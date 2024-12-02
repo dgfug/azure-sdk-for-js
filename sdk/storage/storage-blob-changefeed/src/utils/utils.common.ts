@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { URLBuilder, AbortSignalLike } from "@azure/core-http";
-import { ContainerClient, CommonOptions } from "@azure/storage-blob";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { ContainerClient, CommonOptions } from "@azure/storage-blob";
 import { CHANGE_FEED_SEGMENT_PREFIX, CHANGE_FEED_INITIALIZATION_SEGMENT } from "./constants";
-import { createSpan } from "./tracing";
-import { SpanStatusCode } from "@azure/core-tracing";
+import { tracingClient } from "./tracing";
+import type { BlobChangeFeedEvent, UpdatedBlobProperties } from "../models/BlobChangeFeedEvent";
 
 const millisecondsInAnHour = 60 * 60 * 1000;
 export function ceilToNearestHour(date: Date | undefined): Date | undefined {
@@ -28,28 +28,8 @@ export function floorToNearestHour(date: Date | undefined): Date | undefined {
  * @param url - Source URL string
  */
 export function getHost(url: string): string | undefined {
-  const urlParsed = URLBuilder.parse(url);
-  return urlParsed.getHost();
-}
-
-/**
- * Get URI from an URL string.
- *
- * @param url - Source URL string
- */
-export function getURI(url: string): string {
-  const urlParsed = URLBuilder.parse(url);
-  return `${urlParsed.getHost()}${urlParsed.getPort()}${urlParsed.getPath()}`;
-}
-
-// s[0]*31^(n - 1) + s[1]*31^(n - 2) + ... + s[n - 1]
-export function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0; // Bit operation converts operands to 32-bit integers
-  }
-  return hash;
+  const urlParsed = new URL(url);
+  return urlParsed.hostname;
 }
 
 /**
@@ -65,15 +45,14 @@ export interface GetYearsPathsOptions extends CommonOptions {
 
 export async function getYearsPaths(
   containerClient: ContainerClient,
-  options: GetYearsPathsOptions = {}
+  options: GetYearsPathsOptions = {},
 ): Promise<number[]> {
-  const { span, updatedOptions } = createSpan("getYearsPaths", options);
-  try {
+  return tracingClient.withSpan("getYearsPaths", options, async (updatedOptions) => {
     const years: number[] = [];
     for await (const item of containerClient.listBlobsByHierarchy("/", {
       abortSignal: options.abortSignal,
       tracingOptions: updatedOptions.tracingOptions,
-      prefix: CHANGE_FEED_SEGMENT_PREFIX
+      prefix: CHANGE_FEED_SEGMENT_PREFIX,
     })) {
       if (item.kind === "prefix" && !item.name.includes(CHANGE_FEED_INITIALIZATION_SEGMENT)) {
         const yearStr = item.name.slice(CHANGE_FEED_SEGMENT_PREFIX.length, -1);
@@ -81,15 +60,7 @@ export async function getYearsPaths(
       }
     }
     return years.sort((a, b) => a - b);
-  } catch (e) {
-    span.setStatus({
-      code: SpanStatusCode.ERROR,
-      message: e.message
-    });
-    throw e;
-  } finally {
-    span.end();
-  }
+  });
 }
 
 /**
@@ -108,11 +79,9 @@ export async function getSegmentsInYear(
   year: number,
   startTime?: Date,
   endTime?: Date,
-  options: GetSegmentsInYearOptions = {}
+  options: GetSegmentsInYearOptions = {},
 ): Promise<string[]> {
-  const { span, updatedOptions } = createSpan("getSegmentsInYear", options);
-
-  try {
+  return tracingClient.withSpan("getSegmentsInYear", options, async (updatedOptions) => {
     const segments: string[] = [];
     const yearBeginTime = new Date(Date.UTC(year, 0));
     if (endTime && yearBeginTime >= endTime) {
@@ -123,7 +92,7 @@ export async function getSegmentsInYear(
     for await (const item of containerClient.listBlobsFlat({
       prefix,
       abortSignal: options.abortSignal,
-      tracingOptions: updatedOptions.tracingOptions
+      tracingOptions: updatedOptions.tracingOptions,
     })) {
       const segmentTime = parseDateFromSegmentPath(item.name);
       if ((startTime && segmentTime < startTime) || (endTime && segmentTime >= endTime)) {
@@ -132,15 +101,7 @@ export async function getSegmentsInYear(
       segments.push(item.name);
     }
     return segments;
-  } catch (e) {
-    span.setStatus({
-      code: SpanStatusCode.ERROR,
-      message: e.message
-    });
-    throw e;
-  } finally {
-    span.end();
-  }
+  });
 }
 
 export function parseDateFromSegmentPath(segmentPath: string): Date {
@@ -169,4 +130,94 @@ export function minDate(dateA: Date, dateB?: Date): Date {
     return dateB;
   }
   return dateA;
+}
+
+export function rawEventToBlobChangeFeedEvent(rawEvent: Record<string, any>): BlobChangeFeedEvent {
+  if (rawEvent.eventTime) {
+    rawEvent.eventTime = new Date(rawEvent.eventTime);
+  }
+  if (rawEvent.eTag) {
+    rawEvent.etag = rawEvent.eTag;
+    delete rawEvent.eTag;
+  }
+  if (rawEvent.data) {
+    if (rawEvent.data.recursive !== undefined) {
+      rawEvent.data.isRecursive = rawEvent.data.recursive;
+      delete rawEvent.data.recursive;
+    }
+    if (rawEvent.data.previousInfo) {
+      const previousInfo = rawEvent.data.previousInfo;
+
+      if (previousInfo.SoftDeleteSnapshot) {
+        previousInfo.softDeleteSnapshot = previousInfo.SoftDeleteSnapshot;
+        delete previousInfo.SoftDeleteSnapshot;
+      }
+      if (previousInfo.WasBlobSoftDeleted) {
+        previousInfo.isBlobSoftDeleted = previousInfo.WasBlobSoftDeleted === "true";
+        delete previousInfo.WasBlobSoftDeleted;
+      }
+      if (previousInfo.BlobVersion) {
+        previousInfo.newBlobVersion = previousInfo.BlobVersion;
+        delete previousInfo.BlobVersion;
+      }
+      if (previousInfo.LastVersion) {
+        previousInfo.oldBlobVersion = previousInfo.LastVersion;
+        delete previousInfo.LastVersion;
+      }
+      if (previousInfo.PreviousTier) {
+        previousInfo.previousTier = previousInfo.PreviousTier;
+        delete previousInfo.PreviousTier;
+      }
+
+      rawEvent.data.previousInfo = previousInfo;
+    }
+
+    if (rawEvent.data.blobPropertiesUpdated) {
+      const updatedBlobProperties: UpdatedBlobProperties = {};
+      Object.entries(rawEvent.data.blobPropertiesUpdated).map((item) => {
+        const blobPropertyChange = {
+          propertyName: item[0],
+          oldValue: (item[1] as any).previous as string,
+          newValue: (item[1] as any).current as string,
+        };
+        updatedBlobProperties[item[0]] = blobPropertyChange;
+      });
+      rawEvent.data.updatedBlobProperties = updatedBlobProperties;
+      delete rawEvent.data.blobPropertiesUpdated;
+    }
+
+    if (rawEvent.data.asyncOperationInfo) {
+      const longRunningOperationInfo = rawEvent.data.asyncOperationInfo;
+      if (longRunningOperationInfo.DestinationTier) {
+        longRunningOperationInfo.destinationAccessTier = longRunningOperationInfo.DestinationTier;
+        delete longRunningOperationInfo.DestinationTier;
+      }
+      if ("WasAsyncOperation" in longRunningOperationInfo) {
+        longRunningOperationInfo.isAsync = longRunningOperationInfo.WasAsyncOperation === "true";
+        delete longRunningOperationInfo.WasAsyncOperation;
+      }
+      if (longRunningOperationInfo.CopyId) {
+        longRunningOperationInfo.copyId = longRunningOperationInfo.CopyId;
+        delete longRunningOperationInfo.CopyId;
+      }
+      rawEvent.data.longRunningOperationInfo = longRunningOperationInfo;
+      delete rawEvent.data.asyncOperationInfo;
+    }
+
+    if (rawEvent.data.blobTagsUpdated) {
+      rawEvent.data.updatedBlobTags = {
+        newTags: rawEvent.data.blobTagsUpdated.current,
+        oldTags: rawEvent.data.blobTagsUpdated.previous,
+      };
+
+      delete rawEvent.data.blobTagsUpdated;
+    }
+
+    if (rawEvent.data.blobTier) {
+      rawEvent.data.blobAccessTier = rawEvent.data.blobTier;
+      delete rawEvent.data.blobTier;
+    }
+  }
+
+  return rawEvent as BlobChangeFeedEvent;
 }

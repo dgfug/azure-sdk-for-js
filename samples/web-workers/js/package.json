@@ -11,14 +11,13 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "parcel-bundler": "^1.12.5",
-    "prettier": "^1.19.1"
+    "parcel-bundler": "^1.12.5"
   },
   "browserslist": [
     "last 1 Chrome versions"
   ],
   "dependencies": {
     "@azure/storage-blob": "^12.5.0",
-    "jsdom": "^16.5.0"
+    "jsdom": "^19.0.0"
   }
 }

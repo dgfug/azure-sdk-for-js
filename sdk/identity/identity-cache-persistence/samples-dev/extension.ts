@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * This sample shows how to add a persistent token cache to `@azure/identity`
  * using the persistence plugin. Once the persistence plugin is added
  * through `useIdentityPlugin`, some credentials, such as
  * `DeviceCodeCredential`, will be able to retrieve tokens from the cache rather
- * than requesting new tokens from the Azure Active Directory token endpoint.
+ * than requesting new tokens from the Microsoft Entra token endpoint.
  *
  * In order to utilize the persistent token cache, the `enabled` property must
  * be set to `true` within `tokenCachePersistenceOptions` in the credential's
@@ -28,11 +28,11 @@ async function main() {
     // This property must be provided, with `enabled` set to true to enable
     // persistent token caching.
     tokenCachePersistenceOptions: {
-      enabled: true
-    }
+      enabled: true,
+    },
   });
 
-  // This is the scope we will use to get a token from the AAD token endpoint.
+  // This is the scope we will use to get a token from the Microsoft Entra token endpoint.
   // By default, we'll use the Microsoft Graph scope as an example, but when
   // you use the credential with an Azure SDK package, it will configure the
   // scope for you automatically.

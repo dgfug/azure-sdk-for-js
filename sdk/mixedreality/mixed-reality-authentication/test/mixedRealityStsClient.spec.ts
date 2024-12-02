@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
-import { Context } from "mocha";
 import { AzureKeyCredential, MixedRealityStsClient } from "../src";
-import { createTokenCredentialFromMRKeyCredential } from "./utils/tokenCredentialHelper";
-import { Recorder } from "@azure-tools/test-recorder";
 import { createClient, createRecorder } from "./utils/recordedClient";
+import type { Context } from "mocha";
+import type { Recorder } from "@azure-tools/test-recorder";
+import { assert } from "chai";
+import { createTokenCredentialFromMRKeyCredential } from "./utils/tokenCredentialHelper";
 
 describe("MixedRealityStsClient", () => {
   const accountDomain = "mixedreality.azure.com";
@@ -26,28 +26,28 @@ describe("MixedRealityStsClient", () => {
   it("can create with invalid arguments", () => {
     assert.throws(
       () => new MixedRealityStsClient(undefined!, accountDomain, keyCredential),
-      "Argument cannot be null or empty: 'accountId'."
+      "Argument cannot be null or empty: 'accountId'.",
     );
     assert.throws(
       () => new MixedRealityStsClient(null!, accountDomain, keyCredential),
-      "Argument cannot be null or empty: 'accountId'."
+      "Argument cannot be null or empty: 'accountId'.",
     );
     assert.throws(
       () => new MixedRealityStsClient("", accountDomain, keyCredential),
-      "Argument cannot be null or empty: 'accountId'."
+      "Argument cannot be null or empty: 'accountId'.",
     );
 
     assert.throws(
       () => new MixedRealityStsClient(accountId, undefined!, keyCredential),
-      "Argument cannot be null or empty: 'accountDomain'."
+      "Argument cannot be null or empty: 'accountDomain'.",
     );
     assert.throws(
       () => new MixedRealityStsClient(accountId, null!, keyCredential),
-      "Argument cannot be null or empty: 'accountDomain'."
+      "Argument cannot be null or empty: 'accountDomain'.",
     );
     assert.throws(
       () => new MixedRealityStsClient(accountId, "", keyCredential),
-      "Argument cannot be null or empty: 'accountDomain'."
+      "Argument cannot be null or empty: 'accountDomain'.",
     );
   });
 
@@ -55,7 +55,7 @@ describe("MixedRealityStsClient", () => {
     const expectedEndpointUrl = "https://sts.westus2.mixedreality.azure.com";
 
     const client = new MixedRealityStsClient(accountId, accountDomain, keyCredential, {
-      customEndpointUrl: expectedEndpointUrl
+      customEndpointUrl: expectedEndpointUrl,
     });
 
     assert.isNotNull(client);
@@ -74,16 +74,16 @@ describe("MixedRealityStsClient", () => {
   });
 });
 
-describe("[AccountKey] MixedRealityStsClient functional tests", function() {
+describe("[AccountKey] MixedRealityStsClient functional tests", function () {
   let client: MixedRealityStsClient;
   let recorder: Recorder;
 
-  beforeEach(function(this: Context) {
-    recorder = createRecorder(this);
-    client = createClient();
+  beforeEach(async function (this: Context) {
+    recorder = await createRecorder(this);
+    client = createClient(recorder.configureClientOptions({}));
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     // Stop the recording.
     await recorder.stop();
   });

@@ -6,16 +6,14 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { createSpan } from "../tracing";
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { ManagedPrivateEndpoints } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import type { PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { ManagedPrivateEndpoints } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as coreTracing from "@azure/core-tracing";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { ManagedPrivateEndpointsClientContext } from "../managedPrivateEndpointsClientContext";
-import {
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import type { ManagedPrivateEndpointsClient } from "../managedPrivateEndpointsClient.js";
+import type {
   ManagedPrivateEndpoint,
   ManagedPrivateEndpointsListNextOptionalParams,
   ManagedPrivateEndpointsListOptionalParams,
@@ -25,30 +23,107 @@ import {
   ManagedPrivateEndpointsCreateResponse,
   ManagedPrivateEndpointsDeleteOptionalParams,
   ManagedPrivateEndpointsListResponse,
-  ManagedPrivateEndpointsListNextResponse
-} from "../models";
+  ManagedPrivateEndpointsListNextResponse,
+} from "../models/index.js";
 
-/// <reference lib="esnext.asynciterable" />
+// Operation Specifications
+const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
+
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ManagedPrivateEndpoint,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.endpoint,
+    Parameters.managedVirtualNetworkName,
+    Parameters.managedPrivateEndpointName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const createOperationSpec: coreClient.OperationSpec = {
+  path: "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
+  httpMethod: "PUT",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ManagedPrivateEndpoint,
+    },
+  },
+  requestBody: Parameters.managedPrivateEndpoint,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.endpoint,
+    Parameters.managedVirtualNetworkName,
+    Parameters.managedPrivateEndpointName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const deleteOperationSpec: coreClient.OperationSpec = {
+  path: "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
+  httpMethod: "DELETE",
+  responses: { 202: {}, 204: {} },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.endpoint,
+    Parameters.managedVirtualNetworkName,
+    Parameters.managedPrivateEndpointName,
+  ],
+  serializer,
+};
+const listOperationSpec: coreClient.OperationSpec = {
+  path: "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ManagedPrivateEndpointListResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.endpoint, Parameters.managedVirtualNetworkName],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const listNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ManagedPrivateEndpointListResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.endpoint, Parameters.managedVirtualNetworkName, Parameters.nextLink],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+
 /** Class containing ManagedPrivateEndpoints operations. */
 export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
-  private readonly client: ManagedPrivateEndpointsClientContext;
+  private readonly client: ManagedPrivateEndpointsClient;
 
   /**
    * Initialize a new instance of the class ManagedPrivateEndpoints class.
-   * @param client Reference to the service client
+   * @param client - Reference to the service client
    */
-  constructor(client: ManagedPrivateEndpointsClientContext) {
+  constructor(client: ManagedPrivateEndpointsClient) {
     this.client = client;
   }
 
   /**
    * List Managed Private Endpoints
-   * @param managedVirtualNetworkName Managed virtual network name
-   * @param options The options parameters.
+   * @param managedVirtualNetworkName - Managed virtual network name
+   * @param options - The options parameters.
    */
   public list(
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListOptionalParams
+    options?: ManagedPrivateEndpointsListOptionalParams,
   ): PagedAsyncIterableIterator<ManagedPrivateEndpoint> {
     const iter = this.listPagingAll(managedVirtualNetworkName, options);
     return {
@@ -60,23 +135,19 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
       },
       byPage: () => {
         return this.listPagingPage(managedVirtualNetworkName, options);
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListOptionalParams
+    options?: ManagedPrivateEndpointsListOptionalParams,
   ): AsyncIterableIterator<ManagedPrivateEndpoint[]> {
     let result = await this._list(managedVirtualNetworkName, options);
     yield result.value || [];
     let continuationToken = result.nextLink;
     while (continuationToken) {
-      result = await this._listNext(
-        managedVirtualNetworkName,
-        continuationToken,
-        options
-      );
+      result = await this._listNext(managedVirtualNetworkName, continuationToken, options);
       continuationToken = result.nextLink;
       yield result.value || [];
     }
@@ -84,263 +155,130 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
 
   private async *listPagingAll(
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListOptionalParams
+    options?: ManagedPrivateEndpointsListOptionalParams,
   ): AsyncIterableIterator<ManagedPrivateEndpoint> {
-    for await (const page of this.listPagingPage(
-      managedVirtualNetworkName,
-      options
-    )) {
+    for await (const page of this.listPagingPage(managedVirtualNetworkName, options)) {
       yield* page;
     }
   }
 
   /**
    * Get Managed Private Endpoints
-   * @param managedVirtualNetworkName Managed virtual network name
-   * @param managedPrivateEndpointName Managed private endpoint name
-   * @param options The options parameters.
+   * @param managedVirtualNetworkName - Managed virtual network name
+   * @param managedPrivateEndpointName - Managed private endpoint name
+   * @param options - The options parameters.
    */
   async get(
     managedVirtualNetworkName: string,
     managedPrivateEndpointName: string,
-    options?: ManagedPrivateEndpointsGetOptionalParams
+    options?: ManagedPrivateEndpointsGetOptionalParams,
   ): Promise<ManagedPrivateEndpointsGetResponse> {
-    const { span } = createSpan(
-      "ManagedPrivateEndpointsClient-get",
-      options || {}
+    return tracingClient.withSpan(
+      "ManagedPrivateEndpointsClient.get",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { managedVirtualNetworkName, managedPrivateEndpointName, updatedOptions },
+          getOperationSpec,
+        ) as Promise<ManagedPrivateEndpointsGetResponse>;
+      },
     );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { managedVirtualNetworkName, managedPrivateEndpointName, options },
-        getOperationSpec
-      );
-      return result as ManagedPrivateEndpointsGetResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
   }
 
   /**
    * Create Managed Private Endpoints
-   * @param managedVirtualNetworkName Managed virtual network name
-   * @param managedPrivateEndpointName Managed private endpoint name
-   * @param managedPrivateEndpoint Managed private endpoint properties.
-   * @param options The options parameters.
+   * @param managedVirtualNetworkName - Managed virtual network name
+   * @param managedPrivateEndpointName - Managed private endpoint name
+   * @param managedPrivateEndpoint - Managed private endpoint properties.
+   * @param options - The options parameters.
    */
   async create(
     managedVirtualNetworkName: string,
     managedPrivateEndpointName: string,
     managedPrivateEndpoint: ManagedPrivateEndpoint,
-    options?: ManagedPrivateEndpointsCreateOptionalParams
+    options?: ManagedPrivateEndpointsCreateOptionalParams,
   ): Promise<ManagedPrivateEndpointsCreateResponse> {
-    const { span } = createSpan(
-      "ManagedPrivateEndpointsClient-create",
-      options || {}
+    return tracingClient.withSpan(
+      "ManagedPrivateEndpointsClient.create",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          {
+            managedVirtualNetworkName,
+            managedPrivateEndpointName,
+            managedPrivateEndpoint,
+            updatedOptions,
+          },
+          createOperationSpec,
+        ) as Promise<ManagedPrivateEndpointsCreateResponse>;
+      },
     );
-    try {
-      const result = await this.client.sendOperationRequest(
-        {
-          managedVirtualNetworkName,
-          managedPrivateEndpointName,
-          managedPrivateEndpoint,
-          options
-        },
-        createOperationSpec
-      );
-      return result as ManagedPrivateEndpointsCreateResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
   }
 
   /**
    * Delete Managed Private Endpoints
-   * @param managedVirtualNetworkName Managed virtual network name
-   * @param managedPrivateEndpointName Managed private endpoint name
-   * @param options The options parameters.
+   * @param managedVirtualNetworkName - Managed virtual network name
+   * @param managedPrivateEndpointName - Managed private endpoint name
+   * @param options - The options parameters.
    */
   async delete(
     managedVirtualNetworkName: string,
     managedPrivateEndpointName: string,
-    options?: ManagedPrivateEndpointsDeleteOptionalParams
+    options?: ManagedPrivateEndpointsDeleteOptionalParams,
   ): Promise<void> {
-    const { span } = createSpan(
-      "ManagedPrivateEndpointsClient-delete",
-      options || {}
+    return tracingClient.withSpan(
+      "ManagedPrivateEndpointsClient.delete",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { managedVirtualNetworkName, managedPrivateEndpointName, updatedOptions },
+          deleteOperationSpec,
+        ) as Promise<void>;
+      },
     );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { managedVirtualNetworkName, managedPrivateEndpointName, options },
-        deleteOperationSpec
-      );
-      return result as void;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
   }
 
   /**
    * List Managed Private Endpoints
-   * @param managedVirtualNetworkName Managed virtual network name
-   * @param options The options parameters.
+   * @param managedVirtualNetworkName - Managed virtual network name
+   * @param options - The options parameters.
    */
   private async _list(
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListOptionalParams
+    options?: ManagedPrivateEndpointsListOptionalParams,
   ): Promise<ManagedPrivateEndpointsListResponse> {
-    const { span } = createSpan(
-      "ManagedPrivateEndpointsClient-_list",
-      options || {}
+    return tracingClient.withSpan(
+      "ManagedPrivateEndpointsClient._list",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { managedVirtualNetworkName, updatedOptions },
+          listOperationSpec,
+        ) as Promise<ManagedPrivateEndpointsListResponse>;
+      },
     );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { managedVirtualNetworkName, options },
-        listOperationSpec
-      );
-      return result as ManagedPrivateEndpointsListResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
   }
 
   /**
    * ListNext
-   * @param managedVirtualNetworkName Managed virtual network name
-   * @param nextLink The nextLink from the previous successful call to the List method.
-   * @param options The options parameters.
+   * @param managedVirtualNetworkName - Managed virtual network name
+   * @param nextLink - The nextLink from the previous successful call to the List method.
+   * @param options - The options parameters.
    */
   private async _listNext(
     managedVirtualNetworkName: string,
     nextLink: string,
-    options?: ManagedPrivateEndpointsListNextOptionalParams
+    options?: ManagedPrivateEndpointsListNextOptionalParams,
   ): Promise<ManagedPrivateEndpointsListNextResponse> {
-    const { span } = createSpan(
-      "ManagedPrivateEndpointsClient-_listNext",
-      options || {}
+    return tracingClient.withSpan(
+      "ManagedPrivateEndpointsClient._listNext",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { managedVirtualNetworkName, nextLink, updatedOptions },
+          listNextOperationSpec,
+        ) as Promise<ManagedPrivateEndpointsListNextResponse>;
+      },
     );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { managedVirtualNetworkName, nextLink, options },
-        listNextOperationSpec
-      );
-      return result as ManagedPrivateEndpointsListNextResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
   }
 }
-// Operation Specifications
-const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
-
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ManagedPrivateEndpoint
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.endpoint,
-    Parameters.managedVirtualNetworkName,
-    Parameters.managedPrivateEndpointName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
-  httpMethod: "PUT",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ManagedPrivateEndpoint
-    }
-  },
-  requestBody: Parameters.managedPrivateEndpoint,
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.endpoint,
-    Parameters.managedVirtualNetworkName,
-    Parameters.managedPrivateEndpointName
-  ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
-};
-const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
-  httpMethod: "DELETE",
-  responses: { 202: {}, 204: {} },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.endpoint,
-    Parameters.managedVirtualNetworkName,
-    Parameters.managedPrivateEndpointName
-  ],
-  serializer
-};
-const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ManagedPrivateEndpointListResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [Parameters.endpoint, Parameters.managedVirtualNetworkName],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ManagedPrivateEndpointListResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.endpoint,
-    Parameters.managedVirtualNetworkName,
-    Parameters.nextLink
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};

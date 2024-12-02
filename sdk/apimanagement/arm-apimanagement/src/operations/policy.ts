@@ -10,7 +10,7 @@ import { Policy } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   PolicyListByServiceOptionalParams,
   PolicyListByServiceResponse,
@@ -27,19 +27,19 @@ import {
 
 /** Class containing Policy operations. */
 export class PolicyImpl implements Policy {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class Policy class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists all the Global Policy definitions of the Api Management service.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -56,7 +56,7 @@ export class PolicyImpl implements Policy {
 
   /**
    * Gets the entity state (Etag) version of the Global policy definition in the Api Management service.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param policyId The identifier of the Policy.
    * @param options The options parameters.
@@ -75,7 +75,7 @@ export class PolicyImpl implements Policy {
 
   /**
    * Get the Global policy definition of the Api Management service.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param policyId The identifier of the Policy.
    * @param options The options parameters.
@@ -94,7 +94,7 @@ export class PolicyImpl implements Policy {
 
   /**
    * Creates or updates the global policy configuration of the Api Management service.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param policyId The identifier of the Policy.
    * @param parameters The policy contents to apply.
@@ -115,7 +115,7 @@ export class PolicyImpl implements Policy {
 
   /**
    * Deletes the global policy configuration of the Api Management Service.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param policyId The identifier of the Policy.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header

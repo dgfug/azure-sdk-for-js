@@ -4,22 +4,19 @@
 
 ```ts
 
-/// <reference lib="esnext.asynciterable" />
-
-import { ChatEventId } from '@azure/communication-signaling';
 import { ChatMessageDeletedEvent } from '@azure/communication-signaling';
 import { ChatMessageEditedEvent } from '@azure/communication-signaling';
 import { ChatMessageReceivedEvent } from '@azure/communication-signaling';
 import { ChatThreadCreatedEvent } from '@azure/communication-signaling';
 import { ChatThreadDeletedEvent } from '@azure/communication-signaling';
 import { ChatThreadPropertiesUpdatedEvent } from '@azure/communication-signaling';
-import { CommonClientOptions } from '@azure/core-client';
-import { CommunicationIdentifier } from '@azure/communication-common';
-import { CommunicationIdentifierKind } from '@azure/communication-common';
-import { CommunicationTokenCredential } from '@azure/communication-common';
+import type { CommonClientOptions } from '@azure/core-client';
+import type { CommunicationIdentifier } from '@azure/communication-common';
+import type { CommunicationIdentifierKind } from '@azure/communication-common';
+import type { CommunicationTokenCredential } from '@azure/communication-common';
 import * as coreClient from '@azure/core-client';
-import { OperationOptions } from '@azure/core-client';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { OperationOptions } from '@azure/core-client';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
 import { ParticipantsAddedEvent } from '@azure/communication-signaling';
 import { ParticipantsRemovedEvent } from '@azure/communication-signaling';
 import { ReadReceiptReceivedEvent } from '@azure/communication-signaling';
@@ -37,6 +34,18 @@ export type AddParticipantsOptions = OperationOptions;
 export interface AddParticipantsRequest {
     participants: ChatParticipant[];
 }
+
+// @public
+export interface ChatAttachment {
+    attachmentType: ChatAttachmentType;
+    id: string;
+    name?: string;
+    previewUrl?: string;
+    url?: string;
+}
+
+// @public
+export type ChatAttachmentType = "image" | "file" | "unknown";
 
 // @public
 export class ChatClient {
@@ -65,6 +74,8 @@ export class ChatClient {
     on(event: "chatThreadPropertiesUpdated", listener: (e: ChatThreadPropertiesUpdatedEvent) => void): void;
     on(event: "participantsAdded", listener: (e: ParticipantsAddedEvent) => void): void;
     on(event: "participantsRemoved", listener: (e: ParticipantsRemovedEvent) => void): void;
+    on(event: "realTimeNotificationConnected", listener: () => void): void;
+    on(event: "realTimeNotificationDisconnected", listener: () => void): void;
     startRealtimeNotifications(): Promise<void>;
     stopRealtimeNotifications(): Promise<void>;
 }
@@ -82,7 +93,8 @@ export interface ChatError {
     readonly target?: string;
 }
 
-export { ChatEventId }
+// @public (undocumented)
+export type ChatEventId = "chatMessageReceived" | "chatMessageEdited" | "chatMessageDeleted" | "typingIndicatorReceived" | "readReceiptReceived" | "chatThreadCreated" | "chatThreadDeleted" | "chatThreadPropertiesUpdated" | "participantsAdded" | "participantsRemoved" | "realTimeNotificationConnected" | "realTimeNotificationDisconnected";
 
 // @public
 export interface ChatMessage {
@@ -101,6 +113,7 @@ export interface ChatMessage {
 
 // @public
 export interface ChatMessageContent {
+    attachments?: ChatAttachment[];
     initiator?: CommunicationIdentifierKind;
     message?: string;
     participants?: ChatParticipant[];

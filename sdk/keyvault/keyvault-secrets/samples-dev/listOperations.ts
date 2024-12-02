@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Uses a SecretClient to iterate over secrets and their versions.
@@ -13,10 +13,9 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 export async function main(): Promise<void> {
-  // DefaultAzureCredential expects the following three environment variables:
-  // - AZURE_TENANT_ID: The tenant ID in Azure Active Directory
-  // - AZURE_CLIENT_ID: The application (client) ID registered in the AAD tenant
-  // - AZURE_CLIENT_SECRET: The client secret for the registered application
+  // This sample uses DefaultAzureCredential, which supports a number of authentication mechanisms.
+  // See https://docs.microsoft.com/javascript/api/overview/azure/identity-readme?view=azure-node-latest for more information
+  // about DefaultAzureCredential and the other credentials that are available for use.
   const credential = new DefaultAzureCredential();
 
   const url = process.env["KEYVAULT_URI"] || "<keyvault-url>";
@@ -55,7 +54,7 @@ export async function main(): Promise<void> {
 
   // List the versions of BankAccountPassword
   for await (const secretProperties of client.listPropertiesOfSecretVersions(
-    bankAccountSecretName
+    bankAccountSecretName,
   )) {
     if (secretProperties.enabled) {
       const secret = await client.getSecret(secretProperties.name);

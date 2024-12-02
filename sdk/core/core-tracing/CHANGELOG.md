@@ -1,15 +1,59 @@
 # Release History
 
-## 1.0.0-preview.14 (Unreleased)
+## 1.2.1 (Unreleased)
 
 ### Features Added
 
 ### Breaking Changes
 
-- SpanOptions has been removed from OperationTracingOptions as it is internal and should not be exposed by client libraries.
-  - Customizing a newly created Span is only supported via passing `SpanOptions` to `createSpanFunction`
-
 ### Bugs Fixed
+
+### Other Changes
+
+## 1.2.0 (2024-10-03)
+
+### Features Added
+
+- Added support for attaching events to a span. [#31162](https://github.com/Azure/azure-sdk-for-js/pull/31162)
+
+## 1.1.2 (2024-04-09)
+
+### Other Changes
+
+- Revert TypeScript output target to ES2017.
+
+## 1.1.1 (2024-03-20)
+
+### Other Changes
+
+- Add top-level `browser` field to `package.json` as fallback for legacy bundlers that do not support the `exports` field.
+
+## 1.1.0 (2024-03-12)
+
+### Other Changes
+
+- Migrated the codebase to ESM. This change is internal and should not affect customers.
+- Migrated unit tests to vitest.
+
+## 1.0.1 (2022-05-05)
+
+### Other Changes
+
+- Minor improvements to the typing of `updatedOptions` when calling startSpan.
+
+## 1.0.0 (2022-03-31)
+
+This release marks the GA release of our @azure/core-tracing libraries and is unchanged from preview.14
+
+## 1.0.0-preview.14 (2022-02-03)
+
+### Breaking Changes
+
+- @azure/core-tracing has been rewritten in order to provide cleaner abstractions for client libraries as well as remove @opentelemetry/api as a direct dependency.
+  - @opentelemetry/api is no longer a direct dependency of @azure/core-tracing providing for smaller bundle sizes and lower incidence of version conflicts
+  - `createSpanFunction` has been removed and replaced with a stateful `TracingClient` which can be created using the `createTracingClient` function.
+  - `TracingClient` introduces a new API for creating tracing spans. Use `TracingClient#withSpan` to wrap an invocation in a span, ensuring the span is ended and exceptions are captured.
+  - `TracingClient` also provides the lower-level APIs necessary to start a span without making it active, create request headers, serialize `traceparent` header, and wrapping a callback with an active context.
 
 ### Other Changes
 

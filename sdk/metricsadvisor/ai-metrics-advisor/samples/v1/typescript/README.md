@@ -29,7 +29,7 @@ These sample programs show how to use the TypeScript client libraries for Azure 
 
 ## Prerequisites
 
-The sample programs are compatible with [LTS versions of Node.js](https://nodejs.org/about/releases/).
+The sample programs are compatible with [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule).
 
 Before running the samples in Node, they must be compiled to JavaScript using the TypeScript compiler. For more information on TypeScript, see the [TypeScript documentation][typescript]. Install the TypeScript compiler using:
 
@@ -72,7 +72,7 @@ node dist/quickstart.js
 Alternatively, run a single sample with the correct environment variables set (setting up the `.env` file is not required if you do this), for example (cross-platform):
 
 ```bash
-npx cross-env METRICS_ADVISOR_ENDPOINT="<metrics advisor endpoint>" METRICS_ADVISOR_SUBSCRIPTION_KEY="<metrics advisor subscription key>" METRICS_ADVISOR_API_KEY="<metrics advisor api key>" METRICS_ADVISOR_SQL_SERVER_CONNECTION_STRING="<metrics advisor sql server connection string>" METRICS_ADVISOR_AZURE_SQL_SERVER_QUERY="<metrics advisor azure sql server query>" node dist/quickstart.js
+npx dev-tool run vendored cross-env METRICS_ADVISOR_ENDPOINT="<metrics advisor endpoint>" METRICS_ADVISOR_SUBSCRIPTION_KEY="<metrics advisor subscription key>" METRICS_ADVISOR_API_KEY="<metrics advisor api key>" METRICS_ADVISOR_SQL_SERVER_CONNECTION_STRING="<metrics advisor sql server connection string>" METRICS_ADVISOR_AZURE_SQL_SERVER_QUERY="<metrics advisor azure sql server query>" node dist/quickstart.js
 ```
 
 ## Next Steps

@@ -6,52 +6,14 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { createSpan } from "../tracing";
-import { WorkspaceOperations } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import type { WorkspaceOperations } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as coreTracing from "@azure/core-tracing";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { ArtifactsClientContext } from "../artifactsClientContext";
-import { WorkspaceGetOptionalParams, WorkspaceGetResponse } from "../models";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import type { ArtifactsClient } from "../artifactsClient.js";
+import type { WorkspaceGetOptionalParams, WorkspaceGetResponse } from "../models/index.js";
 
-/** Class containing WorkspaceOperations operations. */
-export class WorkspaceOperationsImpl implements WorkspaceOperations {
-  private readonly client: ArtifactsClientContext;
-
-  /**
-   * Initialize a new instance of the class WorkspaceOperations class.
-   * @param client Reference to the service client
-   */
-  constructor(client: ArtifactsClientContext) {
-    this.client = client;
-  }
-
-  /**
-   * Get Workspace
-   * @param options The options parameters.
-   */
-  async get(
-    options?: WorkspaceGetOptionalParams
-  ): Promise<WorkspaceGetResponse> {
-    const { span } = createSpan("ArtifactsClient-get", options || {});
-    try {
-      const result = await this.client.sendOperationRequest(
-        { options },
-        getOperationSpec
-      );
-      return result as WorkspaceGetResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-}
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
@@ -60,14 +22,41 @@ const getOperationSpec: coreClient.OperationSpec = {
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.Workspace
+      bodyMapper: Mappers.Workspace,
     },
     default: {
-      bodyMapper: Mappers.ErrorContract
-    }
+      bodyMapper: Mappers.ErrorContract,
+    },
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion5],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
+
+/** Class containing WorkspaceOperations operations. */
+export class WorkspaceOperationsImpl implements WorkspaceOperations {
+  private readonly client: ArtifactsClient;
+
+  /**
+   * Initialize a new instance of the class WorkspaceOperations class.
+   * @param client - Reference to the service client
+   */
+  // eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
+  constructor(client: ArtifactsClient) {
+    this.client = client;
+  }
+
+  /**
+   * Get Workspace
+   * @param options - The options parameters.
+   */
+  async get(options?: WorkspaceGetOptionalParams): Promise<WorkspaceGetResponse> {
+    return tracingClient.withSpan("ArtifactsClient.get", options ?? {}, async (updatedOptions) => {
+      return this.client.sendOperationRequest(
+        { updatedOptions },
+        getOperationSpec,
+      ) as Promise<WorkspaceGetResponse>;
+    });
+  }
+}

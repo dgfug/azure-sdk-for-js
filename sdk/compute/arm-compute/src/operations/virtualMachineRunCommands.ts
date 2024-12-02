@@ -6,22 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { VirtualMachineRunCommands } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ComputeManagementClient } from "../computeManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   RunCommandDocumentBase,
   VirtualMachineRunCommandsListNextOptionalParams,
   VirtualMachineRunCommandsListOptionalParams,
+  VirtualMachineRunCommandsListResponse,
   VirtualMachineRunCommand,
   VirtualMachineRunCommandsListByVirtualMachineNextOptionalParams,
   VirtualMachineRunCommandsListByVirtualMachineOptionalParams,
-  VirtualMachineRunCommandsListResponse,
+  VirtualMachineRunCommandsListByVirtualMachineResponse,
   VirtualMachineRunCommandsGetOptionalParams,
   VirtualMachineRunCommandsGetResponse,
   VirtualMachineRunCommandsCreateOrUpdateOptionalParams,
@@ -32,22 +38,22 @@ import {
   VirtualMachineRunCommandsDeleteOptionalParams,
   VirtualMachineRunCommandsGetByVirtualMachineOptionalParams,
   VirtualMachineRunCommandsGetByVirtualMachineResponse,
-  VirtualMachineRunCommandsListByVirtualMachineResponse,
   VirtualMachineRunCommandsListNextResponse,
-  VirtualMachineRunCommandsListByVirtualMachineNextResponse
+  VirtualMachineRunCommandsListByVirtualMachineNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing VirtualMachineRunCommands operations. */
 export class VirtualMachineRunCommandsImpl
-  implements VirtualMachineRunCommands {
-  private readonly client: ComputeManagementClientContext;
+  implements VirtualMachineRunCommands
+{
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class VirtualMachineRunCommands class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -58,7 +64,7 @@ export class VirtualMachineRunCommandsImpl
    */
   public list(
     location: string,
-    options?: VirtualMachineRunCommandsListOptionalParams
+    options?: VirtualMachineRunCommandsListOptionalParams,
   ): PagedAsyncIterableIterator<RunCommandDocumentBase> {
     const iter = this.listPagingAll(location, options);
     return {
@@ -68,29 +74,41 @@ export class VirtualMachineRunCommandsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(location, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(location, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     location: string,
-    options?: VirtualMachineRunCommandsListOptionalParams
+    options?: VirtualMachineRunCommandsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<RunCommandDocumentBase[]> {
-    let result = await this._list(location, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualMachineRunCommandsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(location, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(location, continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     location: string,
-    options?: VirtualMachineRunCommandsListOptionalParams
+    options?: VirtualMachineRunCommandsListOptionalParams,
   ): AsyncIterableIterator<RunCommandDocumentBase> {
     for await (const page of this.listPagingPage(location, options)) {
       yield* page;
@@ -106,12 +124,12 @@ export class VirtualMachineRunCommandsImpl
   public listByVirtualMachine(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams
+    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachineRunCommand> {
     const iter = this.listByVirtualMachinePagingAll(
       resourceGroupName,
       vmName,
-      options
+      options,
     );
     return {
       next() {
@@ -120,49 +138,62 @@ export class VirtualMachineRunCommandsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByVirtualMachinePagingPage(
           resourceGroupName,
           vmName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByVirtualMachinePagingPage(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams
+    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<VirtualMachineRunCommand[]> {
-    let result = await this._listByVirtualMachine(
-      resourceGroupName,
-      vmName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualMachineRunCommandsListByVirtualMachineResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByVirtualMachine(
+        resourceGroupName,
+        vmName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByVirtualMachineNext(
         resourceGroupName,
         vmName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByVirtualMachinePagingAll(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams
+    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams,
   ): AsyncIterableIterator<VirtualMachineRunCommand> {
     for await (const page of this.listByVirtualMachinePagingPage(
       resourceGroupName,
       vmName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -175,11 +206,11 @@ export class VirtualMachineRunCommandsImpl
    */
   private _list(
     location: string,
-    options?: VirtualMachineRunCommandsListOptionalParams
+    options?: VirtualMachineRunCommandsListOptionalParams,
   ): Promise<VirtualMachineRunCommandsListResponse> {
     return this.client.sendOperationRequest(
       { location, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -192,11 +223,11 @@ export class VirtualMachineRunCommandsImpl
   get(
     location: string,
     commandId: string,
-    options?: VirtualMachineRunCommandsGetOptionalParams
+    options?: VirtualMachineRunCommandsGetOptionalParams,
   ): Promise<VirtualMachineRunCommandsGetResponse> {
     return this.client.sendOperationRequest(
       { location, commandId, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -213,30 +244,29 @@ export class VirtualMachineRunCommandsImpl
     vmName: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommand,
-    options?: VirtualMachineRunCommandsCreateOrUpdateOptionalParams
+    options?: VirtualMachineRunCommandsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachineRunCommandsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachineRunCommandsCreateOrUpdateResponse>,
       VirtualMachineRunCommandsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<VirtualMachineRunCommandsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -245,8 +275,8 @@ export class VirtualMachineRunCommandsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -254,20 +284,25 @@ export class VirtualMachineRunCommandsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, vmName, runCommandName, runCommand, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, vmName, runCommandName, runCommand, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      VirtualMachineRunCommandsCreateOrUpdateResponse,
+      OperationState<VirtualMachineRunCommandsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -283,14 +318,14 @@ export class VirtualMachineRunCommandsImpl
     vmName: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommand,
-    options?: VirtualMachineRunCommandsCreateOrUpdateOptionalParams
+    options?: VirtualMachineRunCommandsCreateOrUpdateOptionalParams,
   ): Promise<VirtualMachineRunCommandsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       vmName,
       runCommandName,
       runCommand,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -308,30 +343,29 @@ export class VirtualMachineRunCommandsImpl
     vmName: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommandUpdate,
-    options?: VirtualMachineRunCommandsUpdateOptionalParams
+    options?: VirtualMachineRunCommandsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachineRunCommandsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachineRunCommandsUpdateResponse>,
       VirtualMachineRunCommandsUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<VirtualMachineRunCommandsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -340,8 +374,8 @@ export class VirtualMachineRunCommandsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -349,20 +383,25 @@ export class VirtualMachineRunCommandsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, vmName, runCommandName, runCommand, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, vmName, runCommandName, runCommand, options },
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      VirtualMachineRunCommandsUpdateResponse,
+      OperationState<VirtualMachineRunCommandsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -378,14 +417,14 @@ export class VirtualMachineRunCommandsImpl
     vmName: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommandUpdate,
-    options?: VirtualMachineRunCommandsUpdateOptionalParams
+    options?: VirtualMachineRunCommandsUpdateOptionalParams,
   ): Promise<VirtualMachineRunCommandsUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       vmName,
       runCommandName,
       runCommand,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -401,25 +440,24 @@ export class VirtualMachineRunCommandsImpl
     resourceGroupName: string,
     vmName: string,
     runCommandName: string,
-    options?: VirtualMachineRunCommandsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: VirtualMachineRunCommandsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -428,8 +466,8 @@ export class VirtualMachineRunCommandsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -437,20 +475,22 @@ export class VirtualMachineRunCommandsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, vmName, runCommandName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, vmName, runCommandName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -464,13 +504,13 @@ export class VirtualMachineRunCommandsImpl
     resourceGroupName: string,
     vmName: string,
     runCommandName: string,
-    options?: VirtualMachineRunCommandsDeleteOptionalParams
+    options?: VirtualMachineRunCommandsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       vmName,
       runCommandName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -486,11 +526,11 @@ export class VirtualMachineRunCommandsImpl
     resourceGroupName: string,
     vmName: string,
     runCommandName: string,
-    options?: VirtualMachineRunCommandsGetByVirtualMachineOptionalParams
+    options?: VirtualMachineRunCommandsGetByVirtualMachineOptionalParams,
   ): Promise<VirtualMachineRunCommandsGetByVirtualMachineResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vmName, runCommandName, options },
-      getByVirtualMachineOperationSpec
+      getByVirtualMachineOperationSpec,
     );
   }
 
@@ -503,11 +543,11 @@ export class VirtualMachineRunCommandsImpl
   private _listByVirtualMachine(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams
+    options?: VirtualMachineRunCommandsListByVirtualMachineOptionalParams,
   ): Promise<VirtualMachineRunCommandsListByVirtualMachineResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vmName, options },
-      listByVirtualMachineOperationSpec
+      listByVirtualMachineOperationSpec,
     );
   }
 
@@ -520,11 +560,11 @@ export class VirtualMachineRunCommandsImpl
   private _listNext(
     location: string,
     nextLink: string,
-    options?: VirtualMachineRunCommandsListNextOptionalParams
+    options?: VirtualMachineRunCommandsListNextOptionalParams,
   ): Promise<VirtualMachineRunCommandsListNextResponse> {
     return this.client.sendOperationRequest(
       { location, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -539,11 +579,11 @@ export class VirtualMachineRunCommandsImpl
     resourceGroupName: string,
     vmName: string,
     nextLink: string,
-    options?: VirtualMachineRunCommandsListByVirtualMachineNextOptionalParams
+    options?: VirtualMachineRunCommandsListByVirtualMachineNextOptionalParams,
   ): Promise<VirtualMachineRunCommandsListByVirtualMachineNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vmName, nextLink, options },
-      listByVirtualMachineNextOperationSpec
+      listByVirtualMachineNextOperationSpec,
     );
   }
 }
@@ -551,113 +591,108 @@ export class VirtualMachineRunCommandsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/runCommands",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/runCommands",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RunCommandListResult
-    }
+      bodyMapper: Mappers.RunCommandListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.location,
     Parameters.subscriptionId,
-    Parameters.location1
   ],
   headerParameters: [Parameters.accept1],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/runCommands/{commandId}",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/runCommands/{commandId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RunCommandDocument
-    }
+      bodyMapper: Mappers.RunCommandDocument,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.location,
     Parameters.subscriptionId,
-    Parameters.location1,
-    Parameters.commandId
+    Parameters.commandId,
   ],
   headerParameters: [Parameters.accept1],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     201: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     202: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     204: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.runCommand,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName,
-    Parameters.runCommandName
+    Parameters.runCommandName,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept1],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     201: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     202: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     204: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.runCommand1,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName,
-    Parameters.runCommandName
+    Parameters.runCommandName,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept1],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -665,102 +700,98 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName,
-    Parameters.runCommandName
+    Parameters.runCommandName,
   ],
   headerParameters: [Parameters.accept1],
-  serializer
+  serializer,
 };
 const getByVirtualMachineOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands/{runCommandName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineRunCommand
+      bodyMapper: Mappers.VirtualMachineRunCommand,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.expand],
+  queryParameters: [Parameters.apiVersion, Parameters.expand1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmName,
-    Parameters.runCommandName
+    Parameters.runCommandName,
   ],
   headerParameters: [Parameters.accept1],
-  serializer
+  serializer,
 };
 const listByVirtualMachineOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}/runCommands",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineRunCommandsListResult
+      bodyMapper: Mappers.VirtualMachineRunCommandsListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.expand],
+  queryParameters: [Parameters.apiVersion, Parameters.expand1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.vmName
+    Parameters.resourceGroupName,
+    Parameters.vmName,
   ],
   headerParameters: [Parameters.accept1],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RunCommandListResult
-    }
+      bodyMapper: Mappers.RunCommandListResult,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.location,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.location1
   ],
   headerParameters: [Parameters.accept1],
-  serializer
+  serializer,
 };
 const listByVirtualMachineNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineRunCommandsListResult
+      bodyMapper: Mappers.VirtualMachineRunCommandsListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.expand],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.vmName
+    Parameters.resourceGroupName,
+    Parameters.vmName,
   ],
   headerParameters: [Parameters.accept1],
-  serializer
+  serializer,
 };

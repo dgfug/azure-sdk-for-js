@@ -6,7 +6,7 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   SubscriptionsListQuotasOptionalParams,
   SubscriptionsListQuotasResponse,
@@ -24,7 +24,7 @@ import {
   SubscriptionsTestInputResponse,
   TestOutput,
   SubscriptionsTestOutputOptionalParams,
-  SubscriptionsTestOutputResponse
+  SubscriptionsTestOutputResponse,
 } from "../models";
 
 /** Interface representing a Subscriptions. */
@@ -37,7 +37,7 @@ export interface Subscriptions {
    */
   listQuotas(
     location: string,
-    options?: SubscriptionsListQuotasOptionalParams
+    options?: SubscriptionsListQuotasOptionalParams,
   ): Promise<SubscriptionsListQuotasResponse>;
   /**
    * Test the Stream Analytics query on a sample input.
@@ -50,10 +50,10 @@ export interface Subscriptions {
   beginTestQuery(
     location: string,
     testQuery: TestQuery,
-    options?: SubscriptionsTestQueryOptionalParams
+    options?: SubscriptionsTestQueryOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsTestQueryResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsTestQueryResponse>,
       SubscriptionsTestQueryResponse
     >
   >;
@@ -68,7 +68,7 @@ export interface Subscriptions {
   beginTestQueryAndWait(
     location: string,
     testQuery: TestQuery,
-    options?: SubscriptionsTestQueryOptionalParams
+    options?: SubscriptionsTestQueryOptionalParams,
   ): Promise<SubscriptionsTestQueryResponse>;
   /**
    * Compile the Stream Analytics query.
@@ -81,7 +81,7 @@ export interface Subscriptions {
   compileQuery(
     location: string,
     compileQuery: CompileQuery,
-    options?: SubscriptionsCompileQueryOptionalParams
+    options?: SubscriptionsCompileQueryOptionalParams,
   ): Promise<SubscriptionsCompileQueryResponse>;
   /**
    * Sample the Stream Analytics input data.
@@ -93,10 +93,10 @@ export interface Subscriptions {
   beginSampleInput(
     location: string,
     sampleInput: SampleInput,
-    options?: SubscriptionsSampleInputOptionalParams
+    options?: SubscriptionsSampleInputOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsSampleInputResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsSampleInputResponse>,
       SubscriptionsSampleInputResponse
     >
   >;
@@ -110,7 +110,7 @@ export interface Subscriptions {
   beginSampleInputAndWait(
     location: string,
     sampleInput: SampleInput,
-    options?: SubscriptionsSampleInputOptionalParams
+    options?: SubscriptionsSampleInputOptionalParams,
   ): Promise<SubscriptionsSampleInputResponse>;
   /**
    * Test the Stream Analytics input.
@@ -122,10 +122,10 @@ export interface Subscriptions {
   beginTestInput(
     location: string,
     testInput: TestInput,
-    options?: SubscriptionsTestInputOptionalParams
+    options?: SubscriptionsTestInputOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsTestInputResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsTestInputResponse>,
       SubscriptionsTestInputResponse
     >
   >;
@@ -139,7 +139,7 @@ export interface Subscriptions {
   beginTestInputAndWait(
     location: string,
     testInput: TestInput,
-    options?: SubscriptionsTestInputOptionalParams
+    options?: SubscriptionsTestInputOptionalParams,
   ): Promise<SubscriptionsTestInputResponse>;
   /**
    * Test the Stream Analytics output.
@@ -151,10 +151,10 @@ export interface Subscriptions {
   beginTestOutput(
     location: string,
     testOutput: TestOutput,
-    options?: SubscriptionsTestOutputOptionalParams
+    options?: SubscriptionsTestOutputOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsTestOutputResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsTestOutputResponse>,
       SubscriptionsTestOutputResponse
     >
   >;
@@ -168,6 +168,6 @@ export interface Subscriptions {
   beginTestOutputAndWait(
     location: string,
     testOutput: TestOutput,
-    options?: SubscriptionsTestOutputOptionalParams
+    options?: SubscriptionsTestOutputOptionalParams,
   ): Promise<SubscriptionsTestOutputResponse>;
 }

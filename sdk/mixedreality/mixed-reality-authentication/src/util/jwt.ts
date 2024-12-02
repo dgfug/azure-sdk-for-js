@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { base64decode } from "./base64";
 
@@ -7,7 +7,7 @@ import { base64decode } from "./base64";
  * Retrieves the expiration value from the JWT.
  *
  * @internal
- * @param jwtValue The JWT value.
+ * @param jwtValue - The JWT value.
  */
 export function retrieveJwtExpirationTimestamp(jwtValue: string): number {
   // Note: This only supports JWS Compact Serialization format.'

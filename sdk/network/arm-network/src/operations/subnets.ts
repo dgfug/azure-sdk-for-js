@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Subnets } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   Subnet,
   SubnetsListNextOptionalParams,
   SubnetsListOptionalParams,
+  SubnetsListResponse,
   SubnetsDeleteOptionalParams,
   SubnetsGetOptionalParams,
   SubnetsGetResponse,
@@ -27,20 +33,19 @@ import {
   SubnetsPrepareNetworkPoliciesOptionalParams,
   UnprepareNetworkPoliciesRequest,
   SubnetsUnprepareNetworkPoliciesOptionalParams,
-  SubnetsListResponse,
-  SubnetsListNextResponse
+  SubnetsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Subnets operations. */
 export class SubnetsImpl implements Subnets {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class Subnets class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -53,12 +58,12 @@ export class SubnetsImpl implements Subnets {
   public list(
     resourceGroupName: string,
     virtualNetworkName: string,
-    options?: SubnetsListOptionalParams
+    options?: SubnetsListOptionalParams,
   ): PagedAsyncIterableIterator<Subnet> {
     const iter = this.listPagingAll(
       resourceGroupName,
       virtualNetworkName,
-      options
+      options,
     );
     return {
       next() {
@@ -67,49 +72,58 @@ export class SubnetsImpl implements Subnets {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           virtualNetworkName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     virtualNetworkName: string,
-    options?: SubnetsListOptionalParams
+    options?: SubnetsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Subnet[]> {
-    let result = await this._list(
-      resourceGroupName,
-      virtualNetworkName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SubnetsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, virtualNetworkName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         virtualNetworkName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     virtualNetworkName: string,
-    options?: SubnetsListOptionalParams
+    options?: SubnetsListOptionalParams,
   ): AsyncIterableIterator<Subnet> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       virtualNetworkName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -126,25 +140,24 @@ export class SubnetsImpl implements Subnets {
     resourceGroupName: string,
     virtualNetworkName: string,
     subnetName: string,
-    options?: SubnetsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: SubnetsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -153,8 +166,8 @@ export class SubnetsImpl implements Subnets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -162,21 +175,23 @@ export class SubnetsImpl implements Subnets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, virtualNetworkName, subnetName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, virtualNetworkName, subnetName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -190,13 +205,13 @@ export class SubnetsImpl implements Subnets {
     resourceGroupName: string,
     virtualNetworkName: string,
     subnetName: string,
-    options?: SubnetsDeleteOptionalParams
+    options?: SubnetsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       virtualNetworkName,
       subnetName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -212,11 +227,11 @@ export class SubnetsImpl implements Subnets {
     resourceGroupName: string,
     virtualNetworkName: string,
     subnetName: string,
-    options?: SubnetsGetOptionalParams
+    options?: SubnetsGetOptionalParams,
   ): Promise<SubnetsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, virtualNetworkName, subnetName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -233,30 +248,29 @@ export class SubnetsImpl implements Subnets {
     virtualNetworkName: string,
     subnetName: string,
     subnetParameters: Subnet,
-    options?: SubnetsCreateOrUpdateOptionalParams
+    options?: SubnetsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubnetsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SubnetsCreateOrUpdateResponse>,
       SubnetsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<SubnetsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -265,8 +279,8 @@ export class SubnetsImpl implements Subnets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -274,27 +288,32 @@ export class SubnetsImpl implements Subnets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         virtualNetworkName,
         subnetName,
         subnetParameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      SubnetsCreateOrUpdateResponse,
+      OperationState<SubnetsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -310,14 +329,14 @@ export class SubnetsImpl implements Subnets {
     virtualNetworkName: string,
     subnetName: string,
     subnetParameters: Subnet,
-    options?: SubnetsCreateOrUpdateOptionalParams
+    options?: SubnetsCreateOrUpdateOptionalParams,
   ): Promise<SubnetsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       virtualNetworkName,
       subnetName,
       subnetParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -336,25 +355,24 @@ export class SubnetsImpl implements Subnets {
     virtualNetworkName: string,
     subnetName: string,
     prepareNetworkPoliciesRequestParameters: PrepareNetworkPoliciesRequest,
-    options?: SubnetsPrepareNetworkPoliciesOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: SubnetsPrepareNetworkPoliciesOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -363,8 +381,8 @@ export class SubnetsImpl implements Subnets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -372,27 +390,29 @@ export class SubnetsImpl implements Subnets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         virtualNetworkName,
         subnetName,
         prepareNetworkPoliciesRequestParameters,
-        options
+        options,
       },
-      prepareNetworkPoliciesOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+      spec: prepareNetworkPoliciesOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -409,14 +429,14 @@ export class SubnetsImpl implements Subnets {
     virtualNetworkName: string,
     subnetName: string,
     prepareNetworkPoliciesRequestParameters: PrepareNetworkPoliciesRequest,
-    options?: SubnetsPrepareNetworkPoliciesOptionalParams
+    options?: SubnetsPrepareNetworkPoliciesOptionalParams,
   ): Promise<void> {
     const poller = await this.beginPrepareNetworkPolicies(
       resourceGroupName,
       virtualNetworkName,
       subnetName,
       prepareNetworkPoliciesRequestParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -435,25 +455,24 @@ export class SubnetsImpl implements Subnets {
     virtualNetworkName: string,
     subnetName: string,
     unprepareNetworkPoliciesRequestParameters: UnprepareNetworkPoliciesRequest,
-    options?: SubnetsUnprepareNetworkPoliciesOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: SubnetsUnprepareNetworkPoliciesOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -462,8 +481,8 @@ export class SubnetsImpl implements Subnets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -471,27 +490,29 @@ export class SubnetsImpl implements Subnets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         virtualNetworkName,
         subnetName,
         unprepareNetworkPoliciesRequestParameters,
-        options
+        options,
       },
-      unprepareNetworkPoliciesOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+      spec: unprepareNetworkPoliciesOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -508,14 +529,14 @@ export class SubnetsImpl implements Subnets {
     virtualNetworkName: string,
     subnetName: string,
     unprepareNetworkPoliciesRequestParameters: UnprepareNetworkPoliciesRequest,
-    options?: SubnetsUnprepareNetworkPoliciesOptionalParams
+    options?: SubnetsUnprepareNetworkPoliciesOptionalParams,
   ): Promise<void> {
     const poller = await this.beginUnprepareNetworkPolicies(
       resourceGroupName,
       virtualNetworkName,
       subnetName,
       unprepareNetworkPoliciesRequestParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -529,11 +550,11 @@ export class SubnetsImpl implements Subnets {
   private _list(
     resourceGroupName: string,
     virtualNetworkName: string,
-    options?: SubnetsListOptionalParams
+    options?: SubnetsListOptionalParams,
   ): Promise<SubnetsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, virtualNetworkName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -548,11 +569,11 @@ export class SubnetsImpl implements Subnets {
     resourceGroupName: string,
     virtualNetworkName: string,
     nextLink: string,
-    options?: SubnetsListNextOptionalParams
+    options?: SubnetsListNextOptionalParams,
   ): Promise<SubnetsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, virtualNetworkName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -560,8 +581,7 @@ export class SubnetsImpl implements Subnets {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -569,8 +589,8 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -578,22 +598,21 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.virtualNetworkName,
-    Parameters.subnetName
+    Parameters.subnetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.Subnet
+      bodyMapper: Mappers.Subnet,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.expand],
   urlParameters: [
@@ -601,31 +620,30 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.virtualNetworkName,
-    Parameters.subnetName
+    Parameters.subnetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.Subnet
+      bodyMapper: Mappers.Subnet,
     },
     201: {
-      bodyMapper: Mappers.Subnet
+      bodyMapper: Mappers.Subnet,
     },
     202: {
-      bodyMapper: Mappers.Subnet
+      bodyMapper: Mappers.Subnet,
     },
     204: {
-      bodyMapper: Mappers.Subnet
+      bodyMapper: Mappers.Subnet,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.subnetParameters,
   queryParameters: [Parameters.apiVersion],
@@ -634,15 +652,14 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.virtualNetworkName,
-    Parameters.subnetName
+    Parameters.subnetName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const prepareNetworkPoliciesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}/PrepareNetworkPolicies",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}/PrepareNetworkPolicies",
   httpMethod: "POST",
   responses: {
     200: {},
@@ -650,8 +667,8 @@ const prepareNetworkPoliciesOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.prepareNetworkPoliciesRequestParameters,
   queryParameters: [Parameters.apiVersion],
@@ -660,15 +677,14 @@ const prepareNetworkPoliciesOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.virtualNetworkName,
-    Parameters.subnetName
+    Parameters.subnetName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const unprepareNetworkPoliciesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}/UnprepareNetworkPolicies",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}/UnprepareNetworkPolicies",
   httpMethod: "POST",
   responses: {
     200: {},
@@ -676,8 +692,8 @@ const unprepareNetworkPoliciesOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.unprepareNetworkPoliciesRequestParameters,
   queryParameters: [Parameters.apiVersion],
@@ -686,53 +702,51 @@ const unprepareNetworkPoliciesOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.virtualNetworkName,
-    Parameters.subnetName
+    Parameters.subnetName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SubnetListResult
+      bodyMapper: Mappers.SubnetListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.virtualNetworkName
+    Parameters.virtualNetworkName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SubnetListResult
+      bodyMapper: Mappers.SubnetListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.virtualNetworkName
+    Parameters.virtualNetworkName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

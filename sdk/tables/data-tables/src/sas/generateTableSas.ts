@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { isNamedKeyCredential, NamedKeyCredential } from "@azure/core-auth";
-import { tableSasPermissionsFromString } from "./tableSasPermisions";
-import {
-  generateTableSasQueryParameters,
-  TableSasSignatureValues
-} from "./tableSasSignatureValues";
+import type { NamedKeyCredential } from "@azure/core-auth";
+import { isNamedKeyCredential } from "@azure/core-auth";
+import type { TableSasSignatureValues } from "./tableSasSignatureValues.js";
+import { generateTableSasQueryParameters } from "./tableSasSignatureValues.js";
+import { tableSasPermissionsFromString } from "./tableSasPermisions.js";
 
 /**
  * Generates a Table Service Shared Access Signature (SAS) URI based on the client properties
@@ -20,27 +19,33 @@ import {
 export function generateTableSas(
   tableName: string,
   credential: NamedKeyCredential,
-  options: TableSasSignatureValues = {}
+  options: TableSasSignatureValues = {},
 ): string {
-  const { expiresOn, permissions = tableSasPermissionsFromString("rl"), ...rest } = options;
+  let { expiresOn, permissions } = options;
 
   if (!isNamedKeyCredential(credential)) {
     throw RangeError(
-      "Can only generate the account SAS when the client is initialized with a shared key credential"
+      "Can only generate the account SAS when the client is initialized with a shared key credential",
     );
   }
 
-  let expiry = expiresOn;
+  // expiresOn and permissions are optional if an identifier is provided
+  // set defaults when no identifier and no values were provided
+  if (!options.identifier) {
+    if (!permissions) {
+      permissions = tableSasPermissionsFromString("r");
+    }
 
-  if (expiry === undefined) {
-    const now = new Date();
-    expiry = new Date(now.getTime() + 3600 * 1000);
+    if (expiresOn === undefined) {
+      const now = new Date();
+      expiresOn = new Date(now.getTime() + 3600 * 1000);
+    }
   }
 
   const sas = generateTableSasQueryParameters(tableName, credential, {
-    expiresOn: expiry,
+    ...options,
+    expiresOn,
     permissions,
-    ...rest
   }).toString();
 
   return sas;

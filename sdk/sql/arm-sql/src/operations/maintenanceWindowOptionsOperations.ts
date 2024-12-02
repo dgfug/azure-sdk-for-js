@@ -10,22 +10,23 @@ import { MaintenanceWindowOptionsOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
-  MaintenanceWindowOptionsOperationsGetOptionalParams,
-  MaintenanceWindowOptionsOperationsGetResponse
+  MaintenanceWindowOptionsGetOptionalParams,
+  MaintenanceWindowOptionsGetResponse,
 } from "../models";
 
 /** Class containing MaintenanceWindowOptionsOperations operations. */
 export class MaintenanceWindowOptionsOperationsImpl
-  implements MaintenanceWindowOptionsOperations {
-  private readonly client: SqlManagementClientContext;
+  implements MaintenanceWindowOptionsOperations
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class MaintenanceWindowOptionsOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -43,17 +44,17 @@ export class MaintenanceWindowOptionsOperationsImpl
     serverName: string,
     databaseName: string,
     maintenanceWindowOptionsName: string,
-    options?: MaintenanceWindowOptionsOperationsGetOptionalParams
-  ): Promise<MaintenanceWindowOptionsOperationsGetResponse> {
+    options?: MaintenanceWindowOptionsGetOptionalParams,
+  ): Promise<MaintenanceWindowOptionsGetResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         serverName,
         databaseName,
         maintenanceWindowOptionsName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 }
@@ -61,26 +62,25 @@ export class MaintenanceWindowOptionsOperationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/maintenanceWindowOptions/current",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/maintenanceWindowOptions/current",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MaintenanceWindowOptions
+      bodyMapper: Mappers.MaintenanceWindowOptions,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [
-    Parameters.apiVersion2,
-    Parameters.maintenanceWindowOptionsName
+    Parameters.apiVersion3,
+    Parameters.maintenanceWindowOptionsName,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.databaseName
+    Parameters.databaseName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

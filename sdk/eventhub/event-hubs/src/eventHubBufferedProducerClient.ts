@@ -1,21 +1,26 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortController } from "@azure/abort-controller";
-import { AmqpAnnotatedMessage } from "@azure/core-amqp";
-import { NamedKeyCredential, SASCredential, TokenCredential } from "@azure/core-auth";
-import { BatchingPartitionChannel } from "./batchingPartitionChannel";
-import { PartitionAssigner } from "./impl/partitionAssigner";
-import { EventData, EventHubProducerClient, OperationOptions } from "./index";
-import { EventHubProperties, PartitionProperties } from "./managementClient";
-import {
+import type { EventData } from "./eventData.js";
+import { EventHubProducerClient } from "./eventHubProducerClient.js";
+import type { OperationOptions } from "./util/operationOptions.js";
+import type {
   EventHubClientOptions,
   GetEventHubPropertiesOptions,
   GetPartitionIdsOptions,
   GetPartitionPropertiesOptions,
-  SendBatchOptions
-} from "./models/public";
-import { isCredential, isDefined } from "./util/typeGuards";
+  SendBatchOptions,
+} from "./models/public.js";
+import type { EventHubProperties, PartitionProperties } from "./managementClient.js";
+import type { NamedKeyCredential, SASCredential, TokenCredential } from "@azure/core-auth";
+import { isDefined } from "@azure/core-util";
+import { isCredential } from "./util/typeGuards.js";
+import type { AmqpAnnotatedMessage } from "@azure/core-amqp";
+import { delay } from "@azure/core-amqp";
+import { BatchingPartitionChannel } from "./batchingPartitionChannel.js";
+import { PartitionAssigner } from "./impl/partitionAssigner.js";
+import { logger } from "./logger.js";
+import { getRandomName } from "./util/utils.js";
 
 /**
  * Contains the events that were successfully sent to the Event Hub,
@@ -70,11 +75,19 @@ export interface EventHubBufferedProducerClientOptions extends EventHubClientOpt
   /**
    * The handler to call once a batch has successfully published.
    */
-  onSendEventsSuccessHandler?: (ctx: OnSendEventsSuccessContext) => Promise<void>;
+  onSendEventsSuccessHandler?: (ctx: OnSendEventsSuccessContext) => void;
   /**
    * The handler to call when a batch fails to publish.
    */
-  onSendEventsErrorHandler: (ctx: OnSendEventsErrorContext) => Promise<void>;
+  onSendEventsErrorHandler: (ctx: OnSendEventsErrorContext) => void;
+  /**
+   * Indicates whether or not the EventHubProducerClient should enable idempotent publishing to Event Hub partitions.
+   * If enabled, the producer will only be able to publish directly to partitions;
+   * it will not be able to publish to the Event Hubs gateway for automatic partition routing
+   * nor will it be able to use a partition key.
+   * Default: false
+   */
+  enableIdempotentRetries?: boolean;
 }
 
 /**
@@ -95,7 +108,7 @@ export interface BufferedCloseOptions extends OperationOptions {
 }
 
 /**
- * Options to configure the `enqueueEvents` method on the `EventHubBufferedProcuerClient`.
+ * Options to configure the `enqueueEvents` method on the `EventHubBufferedProducerClient`.
  */
 export interface EnqueueEventOptions extends SendBatchOptions {}
 
@@ -166,6 +179,16 @@ export class EventHubBufferedProducerClient {
   private _clientOptions: EventHubBufferedProducerClientOptions;
 
   /**
+   * The interval at which the background management operation should run.
+   */
+  private _backgroundManagementInterval = 10000; // 10 seconds
+
+  /**
+   * Indicates whether the background management loop is running.
+   */
+  private _isBackgroundManagementRunning = false;
+
+  /**
    * @readonly
    * The name of the Event Hub instance for which this client is created.
    */
@@ -181,6 +204,12 @@ export class EventHubBufferedProducerClient {
   get fullyQualifiedNamespace(): string {
     return this._producer.fullyQualifiedNamespace;
   }
+
+  /**
+   * The name used to identify this EventHubBufferedProducerClient.
+   * If not specified or empty, a random unique one will be generated.
+   */
+  public readonly identifier: string;
 
   /**
    * The `EventHubBufferedProducerClient` class is used to send events to an Event Hub.
@@ -211,7 +240,7 @@ export class EventHubBufferedProducerClient {
   constructor(
     connectionString: string,
     eventHubName: string,
-    options: EventHubBufferedProducerClientOptions
+    options: EventHubBufferedProducerClientOptions,
   );
   /**
    * The `EventHubBufferedProducerClient` class is used to send events to an Event Hub.
@@ -237,7 +266,7 @@ export class EventHubBufferedProducerClient {
     fullyQualifiedNamespace: string,
     eventHubName: string,
     credential: TokenCredential | NamedKeyCredential | SASCredential,
-    options: EventHubBufferedProducerClientOptions
+    options: EventHubBufferedProducerClientOptions,
   );
   constructor(
     fullyQualifiedNamespaceOrConnectionString1: string,
@@ -247,30 +276,35 @@ export class EventHubBufferedProducerClient {
       | NamedKeyCredential
       | SASCredential
       | EventHubBufferedProducerClientOptions,
-    options4?: EventHubBufferedProducerClientOptions
+    options4?: EventHubBufferedProducerClientOptions,
   ) {
     if (typeof eventHubNameOrOptions2 !== "string") {
-      this._producer = new EventHubProducerClient(
-        fullyQualifiedNamespaceOrConnectionString1,
-        eventHubNameOrOptions2
-      );
+      this.identifier = eventHubNameOrOptions2.identifier ?? getRandomName();
+      this._producer = new EventHubProducerClient(fullyQualifiedNamespaceOrConnectionString1, {
+        ...eventHubNameOrOptions2,
+        identifier: this.identifier,
+      });
       this._clientOptions = { ...eventHubNameOrOptions2 };
     } else if (!isCredential(credentialOrOptions3)) {
+      this.identifier = credentialOrOptions3?.identifier ?? getRandomName();
       this._producer = new EventHubProducerClient(
         fullyQualifiedNamespaceOrConnectionString1,
         eventHubNameOrOptions2,
-        credentialOrOptions3
+        { ...credentialOrOptions3, identifier: this.identifier },
       );
       this._clientOptions = { ...credentialOrOptions3! };
     } else {
+      this.identifier = options4?.identifier ?? getRandomName();
       this._producer = new EventHubProducerClient(
         fullyQualifiedNamespaceOrConnectionString1,
         eventHubNameOrOptions2,
         credentialOrOptions3,
-        options4
+        { ...options4, identifier: this.identifier },
       );
       this._clientOptions = { ...options4! };
     }
+    // setting internal idempotent publishing option on the standard producer.
+    (this._producer as any)._enableIdempotentRetries = this._clientOptions.enableIdempotentRetries;
   }
 
   /**
@@ -286,13 +320,16 @@ export class EventHubBufferedProducerClient {
    * @throws Error if the underlying connection encounters an error while closing.
    */
   async close(options: BufferedCloseOptions = {}): Promise<void> {
+    logger.verbose("closing buffered producer client...");
     if (!isDefined(options.flush) || options.flush === true) {
       await this.flush(options);
     }
     // Calling abort signals to the BatchingPartitionChannels that they
-    // should stop reading/sending events.
+    // should stop reading/sending events, and to the background management
+    // loop that it should stop periodic partition id updates.
     this._abortController.abort();
-    return this._producer.close();
+    await this._producer.close();
+    this._isClosed = true;
   }
 
   /**
@@ -315,24 +352,33 @@ export class EventHubBufferedProducerClient {
    */
   async enqueueEvent(
     event: EventData | AmqpAnnotatedMessage,
-    options: EnqueueEventOptions = {}
+    options: EnqueueEventOptions = {},
   ): Promise<number> {
     if (this._isClosed) {
       throw new Error(
-        `This EventHubBufferedProducerClient has already been closed. Create a new client to enqueue events.`
+        `This EventHubBufferedProducerClient has already been closed. Create a new client to enqueue events.`,
       );
     }
 
-    // TODO: Start a loop that queries partition Ids.
-    // partition ids can be added to an Event Hub after it's been created.
     if (!this._partitionIds.length) {
-      this._partitionIds = await this.getPartitionIds();
-      this._partitionAssigner.setPartitionIds(this._partitionIds);
+      await this._updatePartitionIds();
+    }
+    if (!this._isBackgroundManagementRunning) {
+      this._startPartitionIdsUpdateLoop().catch((e) => {
+        logger.error(
+          `The following error occured during batch creation or sending: ${JSON.stringify(
+            e,
+            undefined,
+            "  ",
+          )}`,
+        );
+      });
+      this._isBackgroundManagementRunning = true;
     }
 
     const partitionId = this._partitionAssigner.assignPartition({
       partitionId: options.partitionId,
-      partitionKey: options.partitionKey
+      partitionKey: options.partitionKey,
     });
 
     const partitionChannel = this._getPartitionChannel(partitionId);
@@ -360,7 +406,8 @@ export class EventHubBufferedProducerClient {
    */
   async enqueueEvents(
     events: EventData[] | AmqpAnnotatedMessage[],
-    options: EnqueueEventOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: EnqueueEventOptions = {},
   ): Promise<number> {
     for (const event of events) {
       await this.enqueueEvent(event, options);
@@ -379,7 +426,7 @@ export class EventHubBufferedProducerClient {
    */
   async flush(options: BufferedFlushOptions = {}): Promise<void> {
     await Promise.all(
-      Array.from(this._partitionChannels.values()).map((channel) => channel.flush(options))
+      Array.from(this._partitionChannels.values()).map((channel) => channel.flush(options)),
     );
   }
 
@@ -416,7 +463,7 @@ export class EventHubBufferedProducerClient {
    */
   getPartitionProperties(
     partitionId: string,
-    options: GetPartitionPropertiesOptions = {}
+    options: GetPartitionPropertiesOptions = {},
   ): Promise<PartitionProperties> {
     return this._producer.getPartitionProperties(partitionId, options);
   }
@@ -436,7 +483,7 @@ export class EventHubBufferedProducerClient {
         onSendEventsErrorHandler: this._clientOptions.onSendEventsErrorHandler,
         onSendEventsSuccessHandler: this._clientOptions.onSendEventsSuccessHandler,
         partitionId,
-        producer: this._producer
+        producer: this._producer,
       });
     this._partitionChannels.set(partitionId, partitionChannel);
     return partitionChannel;
@@ -452,5 +499,26 @@ export class EventHubBufferedProducerClient {
     }
 
     return total;
+  }
+
+  private async _updatePartitionIds(): Promise<void> {
+    logger.verbose("Checking for partition Id updates...");
+    const queriedPartitionIds = await this.getPartitionIds();
+
+    if (this._partitionIds.length !== queriedPartitionIds.length) {
+      logger.verbose("Applying partition Id updates");
+      this._partitionIds = queriedPartitionIds;
+      this._partitionAssigner.setPartitionIds(this._partitionIds);
+    }
+  }
+
+  private async _startPartitionIdsUpdateLoop(): Promise<void> {
+    logger.verbose("Starting a background loop to check and apply partition id updates...");
+    while (!this._abortController.signal.aborted && !this._isClosed) {
+      await delay<void>(this._backgroundManagementInterval);
+      if (!this._isClosed) {
+        await this._updatePartitionIds();
+      }
+    }
   }
 }

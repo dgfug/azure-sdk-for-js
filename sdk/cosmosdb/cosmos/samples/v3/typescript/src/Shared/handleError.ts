@@ -1,9 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import path from "path";
-import * as dotenv from "dotenv";
-dotenv.config({ path: path.resolve(__dirname, "../../sample.env") });
+// Licensed under the MIT License.
 
 import { CosmosClient } from "@azure/cosmos";
 const key = process.env.COSMOS_KEY || "<cosmos key>";
@@ -23,7 +19,7 @@ export async function finish(): Promise<void> {
   try {
     await client.database(dbId).delete();
     console.log("\nEnd of demo.");
-  } catch (err) {
+  } catch (err: any) {
     console.log(
       `Database: "${dbId}" might not have deleted properly. You might need to delete it manually.`
     );

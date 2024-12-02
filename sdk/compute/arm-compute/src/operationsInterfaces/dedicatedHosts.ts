@@ -7,10 +7,11 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   DedicatedHost,
   DedicatedHostsListByHostGroupOptionalParams,
+  DedicatedHostsListAvailableSizesOptionalParams,
   DedicatedHostsCreateOrUpdateOptionalParams,
   DedicatedHostsCreateOrUpdateResponse,
   DedicatedHostUpdate,
@@ -18,7 +19,10 @@ import {
   DedicatedHostsUpdateResponse,
   DedicatedHostsDeleteOptionalParams,
   DedicatedHostsGetOptionalParams,
-  DedicatedHostsGetResponse
+  DedicatedHostsGetResponse,
+  DedicatedHostsRestartOptionalParams,
+  DedicatedHostsRedeployOptionalParams,
+  DedicatedHostsRedeployResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -34,8 +38,22 @@ export interface DedicatedHosts {
   listByHostGroup(
     resourceGroupName: string,
     hostGroupName: string,
-    options?: DedicatedHostsListByHostGroupOptionalParams
+    options?: DedicatedHostsListByHostGroupOptionalParams,
   ): PagedAsyncIterableIterator<DedicatedHost>;
+  /**
+   * Lists all available dedicated host sizes to which the specified dedicated host can be resized. NOTE:
+   * The dedicated host sizes provided can be used to only scale up the existing dedicated host.
+   * @param resourceGroupName The name of the resource group.
+   * @param hostGroupName The name of the dedicated host group.
+   * @param hostName The name of the dedicated host.
+   * @param options The options parameters.
+   */
+  listAvailableSizes(
+    resourceGroupName: string,
+    hostGroupName: string,
+    hostName: string,
+    options?: DedicatedHostsListAvailableSizesOptionalParams,
+  ): PagedAsyncIterableIterator<string>;
   /**
    * Create or update a dedicated host .
    * @param resourceGroupName The name of the resource group.
@@ -49,10 +67,10 @@ export interface DedicatedHosts {
     hostGroupName: string,
     hostName: string,
     parameters: DedicatedHost,
-    options?: DedicatedHostsCreateOrUpdateOptionalParams
+    options?: DedicatedHostsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DedicatedHostsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DedicatedHostsCreateOrUpdateResponse>,
       DedicatedHostsCreateOrUpdateResponse
     >
   >;
@@ -69,10 +87,10 @@ export interface DedicatedHosts {
     hostGroupName: string,
     hostName: string,
     parameters: DedicatedHost,
-    options?: DedicatedHostsCreateOrUpdateOptionalParams
+    options?: DedicatedHostsCreateOrUpdateOptionalParams,
   ): Promise<DedicatedHostsCreateOrUpdateResponse>;
   /**
-   * Update an dedicated host .
+   * Update a dedicated host .
    * @param resourceGroupName The name of the resource group.
    * @param hostGroupName The name of the dedicated host group.
    * @param hostName The name of the dedicated host .
@@ -84,15 +102,15 @@ export interface DedicatedHosts {
     hostGroupName: string,
     hostName: string,
     parameters: DedicatedHostUpdate,
-    options?: DedicatedHostsUpdateOptionalParams
+    options?: DedicatedHostsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DedicatedHostsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DedicatedHostsUpdateResponse>,
       DedicatedHostsUpdateResponse
     >
   >;
   /**
-   * Update an dedicated host .
+   * Update a dedicated host .
    * @param resourceGroupName The name of the resource group.
    * @param hostGroupName The name of the dedicated host group.
    * @param hostName The name of the dedicated host .
@@ -104,7 +122,7 @@ export interface DedicatedHosts {
     hostGroupName: string,
     hostName: string,
     parameters: DedicatedHostUpdate,
-    options?: DedicatedHostsUpdateOptionalParams
+    options?: DedicatedHostsUpdateOptionalParams,
   ): Promise<DedicatedHostsUpdateResponse>;
   /**
    * Delete a dedicated host.
@@ -117,8 +135,8 @@ export interface DedicatedHosts {
     resourceGroupName: string,
     hostGroupName: string,
     hostName: string,
-    options?: DedicatedHostsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DedicatedHostsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete a dedicated host.
    * @param resourceGroupName The name of the resource group.
@@ -130,7 +148,7 @@ export interface DedicatedHosts {
     resourceGroupName: string,
     hostGroupName: string,
     hostName: string,
-    options?: DedicatedHostsDeleteOptionalParams
+    options?: DedicatedHostsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Retrieves information about a dedicated host.
@@ -143,6 +161,75 @@ export interface DedicatedHosts {
     resourceGroupName: string,
     hostGroupName: string,
     hostName: string,
-    options?: DedicatedHostsGetOptionalParams
+    options?: DedicatedHostsGetOptionalParams,
   ): Promise<DedicatedHostsGetResponse>;
+  /**
+   * Restart the dedicated host. The operation will complete successfully once the dedicated host has
+   * restarted and is running. To determine the health of VMs deployed on the dedicated host after the
+   * restart check the Resource Health Center in the Azure Portal. Please refer to
+   * https://docs.microsoft.com/azure/service-health/resource-health-overview for more details.
+   * @param resourceGroupName The name of the resource group.
+   * @param hostGroupName The name of the dedicated host group.
+   * @param hostName The name of the dedicated host.
+   * @param options The options parameters.
+   */
+  beginRestart(
+    resourceGroupName: string,
+    hostGroupName: string,
+    hostName: string,
+    options?: DedicatedHostsRestartOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Restart the dedicated host. The operation will complete successfully once the dedicated host has
+   * restarted and is running. To determine the health of VMs deployed on the dedicated host after the
+   * restart check the Resource Health Center in the Azure Portal. Please refer to
+   * https://docs.microsoft.com/azure/service-health/resource-health-overview for more details.
+   * @param resourceGroupName The name of the resource group.
+   * @param hostGroupName The name of the dedicated host group.
+   * @param hostName The name of the dedicated host.
+   * @param options The options parameters.
+   */
+  beginRestartAndWait(
+    resourceGroupName: string,
+    hostGroupName: string,
+    hostName: string,
+    options?: DedicatedHostsRestartOptionalParams,
+  ): Promise<void>;
+  /**
+   * Redeploy the dedicated host. The operation will complete successfully once the dedicated host has
+   * migrated to a new node and is running. To determine the health of VMs deployed on the dedicated host
+   * after the redeploy check the Resource Health Center in the Azure Portal. Please refer to
+   * https://docs.microsoft.com/azure/service-health/resource-health-overview for more details.
+   * @param resourceGroupName The name of the resource group.
+   * @param hostGroupName The name of the dedicated host group.
+   * @param hostName The name of the dedicated host.
+   * @param options The options parameters.
+   */
+  beginRedeploy(
+    resourceGroupName: string,
+    hostGroupName: string,
+    hostName: string,
+    options?: DedicatedHostsRedeployOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DedicatedHostsRedeployResponse>,
+      DedicatedHostsRedeployResponse
+    >
+  >;
+  /**
+   * Redeploy the dedicated host. The operation will complete successfully once the dedicated host has
+   * migrated to a new node and is running. To determine the health of VMs deployed on the dedicated host
+   * after the redeploy check the Resource Health Center in the Azure Portal. Please refer to
+   * https://docs.microsoft.com/azure/service-health/resource-health-overview for more details.
+   * @param resourceGroupName The name of the resource group.
+   * @param hostGroupName The name of the dedicated host group.
+   * @param hostName The name of the dedicated host.
+   * @param options The options parameters.
+   */
+  beginRedeployAndWait(
+    resourceGroupName: string,
+    hostGroupName: string,
+    hostName: string,
+    options?: DedicatedHostsRedeployOptionalParams,
+  ): Promise<DedicatedHostsRedeployResponse>;
 }

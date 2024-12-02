@@ -1,10 +1,9 @@
 trigger: none
 
-stages:
-  - template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
+extends:
+    template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
     parameters:
       PackageName: "@azure/search-documents"
       ServiceDirectory: search
-      # TODO: change 'Preview' cloud back to public after search RP fixes deletion metadata issue
-      Clouds: 'Preview'
-      SupportedClouds: 'Preview,UsGov,China'
+      TimeoutInMinutes: 90
+      SupportedClouds: "Public,UsGov,China"

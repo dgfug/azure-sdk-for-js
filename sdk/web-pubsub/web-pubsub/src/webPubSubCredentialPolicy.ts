@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { KeyCredential } from "@azure/core-auth";
-import {
+import type { KeyCredential } from "@azure/core-auth";
+import type {
   PipelineResponse,
   PipelineRequest,
   SendRequest,
-  PipelinePolicy
+  PipelinePolicy,
 } from "@azure/core-rest-pipeline";
 
 import jwt from "jsonwebtoken";
@@ -28,10 +28,10 @@ export function webPubSubKeyCredentialPolicy(credential: KeyCredential): Pipelin
       const bearerToken = jwt.sign({}, credential.key, {
         audience: request.url,
         expiresIn: "1h",
-        algorithm: "HS256"
+        algorithm: "HS256",
       });
       request.headers.set("Authorization", `Bearer ${bearerToken}`);
       return next(request);
-    }
+    },
   };
 }

@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export type PatchOperation = ExistingKeyOperation | RemoveOperation;
 
@@ -8,7 +8,7 @@ export const PatchOperationType = {
   replace: "replace",
   remove: "remove",
   set: "set",
-  incr: "incr"
+  incr: "incr",
 } as const;
 
 export type ExistingKeyOperation = {

@@ -6,30 +6,31 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { UsageOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
+import { ComputeManagementClient } from "../computeManagementClient";
 import {
   Usage,
   UsageListNextOptionalParams,
   UsageListOptionalParams,
   UsageListResponse,
-  UsageListNextResponse
+  UsageListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing UsageOperations operations. */
 export class UsageOperationsImpl implements UsageOperations {
-  private readonly client: ComputeManagementClientContext;
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class UsageOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -41,7 +42,7 @@ export class UsageOperationsImpl implements UsageOperations {
    */
   public list(
     location: string,
-    options?: UsageListOptionalParams
+    options?: UsageListOptionalParams,
   ): PagedAsyncIterableIterator<Usage> {
     const iter = this.listPagingAll(location, options);
     return {
@@ -51,29 +52,41 @@ export class UsageOperationsImpl implements UsageOperations {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(location, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(location, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     location: string,
-    options?: UsageListOptionalParams
+    options?: UsageListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Usage[]> {
-    let result = await this._list(location, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: UsageListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(location, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(location, continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     location: string,
-    options?: UsageListOptionalParams
+    options?: UsageListOptionalParams,
   ): AsyncIterableIterator<Usage> {
     for await (const page of this.listPagingPage(location, options)) {
       yield* page;
@@ -88,11 +101,11 @@ export class UsageOperationsImpl implements UsageOperations {
    */
   private _list(
     location: string,
-    options?: UsageListOptionalParams
+    options?: UsageListOptionalParams,
   ): Promise<UsageListResponse> {
     return this.client.sendOperationRequest(
       { location, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -105,11 +118,11 @@ export class UsageOperationsImpl implements UsageOperations {
   private _listNext(
     location: string,
     nextLink: string,
-    options?: UsageListNextOptionalParams
+    options?: UsageListNextOptionalParams,
   ): Promise<UsageListNextResponse> {
     return this.client.sendOperationRequest(
       { location, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -117,38 +130,42 @@ export class UsageOperationsImpl implements UsageOperations {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/usages",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/usages",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListUsagesResult
-    }
+      bodyMapper: Mappers.ListUsagesResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.location,
     Parameters.subscriptionId,
-    Parameters.location1
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListUsagesResult
-    }
+      bodyMapper: Mappers.ListUsagesResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.location,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.location1
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

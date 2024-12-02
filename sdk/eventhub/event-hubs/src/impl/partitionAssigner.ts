@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { isDefined } from "../util/typeGuards";
-import { mapPartitionKeyToId } from "./patitionKeyToIdMapper";
+import { isDefined } from "@azure/core-util";
+import { mapPartitionKeyToId } from "./partitionKeyToIdMapper.js";
 
 /**
  * @internal
@@ -33,14 +33,14 @@ export class PartitionAssigner {
    */
   assignPartition({
     partitionId,
-    partitionKey
+    partitionKey,
   }: {
     partitionId?: string;
     partitionKey?: string;
   }): string {
     if (isDefined(partitionId) && isDefined(partitionKey)) {
       throw new Error(
-        `The partitionId (${partitionId}) and partitionKey (${partitionKey}) cannot both be specified.`
+        `The partitionId (${partitionId}) and partitionKey (${partitionKey}) cannot both be specified.`,
       );
     }
 

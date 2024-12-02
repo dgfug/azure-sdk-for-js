@@ -6,14 +6,19 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { PortalRevision } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ApiManagementClient } from "../apiManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   PortalRevisionContract,
   PortalRevisionListByServiceNextOptionalParams,
@@ -33,19 +38,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing PortalRevision operations. */
 export class PortalRevisionImpl implements PortalRevision {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class PortalRevision class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists developer portal's revisions.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -66,11 +71,15 @@ export class PortalRevisionImpl implements PortalRevision {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -79,15 +88,22 @@ export class PortalRevisionImpl implements PortalRevision {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: PortalRevisionListByServiceOptionalParams
+    options?: PortalRevisionListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<PortalRevisionContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: PortalRevisionListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -96,7 +112,9 @@ export class PortalRevisionImpl implements PortalRevision {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -116,7 +134,7 @@ export class PortalRevisionImpl implements PortalRevision {
 
   /**
    * Lists developer portal's revisions.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -133,7 +151,7 @@ export class PortalRevisionImpl implements PortalRevision {
 
   /**
    * Gets the developer portal revision specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param portalRevisionId Portal revision identifier. Must be unique in the current API Management
    *                         service instance.
@@ -153,7 +171,7 @@ export class PortalRevisionImpl implements PortalRevision {
 
   /**
    * Gets the developer portal's revision specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param portalRevisionId Portal revision identifier. Must be unique in the current API Management
    *                         service instance.
@@ -174,7 +192,7 @@ export class PortalRevisionImpl implements PortalRevision {
   /**
    * Creates a new developer portal's revision by running the portal's publishing. The `isCurrent`
    * property indicates if the revision is publicly accessible.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param portalRevisionId Portal revision identifier. Must be unique in the current API Management
    *                         service instance.
@@ -188,8 +206,8 @@ export class PortalRevisionImpl implements PortalRevision {
     parameters: PortalRevisionContract,
     options?: PortalRevisionCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<PortalRevisionCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<PortalRevisionCreateOrUpdateResponse>,
       PortalRevisionCreateOrUpdateResponse
     >
   > {
@@ -199,7 +217,7 @@ export class PortalRevisionImpl implements PortalRevision {
     ): Promise<PortalRevisionCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -232,22 +250,33 @@ export class PortalRevisionImpl implements PortalRevision {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, portalRevisionId, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        portalRevisionId,
+        parameters,
+        options
+      },
+      spec: createOrUpdateOperationSpec
     });
+    const poller = await createHttpPoller<
+      PortalRevisionCreateOrUpdateResponse,
+      OperationState<PortalRevisionCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Creates a new developer portal's revision by running the portal's publishing. The `isCurrent`
    * property indicates if the revision is publicly accessible.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param portalRevisionId Portal revision identifier. Must be unique in the current API Management
    *                         service instance.
@@ -273,7 +302,7 @@ export class PortalRevisionImpl implements PortalRevision {
 
   /**
    * Updates the description of specified portal revision or makes it current.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param portalRevisionId Portal revision identifier. Must be unique in the current API Management
    *                         service instance.
@@ -290,8 +319,8 @@ export class PortalRevisionImpl implements PortalRevision {
     parameters: PortalRevisionContract,
     options?: PortalRevisionUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<PortalRevisionUpdateResponse>,
+    SimplePollerLike<
+      OperationState<PortalRevisionUpdateResponse>,
       PortalRevisionUpdateResponse
     >
   > {
@@ -301,7 +330,7 @@ export class PortalRevisionImpl implements PortalRevision {
     ): Promise<PortalRevisionUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -334,9 +363,9 @@ export class PortalRevisionImpl implements PortalRevision {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         portalRevisionId,
@@ -344,18 +373,23 @@ export class PortalRevisionImpl implements PortalRevision {
         parameters,
         options
       },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+      spec: updateOperationSpec
     });
+    const poller = await createHttpPoller<
+      PortalRevisionUpdateResponse,
+      OperationState<PortalRevisionUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Updates the description of specified portal revision or makes it current.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param portalRevisionId Portal revision identifier. Must be unique in the current API Management
    *                         service instance.
@@ -385,7 +419,7 @@ export class PortalRevisionImpl implements PortalRevision {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -504,7 +538,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters46,
+  requestBody: Parameters.parameters59,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -542,7 +576,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters46,
+  requestBody: Parameters.parameters59,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -570,12 +604,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

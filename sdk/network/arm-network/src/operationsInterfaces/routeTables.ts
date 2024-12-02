@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   RouteTable,
   RouteTablesListOptionalParams,
@@ -19,7 +19,7 @@ import {
   RouteTablesCreateOrUpdateResponse,
   TagsObject,
   RouteTablesUpdateTagsOptionalParams,
-  RouteTablesUpdateTagsResponse
+  RouteTablesUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,14 +32,14 @@ export interface RouteTables {
    */
   list(
     resourceGroupName: string,
-    options?: RouteTablesListOptionalParams
+    options?: RouteTablesListOptionalParams,
   ): PagedAsyncIterableIterator<RouteTable>;
   /**
    * Gets all route tables in a subscription.
    * @param options The options parameters.
    */
   listAll(
-    options?: RouteTablesListAllOptionalParams
+    options?: RouteTablesListAllOptionalParams,
   ): PagedAsyncIterableIterator<RouteTable>;
   /**
    * Deletes the specified route table.
@@ -50,8 +50,8 @@ export interface RouteTables {
   beginDelete(
     resourceGroupName: string,
     routeTableName: string,
-    options?: RouteTablesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: RouteTablesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified route table.
    * @param resourceGroupName The name of the resource group.
@@ -61,7 +61,7 @@ export interface RouteTables {
   beginDeleteAndWait(
     resourceGroupName: string,
     routeTableName: string,
-    options?: RouteTablesDeleteOptionalParams
+    options?: RouteTablesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified route table.
@@ -72,7 +72,7 @@ export interface RouteTables {
   get(
     resourceGroupName: string,
     routeTableName: string,
-    options?: RouteTablesGetOptionalParams
+    options?: RouteTablesGetOptionalParams,
   ): Promise<RouteTablesGetResponse>;
   /**
    * Create or updates a route table in a specified resource group.
@@ -85,10 +85,10 @@ export interface RouteTables {
     resourceGroupName: string,
     routeTableName: string,
     parameters: RouteTable,
-    options?: RouteTablesCreateOrUpdateOptionalParams
+    options?: RouteTablesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<RouteTablesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<RouteTablesCreateOrUpdateResponse>,
       RouteTablesCreateOrUpdateResponse
     >
   >;
@@ -103,7 +103,7 @@ export interface RouteTables {
     resourceGroupName: string,
     routeTableName: string,
     parameters: RouteTable,
-    options?: RouteTablesCreateOrUpdateOptionalParams
+    options?: RouteTablesCreateOrUpdateOptionalParams,
   ): Promise<RouteTablesCreateOrUpdateResponse>;
   /**
    * Updates a route table tags.
@@ -116,6 +116,6 @@ export interface RouteTables {
     resourceGroupName: string,
     routeTableName: string,
     parameters: TagsObject,
-    options?: RouteTablesUpdateTagsOptionalParams
+    options?: RouteTablesUpdateTagsOptionalParams,
   ): Promise<RouteTablesUpdateTagsResponse>;
 }

@@ -6,11 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { Attestation } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import { Attestation } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { GeneratedClientContext } from "../generatedClientContext";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { GeneratedClient } from "../generatedClient.js";
 import {
   AttestOpenEnclaveRequest,
   AttestationAttestOpenEnclaveOptionalParams,
@@ -21,17 +22,17 @@ import {
   TpmAttestationRequest,
   AttestationAttestTpmOptionalParams,
   AttestationAttestTpmResponse
-} from "../models";
+} from "../models/index.js";
 
-/** Class representing a Attestation. */
+/** Class containing Attestation operations. */
 export class AttestationImpl implements Attestation {
-  private readonly client: GeneratedClientContext;
+  private readonly client: GeneratedClient;
 
   /**
    * Initialize a new instance of the class Attestation class.
    * @param client Reference to the service client
    */
-  constructor(client: GeneratedClientContext) {
+  constructor(client: GeneratedClient) {
     this.client = client;
   }
 
@@ -41,13 +42,19 @@ export class AttestationImpl implements Attestation {
    * @param request Request object containing the quote
    * @param options The options parameters.
    */
-  attestOpenEnclave(
+  async attestOpenEnclave(
     request: AttestOpenEnclaveRequest,
     options?: AttestationAttestOpenEnclaveOptionalParams
   ): Promise<AttestationAttestOpenEnclaveResponse> {
-    return this.client.sendOperationRequest(
-      { request, options },
-      attestOpenEnclaveOperationSpec
+    return tracingClient.withSpan(
+      "GeneratedClient.attestOpenEnclave",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { request, options },
+          attestOpenEnclaveOperationSpec
+        ) as Promise<AttestationAttestOpenEnclaveResponse>;
+      }
     );
   }
 
@@ -57,13 +64,19 @@ export class AttestationImpl implements Attestation {
    * @param request Request object containing the quote
    * @param options The options parameters.
    */
-  attestSgxEnclave(
+  async attestSgxEnclave(
     request: AttestSgxEnclaveRequest,
     options?: AttestationAttestSgxEnclaveOptionalParams
   ): Promise<AttestationAttestSgxEnclaveResponse> {
-    return this.client.sendOperationRequest(
-      { request, options },
-      attestSgxEnclaveOperationSpec
+    return tracingClient.withSpan(
+      "GeneratedClient.attestSgxEnclave",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { request, options },
+          attestSgxEnclaveOperationSpec
+        ) as Promise<AttestationAttestSgxEnclaveResponse>;
+      }
     );
   }
 
@@ -73,13 +86,19 @@ export class AttestationImpl implements Attestation {
    * @param request Request object
    * @param options The options parameters.
    */
-  attestTpm(
+  async attestTpm(
     request: TpmAttestationRequest,
     options?: AttestationAttestTpmOptionalParams
   ): Promise<AttestationAttestTpmResponse> {
-    return this.client.sendOperationRequest(
-      { request, options },
-      attestTpmOperationSpec
+    return tracingClient.withSpan(
+      "GeneratedClient.attestTpm",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { request, options },
+          attestTpmOperationSpec
+        ) as Promise<AttestationAttestTpmResponse>;
+      }
     );
   }
 }

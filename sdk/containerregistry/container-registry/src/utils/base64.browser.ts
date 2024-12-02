@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-// eslint-disable-next-line @azure/azure-sdk/ts-no-namespaces
 declare global {
   function atob(input: string): string;
 }

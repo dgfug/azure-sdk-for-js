@@ -6,16 +6,16 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServerDevOpsAuditingSettings,
   ServerDevOpsAuditSettingsListByServerOptionalParams,
+  DevOpsAuditingSettingsName,
   ServerDevOpsAuditSettingsGetOptionalParams,
   ServerDevOpsAuditSettingsGetResponse,
   ServerDevOpsAuditSettingsCreateOrUpdateOptionalParams,
-  ServerDevOpsAuditSettingsCreateOrUpdateResponse
+  ServerDevOpsAuditSettingsCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -31,42 +31,40 @@ export interface ServerDevOpsAuditSettings {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerDevOpsAuditSettingsListByServerOptionalParams
+    options?: ServerDevOpsAuditSettingsListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerDevOpsAuditingSettings>;
   /**
    * Gets a server's DevOps audit settings.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serverName The name of the server.
-   * @param devOpsAuditingSettingsName The name of the devops audit settings. This should always be
-   *                                   'default'.
+   * @param devOpsAuditingSettingsName
    * @param options The options parameters.
    */
   get(
     resourceGroupName: string,
     serverName: string,
-    devOpsAuditingSettingsName: string,
-    options?: ServerDevOpsAuditSettingsGetOptionalParams
+    devOpsAuditingSettingsName: DevOpsAuditingSettingsName,
+    options?: ServerDevOpsAuditSettingsGetOptionalParams,
   ): Promise<ServerDevOpsAuditSettingsGetResponse>;
   /**
    * Creates or updates a server's DevOps audit settings.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serverName The name of the server.
-   * @param devOpsAuditingSettingsName The name of the devops audit settings. This should always be
-   *                                   'default'.
+   * @param devOpsAuditingSettingsName
    * @param parameters Properties of DevOps audit settings
    * @param options The options parameters.
    */
   beginCreateOrUpdate(
     resourceGroupName: string,
     serverName: string,
-    devOpsAuditingSettingsName: string,
+    devOpsAuditingSettingsName: DevOpsAuditingSettingsName,
     parameters: ServerDevOpsAuditingSettings,
-    options?: ServerDevOpsAuditSettingsCreateOrUpdateOptionalParams
+    options?: ServerDevOpsAuditSettingsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ServerDevOpsAuditSettingsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ServerDevOpsAuditSettingsCreateOrUpdateResponse>,
       ServerDevOpsAuditSettingsCreateOrUpdateResponse
     >
   >;
@@ -75,16 +73,15 @@ export interface ServerDevOpsAuditSettings {
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serverName The name of the server.
-   * @param devOpsAuditingSettingsName The name of the devops audit settings. This should always be
-   *                                   'default'.
+   * @param devOpsAuditingSettingsName
    * @param parameters Properties of DevOps audit settings
    * @param options The options parameters.
    */
   beginCreateOrUpdateAndWait(
     resourceGroupName: string,
     serverName: string,
-    devOpsAuditingSettingsName: string,
+    devOpsAuditingSettingsName: DevOpsAuditingSettingsName,
     parameters: ServerDevOpsAuditingSettings,
-    options?: ServerDevOpsAuditSettingsCreateOrUpdateOptionalParams
+    options?: ServerDevOpsAuditSettingsCreateOrUpdateOptionalParams,
   ): Promise<ServerDevOpsAuditSettingsCreateOrUpdateResponse>;
 }

@@ -10,26 +10,27 @@ import { VirtualMachineExtensionImages } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
+import { ComputeManagementClient } from "../computeManagementClient";
 import {
   VirtualMachineExtensionImagesGetOptionalParams,
   VirtualMachineExtensionImagesGetResponse,
   VirtualMachineExtensionImagesListTypesOptionalParams,
   VirtualMachineExtensionImagesListTypesResponse,
   VirtualMachineExtensionImagesListVersionsOptionalParams,
-  VirtualMachineExtensionImagesListVersionsResponse
+  VirtualMachineExtensionImagesListVersionsResponse,
 } from "../models";
 
 /** Class containing VirtualMachineExtensionImages operations. */
 export class VirtualMachineExtensionImagesImpl
-  implements VirtualMachineExtensionImages {
-  private readonly client: ComputeManagementClientContext;
+  implements VirtualMachineExtensionImages
+{
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class VirtualMachineExtensionImages class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -37,20 +38,20 @@ export class VirtualMachineExtensionImagesImpl
    * Gets a virtual machine extension image.
    * @param location The name of a supported Azure region.
    * @param publisherName
-   * @param version
    * @param typeParam
+   * @param version
    * @param options The options parameters.
    */
   get(
     location: string,
     publisherName: string,
-    version: string,
     typeParam: string,
-    options?: VirtualMachineExtensionImagesGetOptionalParams
+    version: string,
+    options?: VirtualMachineExtensionImagesGetOptionalParams,
   ): Promise<VirtualMachineExtensionImagesGetResponse> {
     return this.client.sendOperationRequest(
-      { location, publisherName, version, typeParam, options },
-      getOperationSpec
+      { location, publisherName, typeParam, version, options },
+      getOperationSpec,
     );
   }
 
@@ -63,11 +64,11 @@ export class VirtualMachineExtensionImagesImpl
   listTypes(
     location: string,
     publisherName: string,
-    options?: VirtualMachineExtensionImagesListTypesOptionalParams
+    options?: VirtualMachineExtensionImagesListTypesOptionalParams,
   ): Promise<VirtualMachineExtensionImagesListTypesResponse> {
     return this.client.sendOperationRequest(
       { location, publisherName, options },
-      listTypesOperationSpec
+      listTypesOperationSpec,
     );
   }
 
@@ -82,11 +83,11 @@ export class VirtualMachineExtensionImagesImpl
     location: string,
     publisherName: string,
     typeParam: string,
-    options?: VirtualMachineExtensionImagesListVersionsOptionalParams
+    options?: VirtualMachineExtensionImagesListVersionsOptionalParams,
   ): Promise<VirtualMachineExtensionImagesListVersionsResponse> {
     return this.client.sendOperationRequest(
       { location, publisherName, typeParam, options },
-      listVersionsOperationSpec
+      listVersionsOperationSpec,
     );
   }
 }
@@ -94,29 +95,30 @@ export class VirtualMachineExtensionImagesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/publishers/{publisherName}/artifacttypes/vmextension/types/{type}/versions/{version}",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/publishers/{publisherName}/artifacttypes/vmextension/types/{type}/versions/{version}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineExtensionImage
-    }
+      bodyMapper: Mappers.VirtualMachineExtensionImage,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location,
+    Parameters.location1,
     Parameters.publisherName,
+    Parameters.version,
     Parameters.typeParam,
-    Parameters.version
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listTypesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/publishers/{publisherName}/artifacttypes/vmextension/types",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/publishers/{publisherName}/artifacttypes/vmextension/types",
   httpMethod: "GET",
   responses: {
     200: {
@@ -126,26 +128,28 @@ const listTypesOperationSpec: coreClient.OperationSpec = {
           element: {
             type: {
               name: "Composite",
-              className: "VirtualMachineExtensionImage"
-            }
-          }
-        }
-      }
-    }
+              className: "VirtualMachineExtensionImage",
+            },
+          },
+        },
+      },
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location,
-    Parameters.publisherName
+    Parameters.location1,
+    Parameters.publisherName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listVersionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/publishers/{publisherName}/artifacttypes/vmextension/types/{type}/versions",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/locations/{location}/publishers/{publisherName}/artifacttypes/vmextension/types/{type}/versions",
   httpMethod: "GET",
   responses: {
     200: {
@@ -155,26 +159,29 @@ const listVersionsOperationSpec: coreClient.OperationSpec = {
           element: {
             type: {
               name: "Composite",
-              className: "VirtualMachineExtensionImage"
-            }
-          }
-        }
-      }
-    }
+              className: "VirtualMachineExtensionImage",
+            },
+          },
+        },
+      },
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.filter,
     Parameters.top,
-    Parameters.orderby
+    Parameters.orderby,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location,
+    Parameters.location1,
     Parameters.publisherName,
-    Parameters.typeParam
+    Parameters.typeParam,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

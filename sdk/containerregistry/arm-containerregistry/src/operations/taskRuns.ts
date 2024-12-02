@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { TaskRuns } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ContainerRegistryManagementClientContext } from "../containerRegistryManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ContainerRegistryManagementClient } from "../containerRegistryManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   TaskRun,
   TaskRunsListNextOptionalParams,
   TaskRunsListOptionalParams,
+  TaskRunsListResponse,
   TaskRunsGetOptionalParams,
   TaskRunsGetResponse,
   TaskRunsCreateOptionalParams,
@@ -28,20 +34,19 @@ import {
   TaskRunsUpdateResponse,
   TaskRunsGetDetailsOptionalParams,
   TaskRunsGetDetailsResponse,
-  TaskRunsListResponse,
   TaskRunsListNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing TaskRuns operations. */
 export class TaskRunsImpl implements TaskRuns {
-  private readonly client: ContainerRegistryManagementClientContext;
+  private readonly client: ContainerRegistryManagementClient;
 
   /**
    * Initialize a new instance of the class TaskRuns class.
    * @param client Reference to the service client
    */
-  constructor(client: ContainerRegistryManagementClientContext) {
+  constructor(client: ContainerRegistryManagementClient) {
     this.client = client;
   }
 
@@ -64,8 +69,16 @@ export class TaskRunsImpl implements TaskRuns {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, registryName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          registryName,
+          options,
+          settings
+        );
       }
     };
   }
@@ -73,11 +86,18 @@ export class TaskRunsImpl implements TaskRuns {
   private async *listPagingPage(
     resourceGroupName: string,
     registryName: string,
-    options?: TaskRunsListOptionalParams
+    options?: TaskRunsListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<TaskRun[]> {
-    let result = await this._list(resourceGroupName, registryName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TaskRunsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, registryName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -86,7 +106,9 @@ export class TaskRunsImpl implements TaskRuns {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -138,8 +160,8 @@ export class TaskRunsImpl implements TaskRuns {
     taskRun: TaskRun,
     options?: TaskRunsCreateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<TaskRunsCreateResponse>,
+    SimplePollerLike<
+      OperationState<TaskRunsCreateResponse>,
       TaskRunsCreateResponse
     >
   > {
@@ -149,7 +171,7 @@ export class TaskRunsImpl implements TaskRuns {
     ): Promise<TaskRunsCreateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -182,15 +204,20 @@ export class TaskRunsImpl implements TaskRuns {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, registryName, taskRunName, taskRun, options },
-      createOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, registryName, taskRunName, taskRun, options },
+      spec: createOperationSpec
+    });
+    const poller = await createHttpPoller<
+      TaskRunsCreateResponse,
+      OperationState<TaskRunsCreateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -230,14 +257,14 @@ export class TaskRunsImpl implements TaskRuns {
     registryName: string,
     taskRunName: string,
     options?: TaskRunsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -270,15 +297,17 @@ export class TaskRunsImpl implements TaskRuns {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, registryName, taskRunName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, registryName, taskRunName, options },
+      spec: deleteOperationSpec
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -318,8 +347,8 @@ export class TaskRunsImpl implements TaskRuns {
     updateParameters: TaskRunUpdateParameters,
     options?: TaskRunsUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<TaskRunsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<TaskRunsUpdateResponse>,
       TaskRunsUpdateResponse
     >
   > {
@@ -329,7 +358,7 @@ export class TaskRunsImpl implements TaskRuns {
     ): Promise<TaskRunsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -362,21 +391,26 @@ export class TaskRunsImpl implements TaskRuns {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         registryName,
         taskRunName,
         updateParameters,
         options
       },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
+      spec: updateOperationSpec
+    });
+    const poller = await createHttpPoller<
+      TaskRunsUpdateResponse,
+      OperationState<TaskRunsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -471,15 +505,15 @@ const getOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.TaskRun
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
     Parameters.registryName,
+    Parameters.resourceGroupName1,
     Parameters.taskRunName
   ],
   headerParameters: [Parameters.accept],
@@ -503,7 +537,7 @@ const createOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.TaskRun
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   requestBody: Parameters.taskRun,
@@ -511,8 +545,8 @@ const createOperationSpec: coreClient.OperationSpec = {
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
     Parameters.registryName,
+    Parameters.resourceGroupName1,
     Parameters.taskRunName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
@@ -529,15 +563,15 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
     Parameters.registryName,
+    Parameters.resourceGroupName1,
     Parameters.taskRunName
   ],
   headerParameters: [Parameters.accept],
@@ -561,7 +595,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.TaskRun
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   requestBody: Parameters.updateParameters1,
@@ -569,8 +603,8 @@ const updateOperationSpec: coreClient.OperationSpec = {
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
     Parameters.registryName,
+    Parameters.resourceGroupName1,
     Parameters.taskRunName
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
@@ -586,15 +620,15 @@ const getDetailsOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.TaskRun
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
     Parameters.registryName,
+    Parameters.resourceGroupName1,
     Parameters.taskRunName
   ],
   headerParameters: [Parameters.accept],
@@ -609,15 +643,15 @@ const listOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.TaskRunListResult
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.registryName
+    Parameters.registryName,
+    Parameters.resourceGroupName1
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -630,16 +664,15 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.TaskRunListResult
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
     Parameters.registryName,
-    Parameters.nextLink
+    Parameters.nextLink,
+    Parameters.resourceGroupName1
   ],
   headerParameters: [Parameters.accept],
   serializer

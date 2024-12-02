@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-package-json-sdktype rule.
- * @author Ben Zhang
+ *
  */
 
-import { RuleTester } from "eslint";
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-package-json-sdktype";
 
 //------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ const examplePackageGood = `{
     "url": "https://github.com/Azure/azure-sdk-for-js/issues"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=18.0.0"
   },
   "main": "./dist/index.js",
   "module": "dist-esm/src/index.js",
@@ -93,7 +93,6 @@ const examplePackageGood = `{
   "dependencies": {
     "@azure/abort-controller": "^1.0.0",
     "@azure/core-amqp": "^3.0.0",
-    "@azure/core-asynciterator-polyfill": "^1.0.0",
     "@azure/core-auth": "^1.3.0",
     "@azure/core-tracing": "1.0.0-preview.13",
     "@azure/logger": "^1.0.0",
@@ -110,9 +109,9 @@ const examplePackageGood = `{
     "@azure/eslint-plugin-azure-sdk": "^3.0.0",
     "@azure/identity": "^2.0.1",
     "@azure/mock-hub": "^1.0.0",
-    "@azure/test-utils": "^1.0.0",
-    "@azure/test-utils-perf": "^1.0.0",
-    "@microsoft/api-extractor": "^7.18.11",
+    "@azure-tools/test-utils": "^1.0.0",
+    "@azure-tools/test-perf": "^1.0.0",
+    "@microsoft/api-extractor": "^7.31.1",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-inject": "^4.0.0",
     "@rollup/plugin-json": "^4.0.0",
@@ -125,8 +124,8 @@ const examplePackageGood = `{
     "@types/chai-string": "^1.4.1",
     "@types/debug": "^4.1.4",
     "@types/long": "^4.0.0",
-    "@types/mocha": "^7.0.2",
-    "@types/node": "^12.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.0.0",
     "@types/sinon": "^9.0.4",
     "@types/uuid": "^8.0.0",
     "@types/ws": "^7.2.4",
@@ -137,36 +136,33 @@ const examplePackageGood = `{
     "chai-string": "^1.5.0",
     "cross-env": "^7.0.2",
     "debug": "^4.1.1",
-    "dotenv": "^8.2.0",
-    "downlevel-dts": "~0.4.0",
-    "eslint": "^7.15.0",
+    "dotenv": "^16.0.0",
+    "eslint": "^9.9.0",
     "esm": "^3.2.18",
     "https-proxy-agent": "^5.0.0",
     "karma": "^6.2.0",
     "karma-chrome-launcher": "^3.0.0",
     "karma-coverage": "^2.0.0",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^2.0.1",
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
     "karma-sourcemap-loader": "^0.3.8",
-    "mocha": "^7.1.1",
+    "mocha": "^10.0.0",
     "mocha-junit-reporter": "^1.18.0",
     "moment": "^2.24.0",
     "nyc": "^14.0.0",
     "prettier": "^1.16.4",
     "puppeteer": "^10.2.0",
-    "rimraf": "^3.0.0",
+    "rimraf": "^5.0.0",
     "rollup": "^1.16.3",
     "rollup-plugin-shim": "^1.0.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
     "rollup-plugin-terser": "^5.1.1",
     "sinon": "^9.0.2",
     "ts-node": "^10.0.0",
-    "typescript": "~4.2.0",
+    "typescript": "~5.6.2",
     "ws": "^7.1.1",
     "typedoc": "0.15.2"
   }
@@ -192,7 +188,7 @@ const examplePackageBad = `{
     "url": "https://github.com/Azure/azure-sdk-for-js/issues"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=18.0.0"
   },
   "main": "./dist/index.js",
   "module": "dist-esm/src/index.js",
@@ -251,7 +247,6 @@ const examplePackageBad = `{
   "dependencies": {
     "@azure/abort-controller": "^1.0.0",
     "@azure/core-amqp": "^3.0.0",
-    "@azure/core-asynciterator-polyfill": "^1.0.0",
     "@azure/core-auth": "^1.3.0",
     "@azure/core-tracing": "1.0.0-preview.13",
     "@azure/logger": "^1.0.0",
@@ -268,9 +263,9 @@ const examplePackageBad = `{
     "@azure/eslint-plugin-azure-sdk": "^3.0.0",
     "@azure/identity": "^2.0.1",
     "@azure/mock-hub": "^1.0.0",
-    "@azure/test-utils": "^1.0.0",
-    "@azure/test-utils-perf": "^1.0.0",
-    "@microsoft/api-extractor": "^7.18.11",
+    "@azure-tools/test-utils": "^1.0.0",
+    "@azure-tools/test-perf": "^1.0.0",
+    "@microsoft/api-extractor": "^7.31.1",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-inject": "^4.0.0",
     "@rollup/plugin-json": "^4.0.0",
@@ -283,8 +278,8 @@ const examplePackageBad = `{
     "@types/chai-string": "^1.4.1",
     "@types/debug": "^4.1.4",
     "@types/long": "^4.0.0",
-    "@types/mocha": "^7.0.2",
-    "@types/node": "^12.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.0.0",
     "@types/sinon": "^9.0.4",
     "@types/uuid": "^8.0.0",
     "@types/ws": "^7.2.4",
@@ -295,36 +290,33 @@ const examplePackageBad = `{
     "chai-string": "^1.5.0",
     "cross-env": "^7.0.2",
     "debug": "^4.1.1",
-    "dotenv": "^8.2.0",
-    "downlevel-dts": "~0.4.0",
-    "eslint": "^7.15.0",
+    "dotenv": "^16.0.0",
+    "eslint": "^9.9.0",
     "esm": "^3.2.18",
     "https-proxy-agent": "^5.0.0",
     "karma": "^6.2.0",
     "karma-chrome-launcher": "^3.0.0",
     "karma-coverage": "^2.0.0",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^2.0.1",
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
     "karma-sourcemap-loader": "^0.3.8",
-    "mocha": "^7.1.1",
+    "mocha": "^10.0.0",
     "mocha-junit-reporter": "^1.18.0",
     "moment": "^2.24.0",
     "nyc": "^14.0.0",
     "prettier": "^1.16.4",
     "puppeteer": "^10.2.0",
-    "rimraf": "^3.0.0",
+    "rimraf": "^5.0.0",
     "rollup": "^1.16.3",
     "rollup-plugin-shim": "^1.0.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
     "rollup-plugin-terser": "^5.1.1",
     "sinon": "^9.0.2",
     "ts-node": "^10.0.0",
-    "typescript": "~4.2.0",
+    "typescript": "~5.6.2",
     "ws": "^7.1.1",
     "typedoc": "0.15.2"
   }
@@ -334,41 +326,35 @@ const examplePackageBad = `{
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-package-json-sdktype", rule, {
   valid: [
     {
       // only the fields we care about
       code: '{"sdk-type": "client"}',
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // only the fields we care about
       code: '{"sdk-type": "mgmt"}',
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // only the fields we care about
       code: '{"sdk-type": "utility"}',
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: examplePackageGood,
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"types": "typings/index.d.ts"}',
-      filename: "not_package.json"
-    }
+      filename: "not_package.json",
+    },
   ],
   invalid: [
     {
@@ -377,9 +363,10 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: 'unrecognized sdk-type value: clien. Expected either "client", "mgmt", or "utility."'
-        }
-      ]
+          message:
+            "unrecognized sdk-type value: clien. Expected one of 'client', 'mgmt', or 'utility.'",
+        },
+      ],
     },
     {
       // sdk-type has incorrect value
@@ -387,9 +374,10 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: 'unrecognized sdk-type value: mgm. Expected either "client", "mgmt", or "utility."'
-        }
-      ]
+          message:
+            "unrecognized sdk-type value: mgm. Expected one of 'client', 'mgmt', or 'utility.'",
+        },
+      ],
     },
     {
       // sdk-type has incorrect value
@@ -397,9 +385,10 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: 'unrecognized sdk-type value: util. Expected either "client", "mgmt", or "utility."'
-        }
-      ]
+          message:
+            "unrecognized sdk-type value: util. Expected one of 'client', 'mgmt', or 'utility.'",
+        },
+      ],
     },
     {
       // sdk-type has incorrect value
@@ -407,9 +396,9 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "sdk-type is not set to a string"
-        }
-      ]
+          message: "sdk-type is not set to a string",
+        },
+      ],
     },
     {
       // sdk-type has incorrect value
@@ -417,9 +406,9 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "sdk-type is not set to a string"
-        }
-      ]
+          message: "sdk-type is not set to a string",
+        },
+      ],
     },
     {
       // sdk-type does not exist
@@ -427,9 +416,9 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "sdk-type does not exist at the outermost level"
-        }
-      ]
+          message: "sdk-type does not exist at the outermost level",
+        },
+      ],
     },
     {
       // sdk-type is in a nested object
@@ -437,9 +426,9 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "sdk-type does not exist at the outermost level"
-        }
-      ]
+          message: "sdk-type does not exist at the outermost level",
+        },
+      ],
     },
     {
       // sdk-type does not exist
@@ -447,9 +436,9 @@ ruleTester.run("ts-package-json-sdktype", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "sdk-type does not exist at the outermost level"
-        }
-      ]
-    }
-  ]
+          message: "sdk-type does not exist at the outermost level",
+        },
+      ],
+    },
+  ],
 });

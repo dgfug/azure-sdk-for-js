@@ -6,23 +6,27 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Tag } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   TagContract,
   TagListByOperationNextOptionalParams,
   TagListByOperationOptionalParams,
+  TagListByOperationResponse,
   TagListByApiNextOptionalParams,
   TagListByApiOptionalParams,
+  TagListByApiResponse,
   TagListByProductNextOptionalParams,
   TagListByProductOptionalParams,
+  TagListByProductResponse,
   TagListByServiceNextOptionalParams,
   TagListByServiceOptionalParams,
-  TagListByOperationResponse,
+  TagListByServiceResponse,
   TagGetEntityStateByOperationOptionalParams,
   TagGetEntityStateByOperationResponse,
   TagGetByOperationOptionalParams,
@@ -30,7 +34,6 @@ import {
   TagAssignToOperationOptionalParams,
   TagAssignToOperationResponse,
   TagDetachFromOperationOptionalParams,
-  TagListByApiResponse,
   TagGetEntityStateByApiOptionalParams,
   TagGetEntityStateByApiResponse,
   TagGetByApiOptionalParams,
@@ -38,7 +41,6 @@ import {
   TagAssignToApiOptionalParams,
   TagAssignToApiResponse,
   TagDetachFromApiOptionalParams,
-  TagListByProductResponse,
   TagGetEntityStateByProductOptionalParams,
   TagGetEntityStateByProductResponse,
   TagGetByProductOptionalParams,
@@ -46,7 +48,6 @@ import {
   TagAssignToProductOptionalParams,
   TagAssignToProductResponse,
   TagDetachFromProductOptionalParams,
-  TagListByServiceResponse,
   TagGetEntityStateOptionalParams,
   TagGetEntityStateResponse,
   TagGetOptionalParams,
@@ -66,19 +67,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Tag operations. */
 export class TagImpl implements Tag {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class Tag class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists all Tags associated with the Operation.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -107,13 +108,17 @@ export class TagImpl implements Tag {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByOperationPagingPage(
           resourceGroupName,
           serviceName,
           apiId,
           operationId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -124,17 +129,24 @@ export class TagImpl implements Tag {
     serviceName: string,
     apiId: string,
     operationId: string,
-    options?: TagListByOperationOptionalParams
+    options?: TagListByOperationOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<TagContract[]> {
-    let result = await this._listByOperation(
-      resourceGroupName,
-      serviceName,
-      apiId,
-      operationId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TagListByOperationResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByOperation(
+        resourceGroupName,
+        serviceName,
+        apiId,
+        operationId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByOperationNext(
         resourceGroupName,
@@ -145,7 +157,9 @@ export class TagImpl implements Tag {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -169,7 +183,7 @@ export class TagImpl implements Tag {
 
   /**
    * Lists all Tags associated with the API.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -194,12 +208,16 @@ export class TagImpl implements Tag {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByApiPagingPage(
           resourceGroupName,
           serviceName,
           apiId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -209,16 +227,23 @@ export class TagImpl implements Tag {
     resourceGroupName: string,
     serviceName: string,
     apiId: string,
-    options?: TagListByApiOptionalParams
+    options?: TagListByApiOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<TagContract[]> {
-    let result = await this._listByApi(
-      resourceGroupName,
-      serviceName,
-      apiId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TagListByApiResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByApi(
+        resourceGroupName,
+        serviceName,
+        apiId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByApiNext(
         resourceGroupName,
@@ -228,7 +253,9 @@ export class TagImpl implements Tag {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -250,7 +277,7 @@ export class TagImpl implements Tag {
 
   /**
    * Lists all Tags associated with the Product.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param productId Product identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -274,12 +301,16 @@ export class TagImpl implements Tag {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByProductPagingPage(
           resourceGroupName,
           serviceName,
           productId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -289,16 +320,23 @@ export class TagImpl implements Tag {
     resourceGroupName: string,
     serviceName: string,
     productId: string,
-    options?: TagListByProductOptionalParams
+    options?: TagListByProductOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<TagContract[]> {
-    let result = await this._listByProduct(
-      resourceGroupName,
-      serviceName,
-      productId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TagListByProductResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByProduct(
+        resourceGroupName,
+        serviceName,
+        productId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByProductNext(
         resourceGroupName,
@@ -308,7 +346,9 @@ export class TagImpl implements Tag {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -330,7 +370,7 @@ export class TagImpl implements Tag {
 
   /**
    * Lists a collection of tags defined within a service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -351,11 +391,15 @@ export class TagImpl implements Tag {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -364,15 +408,22 @@ export class TagImpl implements Tag {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: TagListByServiceOptionalParams
+    options?: TagListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<TagContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TagListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -381,7 +432,9 @@ export class TagImpl implements Tag {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -401,7 +454,7 @@ export class TagImpl implements Tag {
 
   /**
    * Lists all Tags associated with the Operation.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -424,7 +477,7 @@ export class TagImpl implements Tag {
 
   /**
    * Gets the entity state version of the tag specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -449,7 +502,7 @@ export class TagImpl implements Tag {
 
   /**
    * Get tag associated with the Operation.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -474,7 +527,7 @@ export class TagImpl implements Tag {
 
   /**
    * Assign tag to the Operation.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -499,7 +552,7 @@ export class TagImpl implements Tag {
 
   /**
    * Detach the tag from the Operation.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -524,7 +577,7 @@ export class TagImpl implements Tag {
 
   /**
    * Lists all Tags associated with the API.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -544,7 +597,7 @@ export class TagImpl implements Tag {
 
   /**
    * Gets the entity state version of the tag specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -566,7 +619,7 @@ export class TagImpl implements Tag {
 
   /**
    * Get tag associated with the API.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -588,7 +641,7 @@ export class TagImpl implements Tag {
 
   /**
    * Assign tag to the Api.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -610,7 +663,7 @@ export class TagImpl implements Tag {
 
   /**
    * Detach the tag from the Api.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -632,7 +685,7 @@ export class TagImpl implements Tag {
 
   /**
    * Lists all Tags associated with the Product.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param productId Product identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -651,7 +704,7 @@ export class TagImpl implements Tag {
 
   /**
    * Gets the entity state version of the tag specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param productId Product identifier. Must be unique in the current API Management service instance.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
@@ -672,7 +725,7 @@ export class TagImpl implements Tag {
 
   /**
    * Get tag associated with the Product.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param productId Product identifier. Must be unique in the current API Management service instance.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
@@ -693,7 +746,7 @@ export class TagImpl implements Tag {
 
   /**
    * Assign tag to the Product.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param productId Product identifier. Must be unique in the current API Management service instance.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
@@ -714,7 +767,7 @@ export class TagImpl implements Tag {
 
   /**
    * Detach the tag from the Product.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param productId Product identifier. Must be unique in the current API Management service instance.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
@@ -735,7 +788,7 @@ export class TagImpl implements Tag {
 
   /**
    * Lists a collection of tags defined within a service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -752,7 +805,7 @@ export class TagImpl implements Tag {
 
   /**
    * Gets the entity state version of the tag specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -771,7 +824,7 @@ export class TagImpl implements Tag {
 
   /**
    * Gets the details of the tag specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -790,7 +843,7 @@ export class TagImpl implements Tag {
 
   /**
    * Creates a tag.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
    * @param parameters Create parameters.
@@ -811,7 +864,7 @@ export class TagImpl implements Tag {
 
   /**
    * Updates the details of the tag specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -835,7 +888,7 @@ export class TagImpl implements Tag {
 
   /**
    * Deletes specific tag of the API Management service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param tagId Tag identifier. Must be unique in the current API Management service instance.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -857,7 +910,7 @@ export class TagImpl implements Tag {
 
   /**
    * ListByOperationNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -882,7 +935,7 @@ export class TagImpl implements Tag {
 
   /**
    * ListByApiNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -904,7 +957,7 @@ export class TagImpl implements Tag {
 
   /**
    * ListByProductNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param productId Product identifier. Must be unique in the current API Management service instance.
    * @param nextLink The nextLink from the previous successful call to the ListByProduct method.
@@ -925,7 +978,7 @@ export class TagImpl implements Tag {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -1505,12 +1558,6 @@ const listByOperationNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
@@ -1534,12 +1581,6 @@ const listByApiNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
@@ -1562,12 +1603,6 @@ const listByProductNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
@@ -1590,13 +1625,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion,
-    Parameters.scope
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

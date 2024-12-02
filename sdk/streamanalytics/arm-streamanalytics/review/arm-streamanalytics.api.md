@@ -6,75 +6,86 @@
 
 import * as coreAuth from '@azure/core-auth';
 import * as coreClient from '@azure/core-client';
+import { OperationState } from '@azure/core-lro';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PollerLike } from '@azure/core-lro';
-import { PollOperationState } from '@azure/core-lro';
+import { SimplePollerLike } from '@azure/core-lro';
 
 // @public
-export type AggregateFunctionProperties = FunctionProperties & {
+export interface AggregateFunctionProperties extends FunctionProperties {
     type: "Aggregate";
-};
+}
 
 // @public
 export type AuthenticationMode = string;
 
 // @public
-export type AvroSerialization = Serialization & {
-    type: "Avro";
+export interface AvroSerialization extends Serialization {
     properties?: Record<string, unknown>;
-};
+    type: "Avro";
+}
 
 // @public
-export type AzureDataLakeStoreOutputDataSource = OutputDataSource & {
-    type: "Microsoft.DataLake/Accounts";
+export interface AzureDataExplorerOutputDataSource extends OutputDataSource {
+    authenticationMode?: AuthenticationMode;
+    cluster?: string;
+    database?: string;
+    table?: string;
+    type: "Microsoft.Kusto/clusters/databases";
+}
+
+// @public
+export interface AzureDataLakeStoreOutputDataSource extends OutputDataSource {
+    accountName?: string;
+    authenticationMode?: AuthenticationMode;
+    dateFormat?: string;
+    filePathPrefix?: string;
     refreshToken?: string;
-    tokenUserPrincipalName?: string;
+    tenantId?: string;
+    timeFormat?: string;
     tokenUserDisplayName?: string;
-    accountName?: string;
-    tenantId?: string;
-    filePathPrefix?: string;
-    dateFormat?: string;
-    timeFormat?: string;
-    authenticationMode?: AuthenticationMode;
-};
+    tokenUserPrincipalName?: string;
+    type: "Microsoft.DataLake/Accounts";
+}
 
 // @public
-export type AzureDataLakeStoreOutputDataSourceProperties = OAuthBasedDataSourceProperties & {
+export interface AzureDataLakeStoreOutputDataSourceProperties extends OAuthBasedDataSourceProperties {
     accountName?: string;
-    tenantId?: string;
-    filePathPrefix?: string;
-    dateFormat?: string;
-    timeFormat?: string;
     authenticationMode?: AuthenticationMode;
-};
+    dateFormat?: string;
+    filePathPrefix?: string;
+    tenantId?: string;
+    timeFormat?: string;
+}
 
 // @public
-export type AzureFunctionOutputDataSource = OutputDataSource & {
-    type: "Microsoft.AzureFunction";
+export interface AzureFunctionOutputDataSource extends OutputDataSource {
+    apiKey?: string;
     functionAppName?: string;
     functionName?: string;
-    apiKey?: string;
-    maxBatchSize?: number;
     maxBatchCount?: number;
-};
+    maxBatchSize?: number;
+    type: "Microsoft.AzureFunction";
+}
 
 // @public
-export type AzureMachineLearningServiceFunctionBinding = FunctionBinding & {
-    type: "Microsoft.MachineLearningServices";
-    endpoint?: string;
+export interface AzureMachineLearningServiceFunctionBinding extends FunctionBinding {
     apiKey?: string;
-    inputs?: AzureMachineLearningServiceInputColumn[];
-    outputs?: AzureMachineLearningServiceOutputColumn[];
     batchSize?: number;
+    endpoint?: string;
+    inputRequestName?: string;
+    inputs?: AzureMachineLearningServiceInputColumn[];
     numberOfParallelRequests?: number;
-};
+    outputResponseName?: string;
+    outputs?: AzureMachineLearningServiceOutputColumn[];
+    type: "Microsoft.MachineLearningServices";
+}
 
 // @public
-export type AzureMachineLearningServiceFunctionRetrieveDefaultDefinitionParameters = FunctionRetrieveDefaultDefinitionParameters & {
+export interface AzureMachineLearningServiceFunctionRetrieveDefaultDefinitionParameters extends FunctionRetrieveDefaultDefinitionParameters {
     bindingType: "Microsoft.MachineLearningServices";
     executeEndpoint?: string;
     udfType?: "Scalar";
-};
+}
 
 // @public
 export interface AzureMachineLearningServiceInputColumn {
@@ -97,21 +108,21 @@ export interface AzureMachineLearningServiceOutputColumn {
 }
 
 // @public
-export type AzureMachineLearningStudioFunctionBinding = FunctionBinding & {
-    type: "Microsoft.MachineLearning/WebService";
-    endpoint?: string;
+export interface AzureMachineLearningStudioFunctionBinding extends FunctionBinding {
     apiKey?: string;
+    batchSize?: number;
+    endpoint?: string;
     inputs?: AzureMachineLearningStudioInputs;
     outputs?: AzureMachineLearningStudioOutputColumn[];
-    batchSize?: number;
-};
+    type: "Microsoft.MachineLearning/WebService";
+}
 
 // @public
-export type AzureMachineLearningStudioFunctionRetrieveDefaultDefinitionParameters = FunctionRetrieveDefaultDefinitionParameters & {
+export interface AzureMachineLearningStudioFunctionRetrieveDefaultDefinitionParameters extends FunctionRetrieveDefaultDefinitionParameters {
     bindingType: "Microsoft.MachineLearning/WebService";
     executeEndpoint?: string;
     udfType?: "Scalar";
-};
+}
 
 // @public
 export interface AzureMachineLearningStudioInputColumn {
@@ -145,42 +156,39 @@ export interface AzureSqlDatabaseDataSourceProperties {
 }
 
 // @public
-export type AzureSqlDatabaseOutputDataSource = OutputDataSource & {
-    type: "Microsoft.Sql/Server/Database";
-    server?: string;
+export interface AzureSqlDatabaseOutputDataSource extends OutputDataSource {
+    authenticationMode?: AuthenticationMode;
     database?: string;
-    user?: string;
-    password?: string;
-    table?: string;
     maxBatchCount?: number;
     maxWriterCount?: number;
-    authenticationMode?: AuthenticationMode;
-};
-
-// @public
-export type AzureSqlDatabaseOutputDataSourceProperties = AzureSqlDatabaseDataSourceProperties & {};
-
-// @public
-export type AzureSqlReferenceInputDataSource = ReferenceInputDataSource & {
+    password?: string;
+    server?: string;
+    table?: string;
     type: "Microsoft.Sql/Server/Database";
-    properties?: AzureSqlReferenceInputDataSourceProperties;
-};
+    user?: string;
+}
 
 // @public
-export interface AzureSqlReferenceInputDataSourceProperties {
+export interface AzureSqlDatabaseOutputDataSourceProperties extends AzureSqlDatabaseDataSourceProperties {
+}
+
+// @public
+export interface AzureSqlReferenceInputDataSource extends ReferenceInputDataSource {
+    authenticationMode?: AuthenticationMode;
     database?: string;
     deltaSnapshotQuery?: string;
     fullSnapshotQuery?: string;
     password?: string;
     refreshRate?: string;
-    refreshType?: string;
+    refreshType?: RefreshType;
     server?: string;
-    table?: string;
+    type: "Microsoft.Sql/Server/Database";
     user?: string;
 }
 
 // @public
 export interface AzureSynapseDataSourceProperties {
+    authenticationMode?: AuthenticationMode;
     database?: string;
     password?: string;
     server?: string;
@@ -189,32 +197,35 @@ export interface AzureSynapseDataSourceProperties {
 }
 
 // @public
-export type AzureSynapseOutputDataSource = OutputDataSource & {
-    type: "Microsoft.Sql/Server/DataWarehouse";
-    server?: string;
+export interface AzureSynapseOutputDataSource extends OutputDataSource {
+    authenticationMode?: AuthenticationMode;
     database?: string;
-    table?: string;
-    user?: string;
     password?: string;
-};
-
-// @public
-export type AzureSynapseOutputDataSourceProperties = AzureSynapseDataSourceProperties & {};
-
-// @public
-export type AzureTableOutputDataSource = OutputDataSource & {
-    type: "Microsoft.Storage/Table";
-    accountName?: string;
-    accountKey?: string;
+    server?: string;
     table?: string;
+    type: "Microsoft.Sql/Server/DataWarehouse";
+    user?: string;
+}
+
+// @public
+export interface AzureSynapseOutputDataSourceProperties extends AzureSynapseDataSourceProperties {
+}
+
+// @public
+export interface AzureTableOutputDataSource extends OutputDataSource {
+    accountKey?: string;
+    accountName?: string;
+    batchSize?: number;
+    columnsToRemove?: string[];
     partitionKey?: string;
     rowKey?: string;
-    columnsToRemove?: string[];
-    batchSize?: number;
-};
+    table?: string;
+    type: "Microsoft.Storage/Table";
+}
 
 // @public
 export interface BlobDataSourceProperties {
+    authenticationMode?: AuthenticationMode;
     container?: string;
     dateFormat?: string;
     pathPattern?: string;
@@ -223,56 +234,75 @@ export interface BlobDataSourceProperties {
 }
 
 // @public
-export type BlobOutputDataSource = OutputDataSource & {
-    type: "Microsoft.Storage/Blob";
-    storageAccounts?: StorageAccount[];
-    container?: string;
-    pathPattern?: string;
-    dateFormat?: string;
-    timeFormat?: string;
+export interface BlobOutputDataSource extends OutputDataSource {
     authenticationMode?: AuthenticationMode;
-};
+    blobPathPrefix?: string;
+    blobWriteMode?: BlobWriteMode;
+    container?: string;
+    dateFormat?: string;
+    pathPattern?: string;
+    storageAccounts?: StorageAccount[];
+    timeFormat?: string;
+    type: "Microsoft.Storage/Blob";
+}
 
 // @public
-export type BlobOutputDataSourceProperties = BlobDataSourceProperties & {
+export interface BlobOutputDataSourceProperties extends BlobDataSourceProperties {
+    blobPathPrefix?: string;
+    blobWriteMode?: BlobWriteMode;
+}
+
+// @public
+export interface BlobReferenceInputDataSource extends ReferenceInputDataSource {
     authenticationMode?: AuthenticationMode;
-};
-
-// @public
-export type BlobReferenceInputDataSource = ReferenceInputDataSource & {
-    type: "Microsoft.Storage/Blob";
-    storageAccounts?: StorageAccount[];
+    blobName?: string;
     container?: string;
-    pathPattern?: string;
     dateFormat?: string;
-    timeFormat?: string;
-};
-
-// @public
-export type BlobReferenceInputDataSourceProperties = BlobDataSourceProperties & {};
-
-// @public
-export type BlobStreamInputDataSource = StreamInputDataSource & {
-    type: "Microsoft.Storage/Blob";
+    deltaPathPattern?: string;
+    deltaSnapshotRefreshRate?: string;
+    fullSnapshotRefreshRate?: string;
+    pathPattern?: string;
+    sourcePartitionCount?: number;
     storageAccounts?: StorageAccount[];
-    container?: string;
-    pathPattern?: string;
-    dateFormat?: string;
     timeFormat?: string;
-    sourcePartitionCount?: number;
-};
+    type: "Microsoft.Storage/Blob";
+}
 
 // @public
-export type BlobStreamInputDataSourceProperties = BlobDataSourceProperties & {
+export interface BlobReferenceInputDataSourceProperties extends BlobDataSourceProperties {
+    blobName?: string;
+    deltaPathPattern?: string;
+    deltaSnapshotRefreshRate?: string;
+    fullSnapshotRefreshRate?: string;
     sourcePartitionCount?: number;
-};
+}
 
 // @public
-export type Cluster = TrackedResource & {
-    sku?: ClusterSku;
+export interface BlobStreamInputDataSource extends StreamInputDataSource {
+    authenticationMode?: AuthenticationMode;
+    container?: string;
+    dateFormat?: string;
+    pathPattern?: string;
+    sourcePartitionCount?: number;
+    storageAccounts?: StorageAccount[];
+    timeFormat?: string;
+    type: "Microsoft.Storage/Blob";
+}
+
+// @public
+export interface BlobStreamInputDataSourceProperties extends BlobDataSourceProperties {
+    sourcePartitionCount?: number;
+}
+
+// @public
+export type BlobWriteMode = string;
+
+// @public
+export interface Cluster extends TrackedResource {
     readonly etag?: string;
     properties?: ClusterProperties;
-};
+    sku?: ClusterSku;
+}
 
 // @public
 export interface ClusterInfo {
@@ -312,11 +342,11 @@ export type ClusterProvisioningState = string;
 
 // @public
 export interface Clusters {
-    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, cluster: Cluster, options?: ClustersCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<ClustersCreateOrUpdateResponse>, ClustersCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, cluster: Cluster, options?: ClustersCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ClustersCreateOrUpdateResponse>, ClustersCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, clusterName: string, cluster: Cluster, options?: ClustersCreateOrUpdateOptionalParams): Promise<ClustersCreateOrUpdateResponse>;
-    beginDelete(resourceGroupName: string, clusterName: string, options?: ClustersDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, clusterName: string, options?: ClustersDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, clusterName: string, options?: ClustersDeleteOptionalParams): Promise<void>;
-    beginUpdate(resourceGroupName: string, clusterName: string, cluster: Cluster, options?: ClustersUpdateOptionalParams): Promise<PollerLike<PollOperationState<ClustersUpdateResponse>, ClustersUpdateResponse>>;
+    beginUpdate(resourceGroupName: string, clusterName: string, cluster: Cluster, options?: ClustersUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ClustersUpdateResponse>, ClustersUpdateResponse>>;
     beginUpdateAndWait(resourceGroupName: string, clusterName: string, cluster: Cluster, options?: ClustersUpdateOptionalParams): Promise<ClustersUpdateResponse>;
     get(resourceGroupName: string, clusterName: string, options?: ClustersGetOptionalParams): Promise<ClustersGetResponse>;
     listByResourceGroup(resourceGroupName: string, options?: ClustersListByResourceGroupOptionalParams): PagedAsyncIterableIterator<Cluster>;
@@ -423,42 +453,51 @@ export interface CompileQuery {
 
 // @public
 export interface Compression {
-    // (undocumented)
-    type: string;
+    type: CompressionType;
 }
+
+// @public
+export type CompressionType = string;
 
 // @public
 export type ContentStoragePolicy = string;
 
 // @public
-export type CSharpFunctionBinding = FunctionBinding & {
-    type: "Microsoft.StreamAnalytics/CLRUdf";
-    script?: string;
-    dllPath?: string;
+export interface CSharpFunctionBinding extends FunctionBinding {
     class?: string;
+    dllPath?: string;
     method?: string;
-};
+    type: "Microsoft.StreamAnalytics/CLRUdf";
+    updateMode?: UpdateMode;
+}
 
 // @public
-export type CSharpFunctionRetrieveDefaultDefinitionParameters = FunctionRetrieveDefaultDefinitionParameters & {
+export interface CSharpFunctionRetrieveDefaultDefinitionParameters extends FunctionRetrieveDefaultDefinitionParameters {
     bindingType: "Microsoft.StreamAnalytics/CLRUdf";
     script?: string;
     udfType?: "Scalar";
-};
+}
 
 // @public
-export type CsvSerialization = Serialization & {
-    type: "Csv";
-    fieldDelimiter?: string;
+export interface CsvSerialization extends Serialization {
     encoding?: Encoding;
-};
+    fieldDelimiter?: string;
+    type: "Csv";
+}
 
 // @public
-export type CustomClrSerialization = Serialization & {
-    type: "CustomClr";
-    serializationDllPath?: string;
+export interface CustomClrSerialization extends Serialization {
     serializationClassName?: string;
-};
+    serializationDllPath?: string;
+    type: "CustomClr";
+}
+
+// @public
+export interface DeltaSerialization extends Serialization {
+    deltaTablePath?: string;
+    partitionColumns?: string[];
+    type: "Delta";
+}
 
 // @public
 export interface DiagnosticCondition {
@@ -473,26 +512,19 @@ export interface Diagnostics {
 }
 
 // @public
-export type DocumentDbOutputDataSource = OutputDataSource & {
-    type: "Microsoft.Storage/DocumentDB";
+export interface DocumentDbOutputDataSource extends OutputDataSource {
     accountId?: string;
     accountKey?: string;
-    database?: string;
+    authenticationMode?: AuthenticationMode;
     collectionNamePattern?: string;
-    partitionKey?: string;
+    database?: string;
     documentId?: string;
-};
+    partitionKey?: string;
+    type: "Microsoft.Storage/DocumentDB";
+}
 
 // @public
 export type Encoding = string;
-
-// @public
-export interface ErrorAutoGenerated {
-    code?: string;
-    details?: ErrorDetails[];
-    message?: string;
-    target?: string;
-}
 
 // @public
 export interface ErrorDetails {
@@ -502,8 +534,16 @@ export interface ErrorDetails {
 }
 
 // @public
+export interface ErrorError {
+    code?: string;
+    details?: ErrorDetails[];
+    message?: string;
+    target?: string;
+}
+
+// @public
 export interface ErrorModel {
-    error?: ErrorAutoGenerated;
+    error?: ErrorError;
 }
 
 // @public
@@ -513,66 +553,86 @@ export interface ErrorResponse {
 }
 
 // @public
-export type EventHubDataSourceProperties = ServiceBusDataSourceProperties & {
-    eventHubName?: string;
-};
+export type EventGridEventSchemaType = string;
 
 // @public
-export type EventHubOutputDataSource = OutputDataSource & {
+export interface EventGridStreamInputDataSource extends StreamInputDataSource {
+    eventTypes?: string[];
+    schema?: EventGridEventSchemaType;
+    storageAccounts?: StorageAccount[];
+    subscriber?: EventHubV2StreamInputDataSource;
+    type: "Microsoft.EventGrid/EventSubscriptions";
+}
+
+// @public
+export interface EventHubDataSourceProperties extends ServiceBusDataSourceProperties {
+    eventHubName?: string;
+    partitionCount?: number;
+}
+
+// @public
+export interface EventHubOutputDataSource extends OutputDataSource {
+    authenticationMode?: AuthenticationMode;
+    eventHubName?: string;
+    partitionCount?: number;
+    partitionKey?: string;
+    propertyColumns?: string[];
+    serviceBusNamespace?: string;
+    sharedAccessPolicyKey?: string;
+    sharedAccessPolicyName?: string;
     type: "Microsoft.ServiceBus/EventHub";
-    serviceBusNamespace?: string;
-    sharedAccessPolicyName?: string;
-    sharedAccessPolicyKey?: string;
+}
+
+// @public
+export interface EventHubOutputDataSourceProperties extends EventHubDataSourceProperties {
+    partitionKey?: string;
+    propertyColumns?: string[];
+}
+
+// @public
+export interface EventHubStreamInputDataSource extends StreamInputDataSource {
     authenticationMode?: AuthenticationMode;
+    consumerGroupName?: string;
     eventHubName?: string;
-    partitionKey?: string;
-    propertyColumns?: string[];
-};
-
-// @public
-export type EventHubOutputDataSourceProperties = EventHubDataSourceProperties & {
-    partitionKey?: string;
-    propertyColumns?: string[];
-};
-
-// @public
-export type EventHubStreamInputDataSource = StreamInputDataSource & {
+    partitionCount?: number;
+    prefetchCount?: number;
+    serviceBusNamespace?: string;
+    sharedAccessPolicyKey?: string;
+    sharedAccessPolicyName?: string;
     type: "Microsoft.ServiceBus/EventHub";
-    serviceBusNamespace?: string;
-    sharedAccessPolicyName?: string;
-    sharedAccessPolicyKey?: string;
-    authenticationMode?: AuthenticationMode;
-    eventHubName?: string;
-    consumerGroupName?: string;
-};
+}
 
 // @public
-export type EventHubStreamInputDataSourceProperties = EventHubDataSourceProperties & {
+export interface EventHubStreamInputDataSourceProperties extends EventHubDataSourceProperties {
     consumerGroupName?: string;
-};
+    prefetchCount?: number;
+}
 
 // @public
-export type EventHubV2OutputDataSource = OutputDataSource & {
-    type: "Microsoft.EventHub/EventHub";
-    serviceBusNamespace?: string;
-    sharedAccessPolicyName?: string;
-    sharedAccessPolicyKey?: string;
+export interface EventHubV2OutputDataSource extends OutputDataSource {
     authenticationMode?: AuthenticationMode;
     eventHubName?: string;
+    partitionCount?: number;
     partitionKey?: string;
     propertyColumns?: string[];
-};
+    serviceBusNamespace?: string;
+    sharedAccessPolicyKey?: string;
+    sharedAccessPolicyName?: string;
+    type: "Microsoft.EventHub/EventHub";
+}
 
 // @public
-export type EventHubV2StreamInputDataSource = StreamInputDataSource & {
-    type: "Microsoft.EventHub/EventHub";
-    serviceBusNamespace?: string;
-    sharedAccessPolicyName?: string;
-    sharedAccessPolicyKey?: string;
+export interface EventHubV2StreamInputDataSource extends StreamInputDataSource {
     authenticationMode?: AuthenticationMode;
-    eventHubName?: string;
     consumerGroupName?: string;
-};
+    eventHubName?: string;
+    partitionCount?: number;
+    prefetchCount?: number;
+    serviceBusNamespace?: string;
+    sharedAccessPolicyKey?: string;
+    sharedAccessPolicyName?: string;
+    type: "Microsoft.EventHub/EventHub";
+}
 
 // @public
 export type EventSerializationType = string;
@@ -582,13 +642,18 @@ export type EventsOutOfOrderPolicy = string;
 
 // @public
 interface External_2 {
-    // (undocumented)
     container?: string;
-    // (undocumented)
     path?: string;
+    refreshConfiguration?: RefreshConfiguration;
     storageAccount?: StorageAccount;
 }
 export { External_2 as External }
+
+// @public
+export interface FileReferenceInputDataSource extends ReferenceInputDataSource {
+    path?: string;
+    type: "File";
+}
 
 // @public
 export interface FunctionBinding {
@@ -611,9 +676,9 @@ export interface FunctionListResult {
 }
 
 // @public
-export type FunctionModel = SubResource & {
+export interface FunctionModel extends SubResource {
     properties?: FunctionPropertiesUnion;
-};
+}
 
 // @public
 export interface FunctionOutput {
@@ -643,7 +708,7 @@ export type FunctionRetrieveDefaultDefinitionParametersUnion = FunctionRetrieveD
 
 // @public
 export interface Functions {
-    beginTest(resourceGroupName: string, jobName: string, functionName: string, options?: FunctionsTestOptionalParams): Promise<PollerLike<PollOperationState<FunctionsTestResponse>, FunctionsTestResponse>>;
+    beginTest(resourceGroupName: string, jobName: string, functionName: string, options?: FunctionsTestOptionalParams): Promise<SimplePollerLike<OperationState<FunctionsTestResponse>, FunctionsTestResponse>>;
     beginTestAndWait(resourceGroupName: string, jobName: string, functionName: string, options?: FunctionsTestOptionalParams): Promise<FunctionsTestResponse>;
     createOrReplace(resourceGroupName: string, jobName: string, functionName: string, functionParam: FunctionModel, options?: FunctionsCreateOrReplaceOptionalParams): Promise<FunctionsCreateOrReplaceResponse>;
     delete(resourceGroupName: string, jobName: string, functionName: string, options?: FunctionsDeleteOptionalParams): Promise<void>;
@@ -685,7 +750,6 @@ export type FunctionsGetResponse = FunctionsGetHeaders & FunctionModel;
 
 // @public
 export interface FunctionsListByStreamingJobNextOptionalParams extends coreClient.OperationOptions {
-    select?: string;
 }
 
 // @public
@@ -709,7 +773,7 @@ export type FunctionsRetrieveDefaultDefinitionResponse = FunctionModel;
 
 // @public
 export interface FunctionsTestOptionalParams extends coreClient.OperationOptions {
-    functionParam?: FunctionModel;
+    function?: FunctionModel;
     resumeFrom?: string;
     updateIntervalInMs?: number;
 }
@@ -731,19 +795,65 @@ export interface FunctionsUpdateOptionalParams extends coreClient.OperationOptio
 export type FunctionsUpdateResponse = FunctionsUpdateHeaders & FunctionModel;
 
 // @public
-export interface Identity {
-    // (undocumented)
-    principalId?: string;
-    // (undocumented)
-    tenantId?: string;
-    // (undocumented)
-    type?: string;
+export interface GatewayMessageBusOutputDataSource extends OutputDataSource {
+    topic?: string;
+    type: "GatewayMessageBus";
 }
 
 // @public
-export type Input = SubResource & {
+export interface GatewayMessageBusOutputDataSourceProperties extends GatewayMessageBusSourceProperties {
+}
+
+// @public
+export interface GatewayMessageBusSourceProperties {
+    topic?: string;
+}
+
+// @public
+export interface GatewayMessageBusStreamInputDataSource extends StreamInputDataSource {
+    topic?: string;
+    type: "GatewayMessageBus";
+}
+
+// @public
+export interface GatewayMessageBusStreamInputDataSourceProperties extends GatewayMessageBusSourceProperties {
+}
+
+// @public
+export function getContinuationToken(page: unknown): string | undefined;
+
+// @public
+export interface GetStreamingJobSkuResult {
+    readonly capacity?: SkuCapacity;
+    readonly resourceType?: ResourceType;
+    readonly sku?: GetStreamingJobSkuResultSku;
+}
+
+// @public
+export interface GetStreamingJobSkuResults {
+    readonly nextLink?: string;
+    value?: GetStreamingJobSkuResult[];
+}
+
+// @public
+export interface GetStreamingJobSkuResultSku {
+    name?: SkuName;
+}
+
+// @public
+export interface Identity {
+    readonly principalId?: string;
+    readonly tenantId?: string;
+    type?: string;
+    userAssignedIdentities?: {
+        [propertyName: string]: Record<string, unknown>;
+    };
+}
+
+// @public
+export interface Input extends SubResource {
     properties?: InputPropertiesUnion;
-};
+}
 
 // @public
 export interface InputListResult {
@@ -759,6 +869,7 @@ export interface InputProperties {
     partitionKey?: string;
     serialization?: SerializationUnion;
     type: "Stream" | "Reference";
+    watermarkSettings?: InputWatermarkProperties;
 }
 
 // @public (undocumented)
@@ -766,7 +877,7 @@ export type InputPropertiesUnion = InputProperties | StreamInputProperties | Ref
 
 // @public
 export interface Inputs {
-    beginTest(resourceGroupName: string, jobName: string, inputName: string, options?: InputsTestOptionalParams): Promise<PollerLike<PollOperationState<InputsTestResponse>, InputsTestResponse>>;
+    beginTest(resourceGroupName: string, jobName: string, inputName: string, options?: InputsTestOptionalParams): Promise<SimplePollerLike<OperationState<InputsTestResponse>, InputsTestResponse>>;
     beginTestAndWait(resourceGroupName: string, jobName: string, inputName: string, options?: InputsTestOptionalParams): Promise<InputsTestResponse>;
     createOrReplace(resourceGroupName: string, jobName: string, inputName: string, input: Input, options?: InputsCreateOrReplaceOptionalParams): Promise<InputsCreateOrReplaceResponse>;
     delete(resourceGroupName: string, jobName: string, inputName: string, options?: InputsDeleteOptionalParams): Promise<void>;
@@ -807,7 +918,6 @@ export type InputsGetResponse = InputsGetHeaders & Input;
 
 // @public
 export interface InputsListByStreamingJobNextOptionalParams extends coreClient.OperationOptions {
-    select?: string;
 }
 
 // @public
@@ -845,35 +955,42 @@ export interface InputsUpdateOptionalParams extends coreClient.OperationOptions 
 export type InputsUpdateResponse = InputsUpdateHeaders & Input;
 
 // @public
-export type IoTHubStreamInputDataSource = StreamInputDataSource & {
-    type: "Microsoft.Devices/IotHubs";
-    iotHubNamespace?: string;
-    sharedAccessPolicyName?: string;
-    sharedAccessPolicyKey?: string;
+export type InputWatermarkMode = string;
+
+// @public
+export interface InputWatermarkProperties {
+    watermarkMode?: InputWatermarkMode;
+}
+
+// @public
+export interface IoTHubStreamInputDataSource extends StreamInputDataSource {
     consumerGroupName?: string;
     endpoint?: string;
-};
+    iotHubNamespace?: string;
+    sharedAccessPolicyKey?: string;
+    sharedAccessPolicyName?: string;
+    type: "Microsoft.Devices/IotHubs";
+}
 
 // @public
-export type JavaScriptFunctionBinding = FunctionBinding & {
-    type: "Microsoft.StreamAnalytics/JavascriptUdf";
+export interface JavaScriptFunctionBinding extends FunctionBinding {
     script?: string;
-};
+    type: "Microsoft.StreamAnalytics/JavascriptUdf";
+}
 
 // @public
-export type JavaScriptFunctionRetrieveDefaultDefinitionParameters = FunctionRetrieveDefaultDefinitionParameters & {
+export interface JavaScriptFunctionRetrieveDefaultDefinitionParameters extends FunctionRetrieveDefaultDefinitionParameters {
     bindingType: "Microsoft.StreamAnalytics/JavascriptUdf";
     script?: string;
     udfType?: "Scalar";
-};
+}
 
 // @public
 export type JobState = string;
 
 // @public
-export type JobStorageAccount = StorageAccount & {
-    authenticationMode?: AuthenticationMode;
-};
+export interface JobStorageAccount extends StorageAccount {
+}
 
 // @public
 export type JobType = string;
@@ -882,20 +999,23 @@ export type JobType = string;
 export type JsonOutputSerializationFormat = string;
 
 // @public
-export type JsonSerialization = Serialization & {
-    type: "Json";
+export interface JsonSerialization extends Serialization {
     encoding?: Encoding;
     format?: JsonOutputSerializationFormat;
-};
+    type: "Json";
+}
 
 // @public
 export enum KnownAuthenticationMode {
-    // (undocumented)
     ConnectionString = "ConnectionString",
-    // (undocumented)
     Msi = "Msi",
-    // (undocumented)
     UserToken = "UserToken"
+}
+
+// @public
+export enum KnownBlobWriteMode {
+    Append = "Append",
+    Once = "Once"
 }
 
 // @public
@@ -913,44 +1033,54 @@ export enum KnownClusterSkuName {
 
 // @public
 export enum KnownCompatibilityLevel {
-    // (undocumented)
-    One0 = "1.0"
+    One0 = "1.0",
+    One2 = "1.2"
+}
+
+// @public
+export enum KnownCompressionType {
+    Deflate = "Deflate",
+    GZip = "GZip",
+    None = "None"
 }
 
 // @public
 export enum KnownContentStoragePolicy {
-    // (undocumented)
     JobStorageAccount = "JobStorageAccount",
-    // (undocumented)
     SystemAccount = "SystemAccount"
 }
 
 // @public
 export enum KnownEncoding {
-    // (undocumented)
     UTF8 = "UTF8"
 }
 
 // @public
+export enum KnownEventGridEventSchemaType {
+    CloudEventSchema = "CloudEventSchema",
+    EventGridEventSchema = "EventGridEventSchema"
+}
+
+// @public
 export enum KnownEventSerializationType {
-    // (undocumented)
     Avro = "Avro",
-    // (undocumented)
     Csv = "Csv",
-    // (undocumented)
     CustomClr = "CustomClr",
-    // (undocumented)
+    Delta = "Delta",
     Json = "Json",
-    // (undocumented)
     Parquet = "Parquet"
 }
 
 // @public
 export enum KnownEventsOutOfOrderPolicy {
-    // (undocumented)
     Adjust = "Adjust",
-    // (undocumented)
     Drop = "Drop"
+}
+
+// @public
+export enum KnownInputWatermarkMode {
+    None = "None",
+    ReadWatermark = "ReadWatermark"
 }
 
 // @public
@@ -969,36 +1099,34 @@ export enum KnownJobState {
 
 // @public
 export enum KnownJobType {
-    // (undocumented)
     Cloud = "Cloud",
-    // (undocumented)
     Edge = "Edge"
 }
 
 // @public
 export enum KnownJsonOutputSerializationFormat {
-    // (undocumented)
     Array = "Array",
-    // (undocumented)
     LineSeparated = "LineSeparated"
 }
 
 // @public
 export enum KnownOutputErrorPolicy {
-    // (undocumented)
     Drop = "Drop",
-    // (undocumented)
     Stop = "Stop"
 }
 
 // @public
 export enum KnownOutputStartMode {
-    // (undocumented)
     CustomTime = "CustomTime",
-    // (undocumented)
     JobStartTime = "JobStartTime",
-    // (undocumented)
     LastOutputEventTime = "LastOutputEventTime"
+}
+
+// @public
+export enum KnownOutputWatermarkMode {
+    None = "None",
+    SendCurrentPartitionWatermark = "SendCurrentPartitionWatermark",
+    SendLowestWatermarkAcrossPartitions = "SendLowestWatermarkAcrossPartitions"
 }
 
 // @public
@@ -1012,6 +1140,18 @@ export enum KnownQueryTestingResultStatus {
 }
 
 // @public
+export enum KnownRefreshType {
+    RefreshPeriodicallyWithDelta = "RefreshPeriodicallyWithDelta",
+    RefreshPeriodicallyWithFull = "RefreshPeriodicallyWithFull",
+    Static = "Static"
+}
+
+// @public
+export enum KnownResourceType {
+    MicrosoftStreamAnalyticsStreamingjobs = "Microsoft.StreamAnalytics/streamingjobs"
+}
+
+// @public
 export enum KnownSampleInputResultStatus {
     ErrorConnectingToInput = "ErrorConnectingToInput",
     NoEventsFoundInRange = "NoEventsFoundInRange",
@@ -1019,8 +1159,14 @@ export enum KnownSampleInputResultStatus {
 }
 
 // @public
-export enum KnownStreamingJobSkuName {
-    // (undocumented)
+export enum KnownSkuCapacityScaleType {
+    Automatic = "automatic",
+    Manual = "manual",
+    None = "none"
+}
+
+// @public
+export enum KnownSkuName {
     Standard = "Standard"
 }
 
@@ -1028,6 +1174,24 @@ export enum KnownStreamingJobSkuName {
 export enum KnownTestDatasourceResultStatus {
     TestFailed = "TestFailed",
     TestSucceeded = "TestSucceeded"
+}
+
+// @public
+export enum KnownUpdatableUdfRefreshType {
+    Blocking = "Blocking",
+    Nonblocking = "Nonblocking"
+}
+
+// @public
+export enum KnownUpdateMode {
+    Refreshable = "Refreshable",
+    Static = "Static"
+}
+
+// @public
+export interface LastOutputEventTimestamp {
+    lastOutputEventTime?: string;
+    lastUpdateTime?: string;
 }
 
 // @public
@@ -1040,6 +1204,7 @@ export interface OAuthBasedDataSourceProperties {
 // @public
 export interface Operation {
     readonly display?: OperationDisplay;
+    isDataAction?: boolean;
     readonly name?: string;
 }
 
@@ -1077,22 +1242,24 @@ export interface OperationsListOptionalParams extends coreClient.OperationOption
 export type OperationsListResponse = OperationListResult;
 
 // @public
-export type Output = SubResource & {
+export interface Output extends SubResource {
     datasource?: OutputDataSourceUnion;
-    timeWindow?: string;
-    sizeWindow?: number;
-    serialization?: SerializationUnion;
     readonly diagnostics?: Diagnostics;
     readonly etag?: string;
-};
+    readonly lastOutputEventTimestamps?: LastOutputEventTimestamp[];
+    serialization?: SerializationUnion;
+    sizeWindow?: number;
+    timeWindow?: string;
+    watermarkSettings?: OutputWatermarkProperties;
+}
 
 // @public
 export interface OutputDataSource {
-    type: "Raw" | "Microsoft.Storage/Blob" | "Microsoft.Storage/Table" | "Microsoft.ServiceBus/EventHub" | "Microsoft.EventHub/EventHub" | "Microsoft.Sql/Server/Database" | "Microsoft.Sql/Server/DataWarehouse" | "Microsoft.Storage/DocumentDB" | "Microsoft.AzureFunction" | "Microsoft.ServiceBus/Queue" | "Microsoft.ServiceBus/Topic" | "PowerBI" | "Microsoft.DataLake/Accounts";
+    type: "Raw" | "Microsoft.Storage/Blob" | "Microsoft.Storage/Table" | "Microsoft.ServiceBus/EventHub" | "Microsoft.EventHub/EventHub" | "Microsoft.Sql/Server/Database" | "Microsoft.Sql/Server/DataWarehouse" | "Microsoft.DBForPostgreSQL/servers/databases" | "Microsoft.Storage/DocumentDB" | "Microsoft.AzureFunction" | "Microsoft.ServiceBus/Queue" | "Microsoft.ServiceBus/Topic" | "PowerBI" | "Microsoft.DataLake/Accounts" | "GatewayMessageBus" | "Microsoft.Kusto/clusters/databases";
 }
 
 // @public (undocumented)
-export type OutputDataSourceUnion = OutputDataSource | RawOutputDatasource | BlobOutputDataSource | AzureTableOutputDataSource | EventHubOutputDataSource | EventHubV2OutputDataSource | AzureSqlDatabaseOutputDataSource | AzureSynapseOutputDataSource | DocumentDbOutputDataSource | AzureFunctionOutputDataSource | ServiceBusQueueOutputDataSource | ServiceBusTopicOutputDataSource | PowerBIOutputDataSource | AzureDataLakeStoreOutputDataSource;
+export type OutputDataSourceUnion = OutputDataSource | RawOutputDatasource | BlobOutputDataSource | AzureTableOutputDataSource | EventHubOutputDataSource | EventHubV2OutputDataSource | AzureSqlDatabaseOutputDataSource | AzureSynapseOutputDataSource | PostgreSQLOutputDataSource | DocumentDbOutputDataSource | AzureFunctionOutputDataSource | ServiceBusQueueOutputDataSource | ServiceBusTopicOutputDataSource | PowerBIOutputDataSource | AzureDataLakeStoreOutputDataSource | GatewayMessageBusOutputDataSource | AzureDataExplorerOutputDataSource;
 
 // @public
 export type OutputErrorPolicy = string;
@@ -1105,7 +1272,7 @@ export interface OutputListResult {
 
 // @public
 export interface Outputs {
-    beginTest(resourceGroupName: string, jobName: string, outputName: string, options?: OutputsTestOptionalParams): Promise<PollerLike<PollOperationState<OutputsTestResponse>, OutputsTestResponse>>;
+    beginTest(resourceGroupName: string, jobName: string, outputName: string, options?: OutputsTestOptionalParams): Promise<SimplePollerLike<OperationState<OutputsTestResponse>, OutputsTestResponse>>;
     beginTestAndWait(resourceGroupName: string, jobName: string, outputName: string, options?: OutputsTestOptionalParams): Promise<OutputsTestResponse>;
     createOrReplace(resourceGroupName: string, jobName: string, outputName: string, output: Output, options?: OutputsCreateOrReplaceOptionalParams): Promise<OutputsCreateOrReplaceResponse>;
     delete(resourceGroupName: string, jobName: string, outputName: string, options?: OutputsDeleteOptionalParams): Promise<void>;
@@ -1146,7 +1313,6 @@ export type OutputsGetResponse = OutputsGetHeaders & Output;
 
 // @public
 export interface OutputsListByStreamingJobNextOptionalParams extends coreClient.OperationOptions {
-    select?: string;
 }
 
 // @public
@@ -1187,38 +1353,74 @@ export interface OutputsUpdateOptionalParams extends coreClient.OperationOptions
 export type OutputsUpdateResponse = OutputsUpdateHeaders & Output;
 
 // @public
-export type ParquetSerialization = Serialization & {
-    type: "Parquet";
+export type OutputWatermarkMode = string;
+
+// @public
+export interface OutputWatermarkProperties {
+    maxWatermarkDifferenceAcrossPartitions?: string;
+    watermarkMode?: OutputWatermarkMode;
+}
+
+// @public
+export interface ParquetSerialization extends Serialization {
     properties?: Record<string, unknown>;
-};
+    type: "Parquet";
+}
 
 // @public
-export type PowerBIOutputDataSource = OutputDataSource & {
-    type: "PowerBI";
+export interface PostgreSQLDataSourceProperties {
+    authenticationMode?: AuthenticationMode;
+    database?: string;
+    maxWriterCount?: number;
+    password?: string;
+    server?: string;
+    table?: string;
+    user?: string;
+}
+
+// @public
+export interface PostgreSQLOutputDataSource extends OutputDataSource {
+    authenticationMode?: AuthenticationMode;
+    database?: string;
+    maxWriterCount?: number;
+    password?: string;
+    server?: string;
+    table?: string;
+    type: "Microsoft.DBForPostgreSQL/servers/databases";
+    user?: string;
+}
+
+// @public
+export interface PostgreSQLOutputDataSourceProperties extends PostgreSQLDataSourceProperties {
+}
+
+// @public
+export interface PowerBIOutputDataSource extends OutputDataSource {
+    authenticationMode?: AuthenticationMode;
+    dataset?: string;
+    groupId?: string;
+    groupName?: string;
     refreshToken?: string;
-    tokenUserPrincipalName?: string;
+    table?: string;
     tokenUserDisplayName?: string;
-    dataset?: string;
-    table?: string;
-    groupId?: string;
-    groupName?: string;
-    authenticationMode?: AuthenticationMode;
-};
+    tokenUserPrincipalName?: string;
+    type: "PowerBI";
+}
 
 // @public
-export type PowerBIOutputDataSourceProperties = OAuthBasedDataSourceProperties & {
+export interface PowerBIOutputDataSourceProperties extends OAuthBasedDataSourceProperties {
+    authenticationMode?: AuthenticationMode;
     dataset?: string;
-    table?: string;
     groupId?: string;
     groupName?: string;
-    authenticationMode?: AuthenticationMode;
-};
+    table?: string;
+}
 
 // @public
-export type PrivateEndpoint = ProxyResource & {
-    properties?: PrivateEndpointProperties;
+export interface PrivateEndpoint extends ProxyResource {
     readonly etag?: string;
-};
+    properties?: PrivateEndpointProperties;
+}
 
 // @public
 export interface PrivateEndpointListResult {
@@ -1234,7 +1436,7 @@ export interface PrivateEndpointProperties {
 
 // @public
 export interface PrivateEndpoints {
-    beginDelete(resourceGroupName: string, clusterName: string, privateEndpointName: string, options?: PrivateEndpointsDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, clusterName: string, privateEndpointName: string, options?: PrivateEndpointsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, clusterName: string, privateEndpointName: string, options?: PrivateEndpointsDeleteOptionalParams): Promise<void>;
     createOrUpdate(resourceGroupName: string, clusterName: string, privateEndpointName: string, privateEndpoint: PrivateEndpoint, options?: PrivateEndpointsCreateOrUpdateOptionalParams): Promise<PrivateEndpointsCreateOrUpdateResponse>;
     get(resourceGroupName: string, clusterName: string, privateEndpointName: string, options?: PrivateEndpointsGetOptionalParams): Promise<PrivateEndpointsGetResponse>;
@@ -1289,11 +1491,12 @@ export interface PrivateLinkServiceConnection {
     groupIds?: string[];
     privateLinkServiceConnectionState?: PrivateLinkConnectionState;
     privateLinkServiceId?: string;
-    requestMessage?: string;
+    readonly requestMessage?: string;
 }
 
 // @public
-export type ProxyResource = Resource & {};
+export interface ProxyResource extends Resource {
+}
 
 // @public
 export interface QueryCompilationError {
@@ -1330,47 +1533,59 @@ export interface QueryInput {
 }
 
 // @public
-export type QueryTestingResult = ErrorModel & {
-    readonly status?: QueryTestingResultStatus;
+export interface QueryTestingResult extends ErrorModel {
     readonly outputUri?: string;
-};
+    readonly status?: QueryTestingResultStatus;
+}
 
 // @public
 export type QueryTestingResultStatus = string;
 
 // @public
-export type RawOutputDatasource = OutputDataSource & {
-    type: "Raw";
+export interface RawOutputDatasource extends OutputDataSource {
     payloadUri?: string;
-};
+    type: "Raw";
+}
 
 // @public
-export type RawReferenceInputDataSource = ReferenceInputDataSource & {
-    type: "Raw";
+export interface RawReferenceInputDataSource extends ReferenceInputDataSource {
     payload?: string;
     payloadUri?: string;
-};
+    type: "Raw";
+}
 
 // @public
-export type RawStreamInputDataSource = StreamInputDataSource & {
-    type: "Raw";
+export interface RawStreamInputDataSource extends StreamInputDataSource {
     payload?: string;
     payloadUri?: string;
-};
+    type: "Raw";
+}
 
 // @public
 export interface ReferenceInputDataSource {
-    type: "Microsoft.Storage/Blob" | "Raw" | "Microsoft.Sql/Server/Database";
+    type: "File" | "Microsoft.Storage/Blob" | "Raw" | "Microsoft.Sql/Server/Database";
 }
 
 // @public (undocumented)
-export type ReferenceInputDataSourceUnion = ReferenceInputDataSource | BlobReferenceInputDataSource | RawReferenceInputDataSource | AzureSqlReferenceInputDataSource;
+export type ReferenceInputDataSourceUnion = ReferenceInputDataSource | FileReferenceInputDataSource | BlobReferenceInputDataSource | RawReferenceInputDataSource | AzureSqlReferenceInputDataSource;
 
 // @public
-export type ReferenceInputProperties = InputProperties & {
-    type: "Reference";
+export interface ReferenceInputProperties extends InputProperties {
     datasource?: ReferenceInputDataSourceUnion;
-};
+    type: "Reference";
+}
+
+// @public
+export interface RefreshConfiguration {
+    dateFormat?: string;
+    pathPattern?: string;
+    refreshInterval?: string;
+    refreshType?: UpdatableUdfRefreshType;
+    timeFormat?: string;
+}
+
+// @public
+export type RefreshType = string;
 
 // @public
 export interface Resource {
@@ -1386,6 +1601,9 @@ export interface ResourceTestStatus {
 }
 
 // @public
+export type ResourceType = string;
+
+// @public
 export interface SampleInput {
     compatibilityLevel?: string;
     dataLocale?: string;
@@ -1394,28 +1612,33 @@ export interface SampleInput {
 }
 
 // @public
-export type SampleInputResult = ErrorModel & {
-    readonly status?: SampleInputResultStatus;
+export interface SampleInputResult extends ErrorModel {
     readonly diagnostics?: string[];
     readonly eventsDownloadUrl?: string;
     readonly lastArrivalTime?: string;
-};
+    readonly status?: SampleInputResultStatus;
+}
 
 // @public
 export type SampleInputResultStatus = string;
 
 // @public
-export type ScalarFunctionProperties = FunctionProperties & {
+export interface ScalarFunctionProperties extends FunctionProperties {
     type: "Scalar";
-};
+}
+
+// @public
+export interface ScaleStreamingJobParameters {
+    streamingUnits?: number;
+}
 
 // @public
 export interface Serialization {
-    type: "Parquet" | "CustomClr" | "Csv" | "Json" | "Avro";
+    type: "Delta" | "Parquet" | "CustomClr" | "Csv" | "Json" | "Avro";
 }
 
 // @public (undocumented)
-export type SerializationUnion = Serialization | ParquetSerialization | CustomClrSerialization | CsvSerialization | JsonSerialization | AvroSerialization;
+export type SerializationUnion = Serialization | DeltaSerialization | ParquetSerialization | CustomClrSerialization | CsvSerialization | JsonSerialization | AvroSerialization;
 
 // @public
 export interface ServiceBusDataSourceProperties {
@@ -1426,50 +1649,86 @@ export interface ServiceBusDataSourceProperties {
 }
 
 // @public
-export type ServiceBusQueueOutputDataSource = OutputDataSource & {
+export interface ServiceBusQueueOutputDataSource extends OutputDataSource {
+    authenticationMode?: AuthenticationMode;
+    propertyColumns?: string[];
+    queueName?: string;
+    serviceBusNamespace?: string;
+    sharedAccessPolicyKey?: string;
+    sharedAccessPolicyName?: string;
+    systemPropertyColumns?: Record<string, unknown>;
     type: "Microsoft.ServiceBus/Queue";
-    serviceBusNamespace?: string;
-    sharedAccessPolicyName?: string;
-    sharedAccessPolicyKey?: string;
+}
+
+// @public
+export interface ServiceBusQueueOutputDataSourceProperties extends ServiceBusDataSourceProperties {
+    propertyColumns?: string[];
+    queueName?: string;
+    systemPropertyColumns?: Record<string, unknown>;
+}
+
+// @public
+export interface ServiceBusTopicOutputDataSource extends OutputDataSource {
     authenticationMode?: AuthenticationMode;
-    queueName?: string;
     propertyColumns?: string[];
+    serviceBusNamespace?: string;
+    sharedAccessPolicyKey?: string;
+    sharedAccessPolicyName?: string;
     systemPropertyColumns?: {
         [propertyName: string]: string;
     };
-};
-
-// @public
-export type ServiceBusQueueOutputDataSourceProperties = ServiceBusDataSourceProperties & {
-    queueName?: string;
-    propertyColumns?: string[];
-    systemPropertyColumns?: {
-        [propertyName: string]: string;
-    };
-};
-
-// @public
-export type ServiceBusTopicOutputDataSource = OutputDataSource & {
+    topicName?: string;
     type: "Microsoft.ServiceBus/Topic";
-    serviceBusNamespace?: string;
-    sharedAccessPolicyName?: string;
-    sharedAccessPolicyKey?: string;
-    authenticationMode?: AuthenticationMode;
-    topicName?: string;
-    propertyColumns?: string[];
-    systemPropertyColumns?: {
-        [propertyName: string]: string;
-    };
-};
+}
 
 // @public
-export type ServiceBusTopicOutputDataSourceProperties = ServiceBusDataSourceProperties & {
-    topicName?: string;
+export interface ServiceBusTopicOutputDataSourceProperties extends ServiceBusDataSourceProperties {
     propertyColumns?: string[];
     systemPropertyColumns?: {
         [propertyName: string]: string;
     };
-};
+    topicName?: string;
+}
+
+// @public
+export interface Sku {
+    capacity?: number;
+    name?: SkuName;
+}
+
+// @public
+export interface SkuCapacity {
+    readonly allowedValues?: number[];
+    readonly default?: number;
+    readonly maximum?: number;
+    readonly minimum?: number;
+    readonly scaleType?: SkuCapacityScaleType;
+}
+
+// @public
+export type SkuCapacityScaleType = string;
+
+// @public
+export interface SkuListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type SkuListNextResponse = GetStreamingJobSkuResults;
+
+// @public
+export interface SkuListOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type SkuListResponse = GetStreamingJobSkuResults;
+
+// @public
+export type SkuName = string;
+
+// @public
+export interface SkuOperations {
+    list(resourceGroupName: string, jobName: string, options?: SkuListOptionalParams): PagedAsyncIterableIterator<GetStreamingJobSkuResult>;
+}
 
 // @public
 export interface StartStreamingJobParameters {
@@ -1481,10 +1740,13 @@ export interface StartStreamingJobParameters {
 export interface StorageAccount {
     accountKey?: string;
     accountName?: string;
+    authenticationMode?: AuthenticationMode;
 }
 
 // @public (undocumented)
-export class StreamAnalyticsManagementClient extends StreamAnalyticsManagementClientContext {
+export class StreamAnalyticsManagementClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: StreamAnalyticsManagementClientOptionalParams);
     // (undocumented)
     clusters: Clusters;
@@ -1499,20 +1761,15 @@ export class StreamAnalyticsManagementClient extends StreamAnalyticsManagementCl
     // (undocumented)
     privateEndpoints: PrivateEndpoints;
     // (undocumented)
+    skuOperations: SkuOperations;
+    // (undocumented)
     streamingJobs: StreamingJobs;
+    // (undocumented)
+    subscriptionId: string;
     // (undocumented)
     subscriptions: Subscriptions;
     // (undocumented)
     transformations: Transformations;
-}
-
-// @public (undocumented)
-export class StreamAnalyticsManagementClientContext extends coreClient.ServiceClient {
-    // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: StreamAnalyticsManagementClientOptionalParams);
-    // (undocumented)
-    subscriptionId: string;
 }
 
 // @public
@@ -1522,33 +1779,34 @@ export interface StreamAnalyticsManagementClientOptionalParams extends coreClien
 }
 
 // @public
-export type StreamingJob = TrackedResource & {
+export interface StreamingJob extends TrackedResource {
+    cluster?: ClusterInfo;
+    compatibilityLevel?: CompatibilityLevel;
+    contentStoragePolicy?: ContentStoragePolicy;
+    readonly createdDate?: Date;
+    dataLocale?: string;
+    readonly etag?: string;
+    eventsLateArrivalMaxDelayInSeconds?: number;
+    eventsOutOfOrderMaxDelayInSeconds?: number;
+    eventsOutOfOrderPolicy?: EventsOutOfOrderPolicy;
+    externals?: External_2;
+    functions?: FunctionModel[];
     identity?: Identity;
-    sku?: StreamingJobSku;
+    inputs?: Input[];
     readonly jobId?: string;
-    readonly provisioningState?: string;
     readonly jobState?: string;
+    jobStorageAccount?: JobStorageAccount;
     jobType?: JobType;
+    readonly lastOutputEventTime?: Date;
+    outputErrorPolicy?: OutputErrorPolicy;
+    outputs?: Output[];
     outputStartMode?: OutputStartMode;
     outputStartTime?: Date;
-    readonly lastOutputEventTime?: Date;
-    eventsOutOfOrderPolicy?: EventsOutOfOrderPolicy;
-    outputErrorPolicy?: OutputErrorPolicy;
-    eventsOutOfOrderMaxDelayInSeconds?: number;
-    eventsLateArrivalMaxDelayInSeconds?: number;
-    dataLocale?: string;
-    compatibilityLevel?: CompatibilityLevel;
-    readonly createdDate?: Date;
-    inputs?: Input[];
+    readonly provisioningState?: string;
+    sku?: Sku;
+    skuPropertiesSku?: Sku;
     transformation?: Transformation;
-    outputs?: Output[];
-    functions?: FunctionModel[];
-    readonly etag?: string;
-    jobStorageAccount?: JobStorageAccount;
-    contentStoragePolicy?: ContentStoragePolicy;
-    externals?: External_2;
-    cluster?: ClusterInfo;
-};
+}
 
 // @public
 export interface StreamingJobListResult {
@@ -1558,13 +1816,15 @@ export interface StreamingJobListResult {
 
 // @public
 export interface StreamingJobs {
-    beginCreateOrReplace(resourceGroupName: string, jobName: string, streamingJob: StreamingJob, options?: StreamingJobsCreateOrReplaceOptionalParams): Promise<PollerLike<PollOperationState<StreamingJobsCreateOrReplaceResponse>, StreamingJobsCreateOrReplaceResponse>>;
+    beginCreateOrReplace(resourceGroupName: string, jobName: string, streamingJob: StreamingJob, options?: StreamingJobsCreateOrReplaceOptionalParams): Promise<SimplePollerLike<OperationState<StreamingJobsCreateOrReplaceResponse>, StreamingJobsCreateOrReplaceResponse>>;
     beginCreateOrReplaceAndWait(resourceGroupName: string, jobName: string, streamingJob: StreamingJob, options?: StreamingJobsCreateOrReplaceOptionalParams): Promise<StreamingJobsCreateOrReplaceResponse>;
-    beginDelete(resourceGroupName: string, jobName: string, options?: StreamingJobsDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, jobName: string, options?: StreamingJobsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, jobName: string, options?: StreamingJobsDeleteOptionalParams): Promise<void>;
-    beginStart(resourceGroupName: string, jobName: string, options?: StreamingJobsStartOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginScale(resourceGroupName: string, jobName: string, options?: StreamingJobsScaleOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginScaleAndWait(resourceGroupName: string, jobName: string, options?: StreamingJobsScaleOptionalParams): Promise<void>;
+    beginStart(resourceGroupName: string, jobName: string, options?: StreamingJobsStartOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginStartAndWait(resourceGroupName: string, jobName: string, options?: StreamingJobsStartOptionalParams): Promise<void>;
-    beginStop(resourceGroupName: string, jobName: string, options?: StreamingJobsStopOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginStop(resourceGroupName: string, jobName: string, options?: StreamingJobsStopOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginStopAndWait(resourceGroupName: string, jobName: string, options?: StreamingJobsStopOptionalParams): Promise<void>;
     get(resourceGroupName: string, jobName: string, options?: StreamingJobsGetOptionalParams): Promise<StreamingJobsGetResponse>;
     list(options?: StreamingJobsListOptionalParams): PagedAsyncIterableIterator<StreamingJob>;
@@ -1608,16 +1868,7 @@ export interface StreamingJobsGetOptionalParams extends coreClient.OperationOpti
 export type StreamingJobsGetResponse = StreamingJobsGetHeaders & StreamingJob;
 
 // @public
-export interface StreamingJobSku {
-    name?: StreamingJobSkuName;
-}
-
-// @public
-export type StreamingJobSkuName = string;
-
-// @public
 export interface StreamingJobsListByResourceGroupNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
 }
 
 // @public
@@ -1633,7 +1884,6 @@ export type StreamingJobsListByResourceGroupResponse = StreamingJobListResult;
 
 // @public
 export interface StreamingJobsListNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
 }
 
 // @public
@@ -1646,6 +1896,13 @@ export interface StreamingJobsListOptionalParams extends coreClient.OperationOpt
 
 // @public
 export type StreamingJobsListResponse = StreamingJobListResult;
+
+// @public
+export interface StreamingJobsScaleOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    scaleJobParameters?: ScaleStreamingJobParameters;
+    updateIntervalInMs?: number;
+}
 
 // @public
 export interface StreamingJobsStartOptionalParams extends coreClient.OperationOptions {
@@ -1675,17 +1932,17 @@ export type StreamingJobsUpdateResponse = StreamingJobsUpdateHeaders & Streaming
 
 // @public
 export interface StreamInputDataSource {
-    type: "Microsoft.Storage/Blob" | "Microsoft.ServiceBus/EventHub" | "Microsoft.EventHub/EventHub" | "Microsoft.Devices/IotHubs" | "Raw";
+    type: "Microsoft.Storage/Blob" | "Microsoft.ServiceBus/EventHub" | "Microsoft.EventHub/EventHub" | "Microsoft.Devices/IotHubs" | "Raw" | "GatewayMessageBus" | "Microsoft.EventGrid/EventSubscriptions";
 }
 
 // @public (undocumented)
-export type StreamInputDataSourceUnion = StreamInputDataSource | BlobStreamInputDataSource | EventHubStreamInputDataSource | EventHubV2StreamInputDataSource | IoTHubStreamInputDataSource | RawStreamInputDataSource;
+export type StreamInputDataSourceUnion = StreamInputDataSource | BlobStreamInputDataSource | EventHubStreamInputDataSource | EventHubV2StreamInputDataSource | IoTHubStreamInputDataSource | RawStreamInputDataSource | GatewayMessageBusStreamInputDataSource | EventGridStreamInputDataSource;
 
 // @public
-export type StreamInputProperties = InputProperties & {
-    type: "Stream";
+export interface StreamInputProperties extends InputProperties {
     datasource?: StreamInputDataSourceUnion;
-};
+    type: "Stream";
+}
 
 // @public
 export interface SubResource {
@@ -1695,10 +1952,10 @@ export interface SubResource {
 }
 
 // @public
-export type SubscriptionQuota = SubResource & {
-    readonly maxCount?: number;
+export interface SubscriptionQuota extends SubResource {
     readonly currentCount?: number;
-};
+    readonly maxCount?: number;
+}
 
 // @public
 export interface SubscriptionQuotasListResult {
@@ -1707,13 +1964,13 @@ export interface SubscriptionQuotasListResult {
 
 // @public
 export interface Subscriptions {
-    beginSampleInput(location: string, sampleInput: SampleInput, options?: SubscriptionsSampleInputOptionalParams): Promise<PollerLike<PollOperationState<SubscriptionsSampleInputResponse>, SubscriptionsSampleInputResponse>>;
+    beginSampleInput(location: string, sampleInput: SampleInput, options?: SubscriptionsSampleInputOptionalParams): Promise<SimplePollerLike<OperationState<SubscriptionsSampleInputResponse>, SubscriptionsSampleInputResponse>>;
     beginSampleInputAndWait(location: string, sampleInput: SampleInput, options?: SubscriptionsSampleInputOptionalParams): Promise<SubscriptionsSampleInputResponse>;
-    beginTestInput(location: string, testInput: TestInput, options?: SubscriptionsTestInputOptionalParams): Promise<PollerLike<PollOperationState<SubscriptionsTestInputResponse>, SubscriptionsTestInputResponse>>;
+    beginTestInput(location: string, testInput: TestInput, options?: SubscriptionsTestInputOptionalParams): Promise<SimplePollerLike<OperationState<SubscriptionsTestInputResponse>, SubscriptionsTestInputResponse>>;
     beginTestInputAndWait(location: string, testInput: TestInput, options?: SubscriptionsTestInputOptionalParams): Promise<SubscriptionsTestInputResponse>;
-    beginTestOutput(location: string, testOutput: TestOutput, options?: SubscriptionsTestOutputOptionalParams): Promise<PollerLike<PollOperationState<SubscriptionsTestOutputResponse>, SubscriptionsTestOutputResponse>>;
+    beginTestOutput(location: string, testOutput: TestOutput, options?: SubscriptionsTestOutputOptionalParams): Promise<SimplePollerLike<OperationState<SubscriptionsTestOutputResponse>, SubscriptionsTestOutputResponse>>;
     beginTestOutputAndWait(location: string, testOutput: TestOutput, options?: SubscriptionsTestOutputOptionalParams): Promise<SubscriptionsTestOutputResponse>;
-    beginTestQuery(location: string, testQuery: TestQuery, options?: SubscriptionsTestQueryOptionalParams): Promise<PollerLike<PollOperationState<SubscriptionsTestQueryResponse>, SubscriptionsTestQueryResponse>>;
+    beginTestQuery(location: string, testQuery: TestQuery, options?: SubscriptionsTestQueryOptionalParams): Promise<SimplePollerLike<OperationState<SubscriptionsTestQueryResponse>, SubscriptionsTestQueryResponse>>;
     beginTestQueryAndWait(location: string, testQuery: TestQuery, options?: SubscriptionsTestQueryOptionalParams): Promise<SubscriptionsTestQueryResponse>;
     compileQuery(location: string, compileQuery: CompileQuery, options?: SubscriptionsCompileQueryOptionalParams): Promise<SubscriptionsCompileQueryResponse>;
     listQuotas(location: string, options?: SubscriptionsListQuotasOptionalParams): Promise<SubscriptionsListQuotasResponse>;
@@ -1770,9 +2027,9 @@ export interface SubscriptionsTestQueryOptionalParams extends coreClient.Operati
 export type SubscriptionsTestQueryResponse = QueryTestingResult;
 
 // @public
-export type TestDatasourceResult = ErrorModel & {
+export interface TestDatasourceResult extends ErrorModel {
     readonly status?: TestDatasourceResultStatus;
-};
+}
 
 // @public
 export type TestDatasourceResultStatus = string;
@@ -1800,19 +2057,20 @@ export interface TestQueryDiagnostics {
 }
 
 // @public
-export type TrackedResource = Resource & {
+export interface TrackedResource extends Resource {
+    location?: string;
     tags?: {
         [propertyName: string]: string;
     };
-    location?: string;
-};
+}
 
 // @public
-export type Transformation = SubResource & {
-    streamingUnits?: number;
-    query?: string;
+export interface Transformation extends SubResource {
     readonly etag?: string;
-};
+    query?: string;
+    streamingUnits?: number;
+    validStreamingUnits?: number[];
+}
 
 // @public
 export interface Transformations {
@@ -1859,6 +2117,12 @@ export interface TransformationsUpdateOptionalParams extends coreClient.Operatio
 
 // @public
 export type TransformationsUpdateResponse = TransformationsUpdateHeaders & Transformation;
+
+// @public
+export type UpdatableUdfRefreshType = string;
+
+// @public
+export type UpdateMode = string;
 
 // (No @packageDocumentation comment for this package)
 

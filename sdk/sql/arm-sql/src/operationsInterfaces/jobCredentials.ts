@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   JobCredential,
@@ -15,7 +14,7 @@ import {
   JobCredentialsGetResponse,
   JobCredentialsCreateOrUpdateOptionalParams,
   JobCredentialsCreateOrUpdateResponse,
-  JobCredentialsDeleteOptionalParams
+  JobCredentialsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,7 +32,7 @@ export interface JobCredentials {
     resourceGroupName: string,
     serverName: string,
     jobAgentName: string,
-    options?: JobCredentialsListByAgentOptionalParams
+    options?: JobCredentialsListByAgentOptionalParams,
   ): PagedAsyncIterableIterator<JobCredential>;
   /**
    * Gets a jobs credential.
@@ -49,7 +48,7 @@ export interface JobCredentials {
     serverName: string,
     jobAgentName: string,
     credentialName: string,
-    options?: JobCredentialsGetOptionalParams
+    options?: JobCredentialsGetOptionalParams,
   ): Promise<JobCredentialsGetResponse>;
   /**
    * Creates or updates a job credential.
@@ -67,7 +66,7 @@ export interface JobCredentials {
     jobAgentName: string,
     credentialName: string,
     parameters: JobCredential,
-    options?: JobCredentialsCreateOrUpdateOptionalParams
+    options?: JobCredentialsCreateOrUpdateOptionalParams,
   ): Promise<JobCredentialsCreateOrUpdateResponse>;
   /**
    * Deletes a job credential.
@@ -83,6 +82,6 @@ export interface JobCredentials {
     serverName: string,
     jobAgentName: string,
     credentialName: string,
-    options?: JobCredentialsDeleteOptionalParams
+    options?: JobCredentialsDeleteOptionalParams,
   ): Promise<void>;
 }

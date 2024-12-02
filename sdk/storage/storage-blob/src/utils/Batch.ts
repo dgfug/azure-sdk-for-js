@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 // In browser, during webpack or browserify bundling, this module will be replaced by 'events'
 // https://github.com/Gozala/events
@@ -15,7 +15,7 @@ export declare type Operation = () => Promise<any>;
  */
 enum BatchStates {
   Good,
-  Error
+  Error,
 }
 
 /**
@@ -85,7 +85,7 @@ export class Batch {
         this.actives--;
         this.completed++;
         this.parallelExecute();
-      } catch (error) {
+      } catch (error: any) {
         this.emitter.emit("error", error);
       }
     });

@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { StoredAttestationPolicy } from "./storedAttestationPolicy";
+import { StoredAttestationPolicy } from "./storedAttestationPolicy.js";
 // import { AttestationSigningKey } from "./attestationSigningKey";
-import { AttestationToken, AttestationTokenImpl } from "./attestationToken";
+import type { AttestationToken } from "./attestationToken.js";
+import { AttestationTokenImpl } from "./attestationToken.js";
 
 /**
  *
@@ -33,12 +34,12 @@ export interface AttestationPolicyToken extends AttestationToken {}
 export function createAttestationPolicyToken(
   policy: string,
   privateKey?: string,
-  certificate?: string
+  certificate?: string,
 ): AttestationPolicyToken {
   const token = AttestationTokenImpl.create({
     body: new StoredAttestationPolicy(policy).serialize(),
     privateKey: privateKey,
-    certificate: certificate
+    certificate: certificate,
   });
   return token;
 }

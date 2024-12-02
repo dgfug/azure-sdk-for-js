@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AvroReadable, AvroReadableReadOptions } from "./AvroReadable";
+import type { AvroReadableReadOptions } from "./AvroReadable";
+import { AvroReadable } from "./AvroReadable";
 import { AbortError } from "@azure/abort-controller";
 
 const ABORT_ERROR = new AbortError("Reading from the avro blob was aborted.");
@@ -28,17 +29,17 @@ export class AvroReadableFromBlob extends AvroReadable {
 
     const fileReader = new FileReader();
     return new Promise<Uint8Array>((resolve, reject) => {
-      const cleanUp = () => {
+      function cleanUp(): void {
         if (options.abortSignal) {
           options.abortSignal!.removeEventListener("abort", abortHandler);
         }
-      };
+      }
 
-      const abortHandler = () => {
+      function abortHandler(): void {
         fileReader.abort();
         cleanUp();
         reject(ABORT_ERROR);
-      };
+      }
 
       if (options.abortSignal) {
         options.abortSignal.addEventListener("abort", abortHandler);

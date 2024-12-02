@@ -1,5 +1,82 @@
 # Release History
 
+## 1.3.0-beta.4 (2024-03-01)
+
+### Features Added
+
+- Add support for number lookup
+  - Format only can be returned for no cost
+  - Additional number details can be returned for a cost
+
+## 1.3.0-beta.1 (2023-07-21)
+
+### Features Added
+
+- Number Lookup API public preview
+- API version `2023-05-01-preview` is the default
+
+## 1.2.0 (2023-03-28)
+
+### Features Added
+
+- Added support for SIP routing API version `2023-03-01`, releasing SIP routing functionality from public preview to GA.
+- Added environment variable `AZURE_TEST_DOMAIN` for SIP routing tests to support domain verification.
+
+### Breaking Changes
+
+- Changed public methods `getTrunks` to `listTrunks` and `getRoutes` to `listRoutes`.
+
+## 1.2.0-beta.4 (2023-01-10)
+
+- Adds support for Azure Communication Services Phone Numbers Browse API Methods.
+- Adds support for Direct routing configuration management.
+
+### Features Added
+
+- Added support for API version `2022-12-01`, giving users the ability to:
+  - Get all supported countries
+  - Get all supported localities given a country code.
+  - Get all Toll-Free area codes from a given country code.
+  - Get all Geographic area codes from a given country code / locality.
+  - Get all offerings from a given country code.
+- Added new SIP routing client for handling Direct routing numbers.
+
+### Other Changes
+
+- Updated to `@azure/core-tracing` 1.0.
+- Updated to `@azure/communication-common` 2.2.0.
+- Updated to `@azure-tools/test-recorder` 2.0.0.
+
+## 1.2.0-alpha.20220517.1 (2022-05-17)
+
+- Added support for the API version `2022-06-01-preview`
+- Added `operatorId`, `operatorName` and `phoneNumberSource` properties to the `PurchasedPhoneNumber` model.
+
+## 1.2.0-beta.3 (2022-04-06)
+
+### Features Added
+
+- Added environment variable `AZURE_USERAGENT_OVERRIDE` that overrides the HTTP header `x-ms-useragent` during tests
+
+### Other Changes
+
+- Update minimum version of dependency "@azure/core-client" to "1.5.0", which allows adding additional policies to the rest pipeline after initialization.
+
+## 1.2.0-beta.2 (2022-03-10)
+
+### Features Added
+
+- Upgraded the package to use the Azure Core V2, bringing several improvements to the package's HTTP pipeline architecture.
+
+## 1.2.0-beta.1 (2022-01-24)
+
+- Users can now purchase United Kingdom (GB) toll free and geographic phone numbers for PSTN Calling
+- Users can now purchase Denmark (DK) toll free and geographic phone numbers for PSTN Calling
+
+### Features Added
+
+- Added support for the API version `2022-01-11-preview2`
+
 ## 1.1.0 (2021-10-05)
 
 ### Features Added

@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { LinkedServices } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DataFactoryManagementClientContext } from "../dataFactoryManagementClientContext";
+import { DataFactoryManagementClient } from "../dataFactoryManagementClient";
 import {
   LinkedServiceResource,
   LinkedServicesListByFactoryNextOptionalParams,
@@ -22,19 +23,19 @@ import {
   LinkedServicesGetOptionalParams,
   LinkedServicesGetResponse,
   LinkedServicesDeleteOptionalParams,
-  LinkedServicesListByFactoryNextResponse
+  LinkedServicesListByFactoryNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing LinkedServices operations. */
 export class LinkedServicesImpl implements LinkedServices {
-  private readonly client: DataFactoryManagementClientContext;
+  private readonly client: DataFactoryManagementClient;
 
   /**
    * Initialize a new instance of the class LinkedServices class.
    * @param client Reference to the service client
    */
-  constructor(client: DataFactoryManagementClientContext) {
+  constructor(client: DataFactoryManagementClient) {
     this.client = client;
   }
 
@@ -47,12 +48,12 @@ export class LinkedServicesImpl implements LinkedServices {
   public listByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: LinkedServicesListByFactoryOptionalParams
+    options?: LinkedServicesListByFactoryOptionalParams,
   ): PagedAsyncIterableIterator<LinkedServiceResource> {
     const iter = this.listByFactoryPagingAll(
       resourceGroupName,
       factoryName,
-      options
+      options,
     );
     return {
       next() {
@@ -61,49 +62,62 @@ export class LinkedServicesImpl implements LinkedServices {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByFactoryPagingPage(
           resourceGroupName,
           factoryName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByFactoryPagingPage(
     resourceGroupName: string,
     factoryName: string,
-    options?: LinkedServicesListByFactoryOptionalParams
+    options?: LinkedServicesListByFactoryOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<LinkedServiceResource[]> {
-    let result = await this._listByFactory(
-      resourceGroupName,
-      factoryName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: LinkedServicesListByFactoryResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByFactory(
+        resourceGroupName,
+        factoryName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByFactoryNext(
         resourceGroupName,
         factoryName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByFactoryPagingAll(
     resourceGroupName: string,
     factoryName: string,
-    options?: LinkedServicesListByFactoryOptionalParams
+    options?: LinkedServicesListByFactoryOptionalParams,
   ): AsyncIterableIterator<LinkedServiceResource> {
     for await (const page of this.listByFactoryPagingPage(
       resourceGroupName,
       factoryName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -118,11 +132,11 @@ export class LinkedServicesImpl implements LinkedServices {
   private _listByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: LinkedServicesListByFactoryOptionalParams
+    options?: LinkedServicesListByFactoryOptionalParams,
   ): Promise<LinkedServicesListByFactoryResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, options },
-      listByFactoryOperationSpec
+      listByFactoryOperationSpec,
     );
   }
 
@@ -139,7 +153,7 @@ export class LinkedServicesImpl implements LinkedServices {
     factoryName: string,
     linkedServiceName: string,
     linkedService: LinkedServiceResource,
-    options?: LinkedServicesCreateOrUpdateOptionalParams
+    options?: LinkedServicesCreateOrUpdateOptionalParams,
   ): Promise<LinkedServicesCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -147,9 +161,9 @@ export class LinkedServicesImpl implements LinkedServices {
         factoryName,
         linkedServiceName,
         linkedService,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -164,11 +178,11 @@ export class LinkedServicesImpl implements LinkedServices {
     resourceGroupName: string,
     factoryName: string,
     linkedServiceName: string,
-    options?: LinkedServicesGetOptionalParams
+    options?: LinkedServicesGetOptionalParams,
   ): Promise<LinkedServicesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, linkedServiceName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -183,11 +197,11 @@ export class LinkedServicesImpl implements LinkedServices {
     resourceGroupName: string,
     factoryName: string,
     linkedServiceName: string,
-    options?: LinkedServicesDeleteOptionalParams
+    options?: LinkedServicesDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, linkedServiceName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -202,11 +216,11 @@ export class LinkedServicesImpl implements LinkedServices {
     resourceGroupName: string,
     factoryName: string,
     nextLink: string,
-    options?: LinkedServicesListByFactoryNextOptionalParams
+    options?: LinkedServicesListByFactoryNextOptionalParams,
   ): Promise<LinkedServicesListByFactoryNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, nextLink, options },
-      listByFactoryNextOperationSpec
+      listByFactoryNextOperationSpec,
     );
   }
 }
@@ -214,38 +228,36 @@ export class LinkedServicesImpl implements LinkedServices {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByFactoryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LinkedServiceListResponse
+      bodyMapper: Mappers.LinkedServiceListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices/{linkedServiceName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices/{linkedServiceName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.LinkedServiceResource
+      bodyMapper: Mappers.LinkedServiceResource,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.linkedService,
   queryParameters: [Parameters.apiVersion],
@@ -254,28 +266,27 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.linkedServiceName
+    Parameters.linkedServiceName,
   ],
   headerParameters: [
     Parameters.accept,
     Parameters.contentType,
-    Parameters.ifMatch
+    Parameters.ifMatch,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices/{linkedServiceName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices/{linkedServiceName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LinkedServiceResource
+      bodyMapper: Mappers.LinkedServiceResource,
     },
     304: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -283,21 +294,20 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.linkedServiceName
+    Parameters.linkedServiceName,
   ],
   headerParameters: [Parameters.accept, Parameters.ifNoneMatch],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices/{linkedServiceName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/linkedservices/{linkedServiceName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -305,30 +315,29 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.linkedServiceName
+    Parameters.linkedServiceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByFactoryNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LinkedServiceListResponse
+      bodyMapper: Mappers.LinkedServiceListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

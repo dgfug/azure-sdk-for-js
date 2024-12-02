@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type {
+  CompositeMapper,
+  Mapper,
   OperationArguments,
   OperationParameter,
-  Mapper,
-  CompositeMapper,
-  ParameterPath,
+  OperationRequest,
   OperationRequestInfo,
-  OperationRequest
-} from "./interfaces";
+  ParameterPath,
+} from "./interfaces.js";
+
+import { state } from "./state.js";
 
 /**
  * @internal
@@ -22,7 +24,7 @@ import {
 export function getOperationArgumentValueFromParameter(
   operationArguments: OperationArguments,
   parameter: OperationParameter,
-  fallbackObject?: { [parameterName: string]: any }
+  fallbackObject?: { [parameterName: string]: any },
 ): any {
   let parameterPath = parameter.parameterPath;
   const parameterMapper = parameter.mapper;
@@ -64,9 +66,9 @@ export function getOperationArgumentValueFromParameter(
         operationArguments,
         {
           parameterPath: propertyPath,
-          mapper: propertyMapper
+          mapper: propertyMapper,
         },
-        fallbackObject
+        fallbackObject,
       );
       if (propertyValue !== undefined) {
         if (!value) {
@@ -86,7 +88,7 @@ interface PropertySearchResult {
 
 function getPropertyFromParameterPath(
   parent: { [parameterName: string]: any },
-  parameterPath: string[]
+  parameterPath: string[],
 ): PropertySearchResult {
   const result: PropertySearchResult = { propertyFound: false };
   let i = 0;
@@ -106,14 +108,23 @@ function getPropertyFromParameterPath(
   return result;
 }
 
-const operationRequestMap = new WeakMap<OperationRequest, OperationRequestInfo>();
+const originalRequestSymbol = Symbol.for("@azure/core-client original request");
+
+function hasOriginalRequest(
+  request: OperationRequest,
+): request is OperationRequest & { [originalRequestSymbol]: OperationRequest } {
+  return originalRequestSymbol in request;
+}
 
 export function getOperationRequestInfo(request: OperationRequest): OperationRequestInfo {
-  let info = operationRequestMap.get(request);
+  if (hasOriginalRequest(request)) {
+    return getOperationRequestInfo(request[originalRequestSymbol]);
+  }
+  let info = state.operationRequestMap.get(request);
 
   if (!info) {
     info = {};
-    operationRequestMap.set(request, info);
+    state.operationRequestMap.set(request, info);
   }
   return info;
 }

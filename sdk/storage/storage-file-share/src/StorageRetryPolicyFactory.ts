@@ -1,13 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RequestPolicy, RequestPolicyFactory, RequestPolicyOptions } from "@azure/core-http";
+import type {
+  RequestPolicy,
+  RequestPolicyOptionsLike as RequestPolicyOptions,
+  RequestPolicyFactory,
+} from "@azure/core-http-compat";
 import { StorageRetryPolicy, StorageRetryPolicyType } from "./policies/StorageRetryPolicy";
 
 export { StorageRetryPolicyType, StorageRetryPolicy };
 
 /**
- * Retry options interface.
+ * Storage Blob retry options interface.
  */
 export interface StorageRetryOptions {
   /**
@@ -24,12 +28,10 @@ export interface StorageRetryOptions {
 
   /**
    * Optional. Indicates the maximum time in ms allowed for any single try of an HTTP request.
-   * A value of zero or undefined means that you accept our default timeout, 60s or 60 * 1000ms.
+   * A value of zero or undefined means no default timeout on SDK client, Azure
+   * Storage server's default timeout policy will be used.
    *
-   * NOTE: When transferring large amounts of data, the default TryTimeout will probably
-   * not be sufficient. You should override this value based on the bandwidth available to
-   * the host machine and proximity to the Storage service. A good starting point may be something
-   * like (60 seconds per MB of anticipated-payload-size)
+   * @see https://docs.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
    */
   readonly tryTimeoutInMs?: number;
 
@@ -48,7 +50,7 @@ export interface StorageRetryOptions {
 }
 
 /**
- * StorageRetryPolicyFactory is a factory class helping generating StorageRetryPolicy objects.
+ * StorageRetryPolicyFactory is a factory class helping generating {@link StorageRetryPolicy} objects.
  */
 export class StorageRetryPolicyFactory implements RequestPolicyFactory {
   private retryOptions?: StorageRetryOptions;
@@ -63,6 +65,7 @@ export class StorageRetryPolicyFactory implements RequestPolicyFactory {
 
   /**
    * Creates a StorageRetryPolicy object.
+   *
    * @param nextPolicy -
    * @param options -
    */

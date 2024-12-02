@@ -6,35 +6,35 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { ServerAdministrators } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { PostgreSQLManagementClientContext } from "../postgreSQLManagementClientContext";
+import { PostgreSQLManagementClient } from "../postgreSQLManagementClient";
 import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
 import { LroImpl } from "../lroImpl";
 import {
   ServerAdministratorResource,
   ServerAdministratorsListOptionalParams,
+  ServerAdministratorsListResponse,
   ServerAdministratorsGetOptionalParams,
   ServerAdministratorsGetResponse,
   ServerAdministratorsCreateOrUpdateOptionalParams,
   ServerAdministratorsCreateOrUpdateResponse,
-  ServerAdministratorsDeleteOptionalParams,
-  ServerAdministratorsListResponse
+  ServerAdministratorsDeleteOptionalParams
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ServerAdministrators operations. */
 export class ServerAdministratorsImpl implements ServerAdministrators {
-  private readonly client: PostgreSQLManagementClientContext;
+  private readonly client: PostgreSQLManagementClient;
 
   /**
    * Initialize a new instance of the class ServerAdministrators class.
    * @param client Reference to the service client
    */
-  constructor(client: PostgreSQLManagementClientContext) {
+  constructor(client: PostgreSQLManagementClient) {
     this.client = client;
   }
 
@@ -57,8 +57,16 @@ export class ServerAdministratorsImpl implements ServerAdministrators {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, serverName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          serverName,
+          options,
+          settings
+        );
       }
     };
   }
@@ -66,9 +74,11 @@ export class ServerAdministratorsImpl implements ServerAdministrators {
   private async *listPagingPage(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerAdministratorsListOptionalParams
+    options?: ServerAdministratorsListOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<ServerAdministratorResource[]> {
-    let result = await this._list(resourceGroupName, serverName, options);
+    let result: ServerAdministratorsListResponse;
+    result = await this._list(resourceGroupName, serverName, options);
     yield result.value || [];
   }
 
@@ -166,10 +176,12 @@ export class ServerAdministratorsImpl implements ServerAdministrators {
       { resourceGroupName, serverName, properties, options },
       createOrUpdateOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -250,10 +262,12 @@ export class ServerAdministratorsImpl implements ServerAdministrators {
       { resourceGroupName, serverName, options },
       deleteOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**

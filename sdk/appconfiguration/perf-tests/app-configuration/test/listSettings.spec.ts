@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { generateUuid } from "@azure/core-http";
-import { PerfOptionDictionary, executeParallel } from "@azure/test-utils-perf";
+import { randomUUID } from "@azure/core-util";
+import { PerfOptionDictionary, executeParallel } from "@azure-tools/test-perf";
 import { AppConfigTest } from "./appConfigBase.spec";
 
 interface ListTestOptions {
@@ -13,14 +13,14 @@ interface ListTestOptions {
 }
 
 export class ListSettingsTest extends AppConfigTest<ListTestOptions> {
-  static prefix = generateUuid();
+  static prefix = randomUUID();
   public options: PerfOptionDictionary<ListTestOptions> = {
     count: {
       required: true,
       description: "Number of settings to be listed",
       longName: "count",
-      defaultValue: 10
-    }
+      defaultValue: 10,
+    },
   };
 
   public async globalSetup(): Promise<void> {
@@ -30,12 +30,12 @@ export class ListSettingsTest extends AppConfigTest<ListTestOptions> {
     await executeParallel(
       async () => {
         await this.client.addConfigurationSetting({
-          key: ListSettingsTest.prefix + generateUuid(),
-          value: "random"
+          key: ListSettingsTest.prefix + randomUUID(),
+          value: "random",
         });
       },
       this.parsedOptions.count.value,
-      32
+      32,
     );
   }
 
@@ -43,8 +43,9 @@ export class ListSettingsTest extends AppConfigTest<ListTestOptions> {
     for await (const response of this.client
       .listConfigurationSettings({ keyFilter: ListSettingsTest.prefix + "*" })
       .byPage()) {
-      // eslint-disable-next-line no-empty
+      // eslint-disable-next-line  @typescript-eslint/no-unused-vars
       for (const _ of response.items) {
+        /* empty */
       }
     }
   }
@@ -66,7 +67,7 @@ export class ListSettingsTest extends AppConfigTest<ListTestOptions> {
         await this.client.deleteConfigurationSetting({ key: keys[count] });
       },
       this.parsedOptions.count.value,
-      32
+      32,
     );
   }
 }

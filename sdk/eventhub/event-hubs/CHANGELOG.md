@@ -1,6 +1,6 @@
 # Release History
 
-## 5.7.0-beta.2 (Unreleased)
+## 5.13.0 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,145 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 5.12.2 (2024-10-11)
+
+### Bugs Fixed
+
+- The desired capabilities array should be omitted if it is empty.
+
+## 5.12.1 (2024-10-08)
+
+### Bugs Fixed
+
+- The producer now verifies that the input message follows the expected structure.
+
+## 5.13.0-beta.2 (2024-06-27)
+
+### Bugs Fixed
+
+- Fix the definition of the earliest event position.
+
+## 5.13.0-beta.1 (2024-06-06)
+
+### Features Added
+
+- Support Geographic replication to enable recovery in case of geographic disasters.
+
+### Breaking Changes
+
+- The `offset` property of event data is now typed as a string instead of as a number.
+
+## 5.12.0 (2024-05-20)
+
+### Features Added
+
+- Adds support for connecting to the development emulator. The connection string for the development emulator should have the `";UseDevelopmentEmulator=true"` slug.
+
+## 5.11.4 (2024-03-21)
+
+### Other Changes
+
+- The minimum value of timeout for all operations is no longer 60 seconds. The user can now set the timeout to lower values if needed. The default timeout value is still 60 seconds.
+
+## 5.11.3 (2023-11-07)
+
+### Bugs Fixed
+
+- Improve event prefetching to not overload the internal queue.
+
+### Other Changes
+
+- NodeJS v18 is now the minimum version supported. Check out the [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule) for more information on NodeJS support timelines. And check out the [Microsoft Support Policy](https://github.com/Azure/azure-sdk-for-js/blob/main/SUPPORT.md#microsoft-support-policy) for more information on Microsoft support timelines.
+
+## 5.11.2 (2023-09-25)
+
+### Bugs Fixed
+
+- Fixes a memory leak [#25426](https://github.com/Azure/azure-sdk-for-js/issues/25426) in the `EventHubBufferedProducerClient` when there is no activity for a longer interval after sending some events.
+  [#26748](https://github.com/Azure/azure-sdk-for-js/pull/26748)
+
+## 5.11.1 (2023-06-23)
+
+### Bugs Fixed
+
+- Fix a regression of missing `getToken` calls when renewing tokens.
+
+## 5.11.0 (2023-06-08)
+
+### Features Added
+
+- Adds an option to set an identifier for Event Hubs clients.
+- Adds a property on each Event Hub client that returns the identifier of the client.
+
+### Other Changes
+
+- Use Rhea's prefetch window to prefetch events from the service. This improves the performance of the receiver by reducing the number of round trips to the service. The default prefetch window is 3 \* `maxBatchSize` events. This can be configured by setting the `prefetchCount` option on the `subscribe` method on `EventHubConsumerClient`.
+
+## 5.10.0 (2023-05-01)
+
+### Bugs Fixed
+
+- Fix a memory leak issue of linked child abort signals not being released.
+
+### Other Changes
+
+- upgrade dependency `rhea-promise` version to `^3.0.0`.
+
+## 5.9.0 (2023-03-07)
+
+### Bugs Fixed
+
+- Fixing a bug where events were not always received in order [[#23993]](https://github.com/Azure/azure-sdk-for-js/issues/23993).
+
+### Other Changes
+
+- The receiver no longer attempts to build batches of `maxMessageCount` size, instead, it returns batches as soon as they are received from the service, up to `maxMessageCount`.
+
+## 5.8.0 (2022-05-10)
+
+### Breaking Changes
+
+- The `enableIdempotentPartitions` flag has been renamed to `enableIdempotentRetries`
+
+## 5.8.0-beta.3 (2022-04-05)
+
+### Breaking Changes
+
+- `MessageWithMetadata` has been renamed to `MessageContent`.
+- `MessageContent`'s `body` has been renamed to `data`.
+- `MessageAdapter`'s `consumeMessage` and `produceMessage` have been renamed to `consume` and `produce`.
+
+### Bugs Fixed
+
+- The Uint8Array payload was being stringified first before it gets sent which caused the receiver to treat it as an object instead of a Uint8Array. This is now fixed and Uint8Array is being treated the same as a Buffer.
+- The hashing algorithm used to map partition keys to IDs in the buffered producer is no longer sensitive to the endianness of the local machine [Issue #21190](https://github.com/Azure/azure-sdk-for-js/issues/21190).
+
+### Other Changes
+
+- Updated our `@azure/core-tracing` dependency to the latest version (1.0.0). There are no changes from the previous beta; however, please see below for changes from the previous minor version:
+  - Notable changes include Removal of `@opentelemetry/api` as a transitive dependency and ensuring that the active context is properly propagated.
+  - Customers who would like to continue using OpenTelemetry driven tracing should visit our [OpenTelemetry Instrumentation](https://www.npmjs.com/package/@azure/opentelemetry-instrumentation-azure-sdk) package for instructions.
+
+## 5.8.0-beta.2 (2022-03-11)
+
+### Bugs Fixed
+
+- `createEventDataAdapter` is updated so that `consumeMessage` returns the original binary payload instead of the Buffer representation of it.
+
+### Other Changes
+
+- Updated our `@azure/core-tracing` dependency to the latest version (1.0.0-preview.14)
+  - Notable changes include Removal of `@opentelemetry/api` as a transitive dependency and ensuring that the active context is properly propagated.
+  - Customers who would like to continue using OpenTelemetry driven tracing should visit our [OpenTelemetry Instrumentation](https://www.npmjs.com/package/@azure/opentelemetry-instrumentation-azure-sdk) package for instructions.
+
+## 5.8.0-beta.1 (2022-02-08)
+
+### Features Added
+
+- A new function `createEventDataAdapter` is exported that can convert an `EventData` to a simple message with `body` and `contentType` fields. This adapter can be used with the Avro encoder in `@azure/schema-registry-avro` starting from version 1.0.0-beta.6 to create `EventData` messages with Avro-encoded bodies.
+
+- When publishing events to Event Hubs, timeouts or other transient failures may introduce ambiguity into the understanding of whether a batch of events was received by the service. To assist in this scenario, the option to publish events idempotently has been added to `EventHubBufferedProducerClient`. The functionality can be enabled by setting the `enableIdempotentPartitions` client option to `true`. If enabled, retries during publishing will attempt to avoid duplication with a minor cost to throughput. Duplicates are still possible but the chance of them occurring is much lower when idempotent retries are enabled. [PR #20156](https://github.com/Azure/azure-sdk-for-js/pull/20156)
 
 ## 5.7.0-beta.1 (2021-11-12)
 

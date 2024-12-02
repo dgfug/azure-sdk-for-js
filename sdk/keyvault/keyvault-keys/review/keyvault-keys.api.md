@@ -4,16 +4,14 @@
 
 ```ts
 
-/// <reference lib="esnext.asynciterable" />
-
 import { AzureLogger } from '@azure/logger';
-import * as coreHttp from '@azure/core-http';
+import type * as coreClient from '@azure/core-client';
+import type { ExtendedCommonClientOptions } from '@azure/core-http-compat';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
 import { PageSettings } from '@azure/core-paging';
-import { PipelineOptions } from '@azure/core-http';
 import { PollerLike } from '@azure/core-lro';
 import { PollOperationState } from '@azure/core-lro';
-import { TokenCredential } from '@azure/core-http';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export interface AesCbcDecryptParameters {
@@ -52,7 +50,7 @@ export interface AesGcmEncryptParameters {
 }
 
 // @public
-export interface BackupKeyOptions extends coreHttp.OperationOptions {
+export interface BackupKeyOptions extends coreClient.OperationOptions {
 }
 
 // @public
@@ -68,7 +66,7 @@ export interface CreateEcKeyOptions extends CreateKeyOptions {
 }
 
 // @public
-export interface CreateKeyOptions extends coreHttp.OperationOptions {
+export interface CreateKeyOptions extends coreClient.OperationOptions {
     curve?: KeyCurveName;
     enabled?: boolean;
     readonly expiresOn?: Date;
@@ -117,7 +115,7 @@ export interface CryptographyClientOptions extends KeyClientOptions {
 }
 
 // @public
-export interface CryptographyOptions extends coreHttp.OperationOptions {
+export interface CryptographyOptions extends coreClient.OperationOptions {
 }
 
 // @public
@@ -177,24 +175,24 @@ export interface GetCryptographyClientOptions {
 }
 
 // @public
-export interface GetDeletedKeyOptions extends coreHttp.OperationOptions {
+export interface GetDeletedKeyOptions extends coreClient.OperationOptions {
 }
 
 // @public
-export interface GetKeyOptions extends coreHttp.OperationOptions {
+export interface GetKeyOptions extends coreClient.OperationOptions {
     version?: string;
 }
 
 // @public
-export interface GetKeyRotationPolicyOptions extends coreHttp.OperationOptions {
+export interface GetKeyRotationPolicyOptions extends coreClient.OperationOptions {
 }
 
 // @public
-export interface GetRandomBytesOptions extends coreHttp.OperationOptions {
+export interface GetRandomBytesOptions extends coreClient.OperationOptions {
 }
 
 // @public
-export interface ImportKeyOptions extends coreHttp.OperationOptions {
+export interface ImportKeyOptions extends coreClient.OperationOptions {
     enabled?: boolean;
     expiresOn?: Date;
     exportable?: boolean;
@@ -240,7 +238,7 @@ export class KeyClient {
     getCryptographyClient(keyName: string, options?: GetCryptographyClientOptions): CryptographyClient;
     getDeletedKey(name: string, options?: GetDeletedKeyOptions): Promise<DeletedKey>;
     getKey(name: string, options?: GetKeyOptions): Promise<KeyVaultKey>;
-    getKeyRotationPolicy(name: string, options?: GetKeyRotationPolicyOptions): Promise<KeyRotationPolicy>;
+    getKeyRotationPolicy(keyName: string, options?: GetKeyRotationPolicyOptions): Promise<KeyRotationPolicy>;
     getRandomBytes(count: number, options?: GetRandomBytesOptions): Promise<Uint8Array>;
     importKey(name: string, key: JsonWebKey_2, options?: ImportKeyOptions): Promise<KeyVaultKey>;
     listDeletedKeys(options?: ListDeletedKeysOptions): PagedAsyncIterableIterator<DeletedKey>;
@@ -252,12 +250,13 @@ export class KeyClient {
     rotateKey(name: string, options?: RotateKeyOptions): Promise<KeyVaultKey>;
     updateKeyProperties(name: string, keyVersion: string, options?: UpdateKeyPropertiesOptions): Promise<KeyVaultKey>;
     updateKeyProperties(name: string, options?: UpdateKeyPropertiesOptions): Promise<KeyVaultKey>;
-    updateKeyRotationPolicy(name: string, policy: KeyRotationPolicyProperties, options?: UpdateKeyRotationPolicyOptions): Promise<KeyRotationPolicy>;
+    updateKeyRotationPolicy(keyName: string, policy: KeyRotationPolicyProperties, options?: UpdateKeyRotationPolicyOptions): Promise<KeyRotationPolicy>;
     readonly vaultUrl: string;
 }
 
 // @public
-export interface KeyClientOptions extends coreHttp.PipelineOptions {
+export interface KeyClientOptions extends ExtendedCommonClientOptions {
+    disableChallengeResourceVerification?: boolean;
     serviceVersion?: string;
 }
 
@@ -271,7 +270,7 @@ export type KeyExportEncryptionAlgorithm = string;
 export type KeyOperation = string;
 
 // @public
-export interface KeyPollerOptions extends coreHttp.OperationOptions {
+export interface KeyPollerOptions extends coreClient.OperationOptions {
     intervalInMs?: number;
     resumeFrom?: string;
 }
@@ -282,6 +281,7 @@ export interface KeyProperties {
     enabled?: boolean;
     expiresOn?: Date;
     exportable?: boolean;
+    readonly hsmPlatform?: string;
     id?: string;
     readonly managed?: boolean;
     name: string;
@@ -301,6 +301,7 @@ export interface KeyProperties {
 export interface KeyReleasePolicy {
     contentType?: string;
     encodedPolicy?: Uint8Array;
+    immutable?: boolean;
 }
 
 // @public
@@ -433,15 +434,15 @@ export enum KnownSignatureAlgorithms {
 }
 
 // @public
-export interface ListDeletedKeysOptions extends coreHttp.OperationOptions {
+export interface ListDeletedKeysOptions extends coreClient.OperationOptions {
 }
 
 // @public
-export interface ListPropertiesOfKeysOptions extends coreHttp.OperationOptions {
+export interface ListPropertiesOfKeysOptions extends coreClient.OperationOptions {
 }
 
 // @public
-export interface ListPropertiesOfKeyVersionsOptions extends coreHttp.OperationOptions {
+export interface ListPropertiesOfKeyVersionsOptions extends coreClient.OperationOptions {
 }
 
 // @public
@@ -454,18 +455,16 @@ export { PageSettings }
 // @public
 export function parseKeyVaultKeyIdentifier(id: string): KeyVaultKeyIdentifier;
 
-export { PipelineOptions }
-
 export { PollerLike }
 
 export { PollOperationState }
 
 // @public
-export interface PurgeDeletedKeyOptions extends coreHttp.OperationOptions {
+export interface PurgeDeletedKeyOptions extends coreClient.OperationOptions {
 }
 
 // @public
-export interface ReleaseKeyOptions extends coreHttp.OperationOptions {
+export interface ReleaseKeyOptions extends coreClient.OperationOptions {
     algorithm?: KeyExportEncryptionAlgorithm;
     nonce?: string;
     version?: string;
@@ -477,11 +476,11 @@ export interface ReleaseKeyResult {
 }
 
 // @public
-export interface RestoreKeyBackupOptions extends coreHttp.OperationOptions {
+export interface RestoreKeyBackupOptions extends coreClient.OperationOptions {
 }
 
 // @public
-export interface RotateKeyOptions extends coreHttp.OperationOptions {
+export interface RotateKeyOptions extends coreClient.OperationOptions {
 }
 
 // @public
@@ -525,7 +524,7 @@ export interface UnwrapResult {
 }
 
 // @public
-export interface UpdateKeyPropertiesOptions extends coreHttp.OperationOptions {
+export interface UpdateKeyPropertiesOptions extends coreClient.OperationOptions {
     enabled?: boolean;
     expiresOn?: Date;
     keyOps?: KeyOperation[];
@@ -537,7 +536,7 @@ export interface UpdateKeyPropertiesOptions extends coreHttp.OperationOptions {
 }
 
 // @public
-export interface UpdateKeyRotationPolicyOptions extends coreHttp.OperationOptions {
+export interface UpdateKeyRotationPolicyOptions extends coreClient.OperationOptions {
 }
 
 // @public

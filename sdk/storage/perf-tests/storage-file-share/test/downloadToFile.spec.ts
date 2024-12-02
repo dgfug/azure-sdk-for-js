@@ -1,44 +1,43 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PerfOptionDictionary } from "@azure/test-utils-perf";
+import { PerfOptionDictionary } from "@azure-tools/test-perf";
 import { ShareFileClient } from "@azure/storage-file-share";
+import { StorageFileShareTest } from "./storageTest.spec";
+import { randomUUID } from "@azure/core-util";
 import fs from "fs";
 import util from "util";
+
 const fileExists = util.promisify(fs.exists);
 const mkdir = util.promisify(fs.mkdir);
 const deleteFile = util.promisify(fs.unlink);
 
-import { StorageFileShareTest } from "./storageTest.spec";
-import { v4 as generateUuid } from "uuid";
 interface StorageFileShareDownloadTestOptions {
   size: number;
 }
 
 const localDirName = "temp";
 
-export class StorageFileShareDownloadToFileTest extends StorageFileShareTest<
-  StorageFileShareDownloadTestOptions
-> {
+export class StorageFileShareDownloadToFileTest extends StorageFileShareTest<StorageFileShareDownloadTestOptions> {
   public options: PerfOptionDictionary<StorageFileShareDownloadTestOptions> = {
     size: {
       required: true,
       description: "Size in bytes",
       shortName: "sz",
       longName: "size",
-      defaultValue: 1024
-    }
+      defaultValue: 1024,
+    },
   };
-  static fileName = generateUuid();
+  static fileName = randomUUID();
   fileClient: ShareFileClient;
   localFileName: string;
 
   constructor() {
     super();
     this.fileClient = this.directoryClient.getFileClient(
-      StorageFileShareDownloadToFileTest.fileName
+      StorageFileShareDownloadToFileTest.fileName,
     );
-    this.localFileName = generateUuid();
+    this.localFileName = randomUUID();
   }
 
   public async globalSetup() {

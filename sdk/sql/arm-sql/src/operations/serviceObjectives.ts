@@ -6,31 +6,30 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { ServiceObjectives } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   ServiceObjective,
   ServiceObjectivesListByServerOptionalParams,
+  ServiceObjectivesListByServerResponse,
   ServiceObjectivesGetOptionalParams,
   ServiceObjectivesGetResponse,
-  ServiceObjectivesListByServerResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ServiceObjectives operations. */
 export class ServiceObjectivesImpl implements ServiceObjectives {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ServiceObjectives class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -44,12 +43,12 @@ export class ServiceObjectivesImpl implements ServiceObjectives {
   public listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServiceObjectivesListByServerOptionalParams
+    options?: ServiceObjectivesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServiceObjective> {
     const iter = this.listByServerPagingAll(
       resourceGroupName,
       serverName,
-      options
+      options,
     );
     return {
       next() {
@@ -58,38 +57,40 @@ export class ServiceObjectivesImpl implements ServiceObjectives {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServerPagingPage(
           resourceGroupName,
           serverName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByServerPagingPage(
     resourceGroupName: string,
     serverName: string,
-    options?: ServiceObjectivesListByServerOptionalParams
+    options?: ServiceObjectivesListByServerOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<ServiceObjective[]> {
-    let result = await this._listByServer(
-      resourceGroupName,
-      serverName,
-      options
-    );
+    let result: ServiceObjectivesListByServerResponse;
+    result = await this._listByServer(resourceGroupName, serverName, options);
     yield result.value || [];
   }
 
   private async *listByServerPagingAll(
     resourceGroupName: string,
     serverName: string,
-    options?: ServiceObjectivesListByServerOptionalParams
+    options?: ServiceObjectivesListByServerOptionalParams,
   ): AsyncIterableIterator<ServiceObjective> {
     for await (const page of this.listByServerPagingPage(
       resourceGroupName,
       serverName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -107,11 +108,11 @@ export class ServiceObjectivesImpl implements ServiceObjectives {
     resourceGroupName: string,
     serverName: string,
     serviceObjectiveName: string,
-    options?: ServiceObjectivesGetOptionalParams
+    options?: ServiceObjectivesGetOptionalParams,
   ): Promise<ServiceObjectivesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, serviceObjectiveName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -125,11 +126,11 @@ export class ServiceObjectivesImpl implements ServiceObjectives {
   private _listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServiceObjectivesListByServerOptionalParams
+    options?: ServiceObjectivesListByServerOptionalParams,
   ): Promise<ServiceObjectivesListByServerResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, options },
-      listByServerOperationSpec
+      listByServerOperationSpec,
     );
   }
 }
@@ -137,13 +138,12 @@ export class ServiceObjectivesImpl implements ServiceObjectives {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/serviceObjectives/{serviceObjectiveName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/serviceObjectives/{serviceObjectiveName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ServiceObjective
-    }
+      bodyMapper: Mappers.ServiceObjective,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -151,27 +151,26 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.serviceObjectiveName
+    Parameters.serviceObjectiveName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByServerOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/serviceObjectives",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/serviceObjectives",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ServiceObjectiveListResult
-    }
+      bodyMapper: Mappers.ServiceObjectiveListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.serverName
+    Parameters.serverName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

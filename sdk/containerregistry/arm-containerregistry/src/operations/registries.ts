@@ -6,30 +6,36 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Registries } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ContainerRegistryManagementClientContext } from "../containerRegistryManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ContainerRegistryManagementClient } from "../containerRegistryManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   Registry,
   RegistriesListNextOptionalParams,
   RegistriesListOptionalParams,
+  RegistriesListResponse,
   RegistriesListByResourceGroupNextOptionalParams,
   RegistriesListByResourceGroupOptionalParams,
+  RegistriesListByResourceGroupResponse,
   PrivateLinkResource,
   RegistriesListPrivateLinkResourcesNextOptionalParams,
   RegistriesListPrivateLinkResourcesOptionalParams,
+  RegistriesListPrivateLinkResourcesResponse,
   ImportImageParameters,
   RegistriesImportImageOptionalParams,
   RegistryNameCheckRequest,
   RegistriesCheckNameAvailabilityOptionalParams,
   RegistriesCheckNameAvailabilityResponse,
-  RegistriesListResponse,
-  RegistriesListByResourceGroupResponse,
   RegistriesGetOptionalParams,
   RegistriesGetResponse,
   RegistriesCreateOptionalParams,
@@ -40,7 +46,8 @@ import {
   RegistriesUpdateResponse,
   RegistriesListUsagesOptionalParams,
   RegistriesListUsagesResponse,
-  RegistriesListPrivateLinkResourcesResponse,
+  RegistriesGetPrivateLinkResourceOptionalParams,
+  RegistriesGetPrivateLinkResourceResponse,
   RegistriesListCredentialsOptionalParams,
   RegistriesListCredentialsResponse,
   RegenerateCredentialParameters,
@@ -62,13 +69,13 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Registries operations. */
 export class RegistriesImpl implements Registries {
-  private readonly client: ContainerRegistryManagementClientContext;
+  private readonly client: ContainerRegistryManagementClient;
 
   /**
    * Initialize a new instance of the class Registries class.
    * @param client Reference to the service client
    */
-  constructor(client: ContainerRegistryManagementClientContext) {
+  constructor(client: ContainerRegistryManagementClient) {
     this.client = client;
   }
 
@@ -87,22 +94,34 @@ export class RegistriesImpl implements Registries {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
       }
     };
   }
 
   private async *listPagingPage(
-    options?: RegistriesListOptionalParams
+    options?: RegistriesListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Registry[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RegistriesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -116,7 +135,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Lists all the container registries under the specified resource group.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param options The options parameters.
    */
   public listByResourceGroup(
@@ -131,19 +150,33 @@ export class RegistriesImpl implements Registries {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings
+        );
       }
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: RegistriesListByResourceGroupOptionalParams
+    options?: RegistriesListByResourceGroupOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Registry[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RegistriesListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
@@ -151,7 +184,9 @@ export class RegistriesImpl implements Registries {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -169,7 +204,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Lists the private link resources for a container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param options The options parameters.
    */
@@ -190,11 +225,15 @@ export class RegistriesImpl implements Registries {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPrivateLinkResourcesPagingPage(
           resourceGroupName,
           registryName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -203,15 +242,22 @@ export class RegistriesImpl implements Registries {
   private async *listPrivateLinkResourcesPagingPage(
     resourceGroupName: string,
     registryName: string,
-    options?: RegistriesListPrivateLinkResourcesOptionalParams
+    options?: RegistriesListPrivateLinkResourcesOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<PrivateLinkResource[]> {
-    let result = await this._listPrivateLinkResources(
-      resourceGroupName,
-      registryName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RegistriesListPrivateLinkResourcesResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listPrivateLinkResources(
+        resourceGroupName,
+        registryName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listPrivateLinkResourcesNext(
         resourceGroupName,
@@ -220,7 +266,9 @@ export class RegistriesImpl implements Registries {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -240,7 +288,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Copies an image to this container registry from the specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param parameters The parameters specifying the image to copy and the source container registry.
    * @param options The options parameters.
@@ -250,14 +298,14 @@ export class RegistriesImpl implements Registries {
     registryName: string,
     parameters: ImportImageParameters,
     options?: RegistriesImportImageOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -290,20 +338,23 @@ export class RegistriesImpl implements Registries {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, registryName, parameters, options },
-      importImageOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, registryName, parameters, options },
+      spec: importImageOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Copies an image to this container registry from the specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param parameters The parameters specifying the image to copy and the source container registry.
    * @param options The options parameters.
@@ -351,7 +402,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Lists all the container registries under the specified resource group.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param options The options parameters.
    */
   private _listByResourceGroup(
@@ -366,7 +417,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Gets the properties of the specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param options The options parameters.
    */
@@ -383,7 +434,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Creates a container registry with the specified parameters.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param registry The parameters for creating a container registry.
    * @param options The options parameters.
@@ -394,8 +445,8 @@ export class RegistriesImpl implements Registries {
     registry: Registry,
     options?: RegistriesCreateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<RegistriesCreateResponse>,
+    SimplePollerLike<
+      OperationState<RegistriesCreateResponse>,
       RegistriesCreateResponse
     >
   > {
@@ -405,7 +456,7 @@ export class RegistriesImpl implements Registries {
     ): Promise<RegistriesCreateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -438,20 +489,26 @@ export class RegistriesImpl implements Registries {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, registryName, registry, options },
-      createOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, registryName, registry, options },
+      spec: createOperationSpec
     });
+    const poller = await createHttpPoller<
+      RegistriesCreateResponse,
+      OperationState<RegistriesCreateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Creates a container registry with the specified parameters.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param registry The parameters for creating a container registry.
    * @param options The options parameters.
@@ -473,7 +530,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Deletes a container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param options The options parameters.
    */
@@ -481,14 +538,14 @@ export class RegistriesImpl implements Registries {
     resourceGroupName: string,
     registryName: string,
     options?: RegistriesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -521,20 +578,23 @@ export class RegistriesImpl implements Registries {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, registryName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, registryName, options },
+      spec: deleteOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Deletes a container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param options The options parameters.
    */
@@ -553,7 +613,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Updates a container registry with the specified parameters.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param registryUpdateParameters The parameters for updating a container registry.
    * @param options The options parameters.
@@ -564,8 +624,8 @@ export class RegistriesImpl implements Registries {
     registryUpdateParameters: RegistryUpdateParameters,
     options?: RegistriesUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<RegistriesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<RegistriesUpdateResponse>,
       RegistriesUpdateResponse
     >
   > {
@@ -575,7 +635,7 @@ export class RegistriesImpl implements Registries {
     ): Promise<RegistriesUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -608,20 +668,31 @@ export class RegistriesImpl implements Registries {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, registryName, registryUpdateParameters, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        registryName,
+        registryUpdateParameters,
+        options
+      },
+      spec: updateOperationSpec
     });
+    const poller = await createHttpPoller<
+      RegistriesUpdateResponse,
+      OperationState<RegistriesUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Updates a container registry with the specified parameters.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param registryUpdateParameters The parameters for updating a container registry.
    * @param options The options parameters.
@@ -643,7 +714,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Gets the quota usages for the specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param options The options parameters.
    */
@@ -660,7 +731,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Lists the private link resources for a container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param options The options parameters.
    */
@@ -676,8 +747,27 @@ export class RegistriesImpl implements Registries {
   }
 
   /**
+   * Gets a private link resource by a specified group name for a container registry.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
+   * @param registryName The name of the container registry.
+   * @param groupName The name of the private link resource.
+   * @param options The options parameters.
+   */
+  getPrivateLinkResource(
+    resourceGroupName: string,
+    registryName: string,
+    groupName: string,
+    options?: RegistriesGetPrivateLinkResourceOptionalParams
+  ): Promise<RegistriesGetPrivateLinkResourceResponse> {
+    return this.client.sendOperationRequest(
+      { resourceGroupName, registryName, groupName, options },
+      getPrivateLinkResourceOperationSpec
+    );
+  }
+
+  /**
    * Lists the login credentials for the specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param options The options parameters.
    */
@@ -694,7 +784,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Regenerates one of the login credentials for the specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param regenerateCredentialParameters Specifies name of the password which should be regenerated --
    *                                       password or password2.
@@ -719,7 +809,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * Generate keys for a token of a specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param generateCredentialsParameters The parameters for generating credentials.
    * @param options The options parameters.
@@ -730,8 +820,8 @@ export class RegistriesImpl implements Registries {
     generateCredentialsParameters: GenerateCredentialsParameters,
     options?: RegistriesGenerateCredentialsOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<RegistriesGenerateCredentialsResponse>,
+    SimplePollerLike<
+      OperationState<RegistriesGenerateCredentialsResponse>,
       RegistriesGenerateCredentialsResponse
     >
   > {
@@ -741,7 +831,7 @@ export class RegistriesImpl implements Registries {
     ): Promise<RegistriesGenerateCredentialsResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -774,25 +864,31 @@ export class RegistriesImpl implements Registries {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         registryName,
         generateCredentialsParameters,
         options
       },
-      generateCredentialsOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: generateCredentialsOperationSpec
     });
+    const poller = await createHttpPoller<
+      RegistriesGenerateCredentialsResponse,
+      OperationState<RegistriesGenerateCredentialsResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Generate keys for a token of a specified container registry.
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param generateCredentialsParameters The parameters for generating credentials.
    * @param options The options parameters.
@@ -825,8 +921,8 @@ export class RegistriesImpl implements Registries {
     runRequest: RunRequestUnion,
     options?: RegistriesScheduleRunOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<RegistriesScheduleRunResponse>,
+    SimplePollerLike<
+      OperationState<RegistriesScheduleRunResponse>,
       RegistriesScheduleRunResponse
     >
   > {
@@ -836,7 +932,7 @@ export class RegistriesImpl implements Registries {
     ): Promise<RegistriesScheduleRunResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -869,15 +965,20 @@ export class RegistriesImpl implements Registries {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, registryName, runRequest, options },
-      scheduleRunOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, registryName, runRequest, options },
+      spec: scheduleRunOperationSpec
+    });
+    const poller = await createHttpPoller<
+      RegistriesScheduleRunResponse,
+      OperationState<RegistriesScheduleRunResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -936,7 +1037,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * ListByResourceGroupNext
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param nextLink The nextLink from the previous successful call to the ListByResourceGroup method.
    * @param options The options parameters.
    */
@@ -953,7 +1054,7 @@ export class RegistriesImpl implements Registries {
 
   /**
    * ListPrivateLinkResourcesNext
-   * @param resourceGroupName The name of the resource group to which the container registry belongs.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param registryName The name of the container registry.
    * @param nextLink The nextLink from the previous successful call to the ListPrivateLinkResources
    *                 method.
@@ -1170,6 +1271,29 @@ const listPrivateLinkResourcesOperationSpec: coreClient.OperationSpec = {
   headerParameters: [Parameters.accept],
   serializer
 };
+const getPrivateLinkResourceOperationSpec: coreClient.OperationSpec = {
+  path:
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/privateLinkResources/{groupName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.PrivateLinkResource
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse
+    }
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.registryName,
+    Parameters.groupName
+  ],
+  headerParameters: [Parameters.accept],
+  serializer
+};
 const listCredentialsOperationSpec: coreClient.OperationSpec = {
   path:
     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/listCredentials",
@@ -1226,6 +1350,9 @@ const generateCredentialsOperationSpec: coreClient.OperationSpec = {
     },
     204: {
       bodyMapper: Mappers.GenerateCredentialsResult
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse
     }
   },
   requestBody: Parameters.generateCredentialsParameters,
@@ -1258,7 +1385,7 @@ const scheduleRunOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.Run
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   requestBody: Parameters.runRequest,
@@ -1266,8 +1393,8 @@ const scheduleRunOperationSpec: coreClient.OperationSpec = {
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.registryName
+    Parameters.registryName,
+    Parameters.resourceGroupName1
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
@@ -1282,15 +1409,15 @@ const getBuildSourceUploadUrlOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.SourceUploadDefinition
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
+      bodyMapper: Mappers.ErrorResponseForContainerRegistry
     }
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.registryName
+    Parameters.registryName,
+    Parameters.resourceGroupName1
   ],
   headerParameters: [Parameters.accept],
   serializer
@@ -1303,7 +1430,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.RegistryListResult
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -1320,7 +1446,6 @@ const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.RegistryListResult
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -1338,7 +1463,6 @@ const listPrivateLinkResourcesNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.PrivateLinkResourceListResult
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

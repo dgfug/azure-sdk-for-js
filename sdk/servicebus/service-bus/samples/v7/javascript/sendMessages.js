@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how the sendMessages() method can be used to send messages to Service Bus
@@ -14,13 +14,13 @@
  */
 
 const { ServiceBusClient } = require("@azure/service-bus");
+const { DefaultAzureCredential } = require("@azure/identity");
 
 // Load the .env file if it exists
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
 
 const firstSetOfMessages = [
@@ -28,7 +28,7 @@ const firstSetOfMessages = [
   { body: "Werner Heisenberg" },
   { body: "Marie Curie" },
   { body: "Steven Hawking" },
-  { body: "Isaac Newton" }
+  { body: "Isaac Newton" },
 ];
 
 const secondSetOfMessages = [
@@ -36,11 +36,12 @@ const secondSetOfMessages = [
   { body: "Michael Faraday" },
   { body: "Galileo Galilei" },
   { body: "Johannes Kepler" },
-  { body: "Nikolaus Kopernikus" }
+  { body: "Nikolaus Kopernikus" },
 ];
 
 async function main() {
-  const sbClient = new ServiceBusClient(connectionString);
+  const credential = new DefaultAzureCredential();
+  const sbClient = new ServiceBusClient(fqdn, credential);
 
   // createSender() can also be used to create a sender for a topic.
   const sender = sbClient.createSender(queueName);
@@ -69,6 +70,16 @@ async function main() {
     console.log(`Sending the last 5 scientists (as a ServiceBusMessageBatch)`);
     await sender.sendMessages(batch);
 
+    // Send a single message
+    console.log(`Sending one scientists`);
+    const message = {
+      contentType: "application/json",
+      subject: "Scientist",
+      body: { firstName: "Albert", lastName: "Einstein" },
+      timeToLive: 2 * 60 * 1000, // message expires in 2 minutes
+    };
+    await sender.sendMessages(message);
+
     // Close the sender
     console.log(`Done sending, closing...`);
     await sender.close();
@@ -81,3 +92,5 @@ main().catch((err) => {
   console.log("sendMessages Sample: Error occurred: ", err);
   process.exit(1);
 });
+
+module.exports = { main };

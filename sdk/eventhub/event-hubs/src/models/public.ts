@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions } from "../util/operationOptions";
-import { RetryOptions, WebSocketOptions } from "@azure/core-amqp";
+import type { RetryOptions, WebSocketOptions } from "@azure/core-amqp";
+import type { OperationOptions } from "../util/operationOptions.js";
 
 /**
  * The set of options to configure the behavior of `getEventHubProperties`.
@@ -43,7 +43,7 @@ export interface SendBatchOptions extends OperationOptions {
   /**
    * A value that is hashed to produce a partition assignment.
    * It guarantees that messages with the same partitionKey end up in the same partition.
-   * Specifying this will throw an error if the producer was created using a `paritionId`.
+   * Specifying this will throw an error if the producer was created using a `partitionId`.
    */
   partitionKey?: string;
 }
@@ -66,7 +66,7 @@ export interface SendOptions extends OperationOptions {
   /**
    * A value that is hashed to produce a partition assignment.
    * It guarantees that messages with the same partitionKey end up in the same partition.
-   * Specifying this will throw an error if the producer was created using a `paritionId`.
+   * Specifying this will throw an error if the producer was created using a `partitionId`.
    */
   partitionKey?: string;
 }
@@ -83,7 +83,7 @@ export enum CloseReason {
   /**
    * The EventProcessor was shutdown.
    */
-  Shutdown = "Shutdown"
+  Shutdown = "Shutdown",
 }
 
 /**
@@ -102,7 +102,7 @@ export enum CloseReason {
  *    - `retryDelayInMs`: Amount of time to wait in milliseconds before making the next attempt. When `mode` is set to `Exponential`,
  *       this is used to compute the exponentially increasing delays between retries. Default: 30000 milliseconds.
  *    - `timeoutInMs`: Amount of time in milliseconds to wait before the operation times out. This will trigger a retry if there are any
- *       retry attempts remaining. Minimum value: 60000 milliseconds.
+ *       retry attempts remaining. Default value: 60000 milliseconds.
  *
  * A simple usage can be `{ "maxRetries": 4 }`.
  *
@@ -139,6 +139,10 @@ export interface EventHubClientOptions {
    * Value that is appended to the built in user agent string that is passed to the Event Hubs service.
    */
   userAgent?: string;
+  /**
+   * A unique name used to identify the client.  If not provided, a GUID will be used as the identifier
+   */
+  identifier?: string;
 }
 
 /**
@@ -158,7 +162,7 @@ export interface EventHubClientOptions {
  *    - `retryDelayInMs`: Amount of time to wait in milliseconds before making the next attempt. When `mode` is set to `Exponential`,
  *       this is used to compute the exponentially increasing delays between retries. Default: 30000 milliseconds.
  *    - `timeoutInMs`: Amount of time in milliseconds to wait before the operation times out. This will trigger a retry if there are any
- *       retry attempts remaining. Minimum value: 60000 milliseconds.
+ *       retry attempts remaining. Default value: 60000 milliseconds.
  *
  * A simple usage can be `{ "maxRetries": 4 }`.
  *

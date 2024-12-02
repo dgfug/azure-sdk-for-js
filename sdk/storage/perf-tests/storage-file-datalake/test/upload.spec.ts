@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { v4 as generateUuid } from "uuid";
-import { PerfOptionDictionary } from "@azure/test-utils-perf";
+import { randomUUID } from "@azure/core-util";
+import { PerfOptionDictionary } from "@azure-tools/test-perf";
 import { DataLakeFileClient } from "@azure/storage-file-datalake";
 import { StorageDFSTest } from "./storageTest.spec";
 
@@ -19,13 +19,13 @@ export class StorageDFSUploadTest extends StorageDFSTest<StorageFileShareUploadT
       description: "Size in bytes",
       shortName: "sz",
       longName: "size",
-      defaultValue: 1024
-    }
+      defaultValue: 1024,
+    },
   };
 
   constructor() {
     super();
-    const fileName = generateUuid();
+    const fileName = randomUUID();
     this.fileClient = this.directoryClient.getFileClient(fileName);
     this.buffer = Buffer.alloc(this.parsedOptions.size.value!);
   }

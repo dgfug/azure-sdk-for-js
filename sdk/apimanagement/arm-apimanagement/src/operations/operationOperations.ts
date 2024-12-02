@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { OperationOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   TagResourceContract,
   OperationListByTagsNextOptionalParams,
@@ -23,19 +24,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing OperationOperations operations. */
 export class OperationOperationsImpl implements OperationOperations {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class OperationOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists a collection of operations associated with tags.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -60,12 +61,16 @@ export class OperationOperationsImpl implements OperationOperations {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByTagsPagingPage(
           resourceGroupName,
           serviceName,
           apiId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -75,16 +80,23 @@ export class OperationOperationsImpl implements OperationOperations {
     resourceGroupName: string,
     serviceName: string,
     apiId: string,
-    options?: OperationListByTagsOptionalParams
+    options?: OperationListByTagsOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<TagResourceContract[]> {
-    let result = await this._listByTags(
-      resourceGroupName,
-      serviceName,
-      apiId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: OperationListByTagsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByTags(
+        resourceGroupName,
+        serviceName,
+        apiId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByTagsNext(
         resourceGroupName,
@@ -94,7 +106,9 @@ export class OperationOperationsImpl implements OperationOperations {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -116,7 +130,7 @@ export class OperationOperationsImpl implements OperationOperations {
 
   /**
    * Lists a collection of operations associated with tags.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -136,7 +150,7 @@ export class OperationOperationsImpl implements OperationOperations {
 
   /**
    * ListByTagsNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API revision identifier. Must be unique in the current API Management service instance.
    *              Non-current revision has ;rev=n as a suffix where n is the revision number.
@@ -199,13 +213,6 @@ const listByTagsNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion,
-    Parameters.includeNotTaggedOperations
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

@@ -6,16 +6,20 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { SmsApiClient } from "../smsApiClient";
-import { SendMessageRequest, SmsSendOperationResponse } from "../models";
+import { tracingClient } from "../tracing.js";
+import { Sms } from "../operationsInterfaces/index.js";
+import * as coreClient from "@azure/core-client";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { SmsApiClient } from "../smsApiClient.js";
+import {
+  SendMessageRequest,
+  SmsSendOptionalParams,
+  SmsSendOperationResponse,
+} from "../models/index.js";
 
-/**
- * Class representing a Sms.
- */
-export class Sms {
+/** Class containing Sms operations. */
+export class SmsImpl implements Sms {
   private readonly client: SmsApiClient;
 
   /**
@@ -31,35 +35,37 @@ export class Sms {
    * @param sendMessageRequest Represents the body of the send message request.
    * @param options The options parameters.
    */
-  send(
+  async send(
     sendMessageRequest: SendMessageRequest,
-    options?: coreHttp.OperationOptions
+    options?: SmsSendOptionalParams,
   ): Promise<SmsSendOperationResponse> {
-    const operationOptions: coreHttp.RequestOptionsBase = coreHttp.operationOptionsToRequestOptionsBase(
-      options || {}
+    return tracingClient.withSpan(
+      "SmsApiClient.send",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { sendMessageRequest, options },
+          sendOperationSpec,
+        ) as Promise<SmsSendOperationResponse>;
+      },
     );
-    return this.client.sendOperationRequest(
-      { sendMessageRequest, options: operationOptions },
-      sendOperationSpec
-    ) as Promise<SmsSendOperationResponse>;
   }
 }
 // Operation Specifications
+const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
-const serializer = new coreHttp.Serializer(Mappers, /* isXml */ false);
-
-const sendOperationSpec: coreHttp.OperationSpec = {
+const sendOperationSpec: coreClient.OperationSpec = {
   path: "/sms",
   httpMethod: "POST",
   responses: {
     202: {
-      bodyMapper: Mappers.SmsSendResponse
-    }
+      bodyMapper: Mappers.SmsSendResponse,
+    },
   },
   requestBody: Parameters.sendMessageRequest,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint],
-  headerParameters: [Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };

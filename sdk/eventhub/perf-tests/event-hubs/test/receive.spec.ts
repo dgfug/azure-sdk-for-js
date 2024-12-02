@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /*
 # Overview
@@ -8,7 +8,7 @@ Measures the maximum throughput of `receiver.receive()` in package `@azure/event
 # Instructions
 1. Create an Event Hubs namespace with `Tier=Standard` and `Throughput Units=20`.
 2. Create an Event Hub inside the namespace.
-3. Set env vars `EVENTHUB_CONNECTION_STRING`, `EVENTHUB_NAME` and `CONSUMER_GROUP_NAME` in the .env file.
+3. Set env vars `EVENTHUB_CONNECTION_STRING`, `EVENTHUB_NAME` and `EVENTHUB_CONSUMER_GROUP_NAME` in the .env file.
 4. This test presumes that there are no messages in the event hub.
 5. `ts-node test/receive.spec.ts [eventBodySize] [numberOfEvents]`
 6. Example: `ts-node test/receive.spec.ts 1024 10000`
@@ -19,9 +19,9 @@ import {
   earliestEventPosition,
   EventData,
   PartitionContext,
-  EventHubProducerClient
+  EventHubProducerClient,
 } from "@azure/event-hubs";
-import { getEnvVar } from "@azure/test-utils-perf";
+import { getEnvVar } from "@azure-tools/test-perf";
 import moment from "moment";
 import { delay } from "@azure/core-amqp";
 
@@ -35,7 +35,7 @@ let _messages = 0;
 
 const connectionString = getEnvVar("EVENTHUB_CONNECTION_STRING");
 const eventHubName = getEnvVar("EVENTHUB_NAME");
-const consumerGroup = getEnvVar("CONSUMER_GROUP_NAME");
+const consumerGroup = getEnvVar("EVENTHUB_CONSUMER_GROUP_NAME");
 
 async function main(): Promise<void> {
   const eventBodySize = process.argv.length > 2 ? parseInt(process.argv[2]) : 1024;
@@ -58,7 +58,7 @@ async function main(): Promise<void> {
 async function sendBatch(
   numberOfEvents: number,
   partitionIds: string[],
-  eventBodySize: number
+  eventBodySize: number,
 ): Promise<void> {
   const _payload = Buffer.alloc(eventBodySize);
   const producer = new EventHubProducerClient(connectionString, eventHubName);
@@ -98,9 +98,9 @@ async function RunTest(maxBatchSize: number, messages: number): Promise<void> {
   consumerClient.subscribe(
     {
       processEvents,
-      processError
+      processError,
     },
-    { maxBatchSize, startPosition: earliestEventPosition }
+    { maxBatchSize, startPosition: earliestEventPosition },
   );
 }
 
@@ -132,7 +132,7 @@ async function WriteResults(messages: number): Promise<void> {
       currentMessages,
       currentElapsed,
       maxMessages,
-      maxElapsed
+      maxElapsed,
     );
   } while (_messages < messages);
 }
@@ -143,7 +143,7 @@ function WriteResult(
   currentMessages: number,
   currentElapsed: number,
   maxMessages: number,
-  maxElapsed: number
+  maxElapsed: number,
 ): void {
   const memoryUsage = process.memoryUsage();
   log(
@@ -152,7 +152,7 @@ function WriteResult(
       `\tAvg MPS\t${Math.round((totalMessages * 1000) / totalElapsed)}` +
       `\tMax MPS\t${Math.round((maxMessages * 1000) / maxElapsed)}` +
       `\tRSS\t${memoryUsage.rss}` +
-      `\tHeapUsed\t${memoryUsage.heapUsed}`
+      `\tHeapUsed\t${memoryUsage.heapUsed}`,
   );
 }
 

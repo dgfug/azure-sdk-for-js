@@ -9,7 +9,7 @@ export interface LockRenewalOperationInfo extends OperationInfo {
   /**
    * key - id, value - next renewal timer meant for the message/session-receiver
    */
-  lockRenewalTimers: { [key: string]: NodeJS.Timer };
+  lockRenewalTimers: { [key: string]: NodeJS.Timeout };
   /**
    * key - id, value - number of renewals
    */
@@ -49,7 +49,7 @@ export interface TrackedMessageIdsInfo {
 export function initializeOperationInfo(): OperationInfo {
   return {
     numberOfSuccesses: 0,
-    numberOfFailures: 0
+    numberOfFailures: 0,
   };
 }
 
@@ -61,19 +61,19 @@ export function generateMessage(useSessions: boolean, numberOfSessions: number) 
   return {
     body: `message ${Math.random()}`,
     sessionId: useSessions ? `session-${Math.ceil(Math.random() * numberOfSessions)}` : undefined,
-    messageId: uuidv4()
+    messageId: uuidv4(),
   };
 }
 
 export async function saveDiscrepanciesFromTrackedMessages(
-  trackedMessageIds: TrackedMessageIdsInfo
+  trackedMessageIds: TrackedMessageIdsInfo,
 ) {
   const output = {
     messages_sent_but_never_received: [] as string[],
     messages_not_sent_but_received: [] as string[],
     messages_sent_multiple_times: [] as string[],
     messages_sent_once_but_received_multiple_times: [] as string[],
-    messages_sent_once_and_received_once: [] as string[]
+    messages_sent_once_and_received_once: [] as string[],
   };
 
   for (const id in trackedMessageIds) {

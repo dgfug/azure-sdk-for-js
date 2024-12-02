@@ -1,13 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredentialOptions } from "../tokenCredentialOptions";
-import { AuthenticationRecord } from "../msal/types";
+import type { AuthenticationRecord } from "../msal/types.js";
+import type { AuthorityValidationOptions } from "./authorityValidationOptions.js";
+import type { MultiTenantTokenCredentialOptions } from "./multiTenantTokenCredentialOptions.js";
 
 /**
  * Common constructor options for the Identity credentials that requires user interaction.
  */
-export interface InteractiveCredentialOptions extends TokenCredentialOptions {
+export interface InteractiveCredentialOptions
+  extends MultiTenantTokenCredentialOptions,
+    AuthorityValidationOptions {
   /**
    * Result of a previous authentication that can be used to retrieve the cached credentials of each individual account.
    * This is necessary to provide in case the application wants to work with more than one account per

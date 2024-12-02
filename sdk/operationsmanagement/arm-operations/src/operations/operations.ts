@@ -6,12 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { Operations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { OperationsManagementClientContext } from "../operationsManagementClientContext";
+import { OperationsManagementClient } from "../operationsManagementClient";
 import {
   Operation,
   OperationsListOptionalParams,
@@ -21,13 +21,13 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Operations operations. */
 export class OperationsImpl implements Operations {
-  private readonly client: OperationsManagementClientContext;
+  private readonly client: OperationsManagementClient;
 
   /**
    * Initialize a new instance of the class Operations class.
    * @param client Reference to the service client
    */
-  constructor(client: OperationsManagementClientContext) {
+  constructor(client: OperationsManagementClient) {
     this.client = client;
   }
 
@@ -46,16 +46,21 @@ export class OperationsImpl implements Operations {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
       }
     };
   }
 
   private async *listPagingPage(
-    options?: OperationsListOptionalParams
+    options?: OperationsListOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<Operation[]> {
-    let result = await this._list(options);
+    let result: OperationsListResponse;
+    result = await this._list(options);
     yield result.value || [];
   }
 

@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { createHmac } from "crypto";
-import { RequestPolicy, RequestPolicyOptions } from "@azure/core-http";
+import type {
+  RequestPolicy,
+  RequestPolicyOptionsLike as RequestPolicyOptions,
+} from "@azure/core-http-compat";
 
 import { StorageSharedKeyCredentialPolicy } from "../policies/StorageSharedKeyCredentialPolicy";
 import { Credential } from "./Credential";
@@ -42,7 +45,7 @@ export class StorageSharedKeyCredential extends Credential {
    */
   public create(
     nextPolicy: RequestPolicy,
-    options: RequestPolicyOptions
+    options: RequestPolicyOptions,
   ): StorageSharedKeyCredentialPolicy {
     return new StorageSharedKeyCredentialPolicy(nextPolicy, options, this);
   }
@@ -53,8 +56,6 @@ export class StorageSharedKeyCredential extends Credential {
    * @param stringToSign -
    */
   public computeHMACSHA256(stringToSign: string): string {
-    return createHmac("sha256", this.accountKey)
-      .update(stringToSign, "utf8")
-      .digest("base64");
+    return createHmac("sha256", this.accountKey).update(stringToSign, "utf8").digest("base64");
   }
 }

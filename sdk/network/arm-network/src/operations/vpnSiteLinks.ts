@@ -6,32 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { VpnSiteLinks } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
   VpnSiteLink,
   VpnSiteLinksListByVpnSiteNextOptionalParams,
   VpnSiteLinksListByVpnSiteOptionalParams,
+  VpnSiteLinksListByVpnSiteResponse,
   VpnSiteLinksGetOptionalParams,
   VpnSiteLinksGetResponse,
-  VpnSiteLinksListByVpnSiteResponse,
-  VpnSiteLinksListByVpnSiteNextResponse
+  VpnSiteLinksListByVpnSiteNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing VpnSiteLinks operations. */
 export class VpnSiteLinksImpl implements VpnSiteLinks {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class VpnSiteLinks class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -44,12 +45,12 @@ export class VpnSiteLinksImpl implements VpnSiteLinks {
   public listByVpnSite(
     resourceGroupName: string,
     vpnSiteName: string,
-    options?: VpnSiteLinksListByVpnSiteOptionalParams
+    options?: VpnSiteLinksListByVpnSiteOptionalParams,
   ): PagedAsyncIterableIterator<VpnSiteLink> {
     const iter = this.listByVpnSitePagingAll(
       resourceGroupName,
       vpnSiteName,
-      options
+      options,
     );
     return {
       next() {
@@ -58,49 +59,62 @@ export class VpnSiteLinksImpl implements VpnSiteLinks {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByVpnSitePagingPage(
           resourceGroupName,
           vpnSiteName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByVpnSitePagingPage(
     resourceGroupName: string,
     vpnSiteName: string,
-    options?: VpnSiteLinksListByVpnSiteOptionalParams
+    options?: VpnSiteLinksListByVpnSiteOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<VpnSiteLink[]> {
-    let result = await this._listByVpnSite(
-      resourceGroupName,
-      vpnSiteName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VpnSiteLinksListByVpnSiteResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByVpnSite(
+        resourceGroupName,
+        vpnSiteName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByVpnSiteNext(
         resourceGroupName,
         vpnSiteName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByVpnSitePagingAll(
     resourceGroupName: string,
     vpnSiteName: string,
-    options?: VpnSiteLinksListByVpnSiteOptionalParams
+    options?: VpnSiteLinksListByVpnSiteOptionalParams,
   ): AsyncIterableIterator<VpnSiteLink> {
     for await (const page of this.listByVpnSitePagingPage(
       resourceGroupName,
       vpnSiteName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -117,11 +131,11 @@ export class VpnSiteLinksImpl implements VpnSiteLinks {
     resourceGroupName: string,
     vpnSiteName: string,
     vpnSiteLinkName: string,
-    options?: VpnSiteLinksGetOptionalParams
+    options?: VpnSiteLinksGetOptionalParams,
   ): Promise<VpnSiteLinksGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vpnSiteName, vpnSiteLinkName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -134,11 +148,11 @@ export class VpnSiteLinksImpl implements VpnSiteLinks {
   private _listByVpnSite(
     resourceGroupName: string,
     vpnSiteName: string,
-    options?: VpnSiteLinksListByVpnSiteOptionalParams
+    options?: VpnSiteLinksListByVpnSiteOptionalParams,
   ): Promise<VpnSiteLinksListByVpnSiteResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vpnSiteName, options },
-      listByVpnSiteOperationSpec
+      listByVpnSiteOperationSpec,
     );
   }
 
@@ -153,11 +167,11 @@ export class VpnSiteLinksImpl implements VpnSiteLinks {
     resourceGroupName: string,
     vpnSiteName: string,
     nextLink: string,
-    options?: VpnSiteLinksListByVpnSiteNextOptionalParams
+    options?: VpnSiteLinksListByVpnSiteNextOptionalParams,
   ): Promise<VpnSiteLinksListByVpnSiteNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vpnSiteName, nextLink, options },
-      listByVpnSiteNextOperationSpec
+      listByVpnSiteNextOperationSpec,
     );
   }
 }
@@ -165,16 +179,15 @@ export class VpnSiteLinksImpl implements VpnSiteLinks {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnSites/{vpnSiteName}/vpnSiteLinks/{vpnSiteLinkName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnSites/{vpnSiteName}/vpnSiteLinks/{vpnSiteLinkName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VpnSiteLink
+      bodyMapper: Mappers.VpnSiteLink,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -182,52 +195,50 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.vpnSiteName,
-    Parameters.vpnSiteLinkName
+    Parameters.vpnSiteLinkName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByVpnSiteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnSites/{vpnSiteName}/vpnSiteLinks",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnSites/{vpnSiteName}/vpnSiteLinks",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListVpnSiteLinksResult
+      bodyMapper: Mappers.ListVpnSiteLinksResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.vpnSiteName
+    Parameters.vpnSiteName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByVpnSiteNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListVpnSiteLinksResult
+      bodyMapper: Mappers.ListVpnSiteLinksResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.vpnSiteName
+    Parameters.vpnSiteName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

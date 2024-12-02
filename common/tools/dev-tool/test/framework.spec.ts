@@ -1,20 +1,18 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
-
+import { describe, it, assert, beforeAll } from "vitest";
 import { parseOptions } from "../src/framework/parseOptions";
 import { makeCommandInfo, subCommand, leafCommand } from "../src/framework/command";
-
-import { updateBackend } from "../src/util/printer";
+import { silenceLogger } from "./util";
 
 const simpleCommandInfo = makeCommandInfo("simple", "a simple command", {
   simpleArg: {
     kind: "string",
     description: "a simple argument",
     allowMultiple: false,
-    default: "foo"
-  }
+    default: "foo",
+  },
 });
 
 interface SimpleExpectedOptionsType {
@@ -24,33 +22,40 @@ interface SimpleExpectedOptionsType {
 }
 
 describe("Command Framework", () => {
-  before(() => {
-    // Silence the logger
-    updateBackend({
-      error: () => {},
-      warn: () => {},
-      info: () => {},
-      log: () => {}
-    });
-  });
+  beforeAll(silenceLogger);
 
   describe("subCommand", () => {
     it("simple dispatcher", async () => {
       const dispatcher = subCommand(
         { name: "test", description: "a sub-command dispatcher" },
         {
-          sub: async () => ({
-            commandInfo: { name: "sub", description: "a leaf command" },
-            default: leafCommand({ name: "sub", description: "a leaf command" }, async () => true)
-          }),
-          fail: async () => ({
-            commandInfo: { name: "fail", description: "a command that fails" },
-            default: leafCommand(
-              { name: "fail", description: "a command that fails" },
-              async () => false
-            )
-          })
-        }
+          sub: () =>
+            new Promise((resolve) => {
+              resolve({
+                commandInfo: { name: "sub", description: "a leaf command" },
+                default: leafCommand(
+                  { name: "sub", description: "a leaf command" },
+                  () =>
+                    new Promise((resolve) => {
+                      resolve(true);
+                    }),
+                ),
+              });
+            }),
+          fail: () =>
+            new Promise((resolve) => {
+              resolve({
+                commandInfo: { name: "fail", description: "a command that fails" },
+                default: leafCommand(
+                  { name: "fail", description: "a command that fails" },
+                  () =>
+                    new Promise((resolve) => {
+                      resolve(false);
+                    }),
+                ),
+              });
+            }),
+        },
       );
 
       assert.isTrue(await dispatcher("sub"));
@@ -77,9 +82,32 @@ describe("Command Framework", () => {
     it("simple", () => {
       const opts: SimpleExpectedOptionsType = parseOptions(
         ["--simpleArg", "test"],
-        simpleCommandInfo.options
+        simpleCommandInfo.options,
       );
       assert.equal(opts.simpleArg, "test");
+    });
+
+    it("nested", async () => {
+      const nestedOptions = {
+        name: "nested",
+        description: "",
+        options: { internal: { kind: "boolean", description: "" } },
+      } as const;
+      const command = subCommand(
+        { name: "top-level", description: "" },
+        {
+          nested: () =>
+            Promise.resolve({
+              default: leafCommand(nestedOptions, (options) => {
+                assert.deepStrictEqual(options["--"], ["test1", "test2"]);
+                return Promise.resolve(true);
+              }),
+              commandInfo: nestedOptions,
+            }),
+        },
+      );
+
+      assert.isTrue(await command("nested", "--internal", "--", "test1", "test2"));
     });
   });
 });

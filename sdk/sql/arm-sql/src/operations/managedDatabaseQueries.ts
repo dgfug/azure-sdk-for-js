@@ -6,33 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ManagedDatabaseQueries } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   QueryStatistics,
   ManagedDatabaseQueriesListByQueryNextOptionalParams,
   ManagedDatabaseQueriesListByQueryOptionalParams,
+  ManagedDatabaseQueriesListByQueryResponse,
   ManagedDatabaseQueriesGetOptionalParams,
   ManagedDatabaseQueriesGetResponse,
-  ManagedDatabaseQueriesListByQueryResponse,
-  ManagedDatabaseQueriesListByQueryNextResponse
+  ManagedDatabaseQueriesListByQueryNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ManagedDatabaseQueries operations. */
 export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ManagedDatabaseQueries class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -50,14 +50,14 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
     managedInstanceName: string,
     databaseName: string,
     queryId: string,
-    options?: ManagedDatabaseQueriesListByQueryOptionalParams
+    options?: ManagedDatabaseQueriesListByQueryOptionalParams,
   ): PagedAsyncIterableIterator<QueryStatistics> {
     const iter = this.listByQueryPagingAll(
       resourceGroupName,
       managedInstanceName,
       databaseName,
       queryId,
-      options
+      options,
     );
     return {
       next() {
@@ -66,15 +66,19 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByQueryPagingPage(
           resourceGroupName,
           managedInstanceName,
           databaseName,
           queryId,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -83,17 +87,24 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
     managedInstanceName: string,
     databaseName: string,
     queryId: string,
-    options?: ManagedDatabaseQueriesListByQueryOptionalParams
+    options?: ManagedDatabaseQueriesListByQueryOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<QueryStatistics[]> {
-    let result = await this._listByQuery(
-      resourceGroupName,
-      managedInstanceName,
-      databaseName,
-      queryId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ManagedDatabaseQueriesListByQueryResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByQuery(
+        resourceGroupName,
+        managedInstanceName,
+        databaseName,
+        queryId,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByQueryNext(
         resourceGroupName,
@@ -101,10 +112,12 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
         databaseName,
         queryId,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -113,14 +126,14 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
     managedInstanceName: string,
     databaseName: string,
     queryId: string,
-    options?: ManagedDatabaseQueriesListByQueryOptionalParams
+    options?: ManagedDatabaseQueriesListByQueryOptionalParams,
   ): AsyncIterableIterator<QueryStatistics> {
     for await (const page of this.listByQueryPagingPage(
       resourceGroupName,
       managedInstanceName,
       databaseName,
       queryId,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -140,7 +153,7 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
     managedInstanceName: string,
     databaseName: string,
     queryId: string,
-    options?: ManagedDatabaseQueriesGetOptionalParams
+    options?: ManagedDatabaseQueriesGetOptionalParams,
   ): Promise<ManagedDatabaseQueriesGetResponse> {
     return this.client.sendOperationRequest(
       {
@@ -148,9 +161,9 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
         managedInstanceName,
         databaseName,
         queryId,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -168,7 +181,7 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
     managedInstanceName: string,
     databaseName: string,
     queryId: string,
-    options?: ManagedDatabaseQueriesListByQueryOptionalParams
+    options?: ManagedDatabaseQueriesListByQueryOptionalParams,
   ): Promise<ManagedDatabaseQueriesListByQueryResponse> {
     return this.client.sendOperationRequest(
       {
@@ -176,9 +189,9 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
         managedInstanceName,
         databaseName,
         queryId,
-        options
+        options,
       },
-      listByQueryOperationSpec
+      listByQueryOperationSpec,
     );
   }
 
@@ -198,7 +211,7 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
     databaseName: string,
     queryId: string,
     nextLink: string,
-    options?: ManagedDatabaseQueriesListByQueryNextOptionalParams
+    options?: ManagedDatabaseQueriesListByQueryNextOptionalParams,
   ): Promise<ManagedDatabaseQueriesListByQueryNextResponse> {
     return this.client.sendOperationRequest(
       {
@@ -207,9 +220,9 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
         databaseName,
         queryId,
         nextLink,
-        options
+        options,
       },
-      listByQueryNextOperationSpec
+      listByQueryNextOperationSpec,
     );
   }
 }
@@ -217,42 +230,40 @@ export class ManagedDatabaseQueriesImpl implements ManagedDatabaseQueries {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/databases/{databaseName}/queries/{queryId}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/databases/{databaseName}/queries/{queryId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstanceQuery
+      bodyMapper: Mappers.ManagedInstanceQuery,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.databaseName,
     Parameters.managedInstanceName,
-    Parameters.queryId
+    Parameters.queryId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByQueryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/databases/{databaseName}/queries/{queryId}/statistics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/databases/{databaseName}/queries/{queryId}/statistics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstanceQueryStatistics
+      bodyMapper: Mappers.ManagedInstanceQueryStatistics,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [
-    Parameters.apiVersion2,
+    Parameters.apiVersion3,
     Parameters.startTime,
     Parameters.endTime,
-    Parameters.interval
+    Parameters.interval,
   ],
   urlParameters: [
     Parameters.$host,
@@ -260,26 +271,20 @@ const listByQueryOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.databaseName,
     Parameters.managedInstanceName,
-    Parameters.queryId
+    Parameters.queryId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByQueryNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstanceQueryStatistics
+      bodyMapper: Mappers.ManagedInstanceQueryStatistics,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [
-    Parameters.apiVersion2,
-    Parameters.startTime,
-    Parameters.endTime,
-    Parameters.interval
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -287,8 +292,8 @@ const listByQueryNextOperationSpec: coreClient.OperationSpec = {
     Parameters.databaseName,
     Parameters.nextLink,
     Parameters.managedInstanceName,
-    Parameters.queryId
+    Parameters.queryId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

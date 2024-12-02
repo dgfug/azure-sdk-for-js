@@ -1,207 +1,304 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import { assertEnvironmentVariable, isLiveMode, isPlaybackMode } from "@azure-tools/test-recorder";
+import { computeSha256Hash, delay, isDefined } from "@azure/core-util";
+import type { OpenAIClient } from "@azure/openai";
+import { assert } from "chai";
+import type {
   SearchClient,
+  SearchField,
+  SearchIndex,
   SearchIndexClient,
   SearchIndexerClient,
-  GeographyPoint,
-  SearchIndex,
-  KnownAnalyzerNames
+  VectorSearchAlgorithmConfiguration,
+  VectorSearchCompression,
+  VectorSearchProfile,
+  VectorSearchVectorizer,
 } from "../../../src";
-import { Hotel } from "./interfaces";
-import { delay } from "../../../src/serviceUtils";
-import { assert } from "chai";
+import { GeographyPoint, KnownAnalyzerNames } from "../../../src";
+import type { Hotel } from "./interfaces";
 
-export const WAIT_TIME = 4000;
+export const WAIT_TIME = isPlaybackMode() ? 0 : 4000;
 
 // eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
-export async function createIndex(client: SearchIndexClient, name: string): Promise<void> {
+export async function createIndex(
+  client: SearchIndexClient,
+  name: string,
+  serviceVersion: string,
+): Promise<SearchIndex> {
+  const isPreview = serviceVersion.toLowerCase().includes("preview");
+
+  const vectorizers: VectorSearchVectorizer[] = [
+    {
+      kind: "azureOpenAI",
+      vectorizerName: "vector-search-vectorizer",
+      parameters: {
+        deploymentId: assertEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT_NAME"),
+        resourceUrl: assertEnvironmentVariable("AZURE_OPENAI_ENDPOINT"),
+        modelName: "text-embedding-ada-002",
+      },
+    },
+  ];
+  await Promise.all(vectorizers.map((v) => renameUniquelyInPlace("vectorizerName", v)));
+  const [azureOpenAiVectorizerName] = vectorizers.map((v) => v.vectorizerName);
+
+  const algorithmConfigurations: VectorSearchAlgorithmConfiguration[] = [
+    {
+      name: "vector-search-algorithm-configuration",
+      kind: "hnsw",
+      parameters: { metric: "dotProduct" },
+    },
+    {
+      name: "vector-search-algorithm-configuration",
+      kind: "exhaustiveKnn",
+      parameters: { metric: "euclidean" },
+    },
+  ];
+  await Promise.all(algorithmConfigurations.map((c) => renameUniquelyInPlace("name", c)));
+  const [hnswAlgorithmConfigurationName, exhaustiveKnnAlgorithmConfigurationName] =
+    algorithmConfigurations.map((c) => c.name);
+
+  const compressionConfigurations: VectorSearchCompression[] = [
+    {
+      compressionName: "vector-search-compression-configuration",
+      kind: "scalarQuantization",
+      parameters: { quantizedDataType: "int8" },
+      rerankWithOriginalVectors: true,
+    },
+  ];
+  await Promise.all(
+    compressionConfigurations.map((c) => renameUniquelyInPlace("compressionName", c)),
+  );
+  const [scalarQuantizationCompressionConfigurationName] = compressionConfigurations.map(
+    (c) => c.compressionName,
+  );
+
+  const vectorSearchProfiles: VectorSearchProfile[] = [
+    {
+      name: "vector-search-profile",
+      vectorizerName: isPreview ? azureOpenAiVectorizerName : undefined,
+      algorithmConfigurationName: exhaustiveKnnAlgorithmConfigurationName,
+    },
+    {
+      name: "vector-search-profile",
+      vectorizerName: isPreview ? azureOpenAiVectorizerName : undefined,
+      algorithmConfigurationName: hnswAlgorithmConfigurationName,
+      compressionName: isPreview ? scalarQuantizationCompressionConfigurationName : undefined,
+    },
+  ];
+  await Promise.all(vectorSearchProfiles.map((p) => renameUniquelyInPlace("name", p)));
+  const [azureOpenAiVectorSearchProfileName, azureOpenAiCompressedVectorSearchProfileName] =
+    vectorSearchProfiles.map((p) => p.name);
+
+  const vectorFields: SearchField[] = [
+    {
+      type: "Collection(Edm.Single)",
+      name: "vectorDescription",
+      searchable: true,
+      vectorSearchDimensions: 1536,
+      hidden: true,
+      vectorSearchProfileName: azureOpenAiVectorSearchProfileName,
+    },
+    {
+      type: "Collection(Edm.Half)",
+      name: "compressedVectorDescription",
+      searchable: true,
+      hidden: true,
+      vectorSearchDimensions: 1536,
+      vectorSearchProfileName: azureOpenAiCompressedVectorSearchProfileName,
+      stored: false,
+    },
+  ];
+
+  const fields: SearchField[] = [
+    {
+      type: "Edm.String",
+      name: "hotelId",
+      key: true,
+      filterable: true,
+      sortable: true,
+    },
+    {
+      type: "Edm.String",
+      name: "hotelName",
+      searchable: true,
+      filterable: true,
+      sortable: true,
+    },
+    {
+      type: "Edm.String",
+      name: "description",
+      searchable: true,
+      analyzerName: KnownAnalyzerNames.EnLucene,
+    },
+    {
+      type: "Edm.String",
+      name: "descriptionFr",
+      searchable: true,
+      analyzerName: KnownAnalyzerNames.FrLucene,
+    },
+    {
+      type: "Edm.String",
+      name: "category",
+      searchable: true,
+      filterable: true,
+      sortable: true,
+      facetable: true,
+    },
+    {
+      type: "Collection(Edm.String)",
+      name: "tags",
+      searchable: true,
+      filterable: true,
+      facetable: true,
+    },
+    {
+      type: "Edm.Boolean",
+      name: "parkingIncluded",
+      filterable: true,
+      sortable: true,
+      facetable: true,
+    },
+    {
+      type: "Edm.Boolean",
+      name: "smokingAllowed",
+      filterable: true,
+      sortable: true,
+      facetable: true,
+    },
+    {
+      type: "Edm.DateTimeOffset",
+      name: "lastRenovationDate",
+      filterable: true,
+      sortable: true,
+      facetable: true,
+    },
+    {
+      type: "Edm.Double",
+      name: "rating",
+      filterable: true,
+      sortable: true,
+      facetable: true,
+    },
+    {
+      type: "Edm.GeographyPoint",
+      name: "location",
+      filterable: true,
+      sortable: true,
+    },
+    {
+      type: "Edm.ComplexType",
+      name: "address",
+      fields: [
+        {
+          type: "Edm.String",
+          name: "streetAddress",
+          searchable: true,
+        },
+        {
+          type: "Edm.String",
+          name: "city",
+          searchable: true,
+          filterable: true,
+          sortable: true,
+          facetable: true,
+        },
+        {
+          type: "Edm.String",
+          name: "stateProvince",
+          searchable: true,
+          filterable: true,
+          sortable: true,
+          facetable: true,
+        },
+        {
+          type: "Edm.String",
+          name: "country",
+          searchable: true,
+          filterable: true,
+          sortable: true,
+          facetable: true,
+        },
+        {
+          type: "Edm.String",
+          name: "postalCode",
+          searchable: true,
+          filterable: true,
+          sortable: true,
+          facetable: true,
+        },
+      ],
+    },
+    {
+      type: "Collection(Edm.ComplexType)",
+      name: "rooms",
+      fields: [
+        {
+          type: "Edm.String",
+          name: "description",
+          searchable: true,
+          analyzerName: KnownAnalyzerNames.EnLucene,
+        },
+        {
+          type: "Edm.String",
+          name: "descriptionFr",
+          searchable: true,
+          analyzerName: KnownAnalyzerNames.FrLucene,
+        },
+        {
+          type: "Edm.String",
+          name: "type",
+          searchable: true,
+          filterable: true,
+          facetable: true,
+        },
+        {
+          type: "Edm.Double",
+          name: "baseRate",
+          filterable: true,
+          facetable: true,
+        },
+        {
+          type: "Edm.String",
+          name: "bedOptions",
+          searchable: true,
+          filterable: true,
+          facetable: true,
+        },
+        {
+          type: "Edm.Int32",
+          name: "sleepsCount",
+          filterable: true,
+          facetable: true,
+        },
+        {
+          type: "Edm.Boolean",
+          name: "smokingAllowed",
+          filterable: true,
+          facetable: true,
+        },
+        {
+          type: "Collection(Edm.String)",
+          name: "tags",
+          searchable: true,
+          filterable: true,
+          facetable: true,
+        },
+      ],
+    },
+    ...vectorFields,
+  ];
+
   const hotelIndex: SearchIndex = {
     name,
-    fields: [
-      {
-        type: "Edm.String",
-        name: "hotelId",
-        key: true,
-        filterable: true,
-        sortable: true
-      },
-      {
-        type: "Edm.String",
-        name: "hotelName",
-        searchable: true,
-        filterable: true,
-        sortable: true
-      },
-      {
-        type: "Edm.String",
-        name: "description",
-        searchable: true,
-        analyzerName: KnownAnalyzerNames.EnLucene
-      },
-      {
-        type: "Edm.String",
-        name: "descriptionFr",
-        searchable: true,
-        analyzerName: KnownAnalyzerNames.FrLucene
-      },
-      {
-        type: "Edm.String",
-        name: "category",
-        searchable: true,
-        filterable: true,
-        sortable: true,
-        facetable: true
-      },
-      {
-        type: "Collection(Edm.String)",
-        name: "tags",
-        searchable: true,
-        filterable: true,
-        facetable: true
-      },
-      {
-        type: "Edm.Boolean",
-        name: "parkingIncluded",
-        filterable: true,
-        sortable: true,
-        facetable: true
-      },
-      {
-        type: "Edm.Boolean",
-        name: "smokingAllowed",
-        filterable: true,
-        sortable: true,
-        facetable: true
-      },
-      {
-        type: "Edm.DateTimeOffset",
-        name: "lastRenovationDate",
-        filterable: true,
-        sortable: true,
-        facetable: true
-      },
-      {
-        type: "Edm.Double",
-        name: "rating",
-        filterable: true,
-        sortable: true,
-        facetable: true
-      },
-      {
-        type: "Edm.GeographyPoint",
-        name: "location",
-        filterable: true,
-        sortable: true
-      },
-      {
-        type: "Edm.ComplexType",
-        name: "address",
-        fields: [
-          {
-            type: "Edm.String",
-            name: "streetAddress",
-            searchable: true
-          },
-          {
-            type: "Edm.String",
-            name: "city",
-            searchable: true,
-            filterable: true,
-            sortable: true,
-            facetable: true
-          },
-          {
-            type: "Edm.String",
-            name: "stateProvince",
-            searchable: true,
-            filterable: true,
-            sortable: true,
-            facetable: true
-          },
-          {
-            type: "Edm.String",
-            name: "country",
-            searchable: true,
-            filterable: true,
-            sortable: true,
-            facetable: true
-          },
-          {
-            type: "Edm.String",
-            name: "postalCode",
-            searchable: true,
-            filterable: true,
-            sortable: true,
-            facetable: true
-          }
-        ]
-      },
-      {
-        type: "Collection(Edm.ComplexType)",
-        name: "rooms",
-        fields: [
-          {
-            type: "Edm.String",
-            name: "description",
-            searchable: true,
-            analyzerName: KnownAnalyzerNames.EnLucene
-          },
-          {
-            type: "Edm.String",
-            name: "descriptionFr",
-            searchable: true,
-            analyzerName: KnownAnalyzerNames.FrLucene
-          },
-          {
-            type: "Edm.String",
-            name: "type",
-            searchable: true,
-            filterable: true,
-            facetable: true
-          },
-          {
-            type: "Edm.Double",
-            name: "baseRate",
-            filterable: true,
-            facetable: true
-          },
-          {
-            type: "Edm.String",
-            name: "bedOptions",
-            searchable: true,
-            filterable: true,
-            facetable: true
-          },
-          {
-            type: "Edm.Int32",
-            name: "sleepsCount",
-            filterable: true,
-            facetable: true
-          },
-          {
-            type: "Edm.Boolean",
-            name: "smokingAllowed",
-            filterable: true,
-            facetable: true
-          },
-          {
-            type: "Collection(Edm.String)",
-            name: "tags",
-            searchable: true,
-            filterable: true,
-            facetable: true
-          }
-        ]
-      }
-    ],
+    fields,
     suggesters: [
       {
         name: "sg",
         searchMode: "analyzingInfixMatching",
-        sourceFields: ["description", "hotelName"]
-      }
+        sourceFields: ["description", "hotelName"],
+      },
     ],
     scoringProfiles: [
       {
@@ -214,22 +311,44 @@ export async function createIndex(client: SearchIndexClient, name: string): Prom
             boost: 2,
             parameters: {
               referencePointParameter: "myloc",
-              boostingDistance: 100
-            }
-          }
-        ]
-      }
+              boostingDistance: 100,
+            },
+          },
+        ],
+      },
     ],
     corsOptions: {
       // for browser tests
-      allowedOrigins: ["*"]
-    }
+      allowedOrigins: ["*"],
+    },
+    vectorSearch: {
+      algorithms: algorithmConfigurations,
+      vectorizers: isPreview ? vectorizers : undefined,
+      compressions: isPreview ? compressionConfigurations : undefined,
+      profiles: vectorSearchProfiles,
+    },
+    semanticSearch: {
+      configurations: [
+        {
+          name: "semantic-configuration",
+          prioritizedFields: {
+            titleField: { name: "hotelName" },
+            contentFields: [{ name: "description" }],
+            keywordsFields: [{ name: "tags" }],
+          },
+        },
+      ],
+    },
   };
-  await client.createIndex(hotelIndex);
+
+  return client.createIndex(hotelIndex);
 }
 
 // eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
-export async function populateIndex(client: SearchClient<Hotel>): Promise<void> {
+export async function populateIndex(
+  client: SearchClient<Hotel>,
+  openAIClient: OpenAIClient,
+): Promise<void> {
   // test data from https://github.com/Azure/azure-sdk-for-net/blob/master/sdk/search/Azure.Search.Documents/tests/Utilities/SearchResources.Data.cs
   const testDocuments: Hotel[] = [
     {
@@ -248,12 +367,12 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
       tags: ["pool", "view", "wifi", "concierge"],
       parkingIncluded: false,
       smokingAllowed: false,
-      lastRenovationDate: new Date(2010, 5, 27),
+      lastRenovationDate: new Date(Date.UTC(2010, 5, 27)),
       rating: 5,
       location: new GeographyPoint({
         longitude: -122.131577,
-        latitude: 47.678581
-      })
+        latitude: 47.678581,
+      }),
     },
     {
       hotelId: "2",
@@ -264,12 +383,12 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
       tags: ["motel", "budget"],
       parkingIncluded: true,
       smokingAllowed: true,
-      lastRenovationDate: new Date(1982, 3, 28),
+      lastRenovationDate: new Date(Date.UTC(1982, 3, 28)),
       rating: 1,
       location: new GeographyPoint({
         longitude: -122.131577,
-        latitude: 49.678581
-      })
+        latitude: 49.678581,
+      }),
     },
     {
       hotelId: "3",
@@ -280,12 +399,12 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
       tags: ["wifi", "budget"],
       parkingIncluded: true,
       smokingAllowed: false,
-      lastRenovationDate: new Date(1995, 6, 1),
+      lastRenovationDate: new Date(Date.UTC(1995, 6, 1)),
       rating: 4,
       location: new GeographyPoint({
         longitude: -122.131577,
-        latitude: 46.678581
-      })
+        latitude: 46.678581,
+      }),
     },
     {
       hotelId: "4",
@@ -296,12 +415,12 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
       tags: ["wifi", "budget"],
       parkingIncluded: true,
       smokingAllowed: false,
-      lastRenovationDate: new Date(1995, 6, 1),
+      lastRenovationDate: new Date(Date.UTC(1995, 6, 1)),
       rating: 4,
       location: new GeographyPoint({
         longitude: -122.131577,
-        latitude: 46.678581
-      })
+        latitude: 46.678581,
+      }),
     },
     {
       hotelId: "5",
@@ -312,30 +431,30 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
       tags: ["wifi", "budget"],
       parkingIncluded: true,
       smokingAllowed: false,
-      lastRenovationDate: new Date(2012, 7, 12),
+      lastRenovationDate: new Date(Date.UTC(2012, 7, 12)),
       rating: 4,
       location: new GeographyPoint({
         longitude: -122.131577,
-        latitude: 48.678581
-      })
+        latitude: 48.678581,
+      }),
     },
     {
       hotelId: "6",
       description: "Surprisingly expensive. Model suites have an ocean-view.",
-      lastRenovationDate: null
+      lastRenovationDate: null,
     },
     {
       hotelId: "7",
       description: "Modern architecture, very polite staff and very clean. Also very affordable.",
       descriptionFr: "Architecture moderne, personnel poli et très propre. Aussi très abordable.",
-      hotelName: "Modern Stay"
+      hotelName: "Modern Stay",
     },
     {
       hotelId: "8",
       description:
         "Has some road noise and is next to the very police station. Bathrooms had morel coverings.",
       descriptionFr:
-        "Il y a du bruit de la route et se trouve à côté de la station de police. Les salles de bain avaient des revêtements de morilles."
+        "Il y a du bruit de la route et se trouve à côté de la station de police. Les salles de bain avaient des revêtements de morilles.",
     },
     {
       hotelId: "9",
@@ -348,18 +467,18 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
       tags: ["pool", "air conditioning", "concierge"],
       parkingIncluded: false,
       smokingAllowed: true,
-      lastRenovationDate: new Date(1970, 0, 18),
+      lastRenovationDate: new Date(Date.UTC(1970, 0, 18)),
       rating: 4,
       location: new GeographyPoint({
         longitude: -73.975403,
-        latitude: 40.760586
+        latitude: 40.760586,
       }),
       address: {
         streetAddress: "677 5th Ave",
         city: "New York",
         stateProvince: "NY",
         country: "USA",
-        postalCode: "10022"
+        postalCode: "10022",
       },
       rooms: [
         {
@@ -370,7 +489,7 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
           bedOptions: "1 Queen Bed",
           sleepsCount: 2,
           smokingAllowed: true,
-          tags: ["vcr/dvd"]
+          tags: ["vcr/dvd"],
         },
         {
           description: "Budget Room, 1 King Bed (Mountain View)",
@@ -380,9 +499,9 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
           bedOptions: "1 King Bed",
           sleepsCount: 2,
           smokingAllowed: true,
-          tags: ["vcr/dvd", "jacuzzi tub"]
-        }
-      ]
+          tags: ["vcr/dvd", "jacuzzi tub"],
+        },
+      ],
     },
     {
       hotelId: "10",
@@ -395,18 +514,18 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
       tags: ["24-hour front desk service", "coffee in lobby", "restaurant"],
       parkingIncluded: false,
       smokingAllowed: true,
-      lastRenovationDate: new Date(1999, 8, 6),
+      lastRenovationDate: new Date(Date.UTC(1999, 8, 6)),
       rating: 3,
       location: new GeographyPoint({
         longitude: -78.940483,
-        latitude: 35.90416
+        latitude: 35.90416,
       }),
       address: {
         streetAddress: "6910 Fayetteville Rd",
         city: "Durham",
         stateProvince: "NC",
         country: "USA",
-        postalCode: "27713"
+        postalCode: "27713",
       },
       rooms: [
         {
@@ -417,7 +536,7 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
           bedOptions: "1 King Bed",
           sleepsCount: 2,
           smokingAllowed: true,
-          tags: ["coffee maker"]
+          tags: ["coffee maker"],
         },
         {
           description: "Budget Room, 1 Queen Bed (Amenities)",
@@ -427,11 +546,15 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
           bedOptions: "1 Queen Bed",
           sleepsCount: 2,
           smokingAllowed: false,
-          tags: ["coffee maker"]
-        }
-      ]
-    }
+          tags: ["coffee maker"],
+        },
+      ],
+    },
   ];
+
+  if (!isLiveMode()) {
+    await addVectorDescriptions(testDocuments, openAIClient);
+  }
 
   await client.uploadDocuments(testDocuments);
 
@@ -442,6 +565,24 @@ export async function populateIndex(client: SearchClient<Hotel>): Promise<void> 
   }
 
   await delay(WAIT_TIME);
+}
+
+async function addVectorDescriptions(
+  documents: Hotel[],
+  openAIClient: OpenAIClient,
+): Promise<void> {
+  const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME ?? "deployment-name";
+
+  const descriptions = documents.map(({ description }) => description).filter(isDefined);
+
+  const embeddingsArray = await openAIClient.getEmbeddings(deploymentName, descriptions);
+
+  embeddingsArray.data.forEach((embeddingItem) => {
+    const { embedding, index } = embeddingItem;
+    const document = documents[index];
+    document.vectorDescription = embedding;
+    document.compressedVectorDescription = embedding;
+  });
 }
 
 // eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
@@ -456,7 +597,7 @@ export async function createSkillsets(client: SearchIndexerClient): Promise<void
   const testCaseNames: string[] = ["my-azureblob-skillset-1", "my-azureblob-skillset-2"];
   const skillSetNames: string[] = await client.listSkillsetsNames();
   const unCommonElements: string[] = skillSetNames.filter(
-    (element) => !testCaseNames.includes(element)
+    (element) => !testCaseNames.includes(element),
   );
   if (unCommonElements.length > 0) {
     // There are skillsets which are already existing in this subscription.
@@ -480,25 +621,25 @@ export async function createSkillsets(client: SearchIndexerClient): Promise<void
           inputs: [
             {
               name: "text",
-              source: "/document/merged_content"
+              source: "/document/merged_content",
             },
             {
               name: "languageCode",
-              source: "/document/language"
-            }
+              source: "/document/language",
+            },
           ],
           outputs: [
             {
               name: "persons",
-              targetName: "people"
+              targetName: "people",
             },
             {
               name: "locations",
-              targetName: "locations"
-            }
-          ]
-        }
-      ]
+              targetName: "locations",
+            },
+          ],
+        },
+      ],
     });
   }
 }
@@ -513,12 +654,12 @@ export async function deleteSkillsets(client: SearchIndexerClient): Promise<void
 // eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
 export async function createIndexers(
   client: SearchIndexerClient,
-  targetIndexName: string
+  targetIndexName: string,
 ): Promise<void> {
   const testCaseNames: string[] = ["my-azure-indexer-1", "my-azure-indexer-2"];
   const indexerNames: string[] = await client.listIndexersNames();
   const unCommonElements: string[] = indexerNames.filter(
-    (element) => !testCaseNames.includes(element)
+    (element) => !testCaseNames.includes(element),
   );
   if (unCommonElements.length > 0) {
     // There are indexers which are already existing in this subscription.
@@ -538,7 +679,7 @@ export async function createIndexers(
       description: "Description for Sample Indexer",
       dataSourceName: "my-data-source-1",
       targetIndexName: targetIndexName,
-      isDisabled: false
+      isDisabled: false,
     });
   }
 }
@@ -553,7 +694,7 @@ export async function createSynonymMaps(client: SearchIndexClient): Promise<void
   const testCaseNames: string[] = ["my-azure-synonymmap-1", "my-azure-synonymmap-2"];
   const synonymMapNames: string[] = await client.listSynonymMapsNames();
   const unCommonElements: string[] = synonymMapNames.filter(
-    (element) => !testCaseNames.includes(element)
+    (element) => !testCaseNames.includes(element),
   );
   if (unCommonElements.length > 0) {
     // There are synonym maps which are already existing in this subscription.
@@ -570,7 +711,7 @@ export async function createSynonymMaps(client: SearchIndexClient): Promise<void
   for (let i = 1; i <= 2; i++) {
     await client.createSynonymMap({
       name: `my-azure-synonymmap-${i}`,
-      synonyms: ["United States, United States of America => USA", "Washington, Wash. => WA"]
+      synonyms: ["United States, United States of America => USA", "Washington, Wash. => WA"],
     });
   }
 }
@@ -588,19 +729,19 @@ export async function createSimpleIndex(client: SearchIndexClient, name: string)
       {
         type: "Edm.String",
         name: "id",
-        key: true
+        key: true,
       },
       {
         type: "Edm.Double",
         name: "awesomenessLevel",
         sortable: true,
         filterable: true,
-        facetable: true
+        facetable: true,
       },
       {
         type: "Edm.String",
         name: "description",
-        searchable: true
+        searchable: true,
       },
       {
         type: "Edm.ComplexType",
@@ -609,20 +750,29 @@ export async function createSimpleIndex(client: SearchIndexClient, name: string)
           {
             type: "Collection(Edm.String)",
             name: "tags",
-            searchable: true
-          }
-        ]
+            searchable: true,
+          },
+        ],
       },
       {
         type: "Edm.Int32",
         name: "hiddenWeight",
-        hidden: true
-      }
-    ]
+        hidden: true,
+      },
+    ],
   };
   await client.createIndex(index);
 }
 
 export function createRandomIndexName(): string {
-  return `hotel-live-test${Math.floor(Math.random() * 1000) + 1}`;
+  return `hotel-live-test-${Math.floor(Math.random() * 100000) + 1000000}`;
+}
+
+async function renameUniquelyInPlace<T extends string>(
+  prop: T,
+  obj: Record<typeof prop, string>,
+): Promise<void> {
+  const hash = await computeSha256Hash(JSON.stringify(obj), "hex");
+  const name = [obj[prop], hash.toLowerCase()].join("-");
+  obj[prop] = name;
 }

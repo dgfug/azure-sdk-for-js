@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   JobExecution,
   JobExecutionsListByAgentOptionalParams,
@@ -19,7 +18,7 @@ import {
   JobExecutionsGetOptionalParams,
   JobExecutionsGetResponse,
   JobExecutionsCreateOrUpdateOptionalParams,
-  JobExecutionsCreateOrUpdateResponse
+  JobExecutionsCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -37,7 +36,7 @@ export interface JobExecutions {
     resourceGroupName: string,
     serverName: string,
     jobAgentName: string,
-    options?: JobExecutionsListByAgentOptionalParams
+    options?: JobExecutionsListByAgentOptionalParams,
   ): PagedAsyncIterableIterator<JobExecution>;
   /**
    * Lists a job's executions.
@@ -53,7 +52,7 @@ export interface JobExecutions {
     serverName: string,
     jobAgentName: string,
     jobName: string,
-    options?: JobExecutionsListByJobOptionalParams
+    options?: JobExecutionsListByJobOptionalParams,
   ): PagedAsyncIterableIterator<JobExecution>;
   /**
    * Requests cancellation of a job execution.
@@ -71,7 +70,7 @@ export interface JobExecutions {
     jobAgentName: string,
     jobName: string,
     jobExecutionId: string,
-    options?: JobExecutionsCancelOptionalParams
+    options?: JobExecutionsCancelOptionalParams,
   ): Promise<void>;
   /**
    * Starts an elastic job execution.
@@ -87,10 +86,10 @@ export interface JobExecutions {
     serverName: string,
     jobAgentName: string,
     jobName: string,
-    options?: JobExecutionsCreateOptionalParams
+    options?: JobExecutionsCreateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<JobExecutionsCreateResponse>,
+    SimplePollerLike<
+      OperationState<JobExecutionsCreateResponse>,
       JobExecutionsCreateResponse
     >
   >;
@@ -108,7 +107,7 @@ export interface JobExecutions {
     serverName: string,
     jobAgentName: string,
     jobName: string,
-    options?: JobExecutionsCreateOptionalParams
+    options?: JobExecutionsCreateOptionalParams,
   ): Promise<JobExecutionsCreateResponse>;
   /**
    * Gets a job execution.
@@ -126,7 +125,7 @@ export interface JobExecutions {
     jobAgentName: string,
     jobName: string,
     jobExecutionId: string,
-    options?: JobExecutionsGetOptionalParams
+    options?: JobExecutionsGetOptionalParams,
   ): Promise<JobExecutionsGetResponse>;
   /**
    * Creates or updates a job execution.
@@ -144,10 +143,10 @@ export interface JobExecutions {
     jobAgentName: string,
     jobName: string,
     jobExecutionId: string,
-    options?: JobExecutionsCreateOrUpdateOptionalParams
+    options?: JobExecutionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<JobExecutionsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<JobExecutionsCreateOrUpdateResponse>,
       JobExecutionsCreateOrUpdateResponse
     >
   >;
@@ -167,6 +166,6 @@ export interface JobExecutions {
     jobAgentName: string,
     jobName: string,
     jobExecutionId: string,
-    options?: JobExecutionsCreateOrUpdateOptionalParams
+    options?: JobExecutionsCreateOrUpdateOptionalParams,
   ): Promise<JobExecutionsCreateOrUpdateResponse>;
 }

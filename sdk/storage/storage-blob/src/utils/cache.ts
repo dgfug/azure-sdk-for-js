@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { DefaultHttpClient } from "@azure/core-http";
-import { IHttpClient } from "../Pipeline";
+import type { HttpClient } from "@azure/core-rest-pipeline";
+import { createDefaultHttpClient } from "@azure/core-rest-pipeline";
 
-const _defaultHttpClient = new DefaultHttpClient();
+let _defaultHttpClient: HttpClient;
 
-export function getCachedDefaultHttpClient(): IHttpClient {
+export function getCachedDefaultHttpClient(): HttpClient {
+  if (!_defaultHttpClient) {
+    _defaultHttpClient = createDefaultHttpClient();
+  }
   return _defaultHttpClient;
 }

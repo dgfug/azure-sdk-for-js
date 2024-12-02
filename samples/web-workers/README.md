@@ -20,25 +20,25 @@ In these samples we use [JSDOM][jsdom] but you can use any library that provides
 
 ## Prerequisites
 
-The samples are compatible with [LTS versions of Node.js](https://nodejs.org/about/releases/).
+The samples are compatible with [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule).
 
 Before running the TypeScript samples, they must be compiled to JavaScript using the TypeScript compiler. For more information on TypeScript, see the [TypeScript documentation][typescript].
 
 You need [an Azure subscription][freesub] and an Azure Storage Blob container to run this sample. Please refer to the [Storage Blob documentation][storageblob] for additional information on Azure Storage Blob.
 
-To avoid complexity in this sample, we will be using a [SAS Connection String][storageblobsas] to authenticate our client. The ARM template we include will output a SAS Connection String valid for 2 hours which you can then copy and paste into the included `env` files.
+To avoid complexity in this sample, we will be using a [SAS URL][storageblobsas] to authenticate our client. The ARM template we include will output a SAS URL valid for 2 hours.
 
 To quickly create the needed resources in Azure and to receive the necessary environment variables for them, you can deploy our sample template by clicking:
 
-[![](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-sdk-for-js%2Fmaster%2Fsamples%2Fweb-workers%2arm-template.json)
+[![](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-sdk-for-js%2Fmain%2Fsamples%2Fweb-workers%2Farm-template.json)
 
 Once the deployment completes, head over to the "outputs" tab and copy the outputs to a local file - you'll need them in the next step.
 
 ## Running the sample
 
-Once the above resources are created you'll want to ensure our application has the necessary environment variables. To do this, copy `sample.env` as `.env` and provide the necessary environment variables to configure the application. You can get the values from the output tab of the deployment.
+Once the above resources are created you'll want to ensure our application has the necessary values. To do this, open `workers.ts` (or `workers.js` if you are using the JavaScript sample) and set `containerSasUrl` to the generated SAS URL from the deployment. You can get that value from the output tab of the deployment.
 
-> Remember: we are using a connection string to keep this sample simple; however, parcel will embed the connection string into your published bundle which is not suitable for production as it may leak secrets. For production client side applications, you may be interested in the [@azure/identity][identity] package which provides a set of credential implementations for both NodeJS and the browser.
+> Remember: we are using a connection string to keep this sample simple; however, parcel will embed the connection string into your published bundle which is not suitable for production as it may leak secrets. For production client side applications, you may be interested in the [@azure/identity][identity] package which provides a set of credential implementations for both NodeJS and the browser. Alternatively, you may generate a SAS URL from your server-side component and provide it to your client at runtime.
 
 Install the various packages as well as the TypeScript compiler using:
 

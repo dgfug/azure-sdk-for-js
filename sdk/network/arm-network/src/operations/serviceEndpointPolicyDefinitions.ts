@@ -6,38 +6,44 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ServiceEndpointPolicyDefinitions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   ServiceEndpointPolicyDefinition,
   ServiceEndpointPolicyDefinitionsListByResourceGroupNextOptionalParams,
   ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams,
+  ServiceEndpointPolicyDefinitionsListByResourceGroupResponse,
   ServiceEndpointPolicyDefinitionsDeleteOptionalParams,
   ServiceEndpointPolicyDefinitionsGetOptionalParams,
   ServiceEndpointPolicyDefinitionsGetResponse,
   ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams,
   ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse,
-  ServiceEndpointPolicyDefinitionsListByResourceGroupResponse,
-  ServiceEndpointPolicyDefinitionsListByResourceGroupNextResponse
+  ServiceEndpointPolicyDefinitionsListByResourceGroupNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ServiceEndpointPolicyDefinitions operations. */
 export class ServiceEndpointPolicyDefinitionsImpl
-  implements ServiceEndpointPolicyDefinitions {
-  private readonly client: NetworkManagementClientContext;
+  implements ServiceEndpointPolicyDefinitions
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class ServiceEndpointPolicyDefinitions class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -50,12 +56,12 @@ export class ServiceEndpointPolicyDefinitionsImpl
   public listByResourceGroup(
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
-    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<ServiceEndpointPolicyDefinition> {
     const iter = this.listByResourceGroupPagingAll(
       resourceGroupName,
       serviceEndpointPolicyName,
-      options
+      options,
     );
     return {
       next() {
@@ -64,49 +70,62 @@ export class ServiceEndpointPolicyDefinitionsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByResourceGroupPagingPage(
           resourceGroupName,
           serviceEndpointPolicyName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
-    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ServiceEndpointPolicyDefinition[]> {
-    let result = await this._listByResourceGroup(
-      resourceGroupName,
-      serviceEndpointPolicyName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ServiceEndpointPolicyDefinitionsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(
+        resourceGroupName,
+        serviceEndpointPolicyName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         serviceEndpointPolicyName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
-    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<ServiceEndpointPolicyDefinition> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
       serviceEndpointPolicyName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -123,25 +142,24 @@ export class ServiceEndpointPolicyDefinitionsImpl
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
-    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -150,8 +168,8 @@ export class ServiceEndpointPolicyDefinitionsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -159,26 +177,28 @@ export class ServiceEndpointPolicyDefinitionsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceEndpointPolicyName,
         serviceEndpointPolicyDefinitionName,
-        options
+        options,
       },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -192,13 +212,13 @@ export class ServiceEndpointPolicyDefinitionsImpl
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
-    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       serviceEndpointPolicyName,
       serviceEndpointPolicyDefinitionName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -214,16 +234,16 @@ export class ServiceEndpointPolicyDefinitionsImpl
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
-    options?: ServiceEndpointPolicyDefinitionsGetOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsGetOptionalParams,
   ): Promise<ServiceEndpointPolicyDefinitionsGetResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         serviceEndpointPolicyName,
         serviceEndpointPolicyDefinitionName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -241,32 +261,29 @@ export class ServiceEndpointPolicyDefinitionsImpl
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
     serviceEndpointPolicyDefinitions: ServiceEndpointPolicyDefinition,
-    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse>,
       ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -275,8 +292,8 @@ export class ServiceEndpointPolicyDefinitionsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -284,27 +301,32 @@ export class ServiceEndpointPolicyDefinitionsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceEndpointPolicyName,
         serviceEndpointPolicyDefinitionName,
         serviceEndpointPolicyDefinitions,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse,
+      OperationState<ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -321,14 +343,14 @@ export class ServiceEndpointPolicyDefinitionsImpl
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
     serviceEndpointPolicyDefinitions: ServiceEndpointPolicyDefinition,
-    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams,
   ): Promise<ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       serviceEndpointPolicyName,
       serviceEndpointPolicyDefinitionName,
       serviceEndpointPolicyDefinitions,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -342,11 +364,11 @@ export class ServiceEndpointPolicyDefinitionsImpl
   private _listByResourceGroup(
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
-    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams,
   ): Promise<ServiceEndpointPolicyDefinitionsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serviceEndpointPolicyName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -361,11 +383,11 @@ export class ServiceEndpointPolicyDefinitionsImpl
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
     nextLink: string,
-    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupNextOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupNextOptionalParams,
   ): Promise<ServiceEndpointPolicyDefinitionsListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serviceEndpointPolicyName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 }
@@ -373,8 +395,7 @@ export class ServiceEndpointPolicyDefinitionsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions/{serviceEndpointPolicyDefinitionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions/{serviceEndpointPolicyDefinitionName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -382,8 +403,8 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -391,22 +412,21 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.serviceEndpointPolicyName,
-    Parameters.serviceEndpointPolicyDefinitionName
+    Parameters.serviceEndpointPolicyDefinitionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions/{serviceEndpointPolicyDefinitionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions/{serviceEndpointPolicyDefinitionName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ServiceEndpointPolicyDefinition
+      bodyMapper: Mappers.ServiceEndpointPolicyDefinition,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -414,31 +434,30 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.serviceEndpointPolicyName,
-    Parameters.serviceEndpointPolicyDefinitionName
+    Parameters.serviceEndpointPolicyDefinitionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions/{serviceEndpointPolicyDefinitionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions/{serviceEndpointPolicyDefinitionName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ServiceEndpointPolicyDefinition
+      bodyMapper: Mappers.ServiceEndpointPolicyDefinition,
     },
     201: {
-      bodyMapper: Mappers.ServiceEndpointPolicyDefinition
+      bodyMapper: Mappers.ServiceEndpointPolicyDefinition,
     },
     202: {
-      bodyMapper: Mappers.ServiceEndpointPolicyDefinition
+      bodyMapper: Mappers.ServiceEndpointPolicyDefinition,
     },
     204: {
-      bodyMapper: Mappers.ServiceEndpointPolicyDefinition
+      bodyMapper: Mappers.ServiceEndpointPolicyDefinition,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.serviceEndpointPolicyDefinitions,
   queryParameters: [Parameters.apiVersion],
@@ -447,53 +466,51 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.serviceEndpointPolicyName,
-    Parameters.serviceEndpointPolicyDefinitionName
+    Parameters.serviceEndpointPolicyDefinitionName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/serviceEndpointPolicies/{serviceEndpointPolicyName}/serviceEndpointPolicyDefinitions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ServiceEndpointPolicyDefinitionListResult
+      bodyMapper: Mappers.ServiceEndpointPolicyDefinitionListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.serviceEndpointPolicyName
+    Parameters.serviceEndpointPolicyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ServiceEndpointPolicyDefinitionListResult
+      bodyMapper: Mappers.ServiceEndpointPolicyDefinitionListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.serviceEndpointPolicyName
+    Parameters.serviceEndpointPolicyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

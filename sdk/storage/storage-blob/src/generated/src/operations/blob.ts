@@ -6,10 +6,11 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import { Blob } from "../operationsInterfaces";
+import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageClientContext } from "../storageClientContext";
+import { StorageClient } from "../storageClient";
 import {
   BlobDownloadOptionalParams,
   BlobDownloadResponse,
@@ -53,24 +54,25 @@ import {
   AccessTier,
   BlobSetTierOptionalParams,
   BlobSetTierResponse,
+  BlobGetAccountInfoOptionalParams,
   BlobGetAccountInfoResponse,
   BlobQueryOptionalParams,
   BlobQueryResponse,
   BlobGetTagsOptionalParams,
   BlobGetTagsResponse,
   BlobSetTagsOptionalParams,
-  BlobSetTagsResponse
+  BlobSetTagsResponse,
 } from "../models";
 
-/** Class representing a Blob. */
-export class Blob {
-  private readonly client: StorageClientContext;
+/** Class containing Blob operations. */
+export class BlobImpl implements Blob {
+  private readonly client: StorageClient;
 
   /**
    * Initialize a new instance of the class Blob class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageClientContext) {
+  constructor(client: StorageClient) {
     this.client = client;
   }
 
@@ -80,15 +82,9 @@ export class Blob {
    * @param options The options parameters.
    */
   download(
-    options?: BlobDownloadOptionalParams
+    options?: BlobDownloadOptionalParams,
   ): Promise<BlobDownloadResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      downloadOperationSpec
-    ) as Promise<BlobDownloadResponse>;
+    return this.client.sendOperationRequest({ options }, downloadOperationSpec);
   }
 
   /**
@@ -97,15 +93,12 @@ export class Blob {
    * @param options The options parameters.
    */
   getProperties(
-    options?: BlobGetPropertiesOptionalParams
+    options?: BlobGetPropertiesOptionalParams,
   ): Promise<BlobGetPropertiesResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      getPropertiesOperationSpec
-    ) as Promise<BlobGetPropertiesResponse>;
+      { options },
+      getPropertiesOperationSpec,
+    );
   }
 
   /**
@@ -124,13 +117,7 @@ export class Blob {
    * @param options The options parameters.
    */
   delete(options?: BlobDeleteOptionalParams): Promise<BlobDeleteResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      deleteOperationSpec
-    ) as Promise<BlobDeleteResponse>;
+    return this.client.sendOperationRequest({ options }, deleteOperationSpec);
   }
 
   /**
@@ -138,15 +125,9 @@ export class Blob {
    * @param options The options parameters.
    */
   undelete(
-    options?: BlobUndeleteOptionalParams
+    options?: BlobUndeleteOptionalParams,
   ): Promise<BlobUndeleteResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      undeleteOperationSpec
-    ) as Promise<BlobUndeleteResponse>;
+    return this.client.sendOperationRequest({ options }, undeleteOperationSpec);
   }
 
   /**
@@ -156,16 +137,12 @@ export class Blob {
    */
   setExpiry(
     expiryOptions: BlobExpiryOptions,
-    options?: BlobSetExpiryOptionalParams
+    options?: BlobSetExpiryOptionalParams,
   ): Promise<BlobSetExpiryResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      expiryOptions,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setExpiryOperationSpec
-    ) as Promise<BlobSetExpiryResponse>;
+      { expiryOptions, options },
+      setExpiryOperationSpec,
+    );
   }
 
   /**
@@ -173,15 +150,12 @@ export class Blob {
    * @param options The options parameters.
    */
   setHttpHeaders(
-    options?: BlobSetHttpHeadersOptionalParams
+    options?: BlobSetHttpHeadersOptionalParams,
   ): Promise<BlobSetHttpHeadersResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setHttpHeadersOperationSpec
-    ) as Promise<BlobSetHttpHeadersResponse>;
+      { options },
+      setHttpHeadersOperationSpec,
+    );
   }
 
   /**
@@ -189,15 +163,12 @@ export class Blob {
    * @param options The options parameters.
    */
   setImmutabilityPolicy(
-    options?: BlobSetImmutabilityPolicyOptionalParams
+    options?: BlobSetImmutabilityPolicyOptionalParams,
   ): Promise<BlobSetImmutabilityPolicyResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setImmutabilityPolicyOperationSpec
-    ) as Promise<BlobSetImmutabilityPolicyResponse>;
+      { options },
+      setImmutabilityPolicyOperationSpec,
+    );
   }
 
   /**
@@ -205,15 +176,12 @@ export class Blob {
    * @param options The options parameters.
    */
   deleteImmutabilityPolicy(
-    options?: BlobDeleteImmutabilityPolicyOptionalParams
+    options?: BlobDeleteImmutabilityPolicyOptionalParams,
   ): Promise<BlobDeleteImmutabilityPolicyResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      deleteImmutabilityPolicyOperationSpec
-    ) as Promise<BlobDeleteImmutabilityPolicyResponse>;
+      { options },
+      deleteImmutabilityPolicyOperationSpec,
+    );
   }
 
   /**
@@ -223,16 +191,12 @@ export class Blob {
    */
   setLegalHold(
     legalHold: boolean,
-    options?: BlobSetLegalHoldOptionalParams
+    options?: BlobSetLegalHoldOptionalParams,
   ): Promise<BlobSetLegalHoldResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      legalHold,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setLegalHoldOperationSpec
-    ) as Promise<BlobSetLegalHoldResponse>;
+      { legalHold, options },
+      setLegalHoldOperationSpec,
+    );
   }
 
   /**
@@ -241,15 +205,12 @@ export class Blob {
    * @param options The options parameters.
    */
   setMetadata(
-    options?: BlobSetMetadataOptionalParams
+    options?: BlobSetMetadataOptionalParams,
   ): Promise<BlobSetMetadataResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setMetadataOperationSpec
-    ) as Promise<BlobSetMetadataResponse>;
+      { options },
+      setMetadataOperationSpec,
+    );
   }
 
   /**
@@ -258,15 +219,12 @@ export class Blob {
    * @param options The options parameters.
    */
   acquireLease(
-    options?: BlobAcquireLeaseOptionalParams
+    options?: BlobAcquireLeaseOptionalParams,
   ): Promise<BlobAcquireLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      acquireLeaseOperationSpec
-    ) as Promise<BlobAcquireLeaseResponse>;
+      { options },
+      acquireLeaseOperationSpec,
+    );
   }
 
   /**
@@ -277,16 +235,12 @@ export class Blob {
    */
   releaseLease(
     leaseId: string,
-    options?: BlobReleaseLeaseOptionalParams
+    options?: BlobReleaseLeaseOptionalParams,
   ): Promise<BlobReleaseLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      leaseId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      releaseLeaseOperationSpec
-    ) as Promise<BlobReleaseLeaseResponse>;
+      { leaseId, options },
+      releaseLeaseOperationSpec,
+    );
   }
 
   /**
@@ -297,16 +251,12 @@ export class Blob {
    */
   renewLease(
     leaseId: string,
-    options?: BlobRenewLeaseOptionalParams
+    options?: BlobRenewLeaseOptionalParams,
   ): Promise<BlobRenewLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      leaseId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      renewLeaseOperationSpec
-    ) as Promise<BlobRenewLeaseResponse>;
+      { leaseId, options },
+      renewLeaseOperationSpec,
+    );
   }
 
   /**
@@ -321,17 +271,12 @@ export class Blob {
   changeLease(
     leaseId: string,
     proposedLeaseId: string,
-    options?: BlobChangeLeaseOptionalParams
+    options?: BlobChangeLeaseOptionalParams,
   ): Promise<BlobChangeLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      leaseId,
-      proposedLeaseId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      changeLeaseOperationSpec
-    ) as Promise<BlobChangeLeaseResponse>;
+      { leaseId, proposedLeaseId, options },
+      changeLeaseOperationSpec,
+    );
   }
 
   /**
@@ -340,15 +285,12 @@ export class Blob {
    * @param options The options parameters.
    */
   breakLease(
-    options?: BlobBreakLeaseOptionalParams
+    options?: BlobBreakLeaseOptionalParams,
   ): Promise<BlobBreakLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      breakLeaseOperationSpec
-    ) as Promise<BlobBreakLeaseResponse>;
+      { options },
+      breakLeaseOperationSpec,
+    );
   }
 
   /**
@@ -356,15 +298,12 @@ export class Blob {
    * @param options The options parameters.
    */
   createSnapshot(
-    options?: BlobCreateSnapshotOptionalParams
+    options?: BlobCreateSnapshotOptionalParams,
   ): Promise<BlobCreateSnapshotResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      createSnapshotOperationSpec
-    ) as Promise<BlobCreateSnapshotResponse>;
+      { options },
+      createSnapshotOperationSpec,
+    );
   }
 
   /**
@@ -377,16 +316,12 @@ export class Blob {
    */
   startCopyFromURL(
     copySource: string,
-    options?: BlobStartCopyFromURLOptionalParams
+    options?: BlobStartCopyFromURLOptionalParams,
   ): Promise<BlobStartCopyFromURLResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      copySource,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      startCopyFromURLOperationSpec
-    ) as Promise<BlobStartCopyFromURLResponse>;
+      { copySource, options },
+      startCopyFromURLOperationSpec,
+    );
   }
 
   /**
@@ -400,16 +335,12 @@ export class Blob {
    */
   copyFromURL(
     copySource: string,
-    options?: BlobCopyFromURLOptionalParams
+    options?: BlobCopyFromURLOptionalParams,
   ): Promise<BlobCopyFromURLResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      copySource,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      copyFromURLOperationSpec
-    ) as Promise<BlobCopyFromURLResponse>;
+      { copySource, options },
+      copyFromURLOperationSpec,
+    );
   }
 
   /**
@@ -421,16 +352,12 @@ export class Blob {
    */
   abortCopyFromURL(
     copyId: string,
-    options?: BlobAbortCopyFromURLOptionalParams
+    options?: BlobAbortCopyFromURLOptionalParams,
   ): Promise<BlobAbortCopyFromURLResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      copyId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      abortCopyFromURLOperationSpec
-    ) as Promise<BlobAbortCopyFromURLResponse>;
+      { copyId, options },
+      abortCopyFromURLOperationSpec,
+    );
   }
 
   /**
@@ -444,16 +371,12 @@ export class Blob {
    */
   setTier(
     tier: AccessTier,
-    options?: BlobSetTierOptionalParams
+    options?: BlobSetTierOptionalParams,
   ): Promise<BlobSetTierResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      tier,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setTierOperationSpec
-    ) as Promise<BlobSetTierResponse>;
+      { tier, options },
+      setTierOperationSpec,
+    );
   }
 
   /**
@@ -461,15 +384,12 @@ export class Blob {
    * @param options The options parameters.
    */
   getAccountInfo(
-    options?: coreHttp.OperationOptions
+    options?: BlobGetAccountInfoOptionalParams,
   ): Promise<BlobGetAccountInfoResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      getAccountInfoOperationSpec
-    ) as Promise<BlobGetAccountInfoResponse>;
+      { options },
+      getAccountInfoOperationSpec,
+    );
   }
 
   /**
@@ -478,13 +398,7 @@ export class Blob {
    * @param options The options parameters.
    */
   query(options?: BlobQueryOptionalParams): Promise<BlobQueryResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      queryOperationSpec
-    ) as Promise<BlobQueryResponse>;
+    return this.client.sendOperationRequest({ options }, queryOperationSpec);
   }
 
   /**
@@ -492,13 +406,7 @@ export class Blob {
    * @param options The options parameters.
    */
   getTags(options?: BlobGetTagsOptionalParams): Promise<BlobGetTagsResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      getTagsOperationSpec
-    ) as Promise<BlobGetTagsResponse>;
+    return this.client.sendOperationRequest({ options }, getTagsOperationSpec);
   }
 
   /**
@@ -506,45 +414,39 @@ export class Blob {
    * @param options The options parameters.
    */
   setTags(options?: BlobSetTagsOptionalParams): Promise<BlobSetTagsResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      setTagsOperationSpec
-    ) as Promise<BlobSetTagsResponse>;
+    return this.client.sendOperationRequest({ options }, setTagsOperationSpec);
   }
 }
 // Operation Specifications
-const xmlSerializer = new coreHttp.Serializer(Mappers, /* isXml */ true);
+const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
 
-const downloadOperationSpec: coreHttp.OperationSpec = {
+const downloadOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: {
         type: { name: "Stream" },
-        serializedName: "parsedResponse"
+        serializedName: "parsedResponse",
       },
-      headersMapper: Mappers.BlobDownloadHeaders
+      headersMapper: Mappers.BlobDownloadHeaders,
     },
     206: {
       bodyMapper: {
         type: { name: "Stream" },
-        serializedName: "parsedResponse"
+        serializedName: "parsedResponse",
       },
-      headersMapper: Mappers.BlobDownloadHeaders
+      headersMapper: Mappers.BlobDownloadHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobDownloadExceptionHeaders
-    }
+      headersMapper: Mappers.BlobDownloadExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.snapshot,
-    Parameters.versionId
+    Parameters.versionId,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -562,27 +464,27 @@ const downloadOperationSpec: coreHttp.OperationSpec = {
     Parameters.encryptionAlgorithm,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const getPropertiesOperationSpec: coreHttp.OperationSpec = {
+const getPropertiesOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "HEAD",
   responses: {
     200: {
-      headersMapper: Mappers.BlobGetPropertiesHeaders
+      headersMapper: Mappers.BlobGetPropertiesHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobGetPropertiesExceptionHeaders
-    }
+      headersMapper: Mappers.BlobGetPropertiesExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.snapshot,
-    Parameters.versionId
+    Parameters.versionId,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -597,28 +499,28 @@ const getPropertiesOperationSpec: coreHttp.OperationSpec = {
     Parameters.encryptionAlgorithm,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const deleteOperationSpec: coreHttp.OperationSpec = {
+const deleteOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "DELETE",
   responses: {
     202: {
-      headersMapper: Mappers.BlobDeleteHeaders
+      headersMapper: Mappers.BlobDeleteHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobDeleteExceptionHeaders
-    }
+      headersMapper: Mappers.BlobDeleteExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.snapshot,
     Parameters.versionId,
-    Parameters.blobDeleteType
+    Parameters.blobDeleteType,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -631,44 +533,44 @@ const deleteOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
     Parameters.ifTags,
-    Parameters.deleteSnapshots
+    Parameters.deleteSnapshots,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const undeleteOperationSpec: coreHttp.OperationSpec = {
+const undeleteOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobUndeleteHeaders
+      headersMapper: Mappers.BlobUndeleteHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobUndeleteExceptionHeaders
-    }
+      headersMapper: Mappers.BlobUndeleteExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp8],
   urlParameters: [Parameters.url],
   headerParameters: [
     Parameters.version,
     Parameters.requestId,
-    Parameters.accept1
+    Parameters.accept1,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setExpiryOperationSpec: coreHttp.OperationSpec = {
+const setExpiryOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobSetExpiryHeaders
+      headersMapper: Mappers.BlobSetExpiryHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobSetExpiryExceptionHeaders
-    }
+      headersMapper: Mappers.BlobSetExpiryExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp11],
   urlParameters: [Parameters.url],
@@ -677,22 +579,22 @@ const setExpiryOperationSpec: coreHttp.OperationSpec = {
     Parameters.requestId,
     Parameters.accept1,
     Parameters.expiryOptions,
-    Parameters.expiresOn
+    Parameters.expiresOn,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setHttpHeadersOperationSpec: coreHttp.OperationSpec = {
+const setHttpHeadersOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobSetHttpHeadersHeaders
+      headersMapper: Mappers.BlobSetHttpHeadersHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobSetHttpHeadersExceptionHeaders
-    }
+      headersMapper: Mappers.BlobSetHttpHeadersExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.comp, Parameters.timeoutInSeconds],
   urlParameters: [Parameters.url],
@@ -711,24 +613,29 @@ const setHttpHeadersOperationSpec: coreHttp.OperationSpec = {
     Parameters.blobContentMD5,
     Parameters.blobContentEncoding,
     Parameters.blobContentLanguage,
-    Parameters.blobContentDisposition
+    Parameters.blobContentDisposition,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setImmutabilityPolicyOperationSpec: coreHttp.OperationSpec = {
+const setImmutabilityPolicyOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobSetImmutabilityPolicyHeaders
+      headersMapper: Mappers.BlobSetImmutabilityPolicyHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobSetImmutabilityPolicyExceptionHeaders
-    }
+      headersMapper: Mappers.BlobSetImmutabilityPolicyExceptionHeaders,
+    },
   },
-  queryParameters: [Parameters.timeoutInSeconds, Parameters.comp12],
+  queryParameters: [
+    Parameters.timeoutInSeconds,
+    Parameters.snapshot,
+    Parameters.versionId,
+    Parameters.comp12,
+  ],
   urlParameters: [Parameters.url],
   headerParameters: [
     Parameters.version,
@@ -736,67 +643,77 @@ const setImmutabilityPolicyOperationSpec: coreHttp.OperationSpec = {
     Parameters.accept1,
     Parameters.ifUnmodifiedSince,
     Parameters.immutabilityPolicyExpiry,
-    Parameters.immutabilityPolicyMode
+    Parameters.immutabilityPolicyMode,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const deleteImmutabilityPolicyOperationSpec: coreHttp.OperationSpec = {
+const deleteImmutabilityPolicyOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "DELETE",
   responses: {
     200: {
-      headersMapper: Mappers.BlobDeleteImmutabilityPolicyHeaders
+      headersMapper: Mappers.BlobDeleteImmutabilityPolicyHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobDeleteImmutabilityPolicyExceptionHeaders
-    }
+      headersMapper: Mappers.BlobDeleteImmutabilityPolicyExceptionHeaders,
+    },
   },
-  queryParameters: [Parameters.timeoutInSeconds, Parameters.comp12],
-  urlParameters: [Parameters.url],
-  headerParameters: [
-    Parameters.version,
-    Parameters.requestId,
-    Parameters.accept1
+  queryParameters: [
+    Parameters.timeoutInSeconds,
+    Parameters.snapshot,
+    Parameters.versionId,
+    Parameters.comp12,
   ],
-  isXML: true,
-  serializer: xmlSerializer
-};
-const setLegalHoldOperationSpec: coreHttp.OperationSpec = {
-  path: "/{containerName}/{blob}",
-  httpMethod: "PUT",
-  responses: {
-    200: {
-      headersMapper: Mappers.BlobSetLegalHoldHeaders
-    },
-    default: {
-      bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobSetLegalHoldExceptionHeaders
-    }
-  },
-  queryParameters: [Parameters.timeoutInSeconds, Parameters.comp13],
   urlParameters: [Parameters.url],
   headerParameters: [
     Parameters.version,
     Parameters.requestId,
     Parameters.accept1,
-    Parameters.legalHold
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setMetadataOperationSpec: coreHttp.OperationSpec = {
+const setLegalHoldOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobSetMetadataHeaders
+      headersMapper: Mappers.BlobSetLegalHoldHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobSetMetadataExceptionHeaders
-    }
+      headersMapper: Mappers.BlobSetLegalHoldExceptionHeaders,
+    },
+  },
+  queryParameters: [
+    Parameters.timeoutInSeconds,
+    Parameters.snapshot,
+    Parameters.versionId,
+    Parameters.comp13,
+  ],
+  urlParameters: [Parameters.url],
+  headerParameters: [
+    Parameters.version,
+    Parameters.requestId,
+    Parameters.accept1,
+    Parameters.legalHold,
+  ],
+  isXML: true,
+  serializer: xmlSerializer,
+};
+const setMetadataOperationSpec: coreClient.OperationSpec = {
+  path: "/{containerName}/{blob}",
+  httpMethod: "PUT",
+  responses: {
+    200: {
+      headersMapper: Mappers.BlobSetMetadataHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.StorageError,
+      headersMapper: Mappers.BlobSetMetadataExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp6],
   urlParameters: [Parameters.url],
@@ -814,22 +731,22 @@ const setMetadataOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
     Parameters.ifTags,
-    Parameters.encryptionScope
+    Parameters.encryptionScope,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const acquireLeaseOperationSpec: coreHttp.OperationSpec = {
+const acquireLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     201: {
-      headersMapper: Mappers.BlobAcquireLeaseHeaders
+      headersMapper: Mappers.BlobAcquireLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobAcquireLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.BlobAcquireLeaseExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp10],
   urlParameters: [Parameters.url],
@@ -844,22 +761,22 @@ const acquireLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.proposedLeaseId,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const releaseLeaseOperationSpec: coreHttp.OperationSpec = {
+const releaseLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobReleaseLeaseHeaders
+      headersMapper: Mappers.BlobReleaseLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobReleaseLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.BlobReleaseLeaseExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp10],
   urlParameters: [Parameters.url],
@@ -873,22 +790,22 @@ const releaseLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.leaseId1,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const renewLeaseOperationSpec: coreHttp.OperationSpec = {
+const renewLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobRenewLeaseHeaders
+      headersMapper: Mappers.BlobRenewLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobRenewLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.BlobRenewLeaseExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp10],
   urlParameters: [Parameters.url],
@@ -902,22 +819,22 @@ const renewLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.action2,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const changeLeaseOperationSpec: coreHttp.OperationSpec = {
+const changeLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobChangeLeaseHeaders
+      headersMapper: Mappers.BlobChangeLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobChangeLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.BlobChangeLeaseExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp10],
   urlParameters: [Parameters.url],
@@ -932,22 +849,22 @@ const changeLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.proposedLeaseId1,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const breakLeaseOperationSpec: coreHttp.OperationSpec = {
+const breakLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     202: {
-      headersMapper: Mappers.BlobBreakLeaseHeaders
+      headersMapper: Mappers.BlobBreakLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobBreakLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.BlobBreakLeaseExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp10],
   urlParameters: [Parameters.url],
@@ -961,22 +878,22 @@ const breakLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.breakPeriod,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const createSnapshotOperationSpec: coreHttp.OperationSpec = {
+const createSnapshotOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     201: {
-      headersMapper: Mappers.BlobCreateSnapshotHeaders
+      headersMapper: Mappers.BlobCreateSnapshotHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobCreateSnapshotExceptionHeaders
-    }
+      headersMapper: Mappers.BlobCreateSnapshotExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.comp14],
   urlParameters: [Parameters.url],
@@ -994,22 +911,22 @@ const createSnapshotOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
     Parameters.ifTags,
-    Parameters.encryptionScope
+    Parameters.encryptionScope,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const startCopyFromURLOperationSpec: coreHttp.OperationSpec = {
+const startCopyFromURLOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     202: {
-      headersMapper: Mappers.BlobStartCopyFromURLHeaders
+      headersMapper: Mappers.BlobStartCopyFromURLHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobStartCopyFromURLExceptionHeaders
-    }
+      headersMapper: Mappers.BlobStartCopyFromURLExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds],
   urlParameters: [Parameters.url],
@@ -1036,22 +953,22 @@ const startCopyFromURLOperationSpec: coreHttp.OperationSpec = {
     Parameters.copySource,
     Parameters.blobTagsString,
     Parameters.sealBlob,
-    Parameters.legalHold1
+    Parameters.legalHold1,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const copyFromURLOperationSpec: coreHttp.OperationSpec = {
+const copyFromURLOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     202: {
-      headersMapper: Mappers.BlobCopyFromURLHeaders
+      headersMapper: Mappers.BlobCopyFromURLHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobCopyFromURLExceptionHeaders
-    }
+      headersMapper: Mappers.BlobCopyFromURLExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds],
   urlParameters: [Parameters.url],
@@ -1079,27 +996,28 @@ const copyFromURLOperationSpec: coreHttp.OperationSpec = {
     Parameters.legalHold1,
     Parameters.xMsRequiresSync,
     Parameters.sourceContentMD5,
-    Parameters.copySourceAuthorization
+    Parameters.copySourceAuthorization,
+    Parameters.copySourceTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const abortCopyFromURLOperationSpec: coreHttp.OperationSpec = {
+const abortCopyFromURLOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     204: {
-      headersMapper: Mappers.BlobAbortCopyFromURLHeaders
+      headersMapper: Mappers.BlobAbortCopyFromURLHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobAbortCopyFromURLExceptionHeaders
-    }
+      headersMapper: Mappers.BlobAbortCopyFromURLExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.comp15,
-    Parameters.copyId
+    Parameters.copyId,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -1107,31 +1025,31 @@ const abortCopyFromURLOperationSpec: coreHttp.OperationSpec = {
     Parameters.requestId,
     Parameters.accept1,
     Parameters.leaseId,
-    Parameters.copyActionAbortConstant
+    Parameters.copyActionAbortConstant,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setTierOperationSpec: coreHttp.OperationSpec = {
+const setTierOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.BlobSetTierHeaders
+      headersMapper: Mappers.BlobSetTierHeaders,
     },
     202: {
-      headersMapper: Mappers.BlobSetTierHeaders
+      headersMapper: Mappers.BlobSetTierHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobSetTierExceptionHeaders
-    }
+      headersMapper: Mappers.BlobSetTierExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.snapshot,
     Parameters.versionId,
-    Parameters.comp16
+    Parameters.comp16,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -1141,57 +1059,65 @@ const setTierOperationSpec: coreHttp.OperationSpec = {
     Parameters.leaseId,
     Parameters.ifTags,
     Parameters.rehydratePriority,
-    Parameters.tier1
+    Parameters.tier1,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const getAccountInfoOperationSpec: coreHttp.OperationSpec = {
+const getAccountInfoOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "GET",
   responses: {
     200: {
-      headersMapper: Mappers.BlobGetAccountInfoHeaders
+      headersMapper: Mappers.BlobGetAccountInfoHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobGetAccountInfoExceptionHeaders
-    }
+      headersMapper: Mappers.BlobGetAccountInfoExceptionHeaders,
+    },
   },
-  queryParameters: [Parameters.comp, Parameters.restype1],
+  queryParameters: [
+    Parameters.comp,
+    Parameters.timeoutInSeconds,
+    Parameters.restype1,
+  ],
   urlParameters: [Parameters.url],
-  headerParameters: [Parameters.version, Parameters.accept1],
+  headerParameters: [
+    Parameters.version,
+    Parameters.requestId,
+    Parameters.accept1,
+  ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const queryOperationSpec: coreHttp.OperationSpec = {
+const queryOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "POST",
   responses: {
     200: {
       bodyMapper: {
         type: { name: "Stream" },
-        serializedName: "parsedResponse"
+        serializedName: "parsedResponse",
       },
-      headersMapper: Mappers.BlobQueryHeaders
+      headersMapper: Mappers.BlobQueryHeaders,
     },
     206: {
       bodyMapper: {
         type: { name: "Stream" },
-        serializedName: "parsedResponse"
+        serializedName: "parsedResponse",
       },
-      headersMapper: Mappers.BlobQueryHeaders
+      headersMapper: Mappers.BlobQueryHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobQueryExceptionHeaders
-    }
+      headersMapper: Mappers.BlobQueryExceptionHeaders,
+    },
   },
   requestBody: Parameters.queryRequest,
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.snapshot,
-    Parameters.comp17
+    Parameters.comp17,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -1207,31 +1133,31 @@ const queryOperationSpec: coreHttp.OperationSpec = {
     Parameters.encryptionAlgorithm,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
   contentType: "application/xml; charset=utf-8",
   mediaType: "xml",
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const getTagsOperationSpec: coreHttp.OperationSpec = {
+const getTagsOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.BlobTags,
-      headersMapper: Mappers.BlobGetTagsHeaders
+      headersMapper: Mappers.BlobGetTagsHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobGetTagsExceptionHeaders
-    }
+      headersMapper: Mappers.BlobGetTagsExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.snapshot,
     Parameters.versionId,
-    Parameters.comp18
+    Parameters.comp18,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -1239,28 +1165,28 @@ const getTagsOperationSpec: coreHttp.OperationSpec = {
     Parameters.requestId,
     Parameters.accept1,
     Parameters.leaseId,
-    Parameters.ifTags
+    Parameters.ifTags,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setTagsOperationSpec: coreHttp.OperationSpec = {
+const setTagsOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}/{blob}",
   httpMethod: "PUT",
   responses: {
     204: {
-      headersMapper: Mappers.BlobSetTagsHeaders
+      headersMapper: Mappers.BlobSetTagsHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.BlobSetTagsExceptionHeaders
-    }
+      headersMapper: Mappers.BlobSetTagsExceptionHeaders,
+    },
   },
   requestBody: Parameters.tags,
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.versionId,
-    Parameters.comp18
+    Parameters.comp18,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -1271,10 +1197,10 @@ const setTagsOperationSpec: coreHttp.OperationSpec = {
     Parameters.leaseId,
     Parameters.ifTags,
     Parameters.transactionalContentMD5,
-    Parameters.transactionalContentCrc64
+    Parameters.transactionalContentCrc64,
   ],
   isXML: true,
   contentType: "application/xml; charset=utf-8",
   mediaType: "xml",
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };

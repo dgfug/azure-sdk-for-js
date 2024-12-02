@@ -7,27 +7,42 @@
  */
 
 import * as coreClient from "@azure/core-client";
+import * as coreRestPipeline from "@azure/core-rest-pipeline";
+import {
+  PipelineRequest,
+  PipelineResponse,
+  SendRequest
+} from "@azure/core-rest-pipeline";
 import * as coreAuth from "@azure/core-auth";
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { ApplicationsImpl, ApplicationDefinitionsImpl } from "./operations";
-import { Applications, ApplicationDefinitions } from "./operationsInterfaces";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "./pagingHelper";
+import {
+  ApplicationsImpl,
+  ApplicationDefinitionsImpl,
+  JitRequestsImpl
+} from "./operations";
+import {
+  Applications,
+  ApplicationDefinitions,
+  JitRequests
+} from "./operationsInterfaces";
 import * as Parameters from "./models/parameters";
 import * as Mappers from "./models/mappers";
-import { ApplicationClientContext } from "./applicationClientContext";
 import {
   ApplicationClientOptionalParams,
   Operation,
-  ApplicationClientListOperationsNextOptionalParams,
-  ApplicationClientListOperationsOptionalParams,
-  ApplicationClientListOperationsNextNextOptionalParams,
-  ApplicationClientListOperationsResponse,
-  ApplicationClientListOperationsNextResponse,
-  ApplicationClientListOperationsNextNextResponse
+  ListOperationsNextOptionalParams,
+  ListOperationsOptionalParams,
+  ListOperationsResponse,
+  ListOperationsNextResponse
 } from "./models";
 
 /// <reference lib="esnext.asynciterable" />
-export class ApplicationClient extends ApplicationClientContext {
+export class ApplicationClient extends coreClient.ServiceClient {
+  $host: string;
+  apiVersion: string;
+  subscriptionId?: string;
+
   /**
    * Initializes a new instance of the ApplicationClient class.
    * @param credentials Subscription credentials which uniquely identify client subscription.
@@ -38,10 +53,123 @@ export class ApplicationClient extends ApplicationClientContext {
     credentials: coreAuth.TokenCredential,
     subscriptionId: string,
     options?: ApplicationClientOptionalParams
+  );
+  constructor(
+    credentials: coreAuth.TokenCredential,
+    options?: ApplicationClientOptionalParams
+  );
+  constructor(
+    credentials: coreAuth.TokenCredential,
+    subscriptionIdOrOptions?: ApplicationClientOptionalParams | string,
+    options?: ApplicationClientOptionalParams
   ) {
-    super(credentials, subscriptionId, options);
+    if (credentials === undefined) {
+      throw new Error("'credentials' cannot be null");
+    }
+
+    let subscriptionId: string | undefined;
+
+    if (typeof subscriptionIdOrOptions === "string") {
+      subscriptionId = subscriptionIdOrOptions;
+    } else if (typeof subscriptionIdOrOptions === "object") {
+      options = subscriptionIdOrOptions;
+    }
+
+    // Initializing default values for options
+    if (!options) {
+      options = {};
+    }
+    const defaults: ApplicationClientOptionalParams = {
+      requestContentType: "application/json; charset=utf-8",
+      credential: credentials
+    };
+
+    const packageDetails = `azsdk-js-arm-managedapplications/3.0.0`;
+    const userAgentPrefix =
+      options.userAgentOptions && options.userAgentOptions.userAgentPrefix
+        ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
+        : `${packageDetails}`;
+
+    const optionsWithDefaults = {
+      ...defaults,
+      ...options,
+      userAgentOptions: {
+        userAgentPrefix
+      },
+      endpoint:
+        options.endpoint ?? options.baseUri ?? "https://management.azure.com"
+    };
+    super(optionsWithDefaults);
+
+    let bearerTokenAuthenticationPolicyFound: boolean = false;
+    if (options?.pipeline && options.pipeline.getOrderedPolicies().length > 0) {
+      const pipelinePolicies: coreRestPipeline.PipelinePolicy[] = options.pipeline.getOrderedPolicies();
+      bearerTokenAuthenticationPolicyFound = pipelinePolicies.some(
+        (pipelinePolicy) =>
+          pipelinePolicy.name ===
+          coreRestPipeline.bearerTokenAuthenticationPolicyName
+      );
+    }
+    if (
+      !options ||
+      !options.pipeline ||
+      options.pipeline.getOrderedPolicies().length == 0 ||
+      !bearerTokenAuthenticationPolicyFound
+    ) {
+      this.pipeline.removePolicy({
+        name: coreRestPipeline.bearerTokenAuthenticationPolicyName
+      });
+      this.pipeline.addPolicy(
+        coreRestPipeline.bearerTokenAuthenticationPolicy({
+          credential: credentials,
+          scopes:
+            optionsWithDefaults.credentialScopes ??
+            `${optionsWithDefaults.endpoint}/.default`,
+          challengeCallbacks: {
+            authorizeRequestOnChallenge:
+              coreClient.authorizeRequestOnClaimChallenge
+          }
+        })
+      );
+    }
+    // Parameter assignments
+    this.subscriptionId = subscriptionId;
+
+    // Assigning values to Constant parameters
+    this.$host = options.$host || "https://management.azure.com";
+    this.apiVersion = options.apiVersion || "2021-07-01";
     this.applications = new ApplicationsImpl(this);
     this.applicationDefinitions = new ApplicationDefinitionsImpl(this);
+    this.jitRequests = new JitRequestsImpl(this);
+    this.addCustomApiVersionPolicy(options.apiVersion);
+  }
+
+  /** A function that adds a policy that sets the api-version (or equivalent) to reflect the library version. */
+  private addCustomApiVersionPolicy(apiVersion?: string) {
+    if (!apiVersion) {
+      return;
+    }
+    const apiVersionPolicy = {
+      name: "CustomApiVersionPolicy",
+      async sendRequest(
+        request: PipelineRequest,
+        next: SendRequest
+      ): Promise<PipelineResponse> {
+        const param = request.url.split("?");
+        if (param.length > 1) {
+          const newParams = param[1].split("&").map((item) => {
+            if (item.indexOf("api-version") > -1) {
+              return "api-version=" + apiVersion;
+            } else {
+              return item;
+            }
+          });
+          request.url = param[0] + "?" + newParams.join("&");
+        }
+        return next(request);
+      }
+    };
+    this.pipeline.addPolicy(apiVersionPolicy);
   }
 
   /**
@@ -49,7 +177,7 @@ export class ApplicationClient extends ApplicationClientContext {
    * @param options The options parameters.
    */
   public listOperations(
-    options?: ApplicationClientListOperationsOptionalParams
+    options?: ListOperationsOptionalParams
   ): PagedAsyncIterableIterator<Operation> {
     const iter = this.listOperationsPagingAll(options);
     return {
@@ -59,78 +187,41 @@ export class ApplicationClient extends ApplicationClientContext {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listOperationsPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listOperationsPagingPage(options, settings);
       }
     };
   }
 
   private async *listOperationsPagingPage(
-    options?: ApplicationClientListOperationsOptionalParams
+    options?: ListOperationsOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Operation[]> {
-    let result = await this._listOperations(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ListOperationsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listOperations(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listOperationsNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listOperationsPagingAll(
-    options?: ApplicationClientListOperationsOptionalParams
+    options?: ListOperationsOptionalParams
   ): AsyncIterableIterator<Operation> {
     for await (const page of this.listOperationsPagingPage(options)) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListOperationsNext
-   * @param nextLink The nextLink from the previous successful call to the ListOperations method.
-   * @param options The options parameters.
-   */
-  public listOperationsNext(
-    nextLink: string,
-    options?: ApplicationClientListOperationsNextOptionalParams
-  ): PagedAsyncIterableIterator<Operation> {
-    const iter = this.listOperationsNextPagingAll(nextLink, options);
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listOperationsNextPagingPage(nextLink, options);
-      }
-    };
-  }
-
-  private async *listOperationsNextPagingPage(
-    nextLink: string,
-    options?: ApplicationClientListOperationsNextOptionalParams
-  ): AsyncIterableIterator<Operation[]> {
-    let result = await this._listOperationsNext(nextLink, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listOperationsNextNext(continuationToken, options);
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listOperationsNextPagingAll(
-    nextLink: string,
-    options?: ApplicationClientListOperationsNextOptionalParams
-  ): AsyncIterableIterator<Operation> {
-    for await (const page of this.listOperationsNextPagingPage(
-      nextLink,
-      options
-    )) {
       yield* page;
     }
   }
@@ -140,8 +231,8 @@ export class ApplicationClient extends ApplicationClientContext {
    * @param options The options parameters.
    */
   private _listOperations(
-    options?: ApplicationClientListOperationsOptionalParams
-  ): Promise<ApplicationClientListOperationsResponse> {
+    options?: ListOperationsOptionalParams
+  ): Promise<ListOperationsResponse> {
     return this.sendOperationRequest({ options }, listOperationsOperationSpec);
   }
 
@@ -152,31 +243,17 @@ export class ApplicationClient extends ApplicationClientContext {
    */
   private _listOperationsNext(
     nextLink: string,
-    options?: ApplicationClientListOperationsNextOptionalParams
-  ): Promise<ApplicationClientListOperationsNextResponse> {
+    options?: ListOperationsNextOptionalParams
+  ): Promise<ListOperationsNextResponse> {
     return this.sendOperationRequest(
       { nextLink, options },
       listOperationsNextOperationSpec
     );
   }
 
-  /**
-   * ListOperationsNextNext
-   * @param nextLink The nextLink from the previous successful call to the ListOperationsNext method.
-   * @param options The options parameters.
-   */
-  private _listOperationsNextNext(
-    nextLink: string,
-    options?: ApplicationClientListOperationsNextNextOptionalParams
-  ): Promise<ApplicationClientListOperationsNextNextResponse> {
-    return this.sendOperationRequest(
-      { nextLink, options },
-      listOperationsNextNextOperationSpec
-    );
-  }
-
   applications: Applications;
   applicationDefinitions: ApplicationDefinitions;
+  jitRequests: JitRequests;
 }
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
@@ -187,6 +264,9 @@ const listOperationsOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.OperationListResult
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse
     }
   },
   queryParameters: [Parameters.apiVersion],
@@ -200,22 +280,11 @@ const listOperationsNextOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.OperationListResult
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [Parameters.$host, Parameters.nextLink],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listOperationsNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.OperationListResult
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.nextLink],
   headerParameters: [Parameters.accept],
   serializer

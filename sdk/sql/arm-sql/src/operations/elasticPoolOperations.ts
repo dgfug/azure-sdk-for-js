@@ -6,32 +6,32 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ElasticPoolOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   ElasticPoolOperation,
   ElasticPoolOperationsListByElasticPoolNextOptionalParams,
   ElasticPoolOperationsListByElasticPoolOptionalParams,
-  ElasticPoolOperationsCancelOptionalParams,
   ElasticPoolOperationsListByElasticPoolResponse,
-  ElasticPoolOperationsListByElasticPoolNextResponse
+  ElasticPoolOperationsCancelOptionalParams,
+  ElasticPoolOperationsListByElasticPoolNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ElasticPoolOperations operations. */
 export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ElasticPoolOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -47,13 +47,13 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolOperationsListByElasticPoolOptionalParams
+    options?: ElasticPoolOperationsListByElasticPoolOptionalParams,
   ): PagedAsyncIterableIterator<ElasticPoolOperation> {
     const iter = this.listByElasticPoolPagingAll(
       resourceGroupName,
       serverName,
       elasticPoolName,
-      options
+      options,
     );
     return {
       next() {
@@ -62,14 +62,18 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByElasticPoolPagingPage(
           resourceGroupName,
           serverName,
           elasticPoolName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -77,26 +81,35 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolOperationsListByElasticPoolOptionalParams
+    options?: ElasticPoolOperationsListByElasticPoolOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ElasticPoolOperation[]> {
-    let result = await this._listByElasticPool(
-      resourceGroupName,
-      serverName,
-      elasticPoolName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ElasticPoolOperationsListByElasticPoolResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByElasticPool(
+        resourceGroupName,
+        serverName,
+        elasticPoolName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByElasticPoolNext(
         resourceGroupName,
         serverName,
         elasticPoolName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -104,13 +117,13 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolOperationsListByElasticPoolOptionalParams
+    options?: ElasticPoolOperationsListByElasticPoolOptionalParams,
   ): AsyncIterableIterator<ElasticPoolOperation> {
     for await (const page of this.listByElasticPoolPagingPage(
       resourceGroupName,
       serverName,
       elasticPoolName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -130,11 +143,11 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
     serverName: string,
     elasticPoolName: string,
     operationId: string,
-    options?: ElasticPoolOperationsCancelOptionalParams
+    options?: ElasticPoolOperationsCancelOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, elasticPoolName, operationId, options },
-      cancelOperationSpec
+      cancelOperationSpec,
     );
   }
 
@@ -150,11 +163,11 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolOperationsListByElasticPoolOptionalParams
+    options?: ElasticPoolOperationsListByElasticPoolOptionalParams,
   ): Promise<ElasticPoolOperationsListByElasticPoolResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, elasticPoolName, options },
-      listByElasticPoolOperationSpec
+      listByElasticPoolOperationSpec,
     );
   }
 
@@ -172,11 +185,11 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
     serverName: string,
     elasticPoolName: string,
     nextLink: string,
-    options?: ElasticPoolOperationsListByElasticPoolNextOptionalParams
+    options?: ElasticPoolOperationsListByElasticPoolNextOptionalParams,
   ): Promise<ElasticPoolOperationsListByElasticPoolNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, elasticPoolName, nextLink, options },
-      listByElasticPoolNextOperationSpec
+      listByElasticPoolNextOperationSpec,
     );
   }
 }
@@ -184,60 +197,57 @@ export class ElasticPoolOperationsImpl implements ElasticPoolOperations {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const cancelOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/operations/{operationId}/cancel",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/operations/{operationId}/cancel",
   httpMethod: "POST",
   responses: { 200: {}, default: {} },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.elasticPoolName,
-    Parameters.operationId
+    Parameters.operationId,
   ],
-  serializer
+  serializer,
 };
 const listByElasticPoolOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/operations",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/operations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ElasticPoolOperationListResult
+      bodyMapper: Mappers.ElasticPoolOperationListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByElasticPoolNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ElasticPoolOperationListResult
+      bodyMapper: Mappers.ElasticPoolOperationListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.elasticPoolName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

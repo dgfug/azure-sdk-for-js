@@ -1,34 +1,33 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { assert } from "chai";
-import { RestError } from "@azure/core-http";
-import { DeleteKeyPoller } from "../../src/lro/delete/poller";
-import { RecoverDeletedKeyPoller } from "../../src/lro/recover/poller";
+// Licensed under the MIT License.
+import { RestError } from "@azure/core-rest-pipeline";
+import { DeleteKeyPoller } from "../../src/lro/delete/poller.js";
+import { RecoverDeletedKeyPoller } from "../../src/lro/recover/poller.js";
+import { describe, it, assert } from "vitest";
 
 describe("The LROs properly throw on unexpected errors", () => {
   const vaultUrl = `https://keyVaultName.vault.azure.net`;
 
   describe("delete LRO", () => {
-    it("403 doesn't throw", async function() {
+    it("403 doesn't throw", async function () {
       const code = 403;
       const client: any = {
         async deleteKey(): Promise<any> {
           return {
             key: {
-              kid: "/version/name/version"
+              kid: "https://keyVaultName.vault.azure.net/version/name/version",
             },
-            recoveryId: "something"
+            recoveryId: "something",
           };
         },
         async getDeletedKey(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
       const poller = new DeleteKeyPoller({
         vaultUrl,
         name: "name",
-        client
+        client,
       });
 
       await poller.pollUntilDone();
@@ -36,25 +35,25 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isTrue(poller.getOperationState().isCompleted);
     });
 
-    it("404 doesn't throw", async function() {
+    it("404 doesn't throw", async function () {
       const code = 404;
       const client: any = {
         async deleteKey(): Promise<any> {
           return {
             key: {
-              kid: "/version/name/version"
+              kid: "https://keyVaultName.vault.azure.net/version/name/version",
             },
-            recoveryId: "something"
+            recoveryId: "something",
           };
         },
         async getDeletedKey(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
       const poller = new DeleteKeyPoller({
         vaultUrl,
         name: "name",
-        client
+        client,
       });
 
       await poller.poll();
@@ -63,32 +62,32 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isUndefined(poller.getOperationState().isCompleted);
     });
 
-    it("Errors other than 403 and 404 throw", async function() {
+    it("Errors other than 403 and 404 throw", async function () {
       const codes = [401, 402, 405, 500];
       for (const code of codes) {
         const client: any = {
           async deleteKey(): Promise<any> {
             return {
               key: {
-                kid: "/version/name/version"
+                kid: "https://keyVaultName.vault.azure.net/version/name/version",
               },
-              recoveryId: "something"
+              recoveryId: "something",
             };
           },
           async getDeletedKey(): Promise<any> {
-            throw new RestError(`${code}`, undefined, code);
-          }
+            throw new RestError(`${code}`, { statusCode: code });
+          },
         };
         const poller = new DeleteKeyPoller({
           vaultUrl,
           name: "name",
-          client
+          client,
         });
 
         let error: Error | null = null;
         try {
           await poller.pollUntilDone();
-        } catch (e) {
+        } catch (e: any) {
           error = e;
         }
 
@@ -98,25 +97,25 @@ describe("The LROs properly throw on unexpected errors", () => {
   });
 
   describe("recover LRO", () => {
-    it("403 doesn't throw", async function() {
+    it("403 doesn't throw", async function () {
       const code = 403;
       const client: any = {
         async recoverDeletedKey(): Promise<any> {
           return {
             key: {
-              kid: "/version/name/version"
+              kid: "https://keyVaultName.vault.azure.net/version/name/version",
             },
-            recoveryId: "something"
+            recoveryId: "something",
           };
         },
         async getKey(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
       const poller = new RecoverDeletedKeyPoller({
         vaultUrl,
         name: "name",
-        client
+        client,
       });
 
       await poller.pollUntilDone();
@@ -124,25 +123,25 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isTrue(poller.getOperationState().isCompleted);
     });
 
-    it("404 doesn't throw", async function() {
+    it("404 doesn't throw", async function () {
       const code = 404;
       const client: any = {
         async recoverDeletedKey(): Promise<any> {
           return {
             key: {
-              kid: "/version/name/version"
+              kid: "https://keyVaultName.vault.azure.net/version/name/version",
             },
-            recoveryId: "something"
+            recoveryId: "something",
           };
         },
         async getKey(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
       const poller = new RecoverDeletedKeyPoller({
         vaultUrl,
         name: "name",
-        client
+        client,
       });
 
       await poller.poll();
@@ -151,32 +150,32 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isUndefined(poller.getOperationState().isCompleted);
     });
 
-    it("Errors other than 403 and 404 throw", async function() {
+    it("Errors other than 403 and 404 throw", async function () {
       const codes = [401, 402, 405, 500];
       for (const code of codes) {
         const client: any = {
           async recoverDeletedKey(): Promise<any> {
             return {
               key: {
-                kid: "/version/name/version"
+                kid: "https://keyVaultName.vault.azure.net/version/name/version",
               },
-              recoveryId: "something"
+              recoveryId: "something",
             };
           },
           async getKey(): Promise<any> {
-            throw new RestError(`${code}`, undefined, code);
-          }
+            throw new RestError(`${code}`, { statusCode: code });
+          },
         };
         const poller = new RecoverDeletedKeyPoller({
           vaultUrl,
           name: "name",
-          client
+          client,
         });
 
         let error: Error | null = null;
         try {
           await poller.pollUntilDone();
-        } catch (e) {
+        } catch (e: any) {
           error = e;
         }
 

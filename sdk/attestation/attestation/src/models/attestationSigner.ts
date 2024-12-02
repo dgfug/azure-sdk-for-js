@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { JsonWebKey } from "../generated/models";
-import { pemFromBase64 } from "../utils/helpers";
+import type { JsonWebKey } from "../generated/models/index.js";
+import { pemFromBase64 } from "../utils/helpers.js";
 
 /**
  * An AttestationSigner represents a signing certificate chain/Key ID combination
@@ -33,6 +33,6 @@ export interface AttestationSigner {
 export function _attestationSignerFromGenerated(key?: JsonWebKey): AttestationSigner {
   return {
     keyId: key?.kid,
-    certificates: key?.x5C?.map((cert) => pemFromBase64(cert, "CERTIFICATE")) ?? []
+    certificates: key?.x5C?.map((cert) => pemFromBase64(cert, "CERTIFICATE")) ?? [],
   };
 }

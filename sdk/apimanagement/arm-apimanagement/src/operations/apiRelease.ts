@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ApiRelease } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   ApiReleaseContract,
   ApiReleaseListByServiceNextOptionalParams,
@@ -32,13 +33,13 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ApiRelease operations. */
 export class ApiReleaseImpl implements ApiRelease {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class ApiRelease class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
@@ -46,7 +47,7 @@ export class ApiReleaseImpl implements ApiRelease {
    * Lists all releases of an API. An API release is created when making an API Revision current.
    * Releases are also used to rollback to previous revisions. Results will be paged and can be
    * constrained by the $top and $skip parameters.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -70,12 +71,16 @@ export class ApiReleaseImpl implements ApiRelease {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
           apiId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -85,16 +90,23 @@ export class ApiReleaseImpl implements ApiRelease {
     resourceGroupName: string,
     serviceName: string,
     apiId: string,
-    options?: ApiReleaseListByServiceOptionalParams
+    options?: ApiReleaseListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<ApiReleaseContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      apiId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ApiReleaseListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        apiId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -104,7 +116,9 @@ export class ApiReleaseImpl implements ApiRelease {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -128,7 +142,7 @@ export class ApiReleaseImpl implements ApiRelease {
    * Lists all releases of an API. An API release is created when making an API Revision current.
    * Releases are also used to rollback to previous revisions. Results will be paged and can be
    * constrained by the $top and $skip parameters.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -147,7 +161,7 @@ export class ApiReleaseImpl implements ApiRelease {
 
   /**
    * Returns the etag of an API release.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param releaseId Release identifier within an API. Must be unique in the current API Management
@@ -169,7 +183,7 @@ export class ApiReleaseImpl implements ApiRelease {
 
   /**
    * Returns the details of an API release.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param releaseId Release identifier within an API. Must be unique in the current API Management
@@ -191,7 +205,7 @@ export class ApiReleaseImpl implements ApiRelease {
 
   /**
    * Creates a new Release for the API.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param releaseId Release identifier within an API. Must be unique in the current API Management
@@ -215,7 +229,7 @@ export class ApiReleaseImpl implements ApiRelease {
 
   /**
    * Updates the details of the release of the API specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param releaseId Release identifier within an API. Must be unique in the current API Management
@@ -250,7 +264,7 @@ export class ApiReleaseImpl implements ApiRelease {
 
   /**
    * Deletes the specified release in the API.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param releaseId Release identifier within an API. Must be unique in the current API Management
@@ -275,7 +289,7 @@ export class ApiReleaseImpl implements ApiRelease {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param apiId API identifier. Must be unique in the current API Management service instance.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
@@ -474,12 +488,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

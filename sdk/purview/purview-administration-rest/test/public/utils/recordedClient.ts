@@ -1,21 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /// <reference lib="esnext.asynciterable" />
 
-import { Context } from "mocha";
+import type { Recorder, RecorderStartOptions } from "@azure-tools/test-recorder";
+import { env } from "@azure-tools/test-recorder";
+import type { PurviewAccount, PurviewMetadataPolicies } from "../../../src/index.js";
+import { PurviewAccountClient, PurviewMetadataPoliciesClient } from "../../../src/index.js";
+import { createTestCredential } from "@azure-tools/test-credential";
 
-import { env, Recorder, record, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import {
-  PurviewAccount,
-  PurviewAccountClient,
-  PurviewMetadataPolicies,
-  PurviewMetadataPoliciesClient,
-} from "../../../src";
-import { ClientSecretCredential } from "@azure/identity";
-
-import "./env";
-import { ClientOptions } from "@azure-rest/core-client";
+import type { ClientOptions } from "@azure-rest/core-client";
 
 const replaceableVariables: { [k: string]: string } = {
   ENDPOINT: "https://endpoint",
@@ -24,50 +18,34 @@ const replaceableVariables: { [k: string]: string } = {
   AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
 };
 
-export const environmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording.replace(/"access_token"\s?:\s?"[^"]*"/g, `"access_token":"access_token"`),
-    // If we put ENDPOINT in replaceableVariables above, it will not capture
-    // the endpoint string used with nock, which will be expanded to
-    // https://<endpoint>:443/ and therefore will not match, so we have to do
-    // this instead.
-    (recording: string): string => {
-      const replaced = recording.replace("endpoint:443", "endpoint");
-      return replaced;
-    },
-  ],
-  queryParametersToSkip: [],
+const recorderOptions: RecorderStartOptions = {
+  envSetupForPlayback: replaceableVariables,
 };
 
-export function createAccountClient(
-  options?: ClientOptions
-): PurviewAccount.Client.PurviewAccountRestClient {
-  const credential = new ClientSecretCredential(
-    env.AZURE_TENANT_ID,
-    env.AZURE_CLIENT_ID,
-    env.AZURE_CLIENT_SECRET
+export async function createAccountClient(
+  recorder: Recorder,
+  options?: ClientOptions,
+): Promise<PurviewAccount.Client.PurviewAccountRestClient> {
+  const credential = createTestCredential();
+  await recorder.start(recorderOptions);
+
+  return PurviewAccountClient(
+    env.ENDPOINT ?? "",
+    credential,
+    recorder.configureClientOptions({ options }),
   );
-  return PurviewAccountClient(env.ENDPOINT, credential, options);
 }
 
-export function createMetadataClient(
-  options?: ClientOptions
-): PurviewMetadataPolicies.Client.PurviewMetadataPoliciesRestClient {
-  const credential = new ClientSecretCredential(
-    env.AZURE_TENANT_ID,
-    env.AZURE_CLIENT_ID,
-    env.AZURE_CLIENT_SECRET
-  );
-  return PurviewMetadataPoliciesClient(env.ENDPOINT, credential, options);
-}
+export async function createMetadataClient(
+  recorder: Recorder,
+  options?: ClientOptions,
+): Promise<PurviewMetadataPolicies.Client.PurviewMetadataPoliciesRestClient> {
+  const credential = createTestCredential();
+  await recorder.start(recorderOptions);
 
-/**
- * creates the recorder and reads the environment variables from the `.env` file.
- * Should be called first in the test suite to make sure environment variables are
- * read before they are being used.
- */
-export function createRecorder(context: Context): Recorder {
-  return record(context, environmentSetup);
+  return PurviewMetadataPoliciesClient(
+    env.ENDPOINT ?? "",
+    credential,
+    recorder.configureClientOptions({ options }),
+  );
 }

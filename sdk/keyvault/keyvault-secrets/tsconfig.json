@@ -1,18 +1,22 @@
 {
-  "extends": "../../../tsconfig.package",
+  "extends": "../../../tsconfig",
   "compilerOptions": {
-    "declarationDir": "./types",
-    "outDir": "./dist-esm",
     "lib": ["dom"],
     "resolveJsonModule": true,
     "paths": {
       "@azure/keyvault-secrets": ["./src/index"]
-    }
+    },
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "."
   },
   "include": [
-    "./src/**/*.ts",
-    "./test/**/*.ts",
-    "../keyvault-common/**/*.ts",
-    "samples-dev/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.mts",
+    "src/**/*.cts",
+    "samples-dev/**/*.ts",
+    "test/**/*.ts",
+    "test/**/*.cts",
+    "test/**/*.mts"
   ]
 }

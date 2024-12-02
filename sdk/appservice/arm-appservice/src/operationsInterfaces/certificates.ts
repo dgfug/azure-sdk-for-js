@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   Certificate,
@@ -19,7 +18,7 @@ import {
   CertificatesDeleteOptionalParams,
   CertificatePatchResource,
   CertificatesUpdateOptionalParams,
-  CertificatesUpdateResponse
+  CertificatesUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +29,7 @@ export interface Certificates {
    * @param options The options parameters.
    */
   list(
-    options?: CertificatesListOptionalParams
+    options?: CertificatesListOptionalParams,
   ): PagedAsyncIterableIterator<Certificate>;
   /**
    * Description for Get all certificates in a resource group.
@@ -39,7 +38,7 @@ export interface Certificates {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: CertificatesListByResourceGroupOptionalParams
+    options?: CertificatesListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Certificate>;
   /**
    * Description for Get a certificate.
@@ -50,7 +49,7 @@ export interface Certificates {
   get(
     resourceGroupName: string,
     name: string,
-    options?: CertificatesGetOptionalParams
+    options?: CertificatesGetOptionalParams,
   ): Promise<CertificatesGetResponse>;
   /**
    * Description for Create or update a certificate.
@@ -63,7 +62,7 @@ export interface Certificates {
     resourceGroupName: string,
     name: string,
     certificateEnvelope: Certificate,
-    options?: CertificatesCreateOrUpdateOptionalParams
+    options?: CertificatesCreateOrUpdateOptionalParams,
   ): Promise<CertificatesCreateOrUpdateResponse>;
   /**
    * Description for Delete a certificate.
@@ -74,7 +73,7 @@ export interface Certificates {
   delete(
     resourceGroupName: string,
     name: string,
-    options?: CertificatesDeleteOptionalParams
+    options?: CertificatesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Description for Create or update a certificate.
@@ -87,6 +86,6 @@ export interface Certificates {
     resourceGroupName: string,
     name: string,
     certificateEnvelope: CertificatePatchResource,
-    options?: CertificatesUpdateOptionalParams
+    options?: CertificatesUpdateOptionalParams,
   ): Promise<CertificatesUpdateResponse>;
 }

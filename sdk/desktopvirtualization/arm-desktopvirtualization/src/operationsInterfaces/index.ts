@@ -8,7 +8,11 @@
 
 export * from "./operations";
 export * from "./workspaces";
+export * from "./privateEndpointConnections";
+export * from "./privateLinkResources";
 export * from "./scalingPlans";
+export * from "./scalingPlanPooledSchedules";
+export * from "./scalingPlanPersonalSchedules";
 export * from "./applicationGroups";
 export * from "./startMenuItems";
 export * from "./applications";
@@ -17,6 +21,6 @@ export * from "./hostPools";
 export * from "./userSessions";
 export * from "./sessionHosts";
 export * from "./msixPackages";
+export * from "./appAttachPackageInfo";
 export * from "./msixImages";
-export * from "./privateEndpointConnections";
-export * from "./privateLinkResources";
+export * from "./appAttachPackageOperations";

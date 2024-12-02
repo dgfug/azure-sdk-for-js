@@ -6,60 +6,66 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { RuleSets } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CdnManagementClientContext } from "../cdnManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { CdnManagementClient } from "../cdnManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   RuleSet,
   RuleSetsListByProfileNextOptionalParams,
   RuleSetsListByProfileOptionalParams,
+  RuleSetsListByProfileResponse,
   Usage,
   RuleSetsListResourceUsageNextOptionalParams,
   RuleSetsListResourceUsageOptionalParams,
-  RuleSetsListByProfileResponse,
+  RuleSetsListResourceUsageResponse,
   RuleSetsGetOptionalParams,
   RuleSetsGetResponse,
   RuleSetsCreateOptionalParams,
   RuleSetsCreateResponse,
   RuleSetsDeleteOptionalParams,
-  RuleSetsListResourceUsageResponse,
   RuleSetsListByProfileNextResponse,
-  RuleSetsListResourceUsageNextResponse
+  RuleSetsListResourceUsageNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RuleSets operations. */
 export class RuleSetsImpl implements RuleSets {
-  private readonly client: CdnManagementClientContext;
+  private readonly client: CdnManagementClient;
 
   /**
    * Initialize a new instance of the class RuleSets class.
    * @param client Reference to the service client
    */
-  constructor(client: CdnManagementClientContext) {
+  constructor(client: CdnManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists existing AzureFrontDoor rule sets within a profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param options The options parameters.
    */
   public listByProfile(
     resourceGroupName: string,
     profileName: string,
-    options?: RuleSetsListByProfileOptionalParams
+    options?: RuleSetsListByProfileOptionalParams,
   ): PagedAsyncIterableIterator<RuleSet> {
     const iter = this.listByProfilePagingAll(
       resourceGroupName,
       profileName,
-      options
+      options,
     );
     return {
       next() {
@@ -68,58 +74,72 @@ export class RuleSetsImpl implements RuleSets {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByProfilePagingPage(
           resourceGroupName,
           profileName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByProfilePagingPage(
     resourceGroupName: string,
     profileName: string,
-    options?: RuleSetsListByProfileOptionalParams
+    options?: RuleSetsListByProfileOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<RuleSet[]> {
-    let result = await this._listByProfile(
-      resourceGroupName,
-      profileName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RuleSetsListByProfileResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByProfile(
+        resourceGroupName,
+        profileName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByProfileNext(
         resourceGroupName,
         profileName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByProfilePagingAll(
     resourceGroupName: string,
     profileName: string,
-    options?: RuleSetsListByProfileOptionalParams
+    options?: RuleSetsListByProfileOptionalParams,
   ): AsyncIterableIterator<RuleSet> {
     for await (const page of this.listByProfilePagingPage(
       resourceGroupName,
       profileName,
-      options
+      options,
     )) {
       yield* page;
     }
   }
 
   /**
-   * Checks the quota and actual usage of endpoints under the given CDN profile.
+   * Checks the quota and actual usage of endpoints under the given Azure Front Door profile..
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile which is unique globally.
    * @param options The options parameters.
    */
@@ -127,13 +147,13 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsListResourceUsageOptionalParams
+    options?: RuleSetsListResourceUsageOptionalParams,
   ): PagedAsyncIterableIterator<Usage> {
     const iter = this.listResourceUsagePagingAll(
       resourceGroupName,
       profileName,
       ruleSetName,
-      options
+      options,
     );
     return {
       next() {
@@ -142,14 +162,18 @@ export class RuleSetsImpl implements RuleSets {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listResourceUsagePagingPage(
           resourceGroupName,
           profileName,
           ruleSetName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -157,26 +181,35 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsListResourceUsageOptionalParams
+    options?: RuleSetsListResourceUsageOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Usage[]> {
-    let result = await this._listResourceUsage(
-      resourceGroupName,
-      profileName,
-      ruleSetName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RuleSetsListResourceUsageResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listResourceUsage(
+        resourceGroupName,
+        profileName,
+        ruleSetName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listResourceUsageNext(
         resourceGroupName,
         profileName,
         ruleSetName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -184,13 +217,13 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsListResourceUsageOptionalParams
+    options?: RuleSetsListResourceUsageOptionalParams,
   ): AsyncIterableIterator<Usage> {
     for await (const page of this.listResourceUsagePagingPage(
       resourceGroupName,
       profileName,
       ruleSetName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -199,17 +232,18 @@ export class RuleSetsImpl implements RuleSets {
   /**
    * Lists existing AzureFrontDoor rule sets within a profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param options The options parameters.
    */
   private _listByProfile(
     resourceGroupName: string,
     profileName: string,
-    options?: RuleSetsListByProfileOptionalParams
+    options?: RuleSetsListByProfileOptionalParams,
   ): Promise<RuleSetsListByProfileResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, options },
-      listByProfileOperationSpec
+      listByProfileOperationSpec,
     );
   }
 
@@ -217,7 +251,8 @@ export class RuleSetsImpl implements RuleSets {
    * Gets an existing AzureFrontDoor rule set with the specified rule set name under the specified
    * subscription, resource group and profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile which is unique globally.
    * @param options The options parameters.
    */
@@ -225,110 +260,40 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsGetOptionalParams
+    options?: RuleSetsGetOptionalParams,
   ): Promise<RuleSetsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, ruleSetName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
   /**
    * Creates a new rule set within the specified profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile which is unique globally
    * @param options The options parameters.
    */
-  async beginCreate(
+  create(
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsCreateOptionalParams
-  ): Promise<
-    PollerLike<
-      PollOperationState<RuleSetsCreateResponse>,
-      RuleSetsCreateResponse
-    >
-  > {
-    const directSendOperation = async (
-      args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<RuleSetsCreateResponse> => {
-      return this.client.sendOperationRequest(args, spec);
-    };
-    const sendOperation = async (
-      args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
-      const providedCallback = args.options?.onResponse;
-      const callback: coreClient.RawResponseCallback = (
-        rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
-      ) => {
-        currentRawResponse = rawResponse;
-        providedCallback?.(rawResponse, flatResponse);
-      };
-      const updatedArgs = {
-        ...args,
-        options: {
-          ...args.options,
-          onResponse: callback
-        }
-      };
-      const flatResponse = await directSendOperation(updatedArgs, spec);
-      return {
-        flatResponse,
-        rawResponse: {
-          statusCode: currentRawResponse!.status,
-          body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
-      };
-    };
-
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, profileName, ruleSetName, options },
-      createOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
-    });
-  }
-
-  /**
-   * Creates a new rule set within the specified profile.
-   * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
-   * @param ruleSetName Name of the rule set under the profile which is unique globally
-   * @param options The options parameters.
-   */
-  async beginCreateAndWait(
-    resourceGroupName: string,
-    profileName: string,
-    ruleSetName: string,
-    options?: RuleSetsCreateOptionalParams
+    options?: RuleSetsCreateOptionalParams,
   ): Promise<RuleSetsCreateResponse> {
-    const poller = await this.beginCreate(
-      resourceGroupName,
-      profileName,
-      ruleSetName,
-      options
+    return this.client.sendOperationRequest(
+      { resourceGroupName, profileName, ruleSetName, options },
+      createOperationSpec,
     );
-    return poller.pollUntilDone();
   }
 
   /**
    * Deletes an existing AzureFrontDoor rule set with the specified rule set name under the specified
    * subscription, resource group and profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile which is unique globally.
    * @param options The options parameters.
    */
@@ -336,25 +301,24 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: RuleSetsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -363,8 +327,8 @@ export class RuleSetsImpl implements RuleSets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -372,28 +336,31 @@ export class RuleSetsImpl implements RuleSets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, profileName, ruleSetName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, profileName, ruleSetName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Deletes an existing AzureFrontDoor rule set with the specified rule set name under the specified
    * subscription, resource group and profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile which is unique globally.
    * @param options The options parameters.
    */
@@ -401,21 +368,22 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsDeleteOptionalParams
+    options?: RuleSetsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       profileName,
       ruleSetName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
 
   /**
-   * Checks the quota and actual usage of endpoints under the given CDN profile.
+   * Checks the quota and actual usage of endpoints under the given Azure Front Door profile..
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile which is unique globally.
    * @param options The options parameters.
    */
@@ -423,18 +391,19 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RuleSetsListResourceUsageOptionalParams
+    options?: RuleSetsListResourceUsageOptionalParams,
   ): Promise<RuleSetsListResourceUsageResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, ruleSetName, options },
-      listResourceUsageOperationSpec
+      listResourceUsageOperationSpec,
     );
   }
 
   /**
    * ListByProfileNext
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param nextLink The nextLink from the previous successful call to the ListByProfile method.
    * @param options The options parameters.
    */
@@ -442,18 +411,19 @@ export class RuleSetsImpl implements RuleSets {
     resourceGroupName: string,
     profileName: string,
     nextLink: string,
-    options?: RuleSetsListByProfileNextOptionalParams
+    options?: RuleSetsListByProfileNextOptionalParams,
   ): Promise<RuleSetsListByProfileNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, nextLink, options },
-      listByProfileNextOperationSpec
+      listByProfileNextOperationSpec,
     );
   }
 
   /**
    * ListResourceUsageNext
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile which is unique globally.
    * @param nextLink The nextLink from the previous successful call to the ListResourceUsage method.
    * @param options The options parameters.
@@ -463,11 +433,11 @@ export class RuleSetsImpl implements RuleSets {
     profileName: string,
     ruleSetName: string,
     nextLink: string,
-    options?: RuleSetsListResourceUsageNextOptionalParams
+    options?: RuleSetsListResourceUsageNextOptionalParams,
   ): Promise<RuleSetsListResourceUsageNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, ruleSetName, nextLink, options },
-      listResourceUsageNextOperationSpec
+      listResourceUsageNextOperationSpec,
     );
   }
 }
@@ -475,85 +445,75 @@ export class RuleSetsImpl implements RuleSets {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByProfileOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RuleSetListResult
+      bodyMapper: Mappers.RuleSetListResult,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RuleSet
+      bodyMapper: Mappers.RuleSet,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName,
-    Parameters.ruleSetName
+    Parameters.profileName1,
+    Parameters.ruleSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.RuleSet
+      bodyMapper: Mappers.RuleSet,
     },
     201: {
-      bodyMapper: Mappers.RuleSet
-    },
-    202: {
-      bodyMapper: Mappers.RuleSet
-    },
-    204: {
-      bodyMapper: Mappers.RuleSet
+      bodyMapper: Mappers.RuleSet,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName,
-    Parameters.ruleSetName
+    Parameters.profileName1,
+    Parameters.ruleSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -561,85 +521,82 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName,
-    Parameters.ruleSetName
+    Parameters.profileName1,
+    Parameters.ruleSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listResourceUsageOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}/usages",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/ruleSets/{ruleSetName}/usages",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.UsagesListResult
+      bodyMapper: Mappers.UsagesListResult,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName,
-    Parameters.ruleSetName
+    Parameters.profileName1,
+    Parameters.ruleSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByProfileNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RuleSetListResult
+      bodyMapper: Mappers.RuleSetListResult,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName,
-    Parameters.nextLink
+    Parameters.profileName1,
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listResourceUsageNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UsagesListResult
+      bodyMapper: Mappers.UsagesListResult,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName,
+    Parameters.profileName1,
     Parameters.nextLink,
-    Parameters.ruleSetName
+    Parameters.ruleSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   BackendAddressPool,
   LoadBalancerBackendAddressPoolsListOptionalParams,
@@ -15,7 +15,7 @@ import {
   LoadBalancerBackendAddressPoolsGetResponse,
   LoadBalancerBackendAddressPoolsCreateOrUpdateOptionalParams,
   LoadBalancerBackendAddressPoolsCreateOrUpdateResponse,
-  LoadBalancerBackendAddressPoolsDeleteOptionalParams
+  LoadBalancerBackendAddressPoolsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface LoadBalancerBackendAddressPools {
   list(
     resourceGroupName: string,
     loadBalancerName: string,
-    options?: LoadBalancerBackendAddressPoolsListOptionalParams
+    options?: LoadBalancerBackendAddressPoolsListOptionalParams,
   ): PagedAsyncIterableIterator<BackendAddressPool>;
   /**
    * Gets load balancer backend address pool.
@@ -43,7 +43,7 @@ export interface LoadBalancerBackendAddressPools {
     resourceGroupName: string,
     loadBalancerName: string,
     backendAddressPoolName: string,
-    options?: LoadBalancerBackendAddressPoolsGetOptionalParams
+    options?: LoadBalancerBackendAddressPoolsGetOptionalParams,
   ): Promise<LoadBalancerBackendAddressPoolsGetResponse>;
   /**
    * Creates or updates a load balancer backend address pool.
@@ -59,10 +59,10 @@ export interface LoadBalancerBackendAddressPools {
     loadBalancerName: string,
     backendAddressPoolName: string,
     parameters: BackendAddressPool,
-    options?: LoadBalancerBackendAddressPoolsCreateOrUpdateOptionalParams
+    options?: LoadBalancerBackendAddressPoolsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<LoadBalancerBackendAddressPoolsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<LoadBalancerBackendAddressPoolsCreateOrUpdateResponse>,
       LoadBalancerBackendAddressPoolsCreateOrUpdateResponse
     >
   >;
@@ -80,7 +80,7 @@ export interface LoadBalancerBackendAddressPools {
     loadBalancerName: string,
     backendAddressPoolName: string,
     parameters: BackendAddressPool,
-    options?: LoadBalancerBackendAddressPoolsCreateOrUpdateOptionalParams
+    options?: LoadBalancerBackendAddressPoolsCreateOrUpdateOptionalParams,
   ): Promise<LoadBalancerBackendAddressPoolsCreateOrUpdateResponse>;
   /**
    * Deletes the specified load balancer backend address pool.
@@ -93,8 +93,8 @@ export interface LoadBalancerBackendAddressPools {
     resourceGroupName: string,
     loadBalancerName: string,
     backendAddressPoolName: string,
-    options?: LoadBalancerBackendAddressPoolsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: LoadBalancerBackendAddressPoolsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified load balancer backend address pool.
    * @param resourceGroupName The name of the resource group.
@@ -106,6 +106,6 @@ export interface LoadBalancerBackendAddressPools {
     resourceGroupName: string,
     loadBalancerName: string,
     backendAddressPoolName: string,
-    options?: LoadBalancerBackendAddressPoolsDeleteOptionalParams
+    options?: LoadBalancerBackendAddressPoolsDeleteOptionalParams,
   ): Promise<void>;
 }

@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Demonstrates using stored procedures for server side run functions
  */
 
-const path = require("path");
 require("dotenv").config();
 
 const { logSampleHeader, logStep, finish, handleError } = require("./Shared/handleError");

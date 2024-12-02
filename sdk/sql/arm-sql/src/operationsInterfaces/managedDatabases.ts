@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ManagedDatabase,
   ManagedDatabasesListByInstanceOptionalParams,
@@ -21,8 +20,13 @@ import {
   ManagedDatabaseUpdate,
   ManagedDatabasesUpdateOptionalParams,
   ManagedDatabasesUpdateResponse,
+  ManagedDatabaseMoveDefinition,
+  ManagedDatabasesCancelMoveOptionalParams,
+  ManagedDatabasesCompleteMoveOptionalParams,
   CompleteDatabaseRestoreDefinition,
-  ManagedDatabasesCompleteRestoreOptionalParams
+  ManagedDatabasesCompleteRestoreOptionalParams,
+  ManagedDatabaseStartMoveDefinition,
+  ManagedDatabasesStartMoveOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -38,7 +42,7 @@ export interface ManagedDatabases {
   listByInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedDatabasesListByInstanceOptionalParams
+    options?: ManagedDatabasesListByInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedDatabase>;
   /**
    * Gets a list of inaccessible managed databases in a managed instance
@@ -50,7 +54,7 @@ export interface ManagedDatabases {
   listInaccessibleByInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedDatabasesListInaccessibleByInstanceOptionalParams
+    options?: ManagedDatabasesListInaccessibleByInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedDatabase>;
   /**
    * Gets a managed database.
@@ -64,7 +68,7 @@ export interface ManagedDatabases {
     resourceGroupName: string,
     managedInstanceName: string,
     databaseName: string,
-    options?: ManagedDatabasesGetOptionalParams
+    options?: ManagedDatabasesGetOptionalParams,
   ): Promise<ManagedDatabasesGetResponse>;
   /**
    * Creates a new database or updates an existing database.
@@ -80,10 +84,10 @@ export interface ManagedDatabases {
     managedInstanceName: string,
     databaseName: string,
     parameters: ManagedDatabase,
-    options?: ManagedDatabasesCreateOrUpdateOptionalParams
+    options?: ManagedDatabasesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ManagedDatabasesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ManagedDatabasesCreateOrUpdateResponse>,
       ManagedDatabasesCreateOrUpdateResponse
     >
   >;
@@ -101,7 +105,7 @@ export interface ManagedDatabases {
     managedInstanceName: string,
     databaseName: string,
     parameters: ManagedDatabase,
-    options?: ManagedDatabasesCreateOrUpdateOptionalParams
+    options?: ManagedDatabasesCreateOrUpdateOptionalParams,
   ): Promise<ManagedDatabasesCreateOrUpdateResponse>;
   /**
    * Deletes a managed database.
@@ -115,8 +119,8 @@ export interface ManagedDatabases {
     resourceGroupName: string,
     managedInstanceName: string,
     databaseName: string,
-    options?: ManagedDatabasesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ManagedDatabasesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a managed database.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -129,7 +133,7 @@ export interface ManagedDatabases {
     resourceGroupName: string,
     managedInstanceName: string,
     databaseName: string,
-    options?: ManagedDatabasesDeleteOptionalParams
+    options?: ManagedDatabasesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Updates an existing database.
@@ -145,10 +149,10 @@ export interface ManagedDatabases {
     managedInstanceName: string,
     databaseName: string,
     parameters: ManagedDatabaseUpdate,
-    options?: ManagedDatabasesUpdateOptionalParams
+    options?: ManagedDatabasesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ManagedDatabasesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ManagedDatabasesUpdateResponse>,
       ManagedDatabasesUpdateResponse
     >
   >;
@@ -166,8 +170,72 @@ export interface ManagedDatabases {
     managedInstanceName: string,
     databaseName: string,
     parameters: ManagedDatabaseUpdate,
-    options?: ManagedDatabasesUpdateOptionalParams
+    options?: ManagedDatabasesUpdateOptionalParams,
   ): Promise<ManagedDatabasesUpdateResponse>;
+  /**
+   * Cancels a managed database move operation.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param managedInstanceName The name of the managed instance.
+   * @param databaseName The name of the database.
+   * @param parameters Parameters of the cancel managed database move operation.
+   * @param options The options parameters.
+   */
+  beginCancelMove(
+    resourceGroupName: string,
+    managedInstanceName: string,
+    databaseName: string,
+    parameters: ManagedDatabaseMoveDefinition,
+    options?: ManagedDatabasesCancelMoveOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Cancels a managed database move operation.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param managedInstanceName The name of the managed instance.
+   * @param databaseName The name of the database.
+   * @param parameters Parameters of the cancel managed database move operation.
+   * @param options The options parameters.
+   */
+  beginCancelMoveAndWait(
+    resourceGroupName: string,
+    managedInstanceName: string,
+    databaseName: string,
+    parameters: ManagedDatabaseMoveDefinition,
+    options?: ManagedDatabasesCancelMoveOptionalParams,
+  ): Promise<void>;
+  /**
+   * Completes a managed database move operation.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param managedInstanceName The name of the managed instance.
+   * @param databaseName The name of the database.
+   * @param parameters Parameters of the complete managed database move operation.
+   * @param options The options parameters.
+   */
+  beginCompleteMove(
+    resourceGroupName: string,
+    managedInstanceName: string,
+    databaseName: string,
+    parameters: ManagedDatabaseMoveDefinition,
+    options?: ManagedDatabasesCompleteMoveOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Completes a managed database move operation.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param managedInstanceName The name of the managed instance.
+   * @param databaseName The name of the database.
+   * @param parameters Parameters of the complete managed database move operation.
+   * @param options The options parameters.
+   */
+  beginCompleteMoveAndWait(
+    resourceGroupName: string,
+    managedInstanceName: string,
+    databaseName: string,
+    parameters: ManagedDatabaseMoveDefinition,
+    options?: ManagedDatabasesCompleteMoveOptionalParams,
+  ): Promise<void>;
   /**
    * Completes the restore operation on a managed database.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -182,8 +250,8 @@ export interface ManagedDatabases {
     managedInstanceName: string,
     databaseName: string,
     parameters: CompleteDatabaseRestoreDefinition,
-    options?: ManagedDatabasesCompleteRestoreOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ManagedDatabasesCompleteRestoreOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Completes the restore operation on a managed database.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -198,6 +266,38 @@ export interface ManagedDatabases {
     managedInstanceName: string,
     databaseName: string,
     parameters: CompleteDatabaseRestoreDefinition,
-    options?: ManagedDatabasesCompleteRestoreOptionalParams
+    options?: ManagedDatabasesCompleteRestoreOptionalParams,
+  ): Promise<void>;
+  /**
+   * Starts a managed database move operation.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param managedInstanceName The name of the managed instance.
+   * @param databaseName The name of the database.
+   * @param parameters Parameters of the start managed database move operation.
+   * @param options The options parameters.
+   */
+  beginStartMove(
+    resourceGroupName: string,
+    managedInstanceName: string,
+    databaseName: string,
+    parameters: ManagedDatabaseStartMoveDefinition,
+    options?: ManagedDatabasesStartMoveOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Starts a managed database move operation.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param managedInstanceName The name of the managed instance.
+   * @param databaseName The name of the database.
+   * @param parameters Parameters of the start managed database move operation.
+   * @param options The options parameters.
+   */
+  beginStartMoveAndWait(
+    resourceGroupName: string,
+    managedInstanceName: string,
+    databaseName: string,
+    parameters: ManagedDatabaseStartMoveDefinition,
+    options?: ManagedDatabasesStartMoveOptionalParams,
   ): Promise<void>;
 }

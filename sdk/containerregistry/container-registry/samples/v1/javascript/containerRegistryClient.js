@@ -5,21 +5,15 @@
  * @summary Lists repository names and deletes a repository.
  */
 
-const {
-  ContainerRegistryClient,
-  KnownContainerRegistryAudience
-} = require("@azure/container-registry");
+const { ContainerRegistryClient } = require("@azure/container-registry");
 const { DefaultAzureCredential } = require("@azure/identity");
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 async function main() {
   // endpoint should be in the form of "https://myregistryname.azurecr.io"
   // where "myregistryname" is the actual name of your registry
   const endpoint = process.env.CONTAINER_REGISTRY_ENDPOINT || "<endpoint>";
-  const client = new ContainerRegistryClient(endpoint, new DefaultAzureCredential(), {
-    audience: KnownContainerRegistryAudience.AzureResourceManagerPublicCloud
-  });
+  const client = new ContainerRegistryClient(endpoint, new DefaultAzureCredential());
   await listRepositoryNames(client);
 
   // Advanced: listing by pages

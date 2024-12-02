@@ -12,15 +12,16 @@ enable-xml: true
 generate-metadata: false
 license-header: MICROSOFT_MIT_NO_VERSION
 output-folder: ../src/generated
-input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/aacb979c4b6ed682c6f29f4e62ae024c154befe7/specification/storage/data-plane/Microsoft.BlobStorage/preview/2020-12-06/blob.json
+input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/b478dcdabacb37945ff89daa0eda1ae1afc98db4/specification/storage/data-plane/Microsoft.BlobStorage/stable/2025-01-05/blob.json
 model-date-time-as-string: true
 optional-response-headers: true
 v3: true
 disable-async-iterators: true
 add-credentials: false
+core-http-compat-mode: true
 use-extension:
-  "@autorest/typescript": "6.0.0-dev.20210218.1"
-package-version: 12.9.0-beta.2
+  "@autorest/typescript": "latest"
+package-version: 12.26.0
 ```
 
 ## Customizations for Track 2 Generator
@@ -1030,6 +1031,26 @@ directive:
       $["x-ms-error-code"]["description"] = "Error Code";
 ```
 
+### Hide x-ms-pageable in PageBlob_GetPageRanges
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=pagelist"]["get"]
+    transform: >
+      delete $["x-ms-pageable"];
+```
+
+### Hide x-ms-pageable in PageBlob_GetPageRangesDiff
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=pagelist&diff"]["get"]
+    transform: >
+      delete $["x-ms-pageable"];
+```
+
 ### Add error code to response header - PageBlob_CopyIncremental
 
 ```yaml
@@ -1330,6 +1351,188 @@ directive:
     where: $["definitions"]["BlobItemInternal"]["properties"]
     transform: >
       $["HasVersionsOnly"]["description"] = "Inactive root blobs which have any versions would have such tag with value true.";
+```
+
+### Use string union instead of string for EncryptionAlgorithm
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.EncryptionAlgorithm
+    transform: >
+      $["x-ms-enum"]["modelAsString"] = true;
+```
+
+### Hide Premium in AccessTier until it's supported in service.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.AccessTier
+    transform: >
+      $["enum"] = [
+        "P4",
+        "P6",
+        "P10",
+        "P15",
+        "P20",
+        "P30",
+        "P40",
+        "P50",
+        "P60",
+        "P70",
+        "P80",
+        "Hot",
+        "Cool",
+        "Archive",
+        "Cold"
+      ];
+```
+
+### Hide version releated properties in FilterBlobItem until it's supported in service.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.FilterBlobItem
+    transform: >
+      delete $["properties"]["VersionId"];
+      delete $["properties"]["IsCurrentVersion"];
+```
+
+### Hide FilterBlobsInclude until it's supported in service.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters
+    transform: >
+      delete $["FilterBlobsInclude"];
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"]["/?comp=blobs"]["get"]
+    transform: >
+      $["parameters"] = [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          },
+          {
+            "$ref": "#/parameters/FilterBlobsWhere"
+          },
+          {
+            "$ref": "#/parameters/Marker"
+          },
+          {
+            "$ref": "#/parameters/MaxResults"
+          }
+        ];
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}?restype=container&comp=blobs"]["get"]
+    transform: >
+      $["parameters"] = [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          },
+          {
+            "$ref": "#/parameters/FilterBlobsWhere"
+          },
+          {
+            "$ref": "#/parameters/Marker"
+          },
+          {
+            "$ref": "#/parameters/MaxResults"
+          }
+        ];
+```
+
+### Add AuthenticationErrorDetail.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.StorageError
+    transform: >
+      $["properties"]["AuthenticationErrorDetail"] = { "type": "string" };
+```
+
+### Update service version from "2018-03-28" to "2025-01-05"
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.ApiVersionParameter
+    transform: $.enum = [ "2025-01-05" ];
+```
+
+### Remove structured body parameters.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}]["get"]
+    transform: >
+      $["parameters"] = $["parameters"].filter(function(param) { return false == param['$ref'].endsWith("#/parameters/StructuredBodyGet")});
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}"]["get"]["responses"]["200"]["headers"]
+    transform: >
+      delete $["x-ms-structured-body"];
+      delete $["x-ms-structured-content-length"];
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}"]["get"]["responses"]["200"]["headers"]
+    transform: >
+      delete $["x-ms-structured-body"];
+      delete $["x-ms-structured-content-length"];
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?BlockBlob"]["put"]
+    transform: >
+      $["parameters"] = $["parameters"].filter(function(param) { return (typeof param['$ref'] === "undefined") || (false == param['$ref'].endsWith("#/parameters/StructuredBodyPut") && false == param['$ref'].endsWith("#/parameters/StructuredContentLength"))});
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?BlockBlob"]["put"]["responses"]["201"]["headers"]    
+    transform: >
+      delete $["x-ms-structured-body"];
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=block"]["put"]
+    transform: >
+      $["parameters"] = $["parameters"].filter(function(param) { return (typeof param['$ref'] === "undefined") || (false == param['$ref'].endsWith("#/parameters/StructuredBodyPut") && false == param['$ref'].endsWith("#/parameters/StructuredContentLength"))});
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=block"]["put"]["responses"]["201"]["headers"]    
+    transform: >
+      delete $["x-ms-structured-body"];
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=page&update"]["put"]
+    transform: >
+      $["parameters"] = $["parameters"].filter(function(param) { return (typeof param['$ref'] === "undefined") || (false == param['$ref'].endsWith("#/parameters/StructuredBodyPut") && false == param['$ref'].endsWith("#/parameters/StructuredContentLength"))});
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=page&update"]["put"]["responses"]["201"]["headers"]    
+    transform: >
+      delete $["x-ms-structured-body"];
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=appendblock"]["put"]
+    transform: >
+      $["parameters"] = $["parameters"].filter(function(param) { return (typeof param['$ref'] === "undefined") || (false == param['$ref'].endsWith("#/parameters/StructuredBodyPut") && false == param['$ref'].endsWith("#/parameters/StructuredContentLength"))});
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=appendblock"]["put"]["responses"]["201"]["headers"]    
+    transform: >
+      delete $["x-ms-structured-body"];
 ```
 
 ![Impressions](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-js%2Fsdk%2Fstorage%2Fstorage-blob%2Fswagger%2FREADME.png)

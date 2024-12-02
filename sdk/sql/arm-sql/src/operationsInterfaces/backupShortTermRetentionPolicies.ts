@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   BackupShortTermRetentionPolicy,
   BackupShortTermRetentionPoliciesListByDatabaseOptionalParams,
@@ -18,7 +17,7 @@ import {
   BackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams,
   BackupShortTermRetentionPoliciesCreateOrUpdateResponse,
   BackupShortTermRetentionPoliciesUpdateOptionalParams,
-  BackupShortTermRetentionPoliciesUpdateResponse
+  BackupShortTermRetentionPoliciesUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -36,7 +35,7 @@ export interface BackupShortTermRetentionPolicies {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: BackupShortTermRetentionPoliciesListByDatabaseOptionalParams
+    options?: BackupShortTermRetentionPoliciesListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<BackupShortTermRetentionPolicy>;
   /**
    * Gets a database's short term retention policy.
@@ -52,7 +51,7 @@ export interface BackupShortTermRetentionPolicies {
     serverName: string,
     databaseName: string,
     policyName: ShortTermRetentionPolicyName,
-    options?: BackupShortTermRetentionPoliciesGetOptionalParams
+    options?: BackupShortTermRetentionPoliciesGetOptionalParams,
   ): Promise<BackupShortTermRetentionPoliciesGetResponse>;
   /**
    * Updates a database's short term retention policy.
@@ -70,12 +69,10 @@ export interface BackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ShortTermRetentionPolicyName,
     parameters: BackupShortTermRetentionPolicy,
-    options?: BackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams
+    options?: BackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        BackupShortTermRetentionPoliciesCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<BackupShortTermRetentionPoliciesCreateOrUpdateResponse>,
       BackupShortTermRetentionPoliciesCreateOrUpdateResponse
     >
   >;
@@ -95,7 +92,7 @@ export interface BackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ShortTermRetentionPolicyName,
     parameters: BackupShortTermRetentionPolicy,
-    options?: BackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams
+    options?: BackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams,
   ): Promise<BackupShortTermRetentionPoliciesCreateOrUpdateResponse>;
   /**
    * Updates a database's short term retention policy.
@@ -113,10 +110,10 @@ export interface BackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ShortTermRetentionPolicyName,
     parameters: BackupShortTermRetentionPolicy,
-    options?: BackupShortTermRetentionPoliciesUpdateOptionalParams
+    options?: BackupShortTermRetentionPoliciesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<BackupShortTermRetentionPoliciesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<BackupShortTermRetentionPoliciesUpdateResponse>,
       BackupShortTermRetentionPoliciesUpdateResponse
     >
   >;
@@ -136,6 +133,6 @@ export interface BackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ShortTermRetentionPolicyName,
     parameters: BackupShortTermRetentionPolicy,
-    options?: BackupShortTermRetentionPoliciesUpdateOptionalParams
+    options?: BackupShortTermRetentionPoliciesUpdateOptionalParams,
   ): Promise<BackupShortTermRetentionPoliciesUpdateResponse>;
 }

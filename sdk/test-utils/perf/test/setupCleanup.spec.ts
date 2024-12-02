@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { PerfTest, PerfOptionDictionary } from "../src";
 
@@ -14,21 +14,21 @@ export class SetupCleanupTest extends PerfTest {
     globalSetup: 0,
     globalCleanup: 0,
     setup: 0,
-    cleanup: 0
+    cleanup: 0,
   };
 
-  public globalSetup() {
+  public globalSetup(): void {
     this.state.globalSetup++;
   }
 
-  public setup() {
+  public setup(): void {
     this.state.setup++;
   }
-  public cleanup() {
+  public cleanup(): void {
     this.state.cleanup++;
   }
 
-  public globalCleanup() {
+  public globalCleanup(): void {
     if (this.state.globalCleanup > 0) {
       throw new Error("globalCleanup() shouldn't be called more than once.");
     }
@@ -37,15 +37,17 @@ export class SetupCleanupTest extends PerfTest {
     }
     if (this.state.setup !== this.parsedOptions.parallel.value) {
       throw new Error(
-        "setup() should be called exactly as many times as the parallel paramter says."
+        "setup() should be called exactly as many times as the parallel paramter says.",
       );
     }
     if (this.state.cleanup !== this.parsedOptions.parallel.value) {
       throw new Error(
-        "cleanup() should be called exactly as many times as the parallel paramter says."
+        "cleanup() should be called exactly as many times as the parallel paramter says.",
       );
     }
   }
 
-  async run() {}
+  async run(): Promise<void> {
+    // do nothing
+  }
 }

@@ -1,23 +1,28 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type {
   CheckpointStore,
   PartitionOwnership,
   Checkpoint,
-  OperationOptions
+  OperationOptions,
 } from "@azure/event-hubs";
-import { ContainerClient, Metadata, RestError, BlobSetMetadataResponse } from "@azure/storage-blob";
-import { logger, logErrorStackTrace } from "./log";
-import { throwTypeErrorIfParameterMissing } from "./util/error";
+import type { Metadata, RestError, BlobSetMetadataResponse } from "@azure/storage-blob";
+import { logger, logErrorStackTrace } from "./log.js";
+import type { ContainerClientLike } from "./storageBlobInterfaces.js";
+import { throwTypeErrorIfParameterMissing } from "./util/error.js";
 
 /**
  * An implementation of CheckpointStore that uses Azure Blob Storage to persist checkpoint data.
  */
 export class BlobCheckpointStore implements CheckpointStore {
-  private _containerClient: ContainerClient;
+  private _containerClient: ContainerClientLike;
 
-  constructor(containerClient: ContainerClient) {
+  /**
+   * Constructs a new instance of {@link BlobCheckpointStore}
+   * @param containerClient - An instance of a storage blob ContainerClient.
+   */
+  constructor(containerClient: ContainerClientLike) {
     this._containerClient = containerClient;
   }
   /**
@@ -38,7 +43,7 @@ export class BlobCheckpointStore implements CheckpointStore {
     fullyQualifiedNamespace: string,
     eventHubName: string,
     consumerGroup: string,
-    options: OperationOptions = {}
+    options: OperationOptions = {},
   ): Promise<PartitionOwnership[]> {
     const partitionOwnershipArray: PartitionOwnership[] = [];
     const { abortSignal, tracingOptions } = options;
@@ -47,7 +52,7 @@ export class BlobCheckpointStore implements CheckpointStore {
       type: "ownership",
       fullyQualifiedNamespace,
       eventHubName,
-      consumerGroup: consumerGroup
+      consumerGroup: consumerGroup,
     });
 
     try {
@@ -55,14 +60,14 @@ export class BlobCheckpointStore implements CheckpointStore {
         abortSignal,
         includeMetadata: true,
         prefix: blobPrefix,
-        tracingOptions
+        tracingOptions,
       });
 
       for await (const blob of blobs) {
         const blobPath = blob.name.split("/");
         const blobName = blobPath[blobPath.length - 1];
 
-        const ownershipMetadata = blob.metadata as OwnershipMetadata;
+        const ownershipMetadata = (blob.metadata as OwnershipMetadata) ?? {};
 
         if (ownershipMetadata.ownerid == null) {
           throw new Error(`Missing ownerid in metadata for blob ${blob.name}`);
@@ -76,12 +81,12 @@ export class BlobCheckpointStore implements CheckpointStore {
           partitionId: blobName,
           lastModifiedTimeInMs:
             blob.properties.lastModified && blob.properties.lastModified.getTime(),
-          etag: blob.properties.etag
+          etag: blob.properties.etag,
         };
         partitionOwnershipArray.push(partitionOwnership);
       }
       return partitionOwnershipArray;
-    } catch (err) {
+    } catch (err: any) {
       logger.warning(`Error occurred while fetching the list of blobs`, err.message);
       logErrorStackTrace(err);
 
@@ -103,7 +108,7 @@ export class BlobCheckpointStore implements CheckpointStore {
    */
   async claimOwnership(
     partitionOwnership: PartitionOwnership[],
-    options: OperationOptions = {}
+    options: OperationOptions = {},
   ): Promise<PartitionOwnership[]> {
     const partitionOwnershipArray: PartitionOwnership[] = [];
     for (const ownership of partitionOwnership) {
@@ -112,10 +117,10 @@ export class BlobCheckpointStore implements CheckpointStore {
         const updatedBlobResponse = await this._setBlobMetadata(
           blobName,
           {
-            ownerid: ownership.ownerId
+            ownerid: ownership.ownerId,
           },
           ownership.etag,
-          options
+          options,
         );
 
         if (updatedBlobResponse.lastModified) {
@@ -126,9 +131,9 @@ export class BlobCheckpointStore implements CheckpointStore {
         partitionOwnershipArray.push(ownership);
         logger.info(
           `[${ownership.ownerId}] Claimed ownership successfully for partition: ${ownership.partitionId}`,
-          `LastModifiedTime: ${ownership.lastModifiedTimeInMs}, ETag: ${ownership.etag}`
+          `LastModifiedTime: ${ownership.lastModifiedTimeInMs}, ETag: ${ownership.etag}`,
         );
-      } catch (err) {
+      } catch (err: any) {
         const restError = err as RestError;
 
         if (restError.statusCode === 412) {
@@ -136,14 +141,14 @@ export class BlobCheckpointStore implements CheckpointStore {
           // as multiple consumers attempt to claim the same partition (first one wins)
           // and losers get this error.
           logger.verbose(
-            `[${ownership.ownerId}] Did not claim partition ${ownership.partitionId}. Another processor has already claimed it.`
+            `[${ownership.ownerId}] Did not claim partition ${ownership.partitionId}. Another processor has already claimed it.`,
           );
           continue;
         }
 
         logger.warning(
           `Error occurred while claiming ownership for partition: ${ownership.partitionId}`,
-          err.message
+          err.message,
         );
         logErrorStackTrace(err);
 
@@ -168,21 +173,21 @@ export class BlobCheckpointStore implements CheckpointStore {
     fullyQualifiedNamespace: string,
     eventHubName: string,
     consumerGroup: string,
-    options: OperationOptions = {}
+    options: OperationOptions = {},
   ): Promise<Checkpoint[]> {
     const { abortSignal, tracingOptions } = options;
     const blobPrefix = BlobCheckpointStore.getBlobPrefix({
       type: "checkpoint",
       fullyQualifiedNamespace,
       eventHubName,
-      consumerGroup
+      consumerGroup,
     });
 
     const blobs = this._containerClient.listBlobsFlat({
       abortSignal,
       includeMetadata: true,
       prefix: blobPrefix,
-      tracingOptions
+      tracingOptions,
     });
 
     const checkpoints: Checkpoint[] = [];
@@ -191,13 +196,16 @@ export class BlobCheckpointStore implements CheckpointStore {
       const blobPath = blob.name.split("/");
       const blobName = blobPath[blobPath.length - 1];
 
-      const checkpointMetadata = blob.metadata as CheckpointMetadata;
+      const checkpointMetadata = (blob.metadata as CheckpointMetadata) ?? {};
 
-      const offset = parseIntOrThrow(blob.name, "offset", checkpointMetadata.offset);
+      const offset = checkpointMetadata.offset;
+      if (offset == null) {
+        throw new Error(`Missing metadata property 'offset' on blob '${blob.name}'`);
+      }
       const sequenceNumber = parseIntOrThrow(
         blob.name,
         "sequencenumber",
-        checkpointMetadata.sequencenumber
+        checkpointMetadata.sequencenumber,
       );
 
       checkpoints.push({
@@ -206,7 +214,7 @@ export class BlobCheckpointStore implements CheckpointStore {
         fullyQualifiedNamespace,
         partitionId: blobName,
         offset,
-        sequenceNumber
+        sequenceNumber,
       });
     }
 
@@ -226,7 +234,7 @@ export class BlobCheckpointStore implements CheckpointStore {
     throwTypeErrorIfParameterMissing(
       "updateCheckpoint",
       "sequenceNumber",
-      checkpoint.sequenceNumber
+      checkpoint.sequenceNumber,
     );
     throwTypeErrorIfParameterMissing("updateCheckpoint", "offset", checkpoint.offset);
 
@@ -236,31 +244,29 @@ export class BlobCheckpointStore implements CheckpointStore {
         blobName,
         {
           sequencenumber: checkpoint.sequenceNumber.toString(),
-          offset: checkpoint.offset.toString()
+          offset: checkpoint.offset.toString(),
         },
         undefined,
-        options
+        options,
       );
 
       logger.verbose(
         `Updated checkpoint successfully for partition: ${checkpoint.partitionId}`,
         `LastModifiedTime: ${metadataResponse.lastModified!.toISOString()}, ETag: ${
           metadataResponse.etag
-        }`
+        }`,
       );
       return;
-    } catch (err) {
+    } catch (err: any) {
       logger.warning(
-        `Error occurred while upating the checkpoint for partition: ${checkpoint.partitionId}.`,
-        err.message
+        `Error occurred while updating the checkpoint for partition: ${checkpoint.partitionId}.`,
+        err.message,
       );
       logErrorStackTrace(err);
 
       if (err?.name === "AbortError") throw err;
 
-      throw new Error(
-        `Error occurred while upating the checkpoint for partition: ${checkpoint.partitionId}, ${err}`
-      );
+      throw err;
     }
   }
 
@@ -288,7 +294,7 @@ export class BlobCheckpointStore implements CheckpointStore {
     blobName: string,
     metadata: OwnershipMetadata | CheckpointMetadata,
     etag: string | undefined,
-    options: OperationOptions = {}
+    options: OperationOptions = {},
   ): Promise<BlobSetMetadataResponse> {
     const { abortSignal, tracingOptions } = options;
     const blockBlobClient = this._containerClient.getBlobClient(blobName).getBlockBlobClient();
@@ -299,9 +305,9 @@ export class BlobCheckpointStore implements CheckpointStore {
       return blockBlobClient.setMetadata(metadata as Metadata, {
         abortSignal,
         conditions: {
-          ifMatch: etag
+          ifMatch: etag,
         },
-        tracingOptions
+        tracingOptions,
       });
     } else {
       try {
@@ -310,9 +316,9 @@ export class BlobCheckpointStore implements CheckpointStore {
         // https://github.com/Azure/azure-sdk-for-js/issues/10132
         return await blockBlobClient.setMetadata(metadata as Metadata, {
           abortSignal,
-          tracingOptions
+          tracingOptions,
         });
-      } catch (err) {
+      } catch (err: any) {
         // Check if the error is `BlobNotFound` and fallback to `upload` if it is.
         if (err?.name !== "RestError") {
           throw err;
@@ -326,7 +332,7 @@ export class BlobCheckpointStore implements CheckpointStore {
         return blockBlobClient.upload("", 0, {
           abortSignal,
           metadata: metadata as Metadata,
-          tracingOptions
+          tracingOptions,
         });
       }
     }
@@ -342,13 +348,12 @@ type CheckpointMetadata = {
 };
 
 /**
- * @hidden
  * @internal
  */
 export function parseIntOrThrow(
   blobName: string,
   fieldName: string,
-  numStr: string | undefined
+  numStr: string | undefined,
 ): number {
   if (numStr == null) {
     throw new Error(`Missing metadata property '${fieldName}' on blob '${blobName}'`);
@@ -358,7 +363,7 @@ export function parseIntOrThrow(
 
   if (isNaN(num)) {
     throw new Error(
-      `Failed to parse metadata property '${fieldName}' on blob '${blobName}' as a number`
+      `Failed to parse metadata property '${fieldName}' on blob '${blobName}' as a number`,
     );
   }
 

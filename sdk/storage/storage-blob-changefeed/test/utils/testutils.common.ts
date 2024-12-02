@@ -1,18 +1,46 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredential, GetTokenOptions, AccessToken } from "@azure/core-http";
-import { isPlaybackMode, env, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
+import type { TokenCredential, GetTokenOptions, AccessToken } from "@azure/core-auth";
+import type { Recorder, RecorderStartOptions } from "@azure-tools/test-recorder";
+import { isPlaybackMode } from "@azure-tools/test-recorder";
+import type { Readable } from "stream";
+import type { FindReplaceSanitizer } from "@azure-tools/test-recorder/types/src/utils/utils";
+import type { Pipeline } from "@azure/core-rest-pipeline";
+import type { BlobChangeFeedClient } from "../../src/BlobChangeFeedClient";
 
 export const testPollerProperties = {
-  intervalInMs: isPlaybackMode() ? 0 : undefined
+  intervalInMs: isPlaybackMode() ? 0 : undefined,
 };
+
+export function configureBlobStorageClient(recorder: Recorder, client: BlobChangeFeedClient): void {
+  const options = recorder.configureClientOptions({});
+
+  const pipeline: Pipeline = (client as any).blobServiceClient.storageClientContext.pipeline;
+  for (const { policy } of options.additionalPolicies ?? []) {
+    pipeline.addPolicy(policy, { afterPhase: "Sign", afterPolicies: ["injectorPolicy"] });
+  }
+}
+
+function getUriSanitizerForQueryParam(paramName: string) {
+  return {
+    regex: true,
+    target: `http.+?[^&]*&?(?<param>${paramName}=[^&]+&?)`,
+    groupForReplace: "param",
+    value: "",
+  };
+}
 
 const mockAccountName = "fakestorageaccount";
 const mockMDAccountName = "md-fakestorageaccount";
 const mockAccountKey = "aaaaa";
-export const recorderEnvSetup: RecorderEnvironmentSetup = {
-  replaceableVariables: {
+const sasParams = ["se", "sig", "sip", "sp", "spr", "srt", "ss", "sr", "st", "sv"];
+if (isBrowser()) {
+  sasParams.push("_");
+}
+export const uriSanitizers: FindReplaceSanitizer[] = sasParams.map(getUriSanitizerForQueryParam);
+export const recorderEnvSetup: RecorderStartOptions = {
+  envSetupForPlayback: {
     // Used in record and playback modes
     // 1. The key-value pairs will be used as the environment variables in playback mode
     // 2. If the env variables are present in the recordings as plain strings, they will be replaced with the provided values in record mode
@@ -26,30 +54,12 @@ export const recorderEnvSetup: RecorderEnvironmentSetup = {
     MD_ACCOUNT_NAME: `${mockMDAccountName}`,
     MD_ACCOUNT_KEY: `${mockAccountKey}`,
     MD_ACCOUNT_SAS: `${mockAccountKey}`,
-    MD_STORAGE_CONNECTION_STRING: `DefaultEndpointsProtocol=https;AccountName=${mockMDAccountName};AccountKey=${mockAccountKey};EndpointSuffix=core.windows.net`
+    MD_STORAGE_CONNECTION_STRING: `DefaultEndpointsProtocol=https;AccountName=${mockMDAccountName};AccountKey=${mockAccountKey};EndpointSuffix=core.windows.net`,
   },
-  customizationsOnRecordings: [
-    // Used in record mode
-    // Array of callback functions can be provided to customize the generated recordings in record mode
-    // `sig` param of SAS Token is being filtered here
-    (recording: string): string =>
-      recording.replace(
-        new RegExp(env.ACCOUNT_SAS.match("(.*)&sig=(.*)")[2], "g"),
-        `${mockAccountKey}`
-      )
-  ],
   // SAS token may contain sensitive information
-  queryParametersToSkip: [
-    // Used in record and playback modes
-    "se",
-    "sig",
-    "sp",
-    "spr",
-    "srt",
-    "ss",
-    "st",
-    "sv"
-  ]
+  sanitizerOptions: {
+    uriSanitizers,
+  },
 };
 
 /**
@@ -86,11 +96,11 @@ export class SimpleTokenCredential implements TokenCredential {
    */
   async getToken(
     _scopes: string | string[],
-    _options?: GetTokenOptions
+    _options?: GetTokenOptions,
   ): Promise<AccessToken | null> {
     return {
       token: this.token,
-      expiresOnTimestamp: this.expiresOn.getTime()
+      expiresOnTimestamp: this.expiresOn.getTime(),
     };
   }
 }
@@ -138,10 +148,23 @@ export function isSuperSet(m1?: BlobMetadata, m2?: BlobMetadata): boolean {
 /**
  * Sleep for seconds.
  *
- * @param seconds -
+ * @param seconds - duration to sleep in seconds
  */
 export function sleep(seconds: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, seconds * 1000);
+  });
+}
+/**
+ * Read text content from a stream as string
+ * @param stream - stream to read from
+ * @returns a utf-8 string that is the whole content of the stream
+ */
+export function streamToString(stream: Readable): Promise<string> {
+  const chunks: any[] = [];
+  return new Promise((resolve, reject) => {
+    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    stream.on("error", (err) => reject(err));
+    stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
   });
 }

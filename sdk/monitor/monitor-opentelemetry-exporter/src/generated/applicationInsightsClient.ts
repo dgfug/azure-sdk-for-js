@@ -7,23 +7,49 @@
  */
 
 import * as coreClient from "@azure/core-client";
-import * as Parameters from "./models/parameters";
-import * as Mappers from "./models/mappers";
-import { ApplicationInsightsClientContext } from "./applicationInsightsClientContext";
+import * as Parameters from "./models/parameters.js";
+import * as Mappers from "./models/mappers.js";
 import {
   ApplicationInsightsClientOptionalParams,
   TelemetryItem,
-  ApplicationInsightsClientTrackOptionalParams,
-  ApplicationInsightsClientTrackResponse
-} from "./models";
+  TrackOptionalParams,
+  TrackOperationResponse,
+} from "./models/index.js";
 
-export class ApplicationInsightsClient extends ApplicationInsightsClientContext {
+export class ApplicationInsightsClient extends coreClient.ServiceClient {
+  host: string;
+
   /**
    * Initializes a new instance of the ApplicationInsightsClient class.
    * @param options The parameter options
    */
   constructor(options?: ApplicationInsightsClientOptionalParams) {
-    super(options);
+    // Initializing default values for options
+    if (!options) {
+      options = {};
+    }
+    const defaults: ApplicationInsightsClientOptionalParams = {
+      requestContentType: "application/json; charset=utf-8",
+    };
+
+    const packageDetails = `azsdk-js-monitor-opentelemetry-exporter/1.0.0-beta.27`;
+    const userAgentPrefix =
+      options.userAgentOptions && options.userAgentOptions.userAgentPrefix
+        ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
+        : `${packageDetails}`;
+
+    const optionsWithDefaults = {
+      ...defaults,
+      ...options,
+      userAgentOptions: {
+        userAgentPrefix,
+      },
+      endpoint: options.endpoint ?? options.baseUri ?? "{Host}/v2.1",
+    };
+    super(optionsWithDefaults);
+
+    // Assigning values to Constant parameters
+    this.host = options.host || "https://dc.services.visualstudio.com";
   }
 
   /**
@@ -33,8 +59,8 @@ export class ApplicationInsightsClient extends ApplicationInsightsClientContext 
    */
   track(
     body: TelemetryItem[],
-    options?: ApplicationInsightsClientTrackOptionalParams
-  ): Promise<ApplicationInsightsClientTrackResponse> {
+    options?: TrackOptionalParams,
+  ): Promise<TrackOperationResponse> {
     return this.sendOperationRequest({ body, options }, trackOperationSpec);
   }
 }
@@ -46,35 +72,35 @@ const trackOperationSpec: coreClient.OperationSpec = {
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TrackResponse
+      bodyMapper: Mappers.TrackResponse,
     },
     206: {
-      bodyMapper: Mappers.TrackResponse
+      bodyMapper: Mappers.TrackResponse,
     },
     400: {
       bodyMapper: Mappers.TrackResponse,
-      isError: true
+      isError: true,
     },
     402: {
       bodyMapper: Mappers.TrackResponse,
-      isError: true
+      isError: true,
     },
     429: {
       bodyMapper: Mappers.TrackResponse,
-      isError: true
+      isError: true,
     },
     500: {
       bodyMapper: Mappers.TrackResponse,
-      isError: true
+      isError: true,
     },
     503: {
       bodyMapper: Mappers.TrackResponse,
-      isError: true
-    }
+      isError: true,
+    },
   },
   requestBody: Parameters.body,
   urlParameters: [Parameters.host],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };

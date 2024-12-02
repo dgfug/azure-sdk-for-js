@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RequestParameters } from "@azure-rest/core-client";
-import {
+import type { RequestParameters } from "@azure-rest/core-client";
+import type {
   AccessKeyOptions,
   Collection,
   DataPlaneAccountUpdateParameters,
   ResourceSetRuleConfig,
-} from "./models";
+} from "./models.js";
 
 export type AccountsGetAccountPropertiesParameters = RequestParameters;
 
@@ -31,8 +31,8 @@ export interface CollectionsCreateOrUpdateCollectionBodyParam {
   body: Collection;
 }
 
-export type CollectionsCreateOrUpdateCollectionParameters = CollectionsCreateOrUpdateCollectionBodyParam &
-  RequestParameters;
+export type CollectionsCreateOrUpdateCollectionParameters =
+  CollectionsCreateOrUpdateCollectionBodyParam & RequestParameters;
 export type CollectionsDeleteCollectionParameters = RequestParameters;
 
 export interface CollectionsListCollectionsQueryParamProperties {
@@ -54,8 +54,8 @@ export interface CollectionsListChildCollectionNamesQueryParam {
   queryParameters?: CollectionsListChildCollectionNamesQueryParamProperties;
 }
 
-export type CollectionsListChildCollectionNamesParameters = CollectionsListChildCollectionNamesQueryParam &
-  RequestParameters;
+export type CollectionsListChildCollectionNamesParameters =
+  CollectionsListChildCollectionNamesQueryParam & RequestParameters;
 export type CollectionsGetCollectionPathParameters = RequestParameters;
 export type ResourceSetRulesGetResourceSetRuleParameters = RequestParameters;
 
@@ -63,8 +63,8 @@ export interface ResourceSetRulesCreateOrUpdateResourceSetRuleBodyParam {
   body: ResourceSetRuleConfig;
 }
 
-export type ResourceSetRulesCreateOrUpdateResourceSetRuleParameters = ResourceSetRulesCreateOrUpdateResourceSetRuleBodyParam &
-  RequestParameters;
+export type ResourceSetRulesCreateOrUpdateResourceSetRuleParameters =
+  ResourceSetRulesCreateOrUpdateResourceSetRuleBodyParam & RequestParameters;
 export type ResourceSetRulesDeleteResourceSetRuleParameters = RequestParameters;
 
 export interface ResourceSetRulesListResourceSetRulesQueryParamProperties {
@@ -75,5 +75,5 @@ export interface ResourceSetRulesListResourceSetRulesQueryParam {
   queryParameters?: ResourceSetRulesListResourceSetRulesQueryParamProperties;
 }
 
-export type ResourceSetRulesListResourceSetRulesParameters = ResourceSetRulesListResourceSetRulesQueryParam &
-  RequestParameters;
+export type ResourceSetRulesListResourceSetRulesParameters =
+  ResourceSetRulesListResourceSetRulesQueryParam & RequestParameters;

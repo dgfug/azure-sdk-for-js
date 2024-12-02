@@ -6,37 +6,42 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { PrivateEndpoints } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StreamAnalyticsManagementClientContext } from "../streamAnalyticsManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { StreamAnalyticsManagementClient } from "../streamAnalyticsManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   PrivateEndpoint,
   PrivateEndpointsListByClusterNextOptionalParams,
   PrivateEndpointsListByClusterOptionalParams,
+  PrivateEndpointsListByClusterResponse,
   PrivateEndpointsCreateOrUpdateOptionalParams,
   PrivateEndpointsCreateOrUpdateResponse,
   PrivateEndpointsGetOptionalParams,
   PrivateEndpointsGetResponse,
   PrivateEndpointsDeleteOptionalParams,
-  PrivateEndpointsListByClusterResponse,
-  PrivateEndpointsListByClusterNextResponse
+  PrivateEndpointsListByClusterNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing PrivateEndpoints operations. */
 export class PrivateEndpointsImpl implements PrivateEndpoints {
-  private readonly client: StreamAnalyticsManagementClientContext;
+  private readonly client: StreamAnalyticsManagementClient;
 
   /**
    * Initialize a new instance of the class PrivateEndpoints class.
    * @param client Reference to the service client
    */
-  constructor(client: StreamAnalyticsManagementClientContext) {
+  constructor(client: StreamAnalyticsManagementClient) {
     this.client = client;
   }
 
@@ -49,12 +54,12 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
   public listByCluster(
     resourceGroupName: string,
     clusterName: string,
-    options?: PrivateEndpointsListByClusterOptionalParams
+    options?: PrivateEndpointsListByClusterOptionalParams,
   ): PagedAsyncIterableIterator<PrivateEndpoint> {
     const iter = this.listByClusterPagingAll(
       resourceGroupName,
       clusterName,
-      options
+      options,
     );
     return {
       next() {
@@ -63,49 +68,62 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByClusterPagingPage(
           resourceGroupName,
           clusterName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByClusterPagingPage(
     resourceGroupName: string,
     clusterName: string,
-    options?: PrivateEndpointsListByClusterOptionalParams
+    options?: PrivateEndpointsListByClusterOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<PrivateEndpoint[]> {
-    let result = await this._listByCluster(
-      resourceGroupName,
-      clusterName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: PrivateEndpointsListByClusterResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByCluster(
+        resourceGroupName,
+        clusterName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByClusterNext(
         resourceGroupName,
         clusterName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByClusterPagingAll(
     resourceGroupName: string,
     clusterName: string,
-    options?: PrivateEndpointsListByClusterOptionalParams
+    options?: PrivateEndpointsListByClusterOptionalParams,
   ): AsyncIterableIterator<PrivateEndpoint> {
     for await (const page of this.listByClusterPagingPage(
       resourceGroupName,
       clusterName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -125,7 +143,7 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
     clusterName: string,
     privateEndpointName: string,
     privateEndpoint: PrivateEndpoint,
-    options?: PrivateEndpointsCreateOrUpdateOptionalParams
+    options?: PrivateEndpointsCreateOrUpdateOptionalParams,
   ): Promise<PrivateEndpointsCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -133,9 +151,9 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
         clusterName,
         privateEndpointName,
         privateEndpoint,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -150,11 +168,11 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
     resourceGroupName: string,
     clusterName: string,
     privateEndpointName: string,
-    options?: PrivateEndpointsGetOptionalParams
+    options?: PrivateEndpointsGetOptionalParams,
   ): Promise<PrivateEndpointsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, clusterName, privateEndpointName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -169,25 +187,24 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
     resourceGroupName: string,
     clusterName: string,
     privateEndpointName: string,
-    options?: PrivateEndpointsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: PrivateEndpointsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -196,8 +213,8 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -205,20 +222,22 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, clusterName, privateEndpointName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, clusterName, privateEndpointName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -232,13 +251,13 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
     resourceGroupName: string,
     clusterName: string,
     privateEndpointName: string,
-    options?: PrivateEndpointsDeleteOptionalParams
+    options?: PrivateEndpointsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       clusterName,
       privateEndpointName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -252,11 +271,11 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
   private _listByCluster(
     resourceGroupName: string,
     clusterName: string,
-    options?: PrivateEndpointsListByClusterOptionalParams
+    options?: PrivateEndpointsListByClusterOptionalParams,
   ): Promise<PrivateEndpointsListByClusterResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, clusterName, options },
-      listByClusterOperationSpec
+      listByClusterOperationSpec,
     );
   }
 
@@ -271,11 +290,11 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
     resourceGroupName: string,
     clusterName: string,
     nextLink: string,
-    options?: PrivateEndpointsListByClusterNextOptionalParams
+    options?: PrivateEndpointsListByClusterNextOptionalParams,
   ): Promise<PrivateEndpointsListByClusterNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, clusterName, nextLink, options },
-      listByClusterNextOperationSpec
+      listByClusterNextOperationSpec,
     );
   }
 }
@@ -283,19 +302,18 @@ export class PrivateEndpointsImpl implements PrivateEndpoints {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints/{privateEndpointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints/{privateEndpointName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateEndpoint
+      bodyMapper: Mappers.PrivateEndpoint,
     },
     201: {
-      bodyMapper: Mappers.PrivateEndpoint
+      bodyMapper: Mappers.PrivateEndpoint,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.privateEndpoint,
   queryParameters: [Parameters.apiVersion1],
@@ -304,28 +322,27 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.clusterName,
-    Parameters.privateEndpointName
+    Parameters.privateEndpointName,
   ],
   headerParameters: [
     Parameters.contentType,
     Parameters.accept,
     Parameters.ifMatch,
-    Parameters.ifNoneMatch
+    Parameters.ifNoneMatch,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints/{privateEndpointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints/{privateEndpointName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateEndpoint
+      bodyMapper: Mappers.PrivateEndpoint,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
@@ -333,14 +350,13 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.clusterName,
-    Parameters.privateEndpointName
+    Parameters.privateEndpointName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints/{privateEndpointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints/{privateEndpointName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -348,8 +364,8 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
@@ -357,52 +373,50 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.clusterName,
-    Parameters.privateEndpointName
+    Parameters.privateEndpointName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByClusterOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/clusters/{clusterName}/privateEndpoints",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateEndpointListResult
+      bodyMapper: Mappers.PrivateEndpointListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.clusterName
+    Parameters.clusterName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByClusterNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateEndpointListResult
+      bodyMapper: Mappers.PrivateEndpointListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.nextLink,
-    Parameters.clusterName
+    Parameters.clusterName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

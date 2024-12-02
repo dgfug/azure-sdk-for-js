@@ -18,7 +18,7 @@ import {
   TagsObject,
   SnapshotsUpdateTagsOptionalParams,
   SnapshotsUpdateTagsResponse,
-  SnapshotsDeleteOptionalParams
+  SnapshotsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -29,31 +29,31 @@ export interface Snapshots {
    * @param options The options parameters.
    */
   list(
-    options?: SnapshotsListOptionalParams
+    options?: SnapshotsListOptionalParams,
   ): PagedAsyncIterableIterator<Snapshot>;
   /**
    * Lists snapshots in the specified subscription and resource group.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param options The options parameters.
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: SnapshotsListByResourceGroupOptionalParams
+    options?: SnapshotsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Snapshot>;
   /**
    * Gets a snapshot.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param options The options parameters.
    */
   get(
     resourceGroupName: string,
     resourceName: string,
-    options?: SnapshotsGetOptionalParams
+    options?: SnapshotsGetOptionalParams,
   ): Promise<SnapshotsGetResponse>;
   /**
    * Creates or updates a snapshot.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param parameters The snapshot to create or update.
    * @param options The options parameters.
@@ -62,11 +62,11 @@ export interface Snapshots {
     resourceGroupName: string,
     resourceName: string,
     parameters: Snapshot,
-    options?: SnapshotsCreateOrUpdateOptionalParams
+    options?: SnapshotsCreateOrUpdateOptionalParams,
   ): Promise<SnapshotsCreateOrUpdateResponse>;
   /**
    * Updates tags on a snapshot.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param parameters Parameters supplied to the Update snapshot Tags operation.
    * @param options The options parameters.
@@ -75,17 +75,17 @@ export interface Snapshots {
     resourceGroupName: string,
     resourceName: string,
     parameters: TagsObject,
-    options?: SnapshotsUpdateTagsOptionalParams
+    options?: SnapshotsUpdateTagsOptionalParams,
   ): Promise<SnapshotsUpdateTagsResponse>;
   /**
    * Deletes a snapshot.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param resourceName The name of the managed cluster resource.
    * @param options The options parameters.
    */
   delete(
     resourceGroupName: string,
     resourceName: string,
-    options?: SnapshotsDeleteOptionalParams
+    options?: SnapshotsDeleteOptionalParams,
   ): Promise<void>;
 }

@@ -6,25 +6,29 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ElasticPools } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { SqlManagementClient } from "../sqlManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   Metric,
   ElasticPoolsListMetricsOptionalParams,
+  ElasticPoolsListMetricsResponse,
   MetricDefinition,
   ElasticPoolsListMetricDefinitionsOptionalParams,
+  ElasticPoolsListMetricDefinitionsResponse,
   ElasticPool,
   ElasticPoolsListByServerNextOptionalParams,
   ElasticPoolsListByServerOptionalParams,
-  ElasticPoolsListMetricsResponse,
-  ElasticPoolsListMetricDefinitionsResponse,
   ElasticPoolsListByServerResponse,
   ElasticPoolsGetOptionalParams,
   ElasticPoolsGetResponse,
@@ -35,19 +39,19 @@ import {
   ElasticPoolsUpdateOptionalParams,
   ElasticPoolsUpdateResponse,
   ElasticPoolsFailoverOptionalParams,
-  ElasticPoolsListByServerNextResponse
+  ElasticPoolsListByServerNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ElasticPools operations. */
 export class ElasticPoolsImpl implements ElasticPools {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ElasticPools class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -65,14 +69,14 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     filter: string,
-    options?: ElasticPoolsListMetricsOptionalParams
+    options?: ElasticPoolsListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<Metric> {
     const iter = this.listMetricsPagingAll(
       resourceGroupName,
       serverName,
       elasticPoolName,
       filter,
-      options
+      options,
     );
     return {
       next() {
@@ -81,15 +85,19 @@ export class ElasticPoolsImpl implements ElasticPools {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricsPagingPage(
           resourceGroupName,
           serverName,
           elasticPoolName,
           filter,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -98,14 +106,16 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     filter: string,
-    options?: ElasticPoolsListMetricsOptionalParams
+    options?: ElasticPoolsListMetricsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Metric[]> {
-    let result = await this._listMetrics(
+    let result: ElasticPoolsListMetricsResponse;
+    result = await this._listMetrics(
       resourceGroupName,
       serverName,
       elasticPoolName,
       filter,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -115,14 +125,14 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     filter: string,
-    options?: ElasticPoolsListMetricsOptionalParams
+    options?: ElasticPoolsListMetricsOptionalParams,
   ): AsyncIterableIterator<Metric> {
     for await (const page of this.listMetricsPagingPage(
       resourceGroupName,
       serverName,
       elasticPoolName,
       filter,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -140,13 +150,13 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsListMetricDefinitionsOptionalParams
+    options?: ElasticPoolsListMetricDefinitionsOptionalParams,
   ): PagedAsyncIterableIterator<MetricDefinition> {
     const iter = this.listMetricDefinitionsPagingAll(
       resourceGroupName,
       serverName,
       elasticPoolName,
-      options
+      options,
     );
     return {
       next() {
@@ -155,14 +165,18 @@ export class ElasticPoolsImpl implements ElasticPools {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricDefinitionsPagingPage(
           resourceGroupName,
           serverName,
           elasticPoolName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -170,13 +184,15 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsListMetricDefinitionsOptionalParams
+    options?: ElasticPoolsListMetricDefinitionsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<MetricDefinition[]> {
-    let result = await this._listMetricDefinitions(
+    let result: ElasticPoolsListMetricDefinitionsResponse;
+    result = await this._listMetricDefinitions(
       resourceGroupName,
       serverName,
       elasticPoolName,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -185,13 +201,13 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsListMetricDefinitionsOptionalParams
+    options?: ElasticPoolsListMetricDefinitionsOptionalParams,
   ): AsyncIterableIterator<MetricDefinition> {
     for await (const page of this.listMetricDefinitionsPagingPage(
       resourceGroupName,
       serverName,
       elasticPoolName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -207,12 +223,12 @@ export class ElasticPoolsImpl implements ElasticPools {
   public listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ElasticPoolsListByServerOptionalParams
+    options?: ElasticPoolsListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ElasticPool> {
     const iter = this.listByServerPagingAll(
       resourceGroupName,
       serverName,
-      options
+      options,
     );
     return {
       next() {
@@ -221,49 +237,58 @@ export class ElasticPoolsImpl implements ElasticPools {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServerPagingPage(
           resourceGroupName,
           serverName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByServerPagingPage(
     resourceGroupName: string,
     serverName: string,
-    options?: ElasticPoolsListByServerOptionalParams
+    options?: ElasticPoolsListByServerOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ElasticPool[]> {
-    let result = await this._listByServer(
-      resourceGroupName,
-      serverName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ElasticPoolsListByServerResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByServer(resourceGroupName, serverName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServerNext(
         resourceGroupName,
         serverName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByServerPagingAll(
     resourceGroupName: string,
     serverName: string,
-    options?: ElasticPoolsListByServerOptionalParams
+    options?: ElasticPoolsListByServerOptionalParams,
   ): AsyncIterableIterator<ElasticPool> {
     for await (const page of this.listByServerPagingPage(
       resourceGroupName,
       serverName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -283,11 +308,11 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     filter: string,
-    options?: ElasticPoolsListMetricsOptionalParams
+    options?: ElasticPoolsListMetricsOptionalParams,
   ): Promise<ElasticPoolsListMetricsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, elasticPoolName, filter, options },
-      listMetricsOperationSpec
+      listMetricsOperationSpec,
     );
   }
 
@@ -303,11 +328,11 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsListMetricDefinitionsOptionalParams
+    options?: ElasticPoolsListMetricDefinitionsOptionalParams,
   ): Promise<ElasticPoolsListMetricDefinitionsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, elasticPoolName, options },
-      listMetricDefinitionsOperationSpec
+      listMetricDefinitionsOperationSpec,
     );
   }
 
@@ -321,11 +346,11 @@ export class ElasticPoolsImpl implements ElasticPools {
   private _listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ElasticPoolsListByServerOptionalParams
+    options?: ElasticPoolsListByServerOptionalParams,
   ): Promise<ElasticPoolsListByServerResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, options },
-      listByServerOperationSpec
+      listByServerOperationSpec,
     );
   }
 
@@ -341,11 +366,11 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsGetOptionalParams
+    options?: ElasticPoolsGetOptionalParams,
   ): Promise<ElasticPoolsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, elasticPoolName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -363,30 +388,29 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     parameters: ElasticPool,
-    options?: ElasticPoolsCreateOrUpdateOptionalParams
+    options?: ElasticPoolsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ElasticPoolsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ElasticPoolsCreateOrUpdateResponse>,
       ElasticPoolsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ElasticPoolsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -395,8 +419,8 @@ export class ElasticPoolsImpl implements ElasticPools {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -404,20 +428,32 @@ export class ElasticPoolsImpl implements ElasticPools {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serverName, elasticPoolName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serverName,
+        elasticPoolName,
+        parameters,
+        options,
+      },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ElasticPoolsCreateOrUpdateResponse,
+      OperationState<ElasticPoolsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -434,14 +470,14 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     parameters: ElasticPool,
-    options?: ElasticPoolsCreateOrUpdateOptionalParams
+    options?: ElasticPoolsCreateOrUpdateOptionalParams,
   ): Promise<ElasticPoolsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       serverName,
       elasticPoolName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -458,25 +494,24 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ElasticPoolsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -485,8 +520,8 @@ export class ElasticPoolsImpl implements ElasticPools {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -494,20 +529,23 @@ export class ElasticPoolsImpl implements ElasticPools {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serverName, elasticPoolName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, serverName, elasticPoolName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -522,13 +560,13 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsDeleteOptionalParams
+    options?: ElasticPoolsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       serverName,
       elasticPoolName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -547,30 +585,29 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     parameters: ElasticPoolUpdate,
-    options?: ElasticPoolsUpdateOptionalParams
+    options?: ElasticPoolsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ElasticPoolsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ElasticPoolsUpdateResponse>,
       ElasticPoolsUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ElasticPoolsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -579,8 +616,8 @@ export class ElasticPoolsImpl implements ElasticPools {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -588,20 +625,32 @@ export class ElasticPoolsImpl implements ElasticPools {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serverName, elasticPoolName, parameters, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serverName,
+        elasticPoolName,
+        parameters,
+        options,
+      },
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ElasticPoolsUpdateResponse,
+      OperationState<ElasticPoolsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -618,14 +667,14 @@ export class ElasticPoolsImpl implements ElasticPools {
     serverName: string,
     elasticPoolName: string,
     parameters: ElasticPoolUpdate,
-    options?: ElasticPoolsUpdateOptionalParams
+    options?: ElasticPoolsUpdateOptionalParams,
   ): Promise<ElasticPoolsUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       serverName,
       elasticPoolName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -642,25 +691,24 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsFailoverOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ElasticPoolsFailoverOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -669,8 +717,8 @@ export class ElasticPoolsImpl implements ElasticPools {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -678,20 +726,22 @@ export class ElasticPoolsImpl implements ElasticPools {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serverName, elasticPoolName, options },
-      failoverOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, serverName, elasticPoolName, options },
+      spec: failoverOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -706,13 +756,13 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: ElasticPoolsFailoverOptionalParams
+    options?: ElasticPoolsFailoverOptionalParams,
   ): Promise<void> {
     const poller = await this.beginFailover(
       resourceGroupName,
       serverName,
       elasticPoolName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -729,11 +779,11 @@ export class ElasticPoolsImpl implements ElasticPools {
     resourceGroupName: string,
     serverName: string,
     nextLink: string,
-    options?: ElasticPoolsListByServerNextOptionalParams
+    options?: ElasticPoolsListByServerNextOptionalParams,
   ): Promise<ElasticPoolsListByServerNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, nextLink, options },
-      listByServerNextOperationSpec
+      listByServerNextOperationSpec,
     );
   }
 }
@@ -741,13 +791,12 @@ export class ElasticPoolsImpl implements ElasticPools {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/metrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/metrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricListResult
-    }
+      bodyMapper: Mappers.MetricListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
@@ -755,19 +804,18 @@ const listMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listMetricDefinitionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/metricDefinitions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/metricDefinitions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricDefinitionListResult
-    }
+      bodyMapper: Mappers.MetricDefinitionListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -775,40 +823,38 @@ const listMetricDefinitionsOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByServerOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ElasticPoolListResult
+      bodyMapper: Mappers.ElasticPoolListResult,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.skip, Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.serverName
+    Parameters.serverName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion2],
   urlParameters: [
@@ -816,46 +862,44 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
     201: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
     202: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
     204: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters9,
+  requestBody: Parameters.parameters8,
   queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
   httpMethod: "DELETE",
   responses: { 200: {}, 201: {}, 202: {}, 204: {}, default: {} },
   queryParameters: [Parameters.apiVersion2],
@@ -864,45 +908,43 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
     201: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
     202: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
     204: {
-      bodyMapper: Mappers.ElasticPool
+      bodyMapper: Mappers.ElasticPool,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters10,
+  requestBody: Parameters.parameters9,
   queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const failoverOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/failover",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/elasticPools/{elasticPoolName}/failover",
   httpMethod: "POST",
   responses: { 200: {}, 201: {}, 202: {}, 204: {}, default: {} },
   queryParameters: [Parameters.apiVersion2],
@@ -911,27 +953,26 @@ const failoverOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.elasticPoolName
+    Parameters.elasticPoolName,
   ],
-  serializer
+  serializer,
 };
 const listByServerNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ElasticPoolListResult
+      bodyMapper: Mappers.ElasticPoolListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.skip, Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

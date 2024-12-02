@@ -1,55 +1,46 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /// <reference lib="esnext.asynciterable" />
 
-import { Context } from "mocha";
+import type { PurviewCatalogClient } from "../../../src/index.js";
+import PurviewCatalog from "../../../src/index.js";
+import { createTestCredential } from "@azure-tools/test-credential";
+import type { ClientOptions } from "@azure-rest/core-client";
 
-import { env, Recorder, record, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import PurviewCatalog, { PurviewCatalogRestClient } from "../../../src";
-import { ClientSecretCredential } from "@azure/identity";
-
-import "./env";
-import { ClientOptions } from "@azure-rest/core-client";
+import type { Recorder, RecorderStartOptions } from "@azure-tools/test-recorder";
+import { env } from "@azure-tools/test-recorder";
 
 const replaceableVariables: { [k: string]: string } = {
-  ENDPOINT: "https://endpoint",
+  ENDPOINT: "https://endpoint/",
   AZURE_CLIENT_ID: "azure_client_id",
   AZURE_CLIENT_SECRET: "azure_client_secret",
   AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
 };
 
-export const environmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording.replace(/"access_token"\s?:\s?"[^"]*"/g, `"access_token":"access_token"`),
-    // If we put ENDPOINT in replaceableVariables above, it will not capture
-    // the endpoint string used with nock, which will be expanded to
-    // https://<endpoint>:443/ and therefore will not match, so we have to do
-    // this instead.
-    (recording: string): string => {
-      const replaced = recording.replace("endpoint:443", "endpoint");
-      return replaced;
-    },
+const recorderOptions: RecorderStartOptions = {
+  envSetupForPlayback: replaceableVariables,
+  removeCentralSanitizers: [
+    "AZSDK3493", // .name in the body is not a secret and is listed below in the beforeEach section
+    "AZSDK3430", // .id in the body is not a secret and is listed below in the beforeEach section
+    "AZSDK3478", // .accountname in the body is not a secret and is listed below in the beforeEach section
+    "AZSDK2030", // .operation-location in the body is not a secret and is listed below in the beforeEach section
   ],
-  queryParametersToSkip: [],
 };
 
-export function createClient(options?: ClientOptions): PurviewCatalogRestClient {
-  const credential = new ClientSecretCredential(
-    env.AZURE_TENANT_ID,
-    env.AZURE_CLIENT_ID,
-    env.AZURE_CLIENT_SECRET
-  );
-  return PurviewCatalog(env.ENDPOINT, credential, options);
-}
+export async function createClient(
+  recorder: Recorder,
+  options?: ClientOptions,
+): Promise<PurviewCatalogClient> {
+  const credential = createTestCredential();
 
-/**
- * creates the recorder and reads the environment variables from the `.env` file.
- * Should be called first in the test suite to make sure environment variables are
- * read before they are being used.
- */
-export function createRecorder(context: Context): Recorder {
-  return record(context, environmentSetup);
+  await recorder.start(recorderOptions);
+
+  return PurviewCatalog(
+    env.ENDPOINT ?? "",
+    credential,
+    recorder.configureClientOptions({
+      options,
+    }),
+  );
 }

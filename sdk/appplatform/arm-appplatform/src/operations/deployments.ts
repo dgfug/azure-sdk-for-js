@@ -6,20 +6,27 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Deployments } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { AppPlatformManagementClientContext } from "../appPlatformManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { AppPlatformManagementClient } from "../appPlatformManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   DeploymentResource,
   DeploymentsListNextOptionalParams,
   DeploymentsListOptionalParams,
+  DeploymentsListResponse,
   DeploymentsListForClusterNextOptionalParams,
   DeploymentsListForClusterOptionalParams,
+  DeploymentsListForClusterResponse,
   DeploymentsGetOptionalParams,
   DeploymentsGetResponse,
   DeploymentsCreateOrUpdateOptionalParams,
@@ -27,11 +34,15 @@ import {
   DeploymentsDeleteOptionalParams,
   DeploymentsUpdateOptionalParams,
   DeploymentsUpdateResponse,
-  DeploymentsListResponse,
-  DeploymentsListForClusterResponse,
   DeploymentsStartOptionalParams,
   DeploymentsStopOptionalParams,
   DeploymentsRestartOptionalParams,
+  DeploymentsEnableRemoteDebuggingOptionalParams,
+  DeploymentsEnableRemoteDebuggingResponse,
+  DeploymentsDisableRemoteDebuggingOptionalParams,
+  DeploymentsDisableRemoteDebuggingResponse,
+  DeploymentsGetRemoteDebuggingConfigOptionalParams,
+  DeploymentsGetRemoteDebuggingConfigResponse,
   DeploymentsGetLogFileUrlOptionalParams,
   DeploymentsGetLogFileUrlResponse,
   DiagnosticParameters,
@@ -45,13 +56,13 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Deployments operations. */
 export class DeploymentsImpl implements Deployments {
-  private readonly client: AppPlatformManagementClientContext;
+  private readonly client: AppPlatformManagementClient;
 
   /**
    * Initialize a new instance of the class Deployments class.
    * @param client Reference to the service client
    */
-  constructor(client: AppPlatformManagementClientContext) {
+  constructor(client: AppPlatformManagementClient) {
     this.client = client;
   }
 
@@ -82,12 +93,16 @@ export class DeploymentsImpl implements Deployments {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           serviceName,
           appName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -97,16 +112,23 @@ export class DeploymentsImpl implements Deployments {
     resourceGroupName: string,
     serviceName: string,
     appName: string,
-    options?: DeploymentsListOptionalParams
+    options?: DeploymentsListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeploymentResource[]> {
-    let result = await this._list(
-      resourceGroupName,
-      serviceName,
-      appName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DeploymentsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        serviceName,
+        appName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -116,7 +138,9 @@ export class DeploymentsImpl implements Deployments {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -160,11 +184,15 @@ export class DeploymentsImpl implements Deployments {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listForClusterPagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -173,15 +201,22 @@ export class DeploymentsImpl implements Deployments {
   private async *listForClusterPagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: DeploymentsListForClusterOptionalParams
+    options?: DeploymentsListForClusterOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeploymentResource[]> {
-    let result = await this._listForCluster(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DeploymentsListForClusterResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listForCluster(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listForClusterNext(
         resourceGroupName,
@@ -190,7 +225,9 @@ export class DeploymentsImpl implements Deployments {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -248,8 +285,8 @@ export class DeploymentsImpl implements Deployments {
     deploymentResource: DeploymentResource,
     options?: DeploymentsCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsCreateOrUpdateResponse>,
       DeploymentsCreateOrUpdateResponse
     >
   > {
@@ -259,7 +296,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -292,9 +329,9 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         appName,
@@ -302,13 +339,17 @@ export class DeploymentsImpl implements Deployments {
         deploymentResource,
         options
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec
     });
+    const poller = await createHttpPoller<
+      DeploymentsCreateOrUpdateResponse,
+      OperationState<DeploymentsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -355,14 +396,14 @@ export class DeploymentsImpl implements Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -395,16 +436,23 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, appName, deploymentName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        appName,
+        deploymentName,
+        options
+      },
+      spec: deleteOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -451,8 +499,8 @@ export class DeploymentsImpl implements Deployments {
     deploymentResource: DeploymentResource,
     options?: DeploymentsUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsUpdateResponse>,
       DeploymentsUpdateResponse
     >
   > {
@@ -462,7 +510,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -495,9 +543,9 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         appName,
@@ -505,13 +553,17 @@ export class DeploymentsImpl implements Deployments {
         deploymentResource,
         options
       },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: updateOperationSpec
     });
+    const poller = await createHttpPoller<
+      DeploymentsUpdateResponse,
+      OperationState<DeploymentsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -596,14 +648,14 @@ export class DeploymentsImpl implements Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsStartOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -636,16 +688,23 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, appName, deploymentName, options },
-      startOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        appName,
+        deploymentName,
+        options
+      },
+      spec: startOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -689,14 +748,14 @@ export class DeploymentsImpl implements Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsStopOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -729,16 +788,23 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, appName, deploymentName, options },
-      stopOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        appName,
+        deploymentName,
+        options
+      },
+      spec: stopOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -782,14 +848,14 @@ export class DeploymentsImpl implements Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsRestartOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -822,16 +888,23 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, appName, deploymentName, options },
-      restartOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        appName,
+        deploymentName,
+        options
+      },
+      spec: restartOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -858,6 +931,244 @@ export class DeploymentsImpl implements Deployments {
       options
     );
     return poller.pollUntilDone();
+  }
+
+  /**
+   * Enable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  async beginEnableRemoteDebugging(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsEnableRemoteDebuggingOptionalParams
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DeploymentsEnableRemoteDebuggingResponse>,
+      DeploymentsEnableRemoteDebuggingResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec
+    ): Promise<DeploymentsEnableRemoteDebuggingResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec
+    ) => {
+      let currentRawResponse:
+        | coreClient.FullOperationResponse
+        | undefined = undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback
+        }
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON()
+        }
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        appName,
+        deploymentName,
+        options
+      },
+      spec: enableRemoteDebuggingOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsEnableRemoteDebuggingResponse,
+      OperationState<DeploymentsEnableRemoteDebuggingResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Enable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  async beginEnableRemoteDebuggingAndWait(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsEnableRemoteDebuggingOptionalParams
+  ): Promise<DeploymentsEnableRemoteDebuggingResponse> {
+    const poller = await this.beginEnableRemoteDebugging(
+      resourceGroupName,
+      serviceName,
+      appName,
+      deploymentName,
+      options
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Disable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  async beginDisableRemoteDebugging(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsDisableRemoteDebuggingOptionalParams
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DeploymentsDisableRemoteDebuggingResponse>,
+      DeploymentsDisableRemoteDebuggingResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec
+    ): Promise<DeploymentsDisableRemoteDebuggingResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec
+    ) => {
+      let currentRawResponse:
+        | coreClient.FullOperationResponse
+        | undefined = undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback
+        }
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON()
+        }
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        appName,
+        deploymentName,
+        options
+      },
+      spec: disableRemoteDebuggingOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsDisableRemoteDebuggingResponse,
+      OperationState<DeploymentsDisableRemoteDebuggingResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Disable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  async beginDisableRemoteDebuggingAndWait(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsDisableRemoteDebuggingOptionalParams
+  ): Promise<DeploymentsDisableRemoteDebuggingResponse> {
+    const poller = await this.beginDisableRemoteDebugging(
+      resourceGroupName,
+      serviceName,
+      appName,
+      deploymentName,
+      options
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Get remote debugging config.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  getRemoteDebuggingConfig(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsGetRemoteDebuggingConfigOptionalParams
+  ): Promise<DeploymentsGetRemoteDebuggingConfigResponse> {
+    return this.client.sendOperationRequest(
+      { resourceGroupName, serviceName, appName, deploymentName, options },
+      getRemoteDebuggingConfigOperationSpec
+    );
   }
 
   /**
@@ -899,14 +1210,14 @@ export class DeploymentsImpl implements Deployments {
     deploymentName: string,
     diagnosticParameters: DiagnosticParameters,
     options?: DeploymentsGenerateHeapDumpOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -939,9 +1250,9 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         appName,
@@ -949,13 +1260,14 @@ export class DeploymentsImpl implements Deployments {
         diagnosticParameters,
         options
       },
-      generateHeapDumpOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: generateHeapDumpOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1004,14 +1316,14 @@ export class DeploymentsImpl implements Deployments {
     deploymentName: string,
     diagnosticParameters: DiagnosticParameters,
     options?: DeploymentsGenerateThreadDumpOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1044,9 +1356,9 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         appName,
@@ -1054,13 +1366,14 @@ export class DeploymentsImpl implements Deployments {
         diagnosticParameters,
         options
       },
-      generateThreadDumpOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: generateThreadDumpOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1109,14 +1422,14 @@ export class DeploymentsImpl implements Deployments {
     deploymentName: string,
     diagnosticParameters: DiagnosticParameters,
     options?: DeploymentsStartJFROptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1149,9 +1462,9 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         appName,
@@ -1159,13 +1472,14 @@ export class DeploymentsImpl implements Deployments {
         diagnosticParameters,
         options
       },
-      startJFROperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: startJFROperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1396,7 +1710,11 @@ const listForClusterOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.version],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.version,
+    Parameters.expand
+  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -1465,6 +1783,98 @@ const restartOperationSpec: coreClient.OperationSpec = {
     201: {},
     202: {},
     204: {},
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.serviceName,
+    Parameters.appName,
+    Parameters.deploymentName
+  ],
+  headerParameters: [Parameters.accept],
+  serializer
+};
+const enableRemoteDebuggingOperationSpec: coreClient.OperationSpec = {
+  path:
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppPlatform/Spring/{serviceName}/apps/{appName}/deployments/{deploymentName}/enableRemoteDebugging",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    201: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    202: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    204: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
+  requestBody: Parameters.remoteDebuggingPayload,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.serviceName,
+    Parameters.appName,
+    Parameters.deploymentName
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer
+};
+const disableRemoteDebuggingOperationSpec: coreClient.OperationSpec = {
+  path:
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppPlatform/Spring/{serviceName}/apps/{appName}/deployments/{deploymentName}/disableRemoteDebugging",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    201: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    202: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    204: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
+    default: {
+      bodyMapper: Mappers.CloudError
+    }
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.serviceName,
+    Parameters.appName,
+    Parameters.deploymentName
+  ],
+  headerParameters: [Parameters.accept],
+  serializer
+};
+const getRemoteDebuggingConfigOperationSpec: coreClient.OperationSpec = {
+  path:
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppPlatform/Spring/{serviceName}/apps/{appName}/deployments/{deploymentName}/getRemoteDebuggingConfig",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.RemoteDebugging
+    },
     default: {
       bodyMapper: Mappers.CloudError
     }
@@ -1562,7 +1972,7 @@ const generateThreadDumpOperationSpec: coreClient.OperationSpec = {
 };
 const startJFROperationSpec: coreClient.OperationSpec = {
   path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppPlatform/Spring/{serviceName}/apps/{appName}/deployments/{deploymentName}/StartJFR",
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppPlatform/Spring/{serviceName}/apps/{appName}/deployments/{deploymentName}/startJFR",
   httpMethod: "POST",
   responses: {
     200: {},
@@ -1598,7 +2008,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.version],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -1621,7 +2030,6 @@ const listForClusterNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.version],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

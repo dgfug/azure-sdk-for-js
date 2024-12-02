@@ -1,39 +1,29 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
-import { Context } from "mocha";
-import { SDK_VERSION } from "../../src/constants";
-import { packageVersion } from "../../src/generated/keyVaultClientContext";
-import { isNode } from "@azure/core-http";
-import path from "path";
-import fs from "fs";
+import { CertificateClient } from "../../src/index.js";
+import { SDK_VERSION } from "../../src/constants.js";
+import type { TokenCredential } from "@azure/core-auth";
+import { describe, it, assert } from "vitest";
 
 describe("Certificates client's user agent (only in Node, because of fs)", () => {
-  it("SDK_VERSION and packageVersion should match", async function() {
-    assert.equal(SDK_VERSION, packageVersion);
-  });
+  it("SDK_VERSION and user-agent should match", async function () {
+    let userAgent: string | undefined;
+    const client = new CertificateClient("https://myvault.vault.azure.net", {} as TokenCredential, {
+      httpClient: {
+        sendRequest: async (request) => {
+          userAgent = request.headers.get("user-agent") ?? request.headers.get("x-ms-useragent");
+          throw new Error("only a test");
+        },
+      },
+    });
 
-  it("the version should also match with the one available in the package.json  (only in Node, because of fs)", async function(this: Context) {
-    if (!isNode) {
-      this.skip();
-      return;
-    }
-    let version: string;
     try {
-      // The unit-test script has this test file at: test/internal/userAgent.spec.ts
-      const fileContents = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "../package.json"), { encoding: "utf-8" })
-      );
-      version = fileContents.version;
+      await client.getCertificate("foo");
     } catch {
-      // The integration-test script has this test file in a considerably different place,
-      // Along the lines of: dist-esm/keyvault-keys/test/internal/userAgent.spec.ts
-      const fileContents = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "../../../../package.json"), { encoding: "utf-8" })
-      );
-      version = fileContents.version;
+      // no-op, we don't care about the response, only the user-agent header
     }
-    assert.equal(version, packageVersion);
+    assert.exists(userAgent, "Expected a User-Agent header to be sent");
+    assert.include(userAgent!, `azsdk-js-keyvault-certificates/${SDK_VERSION}`);
   });
 });

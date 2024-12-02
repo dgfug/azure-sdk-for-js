@@ -1,48 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  StartTranslationParameters,
-  GetTranslationsStatusParameters,
-  GetDocumentStatusParameters,
-  GetTranslationStatusParameters,
-  CancelTranslationParameters,
-  GetDocumentsStatusParameters,
-  GetSupportedDocumentFormatsParameters,
-  GetSupportedGlossaryFormatsParameters,
-  GetSupportedStorageSourcesParameters,
-} from "./parameters";
-import {
-  StartTranslation202Response,
-  StartTranslation400Response,
-  StartTranslation401Response,
-  StartTranslation429Response,
-  StartTranslation500Response,
-  StartTranslation503Response,
-  GetTranslationsStatus200Response,
-  GetTranslationsStatus400Response,
-  GetTranslationsStatus401Response,
-  GetTranslationsStatus429Response,
-  GetTranslationsStatus500Response,
-  GetTranslationsStatus503Response,
-  GetDocumentStatus200Response,
-  GetDocumentStatus401Response,
-  GetDocumentStatus404Response,
-  GetDocumentStatus429Response,
-  GetDocumentStatus500Response,
-  GetDocumentStatus503Response,
-  GetTranslationStatus200Response,
-  GetTranslationStatus401Response,
-  GetTranslationStatus404Response,
-  GetTranslationStatus429Response,
-  GetTranslationStatus500Response,
-  GetTranslationStatus503Response,
+import type {
   CancelTranslation200Response,
   CancelTranslation401Response,
   CancelTranslation404Response,
   CancelTranslation429Response,
   CancelTranslation500Response,
   CancelTranslation503Response,
+  GetDocumentStatus200Response,
+  GetDocumentStatus401Response,
+  GetDocumentStatus404Response,
+  GetDocumentStatus429Response,
+  GetDocumentStatus500Response,
+  GetDocumentStatus503Response,
   GetDocumentsStatus200Response,
   GetDocumentsStatus400Response,
   GetDocumentsStatus401Response,
@@ -62,9 +33,39 @@ import {
   GetSupportedStorageSources429Response,
   GetSupportedStorageSources500Response,
   GetSupportedStorageSources503Response,
-} from "./responses";
-import { getClient, ClientOptions, Client } from "@azure-rest/core-client";
-import { KeyCredential, TokenCredential } from "@azure/core-auth";
+  GetTranslationStatus200Response,
+  GetTranslationStatus401Response,
+  GetTranslationStatus404Response,
+  GetTranslationStatus429Response,
+  GetTranslationStatus500Response,
+  GetTranslationStatus503Response,
+  GetTranslationsStatus200Response,
+  GetTranslationsStatus400Response,
+  GetTranslationsStatus401Response,
+  GetTranslationsStatus429Response,
+  GetTranslationsStatus500Response,
+  GetTranslationsStatus503Response,
+  StartTranslation202Response,
+  StartTranslation400Response,
+  StartTranslation401Response,
+  StartTranslation429Response,
+  StartTranslation500Response,
+  StartTranslation503Response,
+} from "./responses.js";
+import type {
+  CancelTranslationParameters,
+  GetDocumentStatusParameters,
+  GetDocumentsStatusParameters,
+  GetSupportedDocumentFormatsParameters,
+  GetSupportedGlossaryFormatsParameters,
+  GetSupportedStorageSourcesParameters,
+  GetTranslationStatusParameters,
+  GetTranslationsStatusParameters,
+  StartTranslationParameters,
+} from "./parameters.js";
+import type { Client, ClientOptions } from "@azure-rest/core-client";
+import { getClient } from "@azure-rest/core-client";
+import type { KeyCredential, TokenCredential } from "@azure/core-auth";
 
 export interface GetTranslationsStatus {
   /**
@@ -79,7 +80,7 @@ export interface GetTranslationsStatus {
    * If a file with the same name already exists at the destination, it will be overwritten. The targetUrl for each target language must be unique.
    */
   post(
-    options: StartTranslationParameters
+    options: StartTranslationParameters,
   ): Promise<
     | StartTranslation202Response
     | StartTranslation400Response
@@ -114,7 +115,7 @@ export interface GetTranslationsStatus {
    * This reduces the risk of the client making assumptions about the data returned.
    */
   get(
-    options?: GetTranslationsStatusParameters
+    options?: GetTranslationsStatusParameters,
   ): Promise<
     | GetTranslationsStatus200Response
     | GetTranslationsStatus400Response
@@ -128,7 +129,7 @@ export interface GetTranslationsStatus {
 export interface GetDocumentStatus {
   /** Returns the translation status for a specific document based on the request Id and document Id. */
   get(
-    options?: GetDocumentStatusParameters
+    options?: GetDocumentStatusParameters,
   ): Promise<
     | GetDocumentStatus200Response
     | GetDocumentStatus401Response
@@ -145,7 +146,7 @@ export interface CancelTranslation {
    * The status includes the overall request status, as well as the status for documents that are being translated as part of that request.
    */
   get(
-    options?: GetTranslationStatusParameters
+    options?: GetTranslationStatusParameters,
   ): Promise<
     | GetTranslationStatus200Response
     | GetTranslationStatus401Response
@@ -162,7 +163,7 @@ export interface CancelTranslation {
    * All pending documents will be cancelled if possible.
    */
   delete(
-    options?: CancelTranslationParameters
+    options?: CancelTranslationParameters,
   ): Promise<
     | CancelTranslation200Response
     | CancelTranslation401Response
@@ -197,7 +198,7 @@ export interface GetDocumentsStatus {
    * This reduces the risk of the client making assumptions about the data returned.
    */
   get(
-    options?: GetDocumentsStatusParameters
+    options?: GetDocumentsStatusParameters,
   ): Promise<
     | GetDocumentsStatus200Response
     | GetDocumentsStatus400Response
@@ -215,7 +216,7 @@ export interface GetSupportedDocumentFormats {
    * The list includes the common file extension, as well as the content-type if using the upload API.
    */
   get(
-    options?: GetSupportedDocumentFormatsParameters
+    options?: GetSupportedDocumentFormatsParameters,
   ): Promise<
     | GetSupportedDocumentFormats200Response
     | GetSupportedDocumentFormats429Response
@@ -230,7 +231,7 @@ export interface GetSupportedGlossaryFormats {
    * The list includes the common file extension used.
    */
   get(
-    options?: GetSupportedGlossaryFormatsParameters
+    options?: GetSupportedGlossaryFormatsParameters,
   ): Promise<
     | GetSupportedGlossaryFormats200Response
     | GetSupportedGlossaryFormats429Response
@@ -242,7 +243,7 @@ export interface GetSupportedGlossaryFormats {
 export interface GetSupportedStorageSources {
   /** Returns a list of storage sources/options supported by the Document Translation service. */
   get(
-    options?: GetSupportedStorageSourcesParameters
+    options?: GetSupportedStorageSourcesParameters,
   ): Promise<
     | GetSupportedStorageSources200Response
     | GetSupportedStorageSources429Response
@@ -279,9 +280,9 @@ export interface DocumentTranslatorFactory {
 export default function DocumentTranslator(
   endpoint: string,
   credentials: TokenCredential | KeyCredential,
-  options: ClientOptions = {}
+  options: ClientOptions = {},
 ): DocumentTranslatorClient {
-  const baseUrl = options.baseUrl ?? `${endpoint}/translator/text/batch/v1.0-preview.1`;
+  const baseUrl = options.baseUrl ?? `${endpoint}/translator/text/batch/v1.0`;
   options = {
     ...options,
     credentials: {

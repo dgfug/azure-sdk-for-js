@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 export { AzureKeyCredential } from "@azure/core-auth";
 export {
   WebPubSubServiceClient,
@@ -13,6 +13,7 @@ export {
   HubHasGroupOptions,
   HubHasUserOptions,
   WebPubSubServiceClientOptions,
+  WebPubSubServiceClientLogOptions,
   HubRemoveUserFromAllGroupsOptions,
   HubSendToConnectionOptions,
   HubSendToUserOptions,
@@ -23,8 +24,9 @@ export {
   HubSendTextToConnectionOptions,
   HubSendTextToUserOptions,
   JSONTypes,
-  Permission
-} from "./hubClient";
+  Permission,
+  WebPubSubClientProtocol,
+} from "./hubClient.js";
 export {
   WebPubSubGroup,
   GroupAddConnectionOptions,
@@ -35,5 +37,6 @@ export {
   GroupRemoveConnectionOptions,
   GroupRemoveUserOptions,
   GroupSendTextToAllOptions,
-  GroupSendToAllOptions
-} from "./groupClient";
+  GroupSendToAllOptions,
+} from "./groupClient.js";
+export { odata } from "./utils.js";

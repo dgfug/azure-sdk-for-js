@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ManagedInstanceAdministrator,
   ManagedInstanceAdministratorsListByInstanceOptionalParams,
@@ -17,7 +16,7 @@ import {
   ManagedInstanceAdministratorsGetResponse,
   ManagedInstanceAdministratorsCreateOrUpdateOptionalParams,
   ManagedInstanceAdministratorsCreateOrUpdateResponse,
-  ManagedInstanceAdministratorsDeleteOptionalParams
+  ManagedInstanceAdministratorsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,7 +32,7 @@ export interface ManagedInstanceAdministrators {
   listByInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstanceAdministratorsListByInstanceOptionalParams
+    options?: ManagedInstanceAdministratorsListByInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceAdministrator>;
   /**
    * Gets a managed instance administrator.
@@ -47,7 +46,7 @@ export interface ManagedInstanceAdministrators {
     resourceGroupName: string,
     managedInstanceName: string,
     administratorName: AdministratorName,
-    options?: ManagedInstanceAdministratorsGetOptionalParams
+    options?: ManagedInstanceAdministratorsGetOptionalParams,
   ): Promise<ManagedInstanceAdministratorsGetResponse>;
   /**
    * Creates or updates a managed instance administrator.
@@ -63,10 +62,10 @@ export interface ManagedInstanceAdministrators {
     managedInstanceName: string,
     administratorName: AdministratorName,
     parameters: ManagedInstanceAdministrator,
-    options?: ManagedInstanceAdministratorsCreateOrUpdateOptionalParams
+    options?: ManagedInstanceAdministratorsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ManagedInstanceAdministratorsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ManagedInstanceAdministratorsCreateOrUpdateResponse>,
       ManagedInstanceAdministratorsCreateOrUpdateResponse
     >
   >;
@@ -84,7 +83,7 @@ export interface ManagedInstanceAdministrators {
     managedInstanceName: string,
     administratorName: AdministratorName,
     parameters: ManagedInstanceAdministrator,
-    options?: ManagedInstanceAdministratorsCreateOrUpdateOptionalParams
+    options?: ManagedInstanceAdministratorsCreateOrUpdateOptionalParams,
   ): Promise<ManagedInstanceAdministratorsCreateOrUpdateResponse>;
   /**
    * Deletes a managed instance administrator.
@@ -98,8 +97,8 @@ export interface ManagedInstanceAdministrators {
     resourceGroupName: string,
     managedInstanceName: string,
     administratorName: AdministratorName,
-    options?: ManagedInstanceAdministratorsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ManagedInstanceAdministratorsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a managed instance administrator.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -112,6 +111,6 @@ export interface ManagedInstanceAdministrators {
     resourceGroupName: string,
     managedInstanceName: string,
     administratorName: AdministratorName,
-    options?: ManagedInstanceAdministratorsDeleteOptionalParams
+    options?: ManagedInstanceAdministratorsDeleteOptionalParams,
   ): Promise<void>;
 }

@@ -1,4 +1,7 @@
-import { PerfOptionDictionary } from "@azure/test-utils-perf";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import { PerfOptionDictionary } from "@azure-tools/test-perf";
 import { TablesTest } from "./tables.spec";
 import { TableEntityResult, TransactionAction } from "@azure/data-tables";
 import { createBatch } from "./utils/createBaseEntity";
@@ -13,8 +16,8 @@ export class ListComplexEntitiesTest extends TablesTest<ListComplexEntitiesTestO
       defaultValue: 100,
       longName: "entityCount",
       shortName: "ec",
-      description: "Number of entities to list. Defaults to 100"
-    }
+      description: "Number of entities to list. Defaults to 100",
+    },
   };
 
   constructor() {
@@ -25,7 +28,7 @@ export class ListComplexEntitiesTest extends TablesTest<ListComplexEntitiesTestO
     await super.globalSetup(); // Calling base class' setup
     const batches: TransactionAction[][] = createBatch(
       "complex",
-      this.parsedOptions.entityCount.value!
+      this.parsedOptions.entityCount.value!,
     );
 
     for (const batch of batches) {

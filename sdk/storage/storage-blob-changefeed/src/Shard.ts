@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { ContainerClient, CommonOptions } from "@azure/storage-blob";
-import { ChunkFactory } from "./ChunkFactory";
-import { Chunk } from "./Chunk";
-import { BlobChangeFeedEvent } from "./models/BlobChangeFeedEvent";
-import { ShardCursor } from "./models/ChangeFeedCursor";
-import { AbortSignalLike } from "@azure/core-http";
-import { createSpan } from "./utils/tracing";
-import { SpanStatusCode } from "@azure/core-tracing";
+import type { ContainerClient, CommonOptions } from "@azure/storage-blob";
+import type { ChunkFactory } from "./ChunkFactory";
+import type { Chunk } from "./Chunk";
+import type { BlobChangeFeedEvent } from "./models/BlobChangeFeedEvent";
+import type { ShardCursor } from "./models/ChangeFeedCursor";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import { tracingClient } from "./utils/tracing";
 
 /**
  * Options to configure {@link Shard.getChange} operation.
@@ -35,7 +34,7 @@ export class Shard {
     chunkFactory: ChunkFactory,
     chunks: string[],
     currentChunk: Chunk | undefined,
-    public readonly shardPath: string
+    public readonly shardPath: string,
   ) {
     this.containerClient = containerClient;
     this.chunkFactory = chunkFactory;
@@ -50,10 +49,9 @@ export class Shard {
   }
 
   public async getChange(
-    options: ShardGetChangeOptions = {}
+    options: ShardGetChangeOptions = {},
   ): Promise<BlobChangeFeedEvent | undefined> {
-    const { span, updatedOptions } = createSpan("Shard-getChange", options);
-    try {
+    return tracingClient.withSpan("Shard-getChange", options, async (updatedOptions) => {
       let event: BlobChangeFeedEvent | undefined = undefined;
       while (event === undefined && this.hasNext()) {
         event = await this.currentChunk!.getChange();
@@ -67,21 +65,13 @@ export class Shard {
             undefined,
             {
               abortSignal: options.abortSignal,
-              tracingOptions: updatedOptions.tracingOptions
-            }
+              tracingOptions: updatedOptions.tracingOptions,
+            },
           );
         }
       }
       return event;
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 
   public getCursor(): ShardCursor | undefined {
@@ -90,7 +80,7 @@ export class Shard {
       : {
           CurrentChunkPath: this.currentChunk.chunkPath,
           BlockOffset: this.currentChunk.blockOffset,
-          EventIndex: this.currentChunk.eventIndex
+          EventIndex: this.currentChunk.eventIndex,
         };
   }
 }

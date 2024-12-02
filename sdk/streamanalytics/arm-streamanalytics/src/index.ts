@@ -7,7 +7,7 @@
  */
 
 /// <reference lib="esnext.asynciterable" />
+export { getContinuationToken } from "./pagingHelper";
 export * from "./models";
 export { StreamAnalyticsManagementClient } from "./streamAnalyticsManagementClient";
-export { StreamAnalyticsManagementClientContext } from "./streamAnalyticsManagementClientContext";
 export * from "./operationsInterfaces";

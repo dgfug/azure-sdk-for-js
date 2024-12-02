@@ -1,30 +1,31 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type { ActionType } from "./generated/index.js";
+import type {
   DeletedKeyBundle,
   DeletedKeyItem,
+  KeyRotationPolicy as GeneratedPolicy,
   KeyAttributes,
   KeyBundle,
   KeyItem,
-  KeyRotationPolicy as GeneratedPolicy,
-  LifetimeActions
-} from "./generated/models";
-import { parseKeyVaultKeyIdentifier } from "./identifier";
-import {
+  LifetimeActions,
+} from "./generated/models/index.js";
+import { parseKeyVaultKeyIdentifier } from "./identifier.js";
+import type {
   DeletedKey,
-  KeyVaultKey,
   KeyProperties,
   KeyRotationPolicy,
-  KeyRotationPolicyProperties
-} from "./keysModels";
+  KeyRotationPolicyProperties,
+  KeyVaultKey,
+} from "./keysModels.js";
 
 /**
  * @internal
  * Shapes the exposed {@link KeyVaultKey} based on either a received key bundle or deleted key bundle.
  */
 export function getKeyFromKeyBundle(
-  bundle: KeyBundle | DeletedKeyBundle
+  bundle: KeyBundle | DeletedKeyBundle,
 ): KeyVaultKey | DeletedKey {
   const keyBundle = bundle as KeyBundle;
   const deletedKeyBundle = bundle as DeletedKeyBundle;
@@ -52,14 +53,15 @@ export function getKeyFromKeyBundle(
       recoveryLevel: attributes.recoveryLevel,
       exportable: attributes.exportable,
       releasePolicy: keyBundle.releasePolicy,
+      hsmPlatform: attributes.hsmPlatform,
 
       vaultUrl: parsedId.vaultUrl,
       version: parsedId.version,
       name: parsedId.name,
       managed: keyBundle.managed,
 
-      id: keyBundle.key ? keyBundle.key.kid : undefined
-    }
+      id: keyBundle.key ? keyBundle.key.kid : undefined,
+    },
   };
 
   if (deletedKeyBundle.recoveryId) {
@@ -80,7 +82,7 @@ export function getDeletedKeyFromDeletedKeyItem(keyItem: DeletedKeyItem): Delete
 
   return {
     key: {
-      kid: keyItem.kid
+      kid: keyItem.kid,
     },
     id: keyItem.kid,
     name: commonProperties.name,
@@ -88,8 +90,8 @@ export function getDeletedKeyFromDeletedKeyItem(keyItem: DeletedKeyItem): Delete
       ...commonProperties,
       recoveryId: keyItem.recoveryId,
       scheduledPurgeDate: keyItem.scheduledPurgeDate,
-      deletedOn: keyItem.deletedDate
-    }
+      deletedOn: keyItem.deletedDate,
+    },
   };
 }
 
@@ -111,30 +113,45 @@ export function getKeyPropertiesFromKeyItem(keyItem: KeyItem): KeyProperties {
     notBefore: attributes?.notBefore,
     recoverableDays: attributes?.recoverableDays,
     recoveryLevel: attributes?.recoveryLevel,
+    hsmPlatform: attributes?.hsmPlatform,
     tags: keyItem.tags,
     updatedOn: attributes.updated,
     vaultUrl: parsedId.vaultUrl,
-    version: parsedId.version
+    version: parsedId.version,
   };
 
   return resultObject;
+}
+
+const actionTypeCaseInsensitiveMapping: Record<string, string> = {
+  rotate: "Rotate",
+  notify: "Notify",
+};
+
+function getNormalizedActionType(caseInsensitiveActionType: string): ActionType {
+  const result = actionTypeCaseInsensitiveMapping[caseInsensitiveActionType.toLowerCase()];
+  if (result) {
+    return result as ActionType;
+  }
+
+  throw new Error(`Unrecognized action type: ${caseInsensitiveActionType}`);
 }
 
 /**
  * @internal
  */
 export const keyRotationTransformations = {
-  propertiesToGenerated: function(
-    parameters: KeyRotationPolicyProperties
+  propertiesToGenerated: function (
+    parameters: KeyRotationPolicyProperties,
   ): Partial<GeneratedPolicy> {
     const policy: GeneratedPolicy = {
       attributes: {
-        expiryTime: parameters.expiresIn
+        expiryTime: parameters.expiresIn,
       },
       lifetimeActions: parameters.lifetimeActions?.map((action) => {
         const generatedAction: LifetimeActions = {
           action: { type: action.action },
-          trigger: {}
+          trigger: {},
         };
 
         if (action.timeAfterCreate) {
@@ -146,7 +163,7 @@ export const keyRotationTransformations = {
         }
 
         return generatedAction;
-      })
+      }),
     };
     return policy;
   },
@@ -158,12 +175,12 @@ export const keyRotationTransformations = {
       expiresIn: generated.attributes?.expiryTime,
       lifetimeActions: generated.lifetimeActions?.map((action) => {
         return {
-          action: action.action!.type!,
+          action: getNormalizedActionType(action.action!.type!),
           timeAfterCreate: action.trigger?.timeAfterCreate,
-          timeBeforeExpiry: action.trigger?.timeBeforeExpiry
+          timeBeforeExpiry: action.trigger?.timeBeforeExpiry,
         };
-      })
+      }),
     };
     return policy;
-  }
+  },
 };

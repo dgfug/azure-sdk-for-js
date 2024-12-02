@@ -1,16 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CheckpointStore, PartitionOwnership, Checkpoint } from "@azure/event-hubs";
-import { odata, TableClient, TableInsertEntityHeaders } from "@azure/data-tables";
-import { logger, logErrorStackTrace } from "./log";
+import type { Checkpoint, CheckpointStore, PartitionOwnership } from "@azure/event-hubs";
+import type { TableClient, TableInsertEntityHeaders } from "@azure/data-tables";
+import { odata } from "@azure/data-tables";
+import { logErrorStackTrace, logger } from "./log.js";
 
 /**
  *
  * Checks if the value contains a `Timestamp` field of type `string`.
  */
 function _hasTimestamp<T extends TableInsertEntityHeaders>(
-  value: T
+  value: T,
 ): value is T & { Timestamp: string } {
   return typeof (value as any).Timestamp === "string";
 }
@@ -38,7 +39,6 @@ export interface CheckpointEntity {
 /**
  * An ownership entity of type PartitionOwnership to be stored in the table
  * @internal
- * @hidden
  */
 export interface PartitionOwnershipEntity {
   /**
@@ -81,18 +81,18 @@ export class TableCheckpointStore implements CheckpointStore {
   async listOwnership(
     fullyQualifiedNamespace: string,
     eventHubName: string,
-    consumerGroup: string
+    consumerGroup: string,
   ): Promise<PartitionOwnership[]> {
     const partitionKey = `${fullyQualifiedNamespace} ${eventHubName} ${consumerGroup} Ownership`;
     const partitionOwnershipArray: PartitionOwnership[] = [];
     const entitiesIter = this._tableClient.listEntities<PartitionOwnershipEntity>({
-      queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` }
+      queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` },
     });
     try {
       for await (const entity of entitiesIter) {
         if (!entity.timestamp) {
           throw new Error(
-            `Unable to retrieve timestamp from partitionKey "${partitionKey}", rowKey "${entity.rowKey}"`
+            `Unable to retrieve timestamp from partitionKey "${partitionKey}", rowKey "${entity.rowKey}"`,
           );
         }
 
@@ -103,12 +103,12 @@ export class TableCheckpointStore implements CheckpointStore {
           ownerId: entity.ownerid,
           partitionId: entity.rowKey,
           lastModifiedTimeInMs: new Date(entity.timestamp).getTime(),
-          etag: entity.etag
+          etag: entity.etag,
         };
         partitionOwnershipArray.push(partitionOwnership);
       }
       return partitionOwnershipArray;
-    } catch (err) {
+    } catch (err: any) {
       logger.warning(`Error occurred while fetching the list of entities`, err.message);
       logErrorStackTrace(err);
       if (err?.name === "AbortError") throw err;
@@ -136,7 +136,7 @@ export class TableCheckpointStore implements CheckpointStore {
       const ownershipEntity: PartitionOwnershipEntity = {
         partitionKey: partitionKey,
         rowKey: ownership.partitionId,
-        ownerid: ownership.ownerId
+        ownerid: ownership.ownerId,
       };
 
       // When we have an etag, we know the entity existed.
@@ -144,15 +144,15 @@ export class TableCheckpointStore implements CheckpointStore {
       try {
         if (ownership.etag) {
           const updatedMetadata = await this._tableClient.updateEntity(ownershipEntity, "Replace", {
-            etag: ownership.etag
+            etag: ownership.etag,
           });
           const entityRetrieved = await this._tableClient.getEntity(
             ownershipEntity.partitionKey,
-            ownershipEntity.rowKey
+            ownershipEntity.rowKey,
           );
           if (!entityRetrieved.timestamp) {
             throw new Error(
-              `Unable to retrieve timestamp from partitionKey "${partitionKey}", rowKey "${entityRetrieved.rowKey}"`
+              `Unable to retrieve timestamp from partitionKey "${partitionKey}", rowKey "${entityRetrieved.rowKey}"`,
             );
           }
           updatedOwnership.lastModifiedTimeInMs = new Date(entityRetrieved.timestamp).getTime();
@@ -160,42 +160,42 @@ export class TableCheckpointStore implements CheckpointStore {
           partitionOwnershipArray.push(updatedOwnership);
           logger.info(
             `[${ownership.ownerId}] Claimed ownership successfully for partition: ${ownership.partitionId}`,
-            `LastModifiedTime: ${ownership.lastModifiedTimeInMs}, ETag: ${ownership.etag}`
+            `LastModifiedTime: ${ownership.lastModifiedTimeInMs}, ETag: ${ownership.etag}`,
           );
         } else {
           const newOwnershipMetadata = await this._tableClient.createEntity(ownershipEntity, {
             requestOptions: {
               customHeaders: {
-                Prefer: "return-content"
-              }
-            }
+                Prefer: "return-content",
+              },
+            },
           });
 
           if (!_hasTimestamp(newOwnershipMetadata)) {
             throw new Error(
-              `Unable to retrieve timestamp from partitionKey "${partitionKey}", rowKey "${ownershipEntity.rowKey}"`
+              `Unable to retrieve timestamp from partitionKey "${partitionKey}", rowKey "${ownershipEntity.rowKey}"`,
             );
           }
 
           updatedOwnership.lastModifiedTimeInMs = new Date(
-            newOwnershipMetadata.Timestamp
+            newOwnershipMetadata.Timestamp,
           ).getTime();
           updatedOwnership.etag = newOwnershipMetadata.etag;
           partitionOwnershipArray.push(updatedOwnership);
         }
-      } catch (err) {
+      } catch (err: any) {
         if (err.statusCode === 412) {
           // etag failures (precondition not met) aren't fatal errors. They happen
           // as multiple consumers attempt to claim the same partition (first one wins)
           // and losers get this error.
           logger.verbose(
-            `[${ownership.ownerId}] Did not claim partition ${ownership.partitionId}. Another processor has already claimed it.`
+            `[${ownership.ownerId}] Did not claim partition ${ownership.partitionId}. Another processor has already claimed it.`,
           );
           continue;
         }
         logger.warning(
           `Error occurred while claiming ownership for partition: ${ownership.partitionId}`,
-          err.message
+          err.message,
         );
         logErrorStackTrace(err);
       }
@@ -217,12 +217,12 @@ export class TableCheckpointStore implements CheckpointStore {
   async listCheckpoints(
     fullyQualifiedNamespace: string,
     eventHubName: string,
-    consumerGroup: string
+    consumerGroup: string,
   ): Promise<Checkpoint[]> {
     const partitionKey = `${fullyQualifiedNamespace} ${eventHubName} ${consumerGroup} Checkpoint`;
     const checkpoints: Checkpoint[] = [];
     const entitiesIter = this._tableClient.listEntities<CheckpointEntity>({
-      queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` }
+      queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` },
     });
     for await (const entity of entitiesIter) {
       checkpoints.push({
@@ -230,8 +230,8 @@ export class TableCheckpointStore implements CheckpointStore {
         eventHubName,
         fullyQualifiedNamespace,
         partitionId: entity.rowKey,
-        offset: parseInt(entity.offset, 10),
-        sequenceNumber: parseInt(entity.sequencenumber, 10)
+        offset: entity.offset,
+        sequenceNumber: parseInt(entity.sequencenumber, 10),
       });
     }
     return checkpoints;
@@ -252,16 +252,16 @@ export class TableCheckpointStore implements CheckpointStore {
       partitionKey: partitionKey,
       rowKey: checkpoint.partitionId,
       sequencenumber: checkpoint.sequenceNumber.toString(),
-      offset: checkpoint.offset.toString()
+      offset: checkpoint.offset.toString(),
     };
     try {
       await this._tableClient.upsertEntity(checkpointEntity);
       logger.verbose(`Updated checkpoint successfully for partition: ${checkpoint.partitionId}`);
       return;
-    } catch (err) {
+    } catch (err: any) {
       logger.verbose(
-        `Error occurred while upating the checkpoint for partition: ${checkpoint.partitionId}.`,
-        err.message
+        `Error occurred while updating the checkpoint for partition: ${checkpoint.partitionId}.`,
+        err.message,
       );
       throw err;
     }

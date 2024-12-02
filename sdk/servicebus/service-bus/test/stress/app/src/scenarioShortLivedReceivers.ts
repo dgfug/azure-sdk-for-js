@@ -1,23 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import {
   captureConsoleOutputToAppInsights,
   createRandomQueue,
   createServiceBusClient,
   getUniqueQueueName,
-  isReceiveMode
+  isReceiveMode,
 } from "./serviceBusStressTester";
 import { defaultClient as appInsightsClient, Contracts } from "applicationinsights";
 import {
   ServiceBusClient,
   ServiceBusReceivedMessage,
-  ServiceBusReceiver
+  ServiceBusReceiver,
 } from "@azure/service-bus";
 import { EventEmitter } from "stream";
 import { EventContext, ReceiverEvents } from "rhea-promise";
 import parsedArgs from "minimist";
-import { generateUuid } from "@azure/core-http";
+import { v4 as generateUuid } from "uuid";
 
 const messageNumberPropertyName = "messageNumber";
 
@@ -32,7 +32,7 @@ async function main() {
   appInsightsClient.commonProperties = {
     // these will be reported with each event
     testName: "scenarioShortLivedReceiver",
-    testRunId: generateUuid()
+    testRunId: generateUuid(),
   };
 
   const { receiveMode, maxWaitTimeInMs, numMessagesToSend, messagesPerReceive } = {
@@ -49,9 +49,9 @@ async function main() {
         // when targeted to a Service Bus in AUS, connecting from a consumer network in Redmond.
         maxWaitTimeInMs: 500,
         numMessagesToSend: 1000,
-        messagesPerReceive: 5
-      }
-    })
+        messagesPerReceive: 5,
+      },
+    }),
   };
 
   try {
@@ -64,8 +64,8 @@ async function main() {
         receiveMode,
         maxWaitTimeInMs,
         numMessagesToSend,
-        messagesPerReceive
-      }
+        messagesPerReceive,
+      },
     });
 
     if (!isReceiveMode(receiveMode)) {
@@ -77,7 +77,7 @@ async function main() {
       receiveMode,
       maxWaitTimeInMs,
       numMessagesToSend,
-      messagesPerReceive
+      messagesPerReceive,
     });
 
     await createRandomQueue(queueName);
@@ -88,7 +88,7 @@ async function main() {
     const receiver = serviceBusClient.createReceiver(queueName, {
       receiveMode,
       // auto lock renewal is just noise for this particular test, disabling.
-      maxAutoLockRenewalDurationInMs: 0
+      maxAutoLockRenewalDurationInMs: 0,
     });
 
     const rheaMessageNumbers = new Set<number>();
@@ -105,7 +105,7 @@ async function main() {
 
     while (userMessageNumbers.size < numMessagesToSend && gotZeroMessagesCounter < 3) {
       const messages = await receiver.receiveMessages(messagesPerReceive, {
-        maxWaitTimeInMs
+        maxWaitTimeInMs,
       });
 
       if (messages.length === 0) {
@@ -124,7 +124,7 @@ async function main() {
 
       appInsightsClient.trackMetric({
         name: "totalReceivedMessages",
-        value: userMessageNumbers.size
+        value: userMessageNumbers.size,
       });
     }
 
@@ -147,32 +147,32 @@ async function main() {
 
     appInsightsClient.trackMetric({
       name: "totalMissingUserVisibleMessages",
-      value: missingUserVisibleMessages
+      value: missingUserVisibleMessages,
     });
 
     appInsightsClient.trackMetric({
       name: "totalMissingInternalMessages",
-      value: missingInternalMessages
+      value: missingInternalMessages,
     });
 
     if (missingUserVisibleMessages > 0 || missingInternalMessages > 0) {
       console.log(
-        `Messages were missing: user:${missingUserVisibleMessages}, internal:${missingInternalMessages}`
+        `Messages were missing: user:${missingUserVisibleMessages}, internal:${missingInternalMessages}`,
       );
       process.exit(1);
     } else {
       console.log(`Success - all messages accounted for with no duplicates.`);
       process.exit(0);
     }
-  } catch (err) {
+  } catch (err: any) {
     console.log(`Exception thrown: `, err);
 
     appInsightsClient.trackException({
-      exception: err as any
+      exception: err as any,
     });
   } finally {
     appInsightsClient.trackEvent({
-      name: "End"
+      name: "End",
     });
 
     appInsightsClient.flush();
@@ -180,7 +180,7 @@ async function main() {
 
   function assertAndAddMessageNumber(
     message: ServiceBusReceivedMessage,
-    receivedMessageIndices: Set<number>
+    receivedMessageIndices: Set<number>,
   ) {
     const messageNumber = message.applicationProperties?.[messageNumberPropertyName];
 
@@ -193,21 +193,21 @@ async function main() {
       console.log(
         `Message with id of ${
           message.messageId
-        } had a messageNumber property with an incorrect type (${typeof messageNumber})`
+        } had a messageNumber property with an incorrect type (${typeof messageNumber})`,
       );
       throw new TypeError(
         `Message with id of ${
           message.messageId
-        } had a messageNumber property with an incorrect type (${typeof messageNumber})`
+        } had a messageNumber property with an incorrect type (${typeof messageNumber})`,
       );
     }
 
     if (receivedMessageIndices.has(messageNumber)) {
       console.log(
-        `Message with id of ${message.messageId} and message number ${messageNumber} has already been received`
+        `Message with id of ${message.messageId} and message number ${messageNumber} has already been received`,
       );
       throw new Error(
-        `Message with id of ${message.messageId} and message number ${messageNumber} has already been received`
+        `Message with id of ${message.messageId} and message number ${messageNumber} has already been received`,
       );
     }
 
@@ -238,7 +238,7 @@ main().catch((err) => {
  */
 async function addValidatingListener(
   receiver: ServiceBusReceiver,
-  rawMessageNumbers: Set<number>
+  rawMessageNumbers: Set<number>,
 ): Promise<void> {
   // warm up the receiver so the batching receiver will be available (and we can install our 'raw messages' hook
   // for some bookkeeping.
@@ -254,7 +254,7 @@ async function addValidatingListener(
 
   if (linkEntity == null) {
     console.log(
-      "[raw message callback] Couldn't get a receiver._batchingReceiver._link property in the passed in receiver"
+      "[raw message callback] Couldn't get a receiver._batchingReceiver._link property in the passed in receiver",
     );
     process.exit(1);
   }
@@ -264,7 +264,7 @@ async function addValidatingListener(
 
     if (message == null) {
       console.log(
-        "[raw message callback] Fatal test error - no message was on EventContext, but we got a message callback."
+        "[raw message callback] Fatal test error - no message was on EventContext, but we got a message callback.",
       );
       process.exit(1);
     }
@@ -273,14 +273,14 @@ async function addValidatingListener(
 
     if (messageNumber == null || typeof messageNumber !== "number") {
       console.log(
-        `[raw message callback] Fatal test error - message arrived, but without the '${messageNumberPropertyName}' property, type: ${typeof messageNumber}`
+        `[raw message callback] Fatal test error - message arrived, but without the '${messageNumberPropertyName}' property, type: ${typeof messageNumber}`,
       );
       process.exit(1);
     }
 
     if (rawMessageNumbers.has(messageNumber)) {
       console.log(
-        `[raw message callback] Fatal test error - ${messageNumber} was already received - we're receiving duplicates in our raw message callback`
+        `[raw message callback] Fatal test error - ${messageNumber} was already received - we're receiving duplicates in our raw message callback`,
       );
       process.exit(1);
     }
@@ -297,7 +297,7 @@ async function addValidatingListener(
 async function sendTestMessages(
   serviceBusClient: ServiceBusClient,
   queueName: string,
-  numMessagesToSend: number
+  numMessagesToSend: number,
 ): Promise<void> {
   console.log(`Starting to send ${numMessagesToSend} messages to ${queueName}`);
 
@@ -312,8 +312,8 @@ async function sendTestMessages(
       const message = {
         body: largeMessagePayload,
         applicationProperties: {
-          messageNumber: i
-        }
+          messageNumber: i,
+        },
       };
 
       const added = batch.tryAddMessage(message);
@@ -334,12 +334,12 @@ async function sendTestMessages(
     }
 
     console.log(`Done sending messages to ${queueName}`);
-  } catch (err) {
+  } catch (err: any) {
     console.log(`Exception thrown: `, err);
 
     appInsightsClient.trackException({
       exception: err as Error,
-      severity: Contracts.SeverityLevel.Critical
+      severity: Contracts.SeverityLevel.Critical,
     });
   } finally {
     await sender.close();

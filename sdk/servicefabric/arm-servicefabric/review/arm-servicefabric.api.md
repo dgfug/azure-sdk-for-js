@@ -6,9 +6,9 @@
 
 import * as coreAuth from '@azure/core-auth';
 import * as coreClient from '@azure/core-client';
+import { OperationState } from '@azure/core-lro';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PollerLike } from '@azure/core-lro';
-import { PollOperationState } from '@azure/core-lro';
+import { SimplePollerLike } from '@azure/core-lro';
 
 // @public
 export type AddOnFeatures = string;
@@ -38,21 +38,21 @@ export interface ApplicationMetricDescription {
 }
 
 // @public
-export type ApplicationResource = ProxyResource & {
+export interface ApplicationResource extends ProxyResource {
     identity?: ManagedIdentity;
-    typeVersion?: string;
+    managedIdentities?: ApplicationUserAssignedIdentity[];
+    maximumNodes?: number;
+    metrics?: ApplicationMetricDescription[];
+    minimumNodes?: number;
     parameters?: {
         [propertyName: string]: string;
     };
-    upgradePolicy?: ApplicationUpgradePolicy;
-    minimumNodes?: number;
-    maximumNodes?: number;
-    removeApplicationCapacity?: boolean;
-    metrics?: ApplicationMetricDescription[];
-    managedIdentities?: ApplicationUserAssignedIdentity[];
     readonly provisioningState?: string;
+    removeApplicationCapacity?: boolean;
     typeName?: string;
-};
+    typeVersion?: string;
+    upgradePolicy?: ApplicationUpgradePolicy;
+}
 
 // @public
 export interface ApplicationResourceList {
@@ -62,24 +62,24 @@ export interface ApplicationResourceList {
 }
 
 // @public
-export type ApplicationResourceProperties = ApplicationResourceUpdateProperties & {
+export interface ApplicationResourceProperties extends ApplicationResourceUpdateProperties {
     readonly provisioningState?: string;
     typeName?: string;
-};
+}
 
 // @public
-export type ApplicationResourceUpdate = ProxyResource & {
-    typeVersion?: string;
+export interface ApplicationResourceUpdate extends ProxyResource {
+    managedIdentities?: ApplicationUserAssignedIdentity[];
+    maximumNodes?: number;
+    metrics?: ApplicationMetricDescription[];
+    minimumNodes?: number;
     parameters?: {
         [propertyName: string]: string;
     };
-    upgradePolicy?: ApplicationUpgradePolicy;
-    minimumNodes?: number;
-    maximumNodes?: number;
     removeApplicationCapacity?: boolean;
-    metrics?: ApplicationMetricDescription[];
-    managedIdentities?: ApplicationUserAssignedIdentity[];
-};
+    typeVersion?: string;
+    upgradePolicy?: ApplicationUpgradePolicy;
+}
 
 // @public
 export interface ApplicationResourceUpdateProperties {
@@ -97,14 +97,14 @@ export interface ApplicationResourceUpdateProperties {
 
 // @public
 export interface Applications {
-    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, applicationName: string, parameters: ApplicationResource, options?: ApplicationsCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<ApplicationsCreateOrUpdateResponse>, ApplicationsCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, applicationName: string, parameters: ApplicationResource, options?: ApplicationsCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ApplicationsCreateOrUpdateResponse>, ApplicationsCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, clusterName: string, applicationName: string, parameters: ApplicationResource, options?: ApplicationsCreateOrUpdateOptionalParams): Promise<ApplicationsCreateOrUpdateResponse>;
-    beginDelete(resourceGroupName: string, clusterName: string, applicationName: string, options?: ApplicationsDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, clusterName: string, applicationName: string, options?: ApplicationsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, clusterName: string, applicationName: string, options?: ApplicationsDeleteOptionalParams): Promise<void>;
-    beginUpdate(resourceGroupName: string, clusterName: string, applicationName: string, parameters: ApplicationResourceUpdate, options?: ApplicationsUpdateOptionalParams): Promise<PollerLike<PollOperationState<ApplicationsUpdateResponse>, ApplicationsUpdateResponse>>;
+    beginUpdate(resourceGroupName: string, clusterName: string, applicationName: string, parameters: ApplicationResourceUpdate, options?: ApplicationsUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ApplicationsUpdateResponse>, ApplicationsUpdateResponse>>;
     beginUpdateAndWait(resourceGroupName: string, clusterName: string, applicationName: string, parameters: ApplicationResourceUpdate, options?: ApplicationsUpdateOptionalParams): Promise<ApplicationsUpdateResponse>;
     get(resourceGroupName: string, clusterName: string, applicationName: string, options?: ApplicationsGetOptionalParams): Promise<ApplicationsGetResponse>;
-    list(resourceGroupName: string, clusterName: string, options?: ApplicationsListOptionalParams): Promise<ApplicationsListResponse>;
+    list(resourceGroupName: string, clusterName: string, options?: ApplicationsListOptionalParams): PagedAsyncIterableIterator<ApplicationResource>;
 }
 
 // @public
@@ -130,6 +130,13 @@ export interface ApplicationsGetOptionalParams extends coreClient.OperationOptio
 export type ApplicationsGetResponse = ApplicationResource;
 
 // @public
+export interface ApplicationsListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ApplicationsListNextResponse = ApplicationResourceList;
+
+// @public
 export interface ApplicationsListOptionalParams extends coreClient.OperationOptions {
 }
 
@@ -146,9 +153,9 @@ export interface ApplicationsUpdateOptionalParams extends coreClient.OperationOp
 export type ApplicationsUpdateResponse = ApplicationResource;
 
 // @public
-export type ApplicationTypeResource = ProxyResource & {
+export interface ApplicationTypeResource extends ProxyResource {
     readonly provisioningState?: string;
-};
+}
 
 // @public
 export interface ApplicationTypeResourceList {
@@ -159,11 +166,11 @@ export interface ApplicationTypeResourceList {
 
 // @public
 export interface ApplicationTypes {
-    beginDelete(resourceGroupName: string, clusterName: string, applicationTypeName: string, options?: ApplicationTypesDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, clusterName: string, applicationTypeName: string, options?: ApplicationTypesDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, clusterName: string, applicationTypeName: string, options?: ApplicationTypesDeleteOptionalParams): Promise<void>;
     createOrUpdate(resourceGroupName: string, clusterName: string, applicationTypeName: string, parameters: ApplicationTypeResource, options?: ApplicationTypesCreateOrUpdateOptionalParams): Promise<ApplicationTypesCreateOrUpdateResponse>;
     get(resourceGroupName: string, clusterName: string, applicationTypeName: string, options?: ApplicationTypesGetOptionalParams): Promise<ApplicationTypesGetResponse>;
-    list(resourceGroupName: string, clusterName: string, options?: ApplicationTypesListOptionalParams): Promise<ApplicationTypesListResponse>;
+    list(resourceGroupName: string, clusterName: string, options?: ApplicationTypesListOptionalParams): PagedAsyncIterableIterator<ApplicationTypeResource>;
 }
 
 // @public
@@ -187,6 +194,13 @@ export interface ApplicationTypesGetOptionalParams extends coreClient.OperationO
 export type ApplicationTypesGetResponse = ApplicationTypeResource;
 
 // @public
+export interface ApplicationTypesListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ApplicationTypesListNextResponse = ApplicationTypeResourceList;
+
+// @public
 export interface ApplicationTypesListOptionalParams extends coreClient.OperationOptions {
 }
 
@@ -194,13 +208,13 @@ export interface ApplicationTypesListOptionalParams extends coreClient.Operation
 export type ApplicationTypesListResponse = ApplicationTypeResourceList;
 
 // @public
-export type ApplicationTypeVersionResource = ProxyResource & {
-    readonly provisioningState?: string;
+export interface ApplicationTypeVersionResource extends ProxyResource {
     appPackageUrl?: string;
     readonly defaultParameterList?: {
         [propertyName: string]: string;
     };
-};
+    readonly provisioningState?: string;
+}
 
 // @public
 export interface ApplicationTypeVersionResourceList {
@@ -211,12 +225,12 @@ export interface ApplicationTypeVersionResourceList {
 
 // @public
 export interface ApplicationTypeVersions {
-    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, applicationTypeName: string, version: string, parameters: ApplicationTypeVersionResource, options?: ApplicationTypeVersionsCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<ApplicationTypeVersionsCreateOrUpdateResponse>, ApplicationTypeVersionsCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, applicationTypeName: string, version: string, parameters: ApplicationTypeVersionResource, options?: ApplicationTypeVersionsCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ApplicationTypeVersionsCreateOrUpdateResponse>, ApplicationTypeVersionsCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, clusterName: string, applicationTypeName: string, version: string, parameters: ApplicationTypeVersionResource, options?: ApplicationTypeVersionsCreateOrUpdateOptionalParams): Promise<ApplicationTypeVersionsCreateOrUpdateResponse>;
-    beginDelete(resourceGroupName: string, clusterName: string, applicationTypeName: string, version: string, options?: ApplicationTypeVersionsDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, clusterName: string, applicationTypeName: string, version: string, options?: ApplicationTypeVersionsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, clusterName: string, applicationTypeName: string, version: string, options?: ApplicationTypeVersionsDeleteOptionalParams): Promise<void>;
     get(resourceGroupName: string, clusterName: string, applicationTypeName: string, version: string, options?: ApplicationTypeVersionsGetOptionalParams): Promise<ApplicationTypeVersionsGetResponse>;
-    list(resourceGroupName: string, clusterName: string, applicationTypeName: string, options?: ApplicationTypeVersionsListOptionalParams): Promise<ApplicationTypeVersionsListResponse>;
+    list(resourceGroupName: string, clusterName: string, applicationTypeName: string, options?: ApplicationTypeVersionsListOptionalParams): PagedAsyncIterableIterator<ApplicationTypeVersionResource>;
 }
 
 // @public (undocumented)
@@ -245,6 +259,13 @@ export interface ApplicationTypeVersionsGetOptionalParams extends coreClient.Ope
 
 // @public
 export type ApplicationTypeVersionsGetResponse = ApplicationTypeVersionResource;
+
+// @public
+export interface ApplicationTypeVersionsListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ApplicationTypeVersionsListNextResponse = ApplicationTypeVersionResourceList;
 
 // @public
 export interface ApplicationTypeVersionsListOptionalParams extends coreClient.OperationOptions {
@@ -338,8 +359,9 @@ export interface ClientCertificateThumbprint {
 }
 
 // @public
-export type Cluster = Resource & {
+export interface Cluster extends Resource {
     addOnFeatures?: AddOnFeatures[];
+    applicationTypeVersionsCleanupPolicy?: ApplicationTypeVersionsCleanupPolicy;
     readonly availableClusterVersions?: ClusterVersionDetails[];
     azureActiveDirectory?: AzureActiveDirectory;
     certificate?: CertificateDescription;
@@ -353,25 +375,24 @@ export type Cluster = Resource & {
     diagnosticsStorageAccountConfig?: DiagnosticsStorageAccountConfig;
     eventStoreServiceEnabled?: boolean;
     fabricSettings?: SettingsSectionDescription[];
+    infrastructureServiceManager?: boolean;
     managementEndpoint?: string;
     nodeTypes?: NodeTypeDescription[];
+    notifications?: Notification_2[];
     readonly provisioningState?: ProvisioningState;
     reliabilityLevel?: ReliabilityLevel;
     reverseProxyCertificate?: CertificateDescription;
     reverseProxyCertificateCommonNames?: ServerCertificateCommonNames;
+    sfZonalUpgradeMode?: SfZonalUpgradeMode;
     upgradeDescription?: ClusterUpgradePolicy;
     upgradeMode?: UpgradeMode;
-    applicationTypeVersionsCleanupPolicy?: ApplicationTypeVersionsCleanupPolicy;
-    vmImage?: string;
-    sfZonalUpgradeMode?: SfZonalUpgradeMode;
-    vmssZonalUpgradeMode?: VmssZonalUpgradeMode;
-    infrastructureServiceManager?: boolean;
-    upgradeWave?: ClusterUpgradeCadence;
-    upgradePauseStartTimestampUtc?: Date;
     upgradePauseEndTimestampUtc?: Date;
+    upgradePauseStartTimestampUtc?: Date;
+    upgradeWave?: ClusterUpgradeCadence;
+    vmImage?: string;
+    vmssZonalUpgradeMode?: VmssZonalUpgradeMode;
     waveUpgradePaused?: boolean;
-    notifications?: Notification_2[];
-};
+}
 
 // @public
 export interface ClusterCodeVersionsListResult {
@@ -411,14 +432,14 @@ export interface ClusterListResult {
 
 // @public
 export interface Clusters {
-    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, parameters: Cluster, options?: ClustersCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<ClustersCreateOrUpdateResponse>, ClustersCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, parameters: Cluster, options?: ClustersCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ClustersCreateOrUpdateResponse>, ClustersCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, clusterName: string, parameters: Cluster, options?: ClustersCreateOrUpdateOptionalParams): Promise<ClustersCreateOrUpdateResponse>;
-    beginUpdate(resourceGroupName: string, clusterName: string, parameters: ClusterUpdateParameters, options?: ClustersUpdateOptionalParams): Promise<PollerLike<PollOperationState<ClustersUpdateResponse>, ClustersUpdateResponse>>;
+    beginUpdate(resourceGroupName: string, clusterName: string, parameters: ClusterUpdateParameters, options?: ClustersUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ClustersUpdateResponse>, ClustersUpdateResponse>>;
     beginUpdateAndWait(resourceGroupName: string, clusterName: string, parameters: ClusterUpdateParameters, options?: ClustersUpdateOptionalParams): Promise<ClustersUpdateResponse>;
     delete(resourceGroupName: string, clusterName: string, options?: ClustersDeleteOptionalParams): Promise<void>;
     get(resourceGroupName: string, clusterName: string, options?: ClustersGetOptionalParams): Promise<ClustersGetResponse>;
-    list(options?: ClustersListOptionalParams): Promise<ClustersListResponse>;
-    listByResourceGroup(resourceGroupName: string, options?: ClustersListByResourceGroupOptionalParams): Promise<ClustersListByResourceGroupResponse>;
+    list(options?: ClustersListOptionalParams): PagedAsyncIterableIterator<Cluster>;
+    listByResourceGroup(resourceGroupName: string, options?: ClustersListByResourceGroupOptionalParams): PagedAsyncIterableIterator<Cluster>;
     listUpgradableVersions(resourceGroupName: string, clusterName: string, options?: ClustersListUpgradableVersionsOptionalParams): Promise<ClustersListUpgradableVersionsResponse>;
 }
 
@@ -443,11 +464,25 @@ export interface ClustersGetOptionalParams extends coreClient.OperationOptions {
 export type ClustersGetResponse = Cluster;
 
 // @public
+export interface ClustersListByResourceGroupNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ClustersListByResourceGroupNextResponse = ClusterListResult;
+
+// @public
 export interface ClustersListByResourceGroupOptionalParams extends coreClient.OperationOptions {
 }
 
 // @public
 export type ClustersListByResourceGroupResponse = ClusterListResult;
+
+// @public
+export interface ClustersListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ClustersListNextResponse = ClusterListResult;
 
 // @public
 export interface ClustersListOptionalParams extends coreClient.OperationOptions {
@@ -541,10 +576,13 @@ export interface ClusterVersionDetails {
 // @public
 export interface ClusterVersions {
     get(location: string, clusterVersion: string, options?: ClusterVersionsGetOptionalParams): Promise<ClusterVersionsGetResponse>;
-    getByEnvironment(location: string, environment: Enum14, clusterVersion: string, options?: ClusterVersionsGetByEnvironmentOptionalParams): Promise<ClusterVersionsGetByEnvironmentResponse>;
+    getByEnvironment(location: string, environment: ClusterVersionsEnvironment, clusterVersion: string, options?: ClusterVersionsGetByEnvironmentOptionalParams): Promise<ClusterVersionsGetByEnvironmentResponse>;
     list(location: string, options?: ClusterVersionsListOptionalParams): Promise<ClusterVersionsListResponse>;
-    listByEnvironment(location: string, environment: Enum14, options?: ClusterVersionsListByEnvironmentOptionalParams): Promise<ClusterVersionsListByEnvironmentResponse>;
+    listByEnvironment(location: string, environment: ClusterVersionsEnvironment, options?: ClusterVersionsListByEnvironmentOptionalParams): Promise<ClusterVersionsListByEnvironmentResponse>;
 }
+
+// @public
+export type ClusterVersionsEnvironment = string;
 
 // @public
 export interface ClusterVersionsGetByEnvironmentOptionalParams extends coreClient.OperationOptions {
@@ -594,9 +632,6 @@ export interface EndpointRangeDescription {
 }
 
 // @public
-export type Enum14 = string;
-
-// @public
 export interface ErrorModel {
     error?: ErrorModelError;
 }
@@ -608,14 +643,13 @@ export interface ErrorModelError {
 }
 
 // @public
+export function getContinuationToken(page: unknown): string | undefined;
+
+// @public
 export enum KnownAddOnFeatures {
-    // (undocumented)
     BackupRestoreService = "BackupRestoreService",
-    // (undocumented)
     DnsService = "DnsService",
-    // (undocumented)
     RepairManager = "RepairManager",
-    // (undocumented)
     ResourceMonitorService = "ResourceMonitorService"
 }
 
@@ -633,33 +667,21 @@ export enum KnownArmUpgradeFailureAction {
 
 // @public
 export enum KnownClusterEnvironment {
-    // (undocumented)
     Linux = "Linux",
-    // (undocumented)
     Windows = "Windows"
 }
 
 // @public
 export enum KnownClusterState {
-    // (undocumented)
     AutoScale = "AutoScale",
-    // (undocumented)
     BaselineUpgrade = "BaselineUpgrade",
-    // (undocumented)
     Deploying = "Deploying",
-    // (undocumented)
     EnforcingClusterVersion = "EnforcingClusterVersion",
-    // (undocumented)
     Ready = "Ready",
-    // (undocumented)
     UpdatingInfrastructure = "UpdatingInfrastructure",
-    // (undocumented)
     UpdatingUserCertificate = "UpdatingUserCertificate",
-    // (undocumented)
     UpdatingUserConfiguration = "UpdatingUserConfiguration",
-    // (undocumented)
     UpgradeServiceUnreachable = "UpgradeServiceUnreachable",
-    // (undocumented)
     WaitingForNodes = "WaitingForNodes"
 }
 
@@ -671,21 +693,16 @@ export enum KnownClusterUpgradeCadence {
 }
 
 // @public
-export enum KnownDurabilityLevel {
-    // (undocumented)
-    Bronze = "Bronze",
-    // (undocumented)
-    Gold = "Gold",
-    // (undocumented)
-    Silver = "Silver"
+export enum KnownClusterVersionsEnvironment {
+    Linux = "Linux",
+    Windows = "Windows"
 }
 
 // @public
-export enum KnownEnum14 {
-    // (undocumented)
-    Linux = "Linux",
-    // (undocumented)
-    Windows = "Windows"
+export enum KnownDurabilityLevel {
+    Bronze = "Bronze",
+    Gold = "Gold",
+    Silver = "Silver"
 }
 
 // @public
@@ -723,27 +740,18 @@ export enum KnownPartitionScheme {
 
 // @public
 export enum KnownProvisioningState {
-    // (undocumented)
     Canceled = "Canceled",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Succeeded = "Succeeded",
-    // (undocumented)
     Updating = "Updating"
 }
 
 // @public
 export enum KnownReliabilityLevel {
-    // (undocumented)
     Bronze = "Bronze",
-    // (undocumented)
     Gold = "Gold",
-    // (undocumented)
     None = "None",
-    // (undocumented)
     Platinum = "Platinum",
-    // (undocumented)
     Silver = "Silver"
 }
 
@@ -796,21 +804,13 @@ export enum KnownSfZonalUpgradeMode {
 
 // @public
 export enum KnownStoreName {
-    // (undocumented)
     AddressBook = "AddressBook",
-    // (undocumented)
     AuthRoot = "AuthRoot",
-    // (undocumented)
     CertificateAuthority = "CertificateAuthority",
-    // (undocumented)
     Disallowed = "Disallowed",
-    // (undocumented)
     My = "My",
-    // (undocumented)
     Root = "Root",
-    // (undocumented)
     TrustedPeople = "TrustedPeople",
-    // (undocumented)
     TrustedPublisher = "TrustedPublisher"
 }
 
@@ -843,11 +843,11 @@ export type ManagedIdentityType = "SystemAssigned" | "UserAssigned" | "SystemAss
 export type MoveCost = string;
 
 // @public
-export type NamedPartitionSchemeDescription = PartitionSchemeDescription & {
-    partitionScheme: "Named";
+export interface NamedPartitionSchemeDescription extends PartitionSchemeDescription {
     count: number;
     names: string[];
-};
+    partitionScheme: "Named";
+}
 
 // @public
 export interface NodeTypeDescription {
@@ -996,8 +996,12 @@ export interface ServiceCorrelationDescription {
 export type ServiceCorrelationScheme = string;
 
 // @public (undocumented)
-export class ServiceFabricManagementClient extends ServiceFabricManagementClientContext {
+export class ServiceFabricManagementClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: ServiceFabricManagementClientOptionalParams);
+    // (undocumented)
+    apiVersion: string;
     // (undocumented)
     applications: Applications;
     // (undocumented)
@@ -1012,15 +1016,6 @@ export class ServiceFabricManagementClient extends ServiceFabricManagementClient
     operations: Operations;
     // (undocumented)
     services: Services;
-}
-
-// @public (undocumented)
-export class ServiceFabricManagementClientContext extends coreClient.ServiceClient {
-    // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: ServiceFabricManagementClientOptionalParams);
-    // (undocumented)
-    apiVersion: string;
     // (undocumented)
     subscriptionId: string;
 }
@@ -1049,26 +1044,26 @@ export type ServiceLoadMetricWeight = string;
 
 // @public
 export interface ServicePlacementPolicyDescription {
-    type: "undefined";
+    type: "ServicePlacementPolicyDescription";
 }
 
 // @public
 export type ServicePlacementPolicyType = string;
 
 // @public
-export type ServiceResource = ProxyResource & {
-    placementConstraints?: string;
+export interface ServiceResource extends ProxyResource {
     correlationScheme?: ServiceCorrelationDescription[];
-    serviceLoadMetrics?: ServiceLoadMetricDescription[];
-    servicePlacementPolicies?: ServicePlacementPolicyDescription[];
     defaultMoveCost?: MoveCost;
-    readonly provisioningState?: string;
-    serviceKind?: ServiceKind;
-    serviceTypeName?: string;
     partitionDescription?: PartitionSchemeDescriptionUnion;
-    servicePackageActivationMode?: ArmServicePackageActivationMode;
+    placementConstraints?: string;
+    readonly provisioningState?: string;
     serviceDnsName?: string;
-};
+    serviceKind?: ServiceKind;
+    serviceLoadMetrics?: ServiceLoadMetricDescription[];
+    servicePackageActivationMode?: ArmServicePackageActivationMode;
+    servicePlacementPolicies?: ServicePlacementPolicyDescription[];
+    serviceTypeName?: string;
+}
 
 // @public
 export interface ServiceResourceList {
@@ -1078,14 +1073,14 @@ export interface ServiceResourceList {
 }
 
 // @public
-export type ServiceResourceProperties = ServiceResourcePropertiesBase & {
-    readonly provisioningState?: string;
-    serviceKind: ServiceKind;
-    serviceTypeName?: string;
+export interface ServiceResourceProperties extends ServiceResourcePropertiesBase {
     partitionDescription?: PartitionSchemeDescriptionUnion;
-    servicePackageActivationMode?: ArmServicePackageActivationMode;
+    readonly provisioningState?: string;
     serviceDnsName?: string;
-};
+    serviceKind: ServiceKind;
+    servicePackageActivationMode?: ArmServicePackageActivationMode;
+    serviceTypeName?: string;
+}
 
 // @public
 export interface ServiceResourcePropertiesBase {
@@ -1100,33 +1095,33 @@ export interface ServiceResourcePropertiesBase {
 export type ServiceResourcePropertiesUnion = ServiceResourceProperties | StatefulServiceProperties | StatelessServiceProperties;
 
 // @public
-export type ServiceResourceUpdate = ProxyResource & {
-    placementConstraints?: string;
+export interface ServiceResourceUpdate extends ProxyResource {
     correlationScheme?: ServiceCorrelationDescription[];
+    defaultMoveCost?: MoveCost;
+    placementConstraints?: string;
+    serviceKind?: ServiceKind;
     serviceLoadMetrics?: ServiceLoadMetricDescription[];
     servicePlacementPolicies?: ServicePlacementPolicyDescription[];
-    defaultMoveCost?: MoveCost;
-    serviceKind?: ServiceKind;
-};
+}
 
 // @public
-export type ServiceResourceUpdateProperties = ServiceResourcePropertiesBase & {
+export interface ServiceResourceUpdateProperties extends ServiceResourcePropertiesBase {
     serviceKind: ServiceKind;
-};
+}
 
 // @public (undocumented)
 export type ServiceResourceUpdatePropertiesUnion = ServiceResourceUpdateProperties | StatefulServiceUpdateProperties | StatelessServiceUpdateProperties;
 
 // @public
 export interface Services {
-    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, parameters: ServiceResource, options?: ServicesCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<ServicesCreateOrUpdateResponse>, ServicesCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, parameters: ServiceResource, options?: ServicesCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ServicesCreateOrUpdateResponse>, ServicesCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, parameters: ServiceResource, options?: ServicesCreateOrUpdateOptionalParams): Promise<ServicesCreateOrUpdateResponse>;
-    beginDelete(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, options?: ServicesDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, options?: ServicesDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, options?: ServicesDeleteOptionalParams): Promise<void>;
-    beginUpdate(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, parameters: ServiceResourceUpdate, options?: ServicesUpdateOptionalParams): Promise<PollerLike<PollOperationState<ServicesUpdateResponse>, ServicesUpdateResponse>>;
+    beginUpdate(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, parameters: ServiceResourceUpdate, options?: ServicesUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ServicesUpdateResponse>, ServicesUpdateResponse>>;
     beginUpdateAndWait(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, parameters: ServiceResourceUpdate, options?: ServicesUpdateOptionalParams): Promise<ServicesUpdateResponse>;
     get(resourceGroupName: string, clusterName: string, applicationName: string, serviceName: string, options?: ServicesGetOptionalParams): Promise<ServicesGetResponse>;
-    list(resourceGroupName: string, clusterName: string, applicationName: string, options?: ServicesListOptionalParams): Promise<ServicesListResponse>;
+    list(resourceGroupName: string, clusterName: string, applicationName: string, options?: ServicesListOptionalParams): PagedAsyncIterableIterator<ServiceResource>;
 }
 
 // @public
@@ -1150,6 +1145,13 @@ export interface ServicesGetOptionalParams extends coreClient.OperationOptions {
 
 // @public
 export type ServicesGetResponse = ServiceResource;
+
+// @public
+export interface ServicesListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ServicesListNextResponse = ServiceResourceList;
 
 // @public
 export interface ServicesListOptionalParams extends coreClient.OperationOptions {
@@ -1193,40 +1195,44 @@ export interface SettingsSectionDescription {
 export type SfZonalUpgradeMode = string;
 
 // @public
-export type SingletonPartitionSchemeDescription = PartitionSchemeDescription & {
+export interface SingletonPartitionSchemeDescription extends PartitionSchemeDescription {
     partitionScheme: "Singleton";
-};
+}
 
 // @public
-export type StatefulServiceProperties = ServiceResourceProperties & {
+export interface StatefulServiceProperties extends ServiceResourceProperties {
     hasPersistedState?: boolean;
-    targetReplicaSetSize?: number;
     minReplicaSetSize?: number;
-    replicaRestartWaitDuration?: Date;
     quorumLossWaitDuration?: Date;
+    replicaRestartWaitDuration?: Date;
+    serviceKind: "Stateful";
     standByReplicaKeepDuration?: Date;
-};
-
-// @public
-export type StatefulServiceUpdateProperties = ServiceResourceUpdateProperties & {
     targetReplicaSetSize?: number;
+}
+
+// @public
+export interface StatefulServiceUpdateProperties extends ServiceResourceUpdateProperties {
     minReplicaSetSize?: number;
-    replicaRestartWaitDuration?: Date;
     quorumLossWaitDuration?: Date;
+    replicaRestartWaitDuration?: Date;
+    serviceKind: "Stateful";
     standByReplicaKeepDuration?: Date;
-};
+    targetReplicaSetSize?: number;
+}
 
 // @public
-export type StatelessServiceProperties = ServiceResourceProperties & {
-    instanceCount?: number;
+export interface StatelessServiceProperties extends ServiceResourceProperties {
     instanceCloseDelayDuration?: string;
-};
+    instanceCount?: number;
+    serviceKind: "Stateless";
+}
 
 // @public
-export type StatelessServiceUpdateProperties = ServiceResourceUpdateProperties & {
-    instanceCount?: number;
+export interface StatelessServiceUpdateProperties extends ServiceResourceUpdateProperties {
     instanceCloseDelayDuration?: string;
-};
+    instanceCount?: number;
+    serviceKind: "Stateless";
+}
 
 // @public
 export type StoreName = string;
@@ -1242,12 +1248,12 @@ export interface SystemData {
 }
 
 // @public
-export type UniformInt64RangePartitionSchemeDescription = PartitionSchemeDescription & {
-    partitionScheme: "UniformInt64Range";
+export interface UniformInt64RangePartitionSchemeDescription extends PartitionSchemeDescription {
     count: number;
-    lowKey: string;
     highKey: string;
-};
+    lowKey: string;
+    partitionScheme: "UniformInt64Range";
+}
 
 // @public
 export interface UpgradableVersionPathResult {

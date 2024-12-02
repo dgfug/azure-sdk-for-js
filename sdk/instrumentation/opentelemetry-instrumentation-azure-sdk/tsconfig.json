@@ -1,0 +1,20 @@
+{
+  "extends": "../../../tsconfig",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": ".",
+    "paths": {
+      "@azure/opentelemetry-instrumentation-azure-sdk": ["./src/index"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.cts",
+    "src/**/*.mts",
+    "test/**/*.ts",
+    "test/**/*.cts",
+    "test/**/*.mts",
+    "samples-dev/**/*.ts"
+  ]
+}

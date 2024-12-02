@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualNetworkPeering,
   VirtualNetworkPeeringsListOptionalParams,
@@ -15,7 +15,7 @@ import {
   VirtualNetworkPeeringsGetOptionalParams,
   VirtualNetworkPeeringsGetResponse,
   VirtualNetworkPeeringsCreateOrUpdateOptionalParams,
-  VirtualNetworkPeeringsCreateOrUpdateResponse
+  VirtualNetworkPeeringsCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface VirtualNetworkPeerings {
   list(
     resourceGroupName: string,
     virtualNetworkName: string,
-    options?: VirtualNetworkPeeringsListOptionalParams
+    options?: VirtualNetworkPeeringsListOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkPeering>;
   /**
    * Deletes the specified virtual network peering.
@@ -43,8 +43,8 @@ export interface VirtualNetworkPeerings {
     resourceGroupName: string,
     virtualNetworkName: string,
     virtualNetworkPeeringName: string,
-    options?: VirtualNetworkPeeringsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualNetworkPeeringsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified virtual network peering.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface VirtualNetworkPeerings {
     resourceGroupName: string,
     virtualNetworkName: string,
     virtualNetworkPeeringName: string,
-    options?: VirtualNetworkPeeringsDeleteOptionalParams
+    options?: VirtualNetworkPeeringsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified virtual network peering.
@@ -69,7 +69,7 @@ export interface VirtualNetworkPeerings {
     resourceGroupName: string,
     virtualNetworkName: string,
     virtualNetworkPeeringName: string,
-    options?: VirtualNetworkPeeringsGetOptionalParams
+    options?: VirtualNetworkPeeringsGetOptionalParams,
   ): Promise<VirtualNetworkPeeringsGetResponse>;
   /**
    * Creates or updates a peering in the specified virtual network.
@@ -85,10 +85,10 @@ export interface VirtualNetworkPeerings {
     virtualNetworkName: string,
     virtualNetworkPeeringName: string,
     virtualNetworkPeeringParameters: VirtualNetworkPeering,
-    options?: VirtualNetworkPeeringsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkPeeringsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkPeeringsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkPeeringsCreateOrUpdateResponse>,
       VirtualNetworkPeeringsCreateOrUpdateResponse
     >
   >;
@@ -106,6 +106,6 @@ export interface VirtualNetworkPeerings {
     virtualNetworkName: string,
     virtualNetworkPeeringName: string,
     virtualNetworkPeeringParameters: VirtualNetworkPeering,
-    options?: VirtualNetworkPeeringsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkPeeringsCreateOrUpdateOptionalParams,
   ): Promise<VirtualNetworkPeeringsCreateOrUpdateResponse>;
 }

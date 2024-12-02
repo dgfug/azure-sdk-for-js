@@ -20,13 +20,30 @@ pr:
   paths:
     include:
       - sdk/test-utils/
+      - eng/common/testproxy/
 
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: test-utils
-    IncludeRelease: false
-    TestProxy: true
     Artifacts:
       - name: azure-tools-test-recorder
         safeName: azuretoolstestrecorder
+        skipPublishDocMs: true
+        skipPublishDocGithubIo: true
+        skipPublishDevFeed: true
+      - name: azure-tools-test-perf
+        safeName: azuretoolstestperf
+        skipPublishDocMs: true
+        skipPublishDocGithubIo: true
+        skipPublishDevFeed: true
+      - name: azure-tools-test-credential
+        safeName: azuretoolstestcredential
+        skipPublishDocMs: true
+        skipPublishDocGithubIo: true
+        skipPublishDevFeed: true
+      - name: azure-tools-test-utils
+        safeName: azuretoolstestutils
+        skipPublishDocMs: true
+        skipPublishDocGithubIo: true
+        skipPublishDevFeed: true

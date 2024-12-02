@@ -6,29 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { ServerUsages } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   ServerUsage,
   ServerUsagesListByServerOptionalParams,
-  ServerUsagesListByServerResponse
+  ServerUsagesListByServerResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ServerUsages operations. */
 export class ServerUsagesImpl implements ServerUsages {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ServerUsages class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -42,12 +41,12 @@ export class ServerUsagesImpl implements ServerUsages {
   public listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerUsagesListByServerOptionalParams
+    options?: ServerUsagesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerUsage> {
     const iter = this.listByServerPagingAll(
       resourceGroupName,
       serverName,
-      options
+      options,
     );
     return {
       next() {
@@ -56,38 +55,40 @@ export class ServerUsagesImpl implements ServerUsages {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServerPagingPage(
           resourceGroupName,
           serverName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByServerPagingPage(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerUsagesListByServerOptionalParams
+    options?: ServerUsagesListByServerOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<ServerUsage[]> {
-    let result = await this._listByServer(
-      resourceGroupName,
-      serverName,
-      options
-    );
+    let result: ServerUsagesListByServerResponse;
+    result = await this._listByServer(resourceGroupName, serverName, options);
     yield result.value || [];
   }
 
   private async *listByServerPagingAll(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerUsagesListByServerOptionalParams
+    options?: ServerUsagesListByServerOptionalParams,
   ): AsyncIterableIterator<ServerUsage> {
     for await (const page of this.listByServerPagingPage(
       resourceGroupName,
       serverName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -103,11 +104,11 @@ export class ServerUsagesImpl implements ServerUsages {
   private _listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerUsagesListByServerOptionalParams
+    options?: ServerUsagesListByServerOptionalParams,
   ): Promise<ServerUsagesListByServerResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, options },
-      listByServerOperationSpec
+      listByServerOperationSpec,
     );
   }
 }
@@ -115,21 +116,20 @@ export class ServerUsagesImpl implements ServerUsages {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByServerOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/usages",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/usages",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ServerUsageListResult
-    }
+      bodyMapper: Mappers.ServerUsageListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.serverName
+    Parameters.serverName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

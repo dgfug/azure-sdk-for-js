@@ -6,32 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { RecommendedActions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { MySQLManagementClientContext } from "../mySQLManagementClientContext";
+import { MySQLManagementClient } from "../mySQLManagementClient";
 import {
   RecommendationAction,
   RecommendedActionsListByServerNextOptionalParams,
   RecommendedActionsListByServerOptionalParams,
+  RecommendedActionsListByServerResponse,
   RecommendedActionsGetOptionalParams,
   RecommendedActionsGetResponse,
-  RecommendedActionsListByServerResponse,
   RecommendedActionsListByServerNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RecommendedActions operations. */
 export class RecommendedActionsImpl implements RecommendedActions {
-  private readonly client: MySQLManagementClientContext;
+  private readonly client: MySQLManagementClient;
 
   /**
    * Initialize a new instance of the class RecommendedActions class.
    * @param client Reference to the service client
    */
-  constructor(client: MySQLManagementClientContext) {
+  constructor(client: MySQLManagementClient) {
     this.client = client;
   }
 
@@ -61,12 +62,16 @@ export class RecommendedActionsImpl implements RecommendedActions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServerPagingPage(
           resourceGroupName,
           serverName,
           advisorName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -76,16 +81,23 @@ export class RecommendedActionsImpl implements RecommendedActions {
     resourceGroupName: string,
     serverName: string,
     advisorName: string,
-    options?: RecommendedActionsListByServerOptionalParams
+    options?: RecommendedActionsListByServerOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<RecommendationAction[]> {
-    let result = await this._listByServer(
-      resourceGroupName,
-      serverName,
-      advisorName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RecommendedActionsListByServerResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByServer(
+        resourceGroupName,
+        serverName,
+        advisorName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServerNext(
         resourceGroupName,
@@ -95,7 +107,9 @@ export class RecommendedActionsImpl implements RecommendedActions {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 

@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServerSecurityAlertPolicy,
   ServerSecurityAlertPoliciesListByServerOptionalParams,
@@ -16,7 +15,7 @@ import {
   ServerSecurityAlertPoliciesGetOptionalParams,
   ServerSecurityAlertPoliciesGetResponse,
   ServerSecurityAlertPoliciesCreateOrUpdateOptionalParams,
-  ServerSecurityAlertPoliciesCreateOrUpdateResponse
+  ServerSecurityAlertPoliciesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface ServerSecurityAlertPolicies {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerSecurityAlertPoliciesListByServerOptionalParams
+    options?: ServerSecurityAlertPoliciesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerSecurityAlertPolicy>;
   /**
    * Get a server's security alert policy.
@@ -46,7 +45,7 @@ export interface ServerSecurityAlertPolicies {
     resourceGroupName: string,
     serverName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
-    options?: ServerSecurityAlertPoliciesGetOptionalParams
+    options?: ServerSecurityAlertPoliciesGetOptionalParams,
   ): Promise<ServerSecurityAlertPoliciesGetResponse>;
   /**
    * Creates or updates a threat detection policy.
@@ -62,10 +61,10 @@ export interface ServerSecurityAlertPolicies {
     serverName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
     parameters: ServerSecurityAlertPolicy,
-    options?: ServerSecurityAlertPoliciesCreateOrUpdateOptionalParams
+    options?: ServerSecurityAlertPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ServerSecurityAlertPoliciesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ServerSecurityAlertPoliciesCreateOrUpdateResponse>,
       ServerSecurityAlertPoliciesCreateOrUpdateResponse
     >
   >;
@@ -83,6 +82,6 @@ export interface ServerSecurityAlertPolicies {
     serverName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
     parameters: ServerSecurityAlertPolicy,
-    options?: ServerSecurityAlertPoliciesCreateOrUpdateOptionalParams
+    options?: ServerSecurityAlertPoliciesCreateOrUpdateOptionalParams,
   ): Promise<ServerSecurityAlertPoliciesCreateOrUpdateResponse>;
 }

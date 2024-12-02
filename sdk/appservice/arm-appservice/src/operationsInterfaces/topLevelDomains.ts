@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   TopLevelDomain,
@@ -15,7 +14,7 @@ import {
   TopLevelDomainAgreementOption,
   TopLevelDomainsListAgreementsOptionalParams,
   TopLevelDomainsGetOptionalParams,
-  TopLevelDomainsGetResponse
+  TopLevelDomainsGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -26,7 +25,7 @@ export interface TopLevelDomains {
    * @param options The options parameters.
    */
   list(
-    options?: TopLevelDomainsListOptionalParams
+    options?: TopLevelDomainsListOptionalParams,
   ): PagedAsyncIterableIterator<TopLevelDomain>;
   /**
    * Description for Gets all legal agreements that user needs to accept before purchasing a domain.
@@ -37,7 +36,7 @@ export interface TopLevelDomains {
   listAgreements(
     name: string,
     agreementOption: TopLevelDomainAgreementOption,
-    options?: TopLevelDomainsListAgreementsOptionalParams
+    options?: TopLevelDomainsListAgreementsOptionalParams,
   ): PagedAsyncIterableIterator<TldLegalAgreement>;
   /**
    * Description for Get details of a top-level domain.
@@ -46,6 +45,6 @@ export interface TopLevelDomains {
    */
   get(
     name: string,
-    options?: TopLevelDomainsGetOptionalParams
+    options?: TopLevelDomainsGetOptionalParams,
   ): Promise<TopLevelDomainsGetResponse>;
 }

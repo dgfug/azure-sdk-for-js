@@ -1,14 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import { Receiver, ReceiverEvents } from "rhea-promise";
-import { ReceiverHelper } from "../../../src/core/receiverHelper";
-import { assertThrows } from "../../public/utils/testUtils";
-import { createRheaReceiverForTests } from "./unittestUtils";
-chai.use(chaiAsPromised);
-const assert = chai.assert;
+// Licensed under the MIT License.
+import type { Receiver } from "rhea-promise";
+import { ReceiverEvents, delay } from "rhea-promise";
+import { ReceiverHelper } from "../../../src/core/receiverHelper.js";
+import { assertThrows } from "../../public/utils/testUtils.js";
+import { createRheaReceiverForTests } from "./unittestUtils.js";
+import { describe, it } from "vitest";
+import { assert } from "../../public/utils/chai.js";
 
 describe("ReceiverHelper unit tests", () => {
   const closedReceiver = {
@@ -20,10 +18,10 @@ describe("ReceiverHelper unit tests", () => {
     },
     addCredit: (_credits: number): void => {
       throw new Error("Should never be called");
-    }
+    },
   } as Receiver;
 
-  const openReceiver = () => {
+  const openReceiver = (): Receiver & { _addedCredits: number } => {
     const fakeOpenReceiver = {
       _addedCredits: 0,
       credit: 0,
@@ -32,17 +30,17 @@ describe("ReceiverHelper unit tests", () => {
       },
       addCredit: (credits: number): void => {
         fakeOpenReceiver._addedCredits += credits;
-      }
+      },
     };
 
-    return (fakeOpenReceiver as any) as Receiver & { _addedCredits: number };
+    return fakeOpenReceiver as any as Receiver & { _addedCredits: number };
   };
 
   it("addCredit works with a non-suspended open receiver", () => {
     const receiver = openReceiver();
-    let helper = new ReceiverHelper(() => ({
+    const helper = new ReceiverHelper(() => ({
       receiver,
-      logPrefix: "whatever"
+      logPrefix: "whatever",
     }));
 
     // the one case that should work
@@ -55,32 +53,32 @@ describe("ReceiverHelper unit tests", () => {
     // and now the various failure cases.
     let helper = new ReceiverHelper(() => ({
       receiver: undefined,
-      logPrefix: "whatever"
+      logPrefix: "whatever",
     }));
 
     await assertThrows(async () => helper.addCredit(101), {
       name: "ServiceBusError",
       code: "GeneralError",
       message: "Cannot request messages on the receiver since it is undefined.",
-      retryable: true
+      retryable: true,
     });
 
     helper = new ReceiverHelper(() => ({
       receiver: closedReceiver,
-      logPrefix: "whatever"
+      logPrefix: "whatever",
     }));
 
     await assertThrows(async () => helper.addCredit(101), {
       name: "ServiceBusError",
       code: "GeneralError",
       message: "Cannot request messages on the receiver since it is not open.",
-      retryable: true
+      retryable: true,
     });
 
     const receiver = openReceiver();
     helper = new ReceiverHelper(() => ({
       receiver: receiver,
-      logPrefix: "whatever"
+      logPrefix: "whatever",
     }));
 
     await helper.suspend();
@@ -88,7 +86,7 @@ describe("ReceiverHelper unit tests", () => {
     await assertThrows(async () => helper.addCredit(101), {
       name: "AbortError",
       message: "Cannot request messages on the receiver since it is suspended.",
-      retryable: undefined
+      retryable: undefined,
     });
   });
 
@@ -126,5 +124,33 @@ describe("ReceiverHelper unit tests", () => {
     assert.isFalse(helper["_isSuspended"]);
     helper.addCredit(101);
     assert.equal(receiver.credit, 101);
+  });
+
+  it("resolves from suspend() when drain is blocking ", async () => {
+    const receiver = createRheaReceiverForTests();
+    const helper = new ReceiverHelper(() => ({ receiver, logPrefix: "hello" }));
+
+    (receiver as any)["_link"]["drain_credit"] = () => {
+      (receiver as any).credit = 0;
+      // not emitting the `receiverDrained` event
+    };
+    let drainWasCalled = false;
+
+    receiver.on(ReceiverEvents.receiverDrained, () => {
+      drainWasCalled = true;
+    });
+
+    // we can explicitly drain
+    helper.resume();
+    helper.addCredit(101);
+
+    await Promise.race([
+      helper.drain(),
+      delay(2000).then(() => {
+        throw new Error("Test failed. helper.drain() should have already resolved.");
+      }),
+    ]);
+
+    assert.isFalse(drainWasCalled);
   });
 });

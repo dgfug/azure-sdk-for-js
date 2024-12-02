@@ -35,49 +35,6 @@ export const WorkflowListResult: coreClient.CompositeMapper = {
   }
 };
 
-export const Resource: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "Resource",
-    modelProperties: {
-      id: {
-        serializedName: "id",
-        readOnly: true,
-        type: {
-          name: "String"
-        }
-      },
-      name: {
-        serializedName: "name",
-        readOnly: true,
-        type: {
-          name: "String"
-        }
-      },
-      type: {
-        serializedName: "type",
-        readOnly: true,
-        type: {
-          name: "String"
-        }
-      },
-      location: {
-        serializedName: "location",
-        type: {
-          name: "String"
-        }
-      },
-      tags: {
-        serializedName: "tags",
-        type: {
-          name: "Dictionary",
-          value: { type: { name: "String" } }
-        }
-      }
-    }
-  }
-};
-
 export const FlowEndpointsConfiguration: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -364,15 +321,13 @@ export const WorkflowParameter: coreClient.CompositeMapper = {
       value: {
         serializedName: "value",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       metadata: {
         serializedName: "metadata",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       description: {
@@ -441,6 +396,49 @@ export const UserAssignedIdentity: coreClient.CompositeMapper = {
         readOnly: true,
         type: {
           name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const Resource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "Resource",
+    modelProperties: {
+      id: {
+        serializedName: "id",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      name: {
+        serializedName: "name",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      type: {
+        serializedName: "type",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      location: {
+        serializedName: "location",
+        type: {
+          name: "String"
+        }
+      },
+      tags: {
+        serializedName: "tags",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } }
         }
       }
     }
@@ -683,22 +681,6 @@ export const WorkflowTriggerListResult: coreClient.CompositeMapper = {
   }
 };
 
-export const SubResource: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "SubResource",
-    modelProperties: {
-      id: {
-        serializedName: "id",
-        readOnly: true,
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
 export const WorkflowTriggerRecurrence: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -849,6 +831,22 @@ export const RecurrenceScheduleOccurrence: coreClient.CompositeMapper = {
   }
 };
 
+export const SubResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SubResource",
+    modelProperties: {
+      id: {
+        serializedName: "id",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
 export const JsonSchema: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -964,8 +962,7 @@ export const ContentLink: coreClient.CompositeMapper = {
         serializedName: "metadata",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       }
     }
@@ -1036,8 +1033,7 @@ export const WorkflowRunTrigger: coreClient.CompositeMapper = {
         serializedName: "inputs",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       inputsLink: {
@@ -1051,8 +1047,7 @@ export const WorkflowRunTrigger: coreClient.CompositeMapper = {
         serializedName: "outputs",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       outputsLink: {
@@ -1115,16 +1110,14 @@ export const WorkflowRunTrigger: coreClient.CompositeMapper = {
         serializedName: "error",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       trackedProperties: {
         serializedName: "trackedProperties",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       }
     }
@@ -1334,6 +1327,28 @@ export const WorkflowRunActionRepetitionDefinitionCollection: coreClient.Composi
   }
 };
 
+export const RepetitionIndex: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RepetitionIndex",
+    modelProperties: {
+      scopeName: {
+        serializedName: "scopeName",
+        type: {
+          name: "String"
+        }
+      },
+      itemIndex: {
+        serializedName: "itemIndex",
+        required: true,
+        type: {
+          name: "Number"
+        }
+      }
+    }
+  }
+};
+
 export const OperationResultProperties: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -1374,28 +1389,6 @@ export const OperationResultProperties: coreClient.CompositeMapper = {
         serializedName: "error",
         type: {
           name: "any"
-        }
-      }
-    }
-  }
-};
-
-export const RepetitionIndex: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "RepetitionIndex",
-    modelProperties: {
-      scopeName: {
-        serializedName: "scopeName",
-        type: {
-          name: "String"
-        }
-      },
-      itemIndex: {
-        serializedName: "itemIndex",
-        required: true,
-        type: {
-          name: "Number"
         }
       }
     }
@@ -1472,8 +1465,7 @@ export const Request: coreClient.CompositeMapper = {
       headers: {
         serializedName: "headers",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       uri: {
@@ -1500,8 +1492,7 @@ export const Response: coreClient.CompositeMapper = {
       headers: {
         serializedName: "headers",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       statusCode: {
@@ -1846,8 +1837,7 @@ export const TrackingEvent: coreClient.CompositeMapper = {
       record: {
         serializedName: "record",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       error: {
@@ -5152,8 +5142,7 @@ export const ExtendedErrorInfo: coreClient.CompositeMapper = {
       innerError: {
         serializedName: "innerError",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       }
     }
@@ -5187,6 +5176,22 @@ export const IntegrationServiceEnvironmentManagedApiListResult: coreClient.Compo
   }
 };
 
+export const IntegrationServiceEnvironmentManagedApiDeploymentParameters: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "IntegrationServiceEnvironmentManagedApiDeploymentParameters",
+    modelProperties: {
+      contentLinkDefinition: {
+        serializedName: "contentLinkDefinition",
+        type: {
+          name: "Composite",
+          className: "ContentLink"
+        }
+      }
+    }
+  }
+};
+
 export const ApiResourceProperties: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -5204,9 +5209,7 @@ export const ApiResourceProperties: coreClient.CompositeMapper = {
         readOnly: true,
         type: {
           name: "Dictionary",
-          value: {
-            type: { name: "Dictionary", value: { type: { name: "any" } } }
-          }
+          value: { type: { name: "any" } }
         }
       },
       metadata: {
@@ -5562,22 +5565,6 @@ export const ApiResourceDefinitions: coreClient.CompositeMapper = {
   }
 };
 
-export const IntegrationServiceEnvironmentManagedApiDeploymentParameters: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "IntegrationServiceEnvironmentManagedApiDeploymentParameters",
-    modelProperties: {
-      contentLinkDefinition: {
-        serializedName: "contentLinkDefinition",
-        type: {
-          name: "Composite",
-          className: "ContentLink"
-        }
-      }
-    }
-  }
-};
-
 export const ApiOperationListResult: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -5757,8 +5744,7 @@ export const SwaggerSchema: coreClient.CompositeMapper = {
       additionalProperties: {
         serializedName: "additionalProperties",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       required: {
@@ -5825,8 +5811,7 @@ export const SwaggerSchema: coreClient.CompositeMapper = {
       example: {
         serializedName: "example",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       notificationUrlExtension: {
@@ -5906,9 +5891,7 @@ export const SwaggerXml: coreClient.CompositeMapper = {
         serializedName: "extensions",
         type: {
           name: "Dictionary",
-          value: {
-            type: { name: "Dictionary", value: { type: { name: "any" } } }
-          }
+          value: { type: { name: "any" } }
         }
       }
     }
@@ -5936,9 +5919,7 @@ export const SwaggerExternalDocumentation: coreClient.CompositeMapper = {
         serializedName: "extensions",
         type: {
           name: "Dictionary",
-          value: {
-            type: { name: "Dictionary", value: { type: { name: "any" } } }
-          }
+          value: { type: { name: "any" } }
         }
       }
     }
@@ -5966,9 +5947,7 @@ export const SwaggerCustomDynamicSchema: coreClient.CompositeMapper = {
         serializedName: "parameters",
         type: {
           name: "Dictionary",
-          value: {
-            type: { name: "Dictionary", value: { type: { name: "any" } } }
-          }
+          value: { type: { name: "any" } }
         }
       }
     }
@@ -6187,8 +6166,7 @@ export const SwaggerCustomDynamicTreeParameter: coreClient.CompositeMapper = {
       value: {
         serializedName: "value",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       parameterReference: {
@@ -6261,8 +6239,7 @@ export const Operation: coreClient.CompositeMapper = {
       properties: {
         serializedName: "properties",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       }
     }
@@ -6485,6 +6462,118 @@ export const IntegrationAccountSessionFilter: coreClient.CompositeMapper = {
   }
 };
 
+export const WorkflowReference: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkflowReference",
+    modelProperties: {
+      ...ResourceReference.type.modelProperties
+    }
+  }
+};
+
+export const WorkflowTriggerReference: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkflowTriggerReference",
+    modelProperties: {
+      ...ResourceReference.type.modelProperties,
+      flowName: {
+        serializedName: "flowName",
+        type: {
+          name: "String"
+        }
+      },
+      triggerName: {
+        serializedName: "triggerName",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const KeyVaultReference: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "KeyVaultReference",
+    modelProperties: {
+      ...ResourceReference.type.modelProperties
+    }
+  }
+};
+
+export const ApiReference: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ApiReference",
+    modelProperties: {
+      ...ResourceReference.type.modelProperties,
+      displayName: {
+        serializedName: "displayName",
+        type: {
+          name: "String"
+        }
+      },
+      description: {
+        serializedName: "description",
+        type: {
+          name: "String"
+        }
+      },
+      iconUri: {
+        serializedName: "iconUri",
+        type: {
+          name: "String"
+        }
+      },
+      swagger: {
+        serializedName: "swagger",
+        type: {
+          name: "any"
+        }
+      },
+      brandColor: {
+        serializedName: "brandColor",
+        type: {
+          name: "String"
+        }
+      },
+      category: {
+        serializedName: "category",
+        type: {
+          name: "String"
+        }
+      },
+      integrationServiceEnvironment: {
+        serializedName: "integrationServiceEnvironment",
+        type: {
+          name: "Composite",
+          className: "ResourceReference"
+        }
+      }
+    }
+  }
+};
+
+export const WorkflowOutputParameter: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkflowOutputParameter",
+    modelProperties: {
+      ...WorkflowParameter.type.modelProperties,
+      error: {
+        serializedName: "error",
+        readOnly: true,
+        type: {
+          name: "any"
+        }
+      }
+    }
+  }
+};
+
 export const Workflow: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -6577,8 +6666,7 @@ export const Workflow: coreClient.CompositeMapper = {
       definition: {
         serializedName: "properties.definition",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       parameters: {
@@ -6670,8 +6758,7 @@ export const WorkflowVersion: coreClient.CompositeMapper = {
       definition: {
         serializedName: "properties.definition",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       parameters: {
@@ -6739,8 +6826,7 @@ export const WorkflowRunActionRepetitionDefinition: coreClient.CompositeMapper =
         serializedName: "properties.inputs",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       inputsLink: {
@@ -6754,8 +6840,7 @@ export const WorkflowRunActionRepetitionDefinition: coreClient.CompositeMapper =
         serializedName: "properties.outputs",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       outputsLink: {
@@ -6769,8 +6854,7 @@ export const WorkflowRunActionRepetitionDefinition: coreClient.CompositeMapper =
         serializedName: "properties.trackedProperties",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       retryHistory: {
@@ -6936,8 +7020,7 @@ export const IntegrationAccountSchema: coreClient.CompositeMapper = {
       metadata: {
         serializedName: "properties.metadata",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       content: {
@@ -7019,8 +7102,7 @@ export const IntegrationAccountMap: coreClient.CompositeMapper = {
       metadata: {
         serializedName: "properties.metadata",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       }
     }
@@ -7057,8 +7139,7 @@ export const IntegrationAccountPartner: coreClient.CompositeMapper = {
       metadata: {
         serializedName: "properties.metadata",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       content: {
@@ -7095,8 +7176,7 @@ export const IntegrationAccountAgreement: coreClient.CompositeMapper = {
       metadata: {
         serializedName: "properties.metadata",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       agreementType: {
@@ -7169,8 +7249,7 @@ export const IntegrationAccountCertificate: coreClient.CompositeMapper = {
       metadata: {
         serializedName: "properties.metadata",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       key: {
@@ -7213,8 +7292,7 @@ export const IntegrationAccountSession: coreClient.CompositeMapper = {
       content: {
         serializedName: "properties.content",
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       }
     }
@@ -7270,9 +7348,7 @@ export const IntegrationServiceEnvironmentManagedApi: coreClient.CompositeMapper
         readOnly: true,
         type: {
           name: "Dictionary",
-          value: {
-            type: { name: "Dictionary", value: { type: { name: "any" } } }
-          }
+          value: { type: { name: "any" } }
         }
       },
       metadata: {
@@ -7402,120 +7478,6 @@ export const ManagedApi: coreClient.CompositeMapper = {
         type: {
           name: "Composite",
           className: "ApiResourceProperties"
-        }
-      }
-    }
-  }
-};
-
-export const WorkflowReference: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "WorkflowReference",
-    modelProperties: {
-      ...ResourceReference.type.modelProperties
-    }
-  }
-};
-
-export const WorkflowTriggerReference: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "WorkflowTriggerReference",
-    modelProperties: {
-      ...ResourceReference.type.modelProperties,
-      flowName: {
-        serializedName: "flowName",
-        type: {
-          name: "String"
-        }
-      },
-      triggerName: {
-        serializedName: "triggerName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const KeyVaultReference: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "KeyVaultReference",
-    modelProperties: {
-      ...ResourceReference.type.modelProperties
-    }
-  }
-};
-
-export const ApiReference: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "ApiReference",
-    modelProperties: {
-      ...ResourceReference.type.modelProperties,
-      displayName: {
-        serializedName: "displayName",
-        type: {
-          name: "String"
-        }
-      },
-      description: {
-        serializedName: "description",
-        type: {
-          name: "String"
-        }
-      },
-      iconUri: {
-        serializedName: "iconUri",
-        type: {
-          name: "String"
-        }
-      },
-      swagger: {
-        serializedName: "swagger",
-        type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
-        }
-      },
-      brandColor: {
-        serializedName: "brandColor",
-        type: {
-          name: "String"
-        }
-      },
-      category: {
-        serializedName: "category",
-        type: {
-          name: "String"
-        }
-      },
-      integrationServiceEnvironment: {
-        serializedName: "integrationServiceEnvironment",
-        type: {
-          name: "Composite",
-          className: "ResourceReference"
-        }
-      }
-    }
-  }
-};
-
-export const WorkflowOutputParameter: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "WorkflowOutputParameter",
-    modelProperties: {
-      ...WorkflowParameter.type.modelProperties,
-      error: {
-        serializedName: "error",
-        readOnly: true,
-        type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
         }
       }
     }
@@ -7668,8 +7630,7 @@ export const WorkflowTriggerHistory: coreClient.CompositeMapper = {
         serializedName: "properties.error",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       trackingId: {
@@ -7777,8 +7738,7 @@ export const WorkflowRun: coreClient.CompositeMapper = {
         serializedName: "properties.error",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       correlationId: {
@@ -7882,8 +7842,7 @@ export const WorkflowRunAction: coreClient.CompositeMapper = {
         serializedName: "properties.error",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       trackingId: {
@@ -7918,8 +7877,7 @@ export const WorkflowRunAction: coreClient.CompositeMapper = {
         serializedName: "properties.trackedProperties",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       retryHistory: {
@@ -8016,8 +7974,7 @@ export const OperationResult: coreClient.CompositeMapper = {
         serializedName: "inputs",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       inputsLink: {
@@ -8031,8 +7988,7 @@ export const OperationResult: coreClient.CompositeMapper = {
         serializedName: "outputs",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       outputsLink: {
@@ -8046,8 +8002,7 @@ export const OperationResult: coreClient.CompositeMapper = {
         serializedName: "trackedProperties",
         readOnly: true,
         type: {
-          name: "Dictionary",
-          value: { type: { name: "any" } }
+          name: "any"
         }
       },
       retryHistory: {

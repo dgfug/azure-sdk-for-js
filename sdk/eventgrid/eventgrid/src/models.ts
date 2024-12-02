@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * The shape of the input for EventGridProducerClient#sendEventGridEvents
@@ -167,7 +167,7 @@ export const cloudEventReservedPropertyNames = [
   "dataschema",
   "subject",
   "time",
-  "data"
+  "data",
 ];
 
 /**

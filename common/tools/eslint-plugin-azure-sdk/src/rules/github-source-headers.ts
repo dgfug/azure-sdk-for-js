@@ -1,59 +1,55 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Rule to require copyright headers in every source file.
- * @author Arpan Laha
  */
 
-import { Rule } from "eslint";
-import { Comment, Node } from "estree";
-import { getRuleMetaData } from "../utils";
+import { createRule } from "../utils/ruleCreator";
+import { TSESTree } from "@typescript-eslint/utils";
 
-//------------------------------------------------------------------------------
-// Rule Definition
-//------------------------------------------------------------------------------
-
-const expectedLines = ["Copyright (c) Microsoft Corporation.", "Licensed under the MIT license."];
+const expectedLines = ["Copyright (c) Microsoft Corporation.", "Licensed under the MIT License."];
 
 const expectedComments = `// ${expectedLines.join("\n// ")}\n\n`;
 
-function isValid(comments: Comment[]): boolean {
+function isValid(comments: TSESTree.Comment[]): boolean {
   return expectedLines
     .map((l, idx) => ({ expected: l, actual: comments[idx] }))
     .every((v) => v.actual.type === "Line" && v.expected === v.actual.value.trim());
 }
 
-export = {
-  meta: getRuleMetaData(
-    "github-source-headers",
-    "require copyright headers in every source file",
-    "code"
-  ),
-  create: (context: Rule.RuleContext): Rule.RuleListener =>
-    /\.ts$/.test(context.getFilename())
-      ? {
-          // callback functions
+export default createRule({
+  name: "github-source-headers",
+  meta: {
+    type: "suggestion",
+    docs: {
+      description: "require copyright headers in every source file",
+    },
+    messages: {
+      noCopyrightHeader: "the file does not have a correct copyright header",
+    },
+    schema: [],
+    fixable: "code",
+  },
+  defaultOptions: [],
+  create(context) {
+    if (!/\.ts$/.test(context.filename)) {
+      return {};
+    }
+    return {
+      Program: (node): void => {
+        const sourceCode = context.sourceCode;
+        const headerComments = sourceCode.getCommentsBefore(node);
 
-          // check top-level node
-          Program: (node: Node): void => {
-            const sourceCode = context.getSourceCode();
-            const headerComments = sourceCode.getCommentsBefore(node);
-
-            if (headerComments.length < expectedLines.length || !isValid(headerComments)) {
-              context.report({
-                node: (headerComments[0] as any) || node,
-                message: "the file does not have a correct copyright header",
-
-                fix(fixer: Rule.RuleFixer): Rule.Fix {
-                  return fixer.insertTextBefore(
-                    (headerComments[0] as any) || node,
-                    expectedComments
-                  );
-                }
-              });
-            }
-          }
+        if (headerComments.length < expectedLines.length || !isValid(headerComments)) {
+          const targetNode = headerComments[0] || node;
+          context.report({
+            node: targetNode,
+            messageId: "noCopyrightHeader",
+            fix: (fixer) => fixer.insertTextBefore(targetNode, expectedComments),
+          });
         }
-      : {}
-};
+      },
+    };
+  },
+});

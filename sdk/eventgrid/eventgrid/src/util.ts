@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { KeyCredential } from "@azure/core-auth";
+import type { KeyCredential } from "@azure/core-auth";
 
 /**
  * Stringifies a Date object in the format expected by the Event Grid service, for use in a Shared Access Signiture.
@@ -21,16 +21,10 @@ export function dateToServiceTimeString(d: Date): string {
   const day = d.getUTCDate();
   const year = d.getUTCFullYear();
 
-  const hour = d.getUTCHours() === 0 ? 12 : d.getUTCHours() % 12; // getUTCHours returns 0-23, and we want this in 12 hour format.
-  const minute = d
-    .getUTCMinutes()
-    .toString()
-    .padStart(2, "0");
-  const second = d
-    .getUTCSeconds()
-    .toString()
-    .padStart(2, "0");
-  const am = d.getUTCHours() >= 13 ? "PM" : "AM";
+  const hour = d.getUTCHours() === 0 || d.getUTCHours() === 12 ? 12 : d.getUTCHours() % 12; // getUTCHours returns 0-23, and we want this in 12 hour format.
+  const minute = d.getUTCMinutes().toString().padStart(2, "0");
+  const second = d.getUTCSeconds().toString().padStart(2, "0");
+  const am = d.getUTCHours() >= 12 ? "PM" : "AM";
 
   return `${month}/${day}/${year} ${hour}:${minute}:${second} ${am}`;
 }
@@ -82,7 +76,7 @@ export function validateEventGridEvent(o: unknown): void {
     "subject",
     "topic",
     "dataVersion",
-    "metadataVersion"
+    "metadataVersion",
   ]);
 
   validateRequiredAnyProperties(o, ["data"]);
@@ -119,7 +113,7 @@ function validateRequiredStringProperties(o: any, propertyNames: string[]): void
 
     if (typeof o[propertyName] !== "string") {
       throw new TypeError(
-        `event property '${propertyName} should be a 'string', but is '${typeof o[propertyName]}'`
+        `event property '${propertyName} should be a 'string', but is '${typeof o[propertyName]}'`,
       );
     }
   }
@@ -139,7 +133,7 @@ function validateOptionalStringProperties(o: any, propertyNames: string[]): void
       throw new TypeError(
         `event property '${propertyName}' should be a 'string' but it is a '${typeof o[
           propertyName
-        ]}'`
+        ]}'`,
       );
     }
   }

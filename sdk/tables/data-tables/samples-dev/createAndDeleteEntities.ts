@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates create and delete entities in a table
@@ -8,17 +8,15 @@
  * @azsdk-weight 40
  */
 
-import { Edm, TableClient, AzureNamedKeyCredential } from "@azure/data-tables";
-
-// Load the .env file if it exists
-import * as dotenv from "dotenv";
-dotenv.config();
+import type { Edm } from "@azure/data-tables";
+import { TableClient, AzureNamedKeyCredential } from "@azure/data-tables";
+import "dotenv/config";
 
 const tablesUrl = process.env["TABLES_URL"] || "";
 const accountName = process.env["ACCOUNT_NAME"] || "";
 const accountKey = process.env["ACCOUNT_KEY"] || "";
 
-async function createSimpleDateEntity() {
+async function createSimpleDateEntity(): Promise<void> {
   // Note that this sample assumes that a table with tableName exists
   const tableName = `createSimpleDateEntityTable`;
 
@@ -31,7 +29,7 @@ async function createSimpleDateEntity() {
   const entity = {
     partitionKey: "p1",
     rowKey: "r1",
-    date: new Date()
+    date: new Date(),
   };
 
   await client.createEntity(entity);
@@ -39,7 +37,7 @@ async function createSimpleDateEntity() {
   await client.deleteTable();
 }
 
-async function createComplexDateEntity() {
+async function createComplexDateEntity(): Promise<void> {
   // Note that this sample assumes that a table with tableName exists
   const tableName = `createComplexDateEntityTable`;
 
@@ -55,7 +53,7 @@ async function createComplexDateEntity() {
   const entity = {
     partitionKey: "p2",
     rowKey: "r2",
-    date
+    date,
   };
 
   await client.createEntity(entity);
@@ -63,7 +61,7 @@ async function createComplexDateEntity() {
   await client.deleteTable();
 }
 
-async function createAndDeleteEntities() {
+async function createAndDeleteEntities(): Promise<void> {
   console.log("== Create and delete entities Sample ==");
 
   // Note that this sample assumes that a table with tableName exists
@@ -81,7 +79,7 @@ async function createAndDeleteEntities() {
     rowKey: "A1",
     name: "Marker Set",
     price: 5.0,
-    quantity: 21
+    quantity: 21,
   };
 
   // Create the new entity
@@ -103,7 +101,7 @@ interface Entity {
   quantity: number;
 }
 
-export async function main() {
+export async function main(): Promise<void> {
   await createAndDeleteEntities();
   await createSimpleDateEntity();
   await createComplexDateEntity();

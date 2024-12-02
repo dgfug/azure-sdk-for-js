@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license
+// Licensed under the MIT License
 
 import { subCommand, makeCommandInfo } from "../../framework/command";
 
@@ -10,6 +10,5 @@ export default subCommand(commandInfo, {
   prep: () => import("./prep"),
   publish: () => import("./publish"),
   run: () => import("./run"),
-  "ts-to-js": () => import("./tsToJs"),
-  "check-node-versions": () => import("./checkNodeVersions")
+  "check-node-versions": () => import("./checkNodeVersions"),
 });

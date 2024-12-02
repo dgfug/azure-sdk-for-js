@@ -1,0 +1,20 @@
+{
+  "extends": "../../../tsconfig",
+  "compilerOptions": {
+    "paths": {
+      "@azure-rest/maps-geolocation": ["./src/index"]
+    },
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "."
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.mts",
+    "src/**/*.cts",
+    "samples-dev/**/*.ts",
+    "test/**/*.ts",
+    "test/**/*.mts",
+    "test/**/*.cts"
+  ]
+}

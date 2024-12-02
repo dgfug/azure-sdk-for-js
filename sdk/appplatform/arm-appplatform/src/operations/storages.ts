@@ -6,42 +6,47 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Storages } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { AppPlatformManagementClientContext } from "../appPlatformManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { AppPlatformManagementClient } from "../appPlatformManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   StorageResource,
   StoragesListNextOptionalParams,
   StoragesListOptionalParams,
+  StoragesListResponse,
   StoragesGetOptionalParams,
   StoragesGetResponse,
   StoragesCreateOrUpdateOptionalParams,
   StoragesCreateOrUpdateResponse,
   StoragesDeleteOptionalParams,
-  StoragesListResponse,
   StoragesListNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Storages operations. */
 export class StoragesImpl implements Storages {
-  private readonly client: AppPlatformManagementClientContext;
+  private readonly client: AppPlatformManagementClient;
 
   /**
    * Initialize a new instance of the class Storages class.
    * @param client Reference to the service client
    */
-  constructor(client: AppPlatformManagementClientContext) {
+  constructor(client: AppPlatformManagementClient) {
     this.client = client;
   }
 
   /**
-   * List all the storages of one Azure Spring Cloud instance.
+   * List all the storages of one Azure Spring Apps resource.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serviceName The name of the Service resource.
@@ -60,8 +65,16 @@ export class StoragesImpl implements Storages {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, serviceName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          serviceName,
+          options,
+          settings
+        );
       }
     };
   }
@@ -69,11 +82,18 @@ export class StoragesImpl implements Storages {
   private async *listPagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: StoragesListOptionalParams
+    options?: StoragesListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<StorageResource[]> {
-    let result = await this._list(resourceGroupName, serviceName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: StoragesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, serviceName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -82,7 +102,9 @@ export class StoragesImpl implements Storages {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -136,8 +158,8 @@ export class StoragesImpl implements Storages {
     storageResource: StorageResource,
     options?: StoragesCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<StoragesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<StoragesCreateOrUpdateResponse>,
       StoragesCreateOrUpdateResponse
     >
   > {
@@ -147,7 +169,7 @@ export class StoragesImpl implements Storages {
     ): Promise<StoragesCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -180,16 +202,26 @@ export class StoragesImpl implements Storages {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, storageName, storageResource, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        storageName,
+        storageResource,
+        options
+      },
+      spec: createOrUpdateOperationSpec
     });
+    const poller = await createHttpPoller<
+      StoragesCreateOrUpdateResponse,
+      OperationState<StoragesCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -231,14 +263,14 @@ export class StoragesImpl implements Storages {
     serviceName: string,
     storageName: string,
     options?: StoragesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -271,16 +303,17 @@ export class StoragesImpl implements Storages {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, storageName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, serviceName, storageName, options },
+      spec: deleteOperationSpec
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -307,7 +340,7 @@ export class StoragesImpl implements Storages {
   }
 
   /**
-   * List all the storages of one Azure Spring Cloud instance.
+   * List all the storages of one Azure Spring Apps resource.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serviceName The name of the Service resource.
@@ -461,7 +494,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

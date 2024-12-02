@@ -6,20 +6,27 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { VirtualNetworkTaps } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   VirtualNetworkTap,
   VirtualNetworkTapsListAllNextOptionalParams,
   VirtualNetworkTapsListAllOptionalParams,
+  VirtualNetworkTapsListAllResponse,
   VirtualNetworkTapsListByResourceGroupNextOptionalParams,
   VirtualNetworkTapsListByResourceGroupOptionalParams,
+  VirtualNetworkTapsListByResourceGroupResponse,
   VirtualNetworkTapsDeleteOptionalParams,
   VirtualNetworkTapsGetOptionalParams,
   VirtualNetworkTapsGetResponse,
@@ -28,22 +35,20 @@ import {
   TagsObject,
   VirtualNetworkTapsUpdateTagsOptionalParams,
   VirtualNetworkTapsUpdateTagsResponse,
-  VirtualNetworkTapsListAllResponse,
-  VirtualNetworkTapsListByResourceGroupResponse,
   VirtualNetworkTapsListAllNextResponse,
-  VirtualNetworkTapsListByResourceGroupNextResponse
+  VirtualNetworkTapsListByResourceGroupNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing VirtualNetworkTaps operations. */
 export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class VirtualNetworkTaps class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -52,7 +57,7 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
    * @param options The options parameters.
    */
   public listAll(
-    options?: VirtualNetworkTapsListAllOptionalParams
+    options?: VirtualNetworkTapsListAllOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkTap> {
     const iter = this.listAllPagingAll(options);
     return {
@@ -62,27 +67,39 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
+      },
     };
   }
 
   private async *listAllPagingPage(
-    options?: VirtualNetworkTapsListAllOptionalParams
+    options?: VirtualNetworkTapsListAllOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<VirtualNetworkTap[]> {
-    let result = await this._listAll(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualNetworkTapsListAllResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAll(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listAllPagingAll(
-    options?: VirtualNetworkTapsListAllOptionalParams
+    options?: VirtualNetworkTapsListAllOptionalParams,
   ): AsyncIterableIterator<VirtualNetworkTap> {
     for await (const page of this.listAllPagingPage(options)) {
       yield* page;
@@ -96,7 +113,7 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: VirtualNetworkTapsListByResourceGroupOptionalParams
+    options?: VirtualNetworkTapsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkTap> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -106,37 +123,53 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: VirtualNetworkTapsListByResourceGroupOptionalParams
+    options?: VirtualNetworkTapsListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<VirtualNetworkTap[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualNetworkTapsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: VirtualNetworkTapsListByResourceGroupOptionalParams
+    options?: VirtualNetworkTapsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<VirtualNetworkTap> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -151,25 +184,24 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
   async beginDelete(
     resourceGroupName: string,
     tapName: string,
-    options?: VirtualNetworkTapsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: VirtualNetworkTapsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -178,8 +210,8 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -187,21 +219,23 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, tapName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, tapName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -213,7 +247,7 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
   async beginDeleteAndWait(
     resourceGroupName: string,
     tapName: string,
-    options?: VirtualNetworkTapsDeleteOptionalParams
+    options?: VirtualNetworkTapsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(resourceGroupName, tapName, options);
     return poller.pollUntilDone();
@@ -228,11 +262,11 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
   get(
     resourceGroupName: string,
     tapName: string,
-    options?: VirtualNetworkTapsGetOptionalParams
+    options?: VirtualNetworkTapsGetOptionalParams,
   ): Promise<VirtualNetworkTapsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, tapName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -247,30 +281,29 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
     resourceGroupName: string,
     tapName: string,
     parameters: VirtualNetworkTap,
-    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkTapsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkTapsCreateOrUpdateResponse>,
       VirtualNetworkTapsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<VirtualNetworkTapsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -279,8 +312,8 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -288,21 +321,26 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, tapName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, tapName, parameters, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      VirtualNetworkTapsCreateOrUpdateResponse,
+      OperationState<VirtualNetworkTapsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -316,13 +354,13 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
     resourceGroupName: string,
     tapName: string,
     parameters: VirtualNetworkTap,
-    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams,
   ): Promise<VirtualNetworkTapsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       tapName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -338,11 +376,11 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
     resourceGroupName: string,
     tapName: string,
     tapParameters: TagsObject,
-    options?: VirtualNetworkTapsUpdateTagsOptionalParams
+    options?: VirtualNetworkTapsUpdateTagsOptionalParams,
   ): Promise<VirtualNetworkTapsUpdateTagsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, tapName, tapParameters, options },
-      updateTagsOperationSpec
+      updateTagsOperationSpec,
     );
   }
 
@@ -351,7 +389,7 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
    * @param options The options parameters.
    */
   private _listAll(
-    options?: VirtualNetworkTapsListAllOptionalParams
+    options?: VirtualNetworkTapsListAllOptionalParams,
   ): Promise<VirtualNetworkTapsListAllResponse> {
     return this.client.sendOperationRequest({ options }, listAllOperationSpec);
   }
@@ -363,11 +401,11 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: VirtualNetworkTapsListByResourceGroupOptionalParams
+    options?: VirtualNetworkTapsListByResourceGroupOptionalParams,
   ): Promise<VirtualNetworkTapsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -378,11 +416,11 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
    */
   private _listAllNext(
     nextLink: string,
-    options?: VirtualNetworkTapsListAllNextOptionalParams
+    options?: VirtualNetworkTapsListAllNextOptionalParams,
   ): Promise<VirtualNetworkTapsListAllNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listAllNextOperationSpec
+      listAllNextOperationSpec,
     );
   }
 
@@ -395,11 +433,11 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: VirtualNetworkTapsListByResourceGroupNextOptionalParams
+    options?: VirtualNetworkTapsListByResourceGroupNextOptionalParams,
   ): Promise<VirtualNetworkTapsListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 }
@@ -407,8 +445,7 @@ export class VirtualNetworkTapsImpl implements VirtualNetworkTaps {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -416,85 +453,82 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.tapName
+    Parameters.tapName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualNetworkTap
+      bodyMapper: Mappers.VirtualNetworkTap,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.tapName
+    Parameters.tapName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualNetworkTap
+      bodyMapper: Mappers.VirtualNetworkTap,
     },
     201: {
-      bodyMapper: Mappers.VirtualNetworkTap
+      bodyMapper: Mappers.VirtualNetworkTap,
     },
     202: {
-      bodyMapper: Mappers.VirtualNetworkTap
+      bodyMapper: Mappers.VirtualNetworkTap,
     },
     204: {
-      bodyMapper: Mappers.VirtualNetworkTap
+      bodyMapper: Mappers.VirtualNetworkTap,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters67,
+  requestBody: Parameters.parameters82,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.tapName
+    Parameters.tapName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateTagsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps/{tapName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualNetworkTap
+      bodyMapper: Mappers.VirtualNetworkTap,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.tapParameters,
   queryParameters: [Parameters.apiVersion],
@@ -502,88 +536,84 @@ const updateTagsOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.tapName
+    Parameters.tapName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listAllOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/virtualNetworkTaps",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/virtualNetworkTaps",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualNetworkTapListResult
+      bodyMapper: Mappers.VirtualNetworkTapListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkTaps",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualNetworkTapListResult
+      bodyMapper: Mappers.VirtualNetworkTapListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualNetworkTapListResult
+      bodyMapper: Mappers.VirtualNetworkTapListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualNetworkTapListResult
+      bodyMapper: Mappers.VirtualNetworkTapListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -1,40 +1,30 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-no-window rule.
- * @author Maor Leger
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-no-window";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json",
-    sourceType: "module"
-  },
-  settings: {
-    main: "test.ts"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-no-window", rule, {
   valid: [
     {
       code: "self.navigator",
-      filename: "src/test.ts"
+      filename: "src/test.ts",
     },
     {
       code: '"quoted window should be fine"',
-      filename: "src/test.ts"
-    }
+      filename: "src/test.ts",
+    },
   ],
   invalid: [
     {
@@ -42,10 +32,10 @@ ruleTester.run("ts-no-window", rule, {
       filename: "src/test.ts",
       errors: [
         {
-          message: "`window` should not be used, please use `self` instead."
-        }
+          message: "`window` should not be used, please use `self` instead.",
+        },
       ],
-      output: "self.navigator"
-    }
-  ]
+      output: "self.navigator",
+    },
+  ],
 });

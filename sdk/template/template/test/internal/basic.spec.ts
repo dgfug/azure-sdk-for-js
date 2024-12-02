@@ -1,18 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 // Chai is the Azure SDK Team's preferred assertion library, and it is included
 // as part of our template project.
-import { assert } from "chai";
+// For convenience, we export an instance of Chai that comes pre-loaded with often-used plugins.
+import { describe, it, assert } from "vitest";
 
 // Import the internal function to be tested using the normal relative import
 // syntax.
-import { quoteETag } from "../../src/util";
+import { quoteETag } from "../../src/util.js";
 
 // Unit tests SHOULD appear inside of a `describe` block.  The hierarchical
-// oranization of tests within `describe` blocks will be reflected in our
+// organization of tests within `describe` blocks will be reflected in our
 // pipeline analytics and metrics.
-describe("basic internal unit tests", async function() {
+describe("basic internal unit tests", async function () {
   // `it` declares a unit test. The test passes if it does not throw an `Error`
   it("basic assertion", () => {
     assert.equal(1, 1);

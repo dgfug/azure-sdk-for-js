@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { env, isLiveMode } from "@azure-tools/test-recorder";
 import { getGlobalObject } from "./global";
@@ -36,8 +36,9 @@ function skipReason(currentVersion: string, supported: SupportedVersions): strin
   if (supported instanceof Array) {
     return `skipping for version ${currentVersion} as it is not in the list [${supported.join()}]`;
   } else {
-    return `skipping for version ${currentVersion} as it is not in the range: [min ${supported.minVer ??
-      "<unspecified>"}, max ${supported.maxVer ?? "<unspecified>"}]`;
+    return `skipping for version ${currentVersion} as it is not in the range: [min ${
+      supported.minVer ?? "<unspecified>"
+    }, max ${supported.maxVer ?? "<unspecified>"}]`;
   }
 }
 
@@ -51,9 +52,9 @@ function skipReason(currentVersion: string, supported: SupportedVersions): strin
 export function isVersionInSupportedRange(
   currentVersion: string,
   supported: SupportedVersions,
-  allVersions: ReadonlyArray<string>
+  allVersions: ReadonlyArray<string>,
 ): { isSupported: boolean; skipReason?: string } {
-  const lessThanOrEqual = function(a: string, b: string) {
+  const lessThanOrEqual = function (a: string, b: string) {
     const idxA = allVersions.indexOf(a);
     const idxB = allVersions.indexOf(b);
     if (idxA === -1) {
@@ -77,7 +78,7 @@ export function isVersionInSupportedRange(
       // console.log(`  Skipping test on ${currentVersion}`);
       return {
         isSupported: false,
-        skipReason: skipReason(currentVersion, supported)
+        skipReason: skipReason(currentVersion, supported),
       };
     }
   } else {
@@ -95,7 +96,7 @@ export function isVersionInSupportedRange(
         // console.log(`  Skipping ${currentVersion} because it is out of range`);
         return {
           isSupported: false,
-          skipReason: skipReason(currentVersion, supported)
+          skipReason: skipReason(currentVersion, supported),
         };
       }
     } else if (supported.minVer) {
@@ -106,7 +107,7 @@ export function isVersionInSupportedRange(
         // console.log(`  Skip ${currentVersion} because it's below minVer`);
         return {
           isSupported: false,
-          skipReason: skipReason(currentVersion, supported)
+          skipReason: skipReason(currentVersion, supported),
         };
       }
     } else if (supported.maxVer) {
@@ -117,12 +118,12 @@ export function isVersionInSupportedRange(
         // console.log(`  Skip ${currentVersion} because it's above maxVer`);
         return {
           isSupported: false,
-          skipReason: skipReason(currentVersion, supported)
+          skipReason: skipReason(currentVersion, supported),
         };
       }
     } else {
       throw new Error(
-        "Must use either minVer, or maxVer, or both to specify supported version range."
+        "Must use either minVer, or maxVer, or both to specify supported version range.",
       );
     }
   }
@@ -139,57 +140,58 @@ export function isVersionInSupportedRange(
 export function supports(
   currentVersion: string,
   supported: SupportedVersions,
-  allVersions: ReadonlyArray<string>
+  allVersions: ReadonlyArray<string>,
 ): TestFunctionWrapper {
   const run = isVersionInSupportedRange(currentVersion, supported, allVersions);
-  const either = function(match: any, skip: any) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const either = function (match: any, skip: any) {
     return run.isSupported
       ? match
       : isLiveMode()
-      ? // only append skip reason to titles in live TEST_MODE.
-        // Record and playback depends on titles for recording file names so keeping them
-        // in order to be compatible with existing recordings.
-        function(title: string, fn: Mocha.Func | Mocha.AsyncFunc) {
-          return skip(`${title} (${run.skipReason})`, fn);
-        }
-      : skip;
+        ? // only append skip reason to titles in live TEST_MODE.
+          // Record and playback depends on titles for recording file names so keeping them
+          // in order to be compatible with existing recordings.
+          function (title: string, fn: Mocha.Func | Mocha.AsyncFunc) {
+            return skip(`${title} (${run.skipReason})`, fn);
+          }
+        : skip;
   };
 
   const it = either(supports.global.it, supports.global.xit);
   Object.defineProperty(it, "only", {
-    value: either(supports.global.it.only, supports.global.xit)
+    value: either(supports.global.it.only, supports.global.xit),
   });
   Object.defineProperty(it, "skip", {
-    value: supports.global.it.skip
+    value: supports.global.it.skip,
   });
 
   // add current service version to suite titles in Live TEST_MODE
   // Record and playback depends on titles for recording file names so keeping them
   // in order to be compatible with existing recordings.
   const wrappedDescribe = isLiveMode()
-    ? function(title: string, fn: Mocha.Func | Mocha.AsyncFunc) {
+    ? function (title: string, fn: Mocha.Func | Mocha.AsyncFunc) {
         return supports.global.describe(`${title} (service version ${currentVersion})`, fn);
       }
     : supports.global.describe;
   const wrappedDescribeOnly = isLiveMode()
-    ? function(title: string, fn: Mocha.Func | Mocha.AsyncFunc) {
+    ? function (title: string, fn: Mocha.Func | Mocha.AsyncFunc) {
         return supports.global.describe.only(`${title} (service version ${currentVersion})`, fn);
       }
     : supports.global.describe.only;
 
   const describe = either(wrappedDescribe, supports.global.xdescribe);
   Object.defineProperty(describe, "only", {
-    value: either(wrappedDescribeOnly, supports.global.xdescribe)
+    value: either(wrappedDescribeOnly, supports.global.xdescribe),
   });
   Object.defineProperty(describe, "skip", {
-    value: supports.global.describe.skip
+    value: supports.global.describe.skip,
   });
 
   const chain: TestFunctionWrapper = {
     it,
     xit: supports.global.xit,
     describe,
-    xdescribe: supports.global.xdescribe
+    xdescribe: supports.global.xdescribe,
   };
 
   return chain;
@@ -225,8 +227,8 @@ export function versionsToTest(
   options: MultiVersionTestOptions = {},
   handler: (
     serviceVersion: string,
-    onVersions: (supported: SupportedVersions) => TestFunctionWrapper
-  ) => void
+    onVersions: (supported: SupportedVersions) => TestFunctionWrapper,
+  ) => void,
 ): void {
   if (versions.length <= 0) {
     throw new Error("invalid list of service versions to run the tests.");
@@ -242,7 +244,7 @@ export function versionsToTest(
   }
 
   toTest.forEach((serviceVersion) => {
-    const onVersions = function(supported: SupportedVersions) {
+    const onVersions = function (supported: SupportedVersions) {
       return supports(serviceVersion, supported, versions);
     };
     handler(serviceVersion, onVersions);

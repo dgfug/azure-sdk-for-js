@@ -1,8 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions } from "@azure/core-http";
-import { PhoneNumberSearchRequest } from "./generated/src/models/";
+import type { OperationOptions } from "@azure/core-client";
+import type {
+  PhoneNumberAssignmentType,
+  PhoneNumberSearchRequest,
+  PhoneNumbersListAreaCodesOptionalParams,
+  PhoneNumberType,
+} from "./generated/src/models/index.js";
 
 /**
  * The result of the phone numbers purchase operation.
@@ -35,14 +40,93 @@ export interface SearchAvailablePhoneNumbersRequest extends PhoneNumberSearchReq
   countryCode: string;
 }
 
+/**
+ * Additional options that can be passed to the available countries request.
+ */
+export interface ListAvailableCountriesOptions extends OperationOptions {}
+
+/**
+ * Additional options that can be passed to the Toll-Free area codes request.
+ */
+export interface ListTollFreeAreaCodesOptions
+  extends Omit<
+    PhoneNumbersListAreaCodesOptionalParams,
+    "assignmentType" | "locality" | "administrativeDivision"
+  > {}
+
+/**
+ * Additional options that can be passed to the Geographic area codes request.
+ */
+export interface ListGeographicAreaCodesOptions extends PhoneNumbersListAreaCodesOptionalParams {}
+
+/**
+ * Additional options that can be passed to the available localities request.
+ */
+export interface ListLocalitiesOptions extends OperationOptions {
+  administrativeDivision?: string;
+}
+
+/**
+ * Additional options for the search operator information request.
+ */
+export interface SearchOperatorInformationOptions extends OperationOptions {
+  includeAdditionalOperatorDetails: boolean;
+}
+
+/**
+ * Additional options that can be passed to list SIP routes.
+ */
+export interface ListSipRoutesOptions extends OperationOptions {}
+
+/**
+ * Additional options that can be passed to list SIP trunks.
+ */
+export interface ListSipTrunksOptions extends OperationOptions {}
+
+/**
+ * Additional options that can be passed to the available offerings request.
+ */
+export interface ListOfferingsOptions extends OperationOptions {
+  phoneNumberType?: PhoneNumberType;
+  assignmentType?: PhoneNumberAssignmentType;
+}
+
 export {
-  PurchasedPhoneNumber,
+  PhoneNumberAdministrativeDivision,
   PhoneNumberAssignmentType,
+  PhoneNumberAreaCode,
   PhoneNumberCapabilities,
   PhoneNumberCapabilitiesRequest,
   PhoneNumberCapabilityType,
   PhoneNumberCost,
-  PhoneNumberSearchResult,
+  PhoneNumberCountry,
+  PhoneNumbersListAreaCodesOptionalParams,
+  PhoneNumberLocality,
+  PhoneNumberOffering,
   PhoneNumberSearchRequest,
-  PhoneNumberType
-} from "./generated/src/models/";
+  PhoneNumberSearchResult,
+  PhoneNumberSearchResultError,
+  PhoneNumberType,
+  PurchasedPhoneNumber,
+  OperatorDetails,
+  OperatorInformation,
+  OperatorInformationOptions,
+  OperatorInformationResult,
+  OperatorNumberType,
+} from "./generated/src/models/index.js";
+
+export { SipRoutingError, SipTrunkRoute } from "./generated/src/siprouting/models/index.js";
+
+/**
+ * Represents a SIP trunk for routing calls. See RFC 4904.
+ */
+export interface SipTrunk {
+  /**
+   * Gets or sets FQDN of the trunk.
+   */
+  fqdn: string;
+  /**
+   * Gets or sets SIP signaling port of the trunk.
+   */
+  sipSignalingPort: number;
+}

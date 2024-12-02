@@ -6,35 +6,35 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
+import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServerConnectionPolicy,
+  ServerConnectionPoliciesListByServerOptionalParams,
   ConnectionPolicyName,
+  ServerConnectionPoliciesGetOptionalParams,
+  ServerConnectionPoliciesGetResponse,
   ServerConnectionPoliciesCreateOrUpdateOptionalParams,
   ServerConnectionPoliciesCreateOrUpdateResponse,
-  ServerConnectionPoliciesGetOptionalParams,
-  ServerConnectionPoliciesGetResponse
 } from "../models";
 
+/// <reference lib="esnext.asynciterable" />
 /** Interface representing a ServerConnectionPolicies. */
 export interface ServerConnectionPolicies {
   /**
-   * Creates or updates the server's connection policy.
+   * Lists connection policy
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serverName The name of the server.
-   * @param connectionPolicyName The name of the connection policy.
-   * @param parameters The required parameters for updating a secure connection policy.
    * @param options The options parameters.
    */
-  createOrUpdate(
+  listByServer(
     resourceGroupName: string,
     serverName: string,
-    connectionPolicyName: ConnectionPolicyName,
-    parameters: ServerConnectionPolicy,
-    options?: ServerConnectionPoliciesCreateOrUpdateOptionalParams
-  ): Promise<ServerConnectionPoliciesCreateOrUpdateResponse>;
+    options?: ServerConnectionPoliciesListByServerOptionalParams,
+  ): PagedAsyncIterableIterator<ServerConnectionPolicy>;
   /**
-   * Gets the server's secure connection policy.
+   * Gets a server connection policy
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serverName The name of the server.
@@ -45,6 +45,43 @@ export interface ServerConnectionPolicies {
     resourceGroupName: string,
     serverName: string,
     connectionPolicyName: ConnectionPolicyName,
-    options?: ServerConnectionPoliciesGetOptionalParams
+    options?: ServerConnectionPoliciesGetOptionalParams,
   ): Promise<ServerConnectionPoliciesGetResponse>;
+  /**
+   * Updates a server connection policy
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param connectionPolicyName The name of the connection policy.
+   * @param parameters The required parameters for updating a server connection policy.
+   * @param options The options parameters.
+   */
+  beginCreateOrUpdate(
+    resourceGroupName: string,
+    serverName: string,
+    connectionPolicyName: ConnectionPolicyName,
+    parameters: ServerConnectionPolicy,
+    options?: ServerConnectionPoliciesCreateOrUpdateOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<ServerConnectionPoliciesCreateOrUpdateResponse>,
+      ServerConnectionPoliciesCreateOrUpdateResponse
+    >
+  >;
+  /**
+   * Updates a server connection policy
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param connectionPolicyName The name of the connection policy.
+   * @param parameters The required parameters for updating a server connection policy.
+   * @param options The options parameters.
+   */
+  beginCreateOrUpdateAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    connectionPolicyName: ConnectionPolicyName,
+    parameters: ServerConnectionPolicy,
+    options?: ServerConnectionPoliciesCreateOrUpdateOptionalParams,
+  ): Promise<ServerConnectionPoliciesCreateOrUpdateResponse>;
 }

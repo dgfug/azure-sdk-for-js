@@ -1,23 +1,20 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
+import { assert } from "chai";
 import { randomBytes } from "crypto";
-import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
 import { delay, extractConnectionStringParts } from "../../src/utils/utils.common";
-import { Readable, ReadableOptions, PassThrough } from "stream";
+import type { ReadableOptions } from "stream";
+import { Readable, PassThrough } from "stream";
 import {
   readStreamToLocalFile,
   streamToBuffer2,
-  streamToBuffer3
+  streamToBuffer3,
 } from "../../src/utils/utils.node";
-import {
-  ReadableStreamGetter,
-  RetriableReadableStream
-} from "../../src/utils/RetriableReadableStream";
-dotenv.config();
+import type { ReadableStreamGetter } from "../../src/utils/RetriableReadableStream";
+import { RetriableReadableStream } from "../../src/utils/RetriableReadableStream";
 
 describe("Utility Helpers Node.js only", () => {
   const protocol = "https";
@@ -31,112 +28,112 @@ describe("Utility Helpers Node.js only", () => {
     assert.equal(
       "AccountConnString",
       connectionStringParts.kind,
-      "extractConnectionStringParts().kind is different than expected."
+      "extractConnectionStringParts().kind is different than expected.",
     );
     assert.equal(
       blobEndpoint,
       connectionStringParts.url,
-      "extractConnectionStringParts().url is different than expected."
+      "extractConnectionStringParts().url is different than expected.",
     );
     assert.equal(
       accountName,
       connectionStringParts.accountName,
-      "extractConnectionStringParts().accountName is different than expected."
+      "extractConnectionStringParts().accountName is different than expected.",
     );
   }
 
-  it("extractConnectionStringParts throws error when passed an invalid protocol in the connection string", async () => {
+  it("extractConnectionStringParts throws error when passed an invalid protocol in the connection string", async function () {
     try {
       extractConnectionStringParts(
-        "DefaultEndpointsProtocol=a;AccountName=b;AccountKey=c;EndpointSuffix=d"
+        "DefaultEndpointsProtocol=a;AccountName=b;AccountKey=c;EndpointSuffix=d",
       );
       assert.fail("Expecting an thrown error but didn't get one.");
-    } catch (error) {
+    } catch (error: any) {
       assert.ok(
         error.message ===
-          "Invalid DefaultEndpointsProtocol in the provided Connection String. Expecting 'https' or 'http'"
+          "Invalid DefaultEndpointsProtocol in the provided Connection String. Expecting 'https' or 'http'",
       );
     }
   });
 
-  it("extractConnectionStringParts throws error when passed an invalid connection string with typo", async () => {
+  it("extractConnectionStringParts throws error when passed an invalid connection string with typo", async function () {
     try {
       extractConnectionStringParts(
         // Typo in the attributes
-        "DefaultEndpointsProtocol=https;Name=b;AccountKey=c;EndpointSuffix=d"
+        "DefaultEndpointsProtocol=https;Name=b;AccountKey=c;EndpointSuffix=d",
       );
 
       assert.fail("Expecting an thrown error but didn't get one.");
-    } catch (error) {
+    } catch (error: any) {
       assert.equal(
         "Invalid AccountName in the provided Connection String",
         error.message,
-        "Connection string error message is different than expected"
+        "Connection string error message is different than expected",
       );
     }
   });
 
-  it("extractConnectionStringParts throws error with empty EndpointSuffix in the connection string", async () => {
+  it("extractConnectionStringParts throws error with empty EndpointSuffix in the connection string", async function () {
     try {
       extractConnectionStringParts(
-        "DefaultEndpointsProtocol=https;AccountName=b;AccountKey=cdefg;EndpointSuffix="
+        "DefaultEndpointsProtocol=https;AccountName=b;AccountKey=cdefg;EndpointSuffix=",
       );
       assert.fail("Expecting an thrown error but didn't get one.");
-    } catch (error) {
+    } catch (error: any) {
       assert.equal(
         "Invalid EndpointSuffix in the provided Connection String",
         error.message,
-        "Connection string error message is different than expected"
+        "Connection string error message is different than expected",
       );
     }
   });
 
-  it("extractConnectionStringParts throws error with empty AccountKey in the connection string", async () => {
+  it("extractConnectionStringParts throws error with empty AccountKey in the connection string", async function () {
     try {
       extractConnectionStringParts(
-        "DefaultEndpointsProtocol=https;AccountName=b;AccountKey=;EndpointSuffix=d"
+        "DefaultEndpointsProtocol=https;AccountName=b;AccountKey=;EndpointSuffix=d",
       );
       assert.fail("Expecting an thrown error but didn't get one.");
-    } catch (error) {
+    } catch (error: any) {
       assert.equal(
         "Invalid AccountKey in the provided Connection String",
         error.message,
-        "Connection string error message is different than expected"
+        "Connection string error message is different than expected",
       );
     }
   });
 
-  it("extractConnectionStringParts throws error with empty AccountName in the connection string", async () => {
+  it("extractConnectionStringParts throws error with empty AccountName in the connection string", async function () {
     try {
       extractConnectionStringParts(
-        "DefaultEndpointsProtocol=https;AccountName=;AccountKey=c;EndpointSuffix=d"
+        "DefaultEndpointsProtocol=https;AccountName=;AccountKey=c;EndpointSuffix=d",
       );
       assert.fail("Expecting an thrown error but didn't get one.");
-    } catch (error) {
+    } catch (error: any) {
       assert.equal(
         "Invalid AccountName in the provided Connection String",
         error.message,
-        "Connection string error message is different than expected"
+        "Connection string error message is different than expected",
       );
     }
   });
 
-  it("extractConnectionStringParts throws error with empty DefaultEndpointsProtocol in the connection string", async () => {
+  it("extractConnectionStringParts throws error with empty DefaultEndpointsProtocol in the connection string", async function () {
     try {
       extractConnectionStringParts(
-        "DefaultEndpointsProtocol=;AccountName=b;AccountKey=c;EndpointSuffix=d"
+        "DefaultEndpointsProtocol=;AccountName=b;AccountKey=c;EndpointSuffix=d",
       );
       assert.fail("Expecting an thrown error but didn't get one.");
-    } catch (error) {
+    } catch (error: any) {
       assert.equal(
         "Invalid DefaultEndpointsProtocol in the provided Connection String. Expecting 'https' or 'http'",
         error.message,
-        "Connection string error message is different than expected"
+        "Connection string error message is different than expected",
       );
     }
   });
 
-  it("extractConnectionStringParts parses connection string with complete service endpoint for each service", async () => {
+  it("extractConnectionStringParts parses connection string with complete service endpoint for each service", async function () {
     verifyConnectionString(
       `DefaultEndpointsProtocol=${protocol};
           BlobEndpoint=${blobEndpoint};
@@ -144,25 +141,25 @@ describe("Utility Helpers Node.js only", () => {
           QueueEndpoint=myQueueEndpoint;
           TableEndpoint=myTableEndpoint;
           AccountName=${accountName};
-          AccountKey=${accountKey}`
+          AccountKey=${accountKey}`,
     );
   });
 
-  it("extractConnectionStringParts parses connection string with an explicit endpoint", async () => {
+  it("extractConnectionStringParts parses connection string with an explicit endpoint", async function () {
     verifyConnectionString(
       `DefaultEndpointsProtocol=${protocol};
         BlobEndpoint=${blobEndpoint};
         AccountName=${accountName};
-        AccountKey=${accountKey}`
+        AccountKey=${accountKey}`,
     );
   });
 
-  it("extractConnectionStringParts parses connection string with an endpoint suffix", async () => {
+  it("extractConnectionStringParts parses connection string with an endpoint suffix", async function () {
     verifyConnectionString(
       `DefaultEndpointsProtocol=${protocol};
         AccountName=${accountName};
         AccountKey=${accountKey};
-        EndpointSuffix=${endpointSuffix};`
+        EndpointSuffix=${endpointSuffix};`,
     );
   });
 
@@ -172,7 +169,7 @@ describe("Utility Helpers Node.js only", () => {
       constructor(
         private sizeInBytes: number,
         private errorInMiddle: boolean = false,
-        options?: ReadableOptions
+        options?: ReadableOptions,
       ) {
         super(options);
       }
@@ -190,7 +187,7 @@ describe("Utility Helpers Node.js only", () => {
       }
     }
 
-    const validFilePath = path.join(__dirname, "read_stream_to_local_file_test.txt");
+    const validFilePath = path.join("./", "read_stream_to_local_file_test.txt");
 
     afterEach("remove temporary file", () => {
       if (fs.existsSync(validFilePath)) {
@@ -198,7 +195,7 @@ describe("Utility Helpers Node.js only", () => {
       }
     });
 
-    it("writes a readable stream into a file", async () => {
+    it("writes a readable stream into a file", async function () {
       const numBytes = 100;
       const emittingErrorInMiddle = false;
       const readStream = new TestReadableStream(numBytes, emittingErrorInMiddle);
@@ -208,11 +205,11 @@ describe("Utility Helpers Node.js only", () => {
       assert.equal(
         file.length,
         numBytes,
-        "Local file from readStreamToLocalFile is not the expected length."
+        "Local file from readStreamToLocalFile is not the expected length.",
       );
     });
 
-    it("rejects when the readStream emits an error", async () => {
+    it("rejects when the readStream emits an error", async function () {
       const numBytes = 100;
       const shouldEmitError = true;
       const readStream = new TestReadableStream(numBytes, shouldEmitError);
@@ -220,24 +217,24 @@ describe("Utility Helpers Node.js only", () => {
       try {
         await readStreamToLocalFile(readStream, validFilePath);
         throw new Error("Test failure");
-      } catch (err) {
+      } catch (err: any) {
         assert.equal(
           err.message,
           "Expected error.",
-          "readStreamToLocalFile should have rejected on readStream error"
+          "readStreamToLocalFile should have rejected on readStream error",
         );
       }
     });
 
-    it("rejects when the filepath is a directory", async () => {
+    it("rejects when the filepath is a directory", async function () {
       const numBytes = 100;
       const emittingErrorInMiddle = false;
       const readStream = new TestReadableStream(numBytes, emittingErrorInMiddle);
 
       try {
-        await readStreamToLocalFile(readStream, __dirname);
+        await readStreamToLocalFile(readStream, "./");
         throw new Error("Test failure");
-      } catch (err) {
+      } catch (err: any) {
         assert.notEqual(err.message, "Test failure");
       }
     });
@@ -260,7 +257,7 @@ describe("Utility Helpers Node.js only", () => {
         if (this._numBytesSent < this._buffer.length) {
           const bytesToSend = Math.min(
             this._bytesPerRead,
-            this._buffer.length - this._numBytesSent
+            this._buffer.length - this._numBytesSent,
           );
           this.push(this._buffer.slice(this._numBytesSent, this._numBytesSent + bytesToSend));
           this._numBytesSent += bytesToSend;
@@ -279,7 +276,7 @@ describe("Utility Helpers Node.js only", () => {
         streamLength: len,
         bufferLength: len,
         bytesPerRead: len,
-        expectedSuccess: true
+        expectedSuccess: true,
       },
       {
         title:
@@ -288,7 +285,7 @@ describe("Utility Helpers Node.js only", () => {
         streamLength: len,
         bufferLength: len + 1,
         bytesPerRead: len,
-        expectedSuccess: true
+        expectedSuccess: true,
       },
       {
         title:
@@ -297,7 +294,7 @@ describe("Utility Helpers Node.js only", () => {
         streamLength: len,
         bufferLength: len - 1,
         bytesPerRead: len,
-        expectedSuccess: false
+        expectedSuccess: false,
       },
       {
         title:
@@ -306,7 +303,7 @@ describe("Utility Helpers Node.js only", () => {
         streamLength: len,
         bufferLength: len,
         bytesPerRead: 100,
-        expectedSuccess: true
+        expectedSuccess: true,
       },
       {
         title:
@@ -315,7 +312,7 @@ describe("Utility Helpers Node.js only", () => {
         streamLength: len,
         bufferLength: len + 1,
         bytesPerRead: 100,
-        expectedSuccess: true
+        expectedSuccess: true,
       },
       {
         title:
@@ -324,7 +321,7 @@ describe("Utility Helpers Node.js only", () => {
         streamLength: len,
         bufferLength: len - 1,
         bytesPerRead: 100,
-        expectedSuccess: false
+        expectedSuccess: false,
       },
       {
         title:
@@ -332,7 +329,7 @@ describe("Utility Helpers Node.js only", () => {
         streamType: "passthrough",
         streamLength: len,
         bufferLength: len,
-        expectedSuccess: true
+        expectedSuccess: true,
       },
       {
         title:
@@ -340,7 +337,7 @@ describe("Utility Helpers Node.js only", () => {
         streamType: "passthrough",
         streamLength: len,
         bufferLength: len + 1,
-        expectedSuccess: true
+        expectedSuccess: true,
       },
       {
         title:
@@ -348,11 +345,11 @@ describe("Utility Helpers Node.js only", () => {
         streamType: "passthrough",
         streamLength: len,
         bufferLength: len - 1,
-        expectedSuccess: false
-      }
+        expectedSuccess: false,
+      },
     ];
 
-    tests.forEach(function(test) {
+    tests.forEach(function (test) {
       it(test.title, async () => {
         const inputBuffer = randomBytes(test.streamLength);
 
@@ -380,7 +377,7 @@ describe("Utility Helpers Node.js only", () => {
           } else {
             throw new Error("Test failure");
           }
-        } catch (err) {
+        } catch (err: any) {
           if (test.expectedSuccess) {
             throw err;
           } else {
@@ -400,7 +397,7 @@ describe("RetriableReadableStream", () => {
     constructor(
       private _max: number = counterMax,
       public index: number = 0,
-      opt: ReadableOptions = {}
+      opt: ReadableOptions = {},
     ) {
       super(opt);
     }
@@ -423,7 +420,7 @@ describe("RetriableReadableStream", () => {
     });
   };
 
-  it("destory should work", async () => {
+  it("destory should work", async function () {
     const counter = new Counter();
     const retriable = new RetriableReadableStream(counter, getter, 0, counterMax);
 
@@ -441,7 +438,7 @@ describe("RetriableReadableStream", () => {
     assert.ok(errorCaught);
   });
 
-  it("setEncoding should work", async () => {
+  it("setEncoding should work", async function () {
     const counter = new Counter(1);
     const retriable = new RetriableReadableStream(counter, getter, 0, 1);
     retriable.on("data", (chunk) => {
@@ -456,7 +453,7 @@ describe("RetriableReadableStream", () => {
     });
   });
 
-  it("pause and resume should work", async () => {
+  it("pause and resume should work", async function () {
     const counter = new Counter(10, undefined, { highWaterMark: 1 });
     const retriable = new RetriableReadableStream(counter, getter, 0, 10, { highWaterMark: 1 });
 
@@ -475,10 +472,10 @@ describe("RetriableReadableStream", () => {
     assert.equal(cur, 2);
   });
 
-  it("retry should work on source error", async () => {
+  it("retry should work on source error", async function () {
     const counter = new Counter();
     const retriable = new RetriableReadableStream(counter, getter, 0, counterMax, {
-      maxRetryRequests: 1
+      maxRetryRequests: 1,
     });
     counter.destroy(new Error("Manual injected error."));
 
@@ -486,10 +483,10 @@ describe("RetriableReadableStream", () => {
     assert.deepStrictEqual(resBuf.toString(), "0123456789");
   });
 
-  it("retry should work on source unexpected end", async () => {
+  it("retry should work on source unexpected end", async function () {
     const counter = new Counter(2);
     const retriable = new RetriableReadableStream(counter, getter, 0, counterMax, {
-      maxRetryRequests: 1
+      maxRetryRequests: 1,
     });
 
     const resBuf = await streamToBuffer3(retriable);

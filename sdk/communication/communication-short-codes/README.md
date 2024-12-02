@@ -7,7 +7,7 @@ The phone numbers library provides capabilities for short codes administration.
 ### Prerequisites
 
 - An [Azure subscription][azure_sub].
-- An existing Communication Services resource. If you need to create the resource, you can use the [Azure Portal][azure_portal], the[Azure PowerShell][azure_powershell], or the [Azure CLI][azure_cli].
+- An existing Communication Services resource. If you need to create the resource, you can use the [Azure Portal][azure_portal], the [Azure PowerShell][azure_powershell], or the [Azure CLI][azure_cli].
 
 ### Installing
 
@@ -82,7 +82,7 @@ The [`@azure/identity`][azure_identity] package provides a variety of credential
 import { DefaultAzureCredential } from "@azure/identity";
 import { ShortCodesClient } from "@azure-tools/communication-short-codes";
 
-let credential = new DefaultAzureCredential();
+const credential = new DefaultAzureCredential();
 const client = new ShortCodesClient("<endpoint-from-resource>", credential);
 ```
 
@@ -104,7 +104,7 @@ import { ShortCodesClient } from "@azure-tools/communication-short-codes";
 const connectionString = "endpoint=<endpoint>;accessKey=<accessKey>";
 const client = new ShortCodesClient(connectionString);
 
-async main function() {
+async function main() {
   const programBriefId = "00000000-0000-0000-0000-000000000000";
   const programBriefRequest: ShortCodesCreateUSProgramBriefParams = {
     body: {
@@ -163,8 +163,8 @@ Then add a call to `upsertUSProgramBrief` and use the object you created as the 
 
 ```typescript
   // create program brief
-  var createResponse = await client.upsertUSProgramBrief(programBriefId, programBriefRequest);
-  if (createResponse._response.status != 201) {
+  const createResponse = await client.upsertUSProgramBrief(programBriefId, programBriefRequest);
+  if (createResponse._response.status !== 201) {
     throw new Error(`Program brief creation failed.
     Status code: ${createResponse._response.status}; Error: ${createResponse._response.bodyAsText}; CV: ${createResponse._response.headers.get("MS-CV")}`);
   } else {
@@ -176,8 +176,8 @@ When ready to submit, call `submitUSProgramBrief` to submit for processing. Afte
 
 ```typescript
   // submit program brief
-  var submittedProgramBrief = await client.submitUSProgramBrief(programBriefId);
-  if (submittedProgramBrief._response.status == 200) {
+  const submittedProgramBrief = await client.submitUSProgramBrief(programBriefId);
+  if (submittedProgramBrief._response.status === 200) {
     console.log(`Successfully submitted program brief with Id ${programBriefId}`);
   } else {
     throw new Error(`Failed to submit program brief with Id ${programBriefId}.
@@ -194,21 +194,21 @@ import { ShortCodesClient } from "@azure-tools/communication-short-codes";
 const connectionString = "endpoint=<endpoint>;accessKey=<accessKey>";
 const client = new ShortCodesClient(connectionString);
 
-async main function() {
+async function main() {
   // get all program briefs for a resource
-  var programBriefs = await client.listUSProgramBriefs();
+  const programBriefs = await client.listUSProgramBriefs();
 
   // find draft program briefs, and delete them
   for await (const programBrief of programBriefs) {
     console.log(`Program Brief with Id ${programBrief.id} has status ${programBrief.status}`);
 
     // identify drafts
-    if (programBrief.status == 'draft') {
-      var unsubmittedProgramBriefId = programBrief.id;
+    if (programBrief.status === 'draft') {
+      const unsubmittedProgramBriefId = programBrief.id;
     
       // delete draft program brief
-      var deleteResponse = await client.deleteUSProgramBrief(unsubmittedProgramBriefId);
-      if (deleteResponse._response.status == 200) {
+      const deleteResponse = await client.deleteUSProgramBrief(unsubmittedProgramBriefId);
+      if (deleteResponse._response.status === 200) {
           console.log(`Successfully deleted draft program brief with Id ${unsubmittedProgramBriefId}`);
       } else {
           console.log(`Failed to delete draft program brief with Id ${unsubmittedProgramBriefId}.
@@ -230,14 +230,14 @@ import { ShortCodesClient } from "@azure-tools/communication-short-codes";
 const connectionString = "endpoint=<endpoint>;accessKey=<accessKey>";
 const client = new ShortCodesClient(connectionString);
 
-async main function() {
+async function main() {
   // get a program briefs for a resource
   const programBriefId = process.env.PROGRAM_BRIEF_TO_GET || "<program brief Id>";
-  var programBrief = await client.getUSProgramBrief(programBriefId);
+  const programBrief = await client.getUSProgramBrief(programBriefId);
   console.log(`Program brief with Id ${programBrief.id} has status ${programBrief.status} which was last updated ${programBrief.statusUpdatedDate}`);
 
   // update the program brief
-  var updateRequest: ShortCodesUpsertUSProgramBriefOptionalParams = {
+  const updateRequest: ShortCodesUpsertUSProgramBriefOptionalParams = {
       body: {
           id: programBriefId,
           programDetails: {
@@ -246,8 +246,8 @@ async main function() {
           }
       }
   };
-  var upsertResponse = await client.upsertUSProgramBrief(programBriefId, updateRequest);
-  if (upsertResponse._response.status == 200) {
+  const upsertResponse = await client.upsertUSProgramBrief(programBriefId, updateRequest);
+  if (upsertResponse._response.status === 200) {
       console.log(`Successfully updated terms of service and privacy policy for program brief ${programBriefId}`);
   } else {
       throw new Error(`Failed to update program brief with Id ${programBriefId}.
@@ -267,13 +267,35 @@ import { ShortCodesClient } from "@azure-tools/communication-short-codes";
 const connectionString = "endpoint=<endpoint>;accessKey=<accessKey>";
 const client = new ShortCodesClient(connectionString);
 
-async main function() {
+async function main() {
   // get all short codes for a resource
-  var shortCodes = await client.listShortCodes();
+  const shortCodes = await client.listShortCodes();
 
   // print all short codes
   for await (const shortCode of shortCodes) {
     console.log(`${shortCode}`);
+  }
+}
+
+main();
+```
+
+### Get short code costs
+Use `listShortCodeCosts` to page through all short code costs eligible by a resource.
+
+```typescript
+import { ShortCodesClient } from "@azure-tools/communication-short-codes";
+
+const connectionString = "endpoint=<endpoint>;accessKey=<accessKey>";
+const client = new ShortCodesClient(connectionString);
+
+async function main() {
+  // get all eligible short code costs for a resource
+  const shortCodeCosts = await client.listShortCodeCosts();
+
+  // print all short code costs
+  for await (const shortCodeCost of shortCodeCosts) {
+    console.log(`${shortCodeCost}`);
   }
 }
 

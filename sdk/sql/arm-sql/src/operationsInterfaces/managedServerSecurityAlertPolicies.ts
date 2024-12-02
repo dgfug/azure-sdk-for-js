@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ManagedServerSecurityAlertPolicy,
   ManagedServerSecurityAlertPoliciesListByInstanceOptionalParams,
@@ -16,7 +15,7 @@ import {
   ManagedServerSecurityAlertPoliciesGetOptionalParams,
   ManagedServerSecurityAlertPoliciesGetResponse,
   ManagedServerSecurityAlertPoliciesCreateOrUpdateOptionalParams,
-  ManagedServerSecurityAlertPoliciesCreateOrUpdateResponse
+  ManagedServerSecurityAlertPoliciesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface ManagedServerSecurityAlertPolicies {
   listByInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedServerSecurityAlertPoliciesListByInstanceOptionalParams
+    options?: ManagedServerSecurityAlertPoliciesListByInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedServerSecurityAlertPolicy>;
   /**
    * Get a managed server's threat detection policy.
@@ -46,7 +45,7 @@ export interface ManagedServerSecurityAlertPolicies {
     resourceGroupName: string,
     managedInstanceName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
-    options?: ManagedServerSecurityAlertPoliciesGetOptionalParams
+    options?: ManagedServerSecurityAlertPoliciesGetOptionalParams,
   ): Promise<ManagedServerSecurityAlertPoliciesGetResponse>;
   /**
    * Creates or updates a threat detection policy.
@@ -62,12 +61,10 @@ export interface ManagedServerSecurityAlertPolicies {
     managedInstanceName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
     parameters: ManagedServerSecurityAlertPolicy,
-    options?: ManagedServerSecurityAlertPoliciesCreateOrUpdateOptionalParams
+    options?: ManagedServerSecurityAlertPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ManagedServerSecurityAlertPoliciesCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ManagedServerSecurityAlertPoliciesCreateOrUpdateResponse>,
       ManagedServerSecurityAlertPoliciesCreateOrUpdateResponse
     >
   >;
@@ -85,6 +82,6 @@ export interface ManagedServerSecurityAlertPolicies {
     managedInstanceName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
     parameters: ManagedServerSecurityAlertPolicy,
-    options?: ManagedServerSecurityAlertPoliciesCreateOrUpdateOptionalParams
+    options?: ManagedServerSecurityAlertPoliciesCreateOrUpdateOptionalParams,
   ): Promise<ManagedServerSecurityAlertPoliciesCreateOrUpdateResponse>;
 }

@@ -1,5 +1,98 @@
 # Release History
 
+## 4.6.1 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 4.6.0 (2024-10-16)
+
+### Features Added
+
+- Add support for Continuous Access Evaluation (CAE). [#31140](https://github.com/Azure/azure-sdk-for-js/pull/31140)
+
+### Other Changes
+
+- Native ESM support has been added, and this package will now emit both CommonJS and ESM. [#30743](https://github.com/Azure/azure-sdk-for-js/pull/30743)
+
+## 4.5.0 (2024-02-14)
+
+### Features Added
+
+Since 4.4.0:
+
+- Managed Identity can now be used in place of a SAS token to access the blob storage resource when performing backup and restore operations.
+
+### Breaking Changes
+
+Since 4.5.0-beta.1:
+
+- Change signature of backup and restore operations to use an overload when using Managed Identity to access the blob storage resource. This means
+  `undefined` no longer has to be passed in the `sasToken` parameter in order to set additional request options when using Managed Identity.
+  This change is only breaking for customers using 4.5.0-beta.1 and does not impact customers using the previous GA version, 4.4.0.
+
+### Other Changes
+
+- The default service version is now `7.5`.
+
+## 4.5.0-beta.1 (2023-11-08)
+
+### Features Added
+
+- Managed Identity can now be used in place of a SAS token to access the blob storage resource when performing backup and restore operations.
+
+### Other Changes
+
+- The default service version is now `7.5-preview.1`.
+
+## 4.4.0 (2023-03-09)
+
+### Features Added
+
+- Added `KeyVaultSettingsClient` to get and update Managed HSM settings.
+
+### Other Changes
+
+- `KeyVaultAccessControlClient`, `KeyVaultBackupClient`, and `KeyVaultSettingsClient` now support service version 7.4 by default.
+
+## 4.4.0-beta.1 (2022-11-10)
+
+### Features Added
+
+- Added `KeyVaultSettingsClient` to get and update Managed HSM settings.
+- Added support for service version `7.4-preview.1`.
+
+## 4.3.0 (2022-09-20)
+
+### Breaking Changes
+
+- Verify the challenge resource matches the vault domain.
+  This should affect few customers who can set `disableChallengeResourceVerification` in the options bag to `true` to disable.
+  See https://aka.ms/azsdk/blog/vault-uri for more information.
+
+## 4.2.2 (2022-08-09)
+
+### Other Changes
+
+- Improvements to documentation.
+
+## 4.2.1 (2022-07-05)
+
+### Bugs Fixed
+
+- The scope of the token used for authentication now reflects the scope required by the service in the WWW-Authenticate header.
+
+## 4.2.0 (2022-03-24)
+
+### Other Changes
+
+- This release updates `BackupClient` and `AccessControlClient` to support service version 7.3 by default.
+
 ## 4.2.0-beta.2 (2021-11-09)
 
 ### Features Added
@@ -19,7 +112,7 @@
     ```typescript
     let rawResponse: FullOperationResponse | undefined;
     await client.getRoleDefinition(globalScope, "roleDefinitionName", {
-      onResponse: (response) => (rawResponse = response)
+      onResponse: (response) => (rawResponse = response),
     });
     ```
 

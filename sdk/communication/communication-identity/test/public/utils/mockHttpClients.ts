@@ -1,23 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HttpClient, WebResourceLike, HttpOperationResponse, HttpHeaders } from "@azure/core-http";
-import { CommunicationAccessToken } from "../../../src";
-import { CommunicationIdentityAccessTokenResult } from "../../../src/generated/src/models";
+import type { HttpClient, PipelineRequest, PipelineResponse } from "@azure/core-rest-pipeline";
+import { createHttpHeaders } from "@azure/core-rest-pipeline";
+import type { CommunicationAccessToken } from "../../../src/index.js";
 
 export const createMockHttpClient = <T = Record<string, unknown>>(
   status: number = 200,
-  parsedBody?: T
+  parsedBody?: T,
 ): HttpClient => {
   return {
-    async sendRequest(httpRequest: WebResourceLike): Promise<HttpOperationResponse> {
+    async sendRequest(httpRequest: PipelineRequest): Promise<PipelineResponse> {
       return {
         status,
-        headers: new HttpHeaders(),
+        headers: createHttpHeaders(),
         request: httpRequest,
-        parsedBody
+        bodyAsText: JSON.stringify(parsedBody),
       };
-    }
+    },
   };
 };
 
@@ -28,31 +28,26 @@ export const base202HttpClient: HttpClient = createMockHttpClient(202);
 const tokenResponse = {
   id: "identity",
   token: "token",
-  expiresOn: new Date("2011/11/30")
+  expiresOn: new Date("2011/11/30"),
 };
 
 export const getTokenHttpClient: HttpClient = createMockHttpClient<CommunicationAccessToken>(
   200,
-  tokenResponse
+  tokenResponse,
 );
 export const revokeTokensHttpClient: HttpClient = createMockHttpClient(204);
 
-export const createUserHttpClient: HttpClient = createMockHttpClient<
-  CommunicationIdentityAccessTokenResult
->(201, {
-  identity: { id: "identity" }
+export const createUserHttpClient: HttpClient = createMockHttpClient(201, {
+  identity: { id: "identity" },
 });
 
-export const createUserAndTokenHttpClient: HttpClient = createMockHttpClient<
-  CommunicationIdentityAccessTokenResult
->(201, {
+export const createUserAndTokenHttpClient: HttpClient = createMockHttpClient(201, {
   identity: { id: "identity" },
   accessToken: {
     token: "token",
-    expiresOn: new Date("2011/11/30")
-  }
+    expiresOn: new Date("2011/11/30"),
+  },
 });
 
-export const getTokenForTeamsUserHttpClient: HttpClient = createMockHttpClient<
-  CommunicationAccessToken
->(200, tokenResponse);
+export const getTokenForTeamsUserHttpClient: HttpClient =
+  createMockHttpClient<CommunicationAccessToken>(200, tokenResponse);

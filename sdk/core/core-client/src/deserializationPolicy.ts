@@ -1,25 +1,25 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  PipelineResponse,
-  PipelineRequest,
-  SendRequest,
-  PipelinePolicy,
-  RestError
-} from "@azure/core-rest-pipeline";
-import {
+import type {
+  FullOperationResponse,
   OperationRequest,
   OperationResponseMap,
-  FullOperationResponse,
   OperationSpec,
+  RequiredSerializerOptions,
   SerializerOptions,
   XmlOptions,
-  XML_CHARKEY,
-  RequiredSerializerOptions
-} from "./interfaces";
-import { MapperTypeNames } from "./serializer";
-import { getOperationRequestInfo } from "./operationHelpers";
+} from "./interfaces.js";
+import { XML_CHARKEY } from "./interfaces.js";
+import type {
+  PipelinePolicy,
+  PipelineRequest,
+  PipelineResponse,
+  SendRequest,
+} from "@azure/core-rest-pipeline";
+import { RestError } from "@azure/core-rest-pipeline";
+import { MapperTypeNames } from "./serializer.js";
+import { getOperationRequestInfo } from "./operationHelpers.js";
 
 const defaultJsonContentTypes = ["application/json", "text/json"];
 const defaultXmlContentTypes = ["application/xml", "application/atom+xml"];
@@ -80,8 +80,8 @@ export function deserializationPolicy(options: DeserializationPolicyOptions = {}
     xml: {
       rootName: serializerOptions?.xml.rootName ?? "",
       includeRoot: serializerOptions?.xml.includeRoot ?? false,
-      xmlCharKey: serializerOptions?.xml.xmlCharKey ?? XML_CHARKEY
-    }
+      xmlCharKey: serializerOptions?.xml.xmlCharKey ?? XML_CHARKEY,
+    },
   };
 
   return {
@@ -93,14 +93,14 @@ export function deserializationPolicy(options: DeserializationPolicyOptions = {}
         xmlContentTypes,
         response,
         updatedOptions,
-        parseXML
+        parseXML,
       );
-    }
+    },
   };
 }
 
 function getOperationResponseMap(
-  parsedResponse: PipelineResponse
+  parsedResponse: PipelineResponse,
 ): undefined | OperationResponseMap {
   let result: OperationResponseMap | undefined;
   const request: OperationRequest = parsedResponse.request;
@@ -136,14 +136,14 @@ async function deserializeResponseBody(
   xmlContentTypes: string[],
   response: PipelineResponse,
   options: RequiredSerializerOptions,
-  parseXML?: (str: string, opts?: XmlOptions) => Promise<any>
+  parseXML?: (str: string, opts?: XmlOptions) => Promise<any>,
 ): Promise<PipelineResponse> {
   const parsedResponse = await parse(
     jsonContentTypes,
     xmlContentTypes,
     response,
     options,
-    parseXML
+    parseXML,
   );
   if (!shouldDeserializeResponse(parsedResponse)) {
     return parsedResponse;
@@ -159,7 +159,8 @@ async function deserializeResponseBody(
   const { error, shouldReturnResponse } = handleErrorResponse(
     parsedResponse,
     operationSpec,
-    responseSpec
+    responseSpec,
+    options,
   );
   if (error) {
     throw error;
@@ -182,16 +183,17 @@ async function deserializeResponseBody(
         parsedResponse.parsedBody = operationSpec.serializer.deserialize(
           responseSpec.bodyMapper,
           valueToDeserialize,
-          "operationRes.parsedBody"
+          "operationRes.parsedBody",
+          options,
         );
-      } catch (deserializeError) {
+      } catch (deserializeError: any) {
         const restError = new RestError(
           `Error ${deserializeError} occurred in deserializing the responseBody - ${parsedResponse.bodyAsText}`,
           {
             statusCode: parsedResponse.status,
             request: parsedResponse.request,
-            response: parsedResponse
-          }
+            response: parsedResponse,
+          },
         );
         throw restError;
       }
@@ -204,7 +206,8 @@ async function deserializeResponseBody(
       parsedResponse.parsedHeaders = operationSpec.serializer.deserialize(
         responseSpec.headersMapper,
         parsedResponse.headers.toJSON(),
-        "operationRes.parsedHeaders"
+        "operationRes.parsedHeaders",
+        { xml: {}, ignoreUnknownProperties: true },
       );
     }
   }
@@ -223,7 +226,8 @@ function isOperationSpecEmpty(operationSpec: OperationSpec): boolean {
 function handleErrorResponse(
   parsedResponse: FullOperationResponse,
   operationSpec: OperationSpec,
-  responseSpec: OperationResponseMap | undefined
+  responseSpec: OperationResponseMap | undefined,
+  options: RequiredSerializerOptions,
 ): { error: RestError | null; shouldReturnResponse: boolean } {
   const isSuccessByStatus = 200 <= parsedResponse.status && parsedResponse.status < 300;
   const isExpectedStatusCode: boolean = isOperationSpecEmpty(operationSpec)
@@ -243,7 +247,7 @@ function handleErrorResponse(
   const errorResponseSpec = responseSpec ?? operationSpec.responses.default;
 
   const initialErrorMessage = parsedResponse.request.streamResponseStatusCodes?.has(
-    parsedResponse.status
+    parsedResponse.status,
   )
     ? `Unexpected status code: ${parsedResponse.status}`
     : (parsedResponse.bodyAsText as string);
@@ -251,7 +255,7 @@ function handleErrorResponse(
   const error = new RestError(initialErrorMessage, {
     statusCode: parsedResponse.status,
     request: parsedResponse.request,
-    response: parsedResponse
+    response: parsedResponse,
   });
 
   // If the item failed but there's no error spec or default spec to deserialize the error,
@@ -282,7 +286,8 @@ function handleErrorResponse(
         deserializedError = operationSpec.serializer.deserialize(
           defaultBodyMapper,
           valueToDeserialize,
-          "error.response.parsedBody"
+          "error.response.parsedBody",
+          options,
         );
       }
 
@@ -299,13 +304,14 @@ function handleErrorResponse(
 
     // If error response has headers, try to deserialize it using default header mapper
     if (parsedResponse.headers && defaultHeadersMapper) {
-      (error.response! as FullOperationResponse).parsedHeaders = operationSpec.serializer.deserialize(
-        defaultHeadersMapper,
-        parsedResponse.headers.toJSON(),
-        "operationRes.parsedHeaders"
-      );
+      (error.response! as FullOperationResponse).parsedHeaders =
+        operationSpec.serializer.deserialize(
+          defaultHeadersMapper,
+          parsedResponse.headers.toJSON(),
+          "operationRes.parsedHeaders",
+        );
     }
-  } catch (defaultError) {
+  } catch (defaultError: any) {
     error.message = `Error "${defaultError.message}" occurred in deserializing the responseBody - "${parsedResponse.bodyAsText}" for the default response.`;
   }
 
@@ -317,7 +323,7 @@ async function parse(
   xmlContentTypes: string[],
   operationResponse: FullOperationResponse,
   opts: RequiredSerializerOptions,
-  parseXML?: (str: string, opts?: XmlOptions) => Promise<any>
+  parseXML?: (str: string, opts?: XmlOptions) => Promise<any>,
 ): Promise<FullOperationResponse> {
   if (
     !operationResponse.request.streamResponseStatusCodes?.has(operationResponse.status) &&
@@ -344,14 +350,14 @@ async function parse(
         operationResponse.parsedBody = body;
         return operationResponse;
       }
-    } catch (err) {
+    } catch (err: any) {
       const msg = `Error "${err}" occurred while parsing the response body - ${operationResponse.bodyAsText}.`;
       const errCode = err.code || RestError.PARSE_ERROR;
       const e = new RestError(msg, {
         code: errCode,
         statusCode: operationResponse.status,
         request: operationResponse.request,
-        response: operationResponse
+        response: operationResponse,
       });
       throw e;
     }

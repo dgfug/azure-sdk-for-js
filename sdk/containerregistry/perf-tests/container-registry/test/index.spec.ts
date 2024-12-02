@@ -1,10 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PerfProgram, selectPerfTest } from "@azure/test-utils-perf";
+import { createPerfProgram } from "@azure-tools/test-perf";
 import { ArtifactListTest } from "./listArtifacts.spec";
 import { RepositoryListTest } from "./listRepositories.spec";
-console.log("=== Starting the perf test ===");
 
-const perfProgram = new PerfProgram(selectPerfTest([RepositoryListTest, ArtifactListTest]));
+const perfProgram = createPerfProgram(RepositoryListTest, ArtifactListTest);
 perfProgram.run();

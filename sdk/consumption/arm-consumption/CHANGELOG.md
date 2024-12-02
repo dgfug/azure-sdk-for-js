@@ -1,26 +1,90 @@
-## Release History
+# Release History
 
-### 9.0.0-beta.2 (Unreleased)
+## 9.2.1 (Unreleased)
 
-#### Features Added
+### Features Added
 
-#### Breaking Changes
+### Breaking Changes
 
-#### Bugs Fixed
+### Bugs Fixed
 
-#### Other Changes
+### Other Changes
 
-### 9.0.0-beta.1 (2021-11-16)
+## 9.2.0 (2023-01-03)
+    
+### Features Added
 
-This is the first preview for the new version of the `@azure/arm-consumption` package that follows the new [guidelines for TypeScript SDKs](https://azure.github.io/azure-sdk/typescript_introduction.html) for Azure services.
+  - Interface EventsListByBillingAccountNextOptionalParams no longer has parameter filter
+  - Interface LotsListByBillingAccountNextOptionalParams no longer has parameter filter
+  - Interface MarketplacesListNextOptionalParams no longer has parameter filter
+  - Interface MarketplacesListNextOptionalParams no longer has parameter skiptoken
+  - Interface MarketplacesListNextOptionalParams no longer has parameter top
+  - Interface ReservationRecommendationsListNextOptionalParams no longer has parameter filter
+  - Interface ReservationsDetailsListNextOptionalParams no longer has parameter endDate
+  - Interface ReservationsDetailsListNextOptionalParams no longer has parameter filter
+  - Interface ReservationsDetailsListNextOptionalParams no longer has parameter reservationId
+  - Interface ReservationsDetailsListNextOptionalParams no longer has parameter reservationOrderId
+  - Interface ReservationsDetailsListNextOptionalParams no longer has parameter startDate
+  - Interface ReservationsSummariesListByReservationOrderAndReservationNextOptionalParams no longer has parameter filter
+  - Interface ReservationsSummariesListByReservationOrderNextOptionalParams no longer has parameter filter
+  - Interface ReservationsSummariesListNextOptionalParams no longer has parameter endDate
+  - Interface ReservationsSummariesListNextOptionalParams no longer has parameter filter
+  - Interface ReservationsSummariesListNextOptionalParams no longer has parameter reservationId
+  - Interface ReservationsSummariesListNextOptionalParams no longer has parameter reservationOrderId
+  - Interface ReservationsSummariesListNextOptionalParams no longer has parameter startDate
+  - Interface ReservationTransactionsListByBillingProfileNextOptionalParams no longer has parameter filter
+  - Interface ReservationTransactionsListNextOptionalParams no longer has parameter filter
+  - Interface UsageDetailsListNextOptionalParams no longer has parameter expand
+  - Interface UsageDetailsListNextOptionalParams no longer has parameter filter
+  - Interface UsageDetailsListNextOptionalParams no longer has parameter metric
+  - Interface UsageDetailsListNextOptionalParams no longer has parameter skiptoken
+  - Interface UsageDetailsListNextOptionalParams no longer has parameter top
+    
+    
+## 9.1.0 (2022-09-05)
+    
+### Features Added
 
-While this package remains auto generated, the SDK generator itself has undergone changes to comply with the above guidelines in order to generate packages that are idiomatic to the JavaScript/TypeScript ecosystem and consistent with other packages for Azure services. For more on this, please see [State of the Azure SDK 2021](https://devblogs.microsoft.com/azure-sdk/state-of-the-azure-sdk-2021/).
+  - Added Interface AmountWithExchangeRate
+  - Added Interface Balance
+  - Added Interface Budget
+  - Added Interface ChargeSummary
+  - Added Interface CreditSummary
+  - Added Interface EventSummary
+  - Added Interface LegacyChargeSummary
+  - Added Interface LegacyReservationRecommendation
+  - Added Interface LegacyReservationTransaction
+  - Added Interface LegacySharedScopeReservationRecommendationProperties
+  - Added Interface LegacySingleScopeReservationRecommendationProperties
+  - Added Interface LegacyUsageDetail
+  - Added Interface LotSummary
+  - Added Interface ManagementGroupAggregatedCostResult
+  - Added Interface Marketplace
+  - Added Interface ModernChargeSummary
+  - Added Interface ModernReservationRecommendation
+  - Added Interface ModernReservationTransaction
+  - Added Interface ModernUsageDetail
+  - Added Interface PriceSheetResult
+  - Added Interface ReservationDetail
+  - Added Interface ReservationRecommendation
+  - Added Interface ReservationRecommendationDetailsModel
+  - Added Interface ReservationSummary
+  - Added Interface ReservationTransaction
+  - Added Interface TagsResult
+  - Added Interface UsageDetail
+    
+## 9.0.1 (2022-04-11)
 
-Please note that this version has breaking changes, all of which were made after careful consideration during the authoring of the guidelines and user studies.
+### Features Added
 
-**Noteworthy changes and features**
-- Authentication: The packages `@azure/ms-rest-nodeauth` or `@azure/ms-rest-browserauth` are no longer supported. Use package [@azure/identity](https://www.npmjs.com/package/@azure/identity) instead. Select a credential from Azure Identity examples based on the authentication method of your choice.
-- Callbacks: Method overloads that used callbacks have been removed and the use of promises is encouraged instead.
-- List operations now return an iterable result that follows the `PagedAsyncIterableIterator` interface as opposed to the previous model where you had to make a new request using the link to the next page.
-- Long running operations i.e. the Lro related object returned by methods whose names started with `begin`, now uses `pollUntilDone` to check whether the request is finished, instead of `pollUntilFinished`. To get the final result, use the corresponding method that will have the suffix `AndWait`.
-- The SDK only supports ECMAScript 2015 (ES6) and beyond, all projects that referenced this SDK should be upgraded to use ES6.
+  - bug fix
+
+## 9.0.0 (2021-12-16)
+
+The package of @azure/arm-consumption is using our next generation design principles since version 9.0.0, which contains breaking changes.
+
+To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
+
+To migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).
+
+To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart ).

@@ -6,46 +6,46 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { PrivateLinkResources } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { RedisManagementClientContext } from "../redisManagementClientContext";
+import { RedisManagementClient } from "../redisManagementClient";
 import {
   PrivateLinkResource,
   PrivateLinkResourcesListByRedisCacheOptionalParams,
-  PrivateLinkResourcesListByRedisCacheResponse
+  PrivateLinkResourcesListByRedisCacheResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing PrivateLinkResources operations. */
 export class PrivateLinkResourcesImpl implements PrivateLinkResources {
-  private readonly client: RedisManagementClientContext;
+  private readonly client: RedisManagementClient;
 
   /**
    * Initialize a new instance of the class PrivateLinkResources class.
    * @param client Reference to the service client
    */
-  constructor(client: RedisManagementClientContext) {
+  constructor(client: RedisManagementClient) {
     this.client = client;
   }
 
   /**
    * Gets the private link resources that need to be created for a redis cache.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param cacheName The name of the Redis cache.
    * @param options The options parameters.
    */
   public listByRedisCache(
     resourceGroupName: string,
     cacheName: string,
-    options?: PrivateLinkResourcesListByRedisCacheOptionalParams
+    options?: PrivateLinkResourcesListByRedisCacheOptionalParams,
   ): PagedAsyncIterableIterator<PrivateLinkResource> {
     const iter = this.listByRedisCachePagingAll(
       resourceGroupName,
       cacheName,
-      options
+      options,
     );
     return {
       next() {
@@ -54,25 +54,31 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByRedisCachePagingPage(
           resourceGroupName,
           cacheName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByRedisCachePagingPage(
     resourceGroupName: string,
     cacheName: string,
-    options?: PrivateLinkResourcesListByRedisCacheOptionalParams
+    options?: PrivateLinkResourcesListByRedisCacheOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<PrivateLinkResource[]> {
-    let result = await this._listByRedisCache(
+    let result: PrivateLinkResourcesListByRedisCacheResponse;
+    result = await this._listByRedisCache(
       resourceGroupName,
       cacheName,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -80,12 +86,12 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
   private async *listByRedisCachePagingAll(
     resourceGroupName: string,
     cacheName: string,
-    options?: PrivateLinkResourcesListByRedisCacheOptionalParams
+    options?: PrivateLinkResourcesListByRedisCacheOptionalParams,
   ): AsyncIterableIterator<PrivateLinkResource> {
     for await (const page of this.listByRedisCachePagingPage(
       resourceGroupName,
       cacheName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -93,18 +99,18 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
 
   /**
    * Gets the private link resources that need to be created for a redis cache.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param cacheName The name of the Redis cache.
    * @param options The options parameters.
    */
   private _listByRedisCache(
     resourceGroupName: string,
     cacheName: string,
-    options?: PrivateLinkResourcesListByRedisCacheOptionalParams
+    options?: PrivateLinkResourcesListByRedisCacheOptionalParams,
   ): Promise<PrivateLinkResourcesListByRedisCacheResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, cacheName, options },
-      listByRedisCacheOperationSpec
+      listByRedisCacheOperationSpec,
     );
   }
 }
@@ -112,24 +118,23 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByRedisCacheOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redis/{cacheName}/privateLinkResources",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redis/{cacheName}/privateLinkResources",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateLinkResourceListResult
+      bodyMapper: Mappers.PrivateLinkResourceListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.cacheName
+    Parameters.cacheName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { drainStream, PerfOptionDictionary } from "@azure/test-utils-perf";
+import { drainStream, PerfOptionDictionary } from "@azure-tools/test-perf";
 import { StorageDFSTest } from "./storageTest.spec";
 import { DataLakeFileClient } from "@azure/storage-file-datalake";
-import { v4 as generateUuid } from "uuid";
+import { randomUUID } from "@azure/core-util";
+
 interface StorageDFSReadTestOptions {
   size: number;
 }
@@ -16,10 +17,10 @@ export class StorageDFSReadTest extends StorageDFSTest<StorageDFSReadTestOptions
       description: "Size in bytes",
       shortName: "sz",
       longName: "size",
-      defaultValue: 1024
-    }
+      defaultValue: 1024,
+    },
   };
-  static fileName = generateUuid();
+  static fileName = randomUUID();
   fileClient: DataLakeFileClient;
 
   constructor() {

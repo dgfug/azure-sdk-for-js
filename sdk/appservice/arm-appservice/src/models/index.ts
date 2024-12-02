@@ -19,31 +19,6 @@ export interface AppServiceCertificateOrderCollection {
   readonly nextLink?: string;
 }
 
-/** Azure resource. This resource is tracked in Azure Resource Manager */
-export interface Resource {
-  /**
-   * Resource Id.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly id?: string;
-  /**
-   * Resource Name.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly name?: string;
-  /** Kind of resource. */
-  kind?: string;
-  /** Resource Location. */
-  location: string;
-  /**
-   * Resource type.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly type?: string;
-  /** Resource tags. */
-  tags?: { [propertyName: string]: string };
-}
-
 /** Key Vault container for a certificate that is purchased through Azure. */
 export interface AppServiceCertificate {
   /** Key Vault resource Id. */
@@ -111,6 +86,31 @@ export interface CertificateOrderContact {
   nameFirst?: string;
   nameLast?: string;
   phone?: string;
+}
+
+/** Azure resource. This resource is tracked in Azure Resource Manager */
+export interface Resource {
+  /**
+   * Resource Id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+  /**
+   * Resource Name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /** Kind of resource. */
+  kind?: string;
+  /** Resource Location. */
+  location: string;
+  /**
+   * Resource type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /** Resource tags. */
+  tags?: { [propertyName: string]: string };
 }
 
 /** App Service error response. */
@@ -216,6 +216,28 @@ export interface SiteSealRequest {
 export interface SiteSeal {
   /** HTML snippet */
   html: string;
+}
+
+/** Certificate order action. */
+export interface CertificateOrderAction {
+  /**
+   * Action type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly actionType?: CertificateOrderActionType;
+  /**
+   * Time at which the certificate action was performed.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdAt?: Date;
+}
+
+/** SSL certificate email. */
+export interface CertificateEmail {
+  /** Email id. */
+  emailId?: string;
+  /** Time stamp. */
+  timeStamp?: Date;
 }
 
 /** Collection of detector responses */
@@ -711,10 +733,21 @@ export interface AppServiceEnvironment {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly hasLinuxWorkers?: boolean;
+  /** Upgrade Preference */
+  upgradePreference?: UpgradePreference;
   /** Dedicated Host Count */
   dedicatedHostCount?: number;
   /** Whether or not this App Service Environment is zone-redundant. */
   zoneRedundant?: boolean;
+  /** Full view of the custom domain suffix configuration for ASEv3. */
+  customDnsSuffixConfiguration?: CustomDnsSuffixConfiguration;
+  /** Full view of networking configuration for an ASE. */
+  networkingConfiguration?: AseV3NetworkingConfiguration;
+  /**
+   * Whether an upgrade is available for this App Service Environment.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly upgradeAvailability?: UpgradeAvailability;
 }
 
 /** Specification for using a Virtual Network. */
@@ -829,6 +862,24 @@ export interface HostNameSslState {
   hostType?: HostType;
 }
 
+export interface SiteDnsConfig {
+  /** List of custom DNS servers to be used by an app for lookups. Maximum 5 dns servers can be set. */
+  dnsServers?: string[];
+  /** Alternate DNS server to be used by apps. This property replicates the WEBSITE_DNS_ALT_SERVER app setting. */
+  dnsAltServer?: string;
+  /** Timeout for a single dns lookup in seconds. Allowed range: 1-30. Default is 3. */
+  dnsRetryAttemptTimeout?: number;
+  /** Total number of retries for dns lookup. Allowed range: 1-5. Default is 3. */
+  dnsRetryAttemptCount?: number;
+  /** Custom time for DNS to be cached in seconds. Allowed range: 0-60. Default is 30 seconds. 0 means caching disabled. */
+  dnsMaxCacheTimeout?: number;
+  /**
+   * Indicates that sites using Virtual network custom DNS servers are still sorting the list of DNS servers. Read-Only.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly dnsLegacySortOrder?: boolean;
+}
+
 /** Configuration of an App Service app. */
 export interface SiteConfig {
   /** Number of workers. */
@@ -871,6 +922,8 @@ export interface SiteConfig {
   publishingUsername?: string;
   /** Application settings. */
   appSettings?: NameValuePair[];
+  /** Application metadata. This property cannot be retrieved, since it may contain secrets. */
+  metadata?: NameValuePair[];
   /** Connection strings. */
   connectionStrings?: ConnStringInfo[];
   /**
@@ -940,14 +993,20 @@ export interface SiteConfig {
   keyVaultReferenceIdentity?: string;
   /** IP security restrictions for main. */
   ipSecurityRestrictions?: IpSecurityRestriction[];
+  /** Default action for main access restriction if no rules are matched. */
+  ipSecurityRestrictionsDefaultAction?: DefaultAction;
   /** IP security restrictions for scm. */
   scmIpSecurityRestrictions?: IpSecurityRestriction[];
+  /** Default action for scm access restriction if no rules are matched. */
+  scmIpSecurityRestrictionsDefaultAction?: DefaultAction;
   /** IP security restrictions for scm to use main. */
   scmIpSecurityRestrictionsUseMain?: boolean;
   /** Http20Enabled: configures a web site to allow clients to connect over http2.0 */
   http20Enabled?: boolean;
   /** MinTlsVersion: configures the minimum version of TLS required for SSL requests */
   minTlsVersion?: SupportedTlsVersions;
+  /** The minimum strength TLS cipher suite allowed for an application */
+  minTlsCipherSuite?: TlsCipherSuites;
   /** ScmMinTlsVersion: configures the minimum version of TLS required for SSL requests for SCM site */
   scmMinTlsVersion?: SupportedTlsVersions;
   /** State of FTP / FTPS service */
@@ -962,6 +1021,11 @@ export interface SiteConfig {
    * This setting only applies to the Consumption and Elastic Premium Plans
    */
   functionAppScaleLimit?: number;
+  /**
+   * Maximum number of workers that a site can scale out to.
+   * This setting only applies to apps in plans where ElasticScaleEnabled is <code>true</code>
+   */
+  elasticWebAppScaleLimit?: number;
   /** Health check path */
   healthCheckPath?: string;
   /**
@@ -1268,6 +1332,110 @@ export interface AzureStorageInfoValue {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly state?: AzureStorageState;
+  /** Mounting protocol to use for the storage account. */
+  protocol?: AzureStorageProtocol;
+}
+
+/** Function app configuration. */
+export interface FunctionAppConfig {
+  /** Function app deployment configuration. */
+  deployment?: FunctionsDeployment;
+  /** Function app runtime settings. */
+  runtime?: FunctionsRuntime;
+  /** Function app scale and concurrency settings. */
+  scaleAndConcurrency?: FunctionsScaleAndConcurrency;
+}
+
+/** Configuration section for the function app deployment. */
+export interface FunctionsDeployment {
+  /** Storage for deployed package used by the function app. */
+  storage?: FunctionsDeploymentStorage;
+}
+
+/** Storage for deployed package used by the function app. */
+export interface FunctionsDeploymentStorage {
+  /** Property to select Azure Storage type. Available options: blobContainer. */
+  type?: FunctionsDeploymentStorageType;
+  /** Property to set the URL for the selected Azure Storage type. Example: For blobContainer, the value could be https://<storageAccountName>.blob.core.windows.net/<containerName>. */
+  value?: string;
+  /** Authentication method to access the storage account for deployment. */
+  authentication?: FunctionsDeploymentStorageAuthentication;
+}
+
+/** Authentication method to access the storage account for deployment. */
+export interface FunctionsDeploymentStorageAuthentication {
+  /** Property to select authentication type to access the selected storage account. Available options: SystemAssignedIdentity, UserAssignedIdentity, StorageAccountConnectionString. */
+  type?: AuthenticationType;
+  /** Use this property for UserAssignedIdentity. Set the resource ID of the identity. Do not set a value for this property when using other authentication type. */
+  userAssignedIdentityResourceId?: string;
+  /** Use this property for StorageAccountConnectionString. Set the name of the app setting that has the storage account connection string. Do not set a value for this property when using other authentication type. */
+  storageAccountConnectionStringName?: string;
+}
+
+/** Function app runtime name and version. */
+export interface FunctionsRuntime {
+  /** Function app runtime name. Available options: dotnet-isolated, node, java, powershell, python, custom */
+  name?: RuntimeName;
+  /** Function app runtime version. Example: 8 (for dotnet-isolated) */
+  version?: string;
+}
+
+/** Scale and concurrency settings for the function app. */
+export interface FunctionsScaleAndConcurrency {
+  /** 'Always Ready' configuration for the function app. */
+  alwaysReady?: FunctionsAlwaysReadyConfig[];
+  /** The maximum number of instances for the function app. */
+  maximumInstanceCount?: number;
+  /** Set the amount of memory allocated to each instance of the function app in MB. CPU and network bandwidth are allocated proportionally. */
+  instanceMemoryMB?: number;
+  /** Scale and concurrency settings for the function app triggers. */
+  triggers?: FunctionsScaleAndConcurrencyTriggers;
+}
+
+/** Sets the number of 'Always Ready' instances for a function group or a specific function. */
+export interface FunctionsAlwaysReadyConfig {
+  /** Either a function group or a function name is required. For additional information see https://aka.ms/flexconsumption/alwaysready. */
+  name?: string;
+  /** Sets the number of 'Always Ready' instances for a given function group or a specific function. For additional information see https://aka.ms/flexconsumption/alwaysready. */
+  instanceCount?: number;
+}
+
+/** Scale and concurrency settings for the function app triggers. */
+export interface FunctionsScaleAndConcurrencyTriggers {
+  /** Scale and concurrency settings for the HTTP trigger. */
+  http?: FunctionsScaleAndConcurrencyTriggersHttp;
+}
+
+/** Scale and concurrency settings for the HTTP trigger. */
+export interface FunctionsScaleAndConcurrencyTriggersHttp {
+  /** The maximum number of concurrent HTTP trigger invocations per instance. */
+  perInstanceConcurrency?: number;
+}
+
+/** App Dapr configuration. */
+export interface DaprConfig {
+  /** Boolean indicating if the Dapr side car is enabled */
+  enabled?: boolean;
+  /** Dapr application identifier */
+  appId?: string;
+  /** Tells Dapr which port your application is listening on */
+  appPort?: number;
+  /** Dapr max size of http header read buffer in KB to handle when sending multi-KB headers. Default is 65KB. */
+  httpReadBufferSize?: number;
+  /** Increasing max size of request body http servers parameter in MB to handle uploading of big files. Default is 4 MB. */
+  httpMaxRequestSize?: number;
+  /** Sets the log level for the Dapr sidecar. Allowed values are debug, info, warn, error. Default is info. */
+  logLevel?: DaprLogLevel;
+  /** Enables API logging for the Dapr sidecar */
+  enableApiLogging?: boolean;
+}
+
+/** Function app resource requirements. */
+export interface ResourceConfig {
+  /** Required CPU in cores, e.g. 0.5 */
+  cpu?: number;
+  /** Required memory, e.g. "1Gi" */
+  memory?: string;
 }
 
 /** Specification for an App Service Environment to use for this resource. */
@@ -1790,6 +1958,254 @@ export interface CertificateCollection {
   readonly nextLink?: string;
 }
 
+/** Container App collection ARM resource. */
+export interface ContainerAppCollection {
+  /** Collection of resources. */
+  value: ContainerApp[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Non versioned Container App configuration properties that define the mutable settings of a Container app */
+export interface Configuration {
+  /** Collection of secrets used by a Container app */
+  secrets?: Secret[];
+  /**
+   * ActiveRevisionsMode controls how active revisions are handled for the Container app:
+   * <list><item>Multiple: multiple revisions can be active. If no value if provided, this is the default</item><item>Single: Only one revision can be active at a time. Revision weights can not be used in this mode</item></list>
+   */
+  activeRevisionsMode?: ActiveRevisionsMode;
+  /** Ingress configurations. */
+  ingress?: Ingress;
+  /** Collection of private container registry credentials for containers used by the Container app */
+  registries?: RegistryCredentials[];
+}
+
+/** Container App Secret. */
+export interface Secret {
+  /** Secret Name. */
+  name?: string;
+  /** Secret Value. */
+  value?: string;
+}
+
+/** Container App Ingress configuration. */
+export interface Ingress {
+  /**
+   * Hostname.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly fqdn?: string;
+  /** Bool indicating if app exposes an external http endpoint */
+  external?: boolean;
+  /** Target Port in containers for traffic from ingress */
+  targetPort?: number;
+  /** Ingress transport protocol */
+  transport?: IngressTransportMethod;
+  traffic?: TrafficWeight[];
+  /** Bool indicating if HTTP connections to is allowed. If set to false HTTP connections are automatically redirected to HTTPS connections */
+  allowInsecure?: boolean;
+}
+
+/** Traffic weight assigned to a revision */
+export interface TrafficWeight {
+  /** Name of a revision */
+  revisionName?: string;
+  /** Traffic weight assigned to a revision */
+  weight?: number;
+  /** Indicates that the traffic weight belongs to a latest stable revision */
+  latestRevision?: boolean;
+}
+
+/** Container App Private Registry */
+export interface RegistryCredentials {
+  /** Container Registry Server */
+  server?: string;
+  /** Container Registry Username */
+  username?: string;
+  /** The name of the Secret that contains the registry login password */
+  passwordSecretRef?: string;
+}
+
+/**
+ * Container App versioned application definition.
+ * Defines the desired state of an immutable revision.
+ * Any changes to this section Will result in a new revision being created
+ */
+export interface Template {
+  /** User friendly suffix that is appended to the revision name */
+  revisionSuffix?: string;
+  /** List of container definitions for the Container App. */
+  containers?: Container[];
+  /** Scaling properties for the Container App. */
+  scale?: Scale;
+  /** Dapr configuration for the Container App. */
+  dapr?: Dapr;
+}
+
+/** Container App container definition. */
+export interface Container {
+  /** Container image tag. */
+  image?: string;
+  /** Custom container name. */
+  name?: string;
+  /** Container start command. */
+  command?: string[];
+  /** Container start command arguments. */
+  args?: string[];
+  /** Container environment variables. */
+  env?: EnvironmentVar[];
+  /** Container resource requirements. */
+  resources?: ContainerResources;
+}
+
+/** Container App container environment variable. */
+export interface EnvironmentVar {
+  /** Environment variable name. */
+  name?: string;
+  /** Non-secret environment variable value. */
+  value?: string;
+  /** Name of the Container App secret from which to pull the environment variable value. */
+  secretRef?: string;
+}
+
+/** Container App container resource requirements. */
+export interface ContainerResources {
+  /** Required CPU in cores, e.g. 0.5 */
+  cpu?: number;
+  /** Required memory, e.g. "250Mb" */
+  memory?: string;
+}
+
+/** Container App scaling configurations. */
+export interface Scale {
+  /** Optional. Minimum number of container replicas. */
+  minReplicas?: number;
+  /** Optional. Maximum number of container replicas. Defaults to 10 if not set. */
+  maxReplicas?: number;
+  /** Scaling rules. */
+  rules?: ScaleRule[];
+}
+
+/** Container App container scaling rule. */
+export interface ScaleRule {
+  /** Scale Rule Name */
+  name?: string;
+  /** Azure Queue based scaling. */
+  azureQueue?: QueueScaleRule;
+  /** Custom scale rule. */
+  custom?: CustomScaleRule;
+  /** HTTP requests based scaling. */
+  http?: HttpScaleRule;
+}
+
+/** Container App container Azure Queue based scaling rule. */
+export interface QueueScaleRule {
+  /** Queue name. */
+  queueName?: string;
+  /** Queue length. */
+  queueLength?: number;
+  /** Authentication secrets for the queue scale rule. */
+  auth?: ScaleRuleAuth[];
+}
+
+/** Auth Secrets for Container App Scale Rule */
+export interface ScaleRuleAuth {
+  /** Name of the Container App secret from which to pull the auth params. */
+  secretRef?: string;
+  /** Trigger Parameter that uses the secret */
+  triggerParameter?: string;
+}
+
+/** Container App container Custom scaling rule. */
+export interface CustomScaleRule {
+  /**
+   * Type of the custom scale rule
+   * eg: azure-servicebus, redis etc.
+   */
+  type?: string;
+  /** Metadata properties to describe custom scale rule. */
+  metadata?: { [propertyName: string]: string };
+  /** Authentication secrets for the custom scale rule. */
+  auth?: ScaleRuleAuth[];
+}
+
+/** Container App container Custom scaling rule. */
+export interface HttpScaleRule {
+  /** Metadata properties to describe http scale rule. */
+  metadata?: { [propertyName: string]: string };
+  /** Authentication secrets for the custom scale rule. */
+  auth?: ScaleRuleAuth[];
+}
+
+/** Container App Dapr configuration. */
+export interface Dapr {
+  /** Boolean indicating if the Dapr side car is enabled */
+  enabled?: boolean;
+  /** Dapr application identifier */
+  appId?: string;
+  /** Port on which the Dapr side car */
+  appPort?: number;
+  /** Collection of Dapr components */
+  components?: DaprComponent[];
+}
+
+/** Dapr component configuration */
+export interface DaprComponent {
+  /** Component name */
+  name?: string;
+  /** Component type */
+  type?: string;
+  /** Component version */
+  version?: string;
+  /** Component metadata */
+  metadata?: DaprMetadata[];
+}
+
+/** Container App Dapr component metadata. */
+export interface DaprMetadata {
+  /** Metadata property name. */
+  name?: string;
+  /** Metadata property value. */
+  value?: string;
+  /** Name of the Container App secret from which to pull the metadata property value. */
+  secretRef?: string;
+}
+
+/** Container App Secrets Collection ARM resource. */
+export interface SecretsCollection {
+  /** Collection of resources. */
+  value: ContainerAppSecret[];
+}
+
+/** Container App Secret. */
+export interface ContainerAppSecret {
+  /**
+   * Secret Name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Secret Value.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly value?: string;
+}
+
+/** Container App Revisions collection ARM resource. */
+export interface RevisionCollection {
+  /** Collection of resources. */
+  value: Revision[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
 /** Collection of deleted apps. */
 export interface DeletedWebAppCollection {
   /** Collection of resources. */
@@ -2005,6 +2421,21 @@ export interface AppLogsConfiguration {
 export interface LogAnalyticsConfiguration {
   customerId?: string;
   sharedKey?: string;
+}
+
+export interface ContainerAppsConfiguration {
+  /** Azure Monitor instrumentation key used by Dapr to export Service to Service communication telemetry */
+  daprAIInstrumentationKey?: string;
+  /** IP range in CIDR notation that can be reserved for environment infrastructure IP addresses. It must not overlap with any other Subnet IP ranges. */
+  platformReservedCidr?: string;
+  /** An IP address from the IP range defined by platformReservedCidr that will be reserved for the internal DNS server */
+  platformReservedDnsIP?: string;
+  /** Resource ID of a subnet for control plane infrastructure components. This subnet must be in the same VNET as the subnet defined in appSubnetResourceId. Must not overlap with the IP range defined in platformReservedCidr, if defined. */
+  controlPlaneSubnetResourceId?: string;
+  /** Resource ID of a subnet for control plane infrastructure components. This subnet must be in the same VNET as the subnet defined in appSubnetResourceId. Must not overlap with the IP range defined in platformReservedCidr, if defined. */
+  appSubnetResourceId?: string;
+  /** CIDR notation IP range assigned to the Docker bridge network. It must not overlap with any Subnet IP ranges or the IP range defined in platformReservedCidr, if defined. */
+  dockerBridgeCidr?: string;
 }
 
 /** Collection of Application Stacks */
@@ -2508,28 +2939,6 @@ export interface ResourceHealthMetadataCollection {
   readonly nextLink?: string;
 }
 
-/** Appservice Github token request content. */
-export interface AppserviceGithubTokenRequest {
-  /** Code string to exchange for Github Access token */
-  code: string;
-  /** State string used for verification. */
-  state: string;
-}
-
-/** Github access token for Appservice CLI github integration. */
-export interface AppserviceGithubToken {
-  /** Github access token for Appservice CLI github integration */
-  accessToken?: string;
-  /** Scope of the github access token */
-  scope?: string;
-  /** token type */
-  tokenType?: string;
-  /** True if valid github token received, False otherwise */
-  gotToken?: boolean;
-  /** Error message if unable to get token */
-  errorMessage?: string;
-}
-
 /** Collection of source controls. */
 export interface SourceControlCollection {
   /** Collection of resources. */
@@ -2560,6 +2969,8 @@ export interface ResourceNameAvailabilityRequest {
   type: CheckNameResourceTypes;
   /** Is fully qualified domain name. */
   isFqdn?: boolean;
+  /** Azure Resource Manager ID of the customer's selected Container Apps Environment on which to host the Function app. This must be of the form /subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.App/managedEnvironments/{managedEnvironmentName} */
+  environmentId?: string;
 }
 
 /** Information regarding availability of a resource name. */
@@ -2570,6 +2981,17 @@ export interface ResourceNameAvailability {
   reason?: InAvailabilityReasonType;
   /** If reason == invalid, provide the user with the reason why the given name is invalid, and provide the resource naming requirements so that the user can select a valid name. If reason == AlreadyExists, explain that resource name is already in use, and direct them to select a different name. */
   message?: string;
+}
+
+/** Collection of custom hostname sites */
+export interface CustomHostnameSitesCollection {
+  /** Collection of resources. */
+  value: CustomHostnameSites[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
 }
 
 /**
@@ -2591,6 +3013,17 @@ export interface HostingEnvironmentDeploymentInfo {
   name?: string;
   /** Location of the App Service Environment. */
   location?: string;
+}
+
+/** Collection of ASE regions. */
+export interface AseRegionCollection {
+  /** Collection of resources. */
+  value: AseRegion[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
 }
 
 /** Collection of geographical regions. */
@@ -2803,6 +3236,72 @@ export interface StaticSiteTemplateOptions {
   isPrivate?: boolean;
 }
 
+/** Static Site Linked Backend ARM resource. */
+export interface StaticSiteLinkedBackend {
+  /** The resource id of the backend linked to the static site */
+  backendResourceId?: string;
+  /** The region of the backend linked to the static site */
+  region?: string;
+  /**
+   * The date and time on which the backend was linked to the static site.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdOn?: Date;
+  /**
+   * The provisioning state of the linking process.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: string;
+}
+
+/** Static Site Database Connection overview. */
+export interface DatabaseConnectionOverview {
+  /**
+   * The resource id of the database.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly resourceId?: string;
+  /**
+   * If present, the identity is used in conjunction with connection string to connect to the database. Use of the system-assigned managed identity is indicated with the string 'SystemAssigned', while use of a user-assigned managed identity is indicated with the resource id of the managed identity resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly connectionIdentity?: string;
+  /**
+   * The region of the database resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly region?: string;
+  /**
+   * A list of configuration files associated with this database connection.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly configurationFiles?: StaticSiteDatabaseConnectionConfigurationFileOverview[];
+  /**
+   * If present, the name of this database connection resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+}
+
+/** A database connection configuration file */
+export interface StaticSiteDatabaseConnectionConfigurationFileOverview {
+  /**
+   * The name of the configuration file.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly fileName?: string;
+  /**
+   * The Base64 encoding of the file contents.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly contents?: string;
+  /**
+   * The type of configuration file.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+}
+
 /** Collection of static site custom users. */
 export interface StaticSiteUserCollection {
   /** Collection of resources. */
@@ -2823,6 +3322,29 @@ export interface StaticSiteBuildCollection {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly nextLink?: string;
+}
+
+/** Collection of static site database connections. */
+export interface DatabaseConnectionCollection {
+  /** Collection of resources. */
+  value: DatabaseConnection[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Static Site Database Connection Request Properties resource when patching */
+export interface DatabaseConnectionPatchRequest {
+  /** The resource id of the database. */
+  resourceId?: string;
+  /** If present, the identity is used in conjunction with connection string to connect to the database. Use of the system-assigned managed identity is indicated with the string 'SystemAssigned', while use of a user-assigned managed identity is indicated with the resource id of the managed identity resource. */
+  connectionIdentity?: string;
+  /** The connection string to use to connect to the database. */
+  connectionString?: string;
+  /** The region of the database resource. */
+  region?: string;
 }
 
 /** Collection of static site functions. */
@@ -2847,10 +3369,32 @@ export interface StaticSiteUserProvidedFunctionAppsCollection {
   readonly nextLink?: string;
 }
 
+/** Collection of static site basic auth. */
+export interface StaticSiteBasicAuthPropertiesCollection {
+  /** Collection of resources. */
+  value: StaticSiteBasicAuthPropertiesARMResource[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
 /** Collection of static site custom domains. */
 export interface StaticSiteCustomDomainOverviewCollection {
   /** Collection of resources. */
   value: StaticSiteCustomDomainOverviewARMResource[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Collection of static site linked backends. */
+export interface StaticSiteLinkedBackendsCollection {
+  /** Collection of resources. */
+  value: StaticSiteLinkedBackendARMResource[];
   /**
    * Link to next page of resources.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -2974,8 +3518,14 @@ export interface IdentityProviders {
   gitHub?: GitHub;
   /** The configuration settings of the Google provider. */
   google?: Google;
+  /** The configuration settings of the legacy Microsoft Account provider. */
+  legacyMicrosoftAccount?: LegacyMicrosoftAccount;
   /** The configuration settings of the Twitter provider. */
   twitter?: Twitter;
+  /** The configuration settings of the Apple provider. */
+  apple?: Apple;
+  /** The configuration settings of the Azure Static Web Apps provider. */
+  azureStaticWebApps?: AzureStaticWebApps;
   /**
    * The map of the name of the alias of each custom Open ID Connect provider to the
    * configuration settings of the custom Open ID Connect provider.
@@ -2983,12 +3533,6 @@ export interface IdentityProviders {
   customOpenIdConnectProviders?: {
     [propertyName: string]: CustomOpenIdConnectProvider;
   };
-  /** The configuration settings of the legacy Microsoft Account provider. */
-  legacyMicrosoftAccount?: LegacyMicrosoftAccount;
-  /** The configuration settings of the Apple provider. */
-  apple?: Apple;
-  /** The configuration settings of the Azure Static Web Apps provider. */
-  azureStaticWebApps?: AzureStaticWebApps;
 }
 
 /** The configuration settings of the Azure Active directory provider. */
@@ -3009,6 +3553,62 @@ export interface AzureActiveDirectory {
   isAutoProvisioned?: boolean;
 }
 
+/** The configuration settings of the Azure Active Directory app registration. */
+export interface AzureActiveDirectoryRegistration {
+  /**
+   * The OpenID Connect Issuer URI that represents the entity which issues access tokens for this application.
+   * When using Azure Active Directory, this value is the URI of the directory tenant, e.g. https://login.microsoftonline.com/v2.0/{tenant-guid}/.
+   * This URI is a case-sensitive identifier for the token issuer.
+   * More information on OpenID Connect Discovery: http://openid.net/specs/openid-connect-discovery-1_0.html
+   */
+  openIdIssuer?: string;
+  /**
+   * The Client ID of this relying party application, known as the client_id.
+   * This setting is required for enabling OpenID Connection authentication with Azure Active Directory or
+   * other 3rd party OpenID Connect providers.
+   * More information on OpenID Connect: http://openid.net/specs/openid-connect-core-1_0.html
+   */
+  clientId?: string;
+  /** The app setting name that contains the client secret of the relying party application. */
+  clientSecretSettingName?: string;
+  /**
+   * An alternative to the client secret, that is the thumbprint of a certificate used for signing purposes. This property acts as
+   * a replacement for the Client Secret. It is also optional.
+   */
+  clientSecretCertificateThumbprint?: string;
+  /**
+   * An alternative to the client secret thumbprint, that is the subject alternative name of a certificate used for signing purposes. This property acts as
+   * a replacement for the Client Secret Certificate Thumbprint. It is also optional.
+   */
+  clientSecretCertificateSubjectAlternativeName?: string;
+  /**
+   * An alternative to the client secret thumbprint, that is the issuer of a certificate used for signing purposes. This property acts as
+   * a replacement for the Client Secret Certificate Thumbprint. It is also optional.
+   */
+  clientSecretCertificateIssuer?: string;
+}
+
+/** The configuration settings of the Azure Active Directory login flow. */
+export interface AzureActiveDirectoryLogin {
+  /**
+   * Login parameters to send to the OpenID Connect authorization endpoint when
+   * a user logs in. Each parameter must be in the form "key=value".
+   */
+  loginParameters?: string[];
+  /** <code>true</code> if the www-authenticate provider should be omitted from the request; otherwise, <code>false</code>. */
+  disableWWWAuthenticate?: boolean;
+}
+
+/** The configuration settings of the Azure Active Directory token validation flow. */
+export interface AzureActiveDirectoryValidation {
+  /** The configuration settings of the checks that should be made while validating the JWT Claims. */
+  jwtClaimChecks?: JwtClaimChecks;
+  /** The list of audiences that can make successful authentication/authorization requests. */
+  allowedAudiences?: string[];
+  /** The configuration settings of the default authorization policy. */
+  defaultAuthorizationPolicy?: DefaultAuthorizationPolicy;
+}
+
 /** The configuration settings of the checks that should be made while validating the JWT Claims. */
 export interface JwtClaimChecks {
   /** The list of the allowed groups. */
@@ -3025,6 +3625,14 @@ export interface DefaultAuthorizationPolicy {
   allowedApplications?: string[];
 }
 
+/** The configuration settings of the Azure Active Directory allowed principals. */
+export interface AllowedPrincipals {
+  /** The list of the allowed groups. */
+  groups?: string[];
+  /** The list of the allowed identities. */
+  identities?: string[];
+}
+
 /** The configuration settings of the Facebook provider. */
 export interface Facebook {
   /** <code>false</code> if the Facebook provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
@@ -3037,10 +3645,28 @@ export interface Facebook {
   login?: LoginScopes;
 }
 
+/** The configuration settings of the app registration for providers that have app ids and app secrets */
+export interface AppRegistration {
+  /** The App ID of the app used for login. */
+  appId?: string;
+  /** The app setting name that contains the app secret. */
+  appSecretSettingName?: string;
+}
+
 /** The configuration settings of the login flow, including the scopes that should be requested. */
 export interface LoginScopes {
   /** A list of the scopes that should be requested while authenticating. */
   scopes?: string[];
+}
+
+/** The configuration settings of the GitHub provider. */
+export interface GitHub {
+  /** <code>false</code> if the GitHub provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
+  enabled?: boolean;
+  /** The configuration settings of the app registration for the GitHub provider. */
+  registration?: ClientRegistration;
+  /** The configuration settings of the login flow. */
+  login?: LoginScopes;
 }
 
 /** The configuration settings of the app registration for providers that have client ids and client secrets */
@@ -3051,10 +3677,42 @@ export interface ClientRegistration {
   clientSecretSettingName?: string;
 }
 
+/** The configuration settings of the Google provider. */
+export interface Google {
+  /** <code>false</code> if the Google provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
+  enabled?: boolean;
+  /** The configuration settings of the app registration for the Google provider. */
+  registration?: ClientRegistration;
+  /** The configuration settings of the login flow. */
+  login?: LoginScopes;
+  /** The configuration settings of the Azure Active Directory token validation flow. */
+  validation?: AllowedAudiencesValidation;
+}
+
 /** The configuration settings of the Allowed Audiences validation flow. */
 export interface AllowedAudiencesValidation {
   /** The configuration settings of the allowed list of audiences from which to validate the JWT token. */
   allowedAudiences?: string[];
+}
+
+/** The configuration settings of the legacy Microsoft Account provider. */
+export interface LegacyMicrosoftAccount {
+  /** <code>false</code> if the legacy Microsoft Account provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
+  enabled?: boolean;
+  /** The configuration settings of the app registration for the legacy Microsoft Account provider. */
+  registration?: ClientRegistration;
+  /** The configuration settings of the login flow. */
+  login?: LoginScopes;
+  /** The configuration settings of the legacy Microsoft Account provider token validation flow. */
+  validation?: AllowedAudiencesValidation;
+}
+
+/** The configuration settings of the Twitter provider. */
+export interface Twitter {
+  /** <code>false</code> if the Twitter provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
+  enabled?: boolean;
+  /** The configuration settings of the app registration for the Twitter provider. */
+  registration?: TwitterRegistration;
 }
 
 /** The configuration settings of the app registration for the Twitter provider. */
@@ -3070,6 +3728,48 @@ export interface TwitterRegistration {
    * application used for sign-in.
    */
   consumerSecretSettingName?: string;
+}
+
+/** The configuration settings of the Apple provider. */
+export interface Apple {
+  /** <code>false</code> if the Apple provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
+  enabled?: boolean;
+  /** The configuration settings of the Apple registration. */
+  registration?: AppleRegistration;
+  /** The configuration settings of the login flow. */
+  login?: LoginScopes;
+}
+
+/** The configuration settings of the registration for the Apple provider */
+export interface AppleRegistration {
+  /** The Client ID of the app used for login. */
+  clientId?: string;
+  /** The app setting name that contains the client secret. */
+  clientSecretSettingName?: string;
+}
+
+/** The configuration settings of the Azure Static Web Apps provider. */
+export interface AzureStaticWebApps {
+  /** <code>false</code> if the Azure Static Web Apps provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
+  enabled?: boolean;
+  /** The configuration settings of the Azure Static Web Apps registration. */
+  registration?: AzureStaticWebAppsRegistration;
+}
+
+/** The configuration settings of the registration for the Azure Static Web Apps provider */
+export interface AzureStaticWebAppsRegistration {
+  /** The Client ID of the app used for login. */
+  clientId?: string;
+}
+
+/** The configuration settings of the custom Open ID Connect provider. */
+export interface CustomOpenIdConnectProvider {
+  /** <code>false</code> if the custom Open ID provider provider should not be enabled; otherwise, <code>true</code>. */
+  enabled?: boolean;
+  /** The configuration settings of the app registration for the custom Open ID Connect provider. */
+  registration?: OpenIdConnectRegistration;
+  /** The configuration settings of the login flow of the custom Open ID Connect provider. */
+  login?: OpenIdConnectLogin;
 }
 
 /** The configuration settings of the app registration for the custom Open ID Connect provider. */
@@ -3110,20 +3810,6 @@ export interface OpenIdConnectLogin {
   nameClaimType?: string;
   /** A list of the scopes that should be requested while authenticating. */
   scopes?: string[];
-}
-
-/** The configuration settings of the registration for the Apple provider */
-export interface AppleRegistration {
-  /** The Client ID of the app used for login. */
-  clientId?: string;
-  /** The app setting name that contains the client secret. */
-  clientSecretSettingName?: string;
-}
-
-/** The configuration settings of the registration for the Azure Static Web Apps provider */
-export interface AzureStaticWebAppsRegistration {
-  /** The Client ID of the app used for login. */
-  clientId?: string;
 }
 
 /** The configuration settings of the login flow of users using App Service Authentication/Authorization. */
@@ -3174,6 +3860,12 @@ export interface TokenStore {
 export interface FileSystemTokenStore {
   /** The directory in which the tokens will be stored. */
   directory?: string;
+}
+
+/** The configuration settings of the storage of the tokens if blob storage is used. */
+export interface BlobStorageTokenStore {
+  /** The name of the app setting containing the SAS URL of the blob storage containing the tokens. */
+  sasUrlSettingName?: string;
 }
 
 /** The configuration settings of the session cookie's expiration. */
@@ -3335,6 +4027,17 @@ export interface SiteConfigurationSnapshotInfoCollection {
 export interface ContinuousWebJobCollection {
   /** Collection of resources. */
   value: ContinuousWebJob[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Deployment status collection ARM resource. */
+export interface CsmDeploymentStatusCollection {
+  /** Collection of resources. */
+  value: CsmDeploymentStatus[];
   /**
    * Link to next page of resources.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -3646,6 +4349,35 @@ export interface SnapshotRecoverySource {
   id?: string;
 }
 
+/** Collection of site containers */
+export interface SiteContainerCollection {
+  /** Collection of resources. */
+  value: SiteContainer[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+export interface VolumeMount {
+  /** Sub path in the volume where volume is mounted from. */
+  volumeSubPath: string;
+  /** Target path on the container where volume is mounted on */
+  containerMountPath: string;
+  /** Config Data to be mounted on the volume */
+  data?: string;
+  /** Boolean to specify if the mount is read only on the container */
+  readOnly?: boolean;
+}
+
+export interface EnvironmentVariable {
+  /** Environment variable name */
+  name: string;
+  /** Environment variable value */
+  value: string;
+}
+
 /** Collection of Kudu site extension information elements. */
 export interface SiteExtensionInfoCollection {
   /** Collection of resources. */
@@ -3770,8 +4502,651 @@ export interface WebJobCollection {
   readonly nextLink?: string;
 }
 
+/** The workflow filter. */
+export interface WorkflowArtifacts {
+  /** Application settings of the workflow. */
+  appSettings?: Record<string, unknown>;
+  /** Files of the app. */
+  files?: { [propertyName: string]: Record<string, unknown> };
+  /** Files of the app to delete. */
+  filesToDelete?: string[];
+}
+
+/** Collection of Kudu workflow information elements. */
+export interface WorkflowEnvelopeCollection {
+  /** Collection of resources. */
+  value: WorkflowEnvelope[];
+  /**
+   * Link to next page of resources.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Workflow properties definition. */
+export interface WorkflowEnvelope {
+  /**
+   * The resource id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+  /**
+   * Gets the resource name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the resource type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /** The resource kind. */
+  kind?: string;
+  /** The resource location. */
+  location?: string;
+  /** Additional workflow properties. */
+  properties?: WorkflowEnvelopeProperties;
+}
+
+/** Additional workflow properties. */
+export interface WorkflowEnvelopeProperties {
+  /** Gets or sets the files. */
+  files?: { [propertyName: string]: Record<string, unknown> };
+  /** Gets or sets the state of the workflow. */
+  flowState?: WorkflowState;
+  /** Gets or sets workflow health. */
+  health?: WorkflowHealth;
+}
+
+/** Represents the workflow health. */
+export interface WorkflowHealth {
+  /** Gets or sets the workflow health state. */
+  state: WorkflowHealthState;
+  /** Gets or sets the workflow error. */
+  error?: ErrorEntity;
+}
+
+/** The access key regenerate action content. */
+export interface RegenerateActionParameter {
+  /** The key type. */
+  keyType?: KeyType;
+}
+
+/** Error response indicates Logic service is not able to process the incoming request. The error property contains the error details. */
+export interface ErrorResponse {
+  /** The error properties. */
+  error?: ErrorProperties;
+}
+
+/** Error properties indicate why the Logic service was not able to process the incoming request. The reason is provided in the error message. */
+export interface ErrorProperties {
+  /** Error code. */
+  code?: string;
+  /** Error message indicating why the operation failed. */
+  message?: string;
+}
+
+/** The list of workflow runs. */
+export interface WorkflowRunListResult {
+  /** A list of workflow runs. */
+  value?: WorkflowRun[];
+  /** The URL to get the next set of results. */
+  nextLink?: string;
+}
+
+/** The correlation property. */
+export interface Correlation {
+  /** The client tracking id. */
+  clientTrackingId?: string;
+}
+
+/** The resource reference. */
+export interface ResourceReference {
+  /** The resource id. */
+  id?: string;
+  /**
+   * Gets the resource name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the resource type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+}
+
+/** The workflow run trigger. */
+export interface WorkflowRunTrigger {
+  /**
+   * Gets the name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the inputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputs?: Record<string, unknown>;
+  /**
+   * Gets the link to inputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputsLink?: ContentLink;
+  /**
+   * Gets the outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputs?: Record<string, unknown>;
+  /**
+   * Gets the link to outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputsLink?: ContentLink;
+  /**
+   * Gets the scheduled time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly scheduledTime?: Date;
+  /**
+   * Gets the start time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly startTime?: Date;
+  /**
+   * Gets the end time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly endTime?: Date;
+  /**
+   * Gets the tracking id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackingId?: string;
+  /** The run correlation. */
+  correlation?: Correlation;
+  /**
+   * Gets the code.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly code?: string;
+  /**
+   * Gets the status.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly status?: WorkflowStatus;
+  /**
+   * Gets the error.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly error?: Record<string, unknown>;
+  /**
+   * Gets the tracked properties.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackedProperties?: Record<string, unknown>;
+}
+
+/** The content link. */
+export interface ContentLink {
+  /** The content link URI. */
+  uri?: string;
+  /**
+   * The content version.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly contentVersion?: string;
+  /**
+   * The content size.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly contentSize?: number;
+  /**
+   * The content hash.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly contentHash?: ContentHash;
+  /**
+   * The metadata.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly metadata?: Record<string, unknown>;
+}
+
+/** The content hash. */
+export interface ContentHash {
+  /** The algorithm of the content hash. */
+  algorithm?: string;
+  /** The value of the content hash. */
+  value?: string;
+}
+
+/** The workflow parameters. */
+export interface WorkflowParameter {
+  /** The type. */
+  type?: ParameterType;
+  /** The value. */
+  value?: Record<string, unknown>;
+  /** The metadata. */
+  metadata?: Record<string, unknown>;
+  /** The description. */
+  description?: string;
+}
+
+/** The sub resource type. */
+export interface SubResource {
+  /**
+   * The resource id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+}
+
+/** The list of workflow run actions. */
+export interface WorkflowRunActionListResult {
+  /** A list of workflow run actions. */
+  value?: WorkflowRunAction[];
+  /** The URL to get the next set of results. */
+  nextLink?: string;
+}
+
+/** The correlation properties. */
+export interface RunCorrelation {
+  /** The client tracking identifier. */
+  clientTrackingId?: string;
+  /** The client keywords. */
+  clientKeywords?: string[];
+}
+
+/** The retry history. */
+export interface RetryHistory {
+  /** Gets the start time. */
+  startTime?: Date;
+  /** Gets the end time. */
+  endTime?: Date;
+  /** Gets the status code. */
+  code?: string;
+  /** Gets the client request Id. */
+  clientRequestId?: string;
+  /** Gets the service request Id. */
+  serviceRequestId?: string;
+  /** Gets the error response. */
+  error?: ErrorResponse;
+}
+
+/** The expression traces. */
+export interface ExpressionTraces {
+  /** Anything */
+  value?: any;
+  inputs?: ExpressionRoot[];
+  /** The link used to get the next page of recommendations. */
+  nextLink?: string;
+}
+
+/** The expression. */
+export interface Expression {
+  /** The text. */
+  text?: string;
+  /** Anything */
+  value?: any;
+  /** The sub expressions. */
+  subexpressions?: Expression[];
+  /** The azure resource error info. */
+  error?: AzureResourceErrorInfo;
+}
+
+/** The error info. */
+export interface ErrorInfo {
+  /** The error code. */
+  code: string;
+}
+
+/** A collection of workflow run action repetitions. */
+export interface WorkflowRunActionRepetitionDefinitionCollection {
+  /** The link used to get the next page of recommendations. */
+  nextLink?: string;
+  value?: WorkflowRunActionRepetitionDefinition[];
+}
+
+/** The workflow run action repetition index. */
+export interface RepetitionIndex {
+  /** The scope. */
+  scopeName?: string;
+  /** The index. */
+  itemIndex: number;
+}
+
+/** The run operation result properties. */
+export interface OperationResultProperties {
+  /** The start time of the workflow scope repetition. */
+  startTime?: Date;
+  /** The end time of the workflow scope repetition. */
+  endTime?: Date;
+  /** The correlation properties. */
+  correlation?: RunActionCorrelation;
+  /** The status of the workflow scope repetition. */
+  status?: WorkflowStatus;
+  /** The workflow scope repetition code. */
+  code?: string;
+  /** Anything */
+  error?: any;
+}
+
+/** The base resource type. */
+export interface WorkflowResource {
+  /**
+   * The resource id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+  /**
+   * Gets the resource name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the resource type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /** The resource location. */
+  location?: string;
+  /** The resource tags. */
+  tags?: { [propertyName: string]: string };
+}
+
+/** The list of workflow request histories. */
+export interface RequestHistoryListResult {
+  /** A list of workflow request histories. */
+  value?: RequestHistory[];
+  /** The URL to get the next set of results. */
+  nextLink?: string;
+}
+
+/** The request history. */
+export interface RequestHistoryProperties {
+  /** The time the request started. */
+  startTime?: Date;
+  /** The time the request ended. */
+  endTime?: Date;
+  /** The request. */
+  request?: Request;
+  /** The response. */
+  response?: Response;
+}
+
+/** A request. */
+export interface Request {
+  /** A list of all the headers attached to the request. */
+  headers?: Record<string, unknown>;
+  /** The destination for the request. */
+  uri?: string;
+  /** The HTTP method used for the request. */
+  method?: string;
+}
+
+/** A response. */
+export interface Response {
+  /** A list of all the headers attached to the response. */
+  headers?: Record<string, unknown>;
+  /** The status code of the response. */
+  statusCode?: number;
+  /** Details on the location of the body content. */
+  bodyLink?: ContentLink;
+}
+
+/** The list of workflow triggers. */
+export interface WorkflowTriggerListResult {
+  /** A list of workflow triggers. */
+  value?: WorkflowTrigger[];
+  /** The URL to get the next set of results. */
+  nextLink?: string;
+}
+
+/** The workflow trigger recurrence. */
+export interface WorkflowTriggerRecurrence {
+  /** The frequency. */
+  frequency?: RecurrenceFrequency;
+  /** The interval. */
+  interval?: number;
+  /** The start time. */
+  startTime?: string;
+  /** The end time. */
+  endTime?: string;
+  /** The time zone. */
+  timeZone?: string;
+  /** The recurrence schedule. */
+  schedule?: RecurrenceSchedule;
+}
+
+/** The recurrence schedule. */
+export interface RecurrenceSchedule {
+  /** The minutes. */
+  minutes?: number[];
+  /** The hours. */
+  hours?: number[];
+  /** The days of the week. */
+  weekDays?: DaysOfWeek[];
+  /** The month days. */
+  monthDays?: number[];
+  /** The monthly occurrences. */
+  monthlyOccurrences?: RecurrenceScheduleOccurrence[];
+}
+
+/** The recurrence schedule occurrence. */
+export interface RecurrenceScheduleOccurrence {
+  /** The day of the week. */
+  day?: DayOfWeek;
+  /** The occurrence. */
+  occurrence?: number;
+}
+
+/** The list of workflow trigger histories. */
+export interface WorkflowTriggerHistoryListResult {
+  /** A list of workflow trigger histories. */
+  value?: WorkflowTriggerHistory[];
+  /** The URL to get the next set of results. */
+  nextLink?: string;
+}
+
+/** The workflow trigger callback URL. */
+export interface WorkflowTriggerCallbackUrl {
+  /**
+   * Gets the workflow trigger callback URL.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly value?: string;
+  /**
+   * Gets the workflow trigger callback URL HTTP method.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly method?: string;
+  /**
+   * Gets the workflow trigger callback URL base path.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly basePath?: string;
+  /**
+   * Gets the workflow trigger callback URL relative path.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly relativePath?: string;
+  /** Gets the workflow trigger callback URL relative path parameters. */
+  relativePathParameters?: string[];
+  /** Gets the workflow trigger callback URL query parameters. */
+  queries?: WorkflowTriggerListCallbackUrlQueries;
+}
+
+/** Gets the workflow trigger callback URL query parameters. */
+export interface WorkflowTriggerListCallbackUrlQueries {
+  /** The api version. */
+  apiVersion?: string;
+  /** The SAS permissions. */
+  sp?: string;
+  /** The SAS version. */
+  sv?: string;
+  /** The SAS signature. */
+  sig?: string;
+  /** The SAS timestamp. */
+  se?: string;
+}
+
+/** The JSON schema. */
+export interface JsonSchema {
+  /** The JSON title. */
+  title?: string;
+  /** The JSON content. */
+  content?: string;
+}
+
+/** The endpoints configuration. */
+export interface FlowEndpointsConfiguration {
+  /** The workflow endpoints. */
+  workflow?: FlowEndpoints;
+  /** The connector endpoints. */
+  connector?: FlowEndpoints;
+}
+
+/** The flow endpoints configuration. */
+export interface FlowEndpoints {
+  /** The outgoing ip address. */
+  outgoingIpAddresses?: IpAddress[];
+  /** The access endpoint ip address. */
+  accessEndpointIpAddresses?: IpAddress[];
+}
+
+/** The ip address. */
+export interface IpAddress {
+  /** The address. */
+  address?: string;
+}
+
+/** The access control configuration. */
+export interface FlowAccessControlConfiguration {
+  /** The access control configuration for invoking workflow triggers. */
+  triggers?: FlowAccessControlConfigurationPolicy;
+  /** The access control configuration for accessing workflow run contents. */
+  contents?: FlowAccessControlConfigurationPolicy;
+  /** The access control configuration for workflow actions. */
+  actions?: FlowAccessControlConfigurationPolicy;
+  /** The access control configuration for workflow management. */
+  workflowManagement?: FlowAccessControlConfigurationPolicy;
+}
+
+/** The access control configuration policy. */
+export interface FlowAccessControlConfigurationPolicy {
+  /** The allowed caller IP address ranges. */
+  allowedCallerIpAddresses?: IpAddressRange[];
+  /** The authentication policies for workflow. */
+  openAuthenticationPolicies?: OpenAuthenticationAccessPolicies;
+}
+
+/** The ip address range. */
+export interface IpAddressRange {
+  /** The IP address range. */
+  addressRange?: string;
+}
+
+/** AuthenticationPolicy of type Open. */
+export interface OpenAuthenticationAccessPolicies {
+  /** Open authentication policies. */
+  policies?: { [propertyName: string]: OpenAuthenticationAccessPolicy };
+}
+
+/** Open authentication access policy defined by user. */
+export interface OpenAuthenticationAccessPolicy {
+  /** Type of provider for OAuth. */
+  type?: OpenAuthenticationProviderType;
+  /** The access policy claims. */
+  claims?: OpenAuthenticationPolicyClaim[];
+}
+
+/** Open authentication policy claim. */
+export interface OpenAuthenticationPolicyClaim {
+  /** The name of the claim. */
+  name?: string;
+  /** The value of the claim. */
+  value?: string;
+}
+
+/** The sku type. */
+export interface WorkflowSku {
+  /** The name. */
+  name: WorkflowSkuName;
+  /** The reference to plan. */
+  plan?: ResourceReference;
+}
+
+/** The list of workflow versions. */
+export interface WorkflowVersionListResult {
+  /** A list of workflow versions. */
+  value?: WorkflowVersion[];
+  /** The URL to get the next set of results. */
+  nextLink?: string;
+}
+
+/** Github access token for Appservice CLI github integration. */
+export interface AppserviceGithubToken {
+  /** Github access token for Appservice CLI github integration */
+  accessToken?: string;
+  /** Scope of the github access token */
+  scope?: string;
+  /** token type */
+  tokenType?: string;
+  /** True if valid github token received, False otherwise */
+  gotToken?: boolean;
+  /** Error message if unable to get token */
+  errorMessage?: string;
+}
+
+/** Appservice Github token request content. */
+export interface AppserviceGithubTokenRequest {
+  /** Code string to exchange for Github Access token */
+  code: string;
+  /** State string used for verification. */
+  state: string;
+}
+
+/** The workflow filter. */
+export interface WorkflowFilter {
+  /** The state of workflows. */
+  state?: WorkflowState;
+}
+
+/** The list of workflows. */
+export interface WorkflowListResult {
+  /** The list of workflows. */
+  value?: Workflow[];
+  /** The URL to get the next set of results. */
+  nextLink?: string;
+}
+
+/** The workflow run action filter. */
+export interface WorkflowRunActionFilter {
+  /** The status of workflow run action. */
+  status?: WorkflowStatus;
+}
+
+/** The workflow run filter. */
+export interface WorkflowRunFilter {
+  /** The status of workflow run. */
+  status?: WorkflowStatus;
+}
+
+/** The workflow trigger filter. */
+export interface WorkflowTriggerFilter {
+  /** The state of workflow trigger. */
+  state?: WorkflowState;
+}
+
+/** The workflow trigger history filter. */
+export interface WorkflowTriggerHistoryFilter {
+  /** The status of workflow trigger history. */
+  status?: WorkflowStatus;
+}
+
 /** SSL certificate purchase order. */
-export type AppServiceCertificateOrder = Resource & {
+export interface AppServiceCertificateOrder extends Resource {
   /** State of the Key Vault secret. */
   certificates?: { [propertyName: string]: AppServiceCertificate };
   /** Certificate distinguished name. */
@@ -3840,7 +5215,7 @@ export type AppServiceCertificateOrder = Resource & {
    * Reasons why App Service Certificate is not renewable at the current moment.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly appServiceCertificateNotRenewableReasons?: AppServiceCertificateOrderPropertiesAppServiceCertificateNotRenewableReasonsItem[];
+  readonly appServiceCertificateNotRenewableReasons?: ResourceNotRenewableReason[];
   /**
    * Time stamp when the certificate would be auto renewed next
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -3851,10 +5226,10 @@ export type AppServiceCertificateOrder = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly contact?: CertificateOrderContact;
-};
+}
 
 /** Key Vault container ARM resource for a certificate that is purchased through Azure. */
-export type AppServiceCertificateResource = Resource & {
+export interface AppServiceCertificateResource extends Resource {
   /** Key Vault resource Id. */
   keyVaultId?: string;
   /** Key Vault secret name. */
@@ -3864,10 +5239,10 @@ export type AppServiceCertificateResource = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly provisioningState?: KeyVaultSecretStatus;
-};
+}
 
 /** Information about a domain. */
-export type Domain = Resource & {
+export interface Domain extends Resource {
   /** Administrative contact. */
   contactAdmin?: Contact;
   /** Billing contact. */
@@ -3927,7 +5302,7 @@ export type Domain = Resource & {
    * Reasons why domain is not renewable.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly domainNotRenewableReasons?: DomainPropertiesDomainNotRenewableReasonsItem[];
+  readonly domainNotRenewableReasons?: ResourceNotRenewableReason[];
   /** Current DNS type */
   dnsType?: DnsType;
   /** Azure DNS Zone to use */
@@ -3935,10 +5310,10 @@ export type Domain = Resource & {
   /** Target DNS type (would be used for migration) */
   targetDnsType?: DnsType;
   authCode?: string;
-};
+}
 
 /** App Service Environment ARM resource. */
-export type AppServiceEnvironmentResource = Resource & {
+export interface AppServiceEnvironmentResource extends Resource {
   /**
    * Provisioning state of the App Service Environment.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -3986,14 +5361,25 @@ export type AppServiceEnvironmentResource = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly hasLinuxWorkers?: boolean;
+  /** Upgrade Preference */
+  upgradePreference?: UpgradePreference;
   /** Dedicated Host Count */
   dedicatedHostCount?: number;
   /** Whether or not this App Service Environment is zone-redundant. */
   zoneRedundant?: boolean;
-};
+  /** Full view of the custom domain suffix configuration for ASEv3. */
+  customDnsSuffixConfiguration?: CustomDnsSuffixConfiguration;
+  /** Full view of networking configuration for an ASE. */
+  networkingConfiguration?: AseV3NetworkingConfiguration;
+  /**
+   * Whether an upgrade is available for this App Service Environment.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly upgradeAvailability?: UpgradeAvailability;
+}
 
 /** A web app, a mobile app backend, or an API app. */
-export type Site = Resource & {
+export interface Site extends Resource {
   /** Managed service identity. */
   identity?: ManagedServiceIdentity;
   /** Extended Location. */
@@ -4046,8 +5432,26 @@ export type Site = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly lastModifiedTimeUtc?: Date;
+  /** Property to configure various DNS related settings for a site. */
+  dnsConfiguration?: SiteDnsConfig;
+  /** Virtual Network Route All enabled. This causes all outbound traffic to have Virtual Network Security Groups and User Defined Routes applied. */
+  vnetRouteAllEnabled?: boolean;
+  /** To enable pulling image over Virtual Network */
+  vnetImagePullEnabled?: boolean;
+  /** To enable accessing content over virtual network */
+  vnetContentShareEnabled?: boolean;
+  /** To enable Backup and Restore operations over virtual network */
+  vnetBackupRestoreEnabled?: boolean;
   /** Configuration of the app. */
   siteConfig?: SiteConfig;
+  /** Configuration specific of the Azure Function app. */
+  functionAppConfig?: FunctionAppConfig;
+  /** Dapr configuration of the app. */
+  daprConfig?: DaprConfig;
+  /** Workload profile name for function app to execute on. */
+  workloadProfileName?: string;
+  /** Function app resource requirements. */
+  resourceConfig?: ResourceConfig;
   /**
    * Azure Traffic Manager hostnames associated with the app. Read-only.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4141,6 +5545,8 @@ export type Site = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly inProgressOperationId?: string;
+  /** Property to allow or block all public traffic. Allowed Values: 'Enabled', 'Disabled' or an empty string. */
+  publicNetworkAccess?: string;
   /** Checks if Customer provided storage account is required */
   storageAccountRequired?: boolean;
   /** Identity to use for Key Vault Reference authentication. */
@@ -4150,10 +5556,12 @@ export type Site = Resource & {
    * This must be of the form /subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}
    */
   virtualNetworkSubnetId?: string;
-};
+  /** Azure Resource Manager ID of the customer's selected Managed Environment on which to host this app. This must be of the form /subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.App/managedEnvironments/{managedEnvironmentName} */
+  managedEnvironmentId?: string;
+}
 
 /** App Service plan. */
-export type AppServicePlan = Resource & {
+export interface AppServicePlan extends Resource {
   /** Description of a SKU for a scalable resource. */
   sku?: SkuDescription;
   /** Extended Location. */
@@ -4177,6 +5585,11 @@ export type AppServicePlan = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly maximumNumberOfWorkers?: number;
+  /**
+   * The number of instances that are assigned to this App Service plan.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly numberOfWorkers?: number;
   /**
    * Geographical location for the App Service plan.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4229,10 +5642,10 @@ export type AppServicePlan = Resource & {
    * If <code>false</code>, this App Service Plan will not perform availability zone balancing.
    */
   zoneRedundant?: boolean;
-};
+}
 
 /** SSL certificate for an app. */
-export type Certificate = Resource & {
+export interface Certificate extends Resource {
   /** Certificate password. */
   password?: string;
   /**
@@ -4314,10 +5727,87 @@ export type Certificate = Resource & {
   canonicalName?: string;
   /** Method of domain validation for free cert */
   domainValidationMethod?: string;
-};
+}
+
+/** Container App. */
+export interface ContainerApp extends Resource {
+  /**
+   * Provisioning state of the Container App.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: ContainerAppProvisioningState;
+  /** Resource ID of the Container App's KubeEnvironment. */
+  kubeEnvironmentId?: string;
+  /**
+   * Name of the latest revision of the Container App.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly latestRevisionName?: string;
+  /**
+   * Fully Qualified Domain Name of the latest revision of the Container App.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly latestRevisionFqdn?: string;
+  /** Non versioned Container App configuration properties. */
+  configuration?: Configuration;
+  /** Container App versioned application definition. */
+  template?: Template;
+}
+
+/** Container App Revision. */
+export interface Revision extends Resource {
+  /**
+   * Timestamp describing when the revision was created
+   * by controller
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdTime?: Date;
+  /**
+   * Fully qualified domain name of the revision
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly fqdn?: string;
+  /**
+   * Container App Revision Template with all possible settings and the
+   * defaults if user did not provide them. The defaults are populated
+   * as they were at the creation time
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly template?: Template;
+  /**
+   * Boolean describing if the Revision is Active
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly active?: boolean;
+  /**
+   * Number of pods currently running for this revision
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly replicas?: number;
+  /**
+   * Traffic weight assigned to this revision
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trafficWeight?: number;
+  /**
+   * Optional Field - Platform Error Message
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningError?: string;
+  /**
+   * Current health State of the revision
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly healthState?: RevisionHealthState;
+  /**
+   * Current provisioning State of the revision
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: RevisionProvisioningState;
+}
 
 /** A Kubernetes cluster specialized for web workloads by Azure App Service */
-export type KubeEnvironment = Resource & {
+export interface KubeEnvironment extends Resource {
   /** Extended Location. */
   extendedLocation?: ExtendedLocation;
   /**
@@ -4339,6 +5829,8 @@ export type KubeEnvironment = Resource & {
   readonly defaultDomain?: string;
   /** Static IP of the KubeEnvironment */
   staticIp?: string;
+  /** Type of Kubernetes Environment. Only supported for Container App Environments with value as Managed */
+  environmentType?: string;
   /**
    * Cluster configuration which determines the ARC cluster
    * components types. Eg: Choosing between BuildService kind,
@@ -4351,11 +5843,13 @@ export type KubeEnvironment = Resource & {
    * supported
    */
   appLogsConfiguration?: AppLogsConfiguration;
+  /** Cluster configuration for Container Apps Environments to configure Dapr Instrumentation Key and VNET Configuration */
+  containerAppsConfiguration?: ContainerAppsConfiguration;
   aksResourceID?: string;
-};
+}
 
 /** Static Site ARM resource. */
-export type StaticSiteARMResource = Resource & {
+export interface StaticSiteARMResource extends Resource {
   /** Description of a SKU for a scalable resource. */
   sku?: SkuDescription;
   /** Managed service identity. */
@@ -4405,14 +5899,25 @@ export type StaticSiteARMResource = Resource & {
    */
   readonly userProvidedFunctionApps?: StaticSiteUserProvidedFunctionApp[];
   /**
-   * The provider that submitted the last deployment to the primary environment of the static site.
+   * Backends linked to the static side
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly provider?: string;
-};
+  readonly linkedBackends?: StaticSiteLinkedBackend[];
+  /** The provider that submitted the last deployment to the primary environment of the static site. */
+  provider?: string;
+  /** State indicating the status of the enterprise grade CDN serving traffic to the static web app. */
+  enterpriseGradeCdnStatus?: EnterpriseGradeCdnStatus;
+  /** State indicating whether public traffic are allowed or not for a static web app. Allowed Values: 'Enabled', 'Disabled' or an empty string. */
+  publicNetworkAccess?: string;
+  /**
+   * Database connections for the static site
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly databaseConnections?: DatabaseConnectionOverview[];
+}
 
 /** Premier add-on. */
-export type PremierAddOn = Resource & {
+export interface PremierAddOn extends Resource {
   /** Premier add on SKU. */
   sku?: string;
   /** Premier add on Product. */
@@ -4423,10 +5928,11 @@ export type PremierAddOn = Resource & {
   marketplacePublisher?: string;
   /** Premier add on Marketplace offer. */
   marketplaceOffer?: string;
-};
+}
 
 /** ARM resource for a certificate order that is purchased through Azure. */
-export type AppServiceCertificateOrderPatchResource = ProxyOnlyResource & {
+export interface AppServiceCertificateOrderPatchResource
+  extends ProxyOnlyResource {
   /** State of the Key Vault secret. */
   certificates?: { [propertyName: string]: AppServiceCertificate };
   /** Certificate distinguished name. */
@@ -4495,7 +6001,7 @@ export type AppServiceCertificateOrderPatchResource = ProxyOnlyResource & {
    * Reasons why App Service Certificate is not renewable at the current moment.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly appServiceCertificateNotRenewableReasons?: AppServiceCertificateOrderPatchResourcePropertiesAppServiceCertificateNotRenewableReasonsItem[];
+  readonly appServiceCertificateNotRenewableReasons?: ResourceNotRenewableReason[];
   /**
    * Time stamp when the certificate would be auto renewed next
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4506,10 +6012,10 @@ export type AppServiceCertificateOrderPatchResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly contact?: CertificateOrderContact;
-};
+}
 
 /** Key Vault container ARM resource for a certificate that is purchased through Azure. */
-export type AppServiceCertificatePatchResource = ProxyOnlyResource & {
+export interface AppServiceCertificatePatchResource extends ProxyOnlyResource {
   /** Key Vault resource Id. */
   keyVaultId?: string;
   /** Key Vault secret name. */
@@ -4519,10 +6025,10 @@ export type AppServiceCertificatePatchResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly provisioningState?: KeyVaultSecretStatus;
-};
+}
 
 /** Class representing certificate reissue request. */
-export type ReissueCertificateOrderRequest = ProxyOnlyResource & {
+export interface ReissueCertificateOrderRequest extends ProxyOnlyResource {
   /** Certificate Key Size. */
   keySize?: number;
   /** Delay in hours to revoke existing certificate after the new certificate is issued. */
@@ -4531,42 +6037,20 @@ export type ReissueCertificateOrderRequest = ProxyOnlyResource & {
   csr?: string;
   /** Should we change the ASC type (from managed private key to external private key and vice versa). */
   isPrivateKeyExternal?: boolean;
-};
+}
 
 /** Class representing certificate renew request. */
-export type RenewCertificateOrderRequest = ProxyOnlyResource & {
+export interface RenewCertificateOrderRequest extends ProxyOnlyResource {
   /** Certificate Key Size. */
   keySize?: number;
   /** Csr to be used for re-key operation. */
   csr?: string;
   /** Should we change the ASC type (from managed private key to external private key and vice versa). */
   isPrivateKeyExternal?: boolean;
-};
-
-/** Certificate order action. */
-export type CertificateOrderAction = ProxyOnlyResource & {
-  /**
-   * Action type.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly actionType?: CertificateOrderActionType;
-  /**
-   * Time at which the certificate action was performed.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly createdAt?: Date;
-};
-
-/** SSL certificate email. */
-export type CertificateEmail = ProxyOnlyResource & {
-  /** Email id. */
-  emailId?: string;
-  /** Time stamp. */
-  timeStamp?: Date;
-};
+}
 
 /** Class representing Response from Detector */
-export type DetectorResponse = ProxyOnlyResource & {
+export interface DetectorResponse extends ProxyOnlyResource {
   /** metadata for the detector */
   metadata?: DetectorInfo;
   /** Data Set */
@@ -4577,10 +6061,10 @@ export type DetectorResponse = ProxyOnlyResource & {
   dataProvidersMetadata?: DataProviderMetadata[];
   /** Suggested utterances where the detector can be applicable. */
   suggestedUtterances?: QueryUtterancesResults;
-};
+}
 
 /** ARM resource for a domain. */
-export type DomainPatchResource = ProxyOnlyResource & {
+export interface DomainPatchResource extends ProxyOnlyResource {
   /** Administrative contact. */
   contactAdmin?: Contact;
   /** Billing contact. */
@@ -4640,7 +6124,7 @@ export type DomainPatchResource = ProxyOnlyResource & {
    * Reasons why domain is not renewable.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly domainNotRenewableReasons?: DomainPatchResourcePropertiesDomainNotRenewableReasonsItem[];
+  readonly domainNotRenewableReasons?: ResourceNotRenewableReason[];
   /** Current DNS type */
   dnsType?: DnsType;
   /** Azure DNS Zone to use */
@@ -4648,22 +6132,56 @@ export type DomainPatchResource = ProxyOnlyResource & {
   /** Target DNS type (would be used for migration) */
   targetDnsType?: DnsType;
   authCode?: string;
-};
+}
 
 /** Domain ownership Identifier. */
-export type DomainOwnershipIdentifier = ProxyOnlyResource & {
+export interface DomainOwnershipIdentifier extends ProxyOnlyResource {
   /** Ownership Id. */
   ownershipId?: string;
-};
+}
 
 /** A top level domain object. */
-export type TopLevelDomain = ProxyOnlyResource & {
+export interface TopLevelDomain extends ProxyOnlyResource {
   /** If <code>true</code>, then the top level domain supports domain privacy; otherwise, <code>false</code>. */
   privacy?: boolean;
-};
+}
+
+/** Full view of the custom domain suffix configuration for ASEv3. */
+export interface CustomDnsSuffixConfiguration extends ProxyOnlyResource {
+  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+  readonly provisioningState?: CustomDnsSuffixProvisioningState;
+  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+  readonly provisioningDetails?: string;
+  /** The default custom domain suffix to use for all sites deployed on the ASE. */
+  dnsSuffix?: string;
+  /** The URL referencing the Azure Key Vault certificate secret that should be used as the default SSL/TLS certificate for sites with the custom domain suffix. */
+  certificateUrl?: string;
+  /** The user-assigned identity to use for resolving the key vault certificate reference. If not specified, the system-assigned ASE identity will be used if available. */
+  keyVaultReferenceIdentity?: string;
+}
+
+/** Full view of networking configuration for an ASE. */
+export interface AseV3NetworkingConfiguration extends ProxyOnlyResource {
+  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+  readonly windowsOutboundIpAddresses?: string[];
+  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+  readonly linuxOutboundIpAddresses?: string[];
+  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+  readonly externalInboundIpAddresses?: string[];
+  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+  readonly internalInboundIpAddresses?: string[];
+  /** Property to enable and disable new private endpoint connection creation on ASE */
+  allowNewPrivateEndpointConnections?: boolean;
+  /** Property to enable and disable FTP on ASEV3 */
+  ftpEnabled?: boolean;
+  /** Property to enable and disable Remote Debug on ASEV3 */
+  remoteDebugEnabled?: boolean;
+  /** Customer provided Inbound IP Address. Only able to be set on Ase create. */
+  inboundIpAddressOverride?: string;
+}
 
 /** ARM resource for a app service environment. */
-export type AppServiceEnvironmentPatchResource = ProxyOnlyResource & {
+export interface AppServiceEnvironmentPatchResource extends ProxyOnlyResource {
   /**
    * Provisioning state of the App Service Environment.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4711,14 +6229,25 @@ export type AppServiceEnvironmentPatchResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly hasLinuxWorkers?: boolean;
+  /** Upgrade Preference */
+  upgradePreference?: UpgradePreference;
   /** Dedicated Host Count */
   dedicatedHostCount?: number;
   /** Whether or not this App Service Environment is zone-redundant. */
   zoneRedundant?: boolean;
-};
+  /** Full view of the custom domain suffix configuration for ASEv3. */
+  customDnsSuffixConfiguration?: CustomDnsSuffixConfiguration;
+  /** Full view of networking configuration for an ASE. */
+  networkingConfiguration?: AseV3NetworkingConfiguration;
+  /**
+   * Whether an upgrade is available for this App Service Environment.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly upgradeAvailability?: UpgradeAvailability;
+}
 
 /** Describes main public IP address and any extra virtual IPs. */
-export type AddressResponse = ProxyOnlyResource & {
+export interface AddressResponse extends ProxyOnlyResource {
   /** Main public virtual IP. */
   serviceIpAddress?: string;
   /** Virtual Network internal IP address of the App Service Environment if it is in internal load-balancing mode. */
@@ -4727,10 +6256,10 @@ export type AddressResponse = ProxyOnlyResource & {
   outboundIpAddresses?: string[];
   /** Additional virtual IPs. */
   vipMappings?: VirtualIPMapping[];
-};
+}
 
 /** Push settings for the App. */
-export type PushSettings = ProxyOnlyResource & {
+export interface PushSettings extends ProxyOnlyResource {
   /** Gets or sets a flag indicating whether the Push endpoint is enabled. */
   isPushEnabled?: boolean;
   /** Gets or sets a JSON string containing a list of tags that are whitelisted for use by the push registration endpoint. */
@@ -4744,24 +6273,10 @@ export type PushSettings = ProxyOnlyResource & {
   tagsRequiringAuth?: string;
   /** Gets or sets a JSON string containing a list of dynamic tags that will be evaluated from user claims in the push registration endpoint. */
   dynamicTagsJson?: string;
-};
-
-/** Full view of networking configuration for an ASE. */
-export type AseV3NetworkingConfiguration = ProxyOnlyResource & {
-  /** NOTE: This property will not be serialized. It can only be populated by the server. */
-  readonly windowsOutboundIpAddresses?: string[];
-  /** NOTE: This property will not be serialized. It can only be populated by the server. */
-  readonly linuxOutboundIpAddresses?: string[];
-  /** NOTE: This property will not be serialized. It can only be populated by the server. */
-  readonly externalInboundIpAddresses?: string[];
-  /** NOTE: This property will not be serialized. It can only be populated by the server. */
-  readonly internalInboundIpAddresses?: string[];
-  /** Property to enable and disable new private endpoint connection creation on ASE */
-  allowNewPrivateEndpointConnections?: boolean;
-};
+}
 
 /** Worker pool of an App Service Environment ARM resource. */
-export type WorkerPoolResource = ProxyOnlyResource & {
+export interface WorkerPoolResource extends ProxyOnlyResource {
   /** Description of a SKU for a scalable resource. */
   sku?: SkuDescription;
   /** Worker size ID for referencing this worker pool. */
@@ -4777,10 +6292,10 @@ export type WorkerPoolResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly instanceNames?: string[];
-};
+}
 
 /** Metadata for the metrics. */
-export type ResourceMetricDefinition = ProxyOnlyResource & {
+export interface ResourceMetricDefinition extends ProxyOnlyResource {
   /**
    * Unit of the metric.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4806,10 +6321,10 @@ export type ResourceMetricDefinition = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly properties?: { [propertyName: string]: string };
-};
+}
 
 /** Usage of the quota resource. */
-export type Usage = ProxyOnlyResource & {
+export interface Usage extends ProxyOnlyResource {
   /**
    * Friendly name shown in the UI.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4850,10 +6365,11 @@ export type Usage = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly siteMode?: string;
-};
+}
 
 /** Remote Private Endpoint Connection ARM resource. */
-export type RemotePrivateEndpointConnectionARMResource = ProxyOnlyResource & {
+export interface RemotePrivateEndpointConnectionARMResource
+  extends ProxyOnlyResource {
   /** NOTE: This property will not be serialized. It can only be populated by the server. */
   readonly provisioningState?: string;
   /** PrivateEndpoint of a remote private endpoint connection */
@@ -4862,16 +6378,10 @@ export type RemotePrivateEndpointConnectionARMResource = ProxyOnlyResource & {
   privateLinkServiceConnectionState?: PrivateLinkConnectionState;
   /** Private IPAddresses mapped to the remote private endpoint */
   ipAddresses?: string[];
-};
-
-/** Private Endpoint Connection Approval ARM resource. */
-export type PrivateLinkConnectionApprovalRequestResource = ProxyOnlyResource & {
-  /** The state of a private link connection */
-  privateLinkServiceConnectionState?: PrivateLinkConnectionState;
-};
+}
 
 /** ARM resource for a app service plan. */
-export type AppServicePlanPatchResource = ProxyOnlyResource & {
+export interface AppServicePlanPatchResource extends ProxyOnlyResource {
   /** Target worker tier assigned to the App Service plan. */
   workerTierName?: string;
   /**
@@ -4891,6 +6401,11 @@ export type AppServicePlanPatchResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly maximumNumberOfWorkers?: number;
+  /**
+   * The number of instances that are assigned to this App Service plan.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly numberOfWorkers?: number;
   /**
    * Geographical location for the App Service plan.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4943,10 +6458,10 @@ export type AppServicePlanPatchResource = ProxyOnlyResource & {
    * If <code>false</code>, this App Service Plan will not perform availability zone balancing.
    */
   zoneRedundant?: boolean;
-};
+}
 
 /** Hybrid Connection contract. This is used to configure a Hybrid Connection. */
-export type HybridConnection = ProxyOnlyResource & {
+export interface HybridConnection extends ProxyOnlyResource {
   /** The name of the Service Bus namespace. */
   serviceBusNamespace?: string;
   /** The name of the Service Bus relay. */
@@ -4966,10 +6481,10 @@ export type HybridConnection = ProxyOnlyResource & {
   sendKeyValue?: string;
   /** The suffix for the service bus endpoint. By default this is .servicebus.windows.net */
   serviceBusSuffix?: string;
-};
+}
 
 /** Hybrid Connection key contract. This has the send key name and value for a Hybrid Connection. */
-export type HybridConnectionKey = ProxyOnlyResource & {
+export interface HybridConnectionKey extends ProxyOnlyResource {
   /**
    * The name of the send key.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4980,10 +6495,10 @@ export type HybridConnectionKey = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly sendKeyValue?: string;
-};
+}
 
 /** Hybrid Connection limits contract. This is used to return the plan limits of Hybrid Connections. */
-export type HybridConnectionLimits = ProxyOnlyResource & {
+export interface HybridConnectionLimits extends ProxyOnlyResource {
   /**
    * The current number of Hybrid Connections.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -4994,10 +6509,10 @@ export type HybridConnectionLimits = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly maximum?: number;
-};
+}
 
 /** Virtual Network route contract used to pass routing information for a Virtual Network. */
-export type VnetRoute = ProxyOnlyResource & {
+export interface VnetRoute extends ProxyOnlyResource {
   /** The starting address for this route. This may also include a CIDR notation, in which case the end address must not be specified. */
   startAddress?: string;
   /** The ending address for this route. If the start address is specified in CIDR notation, this must be omitted. */
@@ -5011,10 +6526,10 @@ export type VnetRoute = ProxyOnlyResource & {
    * These values will be used for syncing an app's routes with those from a Virtual Network.
    */
   routeType?: RouteType;
-};
+}
 
 /** Virtual Network information ARM resource. */
-export type VnetInfoResource = ProxyOnlyResource & {
+export interface VnetInfoResource extends ProxyOnlyResource {
   /** The Virtual Network's resource ID. */
   vnetResourceId?: string;
   /**
@@ -5041,18 +6556,18 @@ export type VnetInfoResource = ProxyOnlyResource & {
   dnsServers?: string;
   /** Flag that is used to denote if this is VNET injection */
   isSwift?: boolean;
-};
+}
 
 /** The Virtual Network gateway contract. This is used to give the Virtual Network gateway access to the VPN package. */
-export type VnetGateway = ProxyOnlyResource & {
+export interface VnetGateway extends ProxyOnlyResource {
   /** The Virtual Network name. */
   vnetName?: string;
   /** The URI where the VPN package can be downloaded. */
   vpnPackageUri?: string;
-};
+}
 
 /** ARM resource for a certificate. */
-export type CertificatePatchResource = ProxyOnlyResource & {
+export interface CertificatePatchResource extends ProxyOnlyResource {
   /** Certificate password. */
   password?: string;
   /**
@@ -5134,10 +6649,10 @@ export type CertificatePatchResource = ProxyOnlyResource & {
   canonicalName?: string;
   /** Method of domain validation for free cert */
   domainValidationMethod?: string;
-};
+}
 
 /** A deleted app. */
-export type DeletedSite = ProxyOnlyResource & {
+export interface DeletedSite extends ProxyOnlyResource {
   /**
    * Numeric id for the deleted site
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5178,28 +6693,28 @@ export type DeletedSite = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly geoRegionName?: string;
-};
+}
 
 /** Class representing detector definition */
-export type DiagnosticCategory = ProxyOnlyResource & {
+export interface DiagnosticCategory extends ProxyOnlyResource {
   /**
    * Description of the diagnostic category
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly description?: string;
-};
+}
 
 /** Definition of Analysis */
-export type AnalysisDefinition = ProxyOnlyResource & {
+export interface AnalysisDefinition extends ProxyOnlyResource {
   /**
    * Description of the Analysis
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly description?: string;
-};
+}
 
 /** Class representing a diagnostic analysis done on an application */
-export type DiagnosticAnalysis = ProxyOnlyResource & {
+export interface DiagnosticAnalysis extends ProxyOnlyResource {
   /** Start time of the period */
   startTime?: Date;
   /** End time of the period */
@@ -5210,10 +6725,10 @@ export type DiagnosticAnalysis = ProxyOnlyResource & {
   payload?: AnalysisData[];
   /** Data by each detector for detectors that did not corelate */
   nonCorrelatedDetectors?: DetectorDefinition[];
-};
+}
 
 /** ARM resource for a detector definition */
-export type DetectorDefinitionResource = ProxyOnlyResource & {
+export interface DetectorDefinitionResource extends ProxyOnlyResource {
   /**
    * Display name of the detector
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5234,10 +6749,10 @@ export type DetectorDefinitionResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly isEnabled?: boolean;
-};
+}
 
 /** Class representing Response from Diagnostic Detectors */
-export type DiagnosticDetectorResponse = ProxyOnlyResource & {
+export interface DiagnosticDetectorResponse extends ProxyOnlyResource {
   /** Start time of the period */
   startTime?: Date;
   /** End time of the period */
@@ -5254,19 +6769,19 @@ export type DiagnosticDetectorResponse = ProxyOnlyResource & {
   data?: NameValuePair[][];
   /** Meta Data */
   responseMetaData?: ResponseMetaData;
-};
+}
 
 /** A snapshot of an app. */
-export type Snapshot = ProxyOnlyResource & {
+export interface Snapshot extends ProxyOnlyResource {
   /**
    * The time the snapshot was taken.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly time?: string;
-};
+}
 
 /** ARM resource for a KubeEnvironment when patching */
-export type KubeEnvironmentPatchResource = ProxyOnlyResource & {
+export interface KubeEnvironmentPatchResource extends ProxyOnlyResource {
   /**
    * Provisioning state of the Kubernetes Environment.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5298,11 +6813,13 @@ export type KubeEnvironmentPatchResource = ProxyOnlyResource & {
    * supported
    */
   appLogsConfiguration?: AppLogsConfiguration;
+  /** Cluster configuration for Container Apps Environments to configure Dapr Instrumentation Key and VNET Configuration */
+  containerAppsConfiguration?: ContainerAppsConfiguration;
   aksResourceID?: string;
-};
+}
 
 /** ARM resource for a ApplicationStack. */
-export type ApplicationStackResource = ProxyOnlyResource & {
+export interface ApplicationStackResource extends ProxyOnlyResource {
   /** Application stack name. */
   namePropertiesName?: string;
   /** Application stack display name. */
@@ -5315,10 +6832,10 @@ export type ApplicationStackResource = ProxyOnlyResource & {
   frameworks?: ApplicationStack[];
   /** <code>true</code> if this is the stack is deprecated; otherwise, <code>false</code>. */
   isDeprecated?: ApplicationStack[];
-};
+}
 
 /** Function App Stack. */
-export type FunctionAppStack = ProxyOnlyResource & {
+export interface FunctionAppStack extends ProxyOnlyResource {
   /**
    * Function App stack location.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5344,10 +6861,10 @@ export type FunctionAppStack = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly preferredOs?: StackPreferredOs;
-};
+}
 
 /** Web App stack. */
-export type WebAppStack = ProxyOnlyResource & {
+export interface WebAppStack extends ProxyOnlyResource {
   /**
    * Web App stack location.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5373,10 +6890,10 @@ export type WebAppStack = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly preferredOs?: StackPreferredOs;
-};
+}
 
 /** Represents a recommendation result generated by the recommendation engine. */
-export type Recommendation = ProxyOnlyResource & {
+export interface Recommendation extends ProxyOnlyResource {
   /** Timestamp when this instance was created. */
   creationTime?: Date;
   /** A GUID value that each recommendation object is associated with. */
@@ -5426,10 +6943,10 @@ export type Recommendation = ProxyOnlyResource & {
   bladeName?: string;
   /** Forward link to an external document associated with the rule. */
   forwardLink?: string;
-};
+}
 
 /** Represents a recommendation rule that the recommendation engine can perform. */
-export type RecommendationRule = ProxyOnlyResource & {
+export interface RecommendationRule extends ProxyOnlyResource {
   /** Unique name of the rule. */
   recommendationName?: string;
   /** UI friendly name of the rule. */
@@ -5462,18 +6979,18 @@ export type RecommendationRule = ProxyOnlyResource & {
   bladeName?: string;
   /** Forward link to an external document associated with the rule. Applicable to dynamic rule only. */
   forwardLink?: string;
-};
+}
 
 /** Used for getting ResourceHealthCheck settings. */
-export type ResourceHealthMetadata = ProxyOnlyResource & {
+export interface ResourceHealthMetadata extends ProxyOnlyResource {
   /** The category that the resource matches in the RHC Policy File */
   category?: string;
   /** Is there a health signal for the resource */
   signalAvailability?: boolean;
-};
+}
 
 /** User credentials used for publishing activity. */
-export type User = ProxyOnlyResource & {
+export interface User extends ProxyOnlyResource {
   /** Username used for publishing. */
   publishingUserName?: string;
   /**
@@ -5493,10 +7010,10 @@ export type User = ProxyOnlyResource & {
   publishingPasswordHashSalt?: string;
   /** Url of SCM site. */
   scmUri?: string;
-};
+}
 
 /** The source control OAuth token. */
-export type SourceControl = ProxyOnlyResource & {
+export interface SourceControl extends ProxyOnlyResource {
   /** OAuth access token. */
   token?: string;
   /** OAuth access token secret. */
@@ -5505,10 +7022,10 @@ export type SourceControl = ProxyOnlyResource & {
   refreshToken?: string;
   /** OAuth token expiration. */
   expirationTime?: Date;
-};
+}
 
 /** App Service billing entity that contains information about meter which the Azure billing system utilizes to charge users for services. */
-export type BillingMeter = ProxyOnlyResource & {
+export interface BillingMeter extends ProxyOnlyResource {
   /** Meter GUID onboarded in Commerce */
   meterId?: string;
   /** Azure Location of billable resource */
@@ -5523,10 +7040,23 @@ export type BillingMeter = ProxyOnlyResource & {
   osType?: string;
   /** Meter Multiplier */
   multiplier?: number;
-};
+}
+
+/** A domain specific resource identifier. */
+export interface Identifier extends ProxyOnlyResource {
+  /** String representation of the identity. */
+  value?: string;
+}
+
+/** A hostname and its assigned sites */
+export interface CustomHostnameSites extends ProxyOnlyResource {
+  customHostname?: string;
+  region?: string;
+  siteResourceIds?: Identifier[];
+}
 
 /** Geographical region. */
-export type GeoRegion = ProxyOnlyResource & {
+export interface GeoRegion extends ProxyOnlyResource {
   /**
    * Region description.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5542,16 +7072,38 @@ export type GeoRegion = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly orgDomain?: string;
-};
+}
 
-/** A domain specific resource identifier. */
-export type Identifier = ProxyOnlyResource & {
-  /** String representation of the identity. */
-  value?: string;
-};
+/** ASE region. */
+export interface AseRegion extends ProxyOnlyResource {
+  /**
+   * Display name for region.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly displayName?: string;
+  /**
+   * Is region standard.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly standard?: boolean;
+  /**
+   * Dedicated host enabled.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly dedicatedHost?: boolean;
+  /**
+   * Zone redundant deployment enabled.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly zoneRedundant?: boolean;
+  /** Available Skus in region. */
+  availableSku?: string[];
+  /** Available OSs in region. */
+  availableOS?: string[];
+}
 
 /** Premier add-on offer. */
-export type PremierAddOnOffer = ProxyOnlyResource & {
+export interface PremierAddOnOffer extends ProxyOnlyResource {
   /** Premier add on SKU. */
   sku?: string;
   /** Premier add on offer Product. */
@@ -5572,10 +7124,10 @@ export type PremierAddOnOffer = ProxyOnlyResource & {
   marketplacePublisher?: string;
   /** Marketplace offer. */
   marketplaceOffer?: string;
-};
+}
 
 /** The required set of inputs to validate a VNET */
-export type VnetParameters = ProxyOnlyResource & {
+export interface VnetParameters extends ProxyOnlyResource {
   /** The Resource Group of the VNET to be validated */
   vnetResourceGroup?: string;
   /** The name of the VNET to be validated */
@@ -5584,18 +7136,18 @@ export type VnetParameters = ProxyOnlyResource & {
   vnetSubnetName?: string;
   /** The ARM Resource ID of the subnet to validate */
   subnetResourceId?: string;
-};
+}
 
 /** A class that describes a test that failed during NSG and UDR validation. */
-export type VnetValidationTestFailure = ProxyOnlyResource & {
+export interface VnetValidationTestFailure extends ProxyOnlyResource {
   /** The name of the test that failed. */
   testName?: string;
   /** The details of what caused the failure, e.g. the blocking rule name, etc. */
   details?: string;
-};
+}
 
 /** A class that describes the reason for a validation failure. */
-export type VnetValidationFailureDetails = ProxyOnlyResource & {
+export interface VnetValidationFailureDetails extends ProxyOnlyResource {
   /** Text describing the validation outcome. */
   message?: string;
   /** A flag describing whether or not validation failed. */
@@ -5604,20 +7156,20 @@ export type VnetValidationFailureDetails = ProxyOnlyResource & {
   failedTests?: VnetValidationTestFailure[];
   /** A list of warnings generated during validation. */
   warnings?: VnetValidationTestFailure[];
-};
+}
 
 /** Request entity for previewing the Static Site workflow */
-export type StaticSitesWorkflowPreviewRequest = ProxyOnlyResource & {
+export interface StaticSitesWorkflowPreviewRequest extends ProxyOnlyResource {
   /** URL for the repository of the static site. */
   repositoryUrl?: string;
   /** The target branch in the repository. */
   branch?: string;
   /** Build properties to configure on the repository. */
   buildProperties?: StaticSiteBuildProperties;
-};
+}
 
 /** Preview for the Static Site Workflow to be generated */
-export type StaticSitesWorkflowPreview = ProxyOnlyResource & {
+export interface StaticSitesWorkflowPreview extends ProxyOnlyResource {
   /**
    * The path for the workflow file to be generated
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5628,10 +7180,10 @@ export type StaticSitesWorkflowPreview = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly contents?: string;
-};
+}
 
 /** A remote private endpoint connection */
-export type RemotePrivateEndpointConnection = ProxyOnlyResource & {
+export interface RemotePrivateEndpointConnection extends ProxyOnlyResource {
   /** NOTE: This property will not be serialized. It can only be populated by the server. */
   readonly provisioningState?: string;
   /** PrivateEndpoint of a remote private endpoint connection */
@@ -5640,10 +7192,10 @@ export type RemotePrivateEndpointConnection = ProxyOnlyResource & {
   privateLinkServiceConnectionState?: PrivateLinkConnectionState;
   /** Private IPAddresses mapped to the remote private endpoint */
   ipAddresses?: string[];
-};
+}
 
 /** A static site user provided function. */
-export type StaticSiteUserProvidedFunctionApp = ProxyOnlyResource & {
+export interface StaticSiteUserProvidedFunctionApp extends ProxyOnlyResource {
   /** The resource id of the function app registered with the static site */
   functionAppResourceId?: string;
   /** The region of the function app registered with the static site */
@@ -5653,10 +7205,10 @@ export type StaticSiteUserProvidedFunctionApp = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly createdOn?: Date;
-};
+}
 
 /** ARM resource for a static site when patching */
-export type StaticSitePatchResource = ProxyOnlyResource & {
+export interface StaticSitePatchResource extends ProxyOnlyResource {
   /**
    * The default autogenerated hostname for the static site.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5702,14 +7254,25 @@ export type StaticSitePatchResource = ProxyOnlyResource & {
    */
   readonly userProvidedFunctionApps?: StaticSiteUserProvidedFunctionApp[];
   /**
-   * The provider that submitted the last deployment to the primary environment of the static site.
+   * Backends linked to the static side
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly provider?: string;
-};
+  readonly linkedBackends?: StaticSiteLinkedBackend[];
+  /** The provider that submitted the last deployment to the primary environment of the static site. */
+  provider?: string;
+  /** State indicating the status of the enterprise grade CDN serving traffic to the static web app. */
+  enterpriseGradeCdnStatus?: EnterpriseGradeCdnStatus;
+  /** State indicating whether public traffic are allowed or not for a static web app. Allowed Values: 'Enabled', 'Disabled' or an empty string. */
+  publicNetworkAccess?: string;
+  /**
+   * Database connections for the static site
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly databaseConnections?: DatabaseConnectionOverview[];
+}
 
 /** Static Site User ARM resource. */
-export type StaticSiteUserARMResource = ProxyOnlyResource & {
+export interface StaticSiteUserARMResource extends ProxyOnlyResource {
   /**
    * The identity provider for the static site user.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5727,10 +7290,10 @@ export type StaticSiteUserARMResource = ProxyOnlyResource & {
   readonly displayName?: string;
   /** The roles for the static site user, in free-form string format */
   roles?: string;
-};
+}
 
 /** Static Site Build ARM resource. */
-export type StaticSiteBuildARMResource = ProxyOnlyResource & {
+export interface StaticSiteBuildARMResource extends ProxyOnlyResource {
   /**
    * An identifier for the static site build.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5771,16 +7334,44 @@ export type StaticSiteBuildARMResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly userProvidedFunctionApps?: StaticSiteUserProvidedFunctionApp[];
-};
+  /**
+   * Backends linked to the static side build
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly linkedBackends?: StaticSiteLinkedBackend[];
+  /**
+   * Database connections for the static site build
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly databaseConnections?: DatabaseConnectionOverview[];
+}
 
 /** String dictionary resource. */
-export type StringDictionary = ProxyOnlyResource & {
+export interface StringDictionary extends ProxyOnlyResource {
   /** Settings. */
   properties?: { [propertyName: string]: string };
-};
+}
+
+/** Static Site Database Connection resource. */
+export interface DatabaseConnection extends ProxyOnlyResource {
+  /** The resource id of the database. */
+  resourceId?: string;
+  /** If present, the identity is used in conjunction with connection string to connect to the database. Use of the system-assigned managed identity is indicated with the string 'SystemAssigned', while use of a user-assigned managed identity is indicated with the resource id of the managed identity resource. */
+  connectionIdentity?: string;
+  /** The connection string to use to connect to the database. */
+  connectionString?: string;
+  /** The region of the database resource. */
+  region?: string;
+  /**
+   * A list of configuration files associated with this database connection.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly configurationFiles?: StaticSiteDatabaseConnectionConfigurationFileOverview[];
+}
 
 /** Static Site Function Overview ARM resource. */
-export type StaticSiteFunctionOverviewARMResource = ProxyOnlyResource & {
+export interface StaticSiteFunctionOverviewARMResource
+  extends ProxyOnlyResource {
   /**
    * The name for the function
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5791,10 +7382,11 @@ export type StaticSiteFunctionOverviewARMResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly triggerType?: TriggerTypes;
-};
+}
 
 /** Static Site User Provided Function App ARM resource. */
-export type StaticSiteUserProvidedFunctionAppARMResource = ProxyOnlyResource & {
+export interface StaticSiteUserProvidedFunctionAppARMResource
+  extends ProxyOnlyResource {
   /** The resource id of the function app registered with the static site */
   functionAppResourceId?: string;
   /** The region of the function app registered with the static site */
@@ -5804,10 +7396,10 @@ export type StaticSiteUserProvidedFunctionAppARMResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly createdOn?: Date;
-};
+}
 
 /** Static site zip deployment ARM resource. */
-export type StaticSiteZipDeploymentARMResource = ProxyOnlyResource & {
+export interface StaticSiteZipDeploymentARMResource extends ProxyOnlyResource {
   /** URL for the zipped app content */
   appZipUrl?: string;
   /** URL for the zipped api content */
@@ -5818,10 +7410,29 @@ export type StaticSiteZipDeploymentARMResource = ProxyOnlyResource & {
   provider?: string;
   /** The language of the api content, if it exists */
   functionLanguage?: string;
-};
+}
+
+/** Static site basic auth properties ARM resource. */
+export interface StaticSiteBasicAuthPropertiesARMResource
+  extends ProxyOnlyResource {
+  /** The password for basic auth. */
+  password?: string;
+  /** Url to the secret in Key Vault. */
+  secretUrl?: string;
+  /** State indicating if basic auth is enabled and for what environments it is active. */
+  applicableEnvironmentsMode?: string;
+  /** The list of enabled environments for Basic Auth if ApplicableEnvironmentsMode is set to SpecifiedEnvironments. */
+  environments?: string[];
+  /**
+   * State indicating if basic auth has a secret and what type it is.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly secretState?: string;
+}
 
 /** Static sites user roles invitation resource. */
-export type StaticSiteUserInvitationRequestResource = ProxyOnlyResource & {
+export interface StaticSiteUserInvitationRequestResource
+  extends ProxyOnlyResource {
   /** The domain name for the static site custom domain. */
   domain?: string;
   /** The identity provider for the static site user. */
@@ -5832,10 +7443,11 @@ export type StaticSiteUserInvitationRequestResource = ProxyOnlyResource & {
   roles?: string;
   /** The number of hours the sas token stays valid */
   numHoursToExpiration?: number;
-};
+}
 
 /** Static sites user roles invitation link resource. */
-export type StaticSiteUserInvitationResponseResource = ProxyOnlyResource & {
+export interface StaticSiteUserInvitationResponseResource
+  extends ProxyOnlyResource {
   /**
    * The expiration time of the invitation
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5846,10 +7458,11 @@ export type StaticSiteUserInvitationResponseResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly invitationUrl?: string;
-};
+}
 
 /** Static Site Custom Domain Overview ARM resource. */
-export type StaticSiteCustomDomainOverviewARMResource = ProxyOnlyResource & {
+export interface StaticSiteCustomDomainOverviewARMResource
+  extends ProxyOnlyResource {
   /**
    * The domain name for the static site custom domain.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -5872,30 +7485,50 @@ export type StaticSiteCustomDomainOverviewARMResource = ProxyOnlyResource & {
   readonly validationToken?: string;
   /** NOTE: This property will not be serialized. It can only be populated by the server. */
   readonly errorMessage?: string;
-};
+}
 
 /** Static Site Custom Domain Request Properties ARM resource. */
-export type StaticSiteCustomDomainRequestPropertiesARMResource = ProxyOnlyResource & {
+export interface StaticSiteCustomDomainRequestPropertiesARMResource
+  extends ProxyOnlyResource {
   /** Validation method for adding a custom domain */
   validationMethod?: string;
-};
+}
 
 /** String list resource. */
-export type StringList = ProxyOnlyResource & {
+export interface StringList extends ProxyOnlyResource {
   /** List of string resources. */
   properties?: string[];
-};
+}
 
 /** Static Site Reset Properties ARM resource. */
-export type StaticSiteResetPropertiesARMResource = ProxyOnlyResource & {
+export interface StaticSiteResetPropertiesARMResource
+  extends ProxyOnlyResource {
   /** The token which proves admin privileges to the repository. */
   repositoryToken?: string;
   /** Determines whether the repository should be updated with the new properties. */
   shouldUpdateRepository?: boolean;
-};
+}
+
+/** Static Site Linked Backend ARM resource. */
+export interface StaticSiteLinkedBackendARMResource extends ProxyOnlyResource {
+  /** The resource id of the backend linked to the static site */
+  backendResourceId?: string;
+  /** The region of the backend linked to the static site */
+  region?: string;
+  /**
+   * The date and time on which the backend was linked to the static site.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdOn?: Date;
+  /**
+   * The provisioning state of the linking process.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: string;
+}
 
 /** ARM resource for a site. */
-export type SitePatchResource = ProxyOnlyResource & {
+export interface SitePatchResource extends ProxyOnlyResource {
   /** Managed service identity. */
   identity?: ManagedServiceIdentity;
   /**
@@ -5946,6 +7579,8 @@ export type SitePatchResource = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly lastModifiedTimeUtc?: Date;
+  /** Property to configure various DNS related settings for a site. */
+  dnsConfiguration?: SiteDnsConfig;
   /** Configuration of the app. */
   siteConfig?: SiteConfig;
   /**
@@ -6050,10 +7685,10 @@ export type SitePatchResource = ProxyOnlyResource & {
    * This must be of the form /subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}
    */
   virtualNetworkSubnetId?: string;
-};
+}
 
 /** Custom domain analysis. */
-export type CustomHostnameAnalysisResult = ProxyOnlyResource & {
+export interface CustomHostnameAnalysisResult extends ProxyOnlyResource {
   /**
    * <code>true</code> if hostname is already verified; otherwise, <code>false</code>.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -6094,10 +7729,10 @@ export type CustomHostnameAnalysisResult = ProxyOnlyResource & {
   alternateCNameRecords?: string[];
   /** Alternate TXT records controller can see for this hostname. */
   alternateTxtRecords?: string[];
-};
+}
 
 /** Description of a backup which will be performed. */
-export type BackupRequest = ProxyOnlyResource & {
+export interface BackupRequest extends ProxyOnlyResource {
   /** Name of the backup. */
   backupName?: string;
   /** True if the backup schedule is enabled (must be included in that case), false if the backup schedule should be disabled. */
@@ -6108,10 +7743,10 @@ export type BackupRequest = ProxyOnlyResource & {
   backupSchedule?: BackupSchedule;
   /** Databases included in the backup. */
   databases?: DatabaseBackupSetting[];
-};
+}
 
 /** Backup description. */
-export type BackupItem = ProxyOnlyResource & {
+export interface BackupItem extends ProxyOnlyResource {
   /**
    * Id of the backup.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -6182,10 +7817,10 @@ export type BackupItem = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly websiteSizeInBytes?: number;
-};
+}
 
 /** Description of a restore request. */
-export type RestoreRequest = ProxyOnlyResource & {
+export interface RestoreRequest extends ProxyOnlyResource {
   /** SAS URL to the container. */
   storageAccountUrl?: string;
   /** Name of a blob which contains the backup. */
@@ -6211,16 +7846,17 @@ export type RestoreRequest = ProxyOnlyResource & {
   adjustConnectionStrings?: boolean;
   /** App Service Environment name, if needed (only when restoring an app to an App Service Environment). */
   hostingEnvironment?: string;
-};
+}
 
 /** Publishing Credentials Policies parameters. */
-export type CsmPublishingCredentialsPoliciesEntity = ProxyOnlyResource & {
+export interface CsmPublishingCredentialsPoliciesEntity
+  extends ProxyOnlyResource {
   /** <code>true</code> to allow access to a publishing method; otherwise, <code>false</code>. */
   allow?: boolean;
-};
+}
 
 /** Web app configuration ARM resource. */
-export type SiteConfigResource = ProxyOnlyResource & {
+export interface SiteConfigResource extends ProxyOnlyResource {
   /** Number of workers. */
   numberOfWorkers?: number;
   /** Default documents. */
@@ -6261,6 +7897,8 @@ export type SiteConfigResource = ProxyOnlyResource & {
   publishingUsername?: string;
   /** Application settings. */
   appSettings?: NameValuePair[];
+  /** Application metadata. This property cannot be retrieved, since it may contain secrets. */
+  metadata?: NameValuePair[];
   /** Connection strings. */
   connectionStrings?: ConnStringInfo[];
   /**
@@ -6330,14 +7968,20 @@ export type SiteConfigResource = ProxyOnlyResource & {
   keyVaultReferenceIdentity?: string;
   /** IP security restrictions for main. */
   ipSecurityRestrictions?: IpSecurityRestriction[];
+  /** Default action for main access restriction if no rules are matched. */
+  ipSecurityRestrictionsDefaultAction?: DefaultAction;
   /** IP security restrictions for scm. */
   scmIpSecurityRestrictions?: IpSecurityRestriction[];
+  /** Default action for scm access restriction if no rules are matched. */
+  scmIpSecurityRestrictionsDefaultAction?: DefaultAction;
   /** IP security restrictions for scm to use main. */
   scmIpSecurityRestrictionsUseMain?: boolean;
   /** Http20Enabled: configures a web site to allow clients to connect over http2.0 */
   http20Enabled?: boolean;
   /** MinTlsVersion: configures the minimum version of TLS required for SSL requests */
   minTlsVersion?: SupportedTlsVersions;
+  /** The minimum strength TLS cipher suite allowed for an application */
+  minTlsCipherSuite?: TlsCipherSuites;
   /** ScmMinTlsVersion: configures the minimum version of TLS required for SSL requests for SCM site */
   scmMinTlsVersion?: SupportedTlsVersions;
   /** State of FTP / FTPS service */
@@ -6352,6 +7996,11 @@ export type SiteConfigResource = ProxyOnlyResource & {
    * This setting only applies to the Consumption and Elastic Premium Plans
    */
   functionAppScaleLimit?: number;
+  /**
+   * Maximum number of workers that a site can scale out to.
+   * This setting only applies to apps in plans where ElasticScaleEnabled is <code>true</code>
+   */
+  elasticWebAppScaleLimit?: number;
   /** Health check path */
   healthCheckPath?: string;
   /**
@@ -6371,10 +8020,10 @@ export type SiteConfigResource = ProxyOnlyResource & {
   azureStorageAccounts?: { [propertyName: string]: AzureStorageInfoValue };
   /** Property to allow or block all public traffic. */
   publicNetworkAccess?: string;
-};
+}
 
 /** Configuration settings for the Azure App Service Authentication / Authorization feature. */
-export type SiteAuthSettings = ProxyOnlyResource & {
+export interface SiteAuthSettings extends ProxyOnlyResource {
   /** <code>true</code> if the Authentication / Authorization feature is enabled for the current app; otherwise, <code>false</code>. */
   enabled?: boolean;
   /**
@@ -6437,7 +8086,7 @@ export type SiteAuthSettings = ProxyOnlyResource & {
   /** Gets a value indicating whether the issuer should be a valid HTTPS url and be validated as such. */
   validateIssuer?: boolean;
   /**
-   * Allowed audience values to consider when validating JWTs issued by
+   * Allowed audience values to consider when validating JSON Web Tokens issued by
    * Azure Active Directory. Note that the <code>ClientID</code> value is always considered an
    * allowed audience, regardless of this setting.
    */
@@ -6567,158 +8216,10 @@ export type SiteAuthSettings = ProxyOnlyResource & {
    * The setting in this value can control the behavior of the control plane for Authentication / Authorization.
    */
   configVersion?: string;
-};
-
-/** The configuration settings of the Azure Active Directory app registration. */
-export type AzureActiveDirectoryRegistration = ProxyOnlyResource & {
-  /**
-   * The OpenID Connect Issuer URI that represents the entity which issues access tokens for this application.
-   * When using Azure Active Directory, this value is the URI of the directory tenant, e.g. https://login.microsoftonline.com/v2.0/{tenant-guid}/.
-   * This URI is a case-sensitive identifier for the token issuer.
-   * More information on OpenID Connect Discovery: http://openid.net/specs/openid-connect-discovery-1_0.html
-   */
-  openIdIssuer?: string;
-  /**
-   * The Client ID of this relying party application, known as the client_id.
-   * This setting is required for enabling OpenID Connection authentication with Azure Active Directory or
-   * other 3rd party OpenID Connect providers.
-   * More information on OpenID Connect: http://openid.net/specs/openid-connect-core-1_0.html
-   */
-  clientId?: string;
-  /** The app setting name that contains the client secret of the relying party application. */
-  clientSecretSettingName?: string;
-  /**
-   * An alternative to the client secret, that is the thumbprint of a certificate used for signing purposes. This property acts as
-   * a replacement for the Client Secret. It is also optional.
-   */
-  clientSecretCertificateThumbprint?: string;
-  /**
-   * An alternative to the client secret thumbprint, that is the subject alternative name of a certificate used for signing purposes. This property acts as
-   * a replacement for the Client Secret Certificate Thumbprint. It is also optional.
-   */
-  clientSecretCertificateSubjectAlternativeName?: string;
-  /**
-   * An alternative to the client secret thumbprint, that is the issuer of a certificate used for signing purposes. This property acts as
-   * a replacement for the Client Secret Certificate Thumbprint. It is also optional.
-   */
-  clientSecretCertificateIssuer?: string;
-};
-
-/** The configuration settings of the Azure Active Directory login flow. */
-export type AzureActiveDirectoryLogin = ProxyOnlyResource & {
-  /**
-   * Login parameters to send to the OpenID Connect authorization endpoint when
-   * a user logs in. Each parameter must be in the form "key=value".
-   */
-  loginParameters?: string[];
-  /** <code>true</code> if the www-authenticate provider should be omitted from the request; otherwise, <code>false</code>. */
-  disableWWWAuthenticate?: boolean;
-};
-
-/** The configuration settings of the Azure Active Directory allowed principals. */
-export type AllowedPrincipals = ProxyOnlyResource & {
-  /** The list of the allowed groups. */
-  groups?: string[];
-  /** The list of the allowed identities. */
-  identities?: string[];
-};
-
-/** The configuration settings of the Azure Active Directory token validation flow. */
-export type AzureActiveDirectoryValidation = ProxyOnlyResource & {
-  /** The configuration settings of the checks that should be made while validating the JWT Claims. */
-  jwtClaimChecks?: JwtClaimChecks;
-  /** The list of audiences that can make successful authentication/authorization requests. */
-  allowedAudiences?: string[];
-  /** The configuration settings of the default authorization policy. */
-  defaultAuthorizationPolicy?: DefaultAuthorizationPolicy;
-};
-
-/** The configuration settings of the app registration for providers that have app ids and app secrets */
-export type AppRegistration = ProxyOnlyResource & {
-  /** The App ID of the app used for login. */
-  appId?: string;
-  /** The app setting name that contains the app secret. */
-  appSecretSettingName?: string;
-};
-
-/** The configuration settings of the GitHub provider. */
-export type GitHub = ProxyOnlyResource & {
-  /** <code>false</code> if the GitHub provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
-  enabled?: boolean;
-  /** The configuration settings of the app registration for the GitHub provider. */
-  registration?: ClientRegistration;
-  /** The configuration settings of the login flow. */
-  login?: LoginScopes;
-};
-
-/** The configuration settings of the Google provider. */
-export type Google = ProxyOnlyResource & {
-  /** <code>false</code> if the Google provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
-  enabled?: boolean;
-  /** The configuration settings of the app registration for the Google provider. */
-  registration?: ClientRegistration;
-  /** The configuration settings of the login flow. */
-  login?: LoginScopes;
-  /** The configuration settings of the Azure Active Directory token validation flow. */
-  validation?: AllowedAudiencesValidation;
-};
-
-/** The configuration settings of the Twitter provider. */
-export type Twitter = ProxyOnlyResource & {
-  /** <code>false</code> if the Twitter provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
-  enabled?: boolean;
-  /** The configuration settings of the app registration for the Twitter provider. */
-  registration?: TwitterRegistration;
-};
-
-/** The configuration settings of the custom Open ID Connect provider. */
-export type CustomOpenIdConnectProvider = ProxyOnlyResource & {
-  /** <code>false</code> if the custom Open ID provider provider should not be enabled; otherwise, <code>true</code>. */
-  enabled?: boolean;
-  /** The configuration settings of the app registration for the custom Open ID Connect provider. */
-  registration?: OpenIdConnectRegistration;
-  /** The configuration settings of the login flow of the custom Open ID Connect provider. */
-  login?: OpenIdConnectLogin;
-};
-
-/** The configuration settings of the legacy Microsoft Account provider. */
-export type LegacyMicrosoftAccount = ProxyOnlyResource & {
-  /** <code>false</code> if the legacy Microsoft Account provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
-  enabled?: boolean;
-  /** The configuration settings of the app registration for the legacy Microsoft Account provider. */
-  registration?: ClientRegistration;
-  /** The configuration settings of the login flow. */
-  login?: LoginScopes;
-  /** The configuration settings of the legacy Microsoft Account provider token validation flow. */
-  validation?: AllowedAudiencesValidation;
-};
-
-/** The configuration settings of the Apple provider. */
-export type Apple = ProxyOnlyResource & {
-  /** <code>false</code> if the Apple provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
-  enabled?: boolean;
-  /** The configuration settings of the Apple registration. */
-  registration?: AppleRegistration;
-  /** The configuration settings of the login flow. */
-  login?: LoginScopes;
-};
-
-/** The configuration settings of the Azure Static Web Apps provider. */
-export type AzureStaticWebApps = ProxyOnlyResource & {
-  /** <code>false</code> if the Azure Static Web Apps provider should not be enabled despite the set registration; otherwise, <code>true</code>. */
-  enabled?: boolean;
-  /** The configuration settings of the Azure Static Web Apps registration. */
-  registration?: AzureStaticWebAppsRegistration;
-};
-
-/** The configuration settings of the storage of the tokens if blob storage is used. */
-export type BlobStorageTokenStore = ProxyOnlyResource & {
-  /** The name of the app setting containing the SAS URL of the blob storage containing the tokens. */
-  sasUrlSettingName?: string;
-};
+}
 
 /** Configuration settings for the Azure App Service Authentication / Authorization V2 feature. */
-export type SiteAuthSettingsV2 = ProxyOnlyResource & {
+export interface SiteAuthSettingsV2 extends ProxyOnlyResource {
   /** The configuration settings of the platform of App Service Authentication/Authorization. */
   platform?: AuthPlatform;
   /** The configuration settings that determines the validation flow of users using App Service Authentication/Authorization. */
@@ -6729,16 +8230,17 @@ export type SiteAuthSettingsV2 = ProxyOnlyResource & {
   login?: Login;
   /** The configuration settings of the HTTP requests for authentication and authorization requests made against App Service Authentication/Authorization. */
   httpSettings?: HttpSettings;
-};
+}
 
 /** AzureStorageInfo dictionary resource. */
-export type AzureStoragePropertyDictionaryResource = ProxyOnlyResource & {
+export interface AzureStoragePropertyDictionaryResource
+  extends ProxyOnlyResource {
   /** Azure storage accounts. */
   properties?: { [propertyName: string]: AzureStorageInfoValue };
-};
+}
 
 /** Description of site key vault references. */
-export type ApiKVReference = ProxyOnlyResource & {
+export interface ApiKVReference extends ProxyOnlyResource {
   reference?: string;
   status?: ResolveStatus;
   vaultName?: string;
@@ -6749,16 +8251,16 @@ export type ApiKVReference = ProxyOnlyResource & {
   details?: string;
   source?: "KeyVault";
   activeVersion?: string;
-};
+}
 
 /** String dictionary resource. */
-export type ConnectionStringDictionary = ProxyOnlyResource & {
+export interface ConnectionStringDictionary extends ProxyOnlyResource {
   /** Connection strings. */
   properties?: { [propertyName: string]: ConnStringValueTypePair };
-};
+}
 
 /** Configuration of App Service site logs. */
-export type SiteLogsConfig = ProxyOnlyResource & {
+export interface SiteLogsConfig extends ProxyOnlyResource {
   /** Application logs configuration. */
   applicationLogs?: ApplicationLogsConfig;
   /** HTTP logs configuration. */
@@ -6767,20 +8269,20 @@ export type SiteLogsConfig = ProxyOnlyResource & {
   failedRequestsTracing?: EnabledConfig;
   /** Detailed error messages configuration. */
   detailedErrorMessages?: EnabledConfig;
-};
+}
 
 /** Slot Config names azure resource. */
-export type SlotConfigNamesResource = ProxyOnlyResource & {
+export interface SlotConfigNamesResource extends ProxyOnlyResource {
   /** List of connection string names. */
   connectionStringNames?: string[];
   /** List of application settings names. */
   appSettingNames?: string[];
   /** List of external Azure storage account identifiers. */
   azureStorageConfigNames?: string[];
-};
+}
 
 /** A snapshot of a web app configuration. */
-export type SiteConfigurationSnapshotInfo = ProxyOnlyResource & {
+export interface SiteConfigurationSnapshotInfo extends ProxyOnlyResource {
   /**
    * The time the snapshot was taken.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -6791,10 +8293,10 @@ export type SiteConfigurationSnapshotInfo = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly snapshotId?: number;
-};
+}
 
 /** Continuous Web Job Information. */
-export type ContinuousWebJob = ProxyOnlyResource & {
+export interface ContinuousWebJob extends ProxyOnlyResource {
   /** Job status. */
   status?: ContinuousWebJobStatus;
   /** Detailed status. */
@@ -6815,10 +8317,28 @@ export type ContinuousWebJob = ProxyOnlyResource & {
   usingSdk?: boolean;
   /** Job settings. */
   settings?: { [propertyName: string]: Record<string, unknown> };
-};
+}
+
+/** Deployment status response payload. */
+export interface CsmDeploymentStatus extends ProxyOnlyResource {
+  /** Deployment operation id. */
+  deploymentId?: string;
+  /** Deployment build status. */
+  status?: DeploymentBuildStatus;
+  /** Number of site instances currently being provisioned. */
+  numberOfInstancesInProgress?: number;
+  /** Number of site instances provisioned successfully. */
+  numberOfInstancesSuccessful?: number;
+  /** Number of site instances failed to provision. */
+  numberOfInstancesFailed?: number;
+  /** List of URLs pointing to logs for instances which failed to provision. */
+  failedInstancesLogs?: string[];
+  /** List of errors. */
+  errors?: ErrorEntity[];
+}
 
 /** User credentials used for publishing activity. */
-export type Deployment = ProxyOnlyResource & {
+export interface Deployment extends ProxyOnlyResource {
   /** Deployment status. */
   status?: number;
   /** Details about deployment status. */
@@ -6837,10 +8357,10 @@ export type Deployment = ProxyOnlyResource & {
   active?: boolean;
   /** Details on deployment. */
   details?: string;
-};
+}
 
 /** MSDeploy ARM response */
-export type MSDeployStatus = ProxyOnlyResource & {
+export interface MSDeployStatus extends ProxyOnlyResource {
   /**
    * Username of deployer
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -6866,10 +8386,10 @@ export type MSDeployStatus = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly complete?: boolean;
-};
+}
 
 /** MSDeploy ARM PUT information */
-export type MSDeploy = ProxyOnlyResource & {
+export interface MSDeploy extends ProxyOnlyResource {
   /** Package URI */
   packageUri?: string;
   /** SQL Connection String */
@@ -6892,19 +8412,19 @@ export type MSDeploy = ProxyOnlyResource & {
    * Setting is <code>false</code> by default.
    */
   appOffline?: boolean;
-};
+}
 
 /** MSDeploy log */
-export type MSDeployLog = ProxyOnlyResource & {
+export interface MSDeployLog extends ProxyOnlyResource {
   /**
    * List of log entry messages
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly entries?: MSDeployLogEntry[];
-};
+}
 
 /** Function information. */
-export type FunctionEnvelope = ProxyOnlyResource & {
+export interface FunctionEnvelope extends ProxyOnlyResource {
   /** Function App ID. */
   functionAppId?: string;
   /** Script root path URI. */
@@ -6931,10 +8451,10 @@ export type FunctionEnvelope = ProxyOnlyResource & {
   language?: string;
   /** Gets or sets a value indicating whether the function is disabled */
   isDisabled?: boolean;
-};
+}
 
 /** A hostname binding object. */
-export type HostNameBinding = ProxyOnlyResource & {
+export interface HostNameBinding extends ProxyOnlyResource {
   /** App Service app name. */
   siteName?: string;
   /** Fully qualified ARM domain resource URI. */
@@ -6956,10 +8476,10 @@ export type HostNameBinding = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly virtualIP?: string;
-};
+}
 
 /** Hybrid Connection for an App Service app. */
-export type RelayServiceConnectionEntity = ProxyOnlyResource & {
+export interface RelayServiceConnectionEntity extends ProxyOnlyResource {
   entityName?: string;
   entityConnectionString?: string;
   resourceType?: string;
@@ -6967,9 +8487,9 @@ export type RelayServiceConnectionEntity = ProxyOnlyResource & {
   hostname?: string;
   port?: number;
   biztalkUri?: string;
-};
+}
 
-export type WebSiteInstanceStatus = ProxyOnlyResource & {
+export interface WebSiteInstanceStatus extends ProxyOnlyResource {
   state?: SiteRuntimeState;
   /** Link to the GetStatusApi in Kudu */
   statusUrl?: string;
@@ -6981,10 +8501,10 @@ export type WebSiteInstanceStatus = ProxyOnlyResource & {
   healthCheckUrl?: string;
   /** Dictionary of <ContainerInfo> */
   containers?: { [propertyName: string]: ContainerInfo };
-};
+}
 
 /** Process Thread Information. */
-export type ProcessThreadInfo = ProxyOnlyResource & {
+export interface ProcessThreadInfo extends ProxyOnlyResource {
   /**
    * Site extension ID.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -7012,10 +8532,10 @@ export type ProcessThreadInfo = ProxyOnlyResource & {
   state?: string;
   /** Wait reason. */
   waitReason?: string;
-};
+}
 
 /** Process Module Information. */
-export type ProcessModuleInfo = ProxyOnlyResource & {
+export interface ProcessModuleInfo extends ProxyOnlyResource {
   /** Base address. Used as module identifier in ARM resource URI. */
   baseAddress?: string;
   /** File name. */
@@ -7038,10 +8558,10 @@ export type ProcessModuleInfo = ProxyOnlyResource & {
   isDebug?: boolean;
   /** Module language (locale). */
   language?: string;
-};
+}
 
 /** Process Information. */
-export type ProcessInfo = ProxyOnlyResource & {
+export interface ProcessInfo extends ProxyOnlyResource {
   /**
    * ARM Identifier for deployment.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -7117,10 +8637,10 @@ export type ProcessInfo = ProxyOnlyResource & {
   isWebjob?: boolean;
   /** Description of process. */
   description?: string;
-};
+}
 
 /** Options for app content migration. */
-export type StorageMigrationOptions = ProxyOnlyResource & {
+export interface StorageMigrationOptions extends ProxyOnlyResource {
   /** AzureFiles connection string. */
   azurefilesConnectionString?: string;
   /** AzureFiles share. */
@@ -7129,27 +8649,27 @@ export type StorageMigrationOptions = ProxyOnlyResource & {
   switchSiteAfterMigration?: boolean;
   /** <code>true</code> if the app should be read only during copy operation; otherwise, <code>false</code>. */
   blockWriteAccessToSite?: boolean;
-};
+}
 
 /** Response for a migration of app content request. */
-export type StorageMigrationResponse = ProxyOnlyResource & {
+export interface StorageMigrationResponse extends ProxyOnlyResource {
   /**
    * When server starts the migration process, it will return an operation ID identifying that particular migration operation.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly operationId?: string;
-};
+}
 
 /** MySQL migration request. */
-export type MigrateMySqlRequest = ProxyOnlyResource & {
+export interface MigrateMySqlRequest extends ProxyOnlyResource {
   /** Connection string to the remote MySQL database. */
   connectionString?: string;
   /** The type of migration operation to be done */
   migrationType?: MySqlMigrationType;
-};
+}
 
 /** MySQL migration status. */
-export type MigrateMySqlStatus = ProxyOnlyResource & {
+export interface MigrateMySqlStatus extends ProxyOnlyResource {
   /**
    * Status of the migration task.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -7165,18 +8685,18 @@ export type MigrateMySqlStatus = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly localMySqlEnabled?: boolean;
-};
+}
 
 /** Swift Virtual Network Contract. This is used to enable the new Swift way of doing virtual network integration. */
-export type SwiftVirtualNetwork = ProxyOnlyResource & {
+export interface SwiftVirtualNetwork extends ProxyOnlyResource {
   /** The Virtual Network subnet's resource ID. This is the subnet that this Web App will join. This subnet must have a delegation to Microsoft.Web/serverFarms defined first. */
   subnetResourceId?: string;
   /** A flag that specifies if the scale unit this Web App is on supports Swift integration. */
   swiftSupported?: boolean;
-};
+}
 
 /** Full view of network features for an app (presently VNET integration and Hybrid Connections). */
-export type NetworkFeatures = ProxyOnlyResource & {
+export interface NetworkFeatures extends ProxyOnlyResource {
   /**
    * The Virtual Network name.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -7197,10 +8717,10 @@ export type NetworkFeatures = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly hybridConnectionsV2?: HybridConnection[];
-};
+}
 
 /** Used for getting PHP error logging flag. */
-export type SitePhpErrorLogFlag = ProxyOnlyResource & {
+export interface SitePhpErrorLogFlag extends ProxyOnlyResource {
   /** Local log_errors setting. */
   localLogErrors?: string;
   /** Master log_errors setting. */
@@ -7209,10 +8729,10 @@ export type SitePhpErrorLogFlag = ProxyOnlyResource & {
   localLogErrorsMaxLength?: string;
   /** Master log_errors_max_len setting. */
   masterLogErrorsMaxLength?: string;
-};
+}
 
 /** ARM resource for a PremierAddOn. */
-export type PremierAddOnPatchResource = ProxyOnlyResource & {
+export interface PremierAddOnPatchResource extends ProxyOnlyResource {
   /** Premier add on SKU. */
   sku?: string;
   /** Premier add on Product. */
@@ -7223,18 +8743,18 @@ export type PremierAddOnPatchResource = ProxyOnlyResource & {
   marketplacePublisher?: string;
   /** Premier add on Marketplace offer. */
   marketplaceOffer?: string;
-};
+}
 
 /** Description of the parameters of Private Access for a Web Site. */
-export type PrivateAccess = ProxyOnlyResource & {
+export interface PrivateAccess extends ProxyOnlyResource {
   /** Whether private access is enabled or not. */
   enabled?: boolean;
   /** The Virtual Networks (and subnets) allowed to access the site privately. */
   virtualNetworks?: PrivateAccessVirtualNetwork[];
-};
+}
 
 /** Public certificate object */
-export type PublicCertificate = ProxyOnlyResource & {
+export interface PublicCertificate extends ProxyOnlyResource {
   /** Public Certificate byte array */
   blob?: Uint8Array;
   /** Public Certificate Location */
@@ -7244,10 +8764,10 @@ export type PublicCertificate = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly thumbprint?: string;
-};
+}
 
 /** Details about restoring a deleted app. */
-export type DeletedAppRestoreRequest = ProxyOnlyResource & {
+export interface DeletedAppRestoreRequest extends ProxyOnlyResource {
   /**
    * ARM resource ID of the deleted app. Example:
    * /subscriptions/{subId}/providers/Microsoft.Web/deletedSites/{deletedSiteId}
@@ -7262,10 +8782,10 @@ export type DeletedAppRestoreRequest = ProxyOnlyResource & {
   snapshotTime?: string;
   /** If true, the snapshot is retrieved from DRSecondary endpoint. */
   useDRSecondary?: boolean;
-};
+}
 
 /** Details about app recovery operation. */
-export type SnapshotRestoreRequest = ProxyOnlyResource & {
+export interface SnapshotRestoreRequest extends ProxyOnlyResource {
   /** Point in time in which the app restore should be done, formatted as a DateTime string. */
   snapshotTime?: string;
   /**
@@ -7284,10 +8804,44 @@ export type SnapshotRestoreRequest = ProxyOnlyResource & {
   ignoreConflictingHostNames?: boolean;
   /** If true, the snapshot is retrieved from DRSecondary endpoint. */
   useDRSecondary?: boolean;
-};
+}
+
+/** Container of a site */
+export interface SiteContainer extends ProxyOnlyResource {
+  /** Image Name */
+  image?: string;
+  /** Target Port */
+  targetPort?: string;
+  /** <code>true</code> if the container is the main site container; <code>false</code> otherwise. */
+  isMain?: boolean;
+  /** StartUp Command */
+  startUpCommand?: string;
+  /** Auth Type */
+  authType?: AuthType;
+  /** User Name */
+  userName?: string;
+  /** Password Secret */
+  passwordSecret?: string;
+  /** UserManagedIdentity ClientId */
+  userManagedIdentityClientId?: string;
+  /**
+   * Created Time
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdTime?: Date;
+  /**
+   * Last Modified Time
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly lastModifiedTime?: Date;
+  /** List of volume mounts */
+  volumeMounts?: VolumeMount[];
+  /** List of environment variables */
+  environmentVariables?: EnvironmentVariable[];
+}
 
 /** Site Extension Information. */
-export type SiteExtensionInfo = ProxyOnlyResource & {
+export interface SiteExtensionInfo extends ProxyOnlyResource {
   /** Site extension ID. */
   extensionId?: string;
   title?: string;
@@ -7327,10 +8881,10 @@ export type SiteExtensionInfo = ProxyOnlyResource & {
   provisioningState?: string;
   /** Site Extension comment. */
   comment?: string;
-};
+}
 
 /** A setting difference between two deployment slots of an app. */
-export type SlotDifference = ProxyOnlyResource & {
+export interface SlotDifference extends ProxyOnlyResource {
   /**
    * Level of the difference: Information, Warning or Error.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -7366,10 +8920,10 @@ export type SlotDifference = ProxyOnlyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly description?: string;
-};
+}
 
 /** Source control configuration for an app. */
-export type SiteSourceControl = ProxyOnlyResource & {
+export interface SiteSourceControl extends ProxyOnlyResource {
   /** Repository or source control URL. */
   repoUrl?: string;
   /** Name of branch to use for deployment. */
@@ -7384,10 +8938,10 @@ export type SiteSourceControl = ProxyOnlyResource & {
   isMercurial?: boolean;
   /** If GitHub Action is selected, than the associated configuration. */
   gitHubActionConfiguration?: GitHubActionConfiguration;
-};
+}
 
 /** Triggered Web Job Information. */
-export type TriggeredWebJob = ProxyOnlyResource & {
+export interface TriggeredWebJob extends ProxyOnlyResource {
   /** Latest job run information. */
   latestRun?: TriggeredJobRun;
   /** History URL. */
@@ -7406,18 +8960,22 @@ export type TriggeredWebJob = ProxyOnlyResource & {
   error?: string;
   /** Using SDK? */
   usingSdk?: boolean;
+  /** Property to allow or block all public traffic. Allowed Values: 'Enabled', 'Disabled' or an empty string. */
+  publicNetworkAccess?: string;
+  /** Checks if Customer provided storage account is required */
+  storageAccountRequired?: boolean;
   /** Job settings. */
   settings?: { [propertyName: string]: Record<string, unknown> };
-};
+}
 
 /** Triggered Web Job History. List of Triggered Web Job Run Information elements. */
-export type TriggeredJobHistory = ProxyOnlyResource & {
+export interface TriggeredJobHistory extends ProxyOnlyResource {
   /** List of triggered web job runs. */
   runs?: TriggeredJobRun[];
-};
+}
 
 /** Web Job Information. */
-export type WebJob = ProxyOnlyResource & {
+export interface WebJob extends ProxyOnlyResource {
   /** Run command. */
   runCommand?: string;
   /** Job URL. */
@@ -7432,86 +8990,544 @@ export type WebJob = ProxyOnlyResource & {
   usingSdk?: boolean;
   /** Job settings. */
   settings?: { [propertyName: string]: Record<string, unknown> };
-};
+}
 
-/** Known values of {@link AppServiceCertificateOrderPropertiesAppServiceCertificateNotRenewableReasonsItem} that the service accepts. */
-export enum KnownAppServiceCertificateOrderPropertiesAppServiceCertificateNotRenewableReasonsItem {
+/** Private Endpoint Connection Approval ARM resource. */
+export interface PrivateLinkConnectionApprovalRequestResource
+  extends ProxyOnlyResource {
+  /** The state of a private link connection */
+  privateLinkServiceConnectionState?: PrivateLinkConnectionState;
+}
+
+/** The workflow output parameter. */
+export interface WorkflowOutputParameter extends WorkflowParameter {
+  /**
+   * Gets the error.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly error?: Record<string, unknown>;
+}
+
+/** The workflow run. */
+export interface WorkflowRun extends SubResource {
+  /**
+   * Gets the workflow run name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the workflow run type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /**
+   * Gets the wait end time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly waitEndTime?: Date;
+  /**
+   * Gets the start time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly startTime?: Date;
+  /**
+   * Gets the end time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly endTime?: Date;
+  /**
+   * Gets the status.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly status?: WorkflowStatus;
+  /**
+   * Gets the code.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly code?: string;
+  /**
+   * Gets the error.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly error?: Record<string, unknown>;
+  /**
+   * Gets the correlation id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly correlationId?: string;
+  /** The run correlation. */
+  correlation?: Correlation;
+  /**
+   * Gets the reference to workflow version.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly workflow?: ResourceReference;
+  /**
+   * Gets the fired trigger.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trigger?: WorkflowRunTrigger;
+  /**
+   * Gets the outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputs?: { [propertyName: string]: WorkflowOutputParameter };
+  /**
+   * Gets the response of the flow run.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly response?: WorkflowRunTrigger;
+}
+
+/** The workflow run action. */
+export interface WorkflowRunAction extends SubResource {
+  /**
+   * Gets the workflow run action name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the workflow run action type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /**
+   * Gets the start time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly startTime?: Date;
+  /**
+   * Gets the end time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly endTime?: Date;
+  /**
+   * Gets the status.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly status?: WorkflowStatus;
+  /**
+   * Gets the code.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly code?: string;
+  /**
+   * Gets the error.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly error?: Record<string, unknown>;
+  /**
+   * Gets the tracking id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackingId?: string;
+  /** The correlation properties. */
+  correlation?: RunActionCorrelation;
+  /**
+   * Gets the link to inputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputsLink?: ContentLink;
+  /**
+   * Gets the link to outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputsLink?: ContentLink;
+  /**
+   * Gets the tracked properties.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackedProperties?: Record<string, unknown>;
+  /** Gets the retry histories. */
+  retryHistory?: RetryHistory[];
+}
+
+/** The workflow trigger. */
+export interface WorkflowTrigger extends SubResource {
+  /**
+   * Gets the workflow trigger name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the workflow trigger type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /**
+   * Gets the provisioning state.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: WorkflowTriggerProvisioningState;
+  /**
+   * Gets the created time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdTime?: Date;
+  /**
+   * Gets the changed time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly changedTime?: Date;
+  /**
+   * Gets the state.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly state?: WorkflowState;
+  /**
+   * Gets the status.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly status?: WorkflowStatus;
+  /**
+   * Gets the last execution time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly lastExecutionTime?: Date;
+  /**
+   * Gets the next execution time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextExecutionTime?: Date;
+  /**
+   * Gets the workflow trigger recurrence.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly recurrence?: WorkflowTriggerRecurrence;
+  /**
+   * Gets the reference to workflow.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly workflow?: ResourceReference;
+}
+
+/** The workflow trigger history. */
+export interface WorkflowTriggerHistory extends SubResource {
+  /**
+   * Gets the workflow trigger history name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Gets the workflow trigger history type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /**
+   * Gets the start time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly startTime?: Date;
+  /**
+   * Gets the end time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly endTime?: Date;
+  /**
+   * The scheduled time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly scheduledTime?: Date;
+  /**
+   * Gets the status.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly status?: WorkflowStatus;
+  /**
+   * Gets the code.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly code?: string;
+  /**
+   * Gets the error.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly error?: Record<string, unknown>;
+  /**
+   * Gets the tracking id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackingId?: string;
+  /** The run correlation. */
+  correlation?: Correlation;
+  /**
+   * Gets the link to input parameters.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputsLink?: ContentLink;
+  /**
+   * Gets the link to output parameters.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputsLink?: ContentLink;
+  /**
+   * The value indicating whether trigger was fired.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly fired?: boolean;
+  /**
+   * Gets the reference to workflow run.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly run?: ResourceReference;
+}
+
+/** The workflow run action correlation properties. */
+export interface RunActionCorrelation extends RunCorrelation {
+  /** The action tracking identifier. */
+  actionTrackingId?: string;
+}
+
+/** The expression root. */
+export interface ExpressionRoot extends Expression {
+  /** The path. */
+  path?: string;
+}
+
+/** The azure resource error info. */
+export interface AzureResourceErrorInfo extends ErrorInfo {
+  /** The error message. */
+  message: string;
+  /** The error details. */
+  details?: AzureResourceErrorInfo[];
+}
+
+/** The operation result definition. */
+export interface OperationResult extends OperationResultProperties {
+  /**
+   * Gets the tracking id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackingId?: string;
+  /**
+   * Gets the inputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputs?: Record<string, unknown>;
+  /**
+   * Gets the link to inputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputsLink?: ContentLink;
+  /**
+   * Gets the outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputs?: Record<string, unknown>;
+  /**
+   * Gets the link to outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputsLink?: ContentLink;
+  /**
+   * Gets the tracked properties.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackedProperties?: Record<string, unknown>;
+  /** Gets the retry histories. */
+  retryHistory?: RetryHistory[];
+  iterationCount?: number;
+}
+
+/** The workflow run action repetition definition. */
+export interface WorkflowRunActionRepetitionDefinition
+  extends WorkflowResource {
+  /** The start time of the workflow scope repetition. */
+  startTime?: Date;
+  /** The end time of the workflow scope repetition. */
+  endTime?: Date;
+  /** The correlation properties. */
+  correlation?: RunActionCorrelation;
+  /** The status of the workflow scope repetition. */
+  status?: WorkflowStatus;
+  /** The workflow scope repetition code. */
+  code?: string;
+  /** Anything */
+  error?: any;
+  /**
+   * Gets the tracking id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackingId?: string;
+  /**
+   * Gets the inputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputs?: Record<string, unknown>;
+  /**
+   * Gets the link to inputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly inputsLink?: ContentLink;
+  /**
+   * Gets the outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputs?: Record<string, unknown>;
+  /**
+   * Gets the link to outputs.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outputsLink?: ContentLink;
+  /**
+   * Gets the tracked properties.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly trackedProperties?: Record<string, unknown>;
+  /** Gets the retry histories. */
+  retryHistory?: RetryHistory[];
+  iterationCount?: number;
+  /** The repetition indexes. */
+  repetitionIndexes?: RepetitionIndex[];
+}
+
+/** The request history. */
+export interface RequestHistory extends WorkflowResource {
+  /** The request history properties. */
+  properties?: RequestHistoryProperties;
+}
+
+/** The workflow type. */
+export interface Workflow extends WorkflowResource {
+  /** Managed service identity. */
+  identity?: ManagedServiceIdentity;
+  /**
+   * Gets the provisioning state.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: WorkflowProvisioningState;
+  /**
+   * Gets the created time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdTime?: Date;
+  /**
+   * Gets the changed time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly changedTime?: Date;
+  /** The state. */
+  state?: WorkflowState;
+  /**
+   * Gets the version.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly version?: string;
+  /**
+   * Gets the access endpoint.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly accessEndpoint?: string;
+  /** The endpoints configuration. */
+  endpointsConfiguration?: FlowEndpointsConfiguration;
+  /** The access control configuration. */
+  accessControl?: FlowAccessControlConfiguration;
+  /**
+   * The sku.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly sku?: WorkflowSku;
+  /** The integration account. */
+  integrationAccount?: ResourceReference;
+  /** The integration service environment. */
+  integrationServiceEnvironment?: ResourceReference;
+  /** The definition. */
+  definition?: Record<string, unknown>;
+  /** The parameters. */
+  parameters?: { [propertyName: string]: WorkflowParameter };
+  /** The workflow kind. */
+  kind?: Kind;
+}
+
+/** The workflow version. */
+export interface WorkflowVersion extends WorkflowResource {
+  /**
+   * The provisioning state.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: WorkflowProvisioningState;
+  /**
+   * Gets the created time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdTime?: Date;
+  /**
+   * Gets the changed time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly changedTime?: Date;
+  /** The state. */
+  state?: WorkflowState;
+  /**
+   * Gets the version.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly version?: string;
+  /**
+   * Gets the access endpoint.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly accessEndpoint?: string;
+  /** The endpoints configuration. */
+  endpointsConfiguration?: FlowEndpointsConfiguration;
+  /** The access control configuration. */
+  accessControl?: FlowAccessControlConfiguration;
+  /**
+   * The sku.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly sku?: WorkflowSku;
+  /** The integration account. */
+  integrationAccount?: ResourceReference;
+  /** The definition. */
+  definition?: Record<string, unknown>;
+  /** The parameters. */
+  parameters?: { [propertyName: string]: WorkflowParameter };
+}
+
+/** The workflow run action repetition properties definition. */
+export interface WorkflowRunActionRepetitionProperties extends OperationResult {
+  /** The repetition indexes. */
+  repetitionIndexes?: RepetitionIndex[];
+}
+
+/** Defines headers for AppServiceEnvironments_createOrUpdate operation. */
+export interface AppServiceEnvironmentsCreateOrUpdateHeaders {
+  /** Location header for asynchronous response. */
+  location?: string;
+}
+
+/** Known values of {@link ResourceNotRenewableReason} that the service accepts. */
+export enum KnownResourceNotRenewableReason {
+  /** RegistrationStatusNotSupportedForRenewal */
   RegistrationStatusNotSupportedForRenewal = "RegistrationStatusNotSupportedForRenewal",
+  /** ExpirationNotInRenewalTimeRange */
   ExpirationNotInRenewalTimeRange = "ExpirationNotInRenewalTimeRange",
-  SubscriptionNotActive = "SubscriptionNotActive"
+  /** SubscriptionNotActive */
+  SubscriptionNotActive = "SubscriptionNotActive",
 }
 
 /**
- * Defines values for AppServiceCertificateOrderPropertiesAppServiceCertificateNotRenewableReasonsItem. \
- * {@link KnownAppServiceCertificateOrderPropertiesAppServiceCertificateNotRenewableReasonsItem} can be used interchangeably with AppServiceCertificateOrderPropertiesAppServiceCertificateNotRenewableReasonsItem,
+ * Defines values for ResourceNotRenewableReason. \
+ * {@link KnownResourceNotRenewableReason} can be used interchangeably with ResourceNotRenewableReason,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
  * **RegistrationStatusNotSupportedForRenewal** \
  * **ExpirationNotInRenewalTimeRange** \
  * **SubscriptionNotActive**
  */
-export type AppServiceCertificateOrderPropertiesAppServiceCertificateNotRenewableReasonsItem = string;
-
-/** Known values of {@link AppServiceCertificateOrderPatchResourcePropertiesAppServiceCertificateNotRenewableReasonsItem} that the service accepts. */
-export enum KnownAppServiceCertificateOrderPatchResourcePropertiesAppServiceCertificateNotRenewableReasonsItem {
-  RegistrationStatusNotSupportedForRenewal = "RegistrationStatusNotSupportedForRenewal",
-  ExpirationNotInRenewalTimeRange = "ExpirationNotInRenewalTimeRange",
-  SubscriptionNotActive = "SubscriptionNotActive"
-}
-
-/**
- * Defines values for AppServiceCertificateOrderPatchResourcePropertiesAppServiceCertificateNotRenewableReasonsItem. \
- * {@link KnownAppServiceCertificateOrderPatchResourcePropertiesAppServiceCertificateNotRenewableReasonsItem} can be used interchangeably with AppServiceCertificateOrderPatchResourcePropertiesAppServiceCertificateNotRenewableReasonsItem,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **RegistrationStatusNotSupportedForRenewal** \
- * **ExpirationNotInRenewalTimeRange** \
- * **SubscriptionNotActive**
- */
-export type AppServiceCertificateOrderPatchResourcePropertiesAppServiceCertificateNotRenewableReasonsItem = string;
-
-/** Known values of {@link DomainPropertiesDomainNotRenewableReasonsItem} that the service accepts. */
-export enum KnownDomainPropertiesDomainNotRenewableReasonsItem {
-  RegistrationStatusNotSupportedForRenewal = "RegistrationStatusNotSupportedForRenewal",
-  ExpirationNotInRenewalTimeRange = "ExpirationNotInRenewalTimeRange",
-  SubscriptionNotActive = "SubscriptionNotActive"
-}
-
-/**
- * Defines values for DomainPropertiesDomainNotRenewableReasonsItem. \
- * {@link KnownDomainPropertiesDomainNotRenewableReasonsItem} can be used interchangeably with DomainPropertiesDomainNotRenewableReasonsItem,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **RegistrationStatusNotSupportedForRenewal** \
- * **ExpirationNotInRenewalTimeRange** \
- * **SubscriptionNotActive**
- */
-export type DomainPropertiesDomainNotRenewableReasonsItem = string;
-
-/** Known values of {@link DomainPatchResourcePropertiesDomainNotRenewableReasonsItem} that the service accepts. */
-export enum KnownDomainPatchResourcePropertiesDomainNotRenewableReasonsItem {
-  RegistrationStatusNotSupportedForRenewal = "RegistrationStatusNotSupportedForRenewal",
-  ExpirationNotInRenewalTimeRange = "ExpirationNotInRenewalTimeRange",
-  SubscriptionNotActive = "SubscriptionNotActive"
-}
-
-/**
- * Defines values for DomainPatchResourcePropertiesDomainNotRenewableReasonsItem. \
- * {@link KnownDomainPatchResourcePropertiesDomainNotRenewableReasonsItem} can be used interchangeably with DomainPatchResourcePropertiesDomainNotRenewableReasonsItem,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **RegistrationStatusNotSupportedForRenewal** \
- * **ExpirationNotInRenewalTimeRange** \
- * **SubscriptionNotActive**
- */
-export type DomainPatchResourcePropertiesDomainNotRenewableReasonsItem = string;
+export type ResourceNotRenewableReason = string;
 
 /** Known values of {@link LoadBalancingMode} that the service accepts. */
 export enum KnownLoadBalancingMode {
+  /** None */
   None = "None",
+  /** Web */
   Web = "Web",
+  /** Publishing */
   Publishing = "Publishing",
-  WebPublishing = "Web, Publishing"
+  /** WebPublishing */
+  WebPublishing = "Web, Publishing",
 }
 
 /**
@@ -7526,22 +9542,78 @@ export enum KnownLoadBalancingMode {
  */
 export type LoadBalancingMode = string;
 
+/** Known values of {@link UpgradePreference} that the service accepts. */
+export enum KnownUpgradePreference {
+  /** No preference on when this App Service Environment will be upgraded */
+  None = "None",
+  /** This App Service Environment will be upgraded before others in the same region that have Upgrade Preference 'Late' */
+  Early = "Early",
+  /** This App Service Environment will be upgraded after others in the same region that have Upgrade Preference 'Early' */
+  Late = "Late",
+  /** ASEv3 only. Once an upgrade is available, this App Service Environment will wait 10 days for the upgrade to be manually initiated. After 10 days the upgrade will begin automatically */
+  Manual = "Manual",
+}
+
+/**
+ * Defines values for UpgradePreference. \
+ * {@link KnownUpgradePreference} can be used interchangeably with UpgradePreference,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **None**: No preference on when this App Service Environment will be upgraded \
+ * **Early**: This App Service Environment will be upgraded before others in the same region that have Upgrade Preference 'Late' \
+ * **Late**: This App Service Environment will be upgraded after others in the same region that have Upgrade Preference 'Early' \
+ * **Manual**: ASEv3 only. Once an upgrade is available, this App Service Environment will wait 10 days for the upgrade to be manually initiated. After 10 days the upgrade will begin automatically
+ */
+export type UpgradePreference = string;
+
+/** Known values of {@link UpgradeAvailability} that the service accepts. */
+export enum KnownUpgradeAvailability {
+  /** No upgrade is currently available for this App Service Environment */
+  None = "None",
+  /** An upgrade is ready to be manually initiated on this App Service Environment */
+  Ready = "Ready",
+}
+
+/**
+ * Defines values for UpgradeAvailability. \
+ * {@link KnownUpgradeAvailability} can be used interchangeably with UpgradeAvailability,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **None**: No upgrade is currently available for this App Service Environment \
+ * **Ready**: An upgrade is ready to be manually initiated on this App Service Environment
+ */
+export type UpgradeAvailability = string;
+
 /** Known values of {@link ScmType} that the service accepts. */
 export enum KnownScmType {
+  /** None */
   None = "None",
+  /** Dropbox */
   Dropbox = "Dropbox",
+  /** Tfs */
   Tfs = "Tfs",
+  /** LocalGit */
   LocalGit = "LocalGit",
+  /** GitHub */
   GitHub = "GitHub",
+  /** CodePlexGit */
   CodePlexGit = "CodePlexGit",
+  /** CodePlexHg */
   CodePlexHg = "CodePlexHg",
+  /** BitbucketGit */
   BitbucketGit = "BitbucketGit",
+  /** BitbucketHg */
   BitbucketHg = "BitbucketHg",
+  /** ExternalGit */
   ExternalGit = "ExternalGit",
+  /** ExternalHg */
   ExternalHg = "ExternalHg",
+  /** OneDrive */
   OneDrive = "OneDrive",
+  /** VSO */
   VSO = "VSO",
-  Vstsrm = "VSTSRM"
+  /** Vstsrm */
+  Vstsrm = "VSTSRM",
 }
 
 /**
@@ -7568,9 +9640,12 @@ export type ScmType = string;
 
 /** Known values of {@link IpFilterTag} that the service accepts. */
 export enum KnownIpFilterTag {
+  /** Default */
   Default = "Default",
+  /** XffProxy */
   XffProxy = "XffProxy",
-  ServiceTag = "ServiceTag"
+  /** ServiceTag */
+  ServiceTag = "ServiceTag",
 }
 
 /**
@@ -7584,11 +9659,34 @@ export enum KnownIpFilterTag {
  */
 export type IpFilterTag = string;
 
+/** Known values of {@link DefaultAction} that the service accepts. */
+export enum KnownDefaultAction {
+  /** Allow */
+  Allow = "Allow",
+  /** Deny */
+  Deny = "Deny",
+}
+
+/**
+ * Defines values for DefaultAction. \
+ * {@link KnownDefaultAction} can be used interchangeably with DefaultAction,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Allow** \
+ * **Deny**
+ */
+export type DefaultAction = string;
+
 /** Known values of {@link SupportedTlsVersions} that the service accepts. */
 export enum KnownSupportedTlsVersions {
+  /** One0 */
   One0 = "1.0",
+  /** One1 */
   One1 = "1.1",
-  One2 = "1.2"
+  /** One2 */
+  One2 = "1.2",
+  /** One3 */
+  One3 = "1.3",
 }
 
 /**
@@ -7598,15 +9696,82 @@ export enum KnownSupportedTlsVersions {
  * ### Known values supported by the service
  * **1.0** \
  * **1.1** \
- * **1.2**
+ * **1.2** \
+ * **1.3**
  */
 export type SupportedTlsVersions = string;
 
+/** Known values of {@link TlsCipherSuites} that the service accepts. */
+export enum KnownTlsCipherSuites {
+  /** TLSAES256GCMSHA384 */
+  TLSAES256GCMSHA384 = "TLS_AES_256_GCM_SHA384",
+  /** TLSAES128GCMSHA256 */
+  TLSAES128GCMSHA256 = "TLS_AES_128_GCM_SHA256",
+  /** TLSEcdheEcdsaWithAES256GCMSHA384 */
+  TLSEcdheEcdsaWithAES256GCMSHA384 = "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+  /** TLSEcdheEcdsaWithAES128CBCSHA256 */
+  TLSEcdheEcdsaWithAES128CBCSHA256 = "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+  /** TLSEcdheEcdsaWithAES128GCMSHA256 */
+  TLSEcdheEcdsaWithAES128GCMSHA256 = "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+  /** TLSEcdheRSAWithAES256GCMSHA384 */
+  TLSEcdheRSAWithAES256GCMSHA384 = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+  /** TLSEcdheRSAWithAES128GCMSHA256 */
+  TLSEcdheRSAWithAES128GCMSHA256 = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+  /** TLSEcdheRSAWithAES256CBCSHA384 */
+  TLSEcdheRSAWithAES256CBCSHA384 = "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+  /** TLSEcdheRSAWithAES128CBCSHA256 */
+  TLSEcdheRSAWithAES128CBCSHA256 = "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+  /** TLSEcdheRSAWithAES256CBCSHA */
+  TLSEcdheRSAWithAES256CBCSHA = "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+  /** TLSEcdheRSAWithAES128CBCSHA */
+  TLSEcdheRSAWithAES128CBCSHA = "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+  /** TLSRSAWithAES256GCMSHA384 */
+  TLSRSAWithAES256GCMSHA384 = "TLS_RSA_WITH_AES_256_GCM_SHA384",
+  /** TLSRSAWithAES128GCMSHA256 */
+  TLSRSAWithAES128GCMSHA256 = "TLS_RSA_WITH_AES_128_GCM_SHA256",
+  /** TLSRSAWithAES256CBCSHA256 */
+  TLSRSAWithAES256CBCSHA256 = "TLS_RSA_WITH_AES_256_CBC_SHA256",
+  /** TLSRSAWithAES128CBCSHA256 */
+  TLSRSAWithAES128CBCSHA256 = "TLS_RSA_WITH_AES_128_CBC_SHA256",
+  /** TLSRSAWithAES256CBCSHA */
+  TLSRSAWithAES256CBCSHA = "TLS_RSA_WITH_AES_256_CBC_SHA",
+  /** TLSRSAWithAES128CBCSHA */
+  TLSRSAWithAES128CBCSHA = "TLS_RSA_WITH_AES_128_CBC_SHA",
+}
+
+/**
+ * Defines values for TlsCipherSuites. \
+ * {@link KnownTlsCipherSuites} can be used interchangeably with TlsCipherSuites,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **TLS_AES_256_GCM_SHA384** \
+ * **TLS_AES_128_GCM_SHA256** \
+ * **TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384** \
+ * **TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256** \
+ * **TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256** \
+ * **TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384** \
+ * **TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256** \
+ * **TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384** \
+ * **TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256** \
+ * **TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA** \
+ * **TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA** \
+ * **TLS_RSA_WITH_AES_256_GCM_SHA384** \
+ * **TLS_RSA_WITH_AES_128_GCM_SHA256** \
+ * **TLS_RSA_WITH_AES_256_CBC_SHA256** \
+ * **TLS_RSA_WITH_AES_128_CBC_SHA256** \
+ * **TLS_RSA_WITH_AES_256_CBC_SHA** \
+ * **TLS_RSA_WITH_AES_128_CBC_SHA**
+ */
+export type TlsCipherSuites = string;
+
 /** Known values of {@link FtpsState} that the service accepts. */
 export enum KnownFtpsState {
+  /** AllAllowed */
   AllAllowed = "AllAllowed",
+  /** FtpsOnly */
   FtpsOnly = "FtpsOnly",
-  Disabled = "Disabled"
+  /** Disabled */
+  Disabled = "Disabled",
 }
 
 /**
@@ -7620,11 +9785,125 @@ export enum KnownFtpsState {
  */
 export type FtpsState = string;
 
+/** Known values of {@link AzureStorageProtocol} that the service accepts. */
+export enum KnownAzureStorageProtocol {
+  /** Smb */
+  Smb = "Smb",
+  /** Http */
+  Http = "Http",
+  /** Nfs */
+  Nfs = "Nfs",
+}
+
+/**
+ * Defines values for AzureStorageProtocol. \
+ * {@link KnownAzureStorageProtocol} can be used interchangeably with AzureStorageProtocol,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Smb** \
+ * **Http** \
+ * **Nfs**
+ */
+export type AzureStorageProtocol = string;
+
+/** Known values of {@link FunctionsDeploymentStorageType} that the service accepts. */
+export enum KnownFunctionsDeploymentStorageType {
+  /** BlobContainer */
+  BlobContainer = "blobContainer",
+}
+
+/**
+ * Defines values for FunctionsDeploymentStorageType. \
+ * {@link KnownFunctionsDeploymentStorageType} can be used interchangeably with FunctionsDeploymentStorageType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **blobContainer**
+ */
+export type FunctionsDeploymentStorageType = string;
+
+/** Known values of {@link AuthenticationType} that the service accepts. */
+export enum KnownAuthenticationType {
+  /** SystemAssignedIdentity */
+  SystemAssignedIdentity = "SystemAssignedIdentity",
+  /** UserAssignedIdentity */
+  UserAssignedIdentity = "UserAssignedIdentity",
+  /** StorageAccountConnectionString */
+  StorageAccountConnectionString = "StorageAccountConnectionString",
+}
+
+/**
+ * Defines values for AuthenticationType. \
+ * {@link KnownAuthenticationType} can be used interchangeably with AuthenticationType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **SystemAssignedIdentity** \
+ * **UserAssignedIdentity** \
+ * **StorageAccountConnectionString**
+ */
+export type AuthenticationType = string;
+
+/** Known values of {@link RuntimeName} that the service accepts. */
+export enum KnownRuntimeName {
+  /** DotnetIsolated */
+  DotnetIsolated = "dotnet-isolated",
+  /** Node */
+  Node = "node",
+  /** Java */
+  Java = "java",
+  /** Powershell */
+  Powershell = "powershell",
+  /** Python */
+  Python = "python",
+  /** Custom */
+  Custom = "custom",
+}
+
+/**
+ * Defines values for RuntimeName. \
+ * {@link KnownRuntimeName} can be used interchangeably with RuntimeName,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **dotnet-isolated** \
+ * **node** \
+ * **java** \
+ * **powershell** \
+ * **python** \
+ * **custom**
+ */
+export type RuntimeName = string;
+
+/** Known values of {@link DaprLogLevel} that the service accepts. */
+export enum KnownDaprLogLevel {
+  /** Info */
+  Info = "info",
+  /** Debug */
+  Debug = "debug",
+  /** Warn */
+  Warn = "warn",
+  /** Error */
+  Error = "error",
+}
+
+/**
+ * Defines values for DaprLogLevel. \
+ * {@link KnownDaprLogLevel} can be used interchangeably with DaprLogLevel,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **info** \
+ * **debug** \
+ * **warn** \
+ * **error**
+ */
+export type DaprLogLevel = string;
+
 /** Known values of {@link RouteType} that the service accepts. */
 export enum KnownRouteType {
+  /** Default */
   Default = "DEFAULT",
+  /** Inherited */
   Inherited = "INHERITED",
-  Static = "STATIC"
+  /** Static */
+  Static = "STATIC",
 }
 
 /**
@@ -7638,18 +9917,134 @@ export enum KnownRouteType {
  */
 export type RouteType = string;
 
-/** Known values of {@link Enum10} that the service accepts. */
-export enum KnownEnum10 {
-  Windows = "Windows",
-  Linux = "Linux",
-  WindowsFunctions = "WindowsFunctions",
-  LinuxFunctions = "LinuxFunctions",
-  All = "All"
+/** Known values of {@link ContainerAppProvisioningState} that the service accepts. */
+export enum KnownContainerAppProvisioningState {
+  /** InProgress */
+  InProgress = "InProgress",
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Failed */
+  Failed = "Failed",
+  /** Canceled */
+  Canceled = "Canceled",
 }
 
 /**
- * Defines values for Enum10. \
- * {@link KnownEnum10} can be used interchangeably with Enum10,
+ * Defines values for ContainerAppProvisioningState. \
+ * {@link KnownContainerAppProvisioningState} can be used interchangeably with ContainerAppProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **InProgress** \
+ * **Succeeded** \
+ * **Failed** \
+ * **Canceled**
+ */
+export type ContainerAppProvisioningState = string;
+
+/** Known values of {@link ActiveRevisionsMode} that the service accepts. */
+export enum KnownActiveRevisionsMode {
+  /** Multiple */
+  Multiple = "multiple",
+  /** Single */
+  Single = "single",
+}
+
+/**
+ * Defines values for ActiveRevisionsMode. \
+ * {@link KnownActiveRevisionsMode} can be used interchangeably with ActiveRevisionsMode,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **multiple** \
+ * **single**
+ */
+export type ActiveRevisionsMode = string;
+
+/** Known values of {@link IngressTransportMethod} that the service accepts. */
+export enum KnownIngressTransportMethod {
+  /** Auto */
+  Auto = "auto",
+  /** Http */
+  Http = "http",
+  /** Http2 */
+  Http2 = "http2",
+}
+
+/**
+ * Defines values for IngressTransportMethod. \
+ * {@link KnownIngressTransportMethod} can be used interchangeably with IngressTransportMethod,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **auto** \
+ * **http** \
+ * **http2**
+ */
+export type IngressTransportMethod = string;
+
+/** Known values of {@link RevisionHealthState} that the service accepts. */
+export enum KnownRevisionHealthState {
+  /** Healthy */
+  Healthy = "Healthy",
+  /** Unhealthy */
+  Unhealthy = "Unhealthy",
+  /** None */
+  None = "None",
+}
+
+/**
+ * Defines values for RevisionHealthState. \
+ * {@link KnownRevisionHealthState} can be used interchangeably with RevisionHealthState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Healthy** \
+ * **Unhealthy** \
+ * **None**
+ */
+export type RevisionHealthState = string;
+
+/** Known values of {@link RevisionProvisioningState} that the service accepts. */
+export enum KnownRevisionProvisioningState {
+  /** Provisioning */
+  Provisioning = "Provisioning",
+  /** Provisioned */
+  Provisioned = "Provisioned",
+  /** Failed */
+  Failed = "Failed",
+  /** Deprovisioning */
+  Deprovisioning = "Deprovisioning",
+  /** Deprovisioned */
+  Deprovisioned = "Deprovisioned",
+}
+
+/**
+ * Defines values for RevisionProvisioningState. \
+ * {@link KnownRevisionProvisioningState} can be used interchangeably with RevisionProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Provisioning** \
+ * **Provisioned** \
+ * **Failed** \
+ * **Deprovisioning** \
+ * **Deprovisioned**
+ */
+export type RevisionProvisioningState = string;
+
+/** Known values of {@link ProviderOsTypeSelected} that the service accepts. */
+export enum KnownProviderOsTypeSelected {
+  /** Windows */
+  Windows = "Windows",
+  /** Linux */
+  Linux = "Linux",
+  /** WindowsFunctions */
+  WindowsFunctions = "WindowsFunctions",
+  /** LinuxFunctions */
+  LinuxFunctions = "LinuxFunctions",
+  /** All */
+  All = "All",
+}
+
+/**
+ * Defines values for ProviderOsTypeSelected. \
+ * {@link KnownProviderOsTypeSelected} can be used interchangeably with ProviderOsTypeSelected,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
  * **Windows** \
@@ -7658,107 +10053,37 @@ export enum KnownEnum10 {
  * **LinuxFunctions** \
  * **All**
  */
-export type Enum10 = string;
+export type ProviderOsTypeSelected = string;
 
-/** Known values of {@link Enum11} that the service accepts. */
-export enum KnownEnum11 {
+/** Known values of {@link ProviderStackOsType} that the service accepts. */
+export enum KnownProviderStackOsType {
+  /** Windows */
   Windows = "Windows",
+  /** Linux */
   Linux = "Linux",
-  All = "All"
+  /** All */
+  All = "All",
 }
 
 /**
- * Defines values for Enum11. \
- * {@link KnownEnum11} can be used interchangeably with Enum11,
+ * Defines values for ProviderStackOsType. \
+ * {@link KnownProviderStackOsType} can be used interchangeably with ProviderStackOsType,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
  * **Windows** \
  * **Linux** \
  * **All**
  */
-export type Enum11 = string;
-
-/** Known values of {@link Enum12} that the service accepts. */
-export enum KnownEnum12 {
-  Windows = "Windows",
-  Linux = "Linux",
-  All = "All"
-}
-
-/**
- * Defines values for Enum12. \
- * {@link KnownEnum12} can be used interchangeably with Enum12,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Windows** \
- * **Linux** \
- * **All**
- */
-export type Enum12 = string;
-
-/** Known values of {@link Enum13} that the service accepts. */
-export enum KnownEnum13 {
-  Windows = "Windows",
-  Linux = "Linux",
-  All = "All"
-}
-
-/**
- * Defines values for Enum13. \
- * {@link KnownEnum13} can be used interchangeably with Enum13,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Windows** \
- * **Linux** \
- * **All**
- */
-export type Enum13 = string;
-
-/** Known values of {@link Enum14} that the service accepts. */
-export enum KnownEnum14 {
-  Windows = "Windows",
-  Linux = "Linux",
-  All = "All"
-}
-
-/**
- * Defines values for Enum14. \
- * {@link KnownEnum14} can be used interchangeably with Enum14,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Windows** \
- * **Linux** \
- * **All**
- */
-export type Enum14 = string;
-
-/** Known values of {@link Enum15} that the service accepts. */
-export enum KnownEnum15 {
-  Windows = "Windows",
-  Linux = "Linux",
-  WindowsFunctions = "WindowsFunctions",
-  LinuxFunctions = "LinuxFunctions",
-  All = "All"
-}
-
-/**
- * Defines values for Enum15. \
- * {@link KnownEnum15} can be used interchangeably with Enum15,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Windows** \
- * **Linux** \
- * **WindowsFunctions** \
- * **LinuxFunctions** \
- * **All**
- */
-export type Enum15 = string;
+export type ProviderStackOsType = string;
 
 /** Known values of {@link ResourceScopeType} that the service accepts. */
 export enum KnownResourceScopeType {
+  /** ServerFarm */
   ServerFarm = "ServerFarm",
+  /** Subscription */
   Subscription = "Subscription",
-  WebSite = "WebSite"
+  /** WebSite */
+  WebSite = "WebSite",
 }
 
 /**
@@ -7774,14 +10099,22 @@ export type ResourceScopeType = string;
 
 /** Known values of {@link CheckNameResourceTypes} that the service accepts. */
 export enum KnownCheckNameResourceTypes {
+  /** Site */
   Site = "Site",
+  /** Slot */
   Slot = "Slot",
+  /** HostingEnvironment */
   HostingEnvironment = "HostingEnvironment",
+  /** PublishingUser */
   PublishingUser = "PublishingUser",
+  /** MicrosoftWebSites */
   MicrosoftWebSites = "Microsoft.Web/sites",
+  /** MicrosoftWebSitesSlots */
   MicrosoftWebSitesSlots = "Microsoft.Web/sites/slots",
+  /** MicrosoftWebHostingEnvironments */
   MicrosoftWebHostingEnvironments = "Microsoft.Web/hostingEnvironments",
-  MicrosoftWebPublishingUsers = "Microsoft.Web/publishingUsers"
+  /** MicrosoftWebPublishingUsers */
+  MicrosoftWebPublishingUsers = "Microsoft.Web/publishingUsers",
 }
 
 /**
@@ -7802,8 +10135,10 @@ export type CheckNameResourceTypes = string;
 
 /** Known values of {@link InAvailabilityReasonType} that the service accepts. */
 export enum KnownInAvailabilityReasonType {
+  /** Invalid */
   Invalid = "Invalid",
-  AlreadyExists = "AlreadyExists"
+  /** AlreadyExists */
+  AlreadyExists = "AlreadyExists",
 }
 
 /**
@@ -7818,19 +10153,34 @@ export type InAvailabilityReasonType = string;
 
 /** Known values of {@link SkuName} that the service accepts. */
 export enum KnownSkuName {
+  /** Free */
   Free = "Free",
+  /** Shared */
   Shared = "Shared",
+  /** Basic */
   Basic = "Basic",
+  /** Standard */
   Standard = "Standard",
+  /** Premium */
   Premium = "Premium",
+  /** Dynamic */
   Dynamic = "Dynamic",
+  /** Isolated */
   Isolated = "Isolated",
+  /** IsolatedV2 */
   IsolatedV2 = "IsolatedV2",
+  /** PremiumV2 */
   PremiumV2 = "PremiumV2",
+  /** PremiumV3 */
   PremiumV3 = "PremiumV3",
+  /** PremiumContainer */
   PremiumContainer = "PremiumContainer",
+  /** ElasticPremium */
   ElasticPremium = "ElasticPremium",
-  ElasticIsolated = "ElasticIsolated"
+  /** ElasticIsolated */
+  ElasticIsolated = "ElasticIsolated",
+  /** FlexConsumption */
+  FlexConsumption = "FlexConsumption",
 }
 
 /**
@@ -7850,15 +10200,19 @@ export enum KnownSkuName {
  * **PremiumV3** \
  * **PremiumContainer** \
  * **ElasticPremium** \
- * **ElasticIsolated**
+ * **ElasticIsolated** \
+ * **FlexConsumption**
  */
 export type SkuName = string;
 
 /** Known values of {@link ValidateResourceTypes} that the service accepts. */
 export enum KnownValidateResourceTypes {
+  /** ServerFarm */
   ServerFarm = "ServerFarm",
+  /** Site */
   Site = "Site",
-  MicrosoftWebHostingEnvironments = "Microsoft.Web/hostingEnvironments"
+  /** MicrosoftWebHostingEnvironments */
+  MicrosoftWebHostingEnvironments = "Microsoft.Web/hostingEnvironments",
 }
 
 /**
@@ -7872,15 +10226,46 @@ export enum KnownValidateResourceTypes {
  */
 export type ValidateResourceTypes = string;
 
+/** Known values of {@link EnterpriseGradeCdnStatus} that the service accepts. */
+export enum KnownEnterpriseGradeCdnStatus {
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Enabling */
+  Enabling = "Enabling",
+  /** Disabled */
+  Disabled = "Disabled",
+  /** Disabling */
+  Disabling = "Disabling",
+}
+
+/**
+ * Defines values for EnterpriseGradeCdnStatus. \
+ * {@link KnownEnterpriseGradeCdnStatus} can be used interchangeably with EnterpriseGradeCdnStatus,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled** \
+ * **Enabling** \
+ * **Disabled** \
+ * **Disabling**
+ */
+export type EnterpriseGradeCdnStatus = string;
+
 /** Known values of {@link BuildStatus} that the service accepts. */
 export enum KnownBuildStatus {
+  /** WaitingForDeployment */
   WaitingForDeployment = "WaitingForDeployment",
+  /** Uploading */
   Uploading = "Uploading",
+  /** Deploying */
   Deploying = "Deploying",
+  /** Ready */
   Ready = "Ready",
+  /** Failed */
   Failed = "Failed",
+  /** Deleting */
   Deleting = "Deleting",
-  Detached = "Detached"
+  /** Detached */
+  Detached = "Detached",
 }
 
 /**
@@ -7900,8 +10285,10 @@ export type BuildStatus = string;
 
 /** Known values of {@link TriggerTypes} that the service accepts. */
 export enum KnownTriggerTypes {
+  /** HttpTrigger */
   HttpTrigger = "HttpTrigger",
-  Unknown = "Unknown"
+  /** Unknown */
+  Unknown = "Unknown",
 }
 
 /**
@@ -7914,14 +10301,37 @@ export enum KnownTriggerTypes {
  */
 export type TriggerTypes = string;
 
+/** Known values of {@link BasicAuthName} that the service accepts. */
+export enum KnownBasicAuthName {
+  /** Default */
+  Default = "default",
+}
+
+/**
+ * Defines values for BasicAuthName. \
+ * {@link KnownBasicAuthName} can be used interchangeably with BasicAuthName,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **default**
+ */
+export type BasicAuthName = string;
+
 /** Known values of {@link CustomDomainStatus} that the service accepts. */
 export enum KnownCustomDomainStatus {
+  /** RetrievingValidationToken */
   RetrievingValidationToken = "RetrievingValidationToken",
+  /** Validating */
   Validating = "Validating",
+  /** Adding */
   Adding = "Adding",
+  /** Ready */
   Ready = "Ready",
+  /** Failed */
   Failed = "Failed",
-  Deleting = "Deleting"
+  /** Deleting */
+  Deleting = "Deleting",
+  /** Unhealthy */
+  Unhealthy = "Unhealthy",
 }
 
 /**
@@ -7934,16 +10344,21 @@ export enum KnownCustomDomainStatus {
  * **Adding** \
  * **Ready** \
  * **Failed** \
- * **Deleting**
+ * **Deleting** \
+ * **Unhealthy**
  */
 export type CustomDomainStatus = string;
 
 /** Known values of {@link DatabaseType} that the service accepts. */
 export enum KnownDatabaseType {
+  /** SqlAzure */
   SqlAzure = "SqlAzure",
+  /** MySql */
   MySql = "MySql",
+  /** LocalMySql */
   LocalMySql = "LocalMySql",
-  PostgreSql = "PostgreSql"
+  /** PostgreSql */
+  PostgreSql = "PostgreSql",
 }
 
 /**
@@ -7958,11 +10373,65 @@ export enum KnownDatabaseType {
  */
 export type DatabaseType = string;
 
+/** Known values of {@link DeploymentBuildStatus} that the service accepts. */
+export enum KnownDeploymentBuildStatus {
+  /** TimedOut */
+  TimedOut = "TimedOut",
+  /** RuntimeFailed */
+  RuntimeFailed = "RuntimeFailed",
+  /** BuildAborted */
+  BuildAborted = "BuildAborted",
+  /** BuildFailed */
+  BuildFailed = "BuildFailed",
+  /** BuildRequestReceived */
+  BuildRequestReceived = "BuildRequestReceived",
+  /** BuildPending */
+  BuildPending = "BuildPending",
+  /** BuildInProgress */
+  BuildInProgress = "BuildInProgress",
+  /** BuildSuccessful */
+  BuildSuccessful = "BuildSuccessful",
+  /** PostBuildRestartRequired */
+  PostBuildRestartRequired = "PostBuildRestartRequired",
+  /** StartPolling */
+  StartPolling = "StartPolling",
+  /** StartPollingWithRestart */
+  StartPollingWithRestart = "StartPollingWithRestart",
+  /** RuntimeStarting */
+  RuntimeStarting = "RuntimeStarting",
+  /** RuntimeSuccessful */
+  RuntimeSuccessful = "RuntimeSuccessful",
+}
+
+/**
+ * Defines values for DeploymentBuildStatus. \
+ * {@link KnownDeploymentBuildStatus} can be used interchangeably with DeploymentBuildStatus,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **TimedOut** \
+ * **RuntimeFailed** \
+ * **BuildAborted** \
+ * **BuildFailed** \
+ * **BuildRequestReceived** \
+ * **BuildPending** \
+ * **BuildInProgress** \
+ * **BuildSuccessful** \
+ * **PostBuildRestartRequired** \
+ * **StartPolling** \
+ * **StartPollingWithRestart** \
+ * **RuntimeStarting** \
+ * **RuntimeSuccessful**
+ */
+export type DeploymentBuildStatus = string;
+
 /** Known values of {@link PublishingProfileFormat} that the service accepts. */
 export enum KnownPublishingProfileFormat {
+  /** FileZilla3 */
   FileZilla3 = "FileZilla3",
+  /** WebDeploy */
   WebDeploy = "WebDeploy",
-  Ftp = "Ftp"
+  /** Ftp */
+  Ftp = "Ftp",
 }
 
 /**
@@ -7975,6 +10444,390 @@ export enum KnownPublishingProfileFormat {
  * **Ftp**
  */
 export type PublishingProfileFormat = string;
+
+/** Known values of {@link WorkflowState} that the service accepts. */
+export enum KnownWorkflowState {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** Completed */
+  Completed = "Completed",
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+  /** Deleted */
+  Deleted = "Deleted",
+  /** Suspended */
+  Suspended = "Suspended",
+}
+
+/**
+ * Defines values for WorkflowState. \
+ * {@link KnownWorkflowState} can be used interchangeably with WorkflowState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **Completed** \
+ * **Enabled** \
+ * **Disabled** \
+ * **Deleted** \
+ * **Suspended**
+ */
+export type WorkflowState = string;
+
+/** Known values of {@link KeyType} that the service accepts. */
+export enum KnownKeyType {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** Primary */
+  Primary = "Primary",
+  /** Secondary */
+  Secondary = "Secondary",
+}
+
+/**
+ * Defines values for KeyType. \
+ * {@link KnownKeyType} can be used interchangeably with KeyType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **Primary** \
+ * **Secondary**
+ */
+export type KeyType = string;
+
+/** Known values of {@link WorkflowStatus} that the service accepts. */
+export enum KnownWorkflowStatus {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** Paused */
+  Paused = "Paused",
+  /** Running */
+  Running = "Running",
+  /** Waiting */
+  Waiting = "Waiting",
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Skipped */
+  Skipped = "Skipped",
+  /** Suspended */
+  Suspended = "Suspended",
+  /** Cancelled */
+  Cancelled = "Cancelled",
+  /** Failed */
+  Failed = "Failed",
+  /** Faulted */
+  Faulted = "Faulted",
+  /** TimedOut */
+  TimedOut = "TimedOut",
+  /** Aborted */
+  Aborted = "Aborted",
+  /** Ignored */
+  Ignored = "Ignored",
+}
+
+/**
+ * Defines values for WorkflowStatus. \
+ * {@link KnownWorkflowStatus} can be used interchangeably with WorkflowStatus,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **Paused** \
+ * **Running** \
+ * **Waiting** \
+ * **Succeeded** \
+ * **Skipped** \
+ * **Suspended** \
+ * **Cancelled** \
+ * **Failed** \
+ * **Faulted** \
+ * **TimedOut** \
+ * **Aborted** \
+ * **Ignored**
+ */
+export type WorkflowStatus = string;
+
+/** Known values of {@link ParameterType} that the service accepts. */
+export enum KnownParameterType {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** String */
+  String = "String",
+  /** SecureString */
+  SecureString = "SecureString",
+  /** Int */
+  Int = "Int",
+  /** Float */
+  Float = "Float",
+  /** Bool */
+  Bool = "Bool",
+  /** Array */
+  Array = "Array",
+  /** Object */
+  Object = "Object",
+  /** SecureObject */
+  SecureObject = "SecureObject",
+}
+
+/**
+ * Defines values for ParameterType. \
+ * {@link KnownParameterType} can be used interchangeably with ParameterType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **String** \
+ * **SecureString** \
+ * **Int** \
+ * **Float** \
+ * **Bool** \
+ * **Array** \
+ * **Object** \
+ * **SecureObject**
+ */
+export type ParameterType = string;
+
+/** Known values of {@link WorkflowTriggerProvisioningState} that the service accepts. */
+export enum KnownWorkflowTriggerProvisioningState {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** Accepted */
+  Accepted = "Accepted",
+  /** Running */
+  Running = "Running",
+  /** Ready */
+  Ready = "Ready",
+  /** Creating */
+  Creating = "Creating",
+  /** Created */
+  Created = "Created",
+  /** Deleting */
+  Deleting = "Deleting",
+  /** Deleted */
+  Deleted = "Deleted",
+  /** Canceled */
+  Canceled = "Canceled",
+  /** Failed */
+  Failed = "Failed",
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Moving */
+  Moving = "Moving",
+  /** Updating */
+  Updating = "Updating",
+  /** Registering */
+  Registering = "Registering",
+  /** Registered */
+  Registered = "Registered",
+  /** Unregistering */
+  Unregistering = "Unregistering",
+  /** Unregistered */
+  Unregistered = "Unregistered",
+  /** Completed */
+  Completed = "Completed",
+}
+
+/**
+ * Defines values for WorkflowTriggerProvisioningState. \
+ * {@link KnownWorkflowTriggerProvisioningState} can be used interchangeably with WorkflowTriggerProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **Accepted** \
+ * **Running** \
+ * **Ready** \
+ * **Creating** \
+ * **Created** \
+ * **Deleting** \
+ * **Deleted** \
+ * **Canceled** \
+ * **Failed** \
+ * **Succeeded** \
+ * **Moving** \
+ * **Updating** \
+ * **Registering** \
+ * **Registered** \
+ * **Unregistering** \
+ * **Unregistered** \
+ * **Completed**
+ */
+export type WorkflowTriggerProvisioningState = string;
+
+/** Known values of {@link RecurrenceFrequency} that the service accepts. */
+export enum KnownRecurrenceFrequency {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** Second */
+  Second = "Second",
+  /** Minute */
+  Minute = "Minute",
+  /** Hour */
+  Hour = "Hour",
+  /** Day */
+  Day = "Day",
+  /** Week */
+  Week = "Week",
+  /** Month */
+  Month = "Month",
+  /** Year */
+  Year = "Year",
+}
+
+/**
+ * Defines values for RecurrenceFrequency. \
+ * {@link KnownRecurrenceFrequency} can be used interchangeably with RecurrenceFrequency,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **Second** \
+ * **Minute** \
+ * **Hour** \
+ * **Day** \
+ * **Week** \
+ * **Month** \
+ * **Year**
+ */
+export type RecurrenceFrequency = string;
+
+/** Known values of {@link WorkflowProvisioningState} that the service accepts. */
+export enum KnownWorkflowProvisioningState {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** Accepted */
+  Accepted = "Accepted",
+  /** Running */
+  Running = "Running",
+  /** Ready */
+  Ready = "Ready",
+  /** Creating */
+  Creating = "Creating",
+  /** Created */
+  Created = "Created",
+  /** Deleting */
+  Deleting = "Deleting",
+  /** Deleted */
+  Deleted = "Deleted",
+  /** Canceled */
+  Canceled = "Canceled",
+  /** Failed */
+  Failed = "Failed",
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Moving */
+  Moving = "Moving",
+  /** Updating */
+  Updating = "Updating",
+  /** Registering */
+  Registering = "Registering",
+  /** Registered */
+  Registered = "Registered",
+  /** Unregistering */
+  Unregistering = "Unregistering",
+  /** Unregistered */
+  Unregistered = "Unregistered",
+  /** Completed */
+  Completed = "Completed",
+  /** Renewing */
+  Renewing = "Renewing",
+  /** Pending */
+  Pending = "Pending",
+  /** Waiting */
+  Waiting = "Waiting",
+  /** InProgress */
+  InProgress = "InProgress",
+}
+
+/**
+ * Defines values for WorkflowProvisioningState. \
+ * {@link KnownWorkflowProvisioningState} can be used interchangeably with WorkflowProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **Accepted** \
+ * **Running** \
+ * **Ready** \
+ * **Creating** \
+ * **Created** \
+ * **Deleting** \
+ * **Deleted** \
+ * **Canceled** \
+ * **Failed** \
+ * **Succeeded** \
+ * **Moving** \
+ * **Updating** \
+ * **Registering** \
+ * **Registered** \
+ * **Unregistering** \
+ * **Unregistered** \
+ * **Completed** \
+ * **Renewing** \
+ * **Pending** \
+ * **Waiting** \
+ * **InProgress**
+ */
+export type WorkflowProvisioningState = string;
+
+/** Known values of {@link OpenAuthenticationProviderType} that the service accepts. */
+export enum KnownOpenAuthenticationProviderType {
+  /** AAD */
+  AAD = "AAD",
+}
+
+/**
+ * Defines values for OpenAuthenticationProviderType. \
+ * {@link KnownOpenAuthenticationProviderType} can be used interchangeably with OpenAuthenticationProviderType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **AAD**
+ */
+export type OpenAuthenticationProviderType = string;
+
+/** Known values of {@link WorkflowSkuName} that the service accepts. */
+export enum KnownWorkflowSkuName {
+  /** NotSpecified */
+  NotSpecified = "NotSpecified",
+  /** Free */
+  Free = "Free",
+  /** Shared */
+  Shared = "Shared",
+  /** Basic */
+  Basic = "Basic",
+  /** Standard */
+  Standard = "Standard",
+  /** Premium */
+  Premium = "Premium",
+}
+
+/**
+ * Defines values for WorkflowSkuName. \
+ * {@link KnownWorkflowSkuName} can be used interchangeably with WorkflowSkuName,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **NotSpecified** \
+ * **Free** \
+ * **Shared** \
+ * **Basic** \
+ * **Standard** \
+ * **Premium**
+ */
+export type WorkflowSkuName = string;
+
+/** Known values of {@link Kind} that the service accepts. */
+export enum KnownKind {
+  /** Stateful */
+  Stateful = "Stateful",
+  /** Stateless */
+  Stateless = "Stateless",
+}
+
+/**
+ * Defines values for Kind. \
+ * {@link KnownKind} can be used interchangeably with Kind,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Stateful** \
+ * **Stateless**
+ */
+export type Kind = string;
 /** Defines values for KeyVaultSecretStatus. */
 export type KeyVaultSecretStatus =
   | "Initialized"
@@ -8102,6 +10955,12 @@ export type HostingEnvironmentStatus =
   | "Ready"
   | "Scaling"
   | "Deleting";
+/** Defines values for CustomDnsSuffixProvisioningState. */
+export type CustomDnsSuffixProvisioningState =
+  | "Succeeded"
+  | "Failed"
+  | "Degraded"
+  | "InProgress";
 /** Defines values for ComputeModeOptions. */
 export type ComputeModeOptions = "Shared" | "Dedicated" | "Dynamic";
 /** Defines values for WorkerSizeOptions. */
@@ -8334,17 +11193,48 @@ export type PublicCertificateLocation =
   | "CurrentUserMy"
   | "LocalMachineMy"
   | "Unknown";
+/** Defines values for AuthType. */
+export type AuthType =
+  | "Anonymous"
+  | "UserCredentials"
+  | "SystemIdentity"
+  | "UserAssigned";
 /** Defines values for SiteExtensionType. */
 export type SiteExtensionType = "Gallery" | "WebRoot";
 /** Defines values for TriggeredWebJobStatus. */
 export type TriggeredWebJobStatus = "Success" | "Failed" | "Error";
+/** Defines values for WorkflowHealthState. */
+export type WorkflowHealthState =
+  | "NotSpecified"
+  | "Healthy"
+  | "Unhealthy"
+  | "Unknown";
+/** Defines values for DaysOfWeek. */
+export type DaysOfWeek =
+  | "Sunday"
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday";
+/** Defines values for DayOfWeek. */
+export type DayOfWeek =
+  | "Sunday"
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday";
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersListOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the list operation. */
-export type AppServiceCertificateOrdersListResponse = AppServiceCertificateOrderCollection;
+export type AppServiceCertificateOrdersListResponse =
+  AppServiceCertificateOrderCollection;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersValidatePurchaseInformationOptionalParams
@@ -8355,7 +11245,8 @@ export interface AppServiceCertificateOrdersListByResourceGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroup operation. */
-export type AppServiceCertificateOrdersListByResourceGroupResponse = AppServiceCertificateOrderCollection;
+export type AppServiceCertificateOrdersListByResourceGroupResponse =
+  AppServiceCertificateOrderCollection;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersGetOptionalParams
@@ -8374,7 +11265,8 @@ export interface AppServiceCertificateOrdersCreateOrUpdateOptionalParams
 }
 
 /** Contains response data for the createOrUpdate operation. */
-export type AppServiceCertificateOrdersCreateOrUpdateResponse = AppServiceCertificateOrder;
+export type AppServiceCertificateOrdersCreateOrUpdateResponse =
+  AppServiceCertificateOrder;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersDeleteOptionalParams
@@ -8385,21 +11277,24 @@ export interface AppServiceCertificateOrdersUpdateOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the update operation. */
-export type AppServiceCertificateOrdersUpdateResponse = AppServiceCertificateOrder;
+export type AppServiceCertificateOrdersUpdateResponse =
+  AppServiceCertificateOrder;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersListCertificatesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listCertificates operation. */
-export type AppServiceCertificateOrdersListCertificatesResponse = AppServiceCertificateCollection;
+export type AppServiceCertificateOrdersListCertificatesResponse =
+  AppServiceCertificateCollection;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersGetCertificateOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getCertificate operation. */
-export type AppServiceCertificateOrdersGetCertificateResponse = AppServiceCertificateResource;
+export type AppServiceCertificateOrdersGetCertificateResponse =
+  AppServiceCertificateResource;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams
@@ -8411,7 +11306,8 @@ export interface AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalPar
 }
 
 /** Contains response data for the createOrUpdateCertificate operation. */
-export type AppServiceCertificateOrdersCreateOrUpdateCertificateResponse = AppServiceCertificateResource;
+export type AppServiceCertificateOrdersCreateOrUpdateCertificateResponse =
+  AppServiceCertificateResource;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersDeleteCertificateOptionalParams
@@ -8422,7 +11318,8 @@ export interface AppServiceCertificateOrdersUpdateCertificateOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateCertificate operation. */
-export type AppServiceCertificateOrdersUpdateCertificateResponse = AppServiceCertificateResource;
+export type AppServiceCertificateOrdersUpdateCertificateResponse =
+  AppServiceCertificateResource;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersReissueOptionalParams
@@ -8456,42 +11353,48 @@ export interface AppServiceCertificateOrdersRetrieveCertificateActionsOptionalPa
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the retrieveCertificateActions operation. */
-export type AppServiceCertificateOrdersRetrieveCertificateActionsResponse = CertificateOrderAction[];
+export type AppServiceCertificateOrdersRetrieveCertificateActionsResponse =
+  CertificateOrderAction[];
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersRetrieveCertificateEmailHistoryOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the retrieveCertificateEmailHistory operation. */
-export type AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse = CertificateEmail[];
+export type AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse =
+  CertificateEmail[];
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersListNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
-export type AppServiceCertificateOrdersListNextResponse = AppServiceCertificateOrderCollection;
+export type AppServiceCertificateOrdersListNextResponse =
+  AppServiceCertificateOrderCollection;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersListByResourceGroupNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
-export type AppServiceCertificateOrdersListByResourceGroupNextResponse = AppServiceCertificateOrderCollection;
+export type AppServiceCertificateOrdersListByResourceGroupNextResponse =
+  AppServiceCertificateOrderCollection;
 
 /** Optional parameters. */
 export interface AppServiceCertificateOrdersListCertificatesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listCertificatesNext operation. */
-export type AppServiceCertificateOrdersListCertificatesNextResponse = AppServiceCertificateCollection;
+export type AppServiceCertificateOrdersListCertificatesNextResponse =
+  AppServiceCertificateCollection;
 
 /** Optional parameters. */
 export interface CertificateOrdersDiagnosticsListAppServiceCertificateOrderDetectorResponseOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listAppServiceCertificateOrderDetectorResponse operation. */
-export type CertificateOrdersDiagnosticsListAppServiceCertificateOrderDetectorResponseResponse = DetectorResponseCollection;
+export type CertificateOrdersDiagnosticsListAppServiceCertificateOrderDetectorResponseResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface CertificateOrdersDiagnosticsGetAppServiceCertificateOrderDetectorResponseOptionalParams
@@ -8505,28 +11408,32 @@ export interface CertificateOrdersDiagnosticsGetAppServiceCertificateOrderDetect
 }
 
 /** Contains response data for the getAppServiceCertificateOrderDetectorResponse operation. */
-export type CertificateOrdersDiagnosticsGetAppServiceCertificateOrderDetectorResponseResponse = DetectorResponse;
+export type CertificateOrdersDiagnosticsGetAppServiceCertificateOrderDetectorResponseResponse =
+  DetectorResponse;
 
 /** Optional parameters. */
 export interface CertificateOrdersDiagnosticsListAppServiceCertificateOrderDetectorResponseNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listAppServiceCertificateOrderDetectorResponseNext operation. */
-export type CertificateOrdersDiagnosticsListAppServiceCertificateOrderDetectorResponseNextResponse = DetectorResponseCollection;
+export type CertificateOrdersDiagnosticsListAppServiceCertificateOrderDetectorResponseNextResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface CertificateRegistrationProviderListOperationsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listOperations operation. */
-export type CertificateRegistrationProviderListOperationsResponse = CsmOperationCollection;
+export type CertificateRegistrationProviderListOperationsResponse =
+  CsmOperationCollection;
 
 /** Optional parameters. */
 export interface CertificateRegistrationProviderListOperationsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listOperationsNext operation. */
-export type CertificateRegistrationProviderListOperationsNextResponse = CsmOperationCollection;
+export type CertificateRegistrationProviderListOperationsNextResponse =
+  CsmOperationCollection;
 
 /** Optional parameters. */
 export interface DomainsCheckAvailabilityOptionalParams
@@ -8547,7 +11454,8 @@ export interface DomainsGetControlCenterSsoRequestOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getControlCenterSsoRequest operation. */
-export type DomainsGetControlCenterSsoRequestResponse = DomainControlCenterSsoRequest;
+export type DomainsGetControlCenterSsoRequestResponse =
+  DomainControlCenterSsoRequest;
 
 /** Optional parameters. */
 export interface DomainsListRecommendationsOptionalParams
@@ -8600,7 +11508,8 @@ export interface DomainsListOwnershipIdentifiersOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listOwnershipIdentifiers operation. */
-export type DomainsListOwnershipIdentifiersResponse = DomainOwnershipIdentifierCollection;
+export type DomainsListOwnershipIdentifiersResponse =
+  DomainOwnershipIdentifierCollection;
 
 /** Optional parameters. */
 export interface DomainsGetOwnershipIdentifierOptionalParams
@@ -8614,7 +11523,8 @@ export interface DomainsCreateOrUpdateOwnershipIdentifierOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateOwnershipIdentifier operation. */
-export type DomainsCreateOrUpdateOwnershipIdentifierResponse = DomainOwnershipIdentifier;
+export type DomainsCreateOrUpdateOwnershipIdentifierResponse =
+  DomainOwnershipIdentifier;
 
 /** Optional parameters. */
 export interface DomainsDeleteOwnershipIdentifierOptionalParams
@@ -8625,11 +11535,19 @@ export interface DomainsUpdateOwnershipIdentifierOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateOwnershipIdentifier operation. */
-export type DomainsUpdateOwnershipIdentifierResponse = DomainOwnershipIdentifier;
+export type DomainsUpdateOwnershipIdentifierResponse =
+  DomainOwnershipIdentifier;
 
 /** Optional parameters. */
 export interface DomainsRenewOptionalParams
   extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface DomainsTransferOutOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the transferOut operation. */
+export type DomainsTransferOutResponse = Domain;
 
 /** Optional parameters. */
 export interface DomainsListNextOptionalParams
@@ -8657,7 +11575,8 @@ export interface DomainsListOwnershipIdentifiersNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listOwnershipIdentifiersNext operation. */
-export type DomainsListOwnershipIdentifiersNextResponse = DomainOwnershipIdentifierCollection;
+export type DomainsListOwnershipIdentifiersNextResponse =
+  DomainOwnershipIdentifierCollection;
 
 /** Optional parameters. */
 export interface TopLevelDomainsListOptionalParams
@@ -8692,35 +11611,40 @@ export interface TopLevelDomainsListAgreementsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listAgreementsNext operation. */
-export type TopLevelDomainsListAgreementsNextResponse = TldLegalAgreementCollection;
+export type TopLevelDomainsListAgreementsNextResponse =
+  TldLegalAgreementCollection;
 
 /** Optional parameters. */
 export interface DomainRegistrationProviderListOperationsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listOperations operation. */
-export type DomainRegistrationProviderListOperationsResponse = CsmOperationCollection;
+export type DomainRegistrationProviderListOperationsResponse =
+  CsmOperationCollection;
 
 /** Optional parameters. */
 export interface DomainRegistrationProviderListOperationsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listOperationsNext operation. */
-export type DomainRegistrationProviderListOperationsNextResponse = CsmOperationCollection;
+export type DomainRegistrationProviderListOperationsNextResponse =
+  CsmOperationCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the list operation. */
-export type AppServiceEnvironmentsListResponse = AppServiceEnvironmentCollection;
+export type AppServiceEnvironmentsListResponse =
+  AppServiceEnvironmentCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListByResourceGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroup operation. */
-export type AppServiceEnvironmentsListByResourceGroupResponse = AppServiceEnvironmentCollection;
+export type AppServiceEnvironmentsListByResourceGroupResponse =
+  AppServiceEnvironmentCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetOptionalParams
@@ -8739,7 +11663,8 @@ export interface AppServiceEnvironmentsCreateOrUpdateOptionalParams
 }
 
 /** Contains response data for the createOrUpdate operation. */
-export type AppServiceEnvironmentsCreateOrUpdateResponse = AppServiceEnvironmentResource;
+export type AppServiceEnvironmentsCreateOrUpdateResponse =
+  AppServiceEnvironmentResource;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsDeleteOptionalParams
@@ -8757,14 +11682,16 @@ export interface AppServiceEnvironmentsUpdateOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the update operation. */
-export type AppServiceEnvironmentsUpdateResponse = AppServiceEnvironmentResource;
+export type AppServiceEnvironmentsUpdateResponse =
+  AppServiceEnvironmentResource;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListCapacitiesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listCapacities operation. */
-export type AppServiceEnvironmentsListCapacitiesResponse = StampCapacityCollection;
+export type AppServiceEnvironmentsListCapacitiesResponse =
+  StampCapacityCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetVipInfoOptionalParams
@@ -8786,46 +11713,76 @@ export interface AppServiceEnvironmentsChangeVnetOptionalParams
 export type AppServiceEnvironmentsChangeVnetResponse = WebAppCollection;
 
 /** Optional parameters. */
+export interface AppServiceEnvironmentsGetAseCustomDnsSuffixConfigurationOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getAseCustomDnsSuffixConfiguration operation. */
+export type AppServiceEnvironmentsGetAseCustomDnsSuffixConfigurationResponse =
+  CustomDnsSuffixConfiguration;
+
+/** Optional parameters. */
+export interface AppServiceEnvironmentsUpdateAseCustomDnsSuffixConfigurationOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the updateAseCustomDnsSuffixConfiguration operation. */
+export type AppServiceEnvironmentsUpdateAseCustomDnsSuffixConfigurationResponse =
+  CustomDnsSuffixConfiguration;
+
+/** Optional parameters. */
+export interface AppServiceEnvironmentsDeleteAseCustomDnsSuffixConfigurationOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the deleteAseCustomDnsSuffixConfiguration operation. */
+export type AppServiceEnvironmentsDeleteAseCustomDnsSuffixConfigurationResponse =
+  Record<string, unknown>;
+
+/** Optional parameters. */
 export interface AppServiceEnvironmentsGetAseV3NetworkingConfigurationOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getAseV3NetworkingConfiguration operation. */
-export type AppServiceEnvironmentsGetAseV3NetworkingConfigurationResponse = AseV3NetworkingConfiguration;
+export type AppServiceEnvironmentsGetAseV3NetworkingConfigurationResponse =
+  AseV3NetworkingConfiguration;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsUpdateAseNetworkingConfigurationOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateAseNetworkingConfiguration operation. */
-export type AppServiceEnvironmentsUpdateAseNetworkingConfigurationResponse = AseV3NetworkingConfiguration;
+export type AppServiceEnvironmentsUpdateAseNetworkingConfigurationResponse =
+  AseV3NetworkingConfiguration;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListDiagnosticsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listDiagnostics operation. */
-export type AppServiceEnvironmentsListDiagnosticsResponse = HostingEnvironmentDiagnostics[];
+export type AppServiceEnvironmentsListDiagnosticsResponse =
+  HostingEnvironmentDiagnostics[];
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetDiagnosticsItemOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getDiagnosticsItem operation. */
-export type AppServiceEnvironmentsGetDiagnosticsItemResponse = HostingEnvironmentDiagnostics;
+export type AppServiceEnvironmentsGetDiagnosticsItemResponse =
+  HostingEnvironmentDiagnostics;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetInboundNetworkDependenciesEndpointsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getInboundNetworkDependenciesEndpoints operation. */
-export type AppServiceEnvironmentsGetInboundNetworkDependenciesEndpointsResponse = InboundEnvironmentEndpointCollection;
+export type AppServiceEnvironmentsGetInboundNetworkDependenciesEndpointsResponse =
+  InboundEnvironmentEndpointCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRolePoolsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRolePools operation. */
-export type AppServiceEnvironmentsListMultiRolePoolsResponse = WorkerPoolCollection;
+export type AppServiceEnvironmentsListMultiRolePoolsResponse =
+  WorkerPoolCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetMultiRolePoolOptionalParams
@@ -8844,35 +11801,53 @@ export interface AppServiceEnvironmentsCreateOrUpdateMultiRolePoolOptionalParams
 }
 
 /** Contains response data for the createOrUpdateMultiRolePool operation. */
-export type AppServiceEnvironmentsCreateOrUpdateMultiRolePoolResponse = WorkerPoolResource;
+export type AppServiceEnvironmentsCreateOrUpdateMultiRolePoolResponse =
+  WorkerPoolResource;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsUpdateMultiRolePoolOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateMultiRolePool operation. */
-export type AppServiceEnvironmentsUpdateMultiRolePoolResponse = WorkerPoolResource;
+export type AppServiceEnvironmentsUpdateMultiRolePoolResponse =
+  WorkerPoolResource;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRolePoolInstanceMetricDefinitionsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRolePoolInstanceMetricDefinitions operation. */
-export type AppServiceEnvironmentsListMultiRolePoolInstanceMetricDefinitionsResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListMultiRolePoolInstanceMetricDefinitionsResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRoleMetricDefinitionsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRoleMetricDefinitions operation. */
-export type AppServiceEnvironmentsListMultiRoleMetricDefinitionsResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListMultiRoleMetricDefinitionsResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRolePoolSkusOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRolePoolSkus operation. */
-export type AppServiceEnvironmentsListMultiRolePoolSkusResponse = SkuInfoCollection;
+export type AppServiceEnvironmentsListMultiRolePoolSkusResponse =
+  SkuInfoCollection;
+
+/** Optional parameters. */
+export interface AppServiceEnvironmentsTestUpgradeAvailableNotificationOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface AppServiceEnvironmentsUpgradeOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRoleUsagesOptionalParams
@@ -8893,21 +11868,24 @@ export interface AppServiceEnvironmentsGetOutboundNetworkDependenciesEndpointsOp
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getOutboundNetworkDependenciesEndpoints operation. */
-export type AppServiceEnvironmentsGetOutboundNetworkDependenciesEndpointsResponse = OutboundEnvironmentEndpointCollection;
+export type AppServiceEnvironmentsGetOutboundNetworkDependenciesEndpointsResponse =
+  OutboundEnvironmentEndpointCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetPrivateEndpointConnectionListOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionList operation. */
-export type AppServiceEnvironmentsGetPrivateEndpointConnectionListResponse = PrivateEndpointConnectionCollection;
+export type AppServiceEnvironmentsGetPrivateEndpointConnectionListResponse =
+  PrivateEndpointConnectionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetPrivateEndpointConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnection operation. */
-export type AppServiceEnvironmentsGetPrivateEndpointConnectionResponse = RemotePrivateEndpointConnectionARMResource;
+export type AppServiceEnvironmentsGetPrivateEndpointConnectionResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsApproveOrRejectPrivateEndpointConnectionOptionalParams
@@ -8919,7 +11897,8 @@ export interface AppServiceEnvironmentsApproveOrRejectPrivateEndpointConnectionO
 }
 
 /** Contains response data for the approveOrRejectPrivateEndpointConnection operation. */
-export type AppServiceEnvironmentsApproveOrRejectPrivateEndpointConnectionResponse = RemotePrivateEndpointConnectionARMResource;
+export type AppServiceEnvironmentsApproveOrRejectPrivateEndpointConnectionResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsDeletePrivateEndpointConnectionOptionalParams
@@ -8931,17 +11910,16 @@ export interface AppServiceEnvironmentsDeletePrivateEndpointConnectionOptionalPa
 }
 
 /** Contains response data for the deletePrivateEndpointConnection operation. */
-export type AppServiceEnvironmentsDeletePrivateEndpointConnectionResponse = Record<
-  string,
-  unknown
->;
+export type AppServiceEnvironmentsDeletePrivateEndpointConnectionResponse =
+  Record<string, unknown>;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetPrivateLinkResourcesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateLinkResources operation. */
-export type AppServiceEnvironmentsGetPrivateLinkResourcesResponse = PrivateLinkResourcesWrapper;
+export type AppServiceEnvironmentsGetPrivateLinkResourcesResponse =
+  PrivateLinkResourcesWrapper;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsRebootOptionalParams
@@ -8964,7 +11942,8 @@ export interface AppServiceEnvironmentsListAppServicePlansOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listAppServicePlans operation. */
-export type AppServiceEnvironmentsListAppServicePlansResponse = AppServicePlanCollection;
+export type AppServiceEnvironmentsListAppServicePlansResponse =
+  AppServicePlanCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWebAppsOptionalParams
@@ -9003,7 +11982,8 @@ export interface AppServiceEnvironmentsListWorkerPoolsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWorkerPools operation. */
-export type AppServiceEnvironmentsListWorkerPoolsResponse = WorkerPoolCollection;
+export type AppServiceEnvironmentsListWorkerPoolsResponse =
+  WorkerPoolCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetWorkerPoolOptionalParams
@@ -9022,7 +12002,8 @@ export interface AppServiceEnvironmentsCreateOrUpdateWorkerPoolOptionalParams
 }
 
 /** Contains response data for the createOrUpdateWorkerPool operation. */
-export type AppServiceEnvironmentsCreateOrUpdateWorkerPoolResponse = WorkerPoolResource;
+export type AppServiceEnvironmentsCreateOrUpdateWorkerPoolResponse =
+  WorkerPoolResource;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsUpdateWorkerPoolOptionalParams
@@ -9036,21 +12017,24 @@ export interface AppServiceEnvironmentsListWorkerPoolInstanceMetricDefinitionsOp
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWorkerPoolInstanceMetricDefinitions operation. */
-export type AppServiceEnvironmentsListWorkerPoolInstanceMetricDefinitionsResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListWorkerPoolInstanceMetricDefinitionsResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWebWorkerMetricDefinitionsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWebWorkerMetricDefinitions operation. */
-export type AppServiceEnvironmentsListWebWorkerMetricDefinitionsResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListWebWorkerMetricDefinitionsResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWorkerPoolSkusOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWorkerPoolSkus operation. */
-export type AppServiceEnvironmentsListWorkerPoolSkusResponse = SkuInfoCollection;
+export type AppServiceEnvironmentsListWorkerPoolSkusResponse =
+  SkuInfoCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWebWorkerUsagesOptionalParams
@@ -9064,21 +12048,24 @@ export interface AppServiceEnvironmentsListNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
-export type AppServiceEnvironmentsListNextResponse = AppServiceEnvironmentCollection;
+export type AppServiceEnvironmentsListNextResponse =
+  AppServiceEnvironmentCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListByResourceGroupNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
-export type AppServiceEnvironmentsListByResourceGroupNextResponse = AppServiceEnvironmentCollection;
+export type AppServiceEnvironmentsListByResourceGroupNextResponse =
+  AppServiceEnvironmentCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListCapacitiesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listCapacitiesNext operation. */
-export type AppServiceEnvironmentsListCapacitiesNextResponse = StampCapacityCollection;
+export type AppServiceEnvironmentsListCapacitiesNextResponse =
+  StampCapacityCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsChangeVnetNextOptionalParams
@@ -9092,56 +12079,64 @@ export interface AppServiceEnvironmentsGetInboundNetworkDependenciesEndpointsNex
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getInboundNetworkDependenciesEndpointsNext operation. */
-export type AppServiceEnvironmentsGetInboundNetworkDependenciesEndpointsNextResponse = InboundEnvironmentEndpointCollection;
+export type AppServiceEnvironmentsGetInboundNetworkDependenciesEndpointsNextResponse =
+  InboundEnvironmentEndpointCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRolePoolsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRolePoolsNext operation. */
-export type AppServiceEnvironmentsListMultiRolePoolsNextResponse = WorkerPoolCollection;
+export type AppServiceEnvironmentsListMultiRolePoolsNextResponse =
+  WorkerPoolCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRolePoolInstanceMetricDefinitionsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRolePoolInstanceMetricDefinitionsNext operation. */
-export type AppServiceEnvironmentsListMultiRolePoolInstanceMetricDefinitionsNextResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListMultiRolePoolInstanceMetricDefinitionsNextResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRoleMetricDefinitionsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRoleMetricDefinitionsNext operation. */
-export type AppServiceEnvironmentsListMultiRoleMetricDefinitionsNextResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListMultiRoleMetricDefinitionsNextResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRolePoolSkusNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRolePoolSkusNext operation. */
-export type AppServiceEnvironmentsListMultiRolePoolSkusNextResponse = SkuInfoCollection;
+export type AppServiceEnvironmentsListMultiRolePoolSkusNextResponse =
+  SkuInfoCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListMultiRoleUsagesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listMultiRoleUsagesNext operation. */
-export type AppServiceEnvironmentsListMultiRoleUsagesNextResponse = UsageCollection;
+export type AppServiceEnvironmentsListMultiRoleUsagesNextResponse =
+  UsageCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetOutboundNetworkDependenciesEndpointsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getOutboundNetworkDependenciesEndpointsNext operation. */
-export type AppServiceEnvironmentsGetOutboundNetworkDependenciesEndpointsNextResponse = OutboundEnvironmentEndpointCollection;
+export type AppServiceEnvironmentsGetOutboundNetworkDependenciesEndpointsNextResponse =
+  OutboundEnvironmentEndpointCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsGetPrivateEndpointConnectionListNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionListNext operation. */
-export type AppServiceEnvironmentsGetPrivateEndpointConnectionListNextResponse = PrivateEndpointConnectionCollection;
+export type AppServiceEnvironmentsGetPrivateEndpointConnectionListNextResponse =
+  PrivateEndpointConnectionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsResumeNextOptionalParams
@@ -9155,14 +12150,12 @@ export interface AppServiceEnvironmentsListAppServicePlansNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listAppServicePlansNext operation. */
-export type AppServiceEnvironmentsListAppServicePlansNextResponse = AppServicePlanCollection;
+export type AppServiceEnvironmentsListAppServicePlansNextResponse =
+  AppServicePlanCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWebAppsNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Comma separated list of app properties to include. */
-  propertiesToInclude?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWebAppsNext operation. */
 export type AppServiceEnvironmentsListWebAppsNextResponse = WebAppCollection;
@@ -9176,48 +12169,51 @@ export type AppServiceEnvironmentsSuspendNextResponse = WebAppCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListUsagesNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[Hour|Minute|Day]'. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listUsagesNext operation. */
-export type AppServiceEnvironmentsListUsagesNextResponse = CsmUsageQuotaCollection;
+export type AppServiceEnvironmentsListUsagesNextResponse =
+  CsmUsageQuotaCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWorkerPoolsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWorkerPoolsNext operation. */
-export type AppServiceEnvironmentsListWorkerPoolsNextResponse = WorkerPoolCollection;
+export type AppServiceEnvironmentsListWorkerPoolsNextResponse =
+  WorkerPoolCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWorkerPoolInstanceMetricDefinitionsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWorkerPoolInstanceMetricDefinitionsNext operation. */
-export type AppServiceEnvironmentsListWorkerPoolInstanceMetricDefinitionsNextResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListWorkerPoolInstanceMetricDefinitionsNextResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWebWorkerMetricDefinitionsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWebWorkerMetricDefinitionsNext operation. */
-export type AppServiceEnvironmentsListWebWorkerMetricDefinitionsNextResponse = ResourceMetricDefinitionCollection;
+export type AppServiceEnvironmentsListWebWorkerMetricDefinitionsNextResponse =
+  ResourceMetricDefinitionCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWorkerPoolSkusNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWorkerPoolSkusNext operation. */
-export type AppServiceEnvironmentsListWorkerPoolSkusNextResponse = SkuInfoCollection;
+export type AppServiceEnvironmentsListWorkerPoolSkusNextResponse =
+  SkuInfoCollection;
 
 /** Optional parameters. */
 export interface AppServiceEnvironmentsListWebWorkerUsagesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWebWorkerUsagesNext operation. */
-export type AppServiceEnvironmentsListWebWorkerUsagesNextResponse = UsageCollection;
+export type AppServiceEnvironmentsListWebWorkerUsagesNextResponse =
+  UsageCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansListOptionalParams
@@ -9237,7 +12233,8 @@ export interface AppServicePlansListByResourceGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroup operation. */
-export type AppServicePlansListByResourceGroupResponse = AppServicePlanCollection;
+export type AppServicePlansListByResourceGroupResponse =
+  AppServicePlanCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansGetOptionalParams
@@ -9292,28 +12289,32 @@ export interface AppServicePlansListHybridConnectionKeysOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHybridConnectionKeys operation. */
-export type AppServicePlansListHybridConnectionKeysResponse = HybridConnectionKey;
+export type AppServicePlansListHybridConnectionKeysResponse =
+  HybridConnectionKey;
 
 /** Optional parameters. */
 export interface AppServicePlansListWebAppsByHybridConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWebAppsByHybridConnection operation. */
-export type AppServicePlansListWebAppsByHybridConnectionResponse = ResourceCollection;
+export type AppServicePlansListWebAppsByHybridConnectionResponse =
+  ResourceCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansGetHybridConnectionPlanLimitOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getHybridConnectionPlanLimit operation. */
-export type AppServicePlansGetHybridConnectionPlanLimitResponse = HybridConnectionLimits;
+export type AppServicePlansGetHybridConnectionPlanLimitResponse =
+  HybridConnectionLimits;
 
 /** Optional parameters. */
 export interface AppServicePlansListHybridConnectionsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHybridConnections operation. */
-export type AppServicePlansListHybridConnectionsResponse = HybridConnectionCollection;
+export type AppServicePlansListHybridConnectionsResponse =
+  HybridConnectionCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansRestartWebAppsOptionalParams
@@ -9419,13 +12420,7 @@ export interface AppServicePlansRebootWorkerOptionalParams
 
 /** Optional parameters. */
 export interface AppServicePlansListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /**
-   * Specify <code>true</code> to return all App Service plan properties. The default is <code>false</code>, which returns a subset of the properties.
-   *  Retrieval of all properties may increase the API latency.
-   */
-  detailed?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type AppServicePlansListNextResponse = AppServicePlanCollection;
@@ -9435,42 +12430,35 @@ export interface AppServicePlansListByResourceGroupNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
-export type AppServicePlansListByResourceGroupNextResponse = AppServicePlanCollection;
+export type AppServicePlansListByResourceGroupNextResponse =
+  AppServicePlanCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansListWebAppsByHybridConnectionNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWebAppsByHybridConnectionNext operation. */
-export type AppServicePlansListWebAppsByHybridConnectionNextResponse = ResourceCollection;
+export type AppServicePlansListWebAppsByHybridConnectionNextResponse =
+  ResourceCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansListHybridConnectionsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHybridConnectionsNext operation. */
-export type AppServicePlansListHybridConnectionsNextResponse = HybridConnectionCollection;
+export type AppServicePlansListHybridConnectionsNextResponse =
+  HybridConnectionCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansListWebAppsNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Supported filter: $filter=state eq running. Returns only web apps that are currently running */
-  filter?: string;
-  /** Skip to a web app in the list of webapps associated with app service plan. If specified, the resulting list will contain web apps starting from (including) the skipToken. Otherwise, the resulting list contains web apps from the start of the list */
-  skipToken?: string;
-  /** List page size. If specified, results are paged. */
-  top?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listWebAppsNext operation. */
 export type AppServicePlansListWebAppsNextResponse = WebAppCollection;
 
 /** Optional parameters. */
 export interface AppServicePlansListUsagesNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2'). */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listUsagesNext operation. */
 export type AppServicePlansListUsagesNextResponse = CsmUsageQuotaCollection;
@@ -9519,10 +12507,7 @@ export type CertificatesUpdateResponse = Certificate;
 
 /** Optional parameters. */
 export interface CertificatesListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only information specified in the filter (using OData syntax). For example: $filter=KeyVaultId eq 'KeyVaultId' */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type CertificatesListNextResponse = CertificateCollection;
@@ -9533,6 +12518,105 @@ export interface CertificatesListByResourceGroupNextOptionalParams
 
 /** Contains response data for the listByResourceGroupNext operation. */
 export type CertificatesListByResourceGroupNextResponse = CertificateCollection;
+
+/** Optional parameters. */
+export interface ContainerAppsListBySubscriptionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listBySubscription operation. */
+export type ContainerAppsListBySubscriptionResponse = ContainerAppCollection;
+
+/** Optional parameters. */
+export interface ContainerAppsListByResourceGroupOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByResourceGroup operation. */
+export type ContainerAppsListByResourceGroupResponse = ContainerAppCollection;
+
+/** Optional parameters. */
+export interface ContainerAppsGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type ContainerAppsGetResponse = ContainerApp;
+
+/** Optional parameters. */
+export interface ContainerAppsCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type ContainerAppsCreateOrUpdateResponse = ContainerApp;
+
+/** Optional parameters. */
+export interface ContainerAppsDeleteOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Optional parameters. */
+export interface ContainerAppsListSecretsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listSecrets operation. */
+export type ContainerAppsListSecretsResponse = SecretsCollection;
+
+/** Optional parameters. */
+export interface ContainerAppsListBySubscriptionNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listBySubscriptionNext operation. */
+export type ContainerAppsListBySubscriptionNextResponse =
+  ContainerAppCollection;
+
+/** Optional parameters. */
+export interface ContainerAppsListByResourceGroupNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByResourceGroupNext operation. */
+export type ContainerAppsListByResourceGroupNextResponse =
+  ContainerAppCollection;
+
+/** Optional parameters. */
+export interface ContainerAppsRevisionsListRevisionsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listRevisions operation. */
+export type ContainerAppsRevisionsListRevisionsResponse = RevisionCollection;
+
+/** Optional parameters. */
+export interface ContainerAppsRevisionsGetRevisionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getRevision operation. */
+export type ContainerAppsRevisionsGetRevisionResponse = Revision;
+
+/** Optional parameters. */
+export interface ContainerAppsRevisionsActivateRevisionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface ContainerAppsRevisionsDeactivateRevisionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface ContainerAppsRevisionsRestartRevisionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface ContainerAppsRevisionsListRevisionsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listRevisionsNext operation. */
+export type ContainerAppsRevisionsListRevisionsNextResponse =
+  RevisionCollection;
 
 /** Optional parameters. */
 export interface DeletedWebAppsListOptionalParams
@@ -9574,7 +12658,8 @@ export interface DiagnosticsListHostingEnvironmentDetectorResponsesOptionalParam
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHostingEnvironmentDetectorResponses operation. */
-export type DiagnosticsListHostingEnvironmentDetectorResponsesResponse = DetectorResponseCollection;
+export type DiagnosticsListHostingEnvironmentDetectorResponsesResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsGetHostingEnvironmentDetectorResponseOptionalParams
@@ -9588,14 +12673,16 @@ export interface DiagnosticsGetHostingEnvironmentDetectorResponseOptionalParams
 }
 
 /** Contains response data for the getHostingEnvironmentDetectorResponse operation. */
-export type DiagnosticsGetHostingEnvironmentDetectorResponseResponse = DetectorResponse;
+export type DiagnosticsGetHostingEnvironmentDetectorResponseResponse =
+  DetectorResponse;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteDetectorResponsesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDetectorResponses operation. */
-export type DiagnosticsListSiteDetectorResponsesResponse = DetectorResponseCollection;
+export type DiagnosticsListSiteDetectorResponsesResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsGetSiteDetectorResponseOptionalParams
@@ -9616,7 +12703,8 @@ export interface DiagnosticsListSiteDiagnosticCategoriesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDiagnosticCategories operation. */
-export type DiagnosticsListSiteDiagnosticCategoriesResponse = DiagnosticCategoryCollection;
+export type DiagnosticsListSiteDiagnosticCategoriesResponse =
+  DiagnosticCategoryCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsGetSiteDiagnosticCategoryOptionalParams
@@ -9686,7 +12774,8 @@ export interface DiagnosticsListSiteDetectorResponsesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDetectorResponsesSlot operation. */
-export type DiagnosticsListSiteDetectorResponsesSlotResponse = DetectorResponseCollection;
+export type DiagnosticsListSiteDetectorResponsesSlotResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsGetSiteDetectorResponseSlotOptionalParams
@@ -9707,21 +12796,24 @@ export interface DiagnosticsListSiteDiagnosticCategoriesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDiagnosticCategoriesSlot operation. */
-export type DiagnosticsListSiteDiagnosticCategoriesSlotResponse = DiagnosticCategoryCollection;
+export type DiagnosticsListSiteDiagnosticCategoriesSlotResponse =
+  DiagnosticCategoryCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsGetSiteDiagnosticCategorySlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSiteDiagnosticCategorySlot operation. */
-export type DiagnosticsGetSiteDiagnosticCategorySlotResponse = DiagnosticCategory;
+export type DiagnosticsGetSiteDiagnosticCategorySlotResponse =
+  DiagnosticCategory;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteAnalysesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteAnalysesSlot operation. */
-export type DiagnosticsListSiteAnalysesSlotResponse = DiagnosticAnalysisCollection;
+export type DiagnosticsListSiteAnalysesSlotResponse =
+  DiagnosticAnalysisCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsGetSiteAnalysisSlotOptionalParams
@@ -9749,7 +12841,8 @@ export interface DiagnosticsListSiteDetectorsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDetectorsSlot operation. */
-export type DiagnosticsListSiteDetectorsSlotResponse = DiagnosticDetectorCollection;
+export type DiagnosticsListSiteDetectorsSlotResponse =
+  DiagnosticDetectorCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsGetSiteDetectorSlotOptionalParams
@@ -9770,70 +12863,80 @@ export interface DiagnosticsExecuteSiteDetectorSlotOptionalParams
 }
 
 /** Contains response data for the executeSiteDetectorSlot operation. */
-export type DiagnosticsExecuteSiteDetectorSlotResponse = DiagnosticDetectorResponse;
+export type DiagnosticsExecuteSiteDetectorSlotResponse =
+  DiagnosticDetectorResponse;
 
 /** Optional parameters. */
 export interface DiagnosticsListHostingEnvironmentDetectorResponsesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHostingEnvironmentDetectorResponsesNext operation. */
-export type DiagnosticsListHostingEnvironmentDetectorResponsesNextResponse = DetectorResponseCollection;
+export type DiagnosticsListHostingEnvironmentDetectorResponsesNextResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteDetectorResponsesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDetectorResponsesNext operation. */
-export type DiagnosticsListSiteDetectorResponsesNextResponse = DetectorResponseCollection;
+export type DiagnosticsListSiteDetectorResponsesNextResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteDiagnosticCategoriesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDiagnosticCategoriesNext operation. */
-export type DiagnosticsListSiteDiagnosticCategoriesNextResponse = DiagnosticCategoryCollection;
+export type DiagnosticsListSiteDiagnosticCategoriesNextResponse =
+  DiagnosticCategoryCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteAnalysesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteAnalysesNext operation. */
-export type DiagnosticsListSiteAnalysesNextResponse = DiagnosticAnalysisCollection;
+export type DiagnosticsListSiteAnalysesNextResponse =
+  DiagnosticAnalysisCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteDetectorsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDetectorsNext operation. */
-export type DiagnosticsListSiteDetectorsNextResponse = DiagnosticDetectorCollection;
+export type DiagnosticsListSiteDetectorsNextResponse =
+  DiagnosticDetectorCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteDetectorResponsesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDetectorResponsesSlotNext operation. */
-export type DiagnosticsListSiteDetectorResponsesSlotNextResponse = DetectorResponseCollection;
+export type DiagnosticsListSiteDetectorResponsesSlotNextResponse =
+  DetectorResponseCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteDiagnosticCategoriesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDiagnosticCategoriesSlotNext operation. */
-export type DiagnosticsListSiteDiagnosticCategoriesSlotNextResponse = DiagnosticCategoryCollection;
+export type DiagnosticsListSiteDiagnosticCategoriesSlotNextResponse =
+  DiagnosticCategoryCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteAnalysesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteAnalysesSlotNext operation. */
-export type DiagnosticsListSiteAnalysesSlotNextResponse = DiagnosticAnalysisCollection;
+export type DiagnosticsListSiteAnalysesSlotNextResponse =
+  DiagnosticAnalysisCollection;
 
 /** Optional parameters. */
 export interface DiagnosticsListSiteDetectorsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteDetectorsSlotNext operation. */
-export type DiagnosticsListSiteDetectorsSlotNextResponse = DiagnosticDetectorCollection;
+export type DiagnosticsListSiteDetectorsSlotNextResponse =
+  DiagnosticDetectorCollection;
 
 /** Optional parameters. */
 export interface GlobalGetDeletedWebAppOptionalParams
@@ -9858,14 +12961,16 @@ export interface KubeEnvironmentsListBySubscriptionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySubscription operation. */
-export type KubeEnvironmentsListBySubscriptionResponse = KubeEnvironmentCollection;
+export type KubeEnvironmentsListBySubscriptionResponse =
+  KubeEnvironmentCollection;
 
 /** Optional parameters. */
 export interface KubeEnvironmentsListByResourceGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroup operation. */
-export type KubeEnvironmentsListByResourceGroupResponse = KubeEnvironmentCollection;
+export type KubeEnvironmentsListByResourceGroupResponse =
+  KubeEnvironmentCollection;
 
 /** Optional parameters. */
 export interface KubeEnvironmentsGetOptionalParams
@@ -9907,19 +13012,21 @@ export interface KubeEnvironmentsListBySubscriptionNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySubscriptionNext operation. */
-export type KubeEnvironmentsListBySubscriptionNextResponse = KubeEnvironmentCollection;
+export type KubeEnvironmentsListBySubscriptionNextResponse =
+  KubeEnvironmentCollection;
 
 /** Optional parameters. */
 export interface KubeEnvironmentsListByResourceGroupNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
-export type KubeEnvironmentsListByResourceGroupNextResponse = KubeEnvironmentCollection;
+export type KubeEnvironmentsListByResourceGroupNextResponse =
+  KubeEnvironmentCollection;
 
 /** Optional parameters. */
 export interface ProviderGetAvailableStacksOptionalParams
   extends coreClient.OperationOptions {
-  osTypeSelected?: Enum10;
+  osTypeSelected?: ProviderOsTypeSelected;
 }
 
 /** Contains response data for the getAvailableStacks operation. */
@@ -9929,7 +13036,7 @@ export type ProviderGetAvailableStacksResponse = ApplicationStackCollection;
 export interface ProviderGetFunctionAppStacksOptionalParams
   extends coreClient.OperationOptions {
   /** Stack OS Type */
-  stackOsType?: Enum11;
+  stackOsType?: ProviderStackOsType;
 }
 
 /** Contains response data for the getFunctionAppStacks operation. */
@@ -9939,17 +13046,18 @@ export type ProviderGetFunctionAppStacksResponse = FunctionAppStackCollection;
 export interface ProviderGetFunctionAppStacksForLocationOptionalParams
   extends coreClient.OperationOptions {
   /** Stack OS Type */
-  stackOsType?: Enum12;
+  stackOsType?: ProviderStackOsType;
 }
 
 /** Contains response data for the getFunctionAppStacksForLocation operation. */
-export type ProviderGetFunctionAppStacksForLocationResponse = FunctionAppStackCollection;
+export type ProviderGetFunctionAppStacksForLocationResponse =
+  FunctionAppStackCollection;
 
 /** Optional parameters. */
 export interface ProviderGetWebAppStacksForLocationOptionalParams
   extends coreClient.OperationOptions {
   /** Stack OS Type */
-  stackOsType?: Enum13;
+  stackOsType?: ProviderStackOsType;
 }
 
 /** Contains response data for the getWebAppStacksForLocation operation. */
@@ -9966,7 +13074,7 @@ export type ProviderListOperationsResponse = CsmOperationCollection;
 export interface ProviderGetWebAppStacksOptionalParams
   extends coreClient.OperationOptions {
   /** Stack OS Type */
-  stackOsType?: Enum14;
+  stackOsType?: ProviderStackOsType;
 }
 
 /** Contains response data for the getWebAppStacks operation. */
@@ -9975,50 +13083,43 @@ export type ProviderGetWebAppStacksResponse = WebAppStackCollection;
 /** Optional parameters. */
 export interface ProviderGetAvailableStacksOnPremOptionalParams
   extends coreClient.OperationOptions {
-  osTypeSelected?: Enum15;
+  osTypeSelected?: ProviderOsTypeSelected;
 }
 
 /** Contains response data for the getAvailableStacksOnPrem operation. */
-export type ProviderGetAvailableStacksOnPremResponse = ApplicationStackCollection;
+export type ProviderGetAvailableStacksOnPremResponse =
+  ApplicationStackCollection;
 
 /** Optional parameters. */
 export interface ProviderGetAvailableStacksNextOptionalParams
-  extends coreClient.OperationOptions {
-  osTypeSelected?: Enum10;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the getAvailableStacksNext operation. */
 export type ProviderGetAvailableStacksNextResponse = ApplicationStackCollection;
 
 /** Optional parameters. */
 export interface ProviderGetFunctionAppStacksNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Stack OS Type */
-  stackOsType?: Enum11;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the getFunctionAppStacksNext operation. */
-export type ProviderGetFunctionAppStacksNextResponse = FunctionAppStackCollection;
+export type ProviderGetFunctionAppStacksNextResponse =
+  FunctionAppStackCollection;
 
 /** Optional parameters. */
 export interface ProviderGetFunctionAppStacksForLocationNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Stack OS Type */
-  stackOsType?: Enum12;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the getFunctionAppStacksForLocationNext operation. */
-export type ProviderGetFunctionAppStacksForLocationNextResponse = FunctionAppStackCollection;
+export type ProviderGetFunctionAppStacksForLocationNextResponse =
+  FunctionAppStackCollection;
 
 /** Optional parameters. */
 export interface ProviderGetWebAppStacksForLocationNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Stack OS Type */
-  stackOsType?: Enum13;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the getWebAppStacksForLocationNext operation. */
-export type ProviderGetWebAppStacksForLocationNextResponse = WebAppStackCollection;
+export type ProviderGetWebAppStacksForLocationNextResponse =
+  WebAppStackCollection;
 
 /** Optional parameters. */
 export interface ProviderListOperationsNextOptionalParams
@@ -10029,22 +13130,18 @@ export type ProviderListOperationsNextResponse = CsmOperationCollection;
 
 /** Optional parameters. */
 export interface ProviderGetWebAppStacksNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Stack OS Type */
-  stackOsType?: Enum14;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the getWebAppStacksNext operation. */
 export type ProviderGetWebAppStacksNextResponse = WebAppStackCollection;
 
 /** Optional parameters. */
 export interface ProviderGetAvailableStacksOnPremNextOptionalParams
-  extends coreClient.OperationOptions {
-  osTypeSelected?: Enum15;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the getAvailableStacksOnPremNext operation. */
-export type ProviderGetAvailableStacksOnPremNextResponse = ApplicationStackCollection;
+export type ProviderGetAvailableStacksOnPremNextResponse =
+  ApplicationStackCollection;
 
 /** Optional parameters. */
 export interface RecommendationsListOptionalParams
@@ -10076,7 +13173,8 @@ export interface RecommendationsListHistoryForHostingEnvironmentOptionalParams
 }
 
 /** Contains response data for the listHistoryForHostingEnvironment operation. */
-export type RecommendationsListHistoryForHostingEnvironmentResponse = RecommendationCollection;
+export type RecommendationsListHistoryForHostingEnvironmentResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsListRecommendedRulesForHostingEnvironmentOptionalParams
@@ -10088,7 +13186,8 @@ export interface RecommendationsListRecommendedRulesForHostingEnvironmentOptiona
 }
 
 /** Contains response data for the listRecommendedRulesForHostingEnvironment operation. */
-export type RecommendationsListRecommendedRulesForHostingEnvironmentResponse = RecommendationCollection;
+export type RecommendationsListRecommendedRulesForHostingEnvironmentResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsDisableAllForHostingEnvironmentOptionalParams
@@ -10108,7 +13207,8 @@ export interface RecommendationsGetRuleDetailsByHostingEnvironmentOptionalParams
 }
 
 /** Contains response data for the getRuleDetailsByHostingEnvironment operation. */
-export type RecommendationsGetRuleDetailsByHostingEnvironmentResponse = RecommendationRule;
+export type RecommendationsGetRuleDetailsByHostingEnvironmentResponse =
+  RecommendationRule;
 
 /** Optional parameters. */
 export interface RecommendationsDisableRecommendationForHostingEnvironmentOptionalParams
@@ -10124,7 +13224,8 @@ export interface RecommendationsListHistoryForWebAppOptionalParams
 }
 
 /** Contains response data for the listHistoryForWebApp operation. */
-export type RecommendationsListHistoryForWebAppResponse = RecommendationCollection;
+export type RecommendationsListHistoryForWebAppResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsListRecommendedRulesForWebAppOptionalParams
@@ -10136,7 +13237,8 @@ export interface RecommendationsListRecommendedRulesForWebAppOptionalParams
 }
 
 /** Contains response data for the listRecommendedRulesForWebApp operation. */
-export type RecommendationsListRecommendedRulesForWebAppResponse = RecommendationCollection;
+export type RecommendationsListRecommendedRulesForWebAppResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsDisableAllForWebAppOptionalParams
@@ -10164,178 +13266,159 @@ export interface RecommendationsDisableRecommendationForSiteOptionalParams
 
 /** Optional parameters. */
 export interface RecommendationsListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Filter is specified by using OData syntax. Example: $filter=channel eq 'Api' or channel eq 'Notification' and startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[PT1H|PT1M|P1D] */
-  filter?: string;
-  /** Specify <code>true</code> to return only the most critical recommendations. The default is <code>false</code>, which returns all recommendations. */
-  featured?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type RecommendationsListNextResponse = RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsListHistoryForHostingEnvironmentNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Filter is specified by using OData syntax. Example: $filter=channel eq 'Api' or channel eq 'Notification' and startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[PT1H|PT1M|P1D] */
-  filter?: string;
-  /** Specify <code>false</code> to return all recommendations. The default is <code>true</code>, which returns only expired recommendations. */
-  expiredOnly?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHistoryForHostingEnvironmentNext operation. */
-export type RecommendationsListHistoryForHostingEnvironmentNextResponse = RecommendationCollection;
+export type RecommendationsListHistoryForHostingEnvironmentNextResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsListRecommendedRulesForHostingEnvironmentNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only channels specified in the filter. Filter is specified by using OData syntax. Example: $filter=channel eq 'Api' or channel eq 'Notification' */
-  filter?: string;
-  /** Specify <code>true</code> to return only the most critical recommendations. The default is <code>false</code>, which returns all recommendations. */
-  featured?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listRecommendedRulesForHostingEnvironmentNext operation. */
-export type RecommendationsListRecommendedRulesForHostingEnvironmentNextResponse = RecommendationCollection;
+export type RecommendationsListRecommendedRulesForHostingEnvironmentNextResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsListHistoryForWebAppNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Filter is specified by using OData syntax. Example: $filter=channel eq 'Api' or channel eq 'Notification' and startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[PT1H|PT1M|P1D] */
-  filter?: string;
-  /** Specify <code>false</code> to return all recommendations. The default is <code>true</code>, which returns only expired recommendations. */
-  expiredOnly?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHistoryForWebAppNext operation. */
-export type RecommendationsListHistoryForWebAppNextResponse = RecommendationCollection;
+export type RecommendationsListHistoryForWebAppNextResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
 export interface RecommendationsListRecommendedRulesForWebAppNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only channels specified in the filter. Filter is specified by using OData syntax. Example: $filter=channel eq 'Api' or channel eq 'Notification' */
-  filter?: string;
-  /** Specify <code>true</code> to return only the most critical recommendations. The default is <code>false</code>, which returns all recommendations. */
-  featured?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listRecommendedRulesForWebAppNext operation. */
-export type RecommendationsListRecommendedRulesForWebAppNextResponse = RecommendationCollection;
+export type RecommendationsListRecommendedRulesForWebAppNextResponse =
+  RecommendationCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListOptionalParams
+export interface ResourceHealthMetadataListOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the list operation. */
-export type ResourceHealthMetadataOperationsListResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListByResourceGroupOptionalParams
+export interface ResourceHealthMetadataListByResourceGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroup operation. */
-export type ResourceHealthMetadataOperationsListByResourceGroupResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListByResourceGroupResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListBySiteOptionalParams
+export interface ResourceHealthMetadataListBySiteOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySite operation. */
-export type ResourceHealthMetadataOperationsListBySiteResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListBySiteResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsGetBySiteOptionalParams
+export interface ResourceHealthMetadataGetBySiteOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getBySite operation. */
-export type ResourceHealthMetadataOperationsGetBySiteResponse = ResourceHealthMetadata;
+export type ResourceHealthMetadataGetBySiteResponse = ResourceHealthMetadata;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListBySiteSlotOptionalParams
+export interface ResourceHealthMetadataListBySiteSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySiteSlot operation. */
-export type ResourceHealthMetadataOperationsListBySiteSlotResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListBySiteSlotResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsGetBySiteSlotOptionalParams
+export interface ResourceHealthMetadataGetBySiteSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getBySiteSlot operation. */
-export type ResourceHealthMetadataOperationsGetBySiteSlotResponse = ResourceHealthMetadata;
+export type ResourceHealthMetadataGetBySiteSlotResponse =
+  ResourceHealthMetadata;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListNextOptionalParams
+export interface ResourceHealthMetadataListNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
-export type ResourceHealthMetadataOperationsListNextResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListNextResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListByResourceGroupNextOptionalParams
+export interface ResourceHealthMetadataListByResourceGroupNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
-export type ResourceHealthMetadataOperationsListByResourceGroupNextResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListByResourceGroupNextResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListBySiteNextOptionalParams
+export interface ResourceHealthMetadataListBySiteNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySiteNext operation. */
-export type ResourceHealthMetadataOperationsListBySiteNextResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListBySiteNextResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface ResourceHealthMetadataOperationsListBySiteSlotNextOptionalParams
+export interface ResourceHealthMetadataListBySiteSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySiteSlotNext operation. */
-export type ResourceHealthMetadataOperationsListBySiteSlotNextResponse = ResourceHealthMetadataCollection;
+export type ResourceHealthMetadataListBySiteSlotNextResponse =
+  ResourceHealthMetadataCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientGenerateGithubAccessTokenForAppserviceCLIAsyncOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the generateGithubAccessTokenForAppserviceCLIAsync operation. */
-export type WebSiteManagementClientGenerateGithubAccessTokenForAppserviceCLIAsyncResponse = AppserviceGithubToken;
-
-/** Optional parameters. */
-export interface WebSiteManagementClientGetPublishingUserOptionalParams
+export interface GetPublishingUserOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPublishingUser operation. */
-export type WebSiteManagementClientGetPublishingUserResponse = User;
+export type GetPublishingUserResponse = User;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientUpdatePublishingUserOptionalParams
+export interface UpdatePublishingUserOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updatePublishingUser operation. */
-export type WebSiteManagementClientUpdatePublishingUserResponse = User;
+export type UpdatePublishingUserResponse = User;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListSourceControlsOptionalParams
+export interface ListSourceControlsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSourceControls operation. */
-export type WebSiteManagementClientListSourceControlsResponse = SourceControlCollection;
+export type ListSourceControlsResponse = SourceControlCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientGetSourceControlOptionalParams
+export interface GetSourceControlOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSourceControl operation. */
-export type WebSiteManagementClientGetSourceControlResponse = SourceControl;
+export type GetSourceControlResponse = SourceControl;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientUpdateSourceControlOptionalParams
+export interface UpdateSourceControlOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateSourceControl operation. */
-export type WebSiteManagementClientUpdateSourceControlResponse = SourceControl;
+export type UpdateSourceControlResponse = SourceControl;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListBillingMetersOptionalParams
+export interface ListBillingMetersOptionalParams
   extends coreClient.OperationOptions {
   /** Azure Location of billable resource */
   billingLocation?: string;
@@ -10344,27 +13427,46 @@ export interface WebSiteManagementClientListBillingMetersOptionalParams
 }
 
 /** Contains response data for the listBillingMeters operation. */
-export type WebSiteManagementClientListBillingMetersResponse = BillingMeterCollection;
+export type ListBillingMetersResponse = BillingMeterCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientCheckNameAvailabilityOptionalParams
+export interface CheckNameAvailabilityOptionalParams
   extends coreClient.OperationOptions {
   /** Is fully qualified domain name. */
   isFqdn?: boolean;
+  /** Azure Resource Manager ID of the customer's selected Container Apps Environment on which to host the Function app. This must be of the form /subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.App/managedEnvironments/{managedEnvironmentName} */
+  environmentId?: string;
 }
 
 /** Contains response data for the checkNameAvailability operation. */
-export type WebSiteManagementClientCheckNameAvailabilityResponse = ResourceNameAvailability;
+export type CheckNameAvailabilityResponse = ResourceNameAvailability;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientGetSubscriptionDeploymentLocationsOptionalParams
+export interface ListCustomHostNameSitesOptionalParams
+  extends coreClient.OperationOptions {
+  /** Specific hostname */
+  hostname?: string;
+}
+
+/** Contains response data for the listCustomHostNameSites operation. */
+export type ListCustomHostNameSitesResponse = CustomHostnameSitesCollection;
+
+/** Optional parameters. */
+export interface GetSubscriptionDeploymentLocationsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSubscriptionDeploymentLocations operation. */
-export type WebSiteManagementClientGetSubscriptionDeploymentLocationsResponse = DeploymentLocations;
+export type GetSubscriptionDeploymentLocationsResponse = DeploymentLocations;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListGeoRegionsOptionalParams
+export interface ListAseRegionsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listAseRegions operation. */
+export type ListAseRegionsResponse = AseRegionCollection;
+
+/** Optional parameters. */
+export interface ListGeoRegionsOptionalParams
   extends coreClient.OperationOptions {
   /** Name of SKU used to filter the regions. */
   sku?: SkuName;
@@ -10377,99 +13479,112 @@ export interface WebSiteManagementClientListGeoRegionsOptionalParams
 }
 
 /** Contains response data for the listGeoRegions operation. */
-export type WebSiteManagementClientListGeoRegionsResponse = GeoRegionCollection;
+export type ListGeoRegionsResponse = GeoRegionCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListSiteIdentifiersAssignedToHostNameOptionalParams
+export interface ListSiteIdentifiersAssignedToHostNameOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteIdentifiersAssignedToHostName operation. */
-export type WebSiteManagementClientListSiteIdentifiersAssignedToHostNameResponse = IdentifierCollection;
+export type ListSiteIdentifiersAssignedToHostNameResponse =
+  IdentifierCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListPremierAddOnOffersOptionalParams
+export interface ListPremierAddOnOffersOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listPremierAddOnOffers operation. */
-export type WebSiteManagementClientListPremierAddOnOffersResponse = PremierAddOnOfferCollection;
+export type ListPremierAddOnOffersResponse = PremierAddOnOfferCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListSkusOptionalParams
-  extends coreClient.OperationOptions {}
+export interface ListSkusOptionalParams extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSkus operation. */
-export type WebSiteManagementClientListSkusResponse = SkuInfos;
+export type ListSkusResponse = SkuInfos;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientVerifyHostingEnvironmentVnetOptionalParams
+export interface VerifyHostingEnvironmentVnetOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the verifyHostingEnvironmentVnet operation. */
-export type WebSiteManagementClientVerifyHostingEnvironmentVnetResponse = VnetValidationFailureDetails;
+export type VerifyHostingEnvironmentVnetResponse = VnetValidationFailureDetails;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientMoveOptionalParams
-  extends coreClient.OperationOptions {}
+export interface MoveOptionalParams extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
-export interface WebSiteManagementClientValidateOptionalParams
-  extends coreClient.OperationOptions {}
+export interface ValidateOptionalParams extends coreClient.OperationOptions {}
 
 /** Contains response data for the validate operation. */
-export type WebSiteManagementClientValidateResponse = ValidateResponse;
+export type ValidateOperationResponse = ValidateResponse;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientValidateMoveOptionalParams
+export interface ValidateMoveOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListSourceControlsNextOptionalParams
+export interface ListSourceControlsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSourceControlsNext operation. */
-export type WebSiteManagementClientListSourceControlsNextResponse = SourceControlCollection;
+export type ListSourceControlsNextResponse = SourceControlCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListBillingMetersNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Azure Location of billable resource */
-  billingLocation?: string;
-  /** App Service OS type meters used for */
-  osType?: string;
-}
+export interface ListBillingMetersNextOptionalParams
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBillingMetersNext operation. */
-export type WebSiteManagementClientListBillingMetersNextResponse = BillingMeterCollection;
+export type ListBillingMetersNextResponse = BillingMeterCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListGeoRegionsNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Name of SKU used to filter the regions. */
-  sku?: SkuName;
-  /** Specify <code>true</code> if you want to filter to only regions that support Linux workers. */
-  linuxWorkersEnabled?: boolean;
-  /** Specify <code>true</code> if you want to filter to only regions that support Xenon workers. */
-  xenonWorkersEnabled?: boolean;
-  /** Specify <code>true</code> if you want to filter to only regions that support Linux Consumption Workers. */
-  linuxDynamicWorkersEnabled?: boolean;
-}
+export interface ListCustomHostNameSitesNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listCustomHostNameSitesNext operation. */
+export type ListCustomHostNameSitesNextResponse = CustomHostnameSitesCollection;
+
+/** Optional parameters. */
+export interface ListAseRegionsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listAseRegionsNext operation. */
+export type ListAseRegionsNextResponse = AseRegionCollection;
+
+/** Optional parameters. */
+export interface ListGeoRegionsNextOptionalParams
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listGeoRegionsNext operation. */
-export type WebSiteManagementClientListGeoRegionsNextResponse = GeoRegionCollection;
+export type ListGeoRegionsNextResponse = GeoRegionCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListSiteIdentifiersAssignedToHostNameNextOptionalParams
+export interface ListSiteIdentifiersAssignedToHostNameNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteIdentifiersAssignedToHostNameNext operation. */
-export type WebSiteManagementClientListSiteIdentifiersAssignedToHostNameNextResponse = IdentifierCollection;
+export type ListSiteIdentifiersAssignedToHostNameNextResponse =
+  IdentifierCollection;
 
 /** Optional parameters. */
-export interface WebSiteManagementClientListPremierAddOnOffersNextOptionalParams
+export interface ListPremierAddOnOffersNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listPremierAddOnOffersNext operation. */
-export type WebSiteManagementClientListPremierAddOnOffersNextResponse = PremierAddOnOfferCollection;
+export type ListPremierAddOnOffersNextResponse = PremierAddOnOfferCollection;
+
+/** Optional parameters. */
+export interface GetUsagesInLocationListOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the list operation. */
+export type GetUsagesInLocationListResponse = CsmUsageQuotaCollection;
+
+/** Optional parameters. */
+export interface GetUsagesInLocationListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type GetUsagesInLocationListNextResponse = CsmUsageQuotaCollection;
 
 /** Optional parameters. */
 export interface StaticSitesPreviewWorkflowOptionalParams
@@ -10490,7 +13605,8 @@ export interface StaticSitesGetStaticSitesByResourceGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getStaticSitesByResourceGroup operation. */
-export type StaticSitesGetStaticSitesByResourceGroupResponse = StaticSiteCollection;
+export type StaticSitesGetStaticSitesByResourceGroupResponse =
+  StaticSiteCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetStaticSiteOptionalParams
@@ -10573,49 +13689,107 @@ export interface StaticSitesCreateOrUpdateStaticSiteBuildAppSettingsOptionalPara
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateStaticSiteBuildAppSettings operation. */
-export type StaticSitesCreateOrUpdateStaticSiteBuildAppSettingsResponse = StringDictionary;
+export type StaticSitesCreateOrUpdateStaticSiteBuildAppSettingsResponse =
+  StringDictionary;
 
 /** Optional parameters. */
 export interface StaticSitesCreateOrUpdateStaticSiteBuildFunctionAppSettingsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateStaticSiteBuildFunctionAppSettings operation. */
-export type StaticSitesCreateOrUpdateStaticSiteBuildFunctionAppSettingsResponse = StringDictionary;
+export type StaticSitesCreateOrUpdateStaticSiteBuildFunctionAppSettingsResponse =
+  StringDictionary;
+
+/** Optional parameters. */
+export interface StaticSitesGetBuildDatabaseConnectionsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getBuildDatabaseConnections operation. */
+export type StaticSitesGetBuildDatabaseConnectionsResponse =
+  DatabaseConnectionCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetBuildDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getBuildDatabaseConnection operation. */
+export type StaticSitesGetBuildDatabaseConnectionResponse = DatabaseConnection;
+
+/** Optional parameters. */
+export interface StaticSitesCreateOrUpdateBuildDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createOrUpdateBuildDatabaseConnection operation. */
+export type StaticSitesCreateOrUpdateBuildDatabaseConnectionResponse =
+  DatabaseConnection;
+
+/** Optional parameters. */
+export interface StaticSitesDeleteBuildDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface StaticSitesUpdateBuildDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the updateBuildDatabaseConnection operation. */
+export type StaticSitesUpdateBuildDatabaseConnectionResponse =
+  DatabaseConnection;
+
+/** Optional parameters. */
+export interface StaticSitesGetBuildDatabaseConnectionWithDetailsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getBuildDatabaseConnectionWithDetails operation. */
+export type StaticSitesGetBuildDatabaseConnectionWithDetailsResponse =
+  DatabaseConnection;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteBuildFunctionsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteBuildFunctions operation. */
-export type StaticSitesListStaticSiteBuildFunctionsResponse = StaticSiteFunctionOverviewCollection;
+export type StaticSitesListStaticSiteBuildFunctionsResponse =
+  StaticSiteFunctionOverviewCollection;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteBuildAppSettingsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteBuildAppSettings operation. */
-export type StaticSitesListStaticSiteBuildAppSettingsResponse = StringDictionary;
+export type StaticSitesListStaticSiteBuildAppSettingsResponse =
+  StringDictionary;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteBuildFunctionAppSettingsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteBuildFunctionAppSettings operation. */
-export type StaticSitesListStaticSiteBuildFunctionAppSettingsResponse = StringDictionary;
+export type StaticSitesListStaticSiteBuildFunctionAppSettingsResponse =
+  StringDictionary;
+
+/** Optional parameters. */
+export interface StaticSitesGetBuildDatabaseConnectionsWithDetailsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getBuildDatabaseConnectionsWithDetails operation. */
+export type StaticSitesGetBuildDatabaseConnectionsWithDetailsResponse =
+  DatabaseConnectionCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetUserProvidedFunctionAppsForStaticSiteBuildOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getUserProvidedFunctionAppsForStaticSiteBuild operation. */
-export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteBuildResponse = StaticSiteUserProvidedFunctionAppsCollection;
+export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteBuildResponse =
+  StaticSiteUserProvidedFunctionAppsCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetUserProvidedFunctionAppForStaticSiteBuildOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getUserProvidedFunctionAppForStaticSiteBuild operation. */
-export type StaticSitesGetUserProvidedFunctionAppForStaticSiteBuildResponse = StaticSiteUserProvidedFunctionAppARMResource;
+export type StaticSitesGetUserProvidedFunctionAppForStaticSiteBuildResponse =
+  StaticSiteUserProvidedFunctionAppARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteBuildOptionalParams
@@ -10629,7 +13803,8 @@ export interface StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteBuildOp
 }
 
 /** Contains response data for the registerUserProvidedFunctionAppWithStaticSiteBuild operation. */
-export type StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteBuildResponse = StaticSiteUserProvidedFunctionAppARMResource;
+export type StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteBuildResponse =
+  StaticSiteUserProvidedFunctionAppARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesDetachUserProvidedFunctionAppFromStaticSiteBuildOptionalParams
@@ -10649,35 +13824,64 @@ export interface StaticSitesCreateOrUpdateStaticSiteAppSettingsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateStaticSiteAppSettings operation. */
-export type StaticSitesCreateOrUpdateStaticSiteAppSettingsResponse = StringDictionary;
+export type StaticSitesCreateOrUpdateStaticSiteAppSettingsResponse =
+  StringDictionary;
+
+/** Optional parameters. */
+export interface StaticSitesListBasicAuthOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listBasicAuth operation. */
+export type StaticSitesListBasicAuthResponse =
+  StaticSiteBasicAuthPropertiesCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetBasicAuthOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getBasicAuth operation. */
+export type StaticSitesGetBasicAuthResponse =
+  StaticSiteBasicAuthPropertiesARMResource;
+
+/** Optional parameters. */
+export interface StaticSitesCreateOrUpdateBasicAuthOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createOrUpdateBasicAuth operation. */
+export type StaticSitesCreateOrUpdateBasicAuthResponse =
+  StaticSiteBasicAuthPropertiesARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesCreateOrUpdateStaticSiteFunctionAppSettingsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateStaticSiteFunctionAppSettings operation. */
-export type StaticSitesCreateOrUpdateStaticSiteFunctionAppSettingsResponse = StringDictionary;
+export type StaticSitesCreateOrUpdateStaticSiteFunctionAppSettingsResponse =
+  StringDictionary;
 
 /** Optional parameters. */
 export interface StaticSitesCreateUserRolesInvitationLinkOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createUserRolesInvitationLink operation. */
-export type StaticSitesCreateUserRolesInvitationLinkResponse = StaticSiteUserInvitationResponseResource;
+export type StaticSitesCreateUserRolesInvitationLinkResponse =
+  StaticSiteUserInvitationResponseResource;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteCustomDomainsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteCustomDomains operation. */
-export type StaticSitesListStaticSiteCustomDomainsResponse = StaticSiteCustomDomainOverviewCollection;
+export type StaticSitesListStaticSiteCustomDomainsResponse =
+  StaticSiteCustomDomainOverviewCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetStaticSiteCustomDomainOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getStaticSiteCustomDomain operation. */
-export type StaticSitesGetStaticSiteCustomDomainResponse = StaticSiteCustomDomainOverviewARMResource;
+export type StaticSitesGetStaticSiteCustomDomainResponse =
+  StaticSiteCustomDomainOverviewARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesCreateOrUpdateStaticSiteCustomDomainOptionalParams
@@ -10689,7 +13893,8 @@ export interface StaticSitesCreateOrUpdateStaticSiteCustomDomainOptionalParams
 }
 
 /** Contains response data for the createOrUpdateStaticSiteCustomDomain operation. */
-export type StaticSitesCreateOrUpdateStaticSiteCustomDomainResponse = StaticSiteCustomDomainOverviewARMResource;
+export type StaticSitesCreateOrUpdateStaticSiteCustomDomainResponse =
+  StaticSiteCustomDomainOverviewARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesDeleteStaticSiteCustomDomainOptionalParams
@@ -10710,6 +13915,48 @@ export interface StaticSitesValidateCustomDomainCanBeAddedToStaticSiteOptionalPa
 }
 
 /** Optional parameters. */
+export interface StaticSitesGetDatabaseConnectionsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getDatabaseConnections operation. */
+export type StaticSitesGetDatabaseConnectionsResponse =
+  DatabaseConnectionCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getDatabaseConnection operation. */
+export type StaticSitesGetDatabaseConnectionResponse = DatabaseConnection;
+
+/** Optional parameters. */
+export interface StaticSitesCreateOrUpdateDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createOrUpdateDatabaseConnection operation. */
+export type StaticSitesCreateOrUpdateDatabaseConnectionResponse =
+  DatabaseConnection;
+
+/** Optional parameters. */
+export interface StaticSitesDeleteDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface StaticSitesUpdateDatabaseConnectionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the updateDatabaseConnection operation. */
+export type StaticSitesUpdateDatabaseConnectionResponse = DatabaseConnection;
+
+/** Optional parameters. */
+export interface StaticSitesGetDatabaseConnectionWithDetailsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getDatabaseConnectionWithDetails operation. */
+export type StaticSitesGetDatabaseConnectionWithDetailsResponse =
+  DatabaseConnection;
+
+/** Optional parameters. */
 export interface StaticSitesDetachStaticSiteOptionalParams
   extends coreClient.OperationOptions {
   /** Delay to wait until next poll, in milliseconds. */
@@ -10723,7 +13970,8 @@ export interface StaticSitesListStaticSiteFunctionsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteFunctions operation. */
-export type StaticSitesListStaticSiteFunctionsResponse = StaticSiteFunctionOverviewCollection;
+export type StaticSitesListStaticSiteFunctionsResponse =
+  StaticSiteFunctionOverviewCollection;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteAppSettingsOptionalParams
@@ -10744,7 +13992,8 @@ export interface StaticSitesListStaticSiteFunctionAppSettingsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteFunctionAppSettings operation. */
-export type StaticSitesListStaticSiteFunctionAppSettingsResponse = StringDictionary;
+export type StaticSitesListStaticSiteFunctionAppSettingsResponse =
+  StringDictionary;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteSecretsOptionalParams
@@ -10758,14 +14007,16 @@ export interface StaticSitesGetPrivateEndpointConnectionListOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionList operation. */
-export type StaticSitesGetPrivateEndpointConnectionListResponse = PrivateEndpointConnectionCollection;
+export type StaticSitesGetPrivateEndpointConnectionListResponse =
+  PrivateEndpointConnectionCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetPrivateEndpointConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnection operation. */
-export type StaticSitesGetPrivateEndpointConnectionResponse = RemotePrivateEndpointConnectionARMResource;
+export type StaticSitesGetPrivateEndpointConnectionResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesApproveOrRejectPrivateEndpointConnectionOptionalParams
@@ -10777,7 +14028,8 @@ export interface StaticSitesApproveOrRejectPrivateEndpointConnectionOptionalPara
 }
 
 /** Contains response data for the approveOrRejectPrivateEndpointConnection operation. */
-export type StaticSitesApproveOrRejectPrivateEndpointConnectionResponse = RemotePrivateEndpointConnectionARMResource;
+export type StaticSitesApproveOrRejectPrivateEndpointConnectionResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesDeletePrivateEndpointConnectionOptionalParams
@@ -10799,25 +14051,36 @@ export interface StaticSitesGetPrivateLinkResourcesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateLinkResources operation. */
-export type StaticSitesGetPrivateLinkResourcesResponse = PrivateLinkResourcesWrapper;
+export type StaticSitesGetPrivateLinkResourcesResponse =
+  PrivateLinkResourcesWrapper;
 
 /** Optional parameters. */
 export interface StaticSitesResetStaticSiteApiKeyOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
+export interface StaticSitesGetDatabaseConnectionsWithDetailsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getDatabaseConnectionsWithDetails operation. */
+export type StaticSitesGetDatabaseConnectionsWithDetailsResponse =
+  DatabaseConnectionCollection;
+
+/** Optional parameters. */
 export interface StaticSitesGetUserProvidedFunctionAppsForStaticSiteOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getUserProvidedFunctionAppsForStaticSite operation. */
-export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteResponse = StaticSiteUserProvidedFunctionAppsCollection;
+export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteResponse =
+  StaticSiteUserProvidedFunctionAppsCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetUserProvidedFunctionAppForStaticSiteOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getUserProvidedFunctionAppForStaticSite operation. */
-export type StaticSitesGetUserProvidedFunctionAppForStaticSiteResponse = StaticSiteUserProvidedFunctionAppARMResource;
+export type StaticSitesGetUserProvidedFunctionAppForStaticSiteResponse =
+  StaticSiteUserProvidedFunctionAppARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteOptionalParams
@@ -10831,7 +14094,8 @@ export interface StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteOptiona
 }
 
 /** Contains response data for the registerUserProvidedFunctionAppWithStaticSite operation. */
-export type StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteResponse = StaticSiteUserProvidedFunctionAppARMResource;
+export type StaticSitesRegisterUserProvidedFunctionAppWithStaticSiteResponse =
+  StaticSiteUserProvidedFunctionAppARMResource;
 
 /** Optional parameters. */
 export interface StaticSitesDetachUserProvidedFunctionAppFromStaticSiteOptionalParams
@@ -10847,6 +14111,95 @@ export interface StaticSitesCreateZipDeploymentForStaticSiteOptionalParams
 }
 
 /** Optional parameters. */
+export interface StaticSitesValidateBackendOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Optional parameters. */
+export interface StaticSitesValidateBackendForBuildOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Optional parameters. */
+export interface StaticSitesGetLinkedBackendsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getLinkedBackends operation. */
+export type StaticSitesGetLinkedBackendsResponse =
+  StaticSiteLinkedBackendsCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetLinkedBackendsForBuildOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getLinkedBackendsForBuild operation. */
+export type StaticSitesGetLinkedBackendsForBuildResponse =
+  StaticSiteLinkedBackendsCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetLinkedBackendOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getLinkedBackend operation. */
+export type StaticSitesGetLinkedBackendResponse =
+  StaticSiteLinkedBackendARMResource;
+
+/** Optional parameters. */
+export interface StaticSitesLinkBackendOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the linkBackend operation. */
+export type StaticSitesLinkBackendResponse = StaticSiteLinkedBackendARMResource;
+
+/** Optional parameters. */
+export interface StaticSitesUnlinkBackendOptionalParams
+  extends coreClient.OperationOptions {
+  /** Decides if Easy Auth configuration will be removed from backend configuration */
+  isCleaningAuthConfig?: boolean;
+}
+
+/** Optional parameters. */
+export interface StaticSitesGetLinkedBackendForBuildOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getLinkedBackendForBuild operation. */
+export type StaticSitesGetLinkedBackendForBuildResponse =
+  StaticSiteLinkedBackendARMResource;
+
+/** Optional parameters. */
+export interface StaticSitesLinkBackendToBuildOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the linkBackendToBuild operation. */
+export type StaticSitesLinkBackendToBuildResponse =
+  StaticSiteLinkedBackendARMResource;
+
+/** Optional parameters. */
+export interface StaticSitesUnlinkBackendFromBuildOptionalParams
+  extends coreClient.OperationOptions {
+  /** Decides if auth will be removed from backend configuration */
+  isCleaningAuthConfig?: boolean;
+}
+
+/** Optional parameters. */
 export interface StaticSitesListNextOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -10858,63 +14211,128 @@ export interface StaticSitesGetStaticSitesByResourceGroupNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getStaticSitesByResourceGroupNext operation. */
-export type StaticSitesGetStaticSitesByResourceGroupNextResponse = StaticSiteCollection;
+export type StaticSitesGetStaticSitesByResourceGroupNextResponse =
+  StaticSiteCollection;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteUsersNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteUsersNext operation. */
-export type StaticSitesListStaticSiteUsersNextResponse = StaticSiteUserCollection;
+export type StaticSitesListStaticSiteUsersNextResponse =
+  StaticSiteUserCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetStaticSiteBuildsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getStaticSiteBuildsNext operation. */
-export type StaticSitesGetStaticSiteBuildsNextResponse = StaticSiteBuildCollection;
+export type StaticSitesGetStaticSiteBuildsNextResponse =
+  StaticSiteBuildCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetBuildDatabaseConnectionsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getBuildDatabaseConnectionsNext operation. */
+export type StaticSitesGetBuildDatabaseConnectionsNextResponse =
+  DatabaseConnectionCollection;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteBuildFunctionsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteBuildFunctionsNext operation. */
-export type StaticSitesListStaticSiteBuildFunctionsNextResponse = StaticSiteFunctionOverviewCollection;
+export type StaticSitesListStaticSiteBuildFunctionsNextResponse =
+  StaticSiteFunctionOverviewCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetBuildDatabaseConnectionsWithDetailsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getBuildDatabaseConnectionsWithDetailsNext operation. */
+export type StaticSitesGetBuildDatabaseConnectionsWithDetailsNextResponse =
+  DatabaseConnectionCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetUserProvidedFunctionAppsForStaticSiteBuildNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getUserProvidedFunctionAppsForStaticSiteBuildNext operation. */
-export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteBuildNextResponse = StaticSiteUserProvidedFunctionAppsCollection;
+export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteBuildNextResponse =
+  StaticSiteUserProvidedFunctionAppsCollection;
+
+/** Optional parameters. */
+export interface StaticSitesListBasicAuthNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listBasicAuthNext operation. */
+export type StaticSitesListBasicAuthNextResponse =
+  StaticSiteBasicAuthPropertiesCollection;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteCustomDomainsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteCustomDomainsNext operation. */
-export type StaticSitesListStaticSiteCustomDomainsNextResponse = StaticSiteCustomDomainOverviewCollection;
+export type StaticSitesListStaticSiteCustomDomainsNextResponse =
+  StaticSiteCustomDomainOverviewCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetDatabaseConnectionsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getDatabaseConnectionsNext operation. */
+export type StaticSitesGetDatabaseConnectionsNextResponse =
+  DatabaseConnectionCollection;
 
 /** Optional parameters. */
 export interface StaticSitesListStaticSiteFunctionsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listStaticSiteFunctionsNext operation. */
-export type StaticSitesListStaticSiteFunctionsNextResponse = StaticSiteFunctionOverviewCollection;
+export type StaticSitesListStaticSiteFunctionsNextResponse =
+  StaticSiteFunctionOverviewCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetPrivateEndpointConnectionListNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionListNext operation. */
-export type StaticSitesGetPrivateEndpointConnectionListNextResponse = PrivateEndpointConnectionCollection;
+export type StaticSitesGetPrivateEndpointConnectionListNextResponse =
+  PrivateEndpointConnectionCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetDatabaseConnectionsWithDetailsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getDatabaseConnectionsWithDetailsNext operation. */
+export type StaticSitesGetDatabaseConnectionsWithDetailsNextResponse =
+  DatabaseConnectionCollection;
 
 /** Optional parameters. */
 export interface StaticSitesGetUserProvidedFunctionAppsForStaticSiteNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getUserProvidedFunctionAppsForStaticSiteNext operation. */
-export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteNextResponse = StaticSiteUserProvidedFunctionAppsCollection;
+export type StaticSitesGetUserProvidedFunctionAppsForStaticSiteNextResponse =
+  StaticSiteUserProvidedFunctionAppsCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetLinkedBackendsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getLinkedBackendsNext operation. */
+export type StaticSitesGetLinkedBackendsNextResponse =
+  StaticSiteLinkedBackendsCollection;
+
+/** Optional parameters. */
+export interface StaticSitesGetLinkedBackendsForBuildNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getLinkedBackendsForBuildNext operation. */
+export type StaticSitesGetLinkedBackendsForBuildNextResponse =
+  StaticSiteLinkedBackendsCollection;
 
 /** Optional parameters. */
 export interface WebAppsListOptionalParams
@@ -11027,35 +14445,40 @@ export interface WebAppsListBasicPublishingCredentialsPoliciesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBasicPublishingCredentialsPolicies operation. */
-export type WebAppsListBasicPublishingCredentialsPoliciesResponse = PublishingCredentialsPoliciesCollection;
+export type WebAppsListBasicPublishingCredentialsPoliciesResponse =
+  PublishingCredentialsPoliciesCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetFtpAllowedOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getFtpAllowed operation. */
-export type WebAppsGetFtpAllowedResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsGetFtpAllowedResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsUpdateFtpAllowedOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateFtpAllowed operation. */
-export type WebAppsUpdateFtpAllowedResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsUpdateFtpAllowedResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsGetScmAllowedOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getScmAllowed operation. */
-export type WebAppsGetScmAllowedResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsGetScmAllowedResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsUpdateScmAllowedOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateScmAllowed operation. */
-export type WebAppsUpdateScmAllowedResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsUpdateScmAllowedResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsListConfigurationsOptionalParams
@@ -11093,6 +14516,13 @@ export interface WebAppsGetAuthSettingsOptionalParams
 export type WebAppsGetAuthSettingsResponse = SiteAuthSettings;
 
 /** Optional parameters. */
+export interface WebAppsGetAuthSettingsV2WithoutSecretsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getAuthSettingsV2WithoutSecrets operation. */
+export type WebAppsGetAuthSettingsV2WithoutSecretsResponse = SiteAuthSettingsV2;
+
+/** Optional parameters. */
 export interface WebAppsUpdateAuthSettingsV2OptionalParams
   extends coreClient.OperationOptions {}
 
@@ -11111,14 +14541,16 @@ export interface WebAppsUpdateAzureStorageAccountsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateAzureStorageAccounts operation. */
-export type WebAppsUpdateAzureStorageAccountsResponse = AzureStoragePropertyDictionaryResource;
+export type WebAppsUpdateAzureStorageAccountsResponse =
+  AzureStoragePropertyDictionaryResource;
 
 /** Optional parameters. */
 export interface WebAppsListAzureStorageAccountsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listAzureStorageAccounts operation. */
-export type WebAppsListAzureStorageAccountsResponse = AzureStoragePropertyDictionaryResource;
+export type WebAppsListAzureStorageAccountsResponse =
+  AzureStoragePropertyDictionaryResource;
 
 /** Optional parameters. */
 export interface WebAppsUpdateBackupConfigurationOptionalParams
@@ -11143,7 +14575,8 @@ export interface WebAppsGetAppSettingsKeyVaultReferencesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getAppSettingsKeyVaultReferences operation. */
-export type WebAppsGetAppSettingsKeyVaultReferencesResponse = ApiKVReferenceCollection;
+export type WebAppsGetAppSettingsKeyVaultReferencesResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetAppSettingKeyVaultReferenceOptionalParams
@@ -11157,14 +14590,16 @@ export interface WebAppsGetSiteConnectionStringKeyVaultReferencesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSiteConnectionStringKeyVaultReferences operation. */
-export type WebAppsGetSiteConnectionStringKeyVaultReferencesResponse = ApiKVReferenceCollection;
+export type WebAppsGetSiteConnectionStringKeyVaultReferencesResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetSiteConnectionStringKeyVaultReferenceOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSiteConnectionStringKeyVaultReference operation. */
-export type WebAppsGetSiteConnectionStringKeyVaultReferenceResponse = ApiKVReference;
+export type WebAppsGetSiteConnectionStringKeyVaultReferenceResponse =
+  ApiKVReference;
 
 /** Optional parameters. */
 export interface WebAppsUpdateConnectionStringsOptionalParams
@@ -11246,7 +14681,8 @@ export interface WebAppsUpdateSlotConfigurationNamesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateSlotConfigurationNames operation. */
-export type WebAppsUpdateSlotConfigurationNamesResponse = SlotConfigNamesResource;
+export type WebAppsUpdateSlotConfigurationNamesResponse =
+  SlotConfigNamesResource;
 
 /** Optional parameters. */
 export interface WebAppsGetConfigurationOptionalParams
@@ -11274,7 +14710,8 @@ export interface WebAppsListConfigurationSnapshotInfoOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConfigurationSnapshotInfo operation. */
-export type WebAppsListConfigurationSnapshotInfoResponse = SiteConfigurationSnapshotInfoCollection;
+export type WebAppsListConfigurationSnapshotInfoResponse =
+  SiteConfigurationSnapshotInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetConfigurationSnapshotOptionalParams
@@ -11358,6 +14795,27 @@ export interface WebAppsStopContinuousWebJobOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
+export interface WebAppsListProductionSiteDeploymentStatusesOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listProductionSiteDeploymentStatuses operation. */
+export type WebAppsListProductionSiteDeploymentStatusesResponse =
+  CsmDeploymentStatusCollection;
+
+/** Optional parameters. */
+export interface WebAppsGetProductionSiteDeploymentStatusOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the getProductionSiteDeploymentStatus operation. */
+export type WebAppsGetProductionSiteDeploymentStatusResponse =
+  CsmDeploymentStatus;
+
+/** Optional parameters. */
 export interface WebAppsListDeploymentsOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -11401,7 +14859,8 @@ export interface WebAppsListDomainOwnershipIdentifiersOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listDomainOwnershipIdentifiers operation. */
-export type WebAppsListDomainOwnershipIdentifiersResponse = IdentifierCollection;
+export type WebAppsListDomainOwnershipIdentifiersResponse =
+  IdentifierCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetDomainOwnershipIdentifierOptionalParams
@@ -11453,6 +14912,20 @@ export interface WebAppsGetMSDeployLogOptionalParams
 
 /** Contains response data for the getMSDeployLog operation. */
 export type WebAppsGetMSDeployLogResponse = MSDeployLog;
+
+/** Optional parameters. */
+export interface WebAppsGetOneDeployStatusOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getOneDeployStatus operation. */
+export type WebAppsGetOneDeployStatusResponse = Record<string, unknown>;
+
+/** Optional parameters. */
+export interface WebAppsCreateOneDeployOperationOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createOneDeployOperation operation. */
+export type WebAppsCreateOneDeployOperationResponse = Record<string, unknown>;
 
 /** Optional parameters. */
 export interface WebAppsListFunctionsOptionalParams
@@ -11607,21 +15080,24 @@ export interface WebAppsListRelayServiceConnectionsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listRelayServiceConnections operation. */
-export type WebAppsListRelayServiceConnectionsResponse = RelayServiceConnectionEntity;
+export type WebAppsListRelayServiceConnectionsResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsGetRelayServiceConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getRelayServiceConnection operation. */
-export type WebAppsGetRelayServiceConnectionResponse = RelayServiceConnectionEntity;
+export type WebAppsGetRelayServiceConnectionResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsCreateOrUpdateRelayServiceConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateRelayServiceConnection operation. */
-export type WebAppsCreateOrUpdateRelayServiceConnectionResponse = RelayServiceConnectionEntity;
+export type WebAppsCreateOrUpdateRelayServiceConnectionResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsDeleteRelayServiceConnectionOptionalParams
@@ -11632,14 +15108,16 @@ export interface WebAppsUpdateRelayServiceConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateRelayServiceConnection operation. */
-export type WebAppsUpdateRelayServiceConnectionResponse = RelayServiceConnectionEntity;
+export type WebAppsUpdateRelayServiceConnectionResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceIdentifiersOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceIdentifiers operation. */
-export type WebAppsListInstanceIdentifiersResponse = WebAppInstanceStatusCollection;
+export type WebAppsListInstanceIdentifiersResponse =
+  WebAppInstanceStatusCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetInstanceInfoOptionalParams
@@ -11719,7 +15197,8 @@ export interface WebAppsListInstanceProcessModulesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessModules operation. */
-export type WebAppsListInstanceProcessModulesResponse = ProcessModuleInfoCollection;
+export type WebAppsListInstanceProcessModulesResponse =
+  ProcessModuleInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetInstanceProcessModuleOptionalParams
@@ -11733,7 +15212,8 @@ export interface WebAppsListInstanceProcessThreadsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessThreads operation. */
-export type WebAppsListInstanceProcessThreadsResponse = ProcessThreadInfoCollection;
+export type WebAppsListInstanceProcessThreadsResponse =
+  ProcessThreadInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsIsCloneableOptionalParams
@@ -11792,14 +15272,16 @@ export interface WebAppsGetSwiftVirtualNetworkConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSwiftVirtualNetworkConnection operation. */
-export type WebAppsGetSwiftVirtualNetworkConnectionResponse = SwiftVirtualNetwork;
+export type WebAppsGetSwiftVirtualNetworkConnectionResponse =
+  SwiftVirtualNetwork;
 
 /** Optional parameters. */
 export interface WebAppsCreateOrUpdateSwiftVirtualNetworkConnectionWithCheckOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateSwiftVirtualNetworkConnectionWithCheck operation. */
-export type WebAppsCreateOrUpdateSwiftVirtualNetworkConnectionWithCheckResponse = SwiftVirtualNetwork;
+export type WebAppsCreateOrUpdateSwiftVirtualNetworkConnectionWithCheckResponse =
+  SwiftVirtualNetwork;
 
 /** Optional parameters. */
 export interface WebAppsDeleteSwiftVirtualNetworkOptionalParams
@@ -11810,7 +15292,8 @@ export interface WebAppsUpdateSwiftVirtualNetworkConnectionWithCheckOptionalPara
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateSwiftVirtualNetworkConnectionWithCheck operation. */
-export type WebAppsUpdateSwiftVirtualNetworkConnectionWithCheckResponse = SwiftVirtualNetwork;
+export type WebAppsUpdateSwiftVirtualNetworkConnectionWithCheckResponse =
+  SwiftVirtualNetwork;
 
 /** Optional parameters. */
 export interface WebAppsListNetworkFeaturesOptionalParams
@@ -11958,14 +15441,16 @@ export interface WebAppsGetPrivateEndpointConnectionListOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionList operation. */
-export type WebAppsGetPrivateEndpointConnectionListResponse = PrivateEndpointConnectionCollection;
+export type WebAppsGetPrivateEndpointConnectionListResponse =
+  PrivateEndpointConnectionCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetPrivateEndpointConnectionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnection operation. */
-export type WebAppsGetPrivateEndpointConnectionResponse = RemotePrivateEndpointConnectionARMResource;
+export type WebAppsGetPrivateEndpointConnectionResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface WebAppsApproveOrRejectPrivateEndpointConnectionOptionalParams
@@ -11977,7 +15462,8 @@ export interface WebAppsApproveOrRejectPrivateEndpointConnectionOptionalParams
 }
 
 /** Contains response data for the approveOrRejectPrivateEndpointConnection operation. */
-export type WebAppsApproveOrRejectPrivateEndpointConnectionResponse = RemotePrivateEndpointConnectionARMResource;
+export type WebAppsApproveOrRejectPrivateEndpointConnectionResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface WebAppsDeletePrivateEndpointConnectionOptionalParams
@@ -11999,7 +15485,8 @@ export interface WebAppsGetPrivateLinkResourcesOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateLinkResources operation. */
-export type WebAppsGetPrivateLinkResourcesResponse = PrivateLinkResourcesWrapper;
+export type WebAppsGetPrivateLinkResourcesResponse =
+  PrivateLinkResourcesWrapper;
 
 /** Optional parameters. */
 export interface WebAppsListProcessesOptionalParams
@@ -12150,6 +15637,31 @@ export interface WebAppsRestoreSnapshotOptionalParams
 }
 
 /** Optional parameters. */
+export interface WebAppsListSiteContainersOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listSiteContainers operation. */
+export type WebAppsListSiteContainersResponse = SiteContainerCollection;
+
+/** Optional parameters. */
+export interface WebAppsGetSiteContainerOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getSiteContainer operation. */
+export type WebAppsGetSiteContainerResponse = SiteContainer;
+
+/** Optional parameters. */
+export interface WebAppsCreateOrUpdateSiteContainerOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createOrUpdateSiteContainer operation. */
+export type WebAppsCreateOrUpdateSiteContainerResponse = SiteContainer;
+
+/** Optional parameters. */
+export interface WebAppsDeleteSiteContainerOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
 export interface WebAppsListSiteExtensionsOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -12229,7 +15741,8 @@ export interface WebAppsAnalyzeCustomHostnameSlotOptionalParams
 }
 
 /** Contains response data for the analyzeCustomHostnameSlot operation. */
-export type WebAppsAnalyzeCustomHostnameSlotResponse = CustomHostnameAnalysisResult;
+export type WebAppsAnalyzeCustomHostnameSlotResponse =
+  CustomHostnameAnalysisResult;
 
 /** Optional parameters. */
 export interface WebAppsApplySlotConfigurationSlotOptionalParams
@@ -12281,42 +15794,48 @@ export interface WebAppsListBasicPublishingCredentialsPoliciesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBasicPublishingCredentialsPoliciesSlot operation. */
-export type WebAppsListBasicPublishingCredentialsPoliciesSlotResponse = PublishingCredentialsPoliciesCollection;
+export type WebAppsListBasicPublishingCredentialsPoliciesSlotResponse =
+  PublishingCredentialsPoliciesCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetFtpAllowedSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getFtpAllowedSlot operation. */
-export type WebAppsGetFtpAllowedSlotResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsGetFtpAllowedSlotResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsUpdateFtpAllowedSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateFtpAllowedSlot operation. */
-export type WebAppsUpdateFtpAllowedSlotResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsUpdateFtpAllowedSlotResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsGetScmAllowedSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getScmAllowedSlot operation. */
-export type WebAppsGetScmAllowedSlotResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsGetScmAllowedSlotResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsUpdateScmAllowedSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateScmAllowedSlot operation. */
-export type WebAppsUpdateScmAllowedSlotResponse = CsmPublishingCredentialsPoliciesEntity;
+export type WebAppsUpdateScmAllowedSlotResponse =
+  CsmPublishingCredentialsPoliciesEntity;
 
 /** Optional parameters. */
 export interface WebAppsListConfigurationsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConfigurationsSlot operation. */
-export type WebAppsListConfigurationsSlotResponse = SiteConfigResourceCollection;
+export type WebAppsListConfigurationsSlotResponse =
+  SiteConfigResourceCollection;
 
 /** Optional parameters. */
 export interface WebAppsUpdateApplicationSettingsSlotOptionalParams
@@ -12347,6 +15866,14 @@ export interface WebAppsGetAuthSettingsSlotOptionalParams
 export type WebAppsGetAuthSettingsSlotResponse = SiteAuthSettings;
 
 /** Optional parameters. */
+export interface WebAppsGetAuthSettingsV2WithoutSecretsSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getAuthSettingsV2WithoutSecretsSlot operation. */
+export type WebAppsGetAuthSettingsV2WithoutSecretsSlotResponse =
+  SiteAuthSettingsV2;
+
+/** Optional parameters. */
 export interface WebAppsUpdateAuthSettingsV2SlotOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -12365,14 +15892,16 @@ export interface WebAppsUpdateAzureStorageAccountsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateAzureStorageAccountsSlot operation. */
-export type WebAppsUpdateAzureStorageAccountsSlotResponse = AzureStoragePropertyDictionaryResource;
+export type WebAppsUpdateAzureStorageAccountsSlotResponse =
+  AzureStoragePropertyDictionaryResource;
 
 /** Optional parameters. */
 export interface WebAppsListAzureStorageAccountsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listAzureStorageAccountsSlot operation. */
-export type WebAppsListAzureStorageAccountsSlotResponse = AzureStoragePropertyDictionaryResource;
+export type WebAppsListAzureStorageAccountsSlotResponse =
+  AzureStoragePropertyDictionaryResource;
 
 /** Optional parameters. */
 export interface WebAppsUpdateBackupConfigurationSlotOptionalParams
@@ -12397,7 +15926,8 @@ export interface WebAppsGetAppSettingsKeyVaultReferencesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getAppSettingsKeyVaultReferencesSlot operation. */
-export type WebAppsGetAppSettingsKeyVaultReferencesSlotResponse = ApiKVReferenceCollection;
+export type WebAppsGetAppSettingsKeyVaultReferencesSlotResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetAppSettingKeyVaultReferenceSlotOptionalParams
@@ -12411,28 +15941,32 @@ export interface WebAppsGetSiteConnectionStringKeyVaultReferencesSlotOptionalPar
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSiteConnectionStringKeyVaultReferencesSlot operation. */
-export type WebAppsGetSiteConnectionStringKeyVaultReferencesSlotResponse = ApiKVReferenceCollection;
+export type WebAppsGetSiteConnectionStringKeyVaultReferencesSlotResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetSiteConnectionStringKeyVaultReferenceSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSiteConnectionStringKeyVaultReferenceSlot operation. */
-export type WebAppsGetSiteConnectionStringKeyVaultReferenceSlotResponse = ApiKVReference;
+export type WebAppsGetSiteConnectionStringKeyVaultReferenceSlotResponse =
+  ApiKVReference;
 
 /** Optional parameters. */
 export interface WebAppsUpdateConnectionStringsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateConnectionStringsSlot operation. */
-export type WebAppsUpdateConnectionStringsSlotResponse = ConnectionStringDictionary;
+export type WebAppsUpdateConnectionStringsSlotResponse =
+  ConnectionStringDictionary;
 
 /** Optional parameters. */
 export interface WebAppsListConnectionStringsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConnectionStringsSlot operation. */
-export type WebAppsListConnectionStringsSlotResponse = ConnectionStringDictionary;
+export type WebAppsListConnectionStringsSlotResponse =
+  ConnectionStringDictionary;
 
 /** Optional parameters. */
 export interface WebAppsGetDiagnosticLogsConfigurationSlotOptionalParams
@@ -12514,7 +16048,8 @@ export interface WebAppsListConfigurationSnapshotInfoSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConfigurationSnapshotInfoSlot operation. */
-export type WebAppsListConfigurationSnapshotInfoSlotResponse = SiteConfigurationSnapshotInfoCollection;
+export type WebAppsListConfigurationSnapshotInfoSlotResponse =
+  SiteConfigurationSnapshotInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetConfigurationSnapshotSlotOptionalParams
@@ -12576,7 +16111,8 @@ export interface WebAppsListContinuousWebJobsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listContinuousWebJobsSlot operation. */
-export type WebAppsListContinuousWebJobsSlotResponse = ContinuousWebJobCollection;
+export type WebAppsListContinuousWebJobsSlotResponse =
+  ContinuousWebJobCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetContinuousWebJobSlotOptionalParams
@@ -12596,6 +16132,27 @@ export interface WebAppsStartContinuousWebJobSlotOptionalParams
 /** Optional parameters. */
 export interface WebAppsStopContinuousWebJobSlotOptionalParams
   extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface WebAppsListSlotSiteDeploymentStatusesSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listSlotSiteDeploymentStatusesSlot operation. */
+export type WebAppsListSlotSiteDeploymentStatusesSlotResponse =
+  CsmDeploymentStatusCollection;
+
+/** Optional parameters. */
+export interface WebAppsGetSlotSiteDeploymentStatusSlotOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the getSlotSiteDeploymentStatusSlot operation. */
+export type WebAppsGetSlotSiteDeploymentStatusSlotResponse =
+  CsmDeploymentStatus;
 
 /** Optional parameters. */
 export interface WebAppsListDeploymentsSlotOptionalParams
@@ -12641,7 +16198,8 @@ export interface WebAppsListDomainOwnershipIdentifiersSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listDomainOwnershipIdentifiersSlot operation. */
-export type WebAppsListDomainOwnershipIdentifiersSlotResponse = IdentifierCollection;
+export type WebAppsListDomainOwnershipIdentifiersSlotResponse =
+  IdentifierCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetDomainOwnershipIdentifierSlotOptionalParams
@@ -12655,7 +16213,8 @@ export interface WebAppsCreateOrUpdateDomainOwnershipIdentifierSlotOptionalParam
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateDomainOwnershipIdentifierSlot operation. */
-export type WebAppsCreateOrUpdateDomainOwnershipIdentifierSlotResponse = Identifier;
+export type WebAppsCreateOrUpdateDomainOwnershipIdentifierSlotResponse =
+  Identifier;
 
 /** Optional parameters. */
 export interface WebAppsDeleteDomainOwnershipIdentifierSlotOptionalParams
@@ -12699,7 +16258,8 @@ export interface WebAppsListInstanceFunctionsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceFunctionsSlot operation. */
-export type WebAppsListInstanceFunctionsSlotResponse = FunctionEnvelopeCollection;
+export type WebAppsListInstanceFunctionsSlotResponse =
+  FunctionEnvelopeCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetFunctionsAdminTokenSlotOptionalParams
@@ -12822,7 +16382,8 @@ export interface WebAppsCreateOrUpdateHybridConnectionSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateHybridConnectionSlot operation. */
-export type WebAppsCreateOrUpdateHybridConnectionSlotResponse = HybridConnection;
+export type WebAppsCreateOrUpdateHybridConnectionSlotResponse =
+  HybridConnection;
 
 /** Optional parameters. */
 export interface WebAppsDeleteHybridConnectionSlotOptionalParams
@@ -12847,21 +16408,24 @@ export interface WebAppsListRelayServiceConnectionsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listRelayServiceConnectionsSlot operation. */
-export type WebAppsListRelayServiceConnectionsSlotResponse = RelayServiceConnectionEntity;
+export type WebAppsListRelayServiceConnectionsSlotResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsGetRelayServiceConnectionSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getRelayServiceConnectionSlot operation. */
-export type WebAppsGetRelayServiceConnectionSlotResponse = RelayServiceConnectionEntity;
+export type WebAppsGetRelayServiceConnectionSlotResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsCreateOrUpdateRelayServiceConnectionSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateRelayServiceConnectionSlot operation. */
-export type WebAppsCreateOrUpdateRelayServiceConnectionSlotResponse = RelayServiceConnectionEntity;
+export type WebAppsCreateOrUpdateRelayServiceConnectionSlotResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsDeleteRelayServiceConnectionSlotOptionalParams
@@ -12872,14 +16436,16 @@ export interface WebAppsUpdateRelayServiceConnectionSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateRelayServiceConnectionSlot operation. */
-export type WebAppsUpdateRelayServiceConnectionSlotResponse = RelayServiceConnectionEntity;
+export type WebAppsUpdateRelayServiceConnectionSlotResponse =
+  RelayServiceConnectionEntity;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceIdentifiersSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceIdentifiersSlot operation. */
-export type WebAppsListInstanceIdentifiersSlotResponse = WebAppInstanceStatusCollection;
+export type WebAppsListInstanceIdentifiersSlotResponse =
+  WebAppInstanceStatusCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetInstanceInfoSlotOptionalParams
@@ -12959,7 +16525,8 @@ export interface WebAppsListInstanceProcessModulesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessModulesSlot operation. */
-export type WebAppsListInstanceProcessModulesSlotResponse = ProcessModuleInfoCollection;
+export type WebAppsListInstanceProcessModulesSlotResponse =
+  ProcessModuleInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetInstanceProcessModuleSlotOptionalParams
@@ -12973,7 +16540,8 @@ export interface WebAppsListInstanceProcessThreadsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessThreadsSlot operation. */
-export type WebAppsListInstanceProcessThreadsSlotResponse = ProcessThreadInfoCollection;
+export type WebAppsListInstanceProcessThreadsSlotResponse =
+  ProcessThreadInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsIsCloneableSlotOptionalParams
@@ -13008,14 +16576,16 @@ export interface WebAppsGetSwiftVirtualNetworkConnectionSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSwiftVirtualNetworkConnectionSlot operation. */
-export type WebAppsGetSwiftVirtualNetworkConnectionSlotResponse = SwiftVirtualNetwork;
+export type WebAppsGetSwiftVirtualNetworkConnectionSlotResponse =
+  SwiftVirtualNetwork;
 
 /** Optional parameters. */
 export interface WebAppsCreateOrUpdateSwiftVirtualNetworkConnectionWithCheckSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateSwiftVirtualNetworkConnectionWithCheckSlot operation. */
-export type WebAppsCreateOrUpdateSwiftVirtualNetworkConnectionWithCheckSlotResponse = SwiftVirtualNetwork;
+export type WebAppsCreateOrUpdateSwiftVirtualNetworkConnectionWithCheckSlotResponse =
+  SwiftVirtualNetwork;
 
 /** Optional parameters. */
 export interface WebAppsDeleteSwiftVirtualNetworkSlotOptionalParams
@@ -13026,7 +16596,8 @@ export interface WebAppsUpdateSwiftVirtualNetworkConnectionWithCheckSlotOptional
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the updateSwiftVirtualNetworkConnectionWithCheckSlot operation. */
-export type WebAppsUpdateSwiftVirtualNetworkConnectionWithCheckSlotResponse = SwiftVirtualNetwork;
+export type WebAppsUpdateSwiftVirtualNetworkConnectionWithCheckSlotResponse =
+  SwiftVirtualNetwork;
 
 /** Optional parameters. */
 export interface WebAppsListNetworkFeaturesSlotOptionalParams
@@ -13075,7 +16646,8 @@ export interface WebAppsStartWebSiteNetworkTraceOperationSlotOptionalParams
 }
 
 /** Contains response data for the startWebSiteNetworkTraceOperationSlot operation. */
-export type WebAppsStartWebSiteNetworkTraceOperationSlotResponse = NetworkTrace[];
+export type WebAppsStartWebSiteNetworkTraceOperationSlotResponse =
+  NetworkTrace[];
 
 /** Optional parameters. */
 export interface WebAppsStopWebSiteNetworkTraceSlotOptionalParams
@@ -13174,14 +16746,16 @@ export interface WebAppsGetPrivateEndpointConnectionListSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionListSlot operation. */
-export type WebAppsGetPrivateEndpointConnectionListSlotResponse = PrivateEndpointConnectionCollection;
+export type WebAppsGetPrivateEndpointConnectionListSlotResponse =
+  PrivateEndpointConnectionCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetPrivateEndpointConnectionSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionSlot operation. */
-export type WebAppsGetPrivateEndpointConnectionSlotResponse = RemotePrivateEndpointConnectionARMResource;
+export type WebAppsGetPrivateEndpointConnectionSlotResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface WebAppsApproveOrRejectPrivateEndpointConnectionSlotOptionalParams
@@ -13193,7 +16767,8 @@ export interface WebAppsApproveOrRejectPrivateEndpointConnectionSlotOptionalPara
 }
 
 /** Contains response data for the approveOrRejectPrivateEndpointConnectionSlot operation. */
-export type WebAppsApproveOrRejectPrivateEndpointConnectionSlotResponse = RemotePrivateEndpointConnectionARMResource;
+export type WebAppsApproveOrRejectPrivateEndpointConnectionSlotResponse =
+  RemotePrivateEndpointConnectionARMResource;
 
 /** Optional parameters. */
 export interface WebAppsDeletePrivateEndpointConnectionSlotOptionalParams
@@ -13215,7 +16790,8 @@ export interface WebAppsGetPrivateLinkResourcesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateLinkResourcesSlot operation. */
-export type WebAppsGetPrivateLinkResourcesSlotResponse = PrivateLinkResourcesWrapper;
+export type WebAppsGetPrivateLinkResourcesSlotResponse =
+  PrivateLinkResourcesWrapper;
 
 /** Optional parameters. */
 export interface WebAppsListProcessesSlotOptionalParams
@@ -13283,7 +16859,8 @@ export interface WebAppsListPublicCertificatesSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listPublicCertificatesSlot operation. */
-export type WebAppsListPublicCertificatesSlotResponse = PublicCertificateCollection;
+export type WebAppsListPublicCertificatesSlotResponse =
+  PublicCertificateCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetPublicCertificateSlotOptionalParams
@@ -13297,7 +16874,8 @@ export interface WebAppsCreateOrUpdatePublicCertificateSlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdatePublicCertificateSlot operation. */
-export type WebAppsCreateOrUpdatePublicCertificateSlotResponse = PublicCertificate;
+export type WebAppsCreateOrUpdatePublicCertificateSlotResponse =
+  PublicCertificate;
 
 /** Optional parameters. */
 export interface WebAppsDeletePublicCertificateSlotOptionalParams
@@ -13366,6 +16944,31 @@ export interface WebAppsRestoreSnapshotSlotOptionalParams
 }
 
 /** Optional parameters. */
+export interface WebAppsListSiteContainersSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listSiteContainersSlot operation. */
+export type WebAppsListSiteContainersSlotResponse = SiteContainerCollection;
+
+/** Optional parameters. */
+export interface WebAppsGetSiteContainerSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getSiteContainerSlot operation. */
+export type WebAppsGetSiteContainerSlotResponse = SiteContainer;
+
+/** Optional parameters. */
+export interface WebAppsCreateOrUpdateSiteContainerSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createOrUpdateSiteContainerSlot operation. */
+export type WebAppsCreateOrUpdateSiteContainerSlotResponse = SiteContainer;
+
+/** Optional parameters. */
+export interface WebAppsDeleteSiteContainerSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
 export interface WebAppsListSiteExtensionsSlotOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -13423,7 +17026,8 @@ export interface WebAppsListSnapshotsFromDRSecondarySlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSnapshotsFromDRSecondarySlot operation. */
-export type WebAppsListSnapshotsFromDRSecondarySlotResponse = SnapshotCollection;
+export type WebAppsListSnapshotsFromDRSecondarySlotResponse =
+  SnapshotCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetSourceControlSlotOptionalParams
@@ -13518,7 +17122,8 @@ export interface WebAppsListTriggeredWebJobHistorySlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listTriggeredWebJobHistorySlot operation. */
-export type WebAppsListTriggeredWebJobHistorySlotResponse = TriggeredJobHistoryCollection;
+export type WebAppsListTriggeredWebJobHistorySlotResponse =
+  TriggeredJobHistoryCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetTriggeredWebJobHistorySlotOptionalParams
@@ -13585,7 +17190,8 @@ export interface WebAppsCreateOrUpdateVnetConnectionGatewaySlotOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the createOrUpdateVnetConnectionGatewaySlot operation. */
-export type WebAppsCreateOrUpdateVnetConnectionGatewaySlotResponse = VnetGateway;
+export type WebAppsCreateOrUpdateVnetConnectionGatewaySlotResponse =
+  VnetGateway;
 
 /** Optional parameters. */
 export interface WebAppsUpdateVnetConnectionGatewaySlotOptionalParams
@@ -13613,7 +17219,8 @@ export interface WebAppsListSlotDifferencesFromProductionOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSlotDifferencesFromProduction operation. */
-export type WebAppsListSlotDifferencesFromProductionResponse = SlotDifferenceCollection;
+export type WebAppsListSlotDifferencesFromProductionResponse =
+  SlotDifferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsSwapSlotWithProductionOptionalParams
@@ -13731,7 +17338,8 @@ export interface WebAppsListTriggeredWebJobHistoryOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listTriggeredWebJobHistory operation. */
-export type WebAppsListTriggeredWebJobHistoryResponse = TriggeredJobHistoryCollection;
+export type WebAppsListTriggeredWebJobHistoryResponse =
+  TriggeredJobHistoryCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetTriggeredWebJobHistoryOptionalParams
@@ -13822,6 +17430,63 @@ export interface WebAppsGetWebJobOptionalParams
 export type WebAppsGetWebJobResponse = WebJob;
 
 /** Optional parameters. */
+export interface WebAppsDeployWorkflowArtifactsOptionalParams
+  extends coreClient.OperationOptions {
+  /** Application settings and files of the workflow. */
+  workflowArtifacts?: WorkflowArtifacts;
+}
+
+/** Optional parameters. */
+export interface WebAppsDeployWorkflowArtifactsSlotOptionalParams
+  extends coreClient.OperationOptions {
+  /** Application settings and files of the workflow. */
+  workflowArtifacts?: WorkflowArtifacts;
+}
+
+/** Optional parameters. */
+export interface WebAppsListInstanceWorkflowsSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listInstanceWorkflowsSlot operation. */
+export type WebAppsListInstanceWorkflowsSlotResponse =
+  WorkflowEnvelopeCollection;
+
+/** Optional parameters. */
+export interface WebAppsGetInstanceWorkflowSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getInstanceWorkflowSlot operation. */
+export type WebAppsGetInstanceWorkflowSlotResponse = WorkflowEnvelope;
+
+/** Optional parameters. */
+export interface WebAppsListWorkflowsConnectionsSlotOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listWorkflowsConnectionsSlot operation. */
+export type WebAppsListWorkflowsConnectionsSlotResponse = WorkflowEnvelope;
+
+/** Optional parameters. */
+export interface WebAppsListWorkflowsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listWorkflows operation. */
+export type WebAppsListWorkflowsResponse = WorkflowEnvelopeCollection;
+
+/** Optional parameters. */
+export interface WebAppsGetWorkflowOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getWorkflow operation. */
+export type WebAppsGetWorkflowResponse = WorkflowEnvelope;
+
+/** Optional parameters. */
+export interface WebAppsListWorkflowsConnectionsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listWorkflowsConnections operation. */
+export type WebAppsListWorkflowsConnectionsResponse = WorkflowEnvelope;
+
+/** Optional parameters. */
 export interface WebAppsListNextOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -13830,10 +17495,7 @@ export type WebAppsListNextResponse = WebAppCollection;
 
 /** Optional parameters. */
 export interface WebAppsListByResourceGroupNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Specify <strong>true</strong> to include deployment slots in results. The default is false, which only gives you the production slot of all apps. */
-  includeSlots?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
 export type WebAppsListByResourceGroupNextResponse = WebAppCollection;
@@ -13850,42 +17512,56 @@ export interface WebAppsListBasicPublishingCredentialsPoliciesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBasicPublishingCredentialsPoliciesNext operation. */
-export type WebAppsListBasicPublishingCredentialsPoliciesNextResponse = PublishingCredentialsPoliciesCollection;
+export type WebAppsListBasicPublishingCredentialsPoliciesNextResponse =
+  PublishingCredentialsPoliciesCollection;
 
 /** Optional parameters. */
 export interface WebAppsListConfigurationsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConfigurationsNext operation. */
-export type WebAppsListConfigurationsNextResponse = SiteConfigResourceCollection;
+export type WebAppsListConfigurationsNextResponse =
+  SiteConfigResourceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetAppSettingsKeyVaultReferencesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getAppSettingsKeyVaultReferencesNext operation. */
-export type WebAppsGetAppSettingsKeyVaultReferencesNextResponse = ApiKVReferenceCollection;
+export type WebAppsGetAppSettingsKeyVaultReferencesNextResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetSiteConnectionStringKeyVaultReferencesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSiteConnectionStringKeyVaultReferencesNext operation. */
-export type WebAppsGetSiteConnectionStringKeyVaultReferencesNextResponse = ApiKVReferenceCollection;
+export type WebAppsGetSiteConnectionStringKeyVaultReferencesNextResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsListConfigurationSnapshotInfoNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConfigurationSnapshotInfoNext operation. */
-export type WebAppsListConfigurationSnapshotInfoNextResponse = SiteConfigurationSnapshotInfoCollection;
+export type WebAppsListConfigurationSnapshotInfoNextResponse =
+  SiteConfigurationSnapshotInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListContinuousWebJobsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listContinuousWebJobsNext operation. */
-export type WebAppsListContinuousWebJobsNextResponse = ContinuousWebJobCollection;
+export type WebAppsListContinuousWebJobsNextResponse =
+  ContinuousWebJobCollection;
+
+/** Optional parameters. */
+export interface WebAppsListProductionSiteDeploymentStatusesNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listProductionSiteDeploymentStatusesNext operation. */
+export type WebAppsListProductionSiteDeploymentStatusesNextResponse =
+  CsmDeploymentStatusCollection;
 
 /** Optional parameters. */
 export interface WebAppsListDeploymentsNextOptionalParams
@@ -13899,7 +17575,8 @@ export interface WebAppsListDomainOwnershipIdentifiersNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listDomainOwnershipIdentifiersNext operation. */
-export type WebAppsListDomainOwnershipIdentifiersNextResponse = IdentifierCollection;
+export type WebAppsListDomainOwnershipIdentifiersNextResponse =
+  IdentifierCollection;
 
 /** Optional parameters. */
 export interface WebAppsListFunctionsNextOptionalParams
@@ -13920,7 +17597,8 @@ export interface WebAppsListInstanceIdentifiersNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceIdentifiersNext operation. */
-export type WebAppsListInstanceIdentifiersNextResponse = WebAppInstanceStatusCollection;
+export type WebAppsListInstanceIdentifiersNextResponse =
+  WebAppInstanceStatusCollection;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceProcessesNextOptionalParams
@@ -13934,14 +17612,16 @@ export interface WebAppsListInstanceProcessModulesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessModulesNext operation. */
-export type WebAppsListInstanceProcessModulesNextResponse = ProcessModuleInfoCollection;
+export type WebAppsListInstanceProcessModulesNextResponse =
+  ProcessModuleInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceProcessThreadsNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessThreadsNext operation. */
-export type WebAppsListInstanceProcessThreadsNextResponse = ProcessThreadInfoCollection;
+export type WebAppsListInstanceProcessThreadsNextResponse =
+  ProcessThreadInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListSiteBackupsNextOptionalParams
@@ -13952,10 +17632,7 @@ export type WebAppsListSiteBackupsNextResponse = BackupItemCollection;
 
 /** Optional parameters. */
 export interface WebAppsListPerfMonCountersNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example: $filter=(startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[Hour|Minute|Day]'. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listPerfMonCountersNext operation. */
 export type WebAppsListPerfMonCountersNextResponse = PerfMonCounterCollection;
@@ -13965,7 +17642,8 @@ export interface WebAppsGetPrivateEndpointConnectionListNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionListNext operation. */
-export type WebAppsGetPrivateEndpointConnectionListNextResponse = PrivateEndpointConnectionCollection;
+export type WebAppsGetPrivateEndpointConnectionListNextResponse =
+  PrivateEndpointConnectionCollection;
 
 /** Optional parameters. */
 export interface WebAppsListProcessesNextOptionalParams
@@ -13993,7 +17671,15 @@ export interface WebAppsListPublicCertificatesNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listPublicCertificatesNext operation. */
-export type WebAppsListPublicCertificatesNextResponse = PublicCertificateCollection;
+export type WebAppsListPublicCertificatesNextResponse =
+  PublicCertificateCollection;
+
+/** Optional parameters. */
+export interface WebAppsListSiteContainersNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listSiteContainersNext operation. */
+export type WebAppsListSiteContainersNextResponse = SiteContainerCollection;
 
 /** Optional parameters. */
 export interface WebAppsListSiteExtensionsNextOptionalParams
@@ -14021,42 +17707,56 @@ export interface WebAppsListBasicPublishingCredentialsPoliciesSlotNextOptionalPa
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBasicPublishingCredentialsPoliciesSlotNext operation. */
-export type WebAppsListBasicPublishingCredentialsPoliciesSlotNextResponse = PublishingCredentialsPoliciesCollection;
+export type WebAppsListBasicPublishingCredentialsPoliciesSlotNextResponse =
+  PublishingCredentialsPoliciesCollection;
 
 /** Optional parameters. */
 export interface WebAppsListConfigurationsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConfigurationsSlotNext operation. */
-export type WebAppsListConfigurationsSlotNextResponse = SiteConfigResourceCollection;
+export type WebAppsListConfigurationsSlotNextResponse =
+  SiteConfigResourceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetAppSettingsKeyVaultReferencesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getAppSettingsKeyVaultReferencesSlotNext operation. */
-export type WebAppsGetAppSettingsKeyVaultReferencesSlotNextResponse = ApiKVReferenceCollection;
+export type WebAppsGetAppSettingsKeyVaultReferencesSlotNextResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetSiteConnectionStringKeyVaultReferencesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getSiteConnectionStringKeyVaultReferencesSlotNext operation. */
-export type WebAppsGetSiteConnectionStringKeyVaultReferencesSlotNextResponse = ApiKVReferenceCollection;
+export type WebAppsGetSiteConnectionStringKeyVaultReferencesSlotNextResponse =
+  ApiKVReferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsListConfigurationSnapshotInfoSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listConfigurationSnapshotInfoSlotNext operation. */
-export type WebAppsListConfigurationSnapshotInfoSlotNextResponse = SiteConfigurationSnapshotInfoCollection;
+export type WebAppsListConfigurationSnapshotInfoSlotNextResponse =
+  SiteConfigurationSnapshotInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListContinuousWebJobsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listContinuousWebJobsSlotNext operation. */
-export type WebAppsListContinuousWebJobsSlotNextResponse = ContinuousWebJobCollection;
+export type WebAppsListContinuousWebJobsSlotNextResponse =
+  ContinuousWebJobCollection;
+
+/** Optional parameters. */
+export interface WebAppsListSlotSiteDeploymentStatusesSlotNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listSlotSiteDeploymentStatusesSlotNext operation. */
+export type WebAppsListSlotSiteDeploymentStatusesSlotNextResponse =
+  CsmDeploymentStatusCollection;
 
 /** Optional parameters. */
 export interface WebAppsListDeploymentsSlotNextOptionalParams
@@ -14070,49 +17770,56 @@ export interface WebAppsListDomainOwnershipIdentifiersSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listDomainOwnershipIdentifiersSlotNext operation. */
-export type WebAppsListDomainOwnershipIdentifiersSlotNextResponse = IdentifierCollection;
+export type WebAppsListDomainOwnershipIdentifiersSlotNextResponse =
+  IdentifierCollection;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceFunctionsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceFunctionsSlotNext operation. */
-export type WebAppsListInstanceFunctionsSlotNextResponse = FunctionEnvelopeCollection;
+export type WebAppsListInstanceFunctionsSlotNextResponse =
+  FunctionEnvelopeCollection;
 
 /** Optional parameters. */
 export interface WebAppsListHostNameBindingsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listHostNameBindingsSlotNext operation. */
-export type WebAppsListHostNameBindingsSlotNextResponse = HostNameBindingCollection;
+export type WebAppsListHostNameBindingsSlotNextResponse =
+  HostNameBindingCollection;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceIdentifiersSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceIdentifiersSlotNext operation. */
-export type WebAppsListInstanceIdentifiersSlotNextResponse = WebAppInstanceStatusCollection;
+export type WebAppsListInstanceIdentifiersSlotNextResponse =
+  WebAppInstanceStatusCollection;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceProcessesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessesSlotNext operation. */
-export type WebAppsListInstanceProcessesSlotNextResponse = ProcessInfoCollection;
+export type WebAppsListInstanceProcessesSlotNextResponse =
+  ProcessInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceProcessModulesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessModulesSlotNext operation. */
-export type WebAppsListInstanceProcessModulesSlotNextResponse = ProcessModuleInfoCollection;
+export type WebAppsListInstanceProcessModulesSlotNextResponse =
+  ProcessModuleInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListInstanceProcessThreadsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listInstanceProcessThreadsSlotNext operation. */
-export type WebAppsListInstanceProcessThreadsSlotNextResponse = ProcessThreadInfoCollection;
+export type WebAppsListInstanceProcessThreadsSlotNextResponse =
+  ProcessThreadInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListSiteBackupsSlotNextOptionalParams
@@ -14123,20 +17830,19 @@ export type WebAppsListSiteBackupsSlotNextResponse = BackupItemCollection;
 
 /** Optional parameters. */
 export interface WebAppsListPerfMonCountersSlotNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example: $filter=(startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[Hour|Minute|Day]'. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listPerfMonCountersSlotNext operation. */
-export type WebAppsListPerfMonCountersSlotNextResponse = PerfMonCounterCollection;
+export type WebAppsListPerfMonCountersSlotNextResponse =
+  PerfMonCounterCollection;
 
 /** Optional parameters. */
 export interface WebAppsGetPrivateEndpointConnectionListSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getPrivateEndpointConnectionListSlotNext operation. */
-export type WebAppsGetPrivateEndpointConnectionListSlotNextResponse = PrivateEndpointConnectionCollection;
+export type WebAppsGetPrivateEndpointConnectionListSlotNextResponse =
+  PrivateEndpointConnectionCollection;
 
 /** Optional parameters. */
 export interface WebAppsListProcessesSlotNextOptionalParams
@@ -14150,35 +17856,47 @@ export interface WebAppsListProcessModulesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listProcessModulesSlotNext operation. */
-export type WebAppsListProcessModulesSlotNextResponse = ProcessModuleInfoCollection;
+export type WebAppsListProcessModulesSlotNextResponse =
+  ProcessModuleInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListProcessThreadsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listProcessThreadsSlotNext operation. */
-export type WebAppsListProcessThreadsSlotNextResponse = ProcessThreadInfoCollection;
+export type WebAppsListProcessThreadsSlotNextResponse =
+  ProcessThreadInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListPublicCertificatesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listPublicCertificatesSlotNext operation. */
-export type WebAppsListPublicCertificatesSlotNextResponse = PublicCertificateCollection;
+export type WebAppsListPublicCertificatesSlotNextResponse =
+  PublicCertificateCollection;
+
+/** Optional parameters. */
+export interface WebAppsListSiteContainersSlotNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listSiteContainersSlotNext operation. */
+export type WebAppsListSiteContainersSlotNextResponse = SiteContainerCollection;
 
 /** Optional parameters. */
 export interface WebAppsListSiteExtensionsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSiteExtensionsSlotNext operation. */
-export type WebAppsListSiteExtensionsSlotNextResponse = SiteExtensionInfoCollection;
+export type WebAppsListSiteExtensionsSlotNextResponse =
+  SiteExtensionInfoCollection;
 
 /** Optional parameters. */
 export interface WebAppsListSlotDifferencesSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSlotDifferencesSlotNext operation. */
-export type WebAppsListSlotDifferencesSlotNextResponse = SlotDifferenceCollection;
+export type WebAppsListSlotDifferencesSlotNextResponse =
+  SlotDifferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsListSnapshotsSlotNextOptionalParams
@@ -14192,28 +17910,28 @@ export interface WebAppsListSnapshotsFromDRSecondarySlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSnapshotsFromDRSecondarySlotNext operation. */
-export type WebAppsListSnapshotsFromDRSecondarySlotNextResponse = SnapshotCollection;
+export type WebAppsListSnapshotsFromDRSecondarySlotNextResponse =
+  SnapshotCollection;
 
 /** Optional parameters. */
 export interface WebAppsListTriggeredWebJobsSlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listTriggeredWebJobsSlotNext operation. */
-export type WebAppsListTriggeredWebJobsSlotNextResponse = TriggeredWebJobCollection;
+export type WebAppsListTriggeredWebJobsSlotNextResponse =
+  TriggeredWebJobCollection;
 
 /** Optional parameters. */
 export interface WebAppsListTriggeredWebJobHistorySlotNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listTriggeredWebJobHistorySlotNext operation. */
-export type WebAppsListTriggeredWebJobHistorySlotNextResponse = TriggeredJobHistoryCollection;
+export type WebAppsListTriggeredWebJobHistorySlotNextResponse =
+  TriggeredJobHistoryCollection;
 
 /** Optional parameters. */
 export interface WebAppsListUsagesSlotNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only information specified in the filter (using OData syntax). For example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[Hour|Minute|Day]'. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listUsagesSlotNext operation. */
 export type WebAppsListUsagesSlotNextResponse = CsmUsageQuotaCollection;
@@ -14230,7 +17948,8 @@ export interface WebAppsListSlotDifferencesFromProductionNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSlotDifferencesFromProductionNext operation. */
-export type WebAppsListSlotDifferencesFromProductionNextResponse = SlotDifferenceCollection;
+export type WebAppsListSlotDifferencesFromProductionNextResponse =
+  SlotDifferenceCollection;
 
 /** Optional parameters. */
 export interface WebAppsListSnapshotsNextOptionalParams
@@ -14244,7 +17963,8 @@ export interface WebAppsListSnapshotsFromDRSecondaryNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listSnapshotsFromDRSecondaryNext operation. */
-export type WebAppsListSnapshotsFromDRSecondaryNextResponse = SnapshotCollection;
+export type WebAppsListSnapshotsFromDRSecondaryNextResponse =
+  SnapshotCollection;
 
 /** Optional parameters. */
 export interface WebAppsListTriggeredWebJobsNextOptionalParams
@@ -14258,14 +17978,12 @@ export interface WebAppsListTriggeredWebJobHistoryNextOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the listTriggeredWebJobHistoryNext operation. */
-export type WebAppsListTriggeredWebJobHistoryNextResponse = TriggeredJobHistoryCollection;
+export type WebAppsListTriggeredWebJobHistoryNextResponse =
+  TriggeredJobHistoryCollection;
 
 /** Optional parameters. */
 export interface WebAppsListUsagesNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Return only information specified in the filter (using OData syntax). For example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq 2014-01-01T00:00:00Z and endTime eq 2014-12-31T23:59:59Z and timeGrain eq duration'[Hour|Minute|Day]'. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listUsagesNext operation. */
 export type WebAppsListUsagesNextResponse = CsmUsageQuotaCollection;
@@ -14276,6 +17994,299 @@ export interface WebAppsListWebJobsNextOptionalParams
 
 /** Contains response data for the listWebJobsNext operation. */
 export type WebAppsListWebJobsNextResponse = WebJobCollection;
+
+/** Optional parameters. */
+export interface WebAppsListInstanceWorkflowsSlotNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listInstanceWorkflowsSlotNext operation. */
+export type WebAppsListInstanceWorkflowsSlotNextResponse =
+  WorkflowEnvelopeCollection;
+
+/** Optional parameters. */
+export interface WebAppsListWorkflowsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listWorkflowsNext operation. */
+export type WebAppsListWorkflowsNextResponse = WorkflowEnvelopeCollection;
+
+/** Optional parameters. */
+export interface WorkflowsRegenerateAccessKeyOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface WorkflowsValidateOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface WorkflowRunsListOptionalParams
+  extends coreClient.OperationOptions {
+  /** The number of items to be included in the result. */
+  top?: number;
+  /** The filter to apply on the operation. Options for filters include: Status, StartTime, and ClientTrackingId. */
+  filter?: string;
+}
+
+/** Contains response data for the list operation. */
+export type WorkflowRunsListResponse = WorkflowRunListResult;
+
+/** Optional parameters. */
+export interface WorkflowRunsGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowRunsGetResponse = WorkflowRun;
+
+/** Optional parameters. */
+export interface WorkflowRunsCancelOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface WorkflowRunsListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowRunsListNextResponse = WorkflowRunListResult;
+
+/** Optional parameters. */
+export interface WorkflowRunActionsListOptionalParams
+  extends coreClient.OperationOptions {
+  /** The number of items to be included in the result. */
+  top?: number;
+  /** The filter to apply on the operation. Options for filters include: Status. */
+  filter?: string;
+}
+
+/** Contains response data for the list operation. */
+export type WorkflowRunActionsListResponse = WorkflowRunActionListResult;
+
+/** Optional parameters. */
+export interface WorkflowRunActionsGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowRunActionsGetResponse = WorkflowRunAction;
+
+/** Optional parameters. */
+export interface WorkflowRunActionsListExpressionTracesOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listExpressionTraces operation. */
+export type WorkflowRunActionsListExpressionTracesResponse = ExpressionTraces;
+
+/** Optional parameters. */
+export interface WorkflowRunActionsListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowRunActionsListNextResponse = WorkflowRunActionListResult;
+
+/** Optional parameters. */
+export interface WorkflowRunActionsListExpressionTracesNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listExpressionTracesNext operation. */
+export type WorkflowRunActionsListExpressionTracesNextResponse =
+  ExpressionTraces;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsListOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the list operation. */
+export type WorkflowRunActionRepetitionsListResponse =
+  WorkflowRunActionRepetitionDefinitionCollection;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowRunActionRepetitionsGetResponse =
+  WorkflowRunActionRepetitionDefinition;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsListExpressionTracesOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listExpressionTraces operation. */
+export type WorkflowRunActionRepetitionsListExpressionTracesResponse =
+  ExpressionTraces;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowRunActionRepetitionsListNextResponse =
+  WorkflowRunActionRepetitionDefinitionCollection;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsListExpressionTracesNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listExpressionTracesNext operation. */
+export type WorkflowRunActionRepetitionsListExpressionTracesNextResponse =
+  ExpressionTraces;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsRequestHistoriesListOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the list operation. */
+export type WorkflowRunActionRepetitionsRequestHistoriesListResponse =
+  RequestHistoryListResult;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsRequestHistoriesGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowRunActionRepetitionsRequestHistoriesGetResponse =
+  RequestHistory;
+
+/** Optional parameters. */
+export interface WorkflowRunActionRepetitionsRequestHistoriesListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowRunActionRepetitionsRequestHistoriesListNextResponse =
+  RequestHistoryListResult;
+
+/** Optional parameters. */
+export interface WorkflowRunActionScopeRepetitionsListOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the list operation. */
+export type WorkflowRunActionScopeRepetitionsListResponse =
+  WorkflowRunActionRepetitionDefinitionCollection;
+
+/** Optional parameters. */
+export interface WorkflowRunActionScopeRepetitionsGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowRunActionScopeRepetitionsGetResponse =
+  WorkflowRunActionRepetitionDefinition;
+
+/** Optional parameters. */
+export interface WorkflowRunActionScopeRepetitionsListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowRunActionScopeRepetitionsListNextResponse =
+  WorkflowRunActionRepetitionDefinitionCollection;
+
+/** Optional parameters. */
+export interface WorkflowTriggersListOptionalParams
+  extends coreClient.OperationOptions {
+  /** The number of items to be included in the result. */
+  top?: number;
+  /** The filter to apply on the operation. */
+  filter?: string;
+}
+
+/** Contains response data for the list operation. */
+export type WorkflowTriggersListResponse = WorkflowTriggerListResult;
+
+/** Optional parameters. */
+export interface WorkflowTriggersGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowTriggersGetResponse = WorkflowTrigger;
+
+/** Optional parameters. */
+export interface WorkflowTriggersListCallbackUrlOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listCallbackUrl operation. */
+export type WorkflowTriggersListCallbackUrlResponse =
+  WorkflowTriggerCallbackUrl;
+
+/** Optional parameters. */
+export interface WorkflowTriggersRunOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Optional parameters. */
+export interface WorkflowTriggersGetSchemaJsonOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getSchemaJson operation. */
+export type WorkflowTriggersGetSchemaJsonResponse = JsonSchema;
+
+/** Optional parameters. */
+export interface WorkflowTriggersListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowTriggersListNextResponse = WorkflowTriggerListResult;
+
+/** Optional parameters. */
+export interface WorkflowTriggerHistoriesListOptionalParams
+  extends coreClient.OperationOptions {
+  /** The number of items to be included in the result. */
+  top?: number;
+  /** The filter to apply on the operation. Options for filters include: Status, StartTime, and ClientTrackingId. */
+  filter?: string;
+}
+
+/** Contains response data for the list operation. */
+export type WorkflowTriggerHistoriesListResponse =
+  WorkflowTriggerHistoryListResult;
+
+/** Optional parameters. */
+export interface WorkflowTriggerHistoriesGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowTriggerHistoriesGetResponse = WorkflowTriggerHistory;
+
+/** Optional parameters. */
+export interface WorkflowTriggerHistoriesResubmitOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Optional parameters. */
+export interface WorkflowTriggerHistoriesListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowTriggerHistoriesListNextResponse =
+  WorkflowTriggerHistoryListResult;
+
+/** Optional parameters. */
+export interface WorkflowVersionsListOptionalParams
+  extends coreClient.OperationOptions {
+  /** The number of items to be included in the result. */
+  top?: number;
+}
+
+/** Contains response data for the list operation. */
+export type WorkflowVersionsListResponse = WorkflowVersionListResult;
+
+/** Optional parameters. */
+export interface WorkflowVersionsGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type WorkflowVersionsGetResponse = WorkflowVersion;
+
+/** Optional parameters. */
+export interface WorkflowVersionsListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type WorkflowVersionsListNextResponse = WorkflowVersionListResult;
 
 /** Optional parameters. */
 export interface WebSiteManagementClientOptionalParams

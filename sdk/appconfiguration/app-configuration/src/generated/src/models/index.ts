@@ -6,7 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import * as coreClient from "@azure/core-client";
+import * as coreHttpCompat from "@azure/core-http-compat";
 
 /** The result of a list request. */
 export interface KeyListResult {
@@ -17,7 +18,10 @@ export interface KeyListResult {
 }
 
 export interface Key {
-  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+  /**
+   * The name of the key.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
   readonly name?: string;
 }
 
@@ -39,33 +43,147 @@ export interface ErrorModel {
 export interface KeyValueListResult {
   /** The collection value. */
   items?: KeyValue[];
+  /** An identifier representing the returned state of the resource. */
+  etag?: string;
   /** The URI that can be used to request the next set of paged results. */
   nextLink?: string;
 }
 
 export interface KeyValue {
+  /** The key of the key-value. */
   key: string;
+  /** The label the key-value belongs to. */
   label?: string;
+  /** The content type of the value stored within the key-value. */
   contentType?: string;
+  /** The value of the key-value. */
   value?: string;
+  /** A date representing the last time the key-value was modified. */
   lastModified?: Date;
-  /** Dictionary of <string> */
+  /** The tags of the key-value */
   tags?: { [propertyName: string]: string };
+  /** Indicates whether the key-value is locked. */
   locked?: boolean;
+  /** A value representing the current state of the resource. */
   etag?: string;
+}
+
+/** The result of a snapshot list request. */
+export interface SnapshotListResult {
+  /** The collection value. */
+  items?: ConfigurationSnapshot[];
+  /** The URI that can be used to request the next set of paged results. */
+  nextLink?: string;
+}
+
+/** Snapshot details include name, filters, expiresOn, sizeInBytes, status, itemCount, and more */
+export interface ConfigurationSnapshot {
+  /**
+   * The name of the snapshot.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name: string;
+  /**
+   * The current status of the snapshot.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly status?: ConfigurationSnapshotStatus;
+  /** A list of filters used to filter the key-values included in the snapshot. */
+  filters: ConfigurationSettingsFilter[];
+  /** The composition type describes how the key-values within the snapshot are composed. The 'key' composition type ensures there are no two key-values containing the same key. The 'key_label' composition type ensures there are no two key-values containing the same key and label. */
+  compositionType?: SnapshotComposition;
+  /**
+   * The time that the snapshot was created.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdOn?: Date;
+  /**
+   * The time that the snapshot will expire.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly expiresOn?: Date;
+  /** The amount of time, in seconds, that a snapshot will remain in the archived state before expiring. This property is only writable during the creation of a snapshot. If not specified, the default lifetime of key-value revisions will be used. */
+  retentionPeriodInSeconds?: number;
+  /**
+   * The size in bytes of the snapshot.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly sizeInBytes?: number;
+  /**
+   * The amount of key-values in the snapshot.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly itemCount?: number;
+  /** The tags of the snapshot. */
+  tags?: { [propertyName: string]: string };
+  /**
+   * A value representing the current state of the snapshot.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly etag?: string;
+}
+
+/** Enables filtering of key-values. Syntax reference: https://aka.ms/azconfig/docs/restapisnapshots */
+export interface ConfigurationSettingsFilter {
+  /** Filters key-values by their key field. */
+  keyFilter: string;
+  /** Filters key-values by their label field. */
+  labelFilter?: string;
+  /** Filters key-values by their tags field. */
+  tagsFilter?: string[];
+}
+
+/** Parameters used to update a snapshot. */
+export interface SnapshotUpdateParameters {
+  /** The desired status of the snapshot. */
+  status?: SnapshotStatus;
 }
 
 /** The result of a list request. */
 export interface LabelListResult {
   /** The collection value. */
-  items?: Label[];
+  items?: SettingLabel[];
   /** The URI that can be used to request the next set of paged results. */
   nextLink?: string;
 }
 
-export interface Label {
-  /** NOTE: This property will not be serialized. It can only be populated by the server. */
+/** Label details, with name property that can only be populated by the server */
+export interface SettingLabel {
+  /**
+   * The name of the label.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
   readonly name?: string;
+}
+
+/** Details of a long running operation. */
+export interface OperationDetails {
+  /** The unique id of the operation. */
+  id: string;
+  /** The current status of the operation */
+  status: State;
+  /** An error, available when the status is `Failed`, describing why the operation failed. */
+  error?: ErrorDetail;
+}
+
+/** The details of an error. */
+export interface ErrorDetail {
+  /** One of a server-defined set of error codes. */
+  code: string;
+  /** A human-readable representation of the error. */
+  message: string;
+  /** An array of details about specific errors that led to this reported error. */
+  details?: ErrorDetail[];
+  /** An object containing more specific information than the current object about the error. */
+  innererror?: InnerError;
+}
+
+/** An object containing specific information about an error. */
+export interface InnerError {
+  /** One of a server-defined set of error codes. */
+  code?: string;
+  /** An object containing more specific information than the current object about the error. */
+  innererror?: InnerError;
 }
 
 /** Defines headers for AppConfiguration_getKeys operation. */
@@ -84,12 +202,16 @@ export interface AppConfigurationCheckKeysHeaders {
 export interface AppConfigurationGetKeyValuesHeaders {
   /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
   syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
 }
 
 /** Defines headers for AppConfiguration_checkKeyValues operation. */
 export interface AppConfigurationCheckKeyValuesHeaders {
   /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
   syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
 }
 
 /** Defines headers for AppConfiguration_getKeyValue operation. */
@@ -98,8 +220,6 @@ export interface AppConfigurationGetKeyValueHeaders {
   syncToken?: string;
   /** An identifier representing the returned state of the resource. */
   eTag?: string;
-  /** A UTC datetime that specifies the last time the resource was modified. */
-  lastModified?: string;
 }
 
 /** Defines headers for AppConfiguration_putKeyValue operation. */
@@ -124,8 +244,60 @@ export interface AppConfigurationCheckKeyValueHeaders {
   syncToken?: string;
   /** An identifier representing the returned state of the resource. */
   eTag?: string;
-  /** A UTC datetime that specifies the last time the resource was modified. */
-  lastModified?: string;
+}
+
+/** Defines headers for AppConfiguration_getSnapshots operation. */
+export interface AppConfigurationGetSnapshotsHeaders {
+  /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
+  syncToken?: string;
+}
+
+/** Defines headers for AppConfiguration_checkSnapshots operation. */
+export interface AppConfigurationCheckSnapshotsHeaders {
+  /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
+  syncToken?: string;
+}
+
+/** Defines headers for AppConfiguration_getSnapshot operation. */
+export interface AppConfigurationGetSnapshotHeaders {
+  /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
+  syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
+  /** Includes links to related resources. */
+  link?: string;
+}
+
+/** Defines headers for AppConfiguration_createSnapshot operation. */
+export interface AppConfigurationCreateSnapshotHeaders {
+  /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
+  syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
+  /** Includes links to related resources. */
+  link?: string;
+  /** The URL to track the status of the long running operation. */
+  operationLocation?: string;
+}
+
+/** Defines headers for AppConfiguration_updateSnapshot operation. */
+export interface AppConfigurationUpdateSnapshotHeaders {
+  /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
+  syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
+  /** Includes links to related resources. */
+  link?: string;
+}
+
+/** Defines headers for AppConfiguration_checkSnapshot operation. */
+export interface AppConfigurationCheckSnapshotHeaders {
+  /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
+  syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
+  /** Includes links to related resources. */
+  link?: string;
 }
 
 /** Defines headers for AppConfiguration_getLabels operation. */
@@ -160,12 +332,16 @@ export interface AppConfigurationDeleteLockHeaders {
 export interface AppConfigurationGetRevisionsHeaders {
   /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
   syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
 }
 
 /** Defines headers for AppConfiguration_checkRevisions operation. */
 export interface AppConfigurationCheckRevisionsHeaders {
   /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
   syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
 }
 
 /** Defines headers for AppConfiguration_getKeysNext operation. */
@@ -176,6 +352,14 @@ export interface AppConfigurationGetKeysNextHeaders {
 
 /** Defines headers for AppConfiguration_getKeyValuesNext operation. */
 export interface AppConfigurationGetKeyValuesNextHeaders {
+  /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
+  syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
+}
+
+/** Defines headers for AppConfiguration_getSnapshotsNext operation. */
+export interface AppConfigurationGetSnapshotsNextHeaders {
   /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
   syncToken?: string;
 }
@@ -190,40 +374,50 @@ export interface AppConfigurationGetLabelsNextHeaders {
 export interface AppConfigurationGetRevisionsNextHeaders {
   /** Enables real-time consistency between requests by providing the returned value in the next request made to the server. */
   syncToken?: string;
+  /** An identifier representing the returned state of the resource. */
+  eTag?: string;
 }
 
-/** Known values of {@link ApiVersion10} that the service accepts. */
-export const enum KnownApiVersion10 {
-  /** Api Version '1.0' */
-  One0 = "1.0"
+/** Known values of {@link ApiVersion20231101} that the service accepts. */
+export enum KnownApiVersion20231101 {
+  /** Api Version '2023-11-01' */
+  TwoThousandTwentyThree1101 = "2023-11-01",
 }
 
 /**
- * Defines values for ApiVersion10. \
- * {@link KnownApiVersion10} can be used interchangeably with ApiVersion10,
+ * Defines values for ApiVersion20231101. \
+ * {@link KnownApiVersion20231101} can be used interchangeably with ApiVersion20231101,
  *  this enum contains the known values that the service supports.
- * ### Know values supported by the service
- * **1.0**: Api Version '1.0'
+ * ### Known values supported by the service
+ * **2023-11-01**: Api Version '2023-11-01'
  */
-export type ApiVersion10 = string;
+export type ApiVersion20231101 = string;
 
-/** Known values of {@link Get6ItemsItem} that the service accepts. */
-export const enum KnownGet6ItemsItem {
+/** Known values of {@link KeyValueFields} that the service accepts. */
+export enum KnownKeyValueFields {
+  /** Key */
   Key = "key",
+  /** Label */
   Label = "label",
+  /** ContentType */
   ContentType = "content_type",
+  /** Value */
   Value = "value",
+  /** LastModified */
   LastModified = "last_modified",
+  /** Tags */
   Tags = "tags",
+  /** Locked */
   Locked = "locked",
-  Etag = "etag"
+  /** Etag */
+  Etag = "etag",
 }
 
 /**
- * Defines values for Get6ItemsItem. \
- * {@link KnownGet6ItemsItem} can be used interchangeably with Get6ItemsItem,
+ * Defines values for KeyValueFields. \
+ * {@link KnownKeyValueFields} can be used interchangeably with KeyValueFields,
  *  this enum contains the known values that the service supports.
- * ### Know values supported by the service
+ * ### Known values supported by the service
  * **key** \
  * **label** \
  * **content_type** \
@@ -233,151 +427,143 @@ export const enum KnownGet6ItemsItem {
  * **locked** \
  * **etag**
  */
-export type Get6ItemsItem = string;
+export type KeyValueFields = string;
 
-/** Known values of {@link Head6ItemsItem} that the service accepts. */
-export const enum KnownHead6ItemsItem {
-  Key = "key",
-  Label = "label",
-  ContentType = "content_type",
-  Value = "value",
-  LastModified = "last_modified",
+/** Known values of {@link SnapshotFields} that the service accepts. */
+export enum KnownSnapshotFields {
+  /** Name */
+  Name = "name",
+  /** Status */
+  Status = "status",
+  /** Filters */
+  Filters = "filters",
+  /** CompositionType */
+  CompositionType = "composition_type",
+  /** Created */
+  Created = "created",
+  /** Expires */
+  Expires = "expires",
+  /** RetentionPeriod */
+  RetentionPeriod = "retention_period",
+  /** Size */
+  Size = "size",
+  /** ItemsCount */
+  ItemsCount = "items_count",
+  /** Tags */
   Tags = "tags",
-  Locked = "locked",
-  Etag = "etag"
+  /** Etag */
+  Etag = "etag",
 }
 
 /**
- * Defines values for Head6ItemsItem. \
- * {@link KnownHead6ItemsItem} can be used interchangeably with Head6ItemsItem,
+ * Defines values for SnapshotFields. \
+ * {@link KnownSnapshotFields} can be used interchangeably with SnapshotFields,
  *  this enum contains the known values that the service supports.
- * ### Know values supported by the service
- * **key** \
- * **label** \
- * **content_type** \
- * **value** \
- * **last_modified** \
+ * ### Known values supported by the service
+ * **name** \
+ * **status** \
+ * **filters** \
+ * **composition_type** \
+ * **created** \
+ * **expires** \
+ * **retention_period** \
+ * **size** \
+ * **items_count** \
  * **tags** \
- * **locked** \
  * **etag**
  */
-export type Head6ItemsItem = string;
+export type SnapshotFields = string;
 
-/** Known values of {@link Get7ItemsItem} that the service accepts. */
-export const enum KnownGet7ItemsItem {
-  Key = "key",
-  Label = "label",
-  ContentType = "content_type",
-  Value = "value",
-  LastModified = "last_modified",
-  Tags = "tags",
-  Locked = "locked",
-  Etag = "etag"
+/** Known values of {@link SnapshotStatus} that the service accepts. */
+export enum KnownSnapshotStatus {
+  /** Provisioning */
+  Provisioning = "provisioning",
+  /** Ready */
+  Ready = "ready",
+  /** Archived */
+  Archived = "archived",
+  /** Failed */
+  Failed = "failed",
 }
 
 /**
- * Defines values for Get7ItemsItem. \
- * {@link KnownGet7ItemsItem} can be used interchangeably with Get7ItemsItem,
+ * Defines values for SnapshotStatus. \
+ * {@link KnownSnapshotStatus} can be used interchangeably with SnapshotStatus,
  *  this enum contains the known values that the service supports.
- * ### Know values supported by the service
- * **key** \
- * **label** \
- * **content_type** \
- * **value** \
- * **last_modified** \
- * **tags** \
- * **locked** \
- * **etag**
+ * ### Known values supported by the service
+ * **provisioning** \
+ * **ready** \
+ * **archived** \
+ * **failed**
  */
-export type Get7ItemsItem = string;
+export type SnapshotStatus = string;
 
-/** Known values of {@link Head7ItemsItem} that the service accepts. */
-export const enum KnownHead7ItemsItem {
-  Key = "key",
-  Label = "label",
-  ContentType = "content_type",
-  Value = "value",
-  LastModified = "last_modified",
-  Tags = "tags",
-  Locked = "locked",
-  Etag = "etag"
+/** Known values of {@link ConfigurationSnapshotStatus} that the service accepts. */
+export enum KnownConfigurationSnapshotStatus {
+  /** Provisioning */
+  Provisioning = "provisioning",
+  /** Ready */
+  Ready = "ready",
+  /** Archived */
+  Archived = "archived",
+  /** Failed */
+  Failed = "failed",
 }
 
 /**
- * Defines values for Head7ItemsItem. \
- * {@link KnownHead7ItemsItem} can be used interchangeably with Head7ItemsItem,
+ * Defines values for ConfigurationSnapshotStatus. \
+ * {@link KnownConfigurationSnapshotStatus} can be used interchangeably with ConfigurationSnapshotStatus,
  *  this enum contains the known values that the service supports.
- * ### Know values supported by the service
- * **key** \
- * **label** \
- * **content_type** \
- * **value** \
- * **last_modified** \
- * **tags** \
- * **locked** \
- * **etag**
+ * ### Known values supported by the service
+ * **provisioning** \
+ * **ready** \
+ * **archived** \
+ * **failed**
  */
-export type Head7ItemsItem = string;
+export type ConfigurationSnapshotStatus = string;
 
-/** Known values of {@link Enum5} that the service accepts. */
-export const enum KnownEnum5 {
+/** Known values of {@link SnapshotComposition} that the service accepts. */
+export enum KnownSnapshotComposition {
+  /** Key */
   Key = "key",
-  Label = "label",
-  ContentType = "content_type",
-  Value = "value",
-  LastModified = "last_modified",
-  Tags = "tags",
-  Locked = "locked",
-  Etag = "etag"
+  /** KeyLabel */
+  KeyLabel = "key_label",
 }
 
 /**
- * Defines values for Enum5. \
- * {@link KnownEnum5} can be used interchangeably with Enum5,
+ * Defines values for SnapshotComposition. \
+ * {@link KnownSnapshotComposition} can be used interchangeably with SnapshotComposition,
  *  this enum contains the known values that the service supports.
- * ### Know values supported by the service
+ * ### Known values supported by the service
  * **key** \
- * **label** \
- * **content_type** \
- * **value** \
- * **last_modified** \
- * **tags** \
- * **locked** \
- * **etag**
+ * **key_label**
  */
-export type Enum5 = string;
+export type SnapshotComposition = string;
 
-/** Known values of {@link Enum6} that the service accepts. */
-export const enum KnownEnum6 {
-  Key = "key",
-  Label = "label",
-  ContentType = "content_type",
-  Value = "value",
-  LastModified = "last_modified",
-  Tags = "tags",
-  Locked = "locked",
-  Etag = "etag"
+/** Known values of {@link LabelFields} that the service accepts. */
+export enum KnownLabelFields {
+  /** Name */
+  Name = "name",
 }
 
 /**
- * Defines values for Enum6. \
- * {@link KnownEnum6} can be used interchangeably with Enum6,
+ * Defines values for LabelFields. \
+ * {@link KnownLabelFields} can be used interchangeably with LabelFields,
  *  this enum contains the known values that the service supports.
- * ### Know values supported by the service
- * **key** \
- * **label** \
- * **content_type** \
- * **value** \
- * **last_modified** \
- * **tags** \
- * **locked** \
- * **etag**
+ * ### Known values supported by the service
+ * **name**
  */
-export type Enum6 = string;
+export type LabelFields = string;
+/** Defines values for State. */
+export type State =
+  | "NotStarted"
+  | "Running"
+  | "Succeeded"
+  | "Failed"
+  | "Canceled";
 
 /** Optional parameters. */
-export interface AppConfigurationGetKeysOptionalParams
-  extends coreHttp.OperationOptions {
+export interface GetKeysOptionalParams extends coreClient.OperationOptions {
   /** A filter for the name of the returned keys. */
   name?: string;
   /** Instructs the server to return elements that appear after the element referred to by the specified token. */
@@ -387,23 +573,10 @@ export interface AppConfigurationGetKeysOptionalParams
 }
 
 /** Contains response data for the getKeys operation. */
-export type AppConfigurationGetKeysResponse = AppConfigurationGetKeysHeaders &
-  KeyListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetKeysHeaders;
-    };
-  };
+export type GetKeysResponse = AppConfigurationGetKeysHeaders & KeyListResult;
 
 /** Optional parameters. */
-export interface AppConfigurationCheckKeysOptionalParams
-  extends coreHttp.OperationOptions {
+export interface CheckKeysOptionalParams extends coreClient.OperationOptions {
   /** A filter for the name of the returned keys. */
   name?: string;
   /** Instructs the server to return elements that appear after the element referred to by the specified token. */
@@ -413,101 +586,80 @@ export interface AppConfigurationCheckKeysOptionalParams
 }
 
 /** Contains response data for the checkKeys operation. */
-export type AppConfigurationCheckKeysResponse = AppConfigurationCheckKeysHeaders & {
-  /** The underlying HTTP response. */
-  _response: coreHttp.HttpResponse & {
-    /** The parsed HTTP response headers. */
-    parsedHeaders: AppConfigurationCheckKeysHeaders;
-  };
-};
+export type CheckKeysResponse = AppConfigurationCheckKeysHeaders;
 
 /** Optional parameters. */
-export interface AppConfigurationGetKeyValuesOptionalParams
-  extends coreHttp.OperationOptions {
+export interface GetKeyValuesOptionalParams
+  extends coreClient.OperationOptions {
   /** Instructs the server to return elements that appear after the element referred to by the specified token. */
   after?: string;
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
-  /** A filter used to match keys. */
+  /** A filter used to match keys. Syntax reference: https://aka.ms/azconfig/docs/keyvaluefiltering */
   key?: string;
-  /** A filter used to match labels */
+  /** A filter used to match labels. Syntax reference: https://aka.ms/azconfig/docs/keyvaluefiltering */
   label?: string;
   /** Used to select what fields are present in the returned resource(s). */
-  select?: Get6ItemsItem[];
-}
-
-/** Contains response data for the getKeyValues operation. */
-export type AppConfigurationGetKeyValuesResponse = AppConfigurationGetKeyValuesHeaders &
-  KeyValueListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValueListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetKeyValuesHeaders;
-    };
-  };
-
-/** Optional parameters. */
-export interface AppConfigurationCheckKeyValuesOptionalParams
-  extends coreHttp.OperationOptions {
-  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
-  after?: string;
-  /** Requests the server to respond with the state of the resource at the specified time. */
-  acceptDatetime?: string;
-  /** A filter used to match keys. */
-  key?: string;
-  /** A filter used to match labels */
-  label?: string;
-  /** Used to select what fields are present in the returned resource(s). */
-  select?: Head6ItemsItem[];
-}
-
-/** Contains response data for the checkKeyValues operation. */
-export type AppConfigurationCheckKeyValuesResponse = AppConfigurationCheckKeyValuesHeaders & {
-  /** The underlying HTTP response. */
-  _response: coreHttp.HttpResponse & {
-    /** The parsed HTTP response headers. */
-    parsedHeaders: AppConfigurationCheckKeyValuesHeaders;
-  };
-};
-
-/** Optional parameters. */
-export interface AppConfigurationGetKeyValueOptionalParams
-  extends coreHttp.OperationOptions {
-  /** Requests the server to respond with the state of the resource at the specified time. */
-  acceptDatetime?: string;
-  /** The label of the key-value to retrieve. */
-  label?: string;
+  select?: KeyValueFields[];
+  /** A filter used get key-values for a snapshot. The value should be the name of the snapshot. Not valid when used with 'key' and 'label' filters. */
+  snapshot?: string;
   /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
   ifMatch?: string;
   /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
   ifNoneMatch?: string;
+  /** A filter used to query by tags. Syntax reference: https://aka.ms/azconfig/docs/keyvaluefiltering */
+  tags?: string[];
+}
+
+/** Contains response data for the getKeyValues operation. */
+export type GetKeyValuesResponse = AppConfigurationGetKeyValuesHeaders &
+  KeyValueListResult;
+
+/** Optional parameters. */
+export interface CheckKeyValuesOptionalParams
+  extends coreClient.OperationOptions {
+  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
+  after?: string;
+  /** Requests the server to respond with the state of the resource at the specified time. */
+  acceptDatetime?: string;
+  /** A filter used to match keys. Syntax reference: https://aka.ms/azconfig/docs/keyvaluefiltering */
+  key?: string;
+  /** A filter used to match labels. Syntax reference: https://aka.ms/azconfig/docs/keyvaluefiltering */
+  label?: string;
   /** Used to select what fields are present in the returned resource(s). */
-  select?: Get7ItemsItem[];
+  select?: KeyValueFields[];
+  /** A filter used get key-values for a snapshot. Not valid when used with 'key' and 'label' filters. */
+  snapshot?: string;
+  /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
+  ifMatch?: string;
+  /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
+  ifNoneMatch?: string;
+  /** A filter used to query by tags. Syntax reference: https://aka.ms/azconfig/docs/keyvaluefiltering */
+  tags?: string[];
+}
+
+/** Contains response data for the checkKeyValues operation. */
+export type CheckKeyValuesResponse = AppConfigurationCheckKeyValuesHeaders;
+
+/** Optional parameters. */
+export interface GetKeyValueOptionalParams extends coreClient.OperationOptions {
+  /** Requests the server to respond with the state of the resource at the specified time. */
+  acceptDatetime?: string;
+  /** The label of the key-value to retrieve. */
+  label?: string;
+  /** Used to select what fields are present in the returned resource(s). */
+  select?: KeyValueFields[];
+  /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
+  ifMatch?: string;
+  /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
+  ifNoneMatch?: string;
 }
 
 /** Contains response data for the getKeyValue operation. */
-export type AppConfigurationGetKeyValueResponse = AppConfigurationGetKeyValueHeaders &
-  KeyValue & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValue;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetKeyValueHeaders;
-    };
-  };
+export type GetKeyValueResponse = AppConfigurationGetKeyValueHeaders & KeyValue;
 
 /** Optional parameters. */
-export interface AppConfigurationPutKeyValueOptionalParams
-  extends coreHttp.OperationOptions {
+export interface PutKeyValueOptionalParams extends coreClient.OperationOptions {
   /** The label of the key-value to create. */
   label?: string;
   /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
@@ -519,23 +671,11 @@ export interface AppConfigurationPutKeyValueOptionalParams
 }
 
 /** Contains response data for the putKeyValue operation. */
-export type AppConfigurationPutKeyValueResponse = AppConfigurationPutKeyValueHeaders &
-  KeyValue & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValue;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationPutKeyValueHeaders;
-    };
-  };
+export type PutKeyValueResponse = AppConfigurationPutKeyValueHeaders & KeyValue;
 
 /** Optional parameters. */
-export interface AppConfigurationDeleteKeyValueOptionalParams
-  extends coreHttp.OperationOptions {
+export interface DeleteKeyValueOptionalParams
+  extends coreClient.OperationOptions {
   /** The label of the key-value to delete. */
   label?: string;
   /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
@@ -543,47 +683,108 @@ export interface AppConfigurationDeleteKeyValueOptionalParams
 }
 
 /** Contains response data for the deleteKeyValue operation. */
-export type AppConfigurationDeleteKeyValueResponse = AppConfigurationDeleteKeyValueHeaders &
-  KeyValue & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValue;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationDeleteKeyValueHeaders;
-    };
-  };
+export type DeleteKeyValueResponse = AppConfigurationDeleteKeyValueHeaders &
+  KeyValue;
 
 /** Optional parameters. */
-export interface AppConfigurationCheckKeyValueOptionalParams
-  extends coreHttp.OperationOptions {
+export interface CheckKeyValueOptionalParams
+  extends coreClient.OperationOptions {
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
   /** The label of the key-value to retrieve. */
   label?: string;
+  /** Used to select what fields are present in the returned resource(s). */
+  select?: KeyValueFields[];
+  /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
+  ifMatch?: string;
+  /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
+  ifNoneMatch?: string;
+}
+
+/** Contains response data for the checkKeyValue operation. */
+export type CheckKeyValueResponse = AppConfigurationCheckKeyValueHeaders;
+
+/** Optional parameters. */
+export interface GetSnapshotsOptionalParams
+  extends coreClient.OperationOptions {
+  /** A filter for the name of the returned snapshots. */
+  name?: string;
+  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
+  after?: string;
+  /** Used to select what fields are present in the returned resource(s). */
+  select?: SnapshotFields[];
+  /** Used to filter returned snapshots by their status property. */
+  status?: SnapshotStatus[];
+}
+
+/** Contains response data for the getSnapshots operation. */
+export type GetSnapshotsResponse = AppConfigurationGetSnapshotsHeaders &
+  SnapshotListResult;
+
+/** Optional parameters. */
+export interface CheckSnapshotsOptionalParams
+  extends coreClient.OperationOptions {
+  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
+  after?: string;
+}
+
+/** Contains response data for the checkSnapshots operation. */
+export type CheckSnapshotsResponse = AppConfigurationCheckSnapshotsHeaders;
+
+/** Optional parameters. */
+export interface GetSnapshotOptionalParams extends coreClient.OperationOptions {
   /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
   ifMatch?: string;
   /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
   ifNoneMatch?: string;
   /** Used to select what fields are present in the returned resource(s). */
-  select?: Head7ItemsItem[];
+  select?: SnapshotFields[];
 }
 
-/** Contains response data for the checkKeyValue operation. */
-export type AppConfigurationCheckKeyValueResponse = AppConfigurationCheckKeyValueHeaders & {
-  /** The underlying HTTP response. */
-  _response: coreHttp.HttpResponse & {
-    /** The parsed HTTP response headers. */
-    parsedHeaders: AppConfigurationCheckKeyValueHeaders;
-  };
-};
+/** Contains response data for the getSnapshot operation. */
+export type GetSnapshotResponse = AppConfigurationGetSnapshotHeaders &
+  ConfigurationSnapshot;
 
 /** Optional parameters. */
-export interface AppConfigurationGetLabelsOptionalParams
-  extends coreHttp.OperationOptions {
+export interface CreateSnapshotOptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the createSnapshot operation. */
+export type CreateSnapshotResponse = AppConfigurationCreateSnapshotHeaders &
+  ConfigurationSnapshot;
+
+/** Optional parameters. */
+export interface UpdateSnapshotOptionalParams
+  extends coreClient.OperationOptions {
+  /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
+  ifMatch?: string;
+  /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
+  ifNoneMatch?: string;
+}
+
+/** Contains response data for the updateSnapshot operation. */
+export type UpdateSnapshotResponse = AppConfigurationUpdateSnapshotHeaders &
+  ConfigurationSnapshot;
+
+/** Optional parameters. */
+export interface CheckSnapshotOptionalParams
+  extends coreClient.OperationOptions {
+  /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
+  ifMatch?: string;
+  /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
+  ifNoneMatch?: string;
+}
+
+/** Contains response data for the checkSnapshot operation. */
+export type CheckSnapshotResponse = AppConfigurationCheckSnapshotHeaders;
+
+/** Optional parameters. */
+export interface GetLabelsOptionalParams extends coreClient.OperationOptions {
   /** A filter for the name of the returned labels. */
   name?: string;
   /** Instructs the server to return elements that appear after the element referred to by the specified token. */
@@ -591,27 +792,15 @@ export interface AppConfigurationGetLabelsOptionalParams
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
   /** Used to select what fields are present in the returned resource(s). */
-  select?: string[];
+  select?: LabelFields[];
 }
 
 /** Contains response data for the getLabels operation. */
-export type AppConfigurationGetLabelsResponse = AppConfigurationGetLabelsHeaders &
-  LabelListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: LabelListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetLabelsHeaders;
-    };
-  };
+export type GetLabelsResponse = AppConfigurationGetLabelsHeaders &
+  LabelListResult;
 
 /** Optional parameters. */
-export interface AppConfigurationCheckLabelsOptionalParams
-  extends coreHttp.OperationOptions {
+export interface CheckLabelsOptionalParams extends coreClient.OperationOptions {
   /** A filter for the name of the returned labels. */
   name?: string;
   /** Instructs the server to return elements that appear after the element referred to by the specified token. */
@@ -619,21 +808,14 @@ export interface AppConfigurationCheckLabelsOptionalParams
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
   /** Used to select what fields are present in the returned resource(s). */
-  select?: string[];
+  select?: LabelFields[];
 }
 
 /** Contains response data for the checkLabels operation. */
-export type AppConfigurationCheckLabelsResponse = AppConfigurationCheckLabelsHeaders & {
-  /** The underlying HTTP response. */
-  _response: coreHttp.HttpResponse & {
-    /** The parsed HTTP response headers. */
-    parsedHeaders: AppConfigurationCheckLabelsHeaders;
-  };
-};
+export type CheckLabelsResponse = AppConfigurationCheckLabelsHeaders;
 
 /** Optional parameters. */
-export interface AppConfigurationPutLockOptionalParams
-  extends coreHttp.OperationOptions {
+export interface PutLockOptionalParams extends coreClient.OperationOptions {
   /** The label, if any, of the key-value to lock. */
   label?: string;
   /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
@@ -643,23 +825,10 @@ export interface AppConfigurationPutLockOptionalParams
 }
 
 /** Contains response data for the putLock operation. */
-export type AppConfigurationPutLockResponse = AppConfigurationPutLockHeaders &
-  KeyValue & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValue;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationPutLockHeaders;
-    };
-  };
+export type PutLockResponse = AppConfigurationPutLockHeaders & KeyValue;
 
 /** Optional parameters. */
-export interface AppConfigurationDeleteLockOptionalParams
-  extends coreHttp.OperationOptions {
+export interface DeleteLockOptionalParams extends coreClient.OperationOptions {
   /** The label, if any, of the key-value to unlock. */
   label?: string;
   /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
@@ -669,191 +838,114 @@ export interface AppConfigurationDeleteLockOptionalParams
 }
 
 /** Contains response data for the deleteLock operation. */
-export type AppConfigurationDeleteLockResponse = AppConfigurationDeleteLockHeaders &
-  KeyValue & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValue;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationDeleteLockHeaders;
-    };
-  };
+export type DeleteLockResponse = AppConfigurationDeleteLockHeaders & KeyValue;
 
 /** Optional parameters. */
-export interface AppConfigurationGetRevisionsOptionalParams
-  extends coreHttp.OperationOptions {
+export interface GetRevisionsOptionalParams
+  extends coreClient.OperationOptions {
   /** Instructs the server to return elements that appear after the element referred to by the specified token. */
   after?: string;
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
-  /** A filter used to match keys. */
+  /** A filter used to match keys. Syntax reference: https://aka.ms/azconfig/docs/restapirevisions */
   key?: string;
-  /** A filter used to match labels */
+  /** A filter used to match labels. Syntax reference: https://aka.ms/azconfig/docs/restapirevisions */
   label?: string;
   /** Used to select what fields are present in the returned resource(s). */
-  select?: Enum5[];
+  select?: KeyValueFields[];
+  /** A filter used to query by tags. Syntax reference: https://aka.ms/azconfig/docs/restapirevisions */
+  tags?: string[];
 }
 
 /** Contains response data for the getRevisions operation. */
-export type AppConfigurationGetRevisionsResponse = AppConfigurationGetRevisionsHeaders &
-  KeyValueListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValueListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetRevisionsHeaders;
-    };
-  };
+export type GetRevisionsResponse = AppConfigurationGetRevisionsHeaders &
+  KeyValueListResult;
 
 /** Optional parameters. */
-export interface AppConfigurationCheckRevisionsOptionalParams
-  extends coreHttp.OperationOptions {
+export interface CheckRevisionsOptionalParams
+  extends coreClient.OperationOptions {
   /** Instructs the server to return elements that appear after the element referred to by the specified token. */
   after?: string;
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
-  /** A filter used to match keys. */
+  /** A filter used to match keys. Syntax reference: https://aka.ms/azconfig/docs/restapirevisions */
   key?: string;
-  /** A filter used to match labels */
+  /** A filter used to match labels. Syntax reference: https://aka.ms/azconfig/docs/restapirevisions */
   label?: string;
   /** Used to select what fields are present in the returned resource(s). */
-  select?: Enum6[];
+  select?: KeyValueFields[];
+  /** A filter used to query by tags. Syntax reference: https://aka.ms/azconfig/docs/restapirevisions */
+  tags?: string[];
 }
 
 /** Contains response data for the checkRevisions operation. */
-export type AppConfigurationCheckRevisionsResponse = AppConfigurationCheckRevisionsHeaders & {
-  /** The underlying HTTP response. */
-  _response: coreHttp.HttpResponse & {
-    /** The parsed HTTP response headers. */
-    parsedHeaders: AppConfigurationCheckRevisionsHeaders;
-  };
-};
+export type CheckRevisionsResponse = AppConfigurationCheckRevisionsHeaders;
 
 /** Optional parameters. */
-export interface AppConfigurationGetKeysNextOptionalParams
-  extends coreHttp.OperationOptions {
-  /** A filter for the name of the returned keys. */
-  name?: string;
-  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
-  after?: string;
+export interface GetOperationDetailsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getOperationDetails operation. */
+export type GetOperationDetailsResponse = OperationDetails;
+
+/** Optional parameters. */
+export interface GetKeysNextOptionalParams extends coreClient.OperationOptions {
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
 }
 
 /** Contains response data for the getKeysNext operation. */
-export type AppConfigurationGetKeysNextResponse = AppConfigurationGetKeysNextHeaders &
-  KeyListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetKeysNextHeaders;
-    };
-  };
+export type GetKeysNextResponse = AppConfigurationGetKeysNextHeaders &
+  KeyListResult;
 
 /** Optional parameters. */
-export interface AppConfigurationGetKeyValuesNextOptionalParams
-  extends coreHttp.OperationOptions {
-  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
-  after?: string;
+export interface GetKeyValuesNextOptionalParams
+  extends coreClient.OperationOptions {
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
-  /** A filter used to match keys. */
-  key?: string;
-  /** A filter used to match labels */
-  label?: string;
-  /** Used to select what fields are present in the returned resource(s). */
-  select?: Get6ItemsItem[];
+  /** Used to perform an operation only if the targeted resource's etag matches the value provided. */
+  ifMatch?: string;
+  /** Used to perform an operation only if the targeted resource's etag does not match the value provided. */
+  ifNoneMatch?: string;
 }
 
 /** Contains response data for the getKeyValuesNext operation. */
-export type AppConfigurationGetKeyValuesNextResponse = AppConfigurationGetKeyValuesNextHeaders &
-  KeyValueListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValueListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetKeyValuesNextHeaders;
-    };
-  };
+export type GetKeyValuesNextResponse = AppConfigurationGetKeyValuesNextHeaders &
+  KeyValueListResult;
 
 /** Optional parameters. */
-export interface AppConfigurationGetLabelsNextOptionalParams
-  extends coreHttp.OperationOptions {
-  /** A filter for the name of the returned labels. */
-  name?: string;
-  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
-  after?: string;
+export interface GetSnapshotsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getSnapshotsNext operation. */
+export type GetSnapshotsNextResponse = AppConfigurationGetSnapshotsNextHeaders &
+  SnapshotListResult;
+
+/** Optional parameters. */
+export interface GetLabelsNextOptionalParams
+  extends coreClient.OperationOptions {
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
-  /** Used to select what fields are present in the returned resource(s). */
-  select?: string[];
 }
 
 /** Contains response data for the getLabelsNext operation. */
-export type AppConfigurationGetLabelsNextResponse = AppConfigurationGetLabelsNextHeaders &
-  LabelListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: LabelListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetLabelsNextHeaders;
-    };
-  };
+export type GetLabelsNextResponse = AppConfigurationGetLabelsNextHeaders &
+  LabelListResult;
 
 /** Optional parameters. */
-export interface AppConfigurationGetRevisionsNextOptionalParams
-  extends coreHttp.OperationOptions {
-  /** Instructs the server to return elements that appear after the element referred to by the specified token. */
-  after?: string;
+export interface GetRevisionsNextOptionalParams
+  extends coreClient.OperationOptions {
   /** Requests the server to respond with the state of the resource at the specified time. */
   acceptDatetime?: string;
-  /** A filter used to match keys. */
-  key?: string;
-  /** A filter used to match labels */
-  label?: string;
-  /** Used to select what fields are present in the returned resource(s). */
-  select?: Enum5[];
 }
 
 /** Contains response data for the getRevisionsNext operation. */
-export type AppConfigurationGetRevisionsNextResponse = AppConfigurationGetRevisionsNextHeaders &
-  KeyValueListResult & {
-    /** The underlying HTTP response. */
-    _response: coreHttp.HttpResponse & {
-      /** The response body as text (string format) */
-      bodyAsText: string;
-
-      /** The response body as parsed JSON or XML */
-      parsedBody: KeyValueListResult;
-      /** The parsed HTTP response headers. */
-      parsedHeaders: AppConfigurationGetRevisionsNextHeaders;
-    };
-  };
+export type GetRevisionsNextResponse = AppConfigurationGetRevisionsNextHeaders &
+  KeyValueListResult;
 
 /** Optional parameters. */
 export interface AppConfigurationOptionalParams
-  extends coreHttp.ServiceClientOptions {
+  extends coreHttpCompat.ExtendedServiceClientOptions {
   /** Used to guarantee real-time consistency between requests. */
   syncToken?: string;
   /** Overrides client endpoint. */

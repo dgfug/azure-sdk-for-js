@@ -1,16 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  PipelineResponse,
+import type {
+  PipelinePolicy,
   PipelineRequest,
+  PipelineResponse,
   SendRequest,
-  PipelinePolicy
 } from "@azure/core-rest-pipeline";
-import { NamedKeyCredential } from "@azure/core-auth";
-import { HeaderConstants } from "./utils/constants";
-import { URL } from "./utils/url";
-import { computeHMACSHA256 } from "./utils/computeHMACSHA256";
+import { HeaderConstants } from "./utils/constants.js";
+import type { NamedKeyCredential } from "@azure/core-auth";
+import { computeHMACSHA256 } from "./utils/computeHMACSHA256.js";
 
 /**
  * The programmatic identifier of the tablesNamedKeyCredentialPolicy.
@@ -31,13 +30,13 @@ export function tablesNamedKeyCredentialPolicy(credential: NamedKeyCredential): 
     async sendRequest(request: PipelineRequest, next: SendRequest): Promise<PipelineResponse> {
       signRequest(request);
       return next(request);
-    }
+    },
   };
 }
 
 export function getAuthorizationHeader(
   request: PipelineRequest,
-  credential: NamedKeyCredential
+  credential: NamedKeyCredential,
 ): string {
   if (!request.headers.has(HeaderConstants.X_MS_DATE)) {
     request.headers.set(HeaderConstants.X_MS_DATE, new Date().toUTCString());
@@ -56,7 +55,7 @@ export function getAuthorizationHeader(
 
   const stringToSign: string = [
     dateHeader,
-    getCanonicalizedResourceString(request, credential)
+    getCanonicalizedResourceString(request, credential),
   ].join("\n");
 
   const signature = computeHMACSHA256(stringToSign, credential.key);
@@ -75,7 +74,7 @@ function getHeaderValueToSign(request: PipelineRequest, headerName: string): str
 
 function getCanonicalizedResourceString(
   request: PipelineRequest,
-  credential: NamedKeyCredential
+  credential: NamedKeyCredential,
 ): string {
   // https://docs.microsoft.com/rest/api/storageservices/authorize-with-shared-key#shared-key-lite-and-table-service-format-for-2009-09-19-and-later
   const url = new URL(request.url);

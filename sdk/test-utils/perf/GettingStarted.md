@@ -2,6 +2,7 @@
 
 ## [Index](#index)
 
+- [Sample perf test project](#sample-perf-test-project)
 - [Setting up the project](#setting-up-the-project)
   - [Track 2](#setting-up-the-project)
   - [Track 1](#for-perf-testing-track-1-version-of-the-same-package)
@@ -15,6 +16,10 @@
   - [Adding Readme/Instructions](#adding-readme/instructions)
   - [Testing an older track 2 version](#testing-an-older-track-2-version)
 - [Using Proxy Tool](#using-proxy-tool)
+
+## [Sample perf test project](#sample-perf-test-project)
+
+A [sample project](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/template/perf-tests/template) has been created which demonstrates a basic perf test against the existing `@azure/template` project. Take a look at this sample to see the standard perf test project structure.
 
 ## [Setting up the project](#setting-up-the-project)
 
@@ -45,11 +50,11 @@ To add perf tests for the `sdk/<service>/<service-sdk>` package, follow the step
     ```json
       "dependencies": {
          "@azure/<service-sdk>": "^<version-in-master-branch>",
-         "@azure/test-utils-perf": "^1.0.0"
+         "@azure-tools/test-perf": "^1.0.0"
        }
     ```
 
-    _Note: `"@azure/test-utils-perf"` is not a published npm package._
+    _Note: `"@azure-tools/test-perf"` is not a published npm package._
 
     Set the name of the package and mark it as private.
 
@@ -71,7 +76,7 @@ To add perf tests for the `sdk/<service>/<service-sdk>` package, follow the step
 
     ```
          {
-           "extends": "../../../../tsconfig.package",
+           "extends": "../../../../tsconfig",
            "compilerOptions": {
              "module": "CommonJS",
              "declarationDir": "./typings/latest",
@@ -98,7 +103,7 @@ To add perf tests for the `sdk/<service>/<service-sdk>` package, follow the step
    ```json
      "dependencies": {
         "@azure/<service-sdk>": "^<latest-track-1-version>",
-        "@azure/test-utils-perf": "file:../../../test-utils/perf/azure-test-utils-perf-1.0.0.tgz",
+        "@azure-tools/test-perf": "file:../../../test-utils/perf/azure-test-utils-perf-1.0.0.tgz",
       }
    ```
 
@@ -131,7 +136,7 @@ To add perf tests for the `sdk/<service>/<service-sdk>` package, follow the step
 Add an `index.spec.ts` at `sdk/<service>/perf-tests/<service-sdk>/test/`.
 
 ```js
-import { PerfProgram, selectPerfTest } from "@azure/test-utils-perf";
+import { createPerfProgram } from "@azure-tools/test-perf";
 import { `ServiceNameAPI1Name`Test } from "./api1-name.spec";
 import { `ServiceNameAPI2Name`Test } from "./api2-name.spec";
 
@@ -141,7 +146,7 @@ dotenv.config();
 
 console.log("=== Starting the perf test ===");
 
-const perfProgram = new PerfProgram(selectPerfTest([`ServiceNameAPIName`Test, `ServiceNameAPIName2`Test]));
+const perfProgram = createPerfProgram([`ServiceNameAPIName`Test, `ServiceNameAPIName2`Test]);
 
 perfProgram.run();
 ```
@@ -153,7 +158,7 @@ Base class would have all the common code that would be repeated for each of the
 Create a new file such as `serviceName.spec.ts` at `sdk/<service>/perf-tests/<service-sdk>/test/`.
 
 ```js
-import { PerfTest, getEnvVar } from "@azure/test-utils-perf";
+import { PerfTest, getEnvVar } from "@azure-tools/test-perf";
 import {
   ServiceNameClient
 } from "@azure/<service-sdk>";
@@ -182,7 +187,7 @@ Following code shows how the individual perf test files would look like.
 
 ```js
 import { ServiceNameClient } from "@azure/<service-sdk>";
-import { PerfOptionDictionary, drainStream } from "@azure/test-utils-perf";
+import { PerfOptionDictionary, drainStream } from "@azure-tools/test-perf";
 import { `ServiceName`Test } from "./serviceNameTest.spec";
 
 export class `ServiceNameAPIName`Test extends ServiceNameTest {
@@ -249,7 +254,7 @@ To run a particular test, use `npm run perf-test:node` - takes the test class na
 
 ### [Adding Readme/Instructions](#adding-readme/instructions)
 
-Refer to [storage-blob-perf-tests-readme](https://github.com/Azure/azure-sdk-for-js/blob/fe9b1e5a50946f53b6491d7f67b2420d8ee1b229/sdk/storage/perf-tests/storage-blob/README.md) and [storage-blob-perf-tests-readme-track-1](https://github.com/Azure/azure-sdk-for-js/blob/fe9b1e5a50946f53b6491d7f67b2420d8ee1b229/sdk/storage/perf-tests/storage-blob-track-1/README.md) and have similar set of instructions for your perf project.
+Refer to [the README for the template project](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/template/perf-tests/template/README.md) and create a similar set of instructions for your perf project.
 
 ### [Testing an older track 2 version](#testing-an-older-track-2-version)
 
@@ -270,17 +275,10 @@ Example: Currently `@azure/<service-sdk>` is at 12.4.0 on master and you want to
 To be able to leverage the powers of playing back the requests using the test proxy, add the following to your code.
 
       ```ts
-      /// Core V1 SDKs - For services depending on core-http
-      /// Call this.configureClientOptionsCoreV1 method on your client options
-      this.blobServiceClient = BlobServiceClient.fromConnectionString(connectionString, this.configureClientOptionsCoreV1({}));
+      /// this.configureClientOptions call to modify your client
+      this.client = TableClient.fromConnectionString(connectionString, tableName, this.configureClientOptions({}));
 
-      /// Core V2 SDKs - For services depending on core-rest-pipeline
-      /// this.configureClient call to modify your client
-      this.client = this.configureClient(TableClient.fromConnectionString(connectionString, tableName));
-
-      // Not all core-v1 SDKs allow passing httpClient option.
-      // Not all core-v2 SDKs allow adding policies via pipeline option.
-      // Please reach out if your service doesn't support.
+      // Please reach out if your service/SDK doesn't support or if you face difficulties in this area.
       ```
 
 ### Running the proxy server

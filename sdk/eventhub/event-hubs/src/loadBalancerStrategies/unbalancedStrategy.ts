@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PartitionOwnership } from "../eventProcessor";
-import { LoadBalancingStrategy } from "./loadBalancingStrategy";
+import type { LoadBalancingStrategy } from "./loadBalancingStrategy.js";
+import type { PartitionOwnership } from "../eventProcessor.js";
 
 /**
  * The UnbalancedLoadBalancingStrategy does no actual load balancing.
@@ -19,10 +19,10 @@ export class UnbalancedLoadBalancingStrategy implements LoadBalancingStrategy {
    * @param partitionIds - Partitions to assign owners to.
    * @returns Partition ids to claim.
    */
-  public getPartitionsToCliam(
+  public getPartitionsToClaim(
     _ourOwnerId: string,
     _claimedPartitionOwnershipMap: Map<string, PartitionOwnership>,
-    partitionIds: string[]
+    partitionIds: string[],
   ): string[] {
     return partitionIds;
   }

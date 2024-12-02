@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Delivery, ReceiverOptions, Source } from "rhea-promise";
-import { translateServiceBusError } from "../serviceBusError";
-import { receiverLogger } from "../log";
-import { ReceiveMode } from "../models";
+import type { Delivery, ReceiverOptions, Source } from "rhea-promise";
+import { translateServiceBusError } from "../serviceBusError.js";
+import { receiverLogger } from "../log.js";
+import type { ReceiveMode } from "../models.js";
+import { Constants } from "@azure/core-amqp";
 
 /**
  * @internal
@@ -20,7 +21,7 @@ export type ReceiverHandlers = Pick<
 export interface DeferredPromiseAndTimer {
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
-  timer: NodeJS.Timer;
+  timer: NodeJS.Timeout;
 }
 
 /**
@@ -38,7 +39,7 @@ export interface DeferredPromiseAndTimer {
 export function onMessageSettled(
   logPrefix: string,
   delivery: Delivery | undefined,
-  deliveryDispositionMap: Map<number, DeferredPromiseAndTimer>
+  deliveryDispositionMap: Map<number, DeferredPromiseAndTimer>,
 ): void {
   if (delivery) {
     const id = delivery.id;
@@ -49,7 +50,7 @@ export function onMessageSettled(
       logPrefix,
       id,
       settled,
-      state && state.error ? state.error : state
+      state && state.error ? state.error : state,
     );
     if (settled && deliveryDispositionMap.has(id)) {
       const promise = deliveryDispositionMap.get(id) as DeferredPromiseAndTimer;
@@ -57,14 +58,14 @@ export function onMessageSettled(
       receiverLogger.verbose(
         "%s Found the delivery with id %d in the map and cleared the timer.",
         logPrefix,
-        id
+        id,
       );
       const deleteResult = deliveryDispositionMap.delete(id);
       receiverLogger.verbose(
         "%s Successfully deleted the delivery with id %d from the map.",
         logPrefix,
         id,
-        deleteResult
+        deleteResult,
       );
       if (state && state.error && (state.error.condition || state.error.description)) {
         const error = translateServiceBusError(state.error);
@@ -76,6 +77,8 @@ export function onMessageSettled(
   }
 }
 
+// Placed in Service Bus for now and can be promoted to core-amqp if also useful for Event Hubs in the future.
+const timeoutName = `${Constants.vendorString}:timeout`;
 /**
  * Creates the options that need to be specified while creating an AMQP receiver link.
  *
@@ -85,8 +88,14 @@ export function createReceiverOptions(
   name: string,
   receiveMode: ReceiveMode,
   source: Source,
-  handlers: ReceiverHandlers
+  clientId: string,
+  handlers: ReceiverHandlers,
+  timeoutInMs?: number,
 ): ReceiverOptions {
+  const properties =
+    timeoutInMs !== undefined
+      ? { [Constants.receiverIdentifierName]: clientId, [timeoutName]: timeoutInMs }
+      : { [Constants.receiverIdentifierName]: clientId };
   const rcvrOptions: ReceiverOptions = {
     name,
     // "autoaccept" being true in the "receiveAndDelete" mode sets the "settled" flag to true on the deliveries
@@ -97,8 +106,10 @@ export function createReceiverOptions(
     // receiveAndDelete -> settled (1), peekLock -> unsettled (0)
     snd_settle_mode: receiveMode === "receiveAndDelete" ? 1 : 0,
     source,
+    target: clientId,
     credit_window: 0,
-    ...handlers
+    properties,
+    ...handlers,
   };
 
   return rcvrOptions;

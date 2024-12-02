@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { OpenIdConnectProvider } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   OpenidConnectProviderContract,
   OpenIdConnectProviderListByServiceNextOptionalParams,
@@ -35,19 +36,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing OpenIdConnectProvider operations. */
 export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class OpenIdConnectProvider class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists of all the OpenId Connect Providers.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -68,11 +69,15 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -81,15 +86,22 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: OpenIdConnectProviderListByServiceOptionalParams
+    options?: OpenIdConnectProviderListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<OpenidConnectProviderContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: OpenIdConnectProviderListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -98,7 +110,9 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -118,7 +132,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * Lists of all the OpenId Connect Providers.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -135,7 +149,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * Gets the entity state (Etag) version of the openIdConnectProvider specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param opid Identifier of the OpenID Connect Provider.
    * @param options The options parameters.
@@ -154,7 +168,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * Gets specific OpenID Connect Provider without secrets.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param opid Identifier of the OpenID Connect Provider.
    * @param options The options parameters.
@@ -173,7 +187,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * Creates or updates the OpenID Connect Provider.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param opid Identifier of the OpenID Connect Provider.
    * @param parameters Create parameters.
@@ -194,7 +208,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * Updates the specific OpenID Connect Provider.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param opid Identifier of the OpenID Connect Provider.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -218,7 +232,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * Deletes specific OpenID Connect Provider of the API Management service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param opid Identifier of the OpenID Connect Provider.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -240,7 +254,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * Gets the client secret details of the OpenID Connect Provider.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param opid Identifier of the OpenID Connect Provider.
    * @param options The options parameters.
@@ -259,7 +273,7 @@ export class OpenIdConnectProviderImpl implements OpenIdConnectProvider {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -370,7 +384,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters44,
+  requestBody: Parameters.parameters55,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -400,7 +414,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters45,
+  requestBody: Parameters.parameters56,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -474,12 +488,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

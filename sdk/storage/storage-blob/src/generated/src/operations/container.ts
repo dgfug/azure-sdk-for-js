@@ -6,10 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import { Container } from "../operationsInterfaces";
+import * as coreClient from "@azure/core-client";
+import * as coreRestPipeline from "@azure/core-rest-pipeline";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageClientContext } from "../storageClientContext";
+import { StorageClient } from "../storageClient";
 import {
   ContainerCreateOptionalParams,
   ContainerCreateResponse,
@@ -29,6 +31,8 @@ import {
   ContainerRenameResponse,
   ContainerSubmitBatchOptionalParams,
   ContainerSubmitBatchResponse,
+  ContainerFilterBlobsOptionalParams,
+  ContainerFilterBlobsResponse,
   ContainerAcquireLeaseOptionalParams,
   ContainerAcquireLeaseResponse,
   ContainerReleaseLeaseOptionalParams,
@@ -43,18 +47,19 @@ import {
   ContainerListBlobFlatSegmentResponse,
   ContainerListBlobHierarchySegmentOptionalParams,
   ContainerListBlobHierarchySegmentResponse,
-  ContainerGetAccountInfoResponse
+  ContainerGetAccountInfoOptionalParams,
+  ContainerGetAccountInfoResponse,
 } from "../models";
 
-/** Class representing a Container. */
-export class Container {
-  private readonly client: StorageClientContext;
+/** Class containing Container operations. */
+export class ContainerImpl implements Container {
+  private readonly client: StorageClient;
 
   /**
    * Initialize a new instance of the class Container class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageClientContext) {
+  constructor(client: StorageClient) {
     this.client = client;
   }
 
@@ -64,15 +69,9 @@ export class Container {
    * @param options The options parameters.
    */
   create(
-    options?: ContainerCreateOptionalParams
+    options?: ContainerCreateOptionalParams,
   ): Promise<ContainerCreateResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      createOperationSpec
-    ) as Promise<ContainerCreateResponse>;
+    return this.client.sendOperationRequest({ options }, createOperationSpec);
   }
 
   /**
@@ -81,15 +80,12 @@ export class Container {
    * @param options The options parameters.
    */
   getProperties(
-    options?: ContainerGetPropertiesOptionalParams
+    options?: ContainerGetPropertiesOptionalParams,
   ): Promise<ContainerGetPropertiesResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      getPropertiesOperationSpec
-    ) as Promise<ContainerGetPropertiesResponse>;
+      { options },
+      getPropertiesOperationSpec,
+    );
   }
 
   /**
@@ -98,15 +94,9 @@ export class Container {
    * @param options The options parameters.
    */
   delete(
-    options?: ContainerDeleteOptionalParams
+    options?: ContainerDeleteOptionalParams,
   ): Promise<ContainerDeleteResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      deleteOperationSpec
-    ) as Promise<ContainerDeleteResponse>;
+    return this.client.sendOperationRequest({ options }, deleteOperationSpec);
   }
 
   /**
@@ -114,15 +104,12 @@ export class Container {
    * @param options The options parameters.
    */
   setMetadata(
-    options?: ContainerSetMetadataOptionalParams
+    options?: ContainerSetMetadataOptionalParams,
   ): Promise<ContainerSetMetadataResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setMetadataOperationSpec
-    ) as Promise<ContainerSetMetadataResponse>;
+      { options },
+      setMetadataOperationSpec,
+    );
   }
 
   /**
@@ -131,15 +118,12 @@ export class Container {
    * @param options The options parameters.
    */
   getAccessPolicy(
-    options?: ContainerGetAccessPolicyOptionalParams
+    options?: ContainerGetAccessPolicyOptionalParams,
   ): Promise<ContainerGetAccessPolicyResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      getAccessPolicyOperationSpec
-    ) as Promise<ContainerGetAccessPolicyResponse>;
+      { options },
+      getAccessPolicyOperationSpec,
+    );
   }
 
   /**
@@ -148,15 +132,12 @@ export class Container {
    * @param options The options parameters.
    */
   setAccessPolicy(
-    options?: ContainerSetAccessPolicyOptionalParams
+    options?: ContainerSetAccessPolicyOptionalParams,
   ): Promise<ContainerSetAccessPolicyResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      setAccessPolicyOperationSpec
-    ) as Promise<ContainerSetAccessPolicyResponse>;
+      { options },
+      setAccessPolicyOperationSpec,
+    );
   }
 
   /**
@@ -164,15 +145,9 @@ export class Container {
    * @param options The options parameters.
    */
   restore(
-    options?: ContainerRestoreOptionalParams
+    options?: ContainerRestoreOptionalParams,
   ): Promise<ContainerRestoreResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      restoreOperationSpec
-    ) as Promise<ContainerRestoreResponse>;
+    return this.client.sendOperationRequest({ options }, restoreOperationSpec);
   }
 
   /**
@@ -182,16 +157,12 @@ export class Container {
    */
   rename(
     sourceContainerName: string,
-    options?: ContainerRenameOptionalParams
+    options?: ContainerRenameOptionalParams,
   ): Promise<ContainerRenameResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      sourceContainerName,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      renameOperationSpec
-    ) as Promise<ContainerRenameResponse>;
+      { sourceContainerName, options },
+      renameOperationSpec,
+    );
   }
 
   /**
@@ -205,19 +176,27 @@ export class Container {
   submitBatch(
     contentLength: number,
     multipartContentType: string,
-    body: coreHttp.HttpRequestBody,
-    options?: ContainerSubmitBatchOptionalParams
+    body: coreRestPipeline.RequestBodyType,
+    options?: ContainerSubmitBatchOptionalParams,
   ): Promise<ContainerSubmitBatchResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      contentLength,
-      multipartContentType,
-      body,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      submitBatchOperationSpec
-    ) as Promise<ContainerSubmitBatchResponse>;
+      { contentLength, multipartContentType, body, options },
+      submitBatchOperationSpec,
+    );
+  }
+
+  /**
+   * The Filter Blobs operation enables callers to list blobs in a container whose tags match a given
+   * search expression.  Filter blobs searches within the given container.
+   * @param options The options parameters.
+   */
+  filterBlobs(
+    options?: ContainerFilterBlobsOptionalParams,
+  ): Promise<ContainerFilterBlobsResponse> {
+    return this.client.sendOperationRequest(
+      { options },
+      filterBlobsOperationSpec,
+    );
   }
 
   /**
@@ -226,15 +205,12 @@ export class Container {
    * @param options The options parameters.
    */
   acquireLease(
-    options?: ContainerAcquireLeaseOptionalParams
+    options?: ContainerAcquireLeaseOptionalParams,
   ): Promise<ContainerAcquireLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      acquireLeaseOperationSpec
-    ) as Promise<ContainerAcquireLeaseResponse>;
+      { options },
+      acquireLeaseOperationSpec,
+    );
   }
 
   /**
@@ -245,16 +221,12 @@ export class Container {
    */
   releaseLease(
     leaseId: string,
-    options?: ContainerReleaseLeaseOptionalParams
+    options?: ContainerReleaseLeaseOptionalParams,
   ): Promise<ContainerReleaseLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      leaseId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      releaseLeaseOperationSpec
-    ) as Promise<ContainerReleaseLeaseResponse>;
+      { leaseId, options },
+      releaseLeaseOperationSpec,
+    );
   }
 
   /**
@@ -265,16 +237,12 @@ export class Container {
    */
   renewLease(
     leaseId: string,
-    options?: ContainerRenewLeaseOptionalParams
+    options?: ContainerRenewLeaseOptionalParams,
   ): Promise<ContainerRenewLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      leaseId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      renewLeaseOperationSpec
-    ) as Promise<ContainerRenewLeaseResponse>;
+      { leaseId, options },
+      renewLeaseOperationSpec,
+    );
   }
 
   /**
@@ -283,15 +251,12 @@ export class Container {
    * @param options The options parameters.
    */
   breakLease(
-    options?: ContainerBreakLeaseOptionalParams
+    options?: ContainerBreakLeaseOptionalParams,
   ): Promise<ContainerBreakLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      breakLeaseOperationSpec
-    ) as Promise<ContainerBreakLeaseResponse>;
+      { options },
+      breakLeaseOperationSpec,
+    );
   }
 
   /**
@@ -306,17 +271,12 @@ export class Container {
   changeLease(
     leaseId: string,
     proposedLeaseId: string,
-    options?: ContainerChangeLeaseOptionalParams
+    options?: ContainerChangeLeaseOptionalParams,
   ): Promise<ContainerChangeLeaseResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      leaseId,
-      proposedLeaseId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      changeLeaseOperationSpec
-    ) as Promise<ContainerChangeLeaseResponse>;
+      { leaseId, proposedLeaseId, options },
+      changeLeaseOperationSpec,
+    );
   }
 
   /**
@@ -324,15 +284,12 @@ export class Container {
    * @param options The options parameters.
    */
   listBlobFlatSegment(
-    options?: ContainerListBlobFlatSegmentOptionalParams
+    options?: ContainerListBlobFlatSegmentOptionalParams,
   ): Promise<ContainerListBlobFlatSegmentResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      listBlobFlatSegmentOperationSpec
-    ) as Promise<ContainerListBlobFlatSegmentResponse>;
+      { options },
+      listBlobFlatSegmentOperationSpec,
+    );
   }
 
   /**
@@ -345,16 +302,12 @@ export class Container {
    */
   listBlobHierarchySegment(
     delimiter: string,
-    options?: ContainerListBlobHierarchySegmentOptionalParams
+    options?: ContainerListBlobHierarchySegmentOptionalParams,
   ): Promise<ContainerListBlobHierarchySegmentResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      delimiter,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      listBlobHierarchySegmentOperationSpec
-    ) as Promise<ContainerListBlobHierarchySegmentResponse>;
+      { delimiter, options },
+      listBlobHierarchySegmentOperationSpec,
+    );
   }
 
   /**
@@ -362,31 +315,28 @@ export class Container {
    * @param options The options parameters.
    */
   getAccountInfo(
-    options?: coreHttp.OperationOptions
+    options?: ContainerGetAccountInfoOptionalParams,
   ): Promise<ContainerGetAccountInfoResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
-      getAccountInfoOperationSpec
-    ) as Promise<ContainerGetAccountInfoResponse>;
+      { options },
+      getAccountInfoOperationSpec,
+    );
   }
 }
 // Operation Specifications
-const xmlSerializer = new coreHttp.Serializer(Mappers, /* isXml */ true);
+const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
 
-const createOperationSpec: coreHttp.OperationSpec = {
+const createOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     201: {
-      headersMapper: Mappers.ContainerCreateHeaders
+      headersMapper: Mappers.ContainerCreateHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerCreateExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerCreateExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
   urlParameters: [Parameters.url],
@@ -397,22 +347,22 @@ const createOperationSpec: coreHttp.OperationSpec = {
     Parameters.metadata,
     Parameters.access,
     Parameters.defaultEncryptionScope,
-    Parameters.preventEncryptionScopeOverride
+    Parameters.preventEncryptionScopeOverride,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const getPropertiesOperationSpec: coreHttp.OperationSpec = {
+const getPropertiesOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "GET",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerGetPropertiesHeaders
+      headersMapper: Mappers.ContainerGetPropertiesHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerGetPropertiesExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerGetPropertiesExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
   urlParameters: [Parameters.url],
@@ -420,22 +370,22 @@ const getPropertiesOperationSpec: coreHttp.OperationSpec = {
     Parameters.version,
     Parameters.requestId,
     Parameters.accept1,
-    Parameters.leaseId
+    Parameters.leaseId,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const deleteOperationSpec: coreHttp.OperationSpec = {
+const deleteOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "DELETE",
   responses: {
     202: {
-      headersMapper: Mappers.ContainerDeleteHeaders
+      headersMapper: Mappers.ContainerDeleteHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerDeleteExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerDeleteExceptionHeaders,
+    },
   },
   queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
   urlParameters: [Parameters.url],
@@ -445,27 +395,27 @@ const deleteOperationSpec: coreHttp.OperationSpec = {
     Parameters.accept1,
     Parameters.leaseId,
     Parameters.ifModifiedSince,
-    Parameters.ifUnmodifiedSince
+    Parameters.ifUnmodifiedSince,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setMetadataOperationSpec: coreHttp.OperationSpec = {
+const setMetadataOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerSetMetadataHeaders
+      headersMapper: Mappers.ContainerSetMetadataHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerSetMetadataExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerSetMetadataExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp6
+    Parameters.comp6,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -474,12 +424,12 @@ const setMetadataOperationSpec: coreHttp.OperationSpec = {
     Parameters.accept1,
     Parameters.metadata,
     Parameters.leaseId,
-    Parameters.ifModifiedSince
+    Parameters.ifModifiedSince,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const getAccessPolicyOperationSpec: coreHttp.OperationSpec = {
+const getAccessPolicyOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "GET",
   responses: {
@@ -488,53 +438,53 @@ const getAccessPolicyOperationSpec: coreHttp.OperationSpec = {
         type: {
           name: "Sequence",
           element: {
-            type: { name: "Composite", className: "SignedIdentifier" }
-          }
+            type: { name: "Composite", className: "SignedIdentifier" },
+          },
         },
         serializedName: "SignedIdentifiers",
         xmlName: "SignedIdentifiers",
         xmlIsWrapped: true,
-        xmlElementName: "SignedIdentifier"
+        xmlElementName: "SignedIdentifier",
       },
-      headersMapper: Mappers.ContainerGetAccessPolicyHeaders
+      headersMapper: Mappers.ContainerGetAccessPolicyHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerGetAccessPolicyExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerGetAccessPolicyExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp7
+    Parameters.comp7,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
     Parameters.version,
     Parameters.requestId,
     Parameters.accept1,
-    Parameters.leaseId
+    Parameters.leaseId,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const setAccessPolicyOperationSpec: coreHttp.OperationSpec = {
+const setAccessPolicyOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerSetAccessPolicyHeaders
+      headersMapper: Mappers.ContainerSetAccessPolicyHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerSetAccessPolicyExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerSetAccessPolicyExceptionHeaders,
+    },
   },
   requestBody: Parameters.containerAcl,
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp7
+    Parameters.comp7,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -545,29 +495,29 @@ const setAccessPolicyOperationSpec: coreHttp.OperationSpec = {
     Parameters.access,
     Parameters.leaseId,
     Parameters.ifModifiedSince,
-    Parameters.ifUnmodifiedSince
+    Parameters.ifUnmodifiedSince,
   ],
   isXML: true,
   contentType: "application/xml; charset=utf-8",
   mediaType: "xml",
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const restoreOperationSpec: coreHttp.OperationSpec = {
+const restoreOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     201: {
-      headersMapper: Mappers.ContainerRestoreHeaders
+      headersMapper: Mappers.ContainerRestoreHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerRestoreExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerRestoreExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp8
+    Parameters.comp8,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -575,27 +525,27 @@ const restoreOperationSpec: coreHttp.OperationSpec = {
     Parameters.requestId,
     Parameters.accept1,
     Parameters.deletedContainerName,
-    Parameters.deletedContainerVersion
+    Parameters.deletedContainerVersion,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const renameOperationSpec: coreHttp.OperationSpec = {
+const renameOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerRenameHeaders
+      headersMapper: Mappers.ContainerRenameHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerRenameExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerRenameExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp9
+    Parameters.comp9,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -603,63 +553,92 @@ const renameOperationSpec: coreHttp.OperationSpec = {
     Parameters.requestId,
     Parameters.accept1,
     Parameters.sourceContainerName,
-    Parameters.sourceLeaseId
+    Parameters.sourceLeaseId,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const submitBatchOperationSpec: coreHttp.OperationSpec = {
+const submitBatchOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "POST",
   responses: {
     202: {
       bodyMapper: {
         type: { name: "Stream" },
-        serializedName: "parsedResponse"
+        serializedName: "parsedResponse",
       },
-      headersMapper: Mappers.ContainerSubmitBatchHeaders
+      headersMapper: Mappers.ContainerSubmitBatchHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerSubmitBatchExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerSubmitBatchExceptionHeaders,
+    },
   },
   requestBody: Parameters.body,
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.comp4,
-    Parameters.restype2
+    Parameters.restype2,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
-    Parameters.contentType,
     Parameters.accept,
     Parameters.version,
     Parameters.requestId,
     Parameters.contentLength,
-    Parameters.multipartContentType
+    Parameters.multipartContentType,
   ],
   isXML: true,
   contentType: "application/xml; charset=utf-8",
   mediaType: "xml",
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const acquireLeaseOperationSpec: coreHttp.OperationSpec = {
+const filterBlobsOperationSpec: coreClient.OperationSpec = {
+  path: "/{containerName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.FilterBlobSegment,
+      headersMapper: Mappers.ContainerFilterBlobsHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.StorageError,
+      headersMapper: Mappers.ContainerFilterBlobsExceptionHeaders,
+    },
+  },
+  queryParameters: [
+    Parameters.timeoutInSeconds,
+    Parameters.marker,
+    Parameters.maxPageSize,
+    Parameters.comp5,
+    Parameters.where,
+    Parameters.restype2,
+  ],
+  urlParameters: [Parameters.url],
+  headerParameters: [
+    Parameters.version,
+    Parameters.requestId,
+    Parameters.accept1,
+  ],
+  isXML: true,
+  serializer: xmlSerializer,
+};
+const acquireLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     201: {
-      headersMapper: Mappers.ContainerAcquireLeaseHeaders
+      headersMapper: Mappers.ContainerAcquireLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerAcquireLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerAcquireLeaseExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp10
+    Parameters.comp10,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -670,27 +649,27 @@ const acquireLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifUnmodifiedSince,
     Parameters.action,
     Parameters.duration,
-    Parameters.proposedLeaseId
+    Parameters.proposedLeaseId,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const releaseLeaseOperationSpec: coreHttp.OperationSpec = {
+const releaseLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerReleaseLeaseHeaders
+      headersMapper: Mappers.ContainerReleaseLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerReleaseLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerReleaseLeaseExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp10
+    Parameters.comp10,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -700,27 +679,27 @@ const releaseLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifModifiedSince,
     Parameters.ifUnmodifiedSince,
     Parameters.action1,
-    Parameters.leaseId1
+    Parameters.leaseId1,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const renewLeaseOperationSpec: coreHttp.OperationSpec = {
+const renewLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerRenewLeaseHeaders
+      headersMapper: Mappers.ContainerRenewLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerRenewLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerRenewLeaseExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp10
+    Parameters.comp10,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -730,27 +709,27 @@ const renewLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifModifiedSince,
     Parameters.ifUnmodifiedSince,
     Parameters.leaseId1,
-    Parameters.action2
+    Parameters.action2,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const breakLeaseOperationSpec: coreHttp.OperationSpec = {
+const breakLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     202: {
-      headersMapper: Mappers.ContainerBreakLeaseHeaders
+      headersMapper: Mappers.ContainerBreakLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerBreakLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerBreakLeaseExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp10
+    Parameters.comp10,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -760,27 +739,27 @@ const breakLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifModifiedSince,
     Parameters.ifUnmodifiedSince,
     Parameters.action3,
-    Parameters.breakPeriod
+    Parameters.breakPeriod,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const changeLeaseOperationSpec: coreHttp.OperationSpec = {
+const changeLeaseOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerChangeLeaseHeaders
+      headersMapper: Mappers.ContainerChangeLeaseHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerChangeLeaseExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerChangeLeaseExceptionHeaders,
+    },
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
     Parameters.restype2,
-    Parameters.comp10
+    Parameters.comp10,
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
@@ -791,54 +770,23 @@ const changeLeaseOperationSpec: coreHttp.OperationSpec = {
     Parameters.ifUnmodifiedSince,
     Parameters.leaseId1,
     Parameters.action4,
-    Parameters.proposedLeaseId1
+    Parameters.proposedLeaseId1,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const listBlobFlatSegmentOperationSpec: coreHttp.OperationSpec = {
+const listBlobFlatSegmentOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.ListBlobsFlatSegmentResponse,
-      headersMapper: Mappers.ContainerListBlobFlatSegmentHeaders
+      headersMapper: Mappers.ContainerListBlobFlatSegmentHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerListBlobFlatSegmentExceptionHeaders
-    }
-  },
-  queryParameters: [
-    Parameters.timeoutInSeconds,
-    Parameters.comp2,
-    Parameters.prefix,
-    Parameters.marker,
-    Parameters.maxPageSize,
-    Parameters.restype2,
-    Parameters.include1
-  ],
-  urlParameters: [Parameters.url],
-  headerParameters: [
-    Parameters.version,
-    Parameters.requestId,
-    Parameters.accept1
-  ],
-  isXML: true,
-  serializer: xmlSerializer
-};
-const listBlobHierarchySegmentOperationSpec: coreHttp.OperationSpec = {
-  path: "/{containerName}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ListBlobsHierarchySegmentResponse,
-      headersMapper: Mappers.ContainerListBlobHierarchySegmentHeaders
+      headersMapper: Mappers.ContainerListBlobFlatSegmentExceptionHeaders,
     },
-    default: {
-      bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerListBlobHierarchySegmentExceptionHeaders
-    }
   },
   queryParameters: [
     Parameters.timeoutInSeconds,
@@ -848,32 +796,71 @@ const listBlobHierarchySegmentOperationSpec: coreHttp.OperationSpec = {
     Parameters.maxPageSize,
     Parameters.restype2,
     Parameters.include1,
-    Parameters.delimiter
   ],
   urlParameters: [Parameters.url],
   headerParameters: [
     Parameters.version,
     Parameters.requestId,
-    Parameters.accept1
+    Parameters.accept1,
   ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
 };
-const getAccountInfoOperationSpec: coreHttp.OperationSpec = {
+const listBlobHierarchySegmentOperationSpec: coreClient.OperationSpec = {
   path: "/{containerName}",
   httpMethod: "GET",
   responses: {
     200: {
-      headersMapper: Mappers.ContainerGetAccountInfoHeaders
+      bodyMapper: Mappers.ListBlobsHierarchySegmentResponse,
+      headersMapper: Mappers.ContainerListBlobHierarchySegmentHeaders,
     },
     default: {
       bodyMapper: Mappers.StorageError,
-      headersMapper: Mappers.ContainerGetAccountInfoExceptionHeaders
-    }
+      headersMapper: Mappers.ContainerListBlobHierarchySegmentExceptionHeaders,
+    },
   },
-  queryParameters: [Parameters.comp, Parameters.restype1],
+  queryParameters: [
+    Parameters.timeoutInSeconds,
+    Parameters.comp2,
+    Parameters.prefix,
+    Parameters.marker,
+    Parameters.maxPageSize,
+    Parameters.restype2,
+    Parameters.include1,
+    Parameters.delimiter,
+  ],
   urlParameters: [Parameters.url],
-  headerParameters: [Parameters.version, Parameters.accept1],
+  headerParameters: [
+    Parameters.version,
+    Parameters.requestId,
+    Parameters.accept1,
+  ],
   isXML: true,
-  serializer: xmlSerializer
+  serializer: xmlSerializer,
+};
+const getAccountInfoOperationSpec: coreClient.OperationSpec = {
+  path: "/{containerName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      headersMapper: Mappers.ContainerGetAccountInfoHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.StorageError,
+      headersMapper: Mappers.ContainerGetAccountInfoExceptionHeaders,
+    },
+  },
+  queryParameters: [
+    Parameters.comp,
+    Parameters.timeoutInSeconds,
+    Parameters.restype1,
+  ],
+  urlParameters: [Parameters.url],
+  headerParameters: [
+    Parameters.version,
+    Parameters.requestId,
+    Parameters.accept1,
+  ],
+  isXML: true,
+  serializer: xmlSerializer,
 };

@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * @summary This sample demonstrates how to create a ServiceBusClient meant to be used in an environment
@@ -7,15 +7,16 @@
  */
 
 const { ServiceBusClient } = require("@azure/service-bus");
+const { DefaultAzureCredential } = require("@azure/identity");
+
 const WebSocket = require("ws");
 const { HttpsProxyAgent } = require("https-proxy-agent");
 
 // Load the .env file if it exists
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 // Define connection string for your Service Bus instance here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
 
 async function main() {
@@ -23,7 +24,7 @@ async function main() {
 
   if (!proxyInfo) {
     console.error(
-      "Error: Proxy information not provided, but it is required to run this sample. Exiting."
+      "Error: Proxy information not provided, but it is required to run this sample. Exiting.",
     );
     return;
   }
@@ -31,13 +32,14 @@ async function main() {
   // Create an instance of the `HttpsProxyAgent` class with the proxy server information
   const proxyAgent = new HttpsProxyAgent(proxyInfo);
 
-  const sbClient = new ServiceBusClient(connectionString, {
+  const credential = new DefaultAzureCredential();
+  const sbClient = new ServiceBusClient(fqdn, credential, {
     webSocketOptions: {
       // No need to pass the `WebSocket` from "ws" package if you're in the browser
       // in which case the `window.WebSocket` is used by the library.
       webSocket: WebSocket,
-      webSocketConstructorOptions: { agent: proxyAgent }
-    }
+      webSocketConstructorOptions: { agent: proxyAgent },
+    },
   });
 
   const sender = sbClient.createSender(queueName);
@@ -45,7 +47,7 @@ async function main() {
   console.log(`Sending message using proxy server ${proxyInfo}`);
 
   await sender.sendMessages({
-    body: "sample message"
+    body: "sample message",
   });
 
   await sbClient.close();
@@ -55,3 +57,5 @@ main().catch((err) => {
   console.log("Use Proxy Sample - Error occurred: ", err);
   process.exit(1);
 });
+
+module.exports = { main };

@@ -6,24 +6,114 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import * as coreClient from "@azure/core-client";
+import * as coreRestPipeline from "@azure/core-rest-pipeline";
+import {
+  PipelineRequest,
+  PipelineResponse,
+  SendRequest
+} from "@azure/core-rest-pipeline";
+import { tracingClient } from "./tracing";
 import * as Parameters from "./models/parameters";
 import * as Mappers from "./models/mappers";
-import { MixedRealityStsRestClientContext } from "./mixedRealityStsRestClientContext";
 import {
   MixedRealityStsRestClientOptionalParams,
-  MixedRealityStsRestClientGetTokenOptionalParams,
-  MixedRealityStsRestClientGetTokenResponse
+  GetTokenOptionalParams,
+  GetTokenResponse
 } from "./models";
 
-/** @hidden */
-export class MixedRealityStsRestClient extends MixedRealityStsRestClientContext {
+/** @internal */
+export class MixedRealityStsRestClient extends coreClient.ServiceClient {
+  $host: string;
+  apiVersion?: string;
+
   /**
    * Initializes a new instance of the MixedRealityStsRestClient class.
    * @param options The parameter options
    */
   constructor(options?: MixedRealityStsRestClientOptionalParams) {
-    super(options);
+    // Initializing default values for options
+    if (!options) {
+      options = {};
+    }
+    const defaults: MixedRealityStsRestClientOptionalParams = {
+      requestContentType: "application/json; charset=utf-8"
+    };
+
+    const packageDetails = `azsdk-js-mixed-reality-authentication/1.0.0-beta.2`;
+    const userAgentPrefix =
+      options.userAgentOptions && options.userAgentOptions.userAgentPrefix
+        ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
+        : `${packageDetails}`;
+
+    const optionsWithDefaults = {
+      ...defaults,
+      ...options,
+      userAgentOptions: {
+        userAgentPrefix
+      },
+      baseUri:
+        options.endpoint ??
+        options.baseUri ??
+        "https://sts.mixedreality.azure.com"
+    };
+    super(optionsWithDefaults);
+
+    if (options?.pipeline && options.pipeline.getOrderedPolicies().length > 0) {
+      const pipelinePolicies: coreRestPipeline.PipelinePolicy[] = options.pipeline.getOrderedPolicies();
+      const bearerTokenAuthenticationPolicyFound = pipelinePolicies.some(
+        (pipelinePolicy) =>
+          pipelinePolicy.name ===
+          coreRestPipeline.bearerTokenAuthenticationPolicyName
+      );
+      if (!bearerTokenAuthenticationPolicyFound) {
+        this.pipeline.removePolicy({
+          name: coreRestPipeline.bearerTokenAuthenticationPolicyName
+        });
+        this.pipeline.addPolicy(
+          coreRestPipeline.bearerTokenAuthenticationPolicy({
+            scopes: `${optionsWithDefaults.baseUri}/.default`,
+            challengeCallbacks: {
+              authorizeRequestOnChallenge:
+                coreClient.authorizeRequestOnClaimChallenge
+            }
+          })
+        );
+      }
+    }
+
+    // Assigning values to Constant parameters
+    this.$host = options.$host || "https://sts.mixedreality.azure.com";
+    this.apiVersion = options.apiVersion || "2019-02-28-preview";
+    this.addCustomApiVersionPolicy(options.apiVersion);
+  }
+
+  /** A function that adds a policy that sets the api-version (or equivalent) to reflect the library version. */
+  private addCustomApiVersionPolicy(apiVersion?: string) {
+    if (!apiVersion) {
+      return;
+    }
+    const apiVersionPolicy = {
+      name: "CustomApiVersionPolicy",
+      async sendRequest(
+        request: PipelineRequest,
+        next: SendRequest
+      ): Promise<PipelineResponse> {
+        const param = request.url.split("?");
+        if (param.length > 1) {
+          const newParams = param[1].split("&").map((item) => {
+            if (item.indexOf("api-version") > -1) {
+              return "api-version=" + apiVersion;
+            } else {
+              return item;
+            }
+          });
+          request.url = param[0] + "?" + newParams.join("&");
+        }
+        return next(request);
+      }
+    };
+    this.pipeline.addPolicy(apiVersionPolicy);
   }
 
   /**
@@ -31,24 +121,26 @@ export class MixedRealityStsRestClient extends MixedRealityStsRestClientContext 
    * @param accountId The Mixed Reality account identifier.
    * @param options The options parameters.
    */
-  getToken(
+  async getToken(
     accountId: string,
-    options?: MixedRealityStsRestClientGetTokenOptionalParams
-  ): Promise<MixedRealityStsRestClientGetTokenResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      accountId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      getTokenOperationSpec
-    ) as Promise<MixedRealityStsRestClientGetTokenResponse>;
+    options?: GetTokenOptionalParams
+  ): Promise<GetTokenResponse> {
+    return tracingClient.withSpan(
+      "MixedRealityStsRestClient.getToken",
+      options ?? {},
+      async (options) => {
+        return this.sendOperationRequest(
+          { accountId, options },
+          getTokenOperationSpec
+        ) as Promise<GetTokenResponse>;
+      }
+    );
   }
 }
 // Operation Specifications
-const serializer = new coreHttp.Serializer(Mappers, /* isXml */ false);
+const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
-const getTokenOperationSpec: coreHttp.OperationSpec = {
+const getTokenOperationSpec: coreClient.OperationSpec = {
   path: "/Accounts/{accountId}/token",
   httpMethod: "GET",
   responses: {

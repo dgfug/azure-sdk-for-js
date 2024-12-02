@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualMachineScaleSetExtension,
   VirtualMachineScaleSetExtensionsListOptionalParams,
@@ -18,7 +18,7 @@ import {
   VirtualMachineScaleSetExtensionsUpdateResponse,
   VirtualMachineScaleSetExtensionsDeleteOptionalParams,
   VirtualMachineScaleSetExtensionsGetOptionalParams,
-  VirtualMachineScaleSetExtensionsGetResponse
+  VirtualMachineScaleSetExtensionsGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,7 +33,7 @@ export interface VirtualMachineScaleSetExtensions {
   list(
     resourceGroupName: string,
     vmScaleSetName: string,
-    options?: VirtualMachineScaleSetExtensionsListOptionalParams
+    options?: VirtualMachineScaleSetExtensionsListOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachineScaleSetExtension>;
   /**
    * The operation to create or update an extension.
@@ -48,12 +48,10 @@ export interface VirtualMachineScaleSetExtensions {
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtension,
-    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VirtualMachineScaleSetExtensionsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<VirtualMachineScaleSetExtensionsCreateOrUpdateResponse>,
       VirtualMachineScaleSetExtensionsCreateOrUpdateResponse
     >
   >;
@@ -70,7 +68,7 @@ export interface VirtualMachineScaleSetExtensions {
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtension,
-    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsCreateOrUpdateResponse>;
   /**
    * The operation to update an extension.
@@ -85,10 +83,10 @@ export interface VirtualMachineScaleSetExtensions {
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtensionUpdate,
-    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachineScaleSetExtensionsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachineScaleSetExtensionsUpdateResponse>,
       VirtualMachineScaleSetExtensionsUpdateResponse
     >
   >;
@@ -105,7 +103,7 @@ export interface VirtualMachineScaleSetExtensions {
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtensionUpdate,
-    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsUpdateResponse>;
   /**
    * The operation to delete the extension.
@@ -118,8 +116,8 @@ export interface VirtualMachineScaleSetExtensions {
     resourceGroupName: string,
     vmScaleSetName: string,
     vmssExtensionName: string,
-    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to delete the extension.
    * @param resourceGroupName The name of the resource group.
@@ -131,7 +129,7 @@ export interface VirtualMachineScaleSetExtensions {
     resourceGroupName: string,
     vmScaleSetName: string,
     vmssExtensionName: string,
-    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams
+    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * The operation to get the extension.
@@ -144,6 +142,6 @@ export interface VirtualMachineScaleSetExtensions {
     resourceGroupName: string,
     vmScaleSetName: string,
     vmssExtensionName: string,
-    options?: VirtualMachineScaleSetExtensionsGetOptionalParams
+    options?: VirtualMachineScaleSetExtensionsGetOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsGetResponse>;
 }

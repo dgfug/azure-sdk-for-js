@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Certificate } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   CertificateContract,
   CertificateListByServiceNextOptionalParams,
@@ -33,19 +34,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Certificate operations. */
 export class CertificateImpl implements Certificate {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class Certificate class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists a collection of all certificates in the specified service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -66,11 +67,15 @@ export class CertificateImpl implements Certificate {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -79,15 +84,22 @@ export class CertificateImpl implements Certificate {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: CertificateListByServiceOptionalParams
+    options?: CertificateListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<CertificateContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: CertificateListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -96,7 +108,9 @@ export class CertificateImpl implements Certificate {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -116,7 +130,7 @@ export class CertificateImpl implements Certificate {
 
   /**
    * Lists a collection of all certificates in the specified service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -133,7 +147,7 @@ export class CertificateImpl implements Certificate {
 
   /**
    * Gets the entity state (Etag) version of the certificate specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param certificateId Identifier of the certificate entity. Must be unique in the current API
    *                      Management service instance.
@@ -153,7 +167,7 @@ export class CertificateImpl implements Certificate {
 
   /**
    * Gets the details of the certificate specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param certificateId Identifier of the certificate entity. Must be unique in the current API
    *                      Management service instance.
@@ -173,7 +187,7 @@ export class CertificateImpl implements Certificate {
 
   /**
    * Creates or updates the certificate being used for authentication with the backend.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param certificateId Identifier of the certificate entity. Must be unique in the current API
    *                      Management service instance.
@@ -195,7 +209,7 @@ export class CertificateImpl implements Certificate {
 
   /**
    * Deletes specific certificate.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param certificateId Identifier of the certificate entity. Must be unique in the current API
    *                      Management service instance.
@@ -218,7 +232,7 @@ export class CertificateImpl implements Certificate {
 
   /**
    * From KeyVault, Refresh the certificate being used for authentication with the backend.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param certificateId Identifier of the certificate entity. Must be unique in the current API
    *                      Management service instance.
@@ -238,7 +252,7 @@ export class CertificateImpl implements Certificate {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -350,7 +364,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters23,
+  requestBody: Parameters.parameters32,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -424,13 +438,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion,
-    Parameters.isKeyVaultRefreshFailed
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { CosmosHeaders } from "../../queryExecutionContext";
+// Licensed under the MIT License.
+import type { CosmosDiagnostics } from "../../CosmosDiagnostics";
+import type { CosmosHeaders } from "../../queryExecutionContext";
 import { ResourceResponse } from "../../request";
-import { Resource } from "../Resource";
-import { UserDefinedFunction } from "./UserDefinedFunction";
-import { UserDefinedFunctionDefinition } from "./UserDefinedFunctionDefinition";
+import type { Resource } from "../Resource";
+import type { UserDefinedFunction } from "./UserDefinedFunction";
+import type { UserDefinedFunctionDefinition } from "./UserDefinedFunctionDefinition";
 
 export class UserDefinedFunctionResponse extends ResourceResponse<
   UserDefinedFunctionDefinition & Resource
@@ -13,9 +14,10 @@ export class UserDefinedFunctionResponse extends ResourceResponse<
     resource: UserDefinedFunctionDefinition & Resource,
     headers: CosmosHeaders,
     statusCode: number,
-    udf: UserDefinedFunction
+    udf: UserDefinedFunction,
+    diagnostics: CosmosDiagnostics,
   ) {
-    super(resource, headers, statusCode);
+    super(resource, headers, statusCode, diagnostics);
     this.userDefinedFunction = udf;
   }
   /** A reference to the {@link UserDefinedFunction} corresponding to the returned {@link UserDefinedFunctionDefinition}. */

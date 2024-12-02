@@ -10,7 +10,7 @@ import {
   OperationParameter,
   OperationURLParameter,
   OperationQueryParameter
-} from "@azure/core-http";
+} from "@azure/core-client";
 import {
   Contacts as ContactsMapper,
   CertificateIssuerSetParameters as CertificateIssuerSetParametersMapper,
@@ -22,7 +22,7 @@ import {
   CertificateOperationUpdateParameter as CertificateOperationUpdateParameterMapper,
   CertificateMergeParameters as CertificateMergeParametersMapper,
   CertificateRestoreParameters as CertificateRestoreParametersMapper
-} from "../models/mappers";
+} from "../models/mappers.js";
 
 export const accept: OperationParameter = {
   parameterPath: "accept",

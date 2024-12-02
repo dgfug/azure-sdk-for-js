@@ -1,14 +1,17 @@
 trigger: none
 
-stages:
-  - template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
+extends:
+    template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
     parameters:
       PackageName: "@azure/service-bus"
       ServiceDirectory: servicebus
-      TimeoutInMinutes: 180
-      Clouds: 'Public,Canary'
+      TimeoutInMinutes: 120
+      SupportedClouds: 'Public,UsGov,China'
+      CloudConfig:
+        Public:
+        UsGov:
+          Location: 'usgovarizona'
+        China:
+          Location: 'chinaeast'
       EnvVars:
-        AZURE_CLIENT_ID: $(aad-azure-sdk-test-client-id)
-        AZURE_TENANT_ID: $(aad-azure-sdk-test-tenant-id)
-        AZURE_CLIENT_SECRET: $(aad-azure-sdk-test-client-secret)
-        AZURE_SUBSCRIPTION_ID: $(test-subscription-id)
+        DEBUG: azure:service-bus:*,azure:core-amqp:*,rhea-promise:error,rhea:events,rhea:frames,rhea:io,rhea:flow

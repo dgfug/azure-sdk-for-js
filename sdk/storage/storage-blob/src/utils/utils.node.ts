@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import * as fs from "fs";
 import * as util from "util";
+import { REQUEST_TIMEOUT } from "./constants";
 
 /**
  * Reads a readable stream into buffer. Fill the buffer from offset to end.
@@ -18,14 +19,20 @@ export async function streamToBuffer(
   buffer: Buffer,
   offset: number,
   end: number,
-  encoding?: BufferEncoding
+  encoding?: BufferEncoding,
 ): Promise<void> {
   let pos = 0; // Position in stream
   const count = end - offset; // Total amount of data needed in stream
 
   return new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error(`The operation cannot be completed in timeout.`)),
+      REQUEST_TIMEOUT,
+    );
+
     stream.on("readable", () => {
       if (pos >= count) {
+        clearTimeout(timeout);
         resolve();
         return;
       }
@@ -46,17 +53,21 @@ export async function streamToBuffer(
     });
 
     stream.on("end", () => {
+      clearTimeout(timeout);
       if (pos < count) {
         reject(
           new Error(
-            `Stream drains before getting enough data needed. Data read: ${pos}, data need: ${count}`
-          )
+            `Stream drains before getting enough data needed. Data read: ${pos}, data need: ${count}`,
+          ),
         );
       }
       resolve();
     });
 
-    stream.on("error", reject);
+    stream.on("error", (msg) => {
+      clearTimeout(timeout);
+      reject(msg);
+    });
   });
 }
 
@@ -72,7 +83,7 @@ export async function streamToBuffer(
 export async function streamToBuffer2(
   stream: NodeJS.ReadableStream,
   buffer: Buffer,
-  encoding?: BufferEncoding
+  encoding?: BufferEncoding,
 ): Promise<number> {
   let pos = 0; // Position in stream
   const bufferSize = buffer.length;
@@ -113,7 +124,7 @@ export async function streamToBuffer2(
  */
 export async function streamToBuffer3(
   readableStream: NodeJS.ReadableStream,
-  encoding?: BufferEncoding
+  encoding?: BufferEncoding,
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -137,7 +148,7 @@ export async function streamToBuffer3(
  */
 export async function readStreamToLocalFile(
   rs: NodeJS.ReadableStream,
-  file: string
+  file: string,
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const ws = fs.createWriteStream(file);

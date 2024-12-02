@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import fs from "fs";
-import * as path from "path";
-import { RestError, RestErrorOptions } from "@azure/core-rest-pipeline";
-import { Fetcher } from "./fetcherAbstract";
-import { logger } from "./logger";
-import { DTDL } from "./psuedoDtdl";
+import fs from "node:fs";
+import * as path from "node:path";
+import type { RestErrorOptions } from "@azure/core-rest-pipeline";
+import { RestError } from "@azure/core-rest-pipeline";
+import type { Fetcher } from "./fetcherAbstract.js";
+import { logger } from "./logger.js";
+import type { DTDL } from "./psuedoDtdl.js";
 
 function readFilePromise(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -46,10 +47,10 @@ export class FilesystemFetcher implements Fetcher {
       const dtdlFile = await readFilePromise(absolutePath);
       const parsedDtdl: DTDL | DTDL[] = JSON.parse(dtdlFile);
       return parsedDtdl;
-    } catch (e) {
+    } catch (e: any) {
       const options: RestErrorOptions = {
         code: "ResourceNotFound",
-        statusCode: e?.status
+        statusCode: e?.status,
       };
       throw new RestError("Failed to fetch from Filesystem", options);
     }

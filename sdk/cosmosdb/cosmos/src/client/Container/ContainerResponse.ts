@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { CosmosHeaders } from "../../queryExecutionContext";
+// Licensed under the MIT License.
+import type { CosmosDiagnostics } from "../../CosmosDiagnostics";
+import type { CosmosHeaders } from "../../queryExecutionContext";
 import { ResourceResponse } from "../../request/ResourceResponse";
-import { Resource } from "../Resource";
-import { ContainerDefinition } from "./ContainerDefinition";
-import { Container } from "./index";
+import type { Resource } from "../Resource";
+import type { ContainerDefinition } from "./ContainerDefinition";
+import type { Container } from "./index";
 
 /** Response object for Container operations */
 export class ContainerResponse extends ResourceResponse<ContainerDefinition & Resource> {
@@ -12,9 +13,10 @@ export class ContainerResponse extends ResourceResponse<ContainerDefinition & Re
     resource: ContainerDefinition & Resource,
     headers: CosmosHeaders,
     statusCode: number,
-    container: Container
+    container: Container,
+    diagnostics: CosmosDiagnostics,
   ) {
-    super(resource, headers, statusCode);
+    super(resource, headers, statusCode, diagnostics);
     this.container = container;
   }
   /** A reference to the {@link Container} that the returned {@link ContainerDefinition} corresponds to. */

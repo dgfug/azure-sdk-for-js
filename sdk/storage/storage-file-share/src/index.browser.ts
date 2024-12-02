@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RestError } from "@azure/core-http";
+import { RestError } from "@azure/core-rest-pipeline";
 
 export * from "./Clients";
-export * from "./credentials/AnonymousCredential";
-export * from "./credentials/Credential";
+export * from "../../storage-blob/src/credentials/AnonymousCredential";
+export * from "../../storage-blob/src/credentials/Credential";
 export { SasIPRange } from "./SasIPRange";
 export { Range } from "./Range";
 export {
@@ -15,16 +15,32 @@ export {
   TimePreserveType,
   FileAttributesPreserveType,
   CloseHandlesInfo,
-  HttpAuthorization
+  HttpAuthorization,
 } from "./models";
 export * from "./FileSystemAttributes";
-export * from "./Pipeline";
-export * from "./policies/AnonymousCredentialPolicy";
-export * from "./policies/CredentialPolicy";
+export {
+  Pipeline,
+  PipelineLike,
+  PipelineOptions,
+  isPipelineLike,
+  newPipeline,
+  StoragePipelineOptions,
+  ServiceClientOptions,
+} from "./Pipeline";
+export { BaseRequestPolicy } from "../../storage-blob/src/policies/RequestPolicy";
+export * from "../../storage-blob/src/policies/AnonymousCredentialPolicy";
+export * from "../../storage-blob/src/policies/CredentialPolicy";
 export * from "./StorageRetryPolicyFactory";
-export * from "./StorageBrowserPolicyFactory";
+export * from "../../storage-blob/src/StorageBrowserPolicyFactory";
 export * from "./ShareServiceClient";
 export { CommonOptions } from "./StorageClient";
 export * from "./generatedModels";
+export {
+  WithResponse,
+  ResponseLike,
+  ResponseWithBody,
+  ResponseWithHeaders,
+  HttpResponse,
+} from "./utils/utils.common";
 export { RestError };
 export { logger } from "./log";

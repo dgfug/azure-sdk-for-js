@@ -1,43 +1,52 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  TokenCredential,
-  isTokenCredential,
-  isNode,
-  getDefaultProxySettings
-} from "@azure/core-http";
-import { SpanStatusCode } from "@azure/core-tracing";
-import {
+import type { TokenCredential } from "@azure/core-auth";
+import { isTokenCredential } from "@azure/core-auth";
+import { isNode } from "@azure/core-util";
+import type {
   QueueCreateResponse,
   QueueDeleteResponse,
   QueueItem,
   QueueServiceProperties,
   ServiceGetPropertiesResponse,
+  ServiceGetPropertiesHeaders,
   ServiceGetStatisticsResponse,
   ServiceListQueuesSegmentResponse,
-  ServiceSetPropertiesResponse
+  ServiceSetPropertiesResponse,
+  ServiceListQueuesSegmentHeaders,
+  ListQueuesSegmentResponse,
+  ServiceSetPropertiesHeaders,
+  ServiceGetStatisticsHeaders,
+  QueueServiceStatistics,
 } from "./generatedModels";
-import { AbortSignalLike } from "@azure/abort-controller";
-import { Service } from "./generated/src/operations";
-import { newPipeline, StoragePipelineOptions, Pipeline } from "./Pipeline";
-import { StorageClient, CommonOptions } from "./StorageClient";
-import "@azure/core-paging";
-import { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { Service } from "./generated/src/operationsInterfaces";
+import type { StoragePipelineOptions, Pipeline } from "./Pipeline";
+import { newPipeline, isPipelineLike } from "./Pipeline";
+import type { CommonOptions } from "./StorageClient";
+import { StorageClient } from "./StorageClient";
+import type { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   appendToURLPath,
   appendToURLQuery,
-  extractConnectionStringParts
+  extractConnectionStringParts,
+  assertResponse,
 } from "./utils/utils.common";
-import { StorageSharedKeyCredential } from "./credentials/StorageSharedKeyCredential";
-import { AnonymousCredential } from "./credentials/AnonymousCredential";
-import { createSpan } from "./utils/tracing";
-import { QueueClient, QueueCreateOptions, QueueDeleteOptions } from "./QueueClient";
+import { StorageSharedKeyCredential } from "../../storage-blob/src/credentials/StorageSharedKeyCredential";
+import { AnonymousCredential } from "../../storage-blob/src/credentials/AnonymousCredential";
+import { tracingClient } from "./utils/tracing";
+import type { QueueCreateOptions, QueueDeleteOptions } from "./QueueClient";
+import { QueueClient } from "./QueueClient";
 import { AccountSASPermissions } from "./AccountSASPermissions";
-import { generateAccountSASQueryParameters } from "./AccountSASSignatureValues";
+import {
+  generateAccountSASQueryParameters,
+  generateAccountSASQueryParametersInternal,
+} from "./AccountSASSignatureValues";
 import { AccountSASServices } from "./AccountSASServices";
-import { SASProtocol } from "./SASQueryParameters";
-import { SasIPRange } from "./SasIPRange";
+import type { SASProtocol } from "./SASQueryParameters";
+import type { SasIPRange } from "./SasIPRange";
+import { getDefaultProxySettings } from "@azure/core-rest-pipeline";
 
 /**
  * Options to configure {@link QueueServiceClient.getProperties} operation
@@ -176,7 +185,7 @@ export class QueueServiceClient extends StorageClient {
     connectionString: string,
     // Legacy, no way to fix the eslint error without breaking. Disable the rule for this line.
     /* eslint-disable-next-line @azure/azure-sdk/ts-naming-options */
-    options?: StoragePipelineOptions
+    options?: StoragePipelineOptions,
   ): QueueServiceClient {
     options = options || {};
     const extractedCreds = extractConnectionStringParts(connectionString);
@@ -184,9 +193,11 @@ export class QueueServiceClient extends StorageClient {
       if (isNode) {
         const sharedKeyCredential = new StorageSharedKeyCredential(
           extractedCreds.accountName!,
-          extractedCreds.accountKey
+          extractedCreds.accountKey,
         );
-        options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        if (!options.proxyOptions) {
+          options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        }
         const pipeline = newPipeline(sharedKeyCredential, options);
         return new QueueServiceClient(extractedCreds.url, pipeline);
       } else {
@@ -197,7 +208,7 @@ export class QueueServiceClient extends StorageClient {
       return new QueueServiceClient(extractedCreds.url + "?" + extractedCreds.accountSas, pipeline);
     } else {
       throw new Error(
-        "Connection string must be either an Account connection string or a SAS connection string"
+        "Connection string must be either an Account connection string or a SAS connection string",
       );
     }
   }
@@ -251,7 +262,7 @@ export class QueueServiceClient extends StorageClient {
     credential?: StorageSharedKeyCredential | AnonymousCredential | TokenCredential,
     // Legacy, no way to fix the eslint error without breaking. Disable the rule for this line.
     /* eslint-disable-next-line @azure/azure-sdk/ts-naming-options */
-    options?: StoragePipelineOptions
+    options?: StoragePipelineOptions,
   );
   /**
    * Creates an instance of QueueServiceClient.
@@ -272,10 +283,10 @@ export class QueueServiceClient extends StorageClient {
       | Pipeline,
     // Legacy, no way to fix the eslint error without breaking. Disable the rule for this line.
     /* eslint-disable-next-line @azure/azure-sdk/ts-naming-options */
-    options?: StoragePipelineOptions
+    options?: StoragePipelineOptions,
   ) {
     let pipeline: Pipeline;
-    if (credentialOrPipeline instanceof Pipeline) {
+    if (isPipelineLike(credentialOrPipeline)) {
       pipeline = credentialOrPipeline;
     } else if (
       (isNode && credentialOrPipeline instanceof StorageSharedKeyCredential) ||
@@ -284,11 +295,11 @@ export class QueueServiceClient extends StorageClient {
     ) {
       pipeline = newPipeline(credentialOrPipeline, options);
     } else {
-      // The second paramter is undefined. Use anonymous credential.
+      // The second parameter is undefined. Use anonymous credential.
       pipeline = newPipeline(new AnonymousCredential(), options);
     }
     super(url, pipeline);
-    this.serviceContext = new Service(this.storageClientContext);
+    this.serviceContext = this.storageClientContext.service;
   }
 
   /**
@@ -324,32 +335,29 @@ export class QueueServiceClient extends StorageClient {
    */
   private async listQueuesSegment(
     marker?: string,
-    options: ServiceListQueuesSegmentOptions = {}
+    options: ServiceListQueuesSegmentOptions = {},
   ): Promise<ServiceListQueuesSegmentResponse> {
-    const { span, updatedOptions } = createSpan("QueueServiceClient-listQueuesSegment", options);
-
     if (options.prefix === "") {
       options.prefix = undefined;
     }
 
-    try {
-      return await this.serviceContext.listQueuesSegment({
-        abortSignal: options.abortSignal,
-        marker: marker,
-        maxPageSize: options.maxPageSize,
-        prefix: options.prefix,
-        include: options.include === undefined ? undefined : [options.include],
-        tracingOptions: updatedOptions.tracingOptions
-      });
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "QueueServiceClient-listQueuesSegment",
+      options,
+      async (updatedOptions) => {
+        return assertResponse<
+          ServiceListQueuesSegmentHeaders & ListQueuesSegmentResponse,
+          ServiceListQueuesSegmentHeaders,
+          ListQueuesSegmentResponse
+        >(
+          await this.serviceContext.listQueuesSegment({
+            ...updatedOptions,
+            marker,
+            include: options.include === undefined ? undefined : [options.include],
+          }),
+        );
+      },
+    );
   }
 
   /**
@@ -366,7 +374,7 @@ export class QueueServiceClient extends StorageClient {
    */
   private async *listSegments(
     marker?: string,
-    options: ServiceListQueuesSegmentOptions = {}
+    options: ServiceListQueuesSegmentOptions = {},
   ): AsyncIterableIterator<ServiceListQueuesSegmentResponse> {
     if (options.prefix === "") {
       options.prefix = undefined;
@@ -386,7 +394,7 @@ export class QueueServiceClient extends StorageClient {
    * @param options - Options to list queues operation.
    */
   private async *listItems(
-    options: ServiceListQueuesSegmentOptions = {}
+    options: ServiceListQueuesSegmentOptions = {},
   ): AsyncIterableIterator<QueueItem> {
     if (options.prefix === "") {
       options.prefix = undefined;
@@ -423,7 +431,7 @@ export class QueueServiceClient extends StorageClient {
    * let iterator = queueServiceClient.listQueues();
    * let item = await iterator.next();
    * while (!item.done) {
-   *   console.log(`Queue${i}: ${iterator.value.name}`);
+   *   console.log(`Queue${i}: ${item.value.name}`);
    *   i++;
    *   item = await iterator.next();
    * }
@@ -478,7 +486,7 @@ export class QueueServiceClient extends StorageClient {
    * @returns An asyncIterableIterator that supports paging.
    */
   public listQueues(
-    options: ServiceListQueuesOptions = {}
+    options: ServiceListQueuesOptions = {},
   ): PagedAsyncIterableIterator<QueueItem, ServiceListQueuesSegmentResponse> {
     if (options.prefix === "") {
       options.prefix = undefined;
@@ -486,7 +494,7 @@ export class QueueServiceClient extends StorageClient {
 
     const updatedOptions: ServiceListQueuesSegmentOptions = {
       ...options,
-      ...(options.includeMetadata ? { include: "metadata" } : {})
+      ...(options.includeMetadata ? { include: "metadata" } : {}),
     };
 
     // AsyncIterableIterator to iterate over queues
@@ -510,9 +518,9 @@ export class QueueServiceClient extends StorageClient {
       byPage: (settings: PageSettings = {}) => {
         return this.listSegments(settings.continuationToken, {
           maxPageSize: settings.maxPageSize,
-          ...updatedOptions
+          ...updatedOptions,
         });
-      }
+      },
     };
   }
 
@@ -525,23 +533,19 @@ export class QueueServiceClient extends StorageClient {
    * @returns Response data including the queue service properties.
    */
   public async getProperties(
-    options: ServiceGetPropertiesOptions = {}
+    options: ServiceGetPropertiesOptions = {},
   ): Promise<ServiceGetPropertiesResponse> {
-    const { span, updatedOptions } = createSpan("QueueServiceClient-getProperties", options);
-    try {
-      return await this.serviceContext.getProperties({
-        abortSignal: options.abortSignal,
-        tracingOptions: updatedOptions.tracingOptions
-      });
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "QueueServiceClient-getProperties",
+      options,
+      async (updatedOptions) => {
+        return assertResponse<
+          ServiceGetPropertiesHeaders & QueueServiceProperties,
+          ServiceGetPropertiesHeaders,
+          QueueServiceProperties
+        >(await this.serviceContext.getProperties(updatedOptions));
+      },
+    );
   }
 
   /**
@@ -555,23 +559,17 @@ export class QueueServiceClient extends StorageClient {
    */
   public async setProperties(
     properties: QueueServiceProperties,
-    options: ServiceGetPropertiesOptions = {}
+    options: ServiceGetPropertiesOptions = {},
   ): Promise<ServiceSetPropertiesResponse> {
-    const { span, updatedOptions } = createSpan("QueueServiceClient-setProperties", options);
-    try {
-      return await this.serviceContext.setProperties(properties, {
-        abortSignal: options.abortSignal,
-        tracingOptions: updatedOptions.tracingOptions
-      });
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "QueueServiceClient-setProperties",
+      options,
+      async (updatedOptions) => {
+        return assertResponse<ServiceSetPropertiesHeaders, ServiceSetPropertiesHeaders>(
+          await this.serviceContext.setProperties(properties, updatedOptions),
+        );
+      },
+    );
   }
 
   /**
@@ -584,23 +582,19 @@ export class QueueServiceClient extends StorageClient {
    * @returns Response data for get statistics the operation.
    */
   public async getStatistics(
-    options: ServiceGetStatisticsOptions = {}
+    options: ServiceGetStatisticsOptions = {},
   ): Promise<ServiceGetStatisticsResponse> {
-    const { span, updatedOptions } = createSpan("QueueServiceClient-getStatistics", options);
-    try {
-      return await this.serviceContext.getStatistics({
-        abortSignal: options.abortSignal,
-        tracingOptions: updatedOptions.tracingOptions
-      });
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "QueueServiceClient-getStatistics",
+      options,
+      async (updatedOptions) => {
+        return assertResponse<
+          ServiceGetStatisticsHeaders & QueueServiceStatistics,
+          ServiceGetStatisticsHeaders,
+          QueueServiceStatistics
+        >(await this.serviceContext.getStatistics(updatedOptions));
+      },
+    );
   }
 
   /**
@@ -613,20 +607,15 @@ export class QueueServiceClient extends StorageClient {
    */
   public async createQueue(
     queueName: string,
-    options: QueueCreateOptions = {}
+    options: QueueCreateOptions = {},
   ): Promise<QueueCreateResponse> {
-    const { span, updatedOptions } = createSpan("QueueServiceClient-createQueue", options);
-    try {
-      return await this.getQueueClient(queueName).create(updatedOptions);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "QueueServiceClient-createQueue",
+      options,
+      async (updatedOptions) => {
+        return this.getQueueClient(queueName).create(updatedOptions);
+      },
+    );
   }
 
   /**
@@ -639,20 +628,15 @@ export class QueueServiceClient extends StorageClient {
    */
   public async deleteQueue(
     queueName: string,
-    options: QueueDeleteOptions = {}
+    options: QueueDeleteOptions = {},
   ): Promise<QueueDeleteResponse> {
-    const { span, updatedOptions } = createSpan("QueueServiceClient-deleteQueue", options);
-    try {
-      return await this.getQueueClient(queueName).delete(updatedOptions);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "QueueServiceClient-deleteQueue",
+      options,
+      async (updatedOptions) => {
+        return this.getQueueClient(queueName).delete(updatedOptions);
+      },
+    );
   }
 
   /**
@@ -673,11 +657,11 @@ export class QueueServiceClient extends StorageClient {
     expiresOn?: Date,
     permissions: AccountSASPermissions = AccountSASPermissions.parse("r"),
     resourceTypes: string = "sco",
-    options: ServiceGenerateAccountSasUrlOptions = {}
+    options: ServiceGenerateAccountSasUrlOptions = {},
   ): string {
     if (!(this.credential instanceof StorageSharedKeyCredential)) {
       throw RangeError(
-        "Can only generate the account SAS when the client is initialized with a shared key credential"
+        "Can only generate the account SAS when the client is initialized with a shared key credential",
       );
     }
 
@@ -692,11 +676,54 @@ export class QueueServiceClient extends StorageClient {
         expiresOn,
         resourceTypes,
         services: AccountSASServices.parse("q").toString(),
-        ...options
+        ...options,
       },
-      this.credential
+      this.credential,
     ).toString();
 
     return appendToURLQuery(this.url, sas);
+  }
+
+  /**
+   * Only available for QueueServiceClient constructed with a shared key credential.
+   *
+   * Generates string to sign for an account Shared Access Signature (SAS) URI based on the client properties
+   * and parameters passed in. The SAS is signed by the shared key credential of the client.
+   *
+   * @see https://docs.microsoft.com/en-us/rest/api/storageservices/create-account-sas
+   *
+   * @param expiresOn - Optional. The time at which the shared access signature becomes invalid. Default to an hour later if not specified.
+   * @param permissions - Specifies the list of permissions to be associated with the SAS.
+   * @param resourceTypes - Specifies the resource types associated with the shared access signature.
+   * @param options - Optional parameters.
+   * @returns An account SAS URI consisting of the URI to the resource represented by this client, followed by the generated SAS token.
+   */
+  public generateSasStringToSign(
+    expiresOn?: Date,
+    permissions: AccountSASPermissions = AccountSASPermissions.parse("r"),
+    resourceTypes: string = "sco",
+    options: ServiceGenerateAccountSasUrlOptions = {},
+  ): string {
+    if (!(this.credential instanceof StorageSharedKeyCredential)) {
+      throw RangeError(
+        "Can only generate the account SAS when the client is initialized with a shared key credential",
+      );
+    }
+
+    if (expiresOn === undefined) {
+      const now = new Date();
+      expiresOn = new Date(now.getTime() + 3600 * 1000);
+    }
+
+    return generateAccountSASQueryParametersInternal(
+      {
+        permissions,
+        expiresOn,
+        resourceTypes,
+        services: AccountSASServices.parse("q").toString(),
+        ...options,
+      },
+      this.credential,
+    ).stringToSign;
   }
 }

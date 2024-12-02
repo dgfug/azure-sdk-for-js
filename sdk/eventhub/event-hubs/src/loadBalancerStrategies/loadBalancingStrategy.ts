@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PartitionOwnership } from "../eventProcessor";
-import { logger } from "../log";
+import type { PartitionOwnership } from "../eventProcessor.js";
+import { logger } from "../logger.js";
 
 /**
  * Determines which partitions to claim as part of load balancing.
@@ -17,10 +17,10 @@ export interface LoadBalancingStrategy {
    * @param partitionIds - Partitions to assign owners to.
    * @returns Partition ids to claim.
    */
-  getPartitionsToCliam(
+  getPartitionsToClaim(
     ownerId: string,
     claimedPartitionOwnershipMap: Map<string, PartitionOwnership>,
-    partitionIds: string[]
+    partitionIds: string[],
   ): string[];
 }
 
@@ -58,11 +58,10 @@ interface EventProcessorCounts {
  *
  * @param partitionOwnershipMap - The existing PartitionOwnerships mapped by partition.
  * @param expirationIntervalInMs - The length of time a PartitionOwnership claim is valid.
- * @hidden
  */
 function getActivePartitionOwnerships(
   partitionOwnershipMap: Map<string, PartitionOwnership>,
-  expirationIntervalInMs: number
+  expirationIntervalInMs: number,
 ): Map<string, PartitionOwnership> {
   const activePartitionOwnershipMap: Map<string, PartitionOwnership> = new Map();
   partitionOwnershipMap.forEach((partitionOwnership: PartitionOwnership, partitionId: string) => {
@@ -92,7 +91,7 @@ function getActivePartitionOwnerships(
  */
 function calculateBalancedLoadCounts(
   ownerToOwnershipMap: Map<string, PartitionOwnership[]>,
-  partitionIds: string[]
+  partitionIds: string[],
 ): { minPartitionsPerOwner: number; requiredNumberOfOwnersWithExtraPartition: number } {
   // Calculate the minimum number of partitions every EventProcessor should own when the load
   // is evenly distributed.
@@ -106,7 +105,7 @@ function calculateBalancedLoadCounts(
 
   return {
     minPartitionsPerOwner,
-    requiredNumberOfOwnersWithExtraPartition
+    requiredNumberOfOwnersWithExtraPartition,
   };
 }
 
@@ -130,12 +129,12 @@ function calculateBalancedLoadCounts(
  */
 function getEventProcessorCounts(
   minPartitionsPerOwner: number,
-  ownerToOwnershipMap: Map<string, PartitionOwnership[]>
+  ownerToOwnershipMap: Map<string, PartitionOwnership[]>,
 ): EventProcessorCounts {
   const counts: EventProcessorCounts = {
     haveRequiredPartitions: 0,
     haveAdditionalPartition: 0,
-    haveTooManyPartitions: 0
+    haveTooManyPartitions: 0,
   };
 
   for (const ownershipList of ownerToOwnershipMap.values()) {
@@ -174,7 +173,7 @@ function getEventProcessorCounts(
 function isLoadBalanced(
   requiredNumberOfOwnersWithExtraPartition: number,
   totalExpectedEventProcessors: number,
-  { haveAdditionalPartition, haveRequiredPartitions }: EventProcessorCounts
+  { haveAdditionalPartition, haveRequiredPartitions }: EventProcessorCounts,
 ): boolean {
   return (
     haveAdditionalPartition === requiredNumberOfOwnersWithExtraPartition &&
@@ -195,7 +194,7 @@ function getNumberOfPartitionsToClaim(
   minRequiredPartitionCount: number,
   requiredNumberOfOwnersWithExtraPartition: number,
   numPartitionsOwnedByUs: number,
-  { haveAdditionalPartition, haveTooManyPartitions }: EventProcessorCounts
+  { haveAdditionalPartition, haveTooManyPartitions }: EventProcessorCounts,
 ): number {
   let actualRequiredPartitionCount = minRequiredPartitionCount;
 
@@ -228,7 +227,7 @@ function findPartitionsToSteal(
   minPartitionsPerOwner: number,
   requiredNumberOfOwnersWithExtraPartition: number,
   ourOwnerId: string,
-  ownerToOwnershipMap: Map<string, PartitionOwnership[]>
+  ownerToOwnershipMap: Map<string, PartitionOwnership[]>,
 ): string[] {
   const partitionsToSteal: string[] = [];
   // Create a list of PartitionOwnership lists that we can steal from.
@@ -288,7 +287,7 @@ export function listAvailablePartitions(
   ownerId: string,
   claimedPartitionOwnershipMap: Map<string, PartitionOwnership>,
   partitionIds: string[],
-  expirationIntervalInMs: number
+  expirationIntervalInMs: number,
 ): string[] {
   if (!partitionIds.length) {
     return [];
@@ -298,10 +297,10 @@ export function listAvailablePartitions(
   // Any PartitionOwnership that has been updated outside the expiration interval can be claimed.
   const activePartitionOwnershipMap = getActivePartitionOwnerships(
     claimedPartitionOwnershipMap,
-    expirationIntervalInMs
+    expirationIntervalInMs,
   );
   logger.verbose(
-    `[${ownerId}] Number of active ownership records: ${activePartitionOwnershipMap.size}.`
+    `[${ownerId}] Number of active ownership records: ${activePartitionOwnershipMap.size}.`,
   );
 
   if (activePartitionOwnershipMap.size === 0) {
@@ -325,14 +324,12 @@ export function listAvailablePartitions(
 
   logger.info(`[${ownerId}] Number of active event processors: ${ownerToOwnershipMap.size}.`);
 
-  const {
-    minPartitionsPerOwner,
-    requiredNumberOfOwnersWithExtraPartition
-  } = calculateBalancedLoadCounts(ownerToOwnershipMap, partitionIds);
+  const { minPartitionsPerOwner, requiredNumberOfOwnersWithExtraPartition } =
+    calculateBalancedLoadCounts(ownerToOwnershipMap, partitionIds);
 
   logger.verbose(
     `[${ownerId}] Expected minimum number of partitions per event processor: ${minPartitionsPerOwner},` +
-      `expected number of event processors with additional partition: ${requiredNumberOfOwnersWithExtraPartition}.`
+      `expected number of event processors with additional partition: ${requiredNumberOfOwnersWithExtraPartition}.`,
   );
 
   // Get some stats representing the current state the world with regards to how balanced the
@@ -343,7 +340,7 @@ export function listAvailablePartitions(
     isLoadBalanced(
       requiredNumberOfOwnersWithExtraPartition,
       ownerToOwnershipMap.size,
-      eventProcessorCounts
+      eventProcessorCounts,
     )
   ) {
     // When the partitions are evenly distributed, no change required.
@@ -354,7 +351,7 @@ export function listAvailablePartitions(
     minPartitionsPerOwner,
     requiredNumberOfOwnersWithExtraPartition,
     ownerToOwnershipMap.get(ownerId)!.length,
-    eventProcessorCounts
+    eventProcessorCounts,
   );
 
   if (numberOfPartitionsToClaim <= 0) {
@@ -381,7 +378,7 @@ export function listAvailablePartitions(
     minPartitionsPerOwner,
     requiredNumberOfOwnersWithExtraPartition,
     ownerId,
-    ownerToOwnershipMap
+    ownerToOwnershipMap,
   );
 
   return partitionsToClaim.concat(partitionsToSteal);

@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 export {
   ErrorResponse,
   ErrorBody,
@@ -8,7 +8,8 @@ export {
   QueryRange,
   AggregateType,
   GroupByExpressions,
-  GroupByAliasToAggregateType
+  GroupByAliasToAggregateType,
+  HybridSearchQueryInfo,
 } from "./ErrorResponse";
 export { FeedOptions } from "./FeedOptions";
 export { RequestOptions } from "./RequestOptions";
@@ -18,3 +19,5 @@ export { SharedOptions } from "./SharedOptions";
 export { StatusCode, SubStatusCode } from "./StatusCodes";
 export { FeedResponse } from "./FeedResponse";
 export { RequestContext } from "./RequestContext";
+export { TimeoutError } from "./TimeoutError";
+export * from "./globalStatistics";

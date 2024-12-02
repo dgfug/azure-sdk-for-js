@@ -6,16 +6,15 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ExtendedServerBlobAuditingPolicy,
   ExtendedServerBlobAuditingPoliciesListByServerOptionalParams,
   ExtendedServerBlobAuditingPoliciesGetOptionalParams,
   ExtendedServerBlobAuditingPoliciesGetResponse,
   ExtendedServerBlobAuditingPoliciesCreateOrUpdateOptionalParams,
-  ExtendedServerBlobAuditingPoliciesCreateOrUpdateResponse
+  ExtendedServerBlobAuditingPoliciesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -31,7 +30,7 @@ export interface ExtendedServerBlobAuditingPolicies {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ExtendedServerBlobAuditingPoliciesListByServerOptionalParams
+    options?: ExtendedServerBlobAuditingPoliciesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ExtendedServerBlobAuditingPolicy>;
   /**
    * Gets an extended server's blob auditing policy.
@@ -43,7 +42,7 @@ export interface ExtendedServerBlobAuditingPolicies {
   get(
     resourceGroupName: string,
     serverName: string,
-    options?: ExtendedServerBlobAuditingPoliciesGetOptionalParams
+    options?: ExtendedServerBlobAuditingPoliciesGetOptionalParams,
   ): Promise<ExtendedServerBlobAuditingPoliciesGetResponse>;
   /**
    * Creates or updates an extended server's blob auditing policy.
@@ -57,12 +56,10 @@ export interface ExtendedServerBlobAuditingPolicies {
     resourceGroupName: string,
     serverName: string,
     parameters: ExtendedServerBlobAuditingPolicy,
-    options?: ExtendedServerBlobAuditingPoliciesCreateOrUpdateOptionalParams
+    options?: ExtendedServerBlobAuditingPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ExtendedServerBlobAuditingPoliciesCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ExtendedServerBlobAuditingPoliciesCreateOrUpdateResponse>,
       ExtendedServerBlobAuditingPoliciesCreateOrUpdateResponse
     >
   >;
@@ -78,6 +75,6 @@ export interface ExtendedServerBlobAuditingPolicies {
     resourceGroupName: string,
     serverName: string,
     parameters: ExtendedServerBlobAuditingPolicy,
-    options?: ExtendedServerBlobAuditingPoliciesCreateOrUpdateOptionalParams
+    options?: ExtendedServerBlobAuditingPoliciesCreateOrUpdateOptionalParams,
   ): Promise<ExtendedServerBlobAuditingPoliciesCreateOrUpdateResponse>;
 }

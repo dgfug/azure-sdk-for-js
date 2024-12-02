@@ -5,13 +5,9 @@
  * @summary Uses ContainerRepository and RegistryArtifact to work with manifests, tags, and artifacts.
  */
 
-const {
-  ContainerRegistryClient,
-  KnownContainerRegistryAudience
-} = require("@azure/container-registry");
+const { ContainerRegistryClient } = require("@azure/container-registry");
 const { DefaultAzureCredential } = require("@azure/identity");
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 async function main() {
   // endpoint should be in the form of "https://myregistryname.azurecr.io"
@@ -20,9 +16,7 @@ async function main() {
   const repositoryName = process.env.REPOSITORY_NAME || "<repository name>";
   const pageSize = 1;
 
-  const client = new ContainerRegistryClient(endpoint, new DefaultAzureCredential(), {
-    audience: KnownContainerRegistryAudience.AzureResourceManagerPublicCloud
-  });
+  const client = new ContainerRegistryClient(endpoint, new DefaultAzureCredential());
   const repository = client.getRepository(repositoryName);
   await getProperties(repository);
 
@@ -61,7 +55,7 @@ async function main() {
 async function listTagProperties(artifact) {
   const tags = [];
   // Obtain the tags ordered from newest to oldest by passing the `orderBy` option
-  const iterator = artifact.listTagProperties({ orderBy: "LastUpdatedOnAscending" });
+  const iterator = artifact.listTagProperties({ order: "LastUpdatedOnAscending" });
   for await (const tag of iterator) {
     tags.push(tag.name);
     console.log(`  registry login server: ${tag.registryLoginServer}`);
@@ -145,7 +139,7 @@ async function getArtifactProperties(artifact) {
   console.log(`  last updated on: ${properties.lastUpdatedOn}`);
   console.log(`  arch : ${properties.architecture}`);
   console.log(`  os : ${properties.operatingSystem}`);
-  console.log(`  size : ${properties.size} bytes`);
+  console.log(`  size : ${properties.sizeInBytes} bytes`);
 }
 
 main().catch((err) => {

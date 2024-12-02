@@ -6,10 +6,13 @@ trigger:
       - main
       - release/*
       - hotfix/*
+      - search/stable
   paths:
     include:
       - sdk/search/
-
+    exclude:
+      - sdk/search/ci.mgmt.yml
+      - sdk/search/arm-search
 pr:
   branches:
     include:
@@ -17,10 +20,15 @@ pr:
       - feature/*
       - release/*
       - hotfix/*
+      - search/stable
+    exclude:
+      - feature/v4
   paths:
     include:
       - sdk/search/
-
+    exclude:
+      - sdk/search/ci.mgmt.yml
+      - sdk/search/arm-search
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:

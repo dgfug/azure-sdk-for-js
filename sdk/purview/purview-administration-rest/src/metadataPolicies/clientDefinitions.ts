@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Client } from "@azure-rest/core-client";
-import {
+import type { Client } from "@azure-rest/core-client";
+import type {
   MetadataPolicyGetParameters,
   MetadataPolicyListAllParameters,
   MetadataPolicyUpdateParameters,
   MetadataRolesListParameters,
-} from "./parameters";
-import {
+} from "./parameters.js";
+import type {
   MetadataPolicyGet200Response,
   MetadataPolicyGetdefaultResponse,
   MetadataPolicyListAll200Response,
@@ -17,30 +17,30 @@ import {
   MetadataPolicyUpdatedefaultResponse,
   MetadataRolesList200Response,
   MetadataRolesListdefaultResponse,
-} from "./responses";
+} from "./responses.js";
 
 export interface MetadataRolesList {
   /** Lists roles for Purview Account */
   get(
-    options?: MetadataRolesListParameters
+    options?: MetadataRolesListParameters,
   ): Promise<MetadataRolesList200Response | MetadataRolesListdefaultResponse>;
 }
 
 export interface MetadataPolicyListAll {
   /** List or Get metadata policies */
   get(
-    options?: MetadataPolicyListAllParameters
+    options?: MetadataPolicyListAllParameters,
   ): Promise<MetadataPolicyListAll200Response | MetadataPolicyListAlldefaultResponse>;
 }
 
 export interface MetadataPolicyUpdate {
   /** Updates a metadata policy */
   put(
-    options?: MetadataPolicyUpdateParameters
+    options?: MetadataPolicyUpdateParameters,
   ): Promise<MetadataPolicyUpdate200Response | MetadataPolicyUpdatedefaultResponse>;
   /** Gets a metadata policy */
   get(
-    options?: MetadataPolicyGetParameters
+    options?: MetadataPolicyGetParameters,
   ): Promise<MetadataPolicyGet200Response | MetadataPolicyGetdefaultResponse>;
 }
 

@@ -6,38 +6,44 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ExpressRouteCircuitAuthorizations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   ExpressRouteCircuitAuthorization,
   ExpressRouteCircuitAuthorizationsListNextOptionalParams,
   ExpressRouteCircuitAuthorizationsListOptionalParams,
+  ExpressRouteCircuitAuthorizationsListResponse,
   ExpressRouteCircuitAuthorizationsDeleteOptionalParams,
   ExpressRouteCircuitAuthorizationsGetOptionalParams,
   ExpressRouteCircuitAuthorizationsGetResponse,
   ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams,
   ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse,
-  ExpressRouteCircuitAuthorizationsListResponse,
-  ExpressRouteCircuitAuthorizationsListNextResponse
+  ExpressRouteCircuitAuthorizationsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ExpressRouteCircuitAuthorizations operations. */
 export class ExpressRouteCircuitAuthorizationsImpl
-  implements ExpressRouteCircuitAuthorizations {
-  private readonly client: NetworkManagementClientContext;
+  implements ExpressRouteCircuitAuthorizations
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class ExpressRouteCircuitAuthorizations class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -50,7 +56,7 @@ export class ExpressRouteCircuitAuthorizationsImpl
   public list(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitAuthorizationsListOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteCircuitAuthorization> {
     const iter = this.listPagingAll(resourceGroupName, circuitName, options);
     return {
@@ -60,41 +66,58 @@ export class ExpressRouteCircuitAuthorizationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, circuitName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          circuitName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitAuthorizationsListOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ExpressRouteCircuitAuthorization[]> {
-    let result = await this._list(resourceGroupName, circuitName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ExpressRouteCircuitAuthorizationsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, circuitName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         circuitName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitAuthorizationsListOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsListOptionalParams,
   ): AsyncIterableIterator<ExpressRouteCircuitAuthorization> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       circuitName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -111,25 +134,24 @@ export class ExpressRouteCircuitAuthorizationsImpl
     resourceGroupName: string,
     circuitName: string,
     authorizationName: string,
-    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -138,8 +160,8 @@ export class ExpressRouteCircuitAuthorizationsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -147,21 +169,23 @@ export class ExpressRouteCircuitAuthorizationsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, circuitName, authorizationName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, circuitName, authorizationName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -175,13 +199,13 @@ export class ExpressRouteCircuitAuthorizationsImpl
     resourceGroupName: string,
     circuitName: string,
     authorizationName: string,
-    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       circuitName,
       authorizationName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -197,11 +221,11 @@ export class ExpressRouteCircuitAuthorizationsImpl
     resourceGroupName: string,
     circuitName: string,
     authorizationName: string,
-    options?: ExpressRouteCircuitAuthorizationsGetOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsGetOptionalParams,
   ): Promise<ExpressRouteCircuitAuthorizationsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, circuitName, authorizationName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -219,32 +243,29 @@ export class ExpressRouteCircuitAuthorizationsImpl
     circuitName: string,
     authorizationName: string,
     authorizationParameters: ExpressRouteCircuitAuthorization,
-    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse>,
       ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -253,8 +274,8 @@ export class ExpressRouteCircuitAuthorizationsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -262,27 +283,32 @@ export class ExpressRouteCircuitAuthorizationsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         circuitName,
         authorizationName,
         authorizationParameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse,
+      OperationState<ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -299,14 +325,14 @@ export class ExpressRouteCircuitAuthorizationsImpl
     circuitName: string,
     authorizationName: string,
     authorizationParameters: ExpressRouteCircuitAuthorization,
-    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       circuitName,
       authorizationName,
       authorizationParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -320,11 +346,11 @@ export class ExpressRouteCircuitAuthorizationsImpl
   private _list(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitAuthorizationsListOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsListOptionalParams,
   ): Promise<ExpressRouteCircuitAuthorizationsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, circuitName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -339,11 +365,11 @@ export class ExpressRouteCircuitAuthorizationsImpl
     resourceGroupName: string,
     circuitName: string,
     nextLink: string,
-    options?: ExpressRouteCircuitAuthorizationsListNextOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsListNextOptionalParams,
   ): Promise<ExpressRouteCircuitAuthorizationsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, circuitName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -351,8 +377,7 @@ export class ExpressRouteCircuitAuthorizationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -360,8 +385,8 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -369,22 +394,21 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.circuitName,
-    Parameters.authorizationName
+    Parameters.authorizationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteCircuitAuthorization
+      bodyMapper: Mappers.ExpressRouteCircuitAuthorization,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -392,31 +416,30 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.circuitName,
-    Parameters.authorizationName
+    Parameters.authorizationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations/{authorizationName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteCircuitAuthorization
+      bodyMapper: Mappers.ExpressRouteCircuitAuthorization,
     },
     201: {
-      bodyMapper: Mappers.ExpressRouteCircuitAuthorization
+      bodyMapper: Mappers.ExpressRouteCircuitAuthorization,
     },
     202: {
-      bodyMapper: Mappers.ExpressRouteCircuitAuthorization
+      bodyMapper: Mappers.ExpressRouteCircuitAuthorization,
     },
     204: {
-      bodyMapper: Mappers.ExpressRouteCircuitAuthorization
+      bodyMapper: Mappers.ExpressRouteCircuitAuthorization,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.authorizationParameters,
   queryParameters: [Parameters.apiVersion],
@@ -425,53 +448,51 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.circuitName,
-    Parameters.authorizationName
+    Parameters.authorizationName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCircuits/{circuitName}/authorizations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AuthorizationListResult
+      bodyMapper: Mappers.AuthorizationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.circuitName
+    Parameters.circuitName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AuthorizationListResult
+      bodyMapper: Mappers.AuthorizationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.circuitName
+    Parameters.circuitName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

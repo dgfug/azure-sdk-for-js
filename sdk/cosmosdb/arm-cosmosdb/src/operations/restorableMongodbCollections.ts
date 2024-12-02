@@ -6,29 +6,30 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { RestorableMongodbCollections } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   RestorableMongodbCollectionGetResult,
   RestorableMongodbCollectionsListOptionalParams,
-  RestorableMongodbCollectionsListResponse
+  RestorableMongodbCollectionsListResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RestorableMongodbCollections operations. */
 export class RestorableMongodbCollectionsImpl
-  implements RestorableMongodbCollections {
-  private readonly client: CosmosDBManagementClientContext;
+  implements RestorableMongodbCollections
+{
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class RestorableMongodbCollections class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -43,7 +44,7 @@ export class RestorableMongodbCollectionsImpl
   public list(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbCollectionsListOptionalParams
+    options?: RestorableMongodbCollectionsListOptionalParams,
   ): PagedAsyncIterableIterator<RestorableMongodbCollectionGetResult> {
     const iter = this.listPagingAll(location, instanceId, options);
     return {
@@ -53,30 +54,35 @@ export class RestorableMongodbCollectionsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(location, instanceId, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(location, instanceId, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbCollectionsListOptionalParams
+    options?: RestorableMongodbCollectionsListOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<RestorableMongodbCollectionGetResult[]> {
-    let result = await this._list(location, instanceId, options);
+    let result: RestorableMongodbCollectionsListResponse;
+    result = await this._list(location, instanceId, options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbCollectionsListOptionalParams
+    options?: RestorableMongodbCollectionsListOptionalParams,
   ): AsyncIterableIterator<RestorableMongodbCollectionGetResult> {
     for await (const page of this.listPagingPage(
       location,
       instanceId,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -93,11 +99,11 @@ export class RestorableMongodbCollectionsImpl
   private _list(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbCollectionsListOptionalParams
+    options?: RestorableMongodbCollectionsListOptionalParams,
   ): Promise<RestorableMongodbCollectionsListResponse> {
     return this.client.sendOperationRequest(
       { location, instanceId, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 }
@@ -105,27 +111,28 @@ export class RestorableMongodbCollectionsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}/restorableMongodbCollections",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}/restorableMongodbCollections",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorableMongodbCollectionsListResult
+      bodyMapper: Mappers.RestorableMongodbCollectionsListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
-    Parameters.restorableMongodbDatabaseRid
+    Parameters.startTime,
+    Parameters.endTime,
+    Parameters.restorableMongodbDatabaseRid,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.location1,
-    Parameters.instanceId
+    Parameters.instanceId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -6,12 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import * as coreClient from "@azure/core-client";
 
-export const ShortCodes: coreHttp.CompositeMapper = {
+export const AcquiredShortCodes: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "ShortCodes",
+    className: "AcquiredShortCodes",
     modelProperties: {
       shortCodes: {
         serializedName: "shortCodes",
@@ -35,22 +35,15 @@ export const ShortCodes: coreHttp.CompositeMapper = {
   }
 };
 
-export const ShortCode: coreHttp.CompositeMapper = {
+export const ShortCode: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ShortCode",
     modelProperties: {
-      number: {
-        serializedName: "number",
+      value: {
+        serializedName: "value",
         type: {
           name: "String"
-        }
-      },
-      numberType: {
-        serializedName: "numberType",
-        type: {
-          name: "Enum",
-          allowedValues: ["shortCode", "alphaId"]
         }
       },
       countryCode: {
@@ -80,7 +73,7 @@ export const ShortCode: coreHttp.CompositeMapper = {
   }
 };
 
-export const CommunicationErrorResponse: coreHttp.CompositeMapper = {
+export const CommunicationErrorResponse: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "CommunicationErrorResponse",
@@ -96,7 +89,7 @@ export const CommunicationErrorResponse: coreHttp.CompositeMapper = {
   }
 };
 
-export const CommunicationError: coreHttp.CompositeMapper = {
+export const CommunicationError: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "CommunicationError",
@@ -146,7 +139,73 @@ export const CommunicationError: coreHttp.CompositeMapper = {
   }
 };
 
-export const USProgramBrief: coreHttp.CompositeMapper = {
+export const ShortCodeCosts: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ShortCodeCosts",
+    modelProperties: {
+      costs: {
+        serializedName: "costs",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ShortCodeCost"
+            }
+          }
+        }
+      },
+      nextLink: {
+        serializedName: "nextLink",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ShortCodeCost: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ShortCodeCost",
+    modelProperties: {
+      amount: {
+        serializedName: "amount",
+        type: {
+          name: "Number"
+        }
+      },
+      currencyCode: {
+        serializedName: "currencyCode",
+        type: {
+          name: "String"
+        }
+      },
+      countryCode: {
+        serializedName: "countryCode",
+        type: {
+          name: "String"
+        }
+      },
+      isVanityShortCode: {
+        serializedName: "isVanityShortCode",
+        type: {
+          name: "Boolean"
+        }
+      },
+      billingFrequency: {
+        serializedName: "billingFrequency",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const USProgramBrief: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "USProgramBrief",
@@ -161,15 +220,7 @@ export const USProgramBrief: coreHttp.CompositeMapper = {
       status: {
         serializedName: "status",
         type: {
-          name: "Enum",
-          allowedValues: [
-            "submitted",
-            "approved",
-            "submitNewVanityNumbers",
-            "updateProgramBrief",
-            "draft",
-            "denied"
-          ]
+          name: "String"
         }
       },
       number: {
@@ -241,12 +292,24 @@ export const USProgramBrief: coreHttp.CompositeMapper = {
           name: "Composite",
           className: "TrafficDetails"
         }
+      },
+      attachments: {
+        serializedName: "attachments",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ProgramBriefAttachmentSummary"
+            }
+          }
+        }
       }
     }
   }
 };
 
-export const ReviewNote: coreHttp.CompositeMapper = {
+export const ReviewNote: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ReviewNote",
@@ -267,38 +330,7 @@ export const ReviewNote: coreHttp.CompositeMapper = {
   }
 };
 
-export const ShortCodeCost: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "ShortCodeCost",
-    modelProperties: {
-      amount: {
-        serializedName: "amount",
-        required: true,
-        type: {
-          name: "Number"
-        }
-      },
-      currencyCode: {
-        serializedName: "currencyCode",
-        required: true,
-        type: {
-          name: "String"
-        }
-      },
-      billingFrequency: {
-        serializedName: "billingFrequency",
-        required: true,
-        type: {
-          name: "Enum",
-          allowedValues: ["monthly", "once"]
-        }
-      }
-    }
-  }
-};
-
-export const ProgramDetails: coreHttp.CompositeMapper = {
+export const ProgramDetails: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ProgramDetails",
@@ -323,8 +355,7 @@ export const ProgramDetails: coreHttp.CompositeMapper = {
       numberType: {
         serializedName: "numberType",
         type: {
-          name: "Enum",
-          allowedValues: ["shortCode", "alphaId"]
+          name: "String"
         }
       },
       isPoliticalCampaign: {
@@ -351,8 +382,8 @@ export const ProgramDetails: coreHttp.CompositeMapper = {
           name: "String"
         }
       },
-      signUpTypes: {
-        serializedName: "signUpTypes",
+      callToActionTypes: {
+        serializedName: "callToActionTypes",
         type: {
           name: "Sequence",
           element: {
@@ -368,8 +399,14 @@ export const ProgramDetails: coreHttp.CompositeMapper = {
           }
         }
       },
-      signUpUrl: {
-        serializedName: "signUpUrl",
+      callToActionUrl: {
+        serializedName: "callToActionUrl",
+        type: {
+          name: "String"
+        }
+      },
+      callToAction: {
+        serializedName: "callToAction",
         type: {
           name: "String"
         }
@@ -396,7 +433,7 @@ export const ProgramDetails: coreHttp.CompositeMapper = {
   }
 };
 
-export const CompanyInformation: coreHttp.CompositeMapper = {
+export const CompanyInformation: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "CompanyInformation",
@@ -437,7 +474,7 @@ export const CompanyInformation: coreHttp.CompositeMapper = {
   }
 };
 
-export const ContactInformation: coreHttp.CompositeMapper = {
+export const ContactInformation: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ContactInformation",
@@ -464,7 +501,7 @@ export const ContactInformation: coreHttp.CompositeMapper = {
   }
 };
 
-export const CustomerCareInformation: coreHttp.CompositeMapper = {
+export const CustomerCareInformation: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "CustomerCareInformation",
@@ -485,56 +522,49 @@ export const CustomerCareInformation: coreHttp.CompositeMapper = {
   }
 };
 
-export const MessageDetails: coreHttp.CompositeMapper = {
+export const MessageDetails: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "MessageDetails",
     modelProperties: {
-      supportedProtocols: {
-        serializedName: "supportedProtocols",
+      supportedProtocol: {
+        serializedName: "supportedProtocol",
         type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["sms", "mms"]
-            }
-          }
+          name: "String"
         }
       },
       recurrence: {
         serializedName: "recurrence",
         type: {
-          name: "Enum",
-          allowedValues: ["subscription", "transaction"]
+          name: "String"
         }
       },
-      helpMessage: {
-        serializedName: "helpMessage",
+      helpAnswerToUser: {
+        serializedName: "helpAnswerToUser",
         type: {
           name: "String"
         }
       },
-      optOutMessage: {
-        serializedName: "optOutMessage",
+      optOutAnswerToUser: {
+        serializedName: "optOutAnswerToUser",
         type: {
           name: "String"
         }
       },
-      optInMessage: {
-        serializedName: "optInMessage",
+      optInMessageToUser: {
+        serializedName: "optInMessageToUser",
         type: {
           name: "String"
         }
       },
-      optInReply: {
-        serializedName: "optInReply",
+      optInAnswerFromUser: {
+        serializedName: "optInAnswerFromUser",
         type: {
           name: "String"
         }
       },
-      confirmationMessage: {
-        serializedName: "confirmationMessage",
+      optInConfirmationMessageToUser: {
+        serializedName: "optInConfirmationMessageToUser",
         type: {
           name: "String"
         }
@@ -542,8 +572,7 @@ export const MessageDetails: coreHttp.CompositeMapper = {
       directionality: {
         serializedName: "directionality",
         type: {
-          name: "Enum",
-          allowedValues: ["oneWay", "twoWay"]
+          name: "String"
         }
       },
       useCases: {
@@ -562,58 +591,21 @@ export const MessageDetails: coreHttp.CompositeMapper = {
   }
 };
 
-export const UseCase: coreHttp.CompositeMapper = {
+export const UseCase: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "UseCase",
     modelProperties: {
-      contentCategory: {
-        serializedName: "contentCategory",
+      contentType: {
+        serializedName: "contentType",
         type: {
-          name: "Enum",
-          allowedValues: [
-            "ringTones",
-            "smsChat",
-            "video",
-            "loyaltyProgramPointsPrizes",
-            "gifting",
-            "inApplicationBilling",
-            "textToScreen",
-            "games",
-            "audioChat",
-            "mmsPictures",
-            "sweepstakesContestAuction",
-            "financialBanking",
-            "premiumWap",
-            "queryService",
-            "wallpaperScreensaver",
-            "voting",
-            "application",
-            "mobileGivingDonations",
-            "coupons",
-            "loyaltyProgram",
-            "noPointsPrizes",
-            "informationalAlerts",
-            "microBilling",
-            "trivia",
-            "entertainmentAlerts",
-            "accountNotification",
-            "ageGatedContent",
-            "conversationalMessaging",
-            "deliveryNotification",
-            "education",
-            "emergencyAlerts",
-            "fraudAlerts",
-            "loanArrangement",
-            "onBehalfOfCarrier",
-            "political",
-            "promotionalMarketing",
-            "publicServiceAnnouncements",
-            "securityAlerts",
-            "socialMedia",
-            "twoFactorAuthentication",
-            "other"
-          ]
+          name: "String"
+        }
+      },
+      customContentType: {
+        serializedName: "customContentType",
+        type: {
+          name: "String"
         }
       },
       examples: {
@@ -632,7 +624,7 @@ export const UseCase: coreHttp.CompositeMapper = {
   }
 };
 
-export const MessageExampleSequence: coreHttp.CompositeMapper = {
+export const MessageExampleSequence: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "MessageExampleSequence",
@@ -653,7 +645,7 @@ export const MessageExampleSequence: coreHttp.CompositeMapper = {
   }
 };
 
-export const MessageExample: coreHttp.CompositeMapper = {
+export const MessageExample: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "MessageExample",
@@ -661,8 +653,7 @@ export const MessageExample: coreHttp.CompositeMapper = {
       direction: {
         serializedName: "direction",
         type: {
-          name: "Enum",
-          allowedValues: ["toUser", "fromUser"]
+          name: "String"
         }
       },
       text: {
@@ -675,7 +666,7 @@ export const MessageExample: coreHttp.CompositeMapper = {
   }
 };
 
-export const TrafficDetails: coreHttp.CompositeMapper = {
+export const TrafficDetails: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "TrafficDetails",
@@ -736,7 +727,34 @@ export const TrafficDetails: coreHttp.CompositeMapper = {
   }
 };
 
-export const USProgramBriefs: coreHttp.CompositeMapper = {
+export const ProgramBriefAttachmentSummary: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProgramBriefAttachmentSummary",
+    modelProperties: {
+      id: {
+        serializedName: "id",
+        type: {
+          name: "Uuid"
+        }
+      },
+      type: {
+        serializedName: "type",
+        type: {
+          name: "String"
+        }
+      },
+      fileName: {
+        serializedName: "fileName",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const USProgramBriefs: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "USProgramBriefs",
@@ -749,6 +767,89 @@ export const USProgramBriefs: coreHttp.CompositeMapper = {
             type: {
               name: "Composite",
               className: "USProgramBrief"
+            }
+          }
+        }
+      },
+      nextLink: {
+        serializedName: "nextLink",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ProgramBriefAttachment: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProgramBriefAttachment",
+    modelProperties: {
+      id: {
+        serializedName: "id",
+        required: true,
+        type: {
+          name: "Uuid"
+        }
+      },
+      type: {
+        serializedName: "type",
+        required: true,
+        type: {
+          name: "String"
+        }
+      },
+      fileName: {
+        constraints: {
+          MinLength: 1
+        },
+        serializedName: "fileName",
+        required: true,
+        type: {
+          name: "String"
+        }
+      },
+      fileSizeInBytes: {
+        serializedName: "fileSizeInBytes",
+        type: {
+          name: "Number"
+        }
+      },
+      fileType: {
+        serializedName: "fileType",
+        required: true,
+        type: {
+          name: "String"
+        }
+      },
+      fileContentBase64: {
+        constraints: {
+          MinLength: 1
+        },
+        serializedName: "fileContentBase64",
+        required: true,
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ProgramBriefAttachments: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProgramBriefAttachments",
+    modelProperties: {
+      attachments: {
+        serializedName: "attachments",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ProgramBriefAttachment"
             }
           }
         }

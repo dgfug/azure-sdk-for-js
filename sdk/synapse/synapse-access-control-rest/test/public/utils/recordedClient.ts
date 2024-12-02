@@ -1,66 +1,47 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Context } from "mocha";
+import "./env.js";
 
-import { env, Recorder, record, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import { TokenCredential, ClientSecretCredential } from "@azure/identity";
-import { ClientOptions } from "@azure-rest/core-client";
+import type { AccessControlRestClient } from "../../../src/index.js";
+import AccessControlClient from "../../../src/index.js";
+import type { Recorder } from "@azure-tools/test-recorder";
+import { env } from "@azure-tools/test-recorder";
 
-import AccessControlClient, { AccessControlRestClient } from "../../../src";
-
-import "./env";
+import type { ClientOptions } from "@azure-rest/core-client";
+import type { TokenCredential } from "@azure/identity";
+import { createTestCredential } from "@azure-tools/test-credential";
 
 const replaceableVariables: { [k: string]: string } = {
   AZURE_CLIENT_ID: "azure_client_id",
   AZURE_CLIENT_SECRET: "azure_client_secret",
   AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
-  ENDPOINT: "https://testaccount.dev.azuresynapse.net"
+  ENDPOINT: "https://testaccount.dev.azuresynapse.net",
 };
 
-export const environmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording.replace(/"access_token"\s?:\s?"[^"]*"/g, `"access_token":"access_token"`),
-    // If we put ENDPOINT in replaceableVariables above, it will not capture
-    // the endpoint string used with nock, which will be expanded to
-    // https://<endpoint>:443/ and therefore will not match, so we have to do
-    // this instead.
-    (recording: string): string => {
-      const replaced = recording.replace(
-        "testaccount.dev.azuresynapse.net:443",
-        "testaccount.dev.azuresynapse.net"
-      );
-      return replaced;
-    }
-  ],
-  queryParametersToSkip: []
-};
+export async function createClient(
+  recorder: Recorder,
+  options?: ClientOptions,
+): Promise<AccessControlRestClient> {
+  await recorder.start({
+    envSetupForPlayback: replaceableVariables,
+    removeCentralSanitizers: [
+      "AZSDK3430", // .id in the body is not a secret and is listed below in the beforeEach section
+    ],
+  });
 
-export function createClient(options?: ClientOptions): AccessControlRestClient {
-  let credential: TokenCredential;
-
-  credential = new ClientSecretCredential(
-    env.AZURE_TENANT_ID,
-    env.AZURE_CLIENT_ID,
-    env.AZURE_CLIENT_SECRET
+  const credential: TokenCredential = createTestCredential();
+  const client = AccessControlClient(
+    env.ENDPOINT ?? "",
+    credential,
+    recorder.configureClientOptions({ ...options, allowInsecureConnection: true }),
   );
-
-  return AccessControlClient(env.ENDPOINT, credential, options);
+  return client;
 }
 
-/**
- * creates the recorder and reads the environment variables from the `.env` file.
- * Should be called first in the test suite to make sure environment variables are
- * read before they are being used.
- */
-export function createRecorder(context: Context): Recorder {
-  return record(context, environmentSetup);
-}
-
-export function getWorkspaceName() {
+export function getWorkspaceName(): string {
   const url: string = env.ENDPOINT ?? "";
+  // eslint-disable-next-line no-useless-escape
   const matches = url.match(/^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/?\n]+)/) ?? [];
 
   if (matches.length < 2) {

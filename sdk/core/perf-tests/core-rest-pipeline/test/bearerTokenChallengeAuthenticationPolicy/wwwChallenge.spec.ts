@@ -1,5 +1,8 @@
-import { PerfTest } from "@azure/test-utils-perf";
-import { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import { PerfTest } from "@azure-tools/test-perf";
+import type { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
 import {
   AuthorizeRequestOnChallengeOptions,
   bearerTokenAuthenticationPolicy,
@@ -9,9 +12,9 @@ import {
   HttpClient,
   Pipeline,
   PipelineRequest,
-  PipelineResponse
+  PipelineResponse,
 } from "@azure/core-rest-pipeline";
-import { TextDecoder } from "util";
+import { TextDecoder } from "node:util";
 
 export interface TestChallenge {
   scope: string;
@@ -50,6 +53,7 @@ export function decodeString(value: string): Uint8Array {
 //     [ { a: 'b', c: 'd' }, { d: 'e', f: 'g"' } ]
 // Important:
 //     Do not use this in production, as values might contain the strings we use to split things up.
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 function parseCAEChallenge(challenges: string): any[] {
   return challenges
     .split("Bearer ")
@@ -59,12 +63,12 @@ function parseCAEChallenge(challenges: string): any[] {
         .split('", ')
         .filter((x) => x)
         .map((keyValue) => (([key, value]) => ({ [key]: value }))(keyValue.trim().split('="')))
-        .reduce((a, b) => ({ ...a, ...b }), {})
+        .reduce((a, b) => ({ ...a, ...b }), {}),
     );
 }
 
 async function authorizeRequestOnChallenge(
-  options: AuthorizeRequestOnChallengeOptions
+  options: AuthorizeRequestOnChallengeOptions,
 ): Promise<boolean> {
   const { scopes, request, response, getAccessToken } = options;
 
@@ -104,13 +108,13 @@ class MockRefreshAzureCredential implements TokenCredential {
 
   public getToken(
     scope: string | string[],
-    _options: GetTokenOptions
+    _options: GetTokenOptions,
   ): Promise<AccessToken | null> {
     this.authCount++;
     this.scopesAndClaims.push({
       scope,
       // Architects haven't decided about the claims property
-      challengeClaims: undefined // options.claims
+      challengeClaims: undefined, // options.claims
     });
     return Promise.resolve(this.getTokenResponse);
   }
@@ -130,23 +134,23 @@ export class BearerTokenAuthenticationPolicyChallengeTest extends PerfTest {
   async globalSetup(): Promise<void> {
     const scope = "http://localhost/.default";
     const challengeClaims = JSON.stringify({
-      access_token: { foo: "bar" }
+      access_token: { foo: "bar" },
     });
 
     const request = createPipelineRequest({ url: "https://example.com" });
     const responses: PipelineResponse[] = [
       {
         headers: createHttpHeaders({
-          "WWW-Authenticate": `Bearer scope="${scope}", claims="${encodeString(challengeClaims)}"`
+          "WWW-Authenticate": `Bearer scope="${scope}", claims="${encodeString(challengeClaims)}"`,
         }),
         request,
-        status: 401
+        status: 401,
       },
       {
         headers: createHttpHeaders(),
         request,
-        status: 200
-      }
+        status: 200,
+      },
     ];
 
     const expiresOn = Date.now() + 5000;
@@ -166,8 +170,8 @@ export class BearerTokenAuthenticationPolicyChallengeTest extends PerfTest {
             request.headers.set("Authorization", `Bearer ${cachedToken}`);
           }
         },
-        authorizeRequestOnChallenge
-      }
+        authorizeRequestOnChallenge,
+      },
     });
 
     pipeline.addPolicy(bearerPolicy);
@@ -189,12 +193,15 @@ export class BearerTokenAuthenticationPolicyChallengeTest extends PerfTest {
         responsesCount++;
         response.request = req;
         return response;
-      }
+      },
     };
   }
 
   async run(): Promise<void> {
     const { pipeline, testHttpsClient, request } = BearerTokenAuthenticationPolicyChallengeTest;
-    await pipeline!.sendRequest(testHttpsClient!, request!);
+    if (!pipeline || !testHttpsClient || !request) {
+      throw new Error("Bad initialization for tests");
+    }
+    await pipeline.sendRequest(testHttpsClient, request);
   }
 }

@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   EncryptionScope,
@@ -16,7 +15,7 @@ import {
   EncryptionScopesPatchOptionalParams,
   EncryptionScopesPatchResponse,
   EncryptionScopesGetOptionalParams,
-  EncryptionScopesGetResponse
+  EncryptionScopesGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -34,7 +33,7 @@ export interface EncryptionScopes {
   list(
     resourceGroupName: string,
     accountName: string,
-    options?: EncryptionScopesListOptionalParams
+    options?: EncryptionScopesListOptionalParams,
   ): PagedAsyncIterableIterator<EncryptionScope>;
   /**
    * Synchronously creates or updates an encryption scope under the specified storage account. If an
@@ -57,7 +56,7 @@ export interface EncryptionScopes {
     accountName: string,
     encryptionScopeName: string,
     encryptionScope: EncryptionScope,
-    options?: EncryptionScopesPutOptionalParams
+    options?: EncryptionScopesPutOptionalParams,
   ): Promise<EncryptionScopesPutResponse>;
   /**
    * Update encryption scope properties as specified in the request body. Update fails if the specified
@@ -79,7 +78,7 @@ export interface EncryptionScopes {
     accountName: string,
     encryptionScopeName: string,
     encryptionScope: EncryptionScope,
-    options?: EncryptionScopesPatchOptionalParams
+    options?: EncryptionScopesPatchOptionalParams,
   ): Promise<EncryptionScopesPatchResponse>;
   /**
    * Returns the properties for the specified encryption scope.
@@ -98,6 +97,6 @@ export interface EncryptionScopes {
     resourceGroupName: string,
     accountName: string,
     encryptionScopeName: string,
-    options?: EncryptionScopesGetOptionalParams
+    options?: EncryptionScopesGetOptionalParams,
   ): Promise<EncryptionScopesGetResponse>;
 }

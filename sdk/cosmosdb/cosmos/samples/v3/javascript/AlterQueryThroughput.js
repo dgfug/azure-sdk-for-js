@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Updates a container offer to change query throughput.
  */
 
-const path = require("path");
 require("dotenv").config();
 
 const { finish, handleError, logStep, logSampleHeader } = require("./Shared/handleError");
@@ -90,7 +89,11 @@ async function updateOfferForCollection(newRups, dbName, collectionName, oldOffe
   );
 
   if (container) {
-    const offer = client.offer(oldOfferDefinition.id);
+    const id = oldOfferDefinition.id;
+    if (typeof id === "undefined") {
+      throw new Error("ID for old offer is undefined");
+    }
+    const offer = client.offer(id);
     logStep("replace old offer with new offer");
     await offer.replace(newOfferDefinition);
   }

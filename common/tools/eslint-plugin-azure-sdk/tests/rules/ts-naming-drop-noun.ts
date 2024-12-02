@@ -1,40 +1,34 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-naming-drop-noun rule.
- * @author Arpan Laha
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-naming-drop-noun";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-naming-drop-noun", rule, {
   valid: [
     // single method
     {
-      code: "class ExampleClient { create(): ExampleClient {}; };"
+      code: "class ExampleClient { create(): ExampleClient {}; };",
     },
     // multiple methods
     {
-      code: "class ExampleClient { create(): ExampleClient {}; upsert(): ExampleClient {}; };"
+      code: "class ExampleClient { create(): ExampleClient {}; upsert(): ExampleClient {}; };",
     },
     // not a client
     {
-      code: "class Example { createExample(): Example {}; };"
-    }
+      code: "class Example { createExample(): Example {}; };",
+    },
   ],
   invalid: [
     // single violator
@@ -43,24 +37,23 @@ ruleTester.run("ts-naming-drop-noun", rule, {
       errors: [
         {
           message:
-            "ExampleClient's method createExample returns an instance of ExampleClient and shouldn't include Example in its name"
-        }
-      ]
+            "ExampleClient's method createExample returns an instance of ExampleClient and shouldn't include Example in its name",
+        },
+      ],
     },
     // multiple violators
     {
-      code:
-        "class ExampleClient { createExample(): ExampleClient {}; upsertExample(): ExampleClient {}; };",
+      code: "class ExampleClient { createExample(): ExampleClient {}; upsertExample(): ExampleClient {}; };",
       errors: [
         {
           message:
-            "ExampleClient's method createExample returns an instance of ExampleClient and shouldn't include Example in its name"
+            "ExampleClient's method createExample returns an instance of ExampleClient and shouldn't include Example in its name",
         },
         {
           message:
-            "ExampleClient's method upsertExample returns an instance of ExampleClient and shouldn't include Example in its name"
-        }
-      ]
-    }
-  ]
+            "ExampleClient's method upsertExample returns an instance of ExampleClient and shouldn't include Example in its name",
+        },
+      ],
+    },
+  ],
 });

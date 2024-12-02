@@ -1,22 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /// <reference lib="esnext.asynciterable" />
 
-import { OperationOptions } from "@azure/core-client";
-import { SpanStatusCode } from "@azure/core-tracing";
-import "@azure/core-paging";
-import { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { OperationOptions } from "@azure/core-client";
+import type { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
 
-import {
+import type {
   ArtifactTagProperties,
   ArtifactManifestProperties,
-  TagOrderBy,
-  TagPageResponse
+  ArtifactTagOrder,
+  TagPageResponse,
 } from "./models";
-import { URL } from "./utils/url";
-import { createSpan } from "./tracing";
-import { GeneratedClient } from "./generated";
+import { tracingClient } from "./tracing";
+import type { GeneratedClient } from "./generated";
 import { extractNextLink, isDigest } from "./utils/helpers";
 import { toArtifactManifestProperties, toServiceTagOrderBy } from "./transformations";
 
@@ -69,8 +66,8 @@ export interface UpdateManifestPropertiesOptions extends OperationOptions {
  * Options for the `listTagProperties` method of `RegistryArtifact`.
  */
 export interface ListTagPropertiesOptions extends OperationOptions {
-  /** orderby query parameter */
-  orderBy?: TagOrderBy;
+  /** order in which the tags are returned */
+  order?: ArtifactTagOrder;
 }
 
 /**
@@ -110,7 +107,7 @@ export interface RegistryArtifact {
    * @param options -
    */
   getManifestProperties(
-    options?: GetManifestPropertiesOptions
+    options?: GetManifestPropertiesOptions,
   ): Promise<ArtifactManifestProperties>;
   /**
    * Updates the properties of the artifact's manifest.
@@ -130,7 +127,7 @@ export interface RegistryArtifact {
    * @param options -
    */
   updateManifestProperties(
-    options: UpdateManifestPropertiesOptions
+    options: UpdateManifestPropertiesOptions,
   ): Promise<ArtifactManifestProperties>;
   /**
    * Retrieves the properties of the specified tag.
@@ -158,7 +155,7 @@ export interface RegistryArtifact {
    */
   updateTagProperties(
     tag: string,
-    options: UpdateTagPropertiesOptions
+    options: UpdateTagPropertiesOptions,
   ): Promise<ArtifactTagProperties>;
   /**
    * Returns an async iterable iterator to list the tags that uniquely identify this artifact and the properties of each.
@@ -204,7 +201,7 @@ export interface RegistryArtifact {
    * @param options -
    */
   listTagProperties(
-    options?: ListTagPropertiesOptions
+    options?: ListTagPropertiesOptions,
   ): PagedAsyncIterableIterator<ArtifactTagProperties>;
 }
 
@@ -241,7 +238,7 @@ export class RegistryArtifactImpl {
     registryEndpoint: string,
     repositoryName: string,
     private tagOrDigest: string,
-    client: GeneratedClient
+    client: GeneratedClient,
   ) {
     this.registryEndpoint = registryEndpoint;
     this.repositoryName = repositoryName;
@@ -279,20 +276,17 @@ export class RegistryArtifactImpl {
    * @param options -
    */
   public async delete(options: DeleteArtifactOptions = {}): Promise<void> {
-    const { span, updatedOptions } = createSpan("RegistryArtifact-delete", options);
-
-    try {
-      await this.client.containerRegistry.deleteManifest(
-        this.repositoryName,
-        await this.getDigest(),
-        updatedOptions
-      );
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "RegistryArtifactImpl.delete",
+      options,
+      async (updatedOptions) => {
+        await this.client.containerRegistry.deleteManifest(
+          this.repositoryName,
+          await this.getDigest(),
+          updatedOptions,
+        );
+      },
+    );
   }
 
   /**
@@ -305,16 +299,13 @@ export class RegistryArtifactImpl {
       throw new Error("invalid tag");
     }
 
-    const { span, updatedOptions } = createSpan("RegistryArtifact-deleteTag", options);
-
-    try {
-      await this.client.containerRegistry.deleteTag(this.repositoryName, tag, updatedOptions);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "RegistryArtifactImpl.deleteTag",
+      options,
+      async (updatedOptions) => {
+        await this.client.containerRegistry.deleteTag(this.repositoryName, tag, updatedOptions);
+      },
+    );
   }
 
   /**
@@ -322,23 +313,24 @@ export class RegistryArtifactImpl {
    * @param options -
    */
   public async getManifestProperties(
-    options: GetManifestPropertiesOptions = {}
+    options: GetManifestPropertiesOptions = {},
   ): Promise<ArtifactManifestProperties> {
-    const { span, updatedOptions } = createSpan("RegistryArtifact-getManifestProperties", options);
-
-    try {
-      const result = await this.client.containerRegistry.getManifestProperties(
-        this.repositoryName,
-        await this.getDigest(),
-        updatedOptions
-      );
-      return toArtifactManifestProperties(result, this.repositoryName, result.registryLoginServer!);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "RegistryArtifactImpl.getManifestProperties",
+      options,
+      async (updatedOptions) => {
+        const result = await this.client.containerRegistry.getManifestProperties(
+          this.repositoryName,
+          await this.getDigest(),
+          updatedOptions,
+        );
+        return toArtifactManifestProperties(
+          result,
+          this.repositoryName,
+          result.registryLoginServer!,
+        );
+      },
+    );
   }
 
   /**
@@ -359,31 +351,32 @@ export class RegistryArtifactImpl {
    * @param options -
    */
   public async updateManifestProperties(
-    options: UpdateManifestPropertiesOptions
+    options: UpdateManifestPropertiesOptions,
   ): Promise<ArtifactManifestProperties> {
-    const { span, updatedOptions } = createSpan("RegistryArtifact-updateManifestProperties", {
-      ...options,
-      value: {
-        canDelete: options.canDelete,
-        canWrite: options.canWrite,
-        canList: options.canList,
-        canRead: options.canRead
-      }
-    });
-
-    try {
-      const result = await this.client.containerRegistry.updateManifestProperties(
-        this.repositoryName,
-        await this.getDigest(),
-        updatedOptions
-      );
-      return toArtifactManifestProperties(result, this.repositoryName, result.registryLoginServer!);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "RegistryArtifactImpl.updateManifestProperties",
+      {
+        ...options,
+        value: {
+          canDelete: options.canDelete,
+          canWrite: options.canWrite,
+          canList: options.canList,
+          canRead: options.canRead,
+        },
+      },
+      async (updatedOptions) => {
+        const result = await this.client.containerRegistry.updateManifestProperties(
+          this.repositoryName,
+          await this.getDigest(),
+          updatedOptions,
+        );
+        return toArtifactManifestProperties(
+          result,
+          this.repositoryName,
+          result.registryLoginServer!,
+        );
+      },
+    );
   }
 
   /**
@@ -393,25 +386,23 @@ export class RegistryArtifactImpl {
    */
   public async getTagProperties(
     tag: string,
-    options: GetTagPropertiesOptions = {}
+    options: GetTagPropertiesOptions = {},
   ): Promise<ArtifactTagProperties> {
     if (!tag) {
       throw new Error("invalid tag");
     }
 
-    const { span, updatedOptions } = createSpan("RegistryArtifact-getTagProperties", options);
-    try {
-      return await this.client.containerRegistry.getTagProperties(
-        this.repositoryName,
-        tag,
-        updatedOptions
-      );
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "RegistryArtifactImpl.getTagProperties",
+      options,
+      (updatedOptions) => {
+        return this.client.containerRegistry.getTagProperties(
+          this.repositoryName,
+          tag,
+          updatedOptions,
+        );
+      },
+    );
   }
 
   /**
@@ -434,34 +425,31 @@ export class RegistryArtifactImpl {
    */
   public async updateTagProperties(
     tag: string,
-    options: UpdateTagPropertiesOptions
+    options: UpdateTagPropertiesOptions,
   ): Promise<ArtifactTagProperties> {
     if (!tag) {
       throw new Error("invalid tag");
     }
 
-    const { span, updatedOptions } = createSpan("RegistryArtifact-updateTagProperties", {
-      ...options,
-      value: {
-        canDelete: options.canDelete,
-        canWrite: options.canWrite,
-        canList: options.canList,
-        canRead: options.canRead
-      }
-    });
-
-    try {
-      return await this.client.containerRegistry.updateTagAttributes(
-        this.repositoryName,
-        tag,
-        updatedOptions
-      );
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "RegistryArtifactImpl.updateTagProperties",
+      {
+        ...options,
+        value: {
+          canDelete: options.canDelete,
+          canWrite: options.canWrite,
+          canList: options.canList,
+          canRead: options.canRead,
+        },
+      },
+      (updatedOptions) => {
+        return this.client.containerRegistry.updateTagAttributes(
+          this.repositoryName,
+          tag,
+          updatedOptions,
+        );
+      },
+    );
   }
 
   /**
@@ -508,7 +496,7 @@ export class RegistryArtifactImpl {
    * @param options -
    */
   public listTagProperties(
-    options: ListTagPropertiesOptions = {}
+    options: ListTagPropertiesOptions = {},
   ): PagedAsyncIterableIterator<ArtifactTagProperties, TagPageResponse> {
     const iter = this.listTagsItems(options);
 
@@ -519,12 +507,12 @@ export class RegistryArtifactImpl {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: (settings: PageSettings = {}) => this.listTagsPage(settings, options)
+      byPage: (settings: PageSettings = {}) => this.listTagsPage(settings, options),
     };
   }
 
   private async *listTagsItems(
-    options: ListTagPropertiesOptions = {}
+    options: ListTagPropertiesOptions = {},
   ): AsyncIterableIterator<ArtifactTagProperties> {
     for await (const page of this.listTagsPage({}, options)) {
       yield* page;
@@ -533,18 +521,18 @@ export class RegistryArtifactImpl {
 
   private async *listTagsPage(
     continuationState: PageSettings,
-    options: ListTagPropertiesOptions = {}
+    options: ListTagPropertiesOptions = {},
   ): AsyncIterableIterator<TagPageResponse> {
-    const orderby = toServiceTagOrderBy(options.orderBy);
+    const orderby = toServiceTagOrderBy(options.order);
     if (!continuationState.continuationToken) {
       const optionsComplete = {
         ...options,
         n: continuationState.maxPageSize,
-        orderby
+        orderby,
       };
       const currentPage = await this.client.containerRegistry.getTags(
         this.repositoryName,
-        optionsComplete
+        optionsComplete,
       );
       continuationState.continuationToken = extractNextLink(currentPage.link);
       if (currentPage.tagAttributeBases) {
@@ -552,12 +540,12 @@ export class RegistryArtifactImpl {
           return {
             registryLoginServer: currentPage.registryLoginServer,
             repositoryName: currentPage.repository,
-            ...t
+            ...t,
           };
         });
         yield Object.defineProperty(array, "continuationToken", {
           value: continuationState.continuationToken,
-          enumerable: true
+          enumerable: true,
         });
       }
     }
@@ -565,7 +553,7 @@ export class RegistryArtifactImpl {
       const currentPage = await this.client.containerRegistry.getTagsNext(
         this.repositoryName,
         continuationState.continuationToken,
-        options
+        options,
       );
       continuationState.continuationToken = extractNextLink(currentPage.link);
       if (currentPage.tagAttributeBases) {
@@ -573,12 +561,12 @@ export class RegistryArtifactImpl {
           return {
             registryLoginServer: currentPage.registryLoginServer,
             repositoryName: currentPage.repository,
-            ...t
+            ...t,
           };
         });
         yield Object.defineProperty(array, "continuationToken", {
           value: continuationState.continuationToken,
-          enumerable: true
+          enumerable: true,
         });
       }
     }

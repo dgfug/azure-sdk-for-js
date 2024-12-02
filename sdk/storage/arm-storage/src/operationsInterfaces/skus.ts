@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import { SkuInformation, SkusListOptionalParams } from "../models";
 
@@ -18,6 +17,6 @@ export interface Skus {
    * @param options The options parameters.
    */
   list(
-    options?: SkusListOptionalParams
+    options?: SkusListOptionalParams,
   ): PagedAsyncIterableIterator<SkuInformation>;
 }

@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { assert } from "chai";
+import type { SearchField as GeneratedSearchField } from "../../src/generated/service/models/index";
+import { KnownAnalyzerNames } from "../../src/index";
+import type { ComplexField, SearchField } from "../../src/serviceModels";
 import { convertFieldsToGenerated, convertFieldsToPublic } from "../../src/serviceUtils";
-import { SearchField as GeneratedSearchField } from "../../src/generated/service/models/index";
-import { KnownLexicalAnalyzerName } from "../../src/index";
-import { ComplexField, SearchField } from "../../src/serviceModels";
 
-describe("serviceUtils", () => {
-  it("convert generated fields to public fields", () => {
+describe("serviceUtils", function () {
+  it("convert generated fields to public fields", function () {
     const publicFields: SearchField[] = convertFieldsToPublic([
       {
         name: "id",
@@ -19,12 +19,12 @@ describe("serviceUtils", () => {
         filterable: true,
         facetable: true,
         retrievable: false,
-        analyzer: KnownLexicalAnalyzerName.ArMicrosoft,
-        indexAnalyzer: KnownLexicalAnalyzerName.ArLucene,
-        normalizer: KnownLexicalAnalyzerName.BgLucene,
-        searchAnalyzer: KnownLexicalAnalyzerName.CaLucene,
-        synonymMaps: undefined
-      }
+        analyzer: KnownAnalyzerNames.ArMicrosoft,
+        indexAnalyzer: KnownAnalyzerNames.ArLucene,
+        normalizer: KnownAnalyzerNames.BgLucene,
+        searchAnalyzer: KnownAnalyzerNames.CaLucene,
+        synonymMaps: undefined,
+      },
     ]);
 
     assert.include(publicFields[0], {
@@ -36,15 +36,15 @@ describe("serviceUtils", () => {
       filterable: true,
       facetable: true,
       hidden: true,
-      analyzerName: KnownLexicalAnalyzerName.ArMicrosoft,
-      indexAnalyzerName: KnownLexicalAnalyzerName.ArLucene,
-      normalizerName: KnownLexicalAnalyzerName.BgLucene,
-      searchAnalyzerName: KnownLexicalAnalyzerName.CaLucene,
-      synonymMapNames: undefined
+      analyzerName: KnownAnalyzerNames.ArMicrosoft,
+      indexAnalyzerName: KnownAnalyzerNames.ArLucene,
+      normalizerName: KnownAnalyzerNames.BgLucene,
+      searchAnalyzerName: KnownAnalyzerNames.CaLucene,
+      synonymMapNames: undefined,
     });
   });
 
-  it("convert generated fields (complex) to public fields", () => {
+  it("convert generated fields (complex) to public fields", function () {
     const publicFields: SearchField[] = convertFieldsToPublic([
       {
         name: "ComplexObj",
@@ -59,19 +59,19 @@ describe("serviceUtils", () => {
             filterable: true,
             facetable: true,
             retrievable: false,
-            analyzer: KnownLexicalAnalyzerName.ArMicrosoft,
-            indexAnalyzer: KnownLexicalAnalyzerName.ArLucene,
-            normalizer: KnownLexicalAnalyzerName.BgLucene,
-            searchAnalyzer: KnownLexicalAnalyzerName.CaLucene,
-            synonymMaps: undefined
-          }
-        ]
-      }
+            analyzer: KnownAnalyzerNames.ArMicrosoft,
+            indexAnalyzer: KnownAnalyzerNames.ArLucene,
+            normalizer: KnownAnalyzerNames.BgLucene,
+            searchAnalyzer: KnownAnalyzerNames.CaLucene,
+            synonymMaps: undefined,
+          },
+        ],
+      },
     ]);
 
     assert.include(publicFields[0], {
       name: "ComplexObj",
-      type: "Edm.ComplexType"
+      type: "Edm.ComplexType",
     });
 
     assert.include((publicFields[0] as ComplexField).fields![0], {
@@ -83,16 +83,16 @@ describe("serviceUtils", () => {
       filterable: true,
       facetable: true,
       hidden: true,
-      analyzerName: KnownLexicalAnalyzerName.ArMicrosoft,
-      indexAnalyzerName: KnownLexicalAnalyzerName.ArLucene,
-      normalizerName: KnownLexicalAnalyzerName.BgLucene,
-      searchAnalyzerName: KnownLexicalAnalyzerName.CaLucene,
-      synonymMapNames: undefined
+      analyzerName: KnownAnalyzerNames.ArMicrosoft,
+      indexAnalyzerName: KnownAnalyzerNames.ArLucene,
+      normalizerName: KnownAnalyzerNames.BgLucene,
+      searchAnalyzerName: KnownAnalyzerNames.CaLucene,
+      synonymMapNames: undefined,
     });
   });
 
-  it("convert public fields to generated fields", () => {
-    const generatedFields: GeneratedSearchField[] = convertFieldsToGenerated([
+  it("convert public fields to generated fields", function () {
+    const generatedFields: GeneratedSearchField[] | undefined = convertFieldsToGenerated([
       {
         name: "id",
         key: true,
@@ -102,15 +102,15 @@ describe("serviceUtils", () => {
         filterable: true,
         facetable: true,
         hidden: true,
-        analyzerName: KnownLexicalAnalyzerName.ArMicrosoft,
-        indexAnalyzerName: KnownLexicalAnalyzerName.ArLucene,
-        normalizerName: KnownLexicalAnalyzerName.BgLucene,
-        searchAnalyzerName: KnownLexicalAnalyzerName.CaLucene,
-        synonymMapNames: undefined
-      }
+        analyzerName: KnownAnalyzerNames.ArMicrosoft,
+        indexAnalyzerName: KnownAnalyzerNames.ArLucene,
+        normalizerName: KnownAnalyzerNames.BgLucene,
+        searchAnalyzerName: KnownAnalyzerNames.CaLucene,
+        synonymMapNames: undefined,
+      },
     ]);
 
-    assert.include(generatedFields[0], {
+    assert.include(generatedFields?.[0], {
       name: "id",
       key: true,
       type: "Edm.String",
@@ -119,16 +119,16 @@ describe("serviceUtils", () => {
       filterable: true,
       facetable: true,
       retrievable: false,
-      analyzer: KnownLexicalAnalyzerName.ArMicrosoft,
-      indexAnalyzer: KnownLexicalAnalyzerName.ArLucene,
-      normalizer: KnownLexicalAnalyzerName.BgLucene,
-      searchAnalyzer: KnownLexicalAnalyzerName.CaLucene,
-      synonymMaps: undefined
+      analyzer: KnownAnalyzerNames.ArMicrosoft,
+      indexAnalyzer: KnownAnalyzerNames.ArLucene,
+      normalizer: KnownAnalyzerNames.BgLucene,
+      searchAnalyzer: KnownAnalyzerNames.CaLucene,
+      synonymMaps: undefined,
     });
   });
 
-  it("convert public fields (complex) to generated fields", () => {
-    const generatedFields: GeneratedSearchField[] = convertFieldsToGenerated([
+  it("convert public fields (complex) to generated fields", function () {
+    const generatedFields: GeneratedSearchField[] | undefined = convertFieldsToGenerated([
       {
         name: "ComplexObj",
         type: "Edm.ComplexType",
@@ -142,22 +142,22 @@ describe("serviceUtils", () => {
             filterable: true,
             facetable: true,
             hidden: true,
-            analyzerName: KnownLexicalAnalyzerName.ArMicrosoft,
-            indexAnalyzerName: KnownLexicalAnalyzerName.ArLucene,
-            normalizerName: KnownLexicalAnalyzerName.BgLucene,
-            searchAnalyzerName: KnownLexicalAnalyzerName.CaLucene,
-            synonymMapNames: undefined
-          }
-        ]
-      }
+            analyzerName: KnownAnalyzerNames.ArMicrosoft,
+            indexAnalyzerName: KnownAnalyzerNames.ArLucene,
+            normalizerName: KnownAnalyzerNames.BgLucene,
+            searchAnalyzerName: KnownAnalyzerNames.CaLucene,
+            synonymMapNames: undefined,
+          },
+        ],
+      },
     ]);
 
-    assert.include(generatedFields[0], {
+    assert.include(generatedFields?.[0], {
       name: "ComplexObj",
-      type: "Edm.ComplexType"
+      type: "Edm.ComplexType",
     });
 
-    assert.include(generatedFields[0].fields![0], {
+    assert.include(generatedFields?.[0].fields![0], {
       name: "id",
       key: true,
       type: "Edm.String",
@@ -166,11 +166,11 @@ describe("serviceUtils", () => {
       filterable: true,
       facetable: true,
       retrievable: false,
-      analyzer: KnownLexicalAnalyzerName.ArMicrosoft,
-      indexAnalyzer: KnownLexicalAnalyzerName.ArLucene,
-      normalizer: KnownLexicalAnalyzerName.BgLucene,
-      searchAnalyzer: KnownLexicalAnalyzerName.CaLucene,
-      synonymMaps: undefined
+      analyzer: KnownAnalyzerNames.ArMicrosoft,
+      indexAnalyzer: KnownAnalyzerNames.ArLucene,
+      normalizer: KnownAnalyzerNames.BgLucene,
+      searchAnalyzer: KnownAnalyzerNames.CaLucene,
+      synonymMaps: undefined,
     });
   });
 });

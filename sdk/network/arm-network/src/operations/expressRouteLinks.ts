@@ -6,32 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ExpressRouteLinks } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
   ExpressRouteLink,
   ExpressRouteLinksListNextOptionalParams,
   ExpressRouteLinksListOptionalParams,
+  ExpressRouteLinksListResponse,
   ExpressRouteLinksGetOptionalParams,
   ExpressRouteLinksGetResponse,
-  ExpressRouteLinksListResponse,
-  ExpressRouteLinksListNextResponse
+  ExpressRouteLinksListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ExpressRouteLinks operations. */
 export class ExpressRouteLinksImpl implements ExpressRouteLinks {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class ExpressRouteLinks class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -44,12 +45,12 @@ export class ExpressRouteLinksImpl implements ExpressRouteLinks {
   public list(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRouteLinksListOptionalParams
+    options?: ExpressRouteLinksListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteLink> {
     const iter = this.listPagingAll(
       resourceGroupName,
       expressRoutePortName,
-      options
+      options,
     );
     return {
       next() {
@@ -58,49 +59,62 @@ export class ExpressRouteLinksImpl implements ExpressRouteLinks {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           expressRoutePortName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRouteLinksListOptionalParams
+    options?: ExpressRouteLinksListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ExpressRouteLink[]> {
-    let result = await this._list(
-      resourceGroupName,
-      expressRoutePortName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ExpressRouteLinksListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        expressRoutePortName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         expressRoutePortName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRouteLinksListOptionalParams
+    options?: ExpressRouteLinksListOptionalParams,
   ): AsyncIterableIterator<ExpressRouteLink> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       expressRoutePortName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -117,11 +131,11 @@ export class ExpressRouteLinksImpl implements ExpressRouteLinks {
     resourceGroupName: string,
     expressRoutePortName: string,
     linkName: string,
-    options?: ExpressRouteLinksGetOptionalParams
+    options?: ExpressRouteLinksGetOptionalParams,
   ): Promise<ExpressRouteLinksGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, expressRoutePortName, linkName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -134,11 +148,11 @@ export class ExpressRouteLinksImpl implements ExpressRouteLinks {
   private _list(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRouteLinksListOptionalParams
+    options?: ExpressRouteLinksListOptionalParams,
   ): Promise<ExpressRouteLinksListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, expressRoutePortName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -153,11 +167,11 @@ export class ExpressRouteLinksImpl implements ExpressRouteLinks {
     resourceGroupName: string,
     expressRoutePortName: string,
     nextLink: string,
-    options?: ExpressRouteLinksListNextOptionalParams
+    options?: ExpressRouteLinksListNextOptionalParams,
   ): Promise<ExpressRouteLinksListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, expressRoutePortName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -165,16 +179,15 @@ export class ExpressRouteLinksImpl implements ExpressRouteLinks {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}/links/{linkName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}/links/{linkName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteLink
+      bodyMapper: Mappers.ExpressRouteLink,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -182,52 +195,50 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.expressRoutePortName,
-    Parameters.linkName
+    Parameters.linkName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}/links",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}/links",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteLinkListResult
+      bodyMapper: Mappers.ExpressRouteLinkListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRoutePortName
+    Parameters.expressRoutePortName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteLinkListResult
+      bodyMapper: Mappers.ExpressRouteLinkListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.expressRoutePortName
+    Parameters.expressRoutePortName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

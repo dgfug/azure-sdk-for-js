@@ -1,49 +1,45 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-/// <reference lib="esnext.asynciterable" />
-
-import { Context } from "mocha";
-
-import { env, Recorder, record, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import ConfidentialLedger, { ConfidentialLedgerRestClient } from "../../../src";
-import { ClientSecretCredential } from "@azure/identity";
-
-import "./env";
-
+import type { ConfidentialLedgerClient } from "../../../src/index.js";
+import ConfidentialLedger, { getLedgerIdentity } from "../../../src/index.js";
+import {
+  Recorder,
+  env,
+  assertEnvironmentVariable,
+  isPlaybackMode,
+} from "@azure-tools/test-recorder";
+import type { TestInfo } from "@azure-tools/test-recorder";
+import { createTestCredential } from "@azure-tools/test-credential";
 const replaceableVariables: { [k: string]: string } = {
-  ENDPOINT: "https://endpoint",
-  AZURE_CLIENT_ID: "azure_client_id",
-  AZURE_CLIENT_SECRET: "azure_client_secret",
-  AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
-  LEDGER_IDENTITY: "FAKE_CERT",
+  LEDGER_URI: "https://test-ledger.confidential-ledger.azure.com",
+  AZURE_CLIENT_OID: "azure_client_oid",
+  IDENTITY_SERVICE_URL: "https://identity.confidential-ledger.core.azure.com",
+  LEDGER_NAME: "test-ledger",
 };
 
-export const environmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording.replace(/"access_token"\s?:\s?"[^"]*"/g, `"access_token":"access_token"`),
-    // If we put ENDPOINT in replaceableVariables above, it will not capture
-    // the endpoint string used with nock, which will be expanded to
-    // https://<endpoint>:443/ and therefore will not match, so we have to do
-    // this instead.
-    (recording: string): string => {
-      const replaced = recording.replace("endpoint:443", "endpoint");
-
-      return replaced;
-    },
-  ],
-  queryParametersToSkip: [],
-};
-
-export function createClient(): ConfidentialLedgerRestClient {
-  const credential = new ClientSecretCredential(
-    env["AZURE_TENANT_ID"],
-    env["AZURE_CLIENT_ID"],
-    env["AZURE_CLIENT_SECRET"]
+export async function getledgerIdentityCertificate(): Promise<string> {
+  if (isPlaybackMode()) {
+    return "";
+  }
+  const { ledgerIdentityCertificate } = await getLedgerIdentity(
+    assertEnvironmentVariable("LEDGER_NAME"),
+    env.IDENTITY_SERVICE_URL,
   );
-  return ConfidentialLedger(env.ENDPOINT, env.LEDGER_IDENTITY, credential);
+  return ledgerIdentityCertificate;
+}
+
+export async function createClient(recorder: Recorder): Promise<ConfidentialLedgerClient> {
+  const clientCredential = createTestCredential();
+
+  const ledgerIdentityCertificate = await getledgerIdentityCertificate();
+
+  return ConfidentialLedger(
+    assertEnvironmentVariable("LEDGER_URI"),
+    ledgerIdentityCertificate,
+    clientCredential,
+    recorder.configureClientOptions({}),
+  );
 }
 
 /**
@@ -51,6 +47,34 @@ export function createClient(): ConfidentialLedgerRestClient {
  * Should be called first in the test suite to make sure environment variables are
  * read before they are being used.
  */
-export function createRecorder(context: Context): Recorder {
-  return record(context, environmentSetup);
+export async function createRecorder(context: TestInfo): Promise<Recorder> {
+  const ledgerIdentityCertificate = await getledgerIdentityCertificate();
+  const recorder = new Recorder(context);
+  const uriSanitizers = [];
+  if (env.AZURE_CLIENT_OID) {
+    uriSanitizers.push({
+      target: env.AZURE_CLIENT_OID,
+      value: replaceableVariables["AZURE_CLIENT_OID"],
+    });
+  }
+  await recorder.start({
+    tlsValidationCert: ledgerIdentityCertificate,
+    envSetupForPlayback: replaceableVariables,
+    sanitizerOptions: {
+      uriSanitizers,
+    },
+    // userId is not a secret, need it for the get user test
+    removeCentralSanitizers: ["AZSDK3433"],
+  });
+  return recorder;
+}
+
+export function getUniqueName(prefix: string): string {
+  return `${prefix}${new Date().getTime()}${Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(5, "00000")}`;
+}
+
+export function getRecorderUniqueVariable(recorder: Recorder, name: string): string {
+  return recorder.variable(name, getUniqueName(name));
 }

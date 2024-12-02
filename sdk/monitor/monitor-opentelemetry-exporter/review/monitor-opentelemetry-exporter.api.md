@@ -4,19 +4,74 @@
 
 ```ts
 
-import { ExportResult } from '@opentelemetry/core';
-import { ReadableSpan } from '@opentelemetry/tracing';
-import { SpanExporter } from '@opentelemetry/tracing';
+import { AggregationTemporality } from '@opentelemetry/sdk-metrics';
+import type { Attributes } from '@opentelemetry/api';
+import type { Context } from '@opentelemetry/api';
+import * as coreClient from '@azure/core-client';
+import type { ExportResult } from '@opentelemetry/core';
+import { InstrumentType } from '@opentelemetry/sdk-metrics';
+import type { Link } from '@opentelemetry/api';
+import type { LogRecordExporter } from '@opentelemetry/sdk-logs';
+import type { PushMetricExporter } from '@opentelemetry/sdk-metrics';
+import type { ReadableLogRecord } from '@opentelemetry/sdk-logs';
+import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import type { ResourceMetrics } from '@opentelemetry/sdk-metrics';
+import type { Sampler } from '@opentelemetry/sdk-trace-base';
+import type { SamplingResult } from '@opentelemetry/sdk-trace-base';
+import type { SpanExporter } from '@opentelemetry/sdk-trace-base';
+import type { SpanKind } from '@opentelemetry/api';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
-export interface AzureExporterConfig {
-    apiVersion?: ServiceApiVersion;
-    connectionString?: string;
+export interface ApplicationInsightsClientOptionalParams extends coreClient.ServiceClientOptions {
+    endpoint?: string;
+    host?: string;
 }
 
 // @public
-export class AzureMonitorTraceExporter implements SpanExporter {
-    constructor(options?: AzureExporterConfig);
+export class ApplicationInsightsSampler implements Sampler {
+    constructor(samplingRatio?: number);
+    shouldSample(context: Context, traceId: string, spanName: string, spanKind: SpanKind, attributes: Attributes, links: Link[]): SamplingResult;
+    toString(): string;
+}
+
+// @public
+export abstract class AzureMonitorBaseExporter {
+    constructor(options?: AzureMonitorExporterOptions, isStatsbeatExporter?: boolean);
+    protected aadAudience: string | undefined;
+    protected endpointUrl: string;
+    protected instrumentationKey: string;
+    protected trackStatsbeat: boolean;
+}
+
+// @public
+export interface AzureMonitorExporterOptions extends ApplicationInsightsClientOptionalParams {
+    apiVersion?: ServiceApiVersion;
+    connectionString?: string;
+    credential?: TokenCredential;
+    disableOfflineStorage?: boolean;
+    storageDirectory?: string;
+}
+
+// @public
+export class AzureMonitorLogExporter extends AzureMonitorBaseExporter implements LogRecordExporter {
+    constructor(options?: AzureMonitorExporterOptions);
+    export(logs: ReadableLogRecord[], resultCallback: (result: ExportResult) => void): Promise<void>;
+    shutdown(): Promise<void>;
+}
+
+// @public
+export class AzureMonitorMetricExporter extends AzureMonitorBaseExporter implements PushMetricExporter {
+    constructor(options?: AzureMonitorExporterOptions);
+    export(metrics: ResourceMetrics, resultCallback: (result: ExportResult) => void): Promise<void>;
+    forceFlush(): Promise<void>;
+    selectAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality;
+    shutdown(): Promise<void>;
+}
+
+// @public
+export class AzureMonitorTraceExporter extends AzureMonitorBaseExporter implements SpanExporter {
+    constructor(options?: AzureMonitorExporterOptions);
     export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): Promise<void>;
     shutdown(): Promise<void>;
 }
@@ -25,7 +80,6 @@ export class AzureMonitorTraceExporter implements SpanExporter {
 export enum ServiceApiVersion {
     V2 = "2020-09-15_Preview"
 }
-
 
 // (No @packageDocumentation comment for this package)
 

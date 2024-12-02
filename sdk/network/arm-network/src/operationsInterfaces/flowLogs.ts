@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   FlowLog,
   FlowLogsListOptionalParams,
@@ -18,7 +18,7 @@ import {
   FlowLogsUpdateTagsResponse,
   FlowLogsGetOptionalParams,
   FlowLogsGetResponse,
-  FlowLogsDeleteOptionalParams
+  FlowLogsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,7 +33,7 @@ export interface FlowLogs {
   list(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: FlowLogsListOptionalParams
+    options?: FlowLogsListOptionalParams,
   ): PagedAsyncIterableIterator<FlowLog>;
   /**
    * Create or update a flow log for the specified network security group.
@@ -48,10 +48,10 @@ export interface FlowLogs {
     networkWatcherName: string,
     flowLogName: string,
     parameters: FlowLog,
-    options?: FlowLogsCreateOrUpdateOptionalParams
+    options?: FlowLogsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<FlowLogsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<FlowLogsCreateOrUpdateResponse>,
       FlowLogsCreateOrUpdateResponse
     >
   >;
@@ -68,7 +68,7 @@ export interface FlowLogs {
     networkWatcherName: string,
     flowLogName: string,
     parameters: FlowLog,
-    options?: FlowLogsCreateOrUpdateOptionalParams
+    options?: FlowLogsCreateOrUpdateOptionalParams,
   ): Promise<FlowLogsCreateOrUpdateResponse>;
   /**
    * Update tags of the specified flow log.
@@ -83,7 +83,7 @@ export interface FlowLogs {
     networkWatcherName: string,
     flowLogName: string,
     parameters: TagsObject,
-    options?: FlowLogsUpdateTagsOptionalParams
+    options?: FlowLogsUpdateTagsOptionalParams,
   ): Promise<FlowLogsUpdateTagsResponse>;
   /**
    * Gets a flow log resource by name.
@@ -96,7 +96,7 @@ export interface FlowLogs {
     resourceGroupName: string,
     networkWatcherName: string,
     flowLogName: string,
-    options?: FlowLogsGetOptionalParams
+    options?: FlowLogsGetOptionalParams,
   ): Promise<FlowLogsGetResponse>;
   /**
    * Deletes the specified flow log resource.
@@ -109,8 +109,8 @@ export interface FlowLogs {
     resourceGroupName: string,
     networkWatcherName: string,
     flowLogName: string,
-    options?: FlowLogsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: FlowLogsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified flow log resource.
    * @param resourceGroupName The name of the resource group.
@@ -122,6 +122,6 @@ export interface FlowLogs {
     resourceGroupName: string,
     networkWatcherName: string,
     flowLogName: string,
-    options?: FlowLogsDeleteOptionalParams
+    options?: FlowLogsDeleteOptionalParams,
   ): Promise<void>;
 }

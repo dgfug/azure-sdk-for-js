@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { truncatedISO8061Date } from "../utils/truncateISO8061Date";
-import { UserDelegationKey } from "./models";
-import { ipRangeToString, SasIPRange } from "./sasIPRange";
+import type { SasIPRange } from "./sasIPRange.js";
+import { ipRangeToString } from "./sasIPRange.js";
+import type { UserDelegationKey } from "./models.js";
+import { truncatedISO8061Date } from "../utils/truncateISO8061Date.js";
 
 /**
  * Protocols for generated SAS.
@@ -132,6 +133,30 @@ export class SasQueryParameters {
   public readonly correlationId?: string;
 
   /**
+   * Optional, but startPartitionKey must accompany startRowKey. The minimum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no lower bound on the table entities that can be accessed.
+   */
+  public readonly startPartitionKey?: string;
+
+  /**
+   * Optional, but startPartitionKey must accompany startRowKey. The minimum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no lower bound on the table entities that can be accessed.
+   */
+  public readonly startRowKey?: string;
+
+  /**
+   * Optional, but endPartitionKey must accompany endRowKey. The maximum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no upper bound on the table entities that can be accessed.
+   */
+  public readonly endPartitionKey?: string;
+
+  /**
+   * Optional, but endPartitionKey must accompany endRowKey. The maximum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no upper bound on the table entities that can be accessed.
+   */
+  public readonly endRowKey?: string;
+
+  /**
    * Optional. IP range allowed for this SAS.
    *
    * @readonly
@@ -140,7 +165,7 @@ export class SasQueryParameters {
     if (this.ipRangeInner) {
       return {
         end: this.ipRangeInner.end,
-        start: this.ipRangeInner.start
+        start: this.ipRangeInner.start,
       };
     }
     return undefined;
@@ -166,6 +191,10 @@ export class SasQueryParameters {
     this.ipRangeInner = options.ipRange;
     this.identifier = options.identifier;
     this.tableName = options.tableName;
+    this.endPartitionKey = options.endPartitionKey;
+    this.endRowKey = options.endRowKey;
+    this.startPartitionKey = options.startPartitionKey;
+    this.startRowKey = options.startRowKey;
 
     if (options.userDelegationKey) {
       this.signedOid = options.userDelegationKey.signedObjectId;
@@ -186,31 +215,35 @@ export class SasQueryParameters {
    */
   public toString(): string {
     const params: string[] = [
-      "sv",
-      "ss",
-      "srt",
-      "spr",
-      "st",
-      "se",
-      "sip",
-      "si",
+      "sv", // SignedVersion
+      "ss", // SignedServices
+      "srt", // SignedResourceTypes
+      "spr", // SignedProtocol
+      "st", // SignedStart
+      "se", // SignedExpiry
+      "sip", // SignedIP
+      "si", // SignedIdentifier
       "skoid", // Signed object ID
       "sktid", // Signed tenant ID
       "skt", // Signed key start time
       "ske", // Signed key expiry time
       "sks", // Signed key service
       "skv", // Signed key version
-      "sr",
-      "sp",
-      "sig",
-      "rscc",
-      "rscd",
-      "rsce",
-      "rscl",
-      "rsct",
-      "saoid",
-      "scid",
-      "tn" // TableName
+      "sr", // signedResource
+      "sp", // SignedPermission
+      "sig", // Signature
+      "rscc", // Cache-Control
+      "rscd", // Content-Disposition
+      "rsce", // Content-Encoding
+      "rscl", // Content-Language
+      "rsct", // Content-Type
+      "saoid", // signedAuthorizedObjectId
+      "scid", // signedCorrelationId
+      "tn", // TableName,
+      "srk", // StartRowKey
+      "spk", // StartPartitionKey
+      "epk", // EndPartitionKey
+      "erk", // EndRowKey
     ];
     const queries: string[] = [];
 
@@ -232,21 +265,21 @@ export class SasQueryParameters {
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.startsOn ? truncatedISO8061Date(this.startsOn, false) : undefined
+            this.startsOn ? truncatedISO8061Date(this.startsOn, false) : undefined,
           );
           break;
         case "se":
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.expiresOn ? truncatedISO8061Date(this.expiresOn, false) : undefined
+            this.expiresOn ? truncatedISO8061Date(this.expiresOn, false) : undefined,
           );
           break;
         case "sip":
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.ipRange ? ipRangeToString(this.ipRange) : undefined
+            this.ipRange ? ipRangeToString(this.ipRange) : undefined,
           );
           break;
         case "si":
@@ -262,14 +295,14 @@ export class SasQueryParameters {
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.signedStartsOn ? truncatedISO8061Date(this.signedStartsOn, false) : undefined
+            this.signedStartsOn ? truncatedISO8061Date(this.signedStartsOn, false) : undefined,
           );
           break;
         case "ske": // Signed key expiry time
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.signedExpiresOn ? truncatedISO8061Date(this.signedExpiresOn, false) : undefined
+            this.signedExpiresOn ? truncatedISO8061Date(this.signedExpiresOn, false) : undefined,
           );
           break;
         case "sks": // Signed key service
@@ -292,6 +325,18 @@ export class SasQueryParameters {
           break;
         case "tn":
           this.tryAppendQueryParameter(queries, param, this.tableName);
+          break;
+        case "spk":
+          this.tryAppendQueryParameter(queries, param, this.startPartitionKey);
+          break;
+        case "srk":
+          this.tryAppendQueryParameter(queries, param, this.startRowKey);
+          break;
+        case "epk":
+          this.tryAppendQueryParameter(queries, param, this.endPartitionKey);
+          break;
+        case "erk":
+          this.tryAppendQueryParameter(queries, param, this.endRowKey);
           break;
       }
     }
@@ -386,4 +431,28 @@ export interface SasQueryParametersOptions {
    * This is only used for User Delegation SAS.
    */
   correlationId?: string;
+
+  /**
+   * Optional, but startPartitionKey must accompany startRowKey. The minimum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no lower bound on the table entities that can be accessed.
+   */
+  startPartitionKey?: string;
+
+  /**
+   * Optional, but startPartitionKey must accompany startRowKey. The minimum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no lower bound on the table entities that can be accessed.
+   */
+  startRowKey?: string;
+
+  /**
+   * Optional, but endPartitionKey must accompany endRowKey. The maximum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no upper bound on the table entities that can be accessed.
+   */
+  endPartitionKey?: string;
+
+  /**
+   * Optional, but endPartitionKey must accompany endRowKey. The maximum partition and row keys that are accessible with this shared access signature.
+   * Key values are inclusive. If they're omitted, there's no upper bound on the table entities that can be accessed.
+   */
+  endRowKey?: string;
 }

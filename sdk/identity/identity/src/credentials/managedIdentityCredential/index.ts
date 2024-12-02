@@ -1,23 +1,62 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { SpanStatusCode } from "@azure/core-tracing";
-import { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
+import type { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
 
-import { IdentityClient } from "../../client/identityClient";
-import { TokenCredentialOptions } from "../../tokenCredentialOptions";
-import { AuthenticationError, CredentialUnavailableError } from "../../errors";
-import { credentialLogger, formatSuccess, formatError } from "../../util/logging";
-import { appServiceMsi2017 } from "./appServiceMsi2017";
-import { createSpan } from "../../util/tracing";
-import { cloudShellMsi } from "./cloudShellMsi";
-import { imdsMsi } from "./imdsMsi";
-import { MSI } from "./models";
-import { arcMsi } from "./arcMsi";
-import { tokenExchangeMsi } from "./tokenExchangeMsi";
-import { fabricMsi } from "./fabricMsi";
+import type { TokenCredentialOptions } from "../../tokenCredentialOptions.js";
+import { getLogLevel } from "@azure/logger";
+import { ManagedIdentityApplication } from "@azure/msal-node";
+import { IdentityClient } from "../../client/identityClient.js";
+import { AuthenticationRequiredError, CredentialUnavailableError } from "../../errors.js";
+import { getMSALLogLevel, defaultLoggerCallback } from "../../msal/utils.js";
+import { imdsRetryPolicy } from "./imdsRetryPolicy.js";
+import { MSIConfiguration } from "./models.js";
+import { formatSuccess, formatError, credentialLogger } from "../../util/logging.js";
+import { tracingClient } from "../../util/tracing.js";
+import { imdsMsi } from "./imdsMsi.js";
+import { tokenExchangeMsi } from "./tokenExchangeMsi.js";
+import { mapScopesToResource } from "./utils.js";
+import { MsalToken, ValidMsalToken } from "../../msal/types.js";
 
 const logger = credentialLogger("ManagedIdentityCredential");
+
+/**
+ * Options to send on the {@link ManagedIdentityCredential} constructor.
+ * This variation supports `clientId` and not `resourceId`, since only one of both is supported.
+ */
+export interface ManagedIdentityCredentialClientIdOptions extends TokenCredentialOptions {
+  /**
+   * The client ID of the user - assigned identity, or app registration(when working with AKS pod - identity).
+   */
+  clientId?: string;
+}
+
+/**
+ * Options to send on the {@link ManagedIdentityCredential} constructor.
+ * This variation supports `resourceId` and not `clientId`, since only one of both is supported.
+ */
+export interface ManagedIdentityCredentialResourceIdOptions extends TokenCredentialOptions {
+  /**
+   * Allows specifying a custom resource Id.
+   * In scenarios such as when user assigned identities are created using an ARM template,
+   * where the resource Id of the identity is known but the client Id can't be known ahead of time,
+   * this parameter allows programs to use these user assigned identities
+   * without having to first determine the client Id of the created identity.
+   */
+  resourceId: string;
+}
+
+/**
+ * Options to send on the {@link ManagedIdentityCredential} constructor.
+ * This variation supports `objectId` as a constructor argument.
+ */
+export interface ManagedIdentityCredentialObjectIdOptions extends TokenCredentialOptions {
+  /**
+   * Allows specifying the object ID of the underlying service principal used to authenticate a user-assigned managed identity.
+   * This is an alternative to providing a client ID or resource ID and is not required for system-assigned managed identities.
+   */
+  objectId: string;
+}
 
 /**
  * Attempts authentication using a managed identity available at the deployment environment.
@@ -25,12 +64,20 @@ const logger = credentialLogger("ManagedIdentityCredential");
  * Azure Kubernetes Services, Azure Service Fabric instances and inside of the Azure Cloud Shell.
  *
  * More information about configuring managed identities can be found here:
- * https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
+ * https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
  */
 export class ManagedIdentityCredential implements TokenCredential {
+  private managedIdentityApp: ManagedIdentityApplication;
   private identityClient: IdentityClient;
-  private clientId: string | undefined;
-  private isEndpointUnavailable: boolean | null = null;
+  private clientId?: string;
+  private resourceId?: string;
+  private objectId?: string;
+  private msiRetryConfig: MSIConfiguration["retryConfig"] = {
+    maxRetries: 5,
+    startDelayInMs: 800,
+    intervalIncrement: 2,
+  };
+  private isAvailableIdentityClient: IdentityClient;
 
   /**
    * Creates an instance of ManagedIdentityCredential with the client ID of a
@@ -41,89 +88,113 @@ export class ManagedIdentityCredential implements TokenCredential {
    */
   constructor(clientId: string, options?: TokenCredentialOptions);
   /**
-   * Creates an instance of ManagedIdentityCredential
+   * Creates an instance of ManagedIdentityCredential with a client ID
    *
    * @param options - Options for configuring the client which makes the access token request.
    */
-  constructor(options?: TokenCredentialOptions);
+  constructor(options?: ManagedIdentityCredentialClientIdOptions);
+  /**
+   * Creates an instance of ManagedIdentityCredential with a resource ID
+   *
+   * @param options - Options for configuring the resource which makes the access token request.
+   */
+  constructor(options?: ManagedIdentityCredentialResourceIdOptions);
+  /**
+   * Creates an instance of ManagedIdentityCredential with an object ID
+   *
+   * @param options - Options for configuring the resource which makes the access token request.
+   */
+  constructor(options?: ManagedIdentityCredentialObjectIdOptions);
   /**
    * @internal
    * @hidden
    */
   constructor(
-    clientIdOrOptions: string | TokenCredentialOptions | undefined,
-    options?: TokenCredentialOptions
+    clientIdOrOptions?:
+      | string
+      | ManagedIdentityCredentialClientIdOptions
+      | ManagedIdentityCredentialResourceIdOptions
+      | ManagedIdentityCredentialObjectIdOptions,
+    options?: TokenCredentialOptions,
   ) {
+    let _options: TokenCredentialOptions;
     if (typeof clientIdOrOptions === "string") {
-      // clientId, options constructor
       this.clientId = clientIdOrOptions;
-      this.identityClient = new IdentityClient(options);
+      _options = options ?? {};
     } else {
-      // options only constructor
-      this.identityClient = new IdentityClient(clientIdOrOptions);
+      this.clientId = (clientIdOrOptions as ManagedIdentityCredentialClientIdOptions)?.clientId;
+      _options = clientIdOrOptions ?? {};
     }
-  }
+    this.resourceId = (_options as ManagedIdentityCredentialResourceIdOptions)?.resourceId;
+    this.objectId = (_options as ManagedIdentityCredentialObjectIdOptions)?.objectId;
 
-  private cachedMSI: MSI | undefined;
-
-  private async cachedAvailableMSI(
-    scopes: string | string[],
-    clientId?: string,
-    getTokenOptions?: GetTokenOptions
-  ): Promise<MSI> {
-    if (this.cachedMSI) {
-      return this.cachedMSI;
-    }
-
-    const MSIs = [fabricMsi, appServiceMsi2017, cloudShellMsi, arcMsi, tokenExchangeMsi(), imdsMsi];
-
-    for (const msi of MSIs) {
-      if (await msi.isAvailable(scopes, this.identityClient, clientId, getTokenOptions)) {
-        this.cachedMSI = msi;
-        return msi;
-      }
-    }
-
-    throw new CredentialUnavailableError(
-      `${ManagedIdentityCredential.name} - No MSI credential available`
-    );
-  }
-
-  private async authenticateManagedIdentity(
-    scopes: string | string[],
-    clientId?: string,
-    getTokenOptions?: GetTokenOptions
-  ): Promise<AccessToken | null> {
-    const { span, updatedOptions } = createSpan(
-      `${ManagedIdentityCredential.name}.authenticateManagedIdentity`,
-      getTokenOptions
-    );
-
-    try {
-      // Determining the available MSI, and avoiding checking for other MSIs while the program is running.
-      const availableMSI = await this.cachedAvailableMSI(scopes, clientId, updatedOptions);
-
-      return availableMSI.getToken(
-        {
-          identityClient: this.identityClient,
-          scopes,
-          clientId
-        },
-        updatedOptions
+    // For JavaScript users.
+    const providedIds = [this.clientId, this.resourceId, this.objectId].filter(Boolean);
+    if (providedIds.length > 1) {
+      throw new Error(
+        `ManagedIdentityCredential: only one of 'clientId', 'resourceId', or 'objectId' can be provided. Received values: ${JSON.stringify(
+          { clientId: this.clientId, resourceId: this.resourceId, objectId: this.objectId },
+        )}`,
       );
-    } catch (err) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: err.message
-      });
-      throw err;
-    } finally {
-      span.end();
+    }
+
+    // ManagedIdentity uses http for local requests
+    _options.allowInsecureConnection = true;
+
+    if (_options.retryOptions?.maxRetries !== undefined) {
+      this.msiRetryConfig.maxRetries = _options.retryOptions.maxRetries;
+    }
+
+    this.identityClient = new IdentityClient({
+      ..._options,
+      additionalPolicies: [{ policy: imdsRetryPolicy(this.msiRetryConfig), position: "perCall" }],
+    });
+
+    this.managedIdentityApp = new ManagedIdentityApplication({
+      managedIdentityIdParams: {
+        userAssignedClientId: this.clientId,
+        userAssignedResourceId: this.resourceId,
+        userAssignedObjectId: this.objectId,
+      },
+      system: {
+        disableInternalRetries: true,
+        networkClient: this.identityClient,
+        loggerOptions: {
+          logLevel: getMSALLogLevel(getLogLevel()),
+          piiLoggingEnabled: _options.loggingOptions?.enableUnsafeSupportLogging,
+          loggerCallback: defaultLoggerCallback(logger),
+        },
+      },
+    });
+
+    this.isAvailableIdentityClient = new IdentityClient({
+      ..._options,
+      retryOptions: {
+        maxRetries: 0,
+      },
+    });
+
+    // CloudShell MSI will ignore any user-assigned identity passed as parameters. To avoid confusion, we prevent this from happening as early as possible.
+    if (this.managedIdentityApp.getManagedIdentitySource() === "CloudShell") {
+      if (this.clientId || this.resourceId || this.objectId) {
+        logger.warning(
+          `CloudShell MSI detected with user-provided IDs - throwing. Received values: ${JSON.stringify(
+            {
+              clientId: this.clientId,
+              resourceId: this.resourceId,
+              objectId: this.objectId,
+            },
+          )}.`,
+        );
+        throw new CredentialUnavailableError(
+          "ManagedIdentityCredential: Specifying a user-assigned managed identity is not supported for CloudShell at runtime. When using Managed Identity in CloudShell, omit the clientId, resourceId, and objectId parameters.",
+        );
+      }
     }
   }
 
   /**
-   * Authenticates with Azure Active Directory and returns an access token if successful.
+   * Authenticates with Microsoft Entra ID and returns an access token if successful.
    * If authentication fails, a {@link CredentialUnavailableError} will be thrown with the details of the failure.
    * If an unexpected error occurs, an {@link AuthenticationError} will be thrown with the details of the failure.
    *
@@ -133,117 +204,158 @@ export class ManagedIdentityCredential implements TokenCredential {
    */
   public async getToken(
     scopes: string | string[],
-    options?: GetTokenOptions
+    options: GetTokenOptions = {},
   ): Promise<AccessToken> {
-    let result: AccessToken | null = null;
+    logger.getToken.info("Using the MSAL provider for Managed Identity.");
+    const resource = mapScopesToResource(scopes);
+    if (!resource) {
+      throw new CredentialUnavailableError(
+        `ManagedIdentityCredential: Multiple scopes are not supported. Scopes: ${JSON.stringify(
+          scopes,
+        )}`,
+      );
+    }
 
-    const { span, updatedOptions } = createSpan(
-      `${ManagedIdentityCredential.name}.getToken`,
-      options
-    );
+    return tracingClient.withSpan("ManagedIdentityCredential.getToken", options, async () => {
+      try {
+        const isTokenExchangeMsi = await tokenExchangeMsi.isAvailable(this.clientId);
 
-    try {
-      // isEndpointAvailable can be true, false, or null,
-      // If it's null, it means we don't yet know whether
-      // the endpoint is available and need to check for it.
-      if (this.isEndpointUnavailable !== true) {
-        result = await this.authenticateManagedIdentity(scopes, this.clientId, updatedOptions);
+        // Most scenarios are handled by MSAL except for two:
+        // AKS pod identity - MSAL does not implement the token exchange flow.
+        // IMDS Endpoint probing - MSAL does not do any probing before trying to get a token.
+        // As a DefaultAzureCredential optimization we probe the IMDS endpoint with a short timeout and no retries before actually trying to get a token
+        // We will continue to implement these features in the Identity library.
 
-        if (result === null) {
-          // If authenticateManagedIdentity returns null,
-          // it means no MSI endpoints are available.
-          // If so, we avoid trying to reach to them in future requests.
-          this.isEndpointUnavailable = true;
+        const identitySource = this.managedIdentityApp.getManagedIdentitySource();
+        const isImdsMsi = identitySource === "DefaultToImds" || identitySource === "Imds"; // Neither actually checks that IMDS endpoint is available, just that it's the source the MSAL _would_ try to use.
 
-          // It also means that the endpoint answered with either 200 or 201 (see the sendTokenRequest method),
-          // yet we had no access token. For this reason, we'll throw once with a specific message:
-          const error = new CredentialUnavailableError(
-            "The managed identity endpoint was reached, yet no tokens were received."
-          );
-          logger.getToken.info(formatError(scopes, error));
-          throw error;
+        logger.getToken.info(`MSAL Identity source: ${identitySource}`);
+
+        if (isTokenExchangeMsi) {
+          // In the AKS scenario we will use the existing tokenExchangeMsi indefinitely.
+          logger.getToken.info("Using the token exchange managed identity.");
+          const result = await tokenExchangeMsi.getToken({
+            scopes,
+            clientId: this.clientId,
+            identityClient: this.identityClient,
+            retryConfig: this.msiRetryConfig,
+            resourceId: this.resourceId,
+          });
+
+          if (result === null) {
+            throw new CredentialUnavailableError(
+              "Attempted to use the token exchange managed identity, but received a null response.",
+            );
+          }
+
+          return result;
+        } else if (isImdsMsi) {
+          // In the IMDS scenario we will probe the IMDS endpoint to ensure it's available before trying to get a token.
+          // If the IMDS endpoint is not available and this is the source that MSAL will use, we will fail-fast with an error that tells DAC to move to the next credential.
+          logger.getToken.info("Using the IMDS endpoint to probe for availability.");
+          const isAvailable = await imdsMsi.isAvailable({
+            scopes,
+            clientId: this.clientId,
+            getTokenOptions: options,
+            identityClient: this.isAvailableIdentityClient,
+            resourceId: this.resourceId,
+          });
+
+          if (!isAvailable) {
+            throw new CredentialUnavailableError(
+              `Attempted to use the IMDS endpoint, but it is not available.`,
+            );
+          }
         }
 
-        // Since `authenticateManagedIdentity` didn't throw, and the result was not null,
-        // We will assume that this endpoint is reachable from this point forward,
-        // and avoid pinging again to it.
-        this.isEndpointUnavailable = false;
-      } else {
-        // We've previously determined that the endpoint was unavailable,
-        // either because it was unreachable or permanently unable to authenticate.
-        const error = new CredentialUnavailableError(
-          "The managed identity endpoint is not currently available"
-        );
-        logger.getToken.info(formatError(scopes, error));
-        throw error;
-      }
+        // If we got this far, it means:
+        // - This is not a tokenExchangeMsi,
+        // - We already probed for IMDS endpoint availability and failed-fast if it's unreachable.
+        // We can proceed normally by calling MSAL for a token.
+        logger.getToken.info("Calling into MSAL for managed identity token.");
+        const token = await this.managedIdentityApp.acquireToken({
+          resource,
+        });
 
-      logger.getToken.info(formatSuccess(scopes));
-      return result;
-    } catch (err) {
-      // CredentialUnavailable errors are expected to reach here.
-      // We intend them to bubble up, so that DefaultAzureCredential can catch them.
-      if (err.name === "AuthenticationRequiredError") {
-        throw err;
-      }
+        this.ensureValidMsalToken(scopes, token, options);
+        logger.getToken.info(formatSuccess(scopes));
 
-      // Expected errors to reach this point:
-      // - Errors coming from a method unexpectedly breaking.
-      // - When identityClient.sendTokenRequest throws, in which case
-      //   if the status code was 400, it means that the endpoint is working,
-      //   but no identity is available.
+        return {
+          expiresOnTimestamp: token.expiresOn.getTime(),
+          token: token.accessToken,
+          refreshAfterTimestamp: token.refreshOn?.getTime(),
+          tokenType: "Bearer",
+        } as AccessToken;
+      } catch (err: any) {
+        logger.getToken.error(formatError(scopes, err));
 
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: err.message
-      });
+        // AuthenticationRequiredError described as Error to enforce authentication after trying to retrieve a token silently.
+        // TODO: why would this _ever_ happen considering we're not trying the silent request in this flow?
+        if (err.name === "AuthenticationRequiredError") {
+          throw err;
+        }
 
-      // If either the network is unreachable,
-      // we can safely assume the credential is unavailable.
-      if (err.code === "ENETUNREACH") {
-        const error = new CredentialUnavailableError(
-          `${ManagedIdentityCredential.name}: Unavailable. Network unreachable. Message: ${err.message}`
-        );
+        if (isNetworkError(err)) {
+          throw new CredentialUnavailableError(
+            `ManagedIdentityCredential: Network unreachable. Message: ${err.message}`,
+            { cause: err },
+          );
+        }
 
-        logger.getToken.info(formatError(scopes, error));
-        throw error;
-      }
-
-      // If either the host was unreachable,
-      // we can safely assume the credential is unavailable.
-      if (err.code === "EHOSTUNREACH") {
-        const error = new CredentialUnavailableError(
-          `${ManagedIdentityCredential.name}: Unavailable. No managed identity endpoint found. Message: ${err.message}`
-        );
-
-        logger.getToken.info(formatError(scopes, error));
-        throw error;
-      }
-
-      // If err.statusCode has a value of 400, it comes from sendTokenRequest,
-      // and it means that the endpoint is working, but that no identity is available.
-      if (err.statusCode === 400) {
         throw new CredentialUnavailableError(
-          `${ManagedIdentityCredential.name}: The managed identity endpoint is indicating there's no available identity. Message: ${err.message}`
+          `ManagedIdentityCredential: Authentication failed. Message ${err.message}`,
+          { cause: err },
         );
       }
+    });
+  }
 
-      // If the error has no status code, we can assume there was no available identity.
-      // This will throw silently during any ChainedTokenCredential.
-      if (err.statusCode === undefined) {
-        throw new CredentialUnavailableError(
-          `${ManagedIdentityCredential.name}: Authentication failed. Message ${err.message}`
-        );
-      }
-
-      // Any other error should break the chain.
-      throw new AuthenticationError(err.statusCode, {
-        error: `${ManagedIdentityCredential.name} authentication failed.`,
-        error_description: err.message
+  /**
+   * Ensures the validity of the MSAL token
+   */
+  private ensureValidMsalToken(
+    scopes: string | string[],
+    msalToken?: MsalToken,
+    getTokenOptions?: GetTokenOptions,
+  ): asserts msalToken is ValidMsalToken {
+    const createError = (message: string): Error => {
+      logger.getToken.info(message);
+      return new AuthenticationRequiredError({
+        scopes: Array.isArray(scopes) ? scopes : [scopes],
+        getTokenOptions,
+        message,
       });
-    } finally {
-      // Finally is always called, both if we return and if we throw in the above try/catch.
-      span.end();
+    };
+    if (!msalToken) {
+      throw createError("No response.");
+    }
+    if (!msalToken.expiresOn) {
+      throw createError(`Response had no "expiresOn" property.`);
+    }
+    if (!msalToken.accessToken) {
+      throw createError(`Response had no "accessToken" property.`);
     }
   }
+}
+
+function isNetworkError(err: any): boolean {
+  // MSAL error
+  if (err.errorCode === "network_error") {
+    return true;
+  }
+
+  // Probe errors
+  if (err.code === "ENETUNREACH" || err.code === "EHOSTUNREACH") {
+    return true;
+  }
+
+  // This is a special case for Docker Desktop which responds with a 403 with a message that contains "A socket operation was attempted to an unreachable network" or "A socket operation was attempted to an unreachable host"
+  // rather than just timing out, as expected.
+  if (err.statusCode === 403 || err.code === 403) {
+    if (err.message.includes("unreachable")) {
+      return true;
+    }
+  }
+
+  return false;
 }

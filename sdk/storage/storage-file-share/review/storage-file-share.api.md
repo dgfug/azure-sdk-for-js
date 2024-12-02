@@ -4,31 +4,28 @@
 
 ```ts
 
-/// <reference types="node" />
-
-import { AbortSignalLike } from '@azure/abort-controller';
+import type { AbortSignalLike } from '@azure/abort-controller';
 import { AzureLogger } from '@azure/logger';
-import { BaseRequestPolicy } from '@azure/core-http';
-import * as coreHttp from '@azure/core-http';
-import { deserializationPolicy } from '@azure/core-http';
-import { HttpHeaders } from '@azure/core-http';
-import { HttpOperationResponse } from '@azure/core-http';
-import { HttpRequestBody } from '@azure/core-http';
-import { HttpResponse } from '@azure/core-http';
-import { HttpClient as IHttpClient } from '@azure/core-http';
-import { KeepAliveOptions } from '@azure/core-http';
-import { OperationTracingOptions } from '@azure/core-tracing';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { ProxyOptions } from '@azure/core-http';
-import { Readable } from 'stream';
-import { RequestPolicy } from '@azure/core-http';
-import { RequestPolicyFactory } from '@azure/core-http';
-import { RequestPolicyOptions } from '@azure/core-http';
-import { RestError } from '@azure/core-http';
-import { ServiceClientOptions } from '@azure/core-http';
-import { TransferProgressEvent } from '@azure/core-http';
-import { UserAgentOptions } from '@azure/core-http';
-import { WebResource } from '@azure/core-http';
+import * as coreClient from '@azure/core-client';
+import * as coreHttpCompat from '@azure/core-http-compat';
+import * as coreRestPipeline from '@azure/core-rest-pipeline';
+import { HttpHeadersLike as HttpHeaders } from '@azure/core-http-compat';
+import { CompatResponse as HttpOperationResponse } from '@azure/core-http-compat';
+import type { HttpPipelineLogLevel } from '@azure/core-http-compat';
+import { RequestBodyType as HttpRequestBody } from '@azure/core-rest-pipeline';
+import type { KeepAliveOptions } from '@azure/core-http-compat';
+import type { OperationTracingOptions } from '@azure/core-tracing';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { ProxySettings } from '@azure/core-rest-pipeline';
+import type { Readable } from 'stream';
+import { RequestPolicy } from '@azure/core-http-compat';
+import { RequestPolicyFactory } from '@azure/core-http-compat';
+import { RequestPolicyOptionsLike as RequestPolicyOptions } from '@azure/core-http-compat';
+import { RestError } from '@azure/core-rest-pipeline';
+import type { TokenCredential } from '@azure/core-auth';
+import type { TransferProgressEvent } from '@azure/core-rest-pipeline';
+import type { UserAgentPolicyOptions } from '@azure/core-rest-pipeline';
+import { WebResourceLike as WebResource } from '@azure/core-http-compat';
 
 // @public
 export interface AccessPolicy {
@@ -92,7 +89,17 @@ export class AnonymousCredentialPolicy extends CredentialPolicy {
     constructor(nextPolicy: RequestPolicy, options: RequestPolicyOptions);
 }
 
-export { BaseRequestPolicy }
+// @public
+export abstract class BaseRequestPolicy implements RequestPolicy {
+    protected constructor(
+    _nextPolicy: RequestPolicy,
+    _options: RequestPolicyOptions);
+    log(logLevel: HttpPipelineLogLevel, message: string): void;
+    readonly _nextPolicy: RequestPolicy;
+    readonly _options: RequestPolicyOptions;
+    abstract sendRequest(webResource: WebResource): Promise<HttpOperationResponse>;
+    shouldLog(logLevel: HttpPipelineLogLevel): boolean;
+}
 
 // @public (undocumented)
 export interface ClearRange {
@@ -133,6 +140,7 @@ export interface CommonOptions {
 // @public
 export interface CopyFileSmbInfo {
     fileAttributes?: string;
+    fileChangeTime?: string;
     fileCreationTime?: string;
     fileLastWriteTime?: string;
     filePermissionCopyMode?: PermissionCopyModeType;
@@ -169,8 +177,6 @@ export type CredentialPolicyCreator = (nextPolicy: RequestPolicy, options: Reque
 
 // @public
 export type DeleteSnapshotsOptionType = "include" | "include-leased";
-
-export { deserializationPolicy }
 
 // @public
 export interface DirectoryCloseHandlesHeaders {
@@ -210,11 +216,7 @@ export interface DirectoryCreateOptions extends FileAndDirectoryCreateCommonOpti
 }
 
 // @public
-export type DirectoryCreateResponse = DirectoryCreateHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: DirectoryCreateHeaders;
-    };
-};
+export type DirectoryCreateResponse = WithResponse<DirectoryCreateHeaders, DirectoryCreateHeaders>;
 
 // @public
 export interface DirectoryDeleteHeaders {
@@ -235,11 +237,7 @@ export interface DirectoryDeleteOptions extends CommonOptions {
 }
 
 // @public
-export type DirectoryDeleteResponse = DirectoryDeleteHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: DirectoryDeleteHeaders;
-    };
-};
+export type DirectoryDeleteResponse = WithResponse<DirectoryDeleteHeaders, DirectoryDeleteHeaders>;
 
 // @public
 export interface DirectoryExistsOptions extends CommonOptions {
@@ -263,11 +261,7 @@ export interface DirectoryForceCloseHandlesOptions extends CommonOptions {
 }
 
 // @public
-export type DirectoryForceCloseHandlesResponse = CloseHandlesInfo & DirectoryCloseHandlesHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: DirectoryForceCloseHandlesHeaders;
-    };
-};
+export type DirectoryForceCloseHandlesResponse = WithResponse<CloseHandlesInfo & DirectoryCloseHandlesHeaders, DirectoryForceCloseHandlesHeaders>;
 
 // @public
 export interface DirectoryForceCloseHandlesSegmentOptions extends CommonOptions {
@@ -302,11 +296,7 @@ export interface DirectoryGetPropertiesOptions extends CommonOptions {
 }
 
 // @public
-export type DirectoryGetPropertiesResponse = DirectoryGetPropertiesHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: DirectoryGetPropertiesHeaders;
-    };
-};
+export type DirectoryGetPropertiesResponse = WithResponse<DirectoryGetPropertiesHeaders, DirectoryGetPropertiesHeaders>;
 
 // @public
 export interface DirectoryItem {
@@ -346,13 +336,7 @@ export interface DirectoryListFilesAndDirectoriesSegmentHeaders {
 }
 
 // @public
-export type DirectoryListFilesAndDirectoriesSegmentResponse = DirectoryListFilesAndDirectoriesSegmentHeaders & ListFilesAndDirectoriesSegmentResponse & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: ListFilesAndDirectoriesSegmentResponse;
-        parsedHeaders: DirectoryListFilesAndDirectoriesSegmentHeaders;
-    };
-};
+export type DirectoryListFilesAndDirectoriesSegmentResponse = WithResponse<DirectoryListFilesAndDirectoriesSegmentHeaders & ListFilesAndDirectoriesSegmentResponse, DirectoryListFilesAndDirectoriesSegmentHeaders, ListFilesAndDirectoriesSegmentResponse>;
 
 // @public
 export interface DirectoryListHandlesHeaders {
@@ -370,13 +354,7 @@ export interface DirectoryListHandlesOptions extends CommonOptions {
 }
 
 // @public
-export type DirectoryListHandlesResponse = DirectoryListHandlesHeaders & ListHandlesResponse & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: ListHandlesResponse;
-        parsedHeaders: DirectoryListHandlesHeaders;
-    };
-};
+export type DirectoryListHandlesResponse = WithResponse<DirectoryListHandlesHeaders & ListHandlesResponse, DirectoryListHandlesHeaders, ListHandlesResponse>;
 
 // @public
 export interface DirectoryListHandlesSegmentOptions extends CommonOptions {
@@ -389,6 +367,41 @@ export interface DirectoryListHandlesSegmentOptions extends CommonOptions {
 export interface DirectoryProperties extends FileAndDirectorySetPropertiesCommonOptions, CommonOptions {
     abortSignal?: AbortSignalLike;
 }
+
+// @public
+export interface DirectoryRenameHeaders {
+    date?: Date;
+    etag?: string;
+    fileAttributes?: string;
+    fileChangeTime?: Date;
+    fileCreationTime?: Date;
+    fileId?: string;
+    fileLastWriteTime?: Date;
+    fileParentId?: string;
+    filePermissionKey?: string;
+    isServerEncrypted?: boolean;
+    lastModified?: Date;
+    requestId?: string;
+    version?: string;
+}
+
+// @public
+export interface DirectoryRenameOptions extends CommonOptions {
+    abortSignal?: AbortSignalLike;
+    copyFileSmbInfo?: CopyFileSmbInfo;
+    destinationLeaseAccessConditions?: LeaseAccessConditions;
+    filePermission?: string;
+    filePermissionFormat?: FilePermissionFormat;
+    filePermissionKey?: string;
+    ignoreReadOnly?: boolean;
+    metadata?: Metadata;
+    replaceIfExists?: boolean;
+    sourceLeaseAccessConditions?: LeaseAccessConditions;
+    timeoutInSeconds?: number;
+}
+
+// @public
+export type DirectoryRenameResponse = WithResponse<DirectoryRenameHeaders, DirectoryRenameHeaders>;
 
 // @public
 export interface DirectorySetMetadataHeaders {
@@ -406,11 +419,7 @@ export interface DirectorySetMetadataOptions extends CommonOptions {
 }
 
 // @public
-export type DirectorySetMetadataResponse = DirectorySetMetadataHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: DirectorySetMetadataHeaders;
-    };
-};
+export type DirectorySetMetadataResponse = WithResponse<DirectorySetMetadataHeaders, DirectorySetMetadataHeaders>;
 
 // @public
 export interface DirectorySetPropertiesHeaders {
@@ -431,11 +440,7 @@ export interface DirectorySetPropertiesHeaders {
 }
 
 // @public
-export type DirectorySetPropertiesResponse = DirectorySetPropertiesHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: DirectorySetPropertiesHeaders;
-    };
-};
+export type DirectorySetPropertiesResponse = WithResponse<DirectorySetPropertiesHeaders, DirectorySetPropertiesHeaders>;
 
 // @public
 export interface FileAbortCopyFromURLOptions extends CommonOptions {
@@ -452,26 +457,26 @@ export interface FileAbortCopyHeaders {
 }
 
 // @public
-export type FileAbortCopyResponse = FileAbortCopyHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileAbortCopyHeaders;
-    };
-};
+export type FileAbortCopyResponse = WithResponse<FileAbortCopyHeaders, FileAbortCopyHeaders>;
 
 // @public (undocumented)
 export interface FileAndDirectoryCreateCommonOptions {
+    changeTime?: Date | TimeNowType;
     creationTime?: Date | TimeNowType;
     fileAttributes?: FileSystemAttributes;
     filePermission?: string | FilePermissionInheritType;
+    filePermissionFormat?: FilePermissionFormat;
     filePermissionKey?: string;
     lastWriteTime?: Date | TimeNowType;
 }
 
 // @public (undocumented)
 export interface FileAndDirectorySetPropertiesCommonOptions {
+    changeTime?: Date | TimeNowType;
     creationTime?: Date | TimeNowType | TimePreserveType;
     fileAttributes?: FileSystemAttributes | FileAttributesPreserveType;
     filePermission?: string | FilePermissionInheritType | FilePermissionPreserveType;
+    filePermissionFormat?: FilePermissionFormat;
     filePermissionKey?: string;
     lastWriteTime?: Date | TimeNowType | TimePreserveType;
 }
@@ -482,6 +487,7 @@ export type FileAttributesPreserveType = "preserve";
 // @public
 export interface FileClearRangeOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
+    fileLastWrittenMode?: FileLastWrittenMode;
     leaseAccessConditions?: LeaseAccessConditions;
 }
 
@@ -520,11 +526,7 @@ export interface FileCreateOptions extends FileAndDirectoryCreateCommonOptions, 
 }
 
 // @public
-export type FileCreateResponse = FileCreateHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileCreateHeaders;
-    };
-};
+export type FileCreateResponse = WithResponse<FileCreateHeaders, FileCreateHeaders>;
 
 // @public
 export interface FileDeleteHeaders {
@@ -546,11 +548,7 @@ export interface FileDeleteOptions extends CommonOptions {
 }
 
 // @public
-export type FileDeleteResponse = FileDeleteHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileDeleteHeaders;
-    };
-};
+export type FileDeleteResponse = WithResponse<FileDeleteHeaders, FileDeleteHeaders>;
 
 // @public
 export interface FileDownloadHeaders {
@@ -593,7 +591,9 @@ export interface FileDownloadHeaders {
 }
 
 // @public
-export interface FileDownloadOptionalParams extends coreHttp.OperationOptions {
+export interface FileDownloadOptionalParams extends coreClient.OperationOptions {
+    allowTrailingDot?: boolean;
+    fileRequestIntent?: ShareTokenIntent;
     leaseAccessConditions?: LeaseAccessConditions;
     range?: string;
     rangeGetContentMD5?: boolean;
@@ -610,13 +610,7 @@ export interface FileDownloadOptions extends CommonOptions {
 }
 
 // @public
-export type FileDownloadResponseModel = FileDownloadHeaders & {
-    blobBody?: Promise<Blob>;
-    readableStreamBody?: NodeJS.ReadableStream;
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileDownloadHeaders;
-    };
-};
+export type FileDownloadResponseModel = WithResponse<RawFileDownloadResponse, FileDownloadHeaders>;
 
 // @public
 export interface FileDownloadToBufferOptions extends CommonOptions {
@@ -650,11 +644,7 @@ export interface FileForceCloseHandlesOptions extends CommonOptions {
 }
 
 // @public
-export type FileForceCloseHandlesResponse = CloseHandlesInfo & FileCloseHandlesHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileForceCloseHandlesHeaders;
-    };
-};
+export type FileForceCloseHandlesResponse = WithResponse<CloseHandlesInfo & FileCloseHandlesHeaders, FileForceCloseHandlesHeaders>;
 
 // @public
 export interface FileGenerateSasUrlOptions extends CommonGenerateSasUrlOptions {
@@ -686,7 +676,7 @@ export interface FileGetPropertiesHeaders {
     fileLastWriteOn?: Date;
     fileParentId?: string;
     filePermissionKey?: string;
-    fileType?: FileType;
+    fileType?: string;
     isServerEncrypted?: boolean;
     lastModified?: Date;
     leaseDuration?: LeaseDurationType;
@@ -706,20 +696,10 @@ export interface FileGetPropertiesOptions extends CommonOptions {
 }
 
 // @public
-export type FileGetPropertiesResponse = FileGetPropertiesHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileGetPropertiesHeaders;
-    };
-};
+export type FileGetPropertiesResponse = WithResponse<FileGetPropertiesHeaders, FileGetPropertiesHeaders>;
 
 // @public
-export type FileGetRangeListDiffResponse = FileGetRangeListHeaders & ShareFileRangeList & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: ShareFileRangeList;
-        parsedHeaders: FileGetRangeListHeaders;
-    };
-};
+export type FileGetRangeListDiffResponse = WithResponse<FileGetRangeListHeaders & ShareFileRangeList, FileGetRangeListHeaders, ShareFileRangeList>;
 
 // @public
 export interface FileGetRangeListHeaders {
@@ -735,19 +715,15 @@ export interface FileGetRangeListHeaders {
 // @public
 export interface FileGetRangeListOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
+    includeRenames?: boolean;
     leaseAccessConditions?: LeaseAccessConditions;
     range?: Range_2;
 }
 
 // @public
-export type FileGetRangeListResponse = FileGetRangeListHeaders & {
+export type FileGetRangeListResponse = WithResponse<FileGetRangeListHeaders & {
     rangeList: RangeModel[];
-    _response: HttpResponse & {
-        parsedHeaders: FileGetRangeListHeaders;
-        bodyAsText: string;
-        parsedBody: RangeModel[];
-    };
-};
+}, FileGetRangeListHeaders, RangeModel[]>;
 
 // @public (undocumented)
 export interface FileHttpHeaders {
@@ -773,6 +749,9 @@ export interface FileItem {
 }
 
 // @public
+export type FileLastWrittenMode = "Now" | "Preserve";
+
+// @public
 export interface FileListHandlesHeaders {
     contentType?: string;
     date?: Date;
@@ -787,13 +766,7 @@ export interface FileListHandlesOptions extends CommonOptions {
 }
 
 // @public
-export type FileListHandlesResponse = FileListHandlesHeaders & ListHandlesResponse & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: ListHandlesResponse;
-        parsedHeaders: FileListHandlesHeaders;
-    };
-};
+export type FileListHandlesResponse = WithResponse<FileListHandlesHeaders & ListHandlesResponse, FileListHandlesHeaders, ListHandlesResponse>;
 
 // @public
 export interface FileListHandlesSegmentOptions extends CommonOptions {
@@ -811,6 +784,9 @@ export interface FileParallelUploadOptions extends CommonOptions {
     onProgress?: (progress: TransferProgressEvent) => void;
     rangeSize?: number;
 }
+
+// @public
+export type FilePermissionFormat = "Sddl" | "Binary";
 
 // @public
 export type FilePermissionInheritType = "inherit";
@@ -841,6 +817,42 @@ export interface FileProperty {
     // (undocumented)
     lastWriteTime?: Date;
 }
+
+// @public
+export interface FileRenameHeaders {
+    date?: Date;
+    etag?: string;
+    fileAttributes?: string;
+    fileChangeTime?: Date;
+    fileCreationTime?: Date;
+    fileId?: string;
+    fileLastWriteTime?: Date;
+    fileParentId?: string;
+    filePermissionKey?: string;
+    isServerEncrypted?: boolean;
+    lastModified?: Date;
+    requestId?: string;
+    version?: string;
+}
+
+// @public
+export interface FileRenameOptions extends CommonOptions {
+    abortSignal?: AbortSignalLike;
+    contentType?: string;
+    copyFileSmbInfo?: CopyFileSmbInfo;
+    destinationLeaseAccessConditions?: LeaseAccessConditions;
+    filePermission?: string;
+    filePermissionFormat?: FilePermissionFormat;
+    filePermissionKey?: string;
+    ignoreReadOnly?: boolean;
+    metadata?: Metadata;
+    replaceIfExists?: boolean;
+    sourceLeaseAccessConditions?: LeaseAccessConditions;
+    timeoutInSeconds?: number;
+}
+
+// @public
+export type FileRenameResponse = WithResponse<FileRenameHeaders, FileRenameHeaders>;
 
 // @public
 export interface FileResizeOptions extends FileAndDirectorySetPropertiesCommonOptions, CommonOptions {
@@ -917,11 +929,7 @@ export interface FileSetHttpHeadersOptions extends FileAndDirectorySetProperties
 }
 
 // @public
-export type FileSetHTTPHeadersResponse = FileSetHTTPHeadersHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileSetHTTPHeadersHeaders;
-    };
-};
+export type FileSetHTTPHeadersResponse = WithResponse<FileSetHTTPHeadersHeaders, FileSetHTTPHeadersHeaders>;
 
 // @public
 export interface FileSetMetadataHeaders {
@@ -940,11 +948,7 @@ export interface FileSetMetadataOptions extends CommonOptions {
 }
 
 // @public
-export type FileSetMetadataResponse = FileSetMetadataHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileSetMetadataHeaders;
-    };
-};
+export type FileSetMetadataResponse = WithResponse<FileSetMetadataHeaders, FileSetMetadataHeaders>;
 
 // @public
 export interface FileStartCopyHeaders {
@@ -963,17 +967,14 @@ export interface FileStartCopyOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     copyFileSmbInfo?: CopyFileSmbInfo;
     filePermission?: string;
+    filePermissionFormat?: FilePermissionFormat;
     filePermissionKey?: string;
     leaseAccessConditions?: LeaseAccessConditions;
     metadata?: Metadata;
 }
 
 // @public
-export type FileStartCopyResponse = FileStartCopyHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileStartCopyHeaders;
-    };
-};
+export type FileStartCopyResponse = WithResponse<FileStartCopyHeaders, FileStartCopyHeaders>;
 
 // @public
 export class FileSystemAttributes {
@@ -992,13 +993,11 @@ export class FileSystemAttributes {
 }
 
 // @public
-export type FileType = "File";
-
-// @public
 export interface FileUploadRangeFromURLHeaders {
     date?: Date;
     errorCode?: string;
     etag?: string;
+    fileLastWriteTime?: Date;
     isServerEncrypted?: boolean;
     lastModified?: Date;
     requestId?: string;
@@ -1007,8 +1006,12 @@ export interface FileUploadRangeFromURLHeaders {
 }
 
 // @public
-export interface FileUploadRangeFromURLOptionalParams extends coreHttp.OperationOptions {
+export interface FileUploadRangeFromURLOptionalParams extends coreClient.OperationOptions {
+    allowSourceTrailingDot?: boolean;
+    allowTrailingDot?: boolean;
     copySourceAuthorization?: string;
+    fileLastWrittenMode?: FileLastWrittenMode;
+    fileRequestIntent?: ShareTokenIntent;
     leaseAccessConditions?: LeaseAccessConditions;
     sourceContentCrc64?: Uint8Array;
     sourceModifiedAccessConditions?: SourceModifiedAccessConditions;
@@ -1019,6 +1022,7 @@ export interface FileUploadRangeFromURLOptionalParams extends coreHttp.Operation
 // @public
 export interface FileUploadRangeFromURLOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
+    fileLastWrittenMode?: FileLastWrittenMode;
     leaseAccessConditions?: LeaseAccessConditions;
     sourceAuthorization?: HttpAuthorization;
     sourceConditions?: SourceModifiedAccessConditions;
@@ -1027,11 +1031,7 @@ export interface FileUploadRangeFromURLOptions extends CommonOptions {
 }
 
 // @public
-export type FileUploadRangeFromURLResponse = FileUploadRangeFromURLHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileUploadRangeFromURLHeaders;
-    };
-};
+export type FileUploadRangeFromURLResponse = WithResponse<FileUploadRangeFromURLHeaders, FileUploadRangeFromURLHeaders>;
 
 // @public
 export interface FileUploadRangeHeaders {
@@ -1039,6 +1039,7 @@ export interface FileUploadRangeHeaders {
     date?: Date;
     errorCode?: string;
     etag?: string;
+    fileLastWriteTime?: Date;
     isServerEncrypted?: boolean;
     lastModified?: Date;
     requestId?: string;
@@ -1049,16 +1050,13 @@ export interface FileUploadRangeHeaders {
 export interface FileUploadRangeOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     contentMD5?: Uint8Array;
+    fileLastWrittenMode?: FileLastWrittenMode;
     leaseAccessConditions?: LeaseAccessConditions;
     onProgress?: (progress: TransferProgressEvent) => void;
 }
 
 // @public
-export type FileUploadRangeResponse = FileUploadRangeHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileUploadRangeHeaders;
-    };
-};
+export type FileUploadRangeResponse = WithResponse<FileUploadRangeHeaders, FileUploadRangeHeaders>;
 
 // @public
 export interface FileUploadStreamOptions extends CommonOptions {
@@ -1076,8 +1074,14 @@ export function generateAccountSASQueryParameters(accountSASSignatureValues: Acc
 export function generateFileSASQueryParameters(fileSASSignatureValues: FileSASSignatureValues, sharedKeyCredential: StorageSharedKeyCredential): SASQueryParameters;
 
 // @public
+export function getFileServiceAccountAudience(storageAccountName: string): string;
+
+// @public
 export interface HandleItem {
+    // (undocumented)
+    accessRightList?: ShareFileHandleAccessRights[];
     clientIp: string;
+    clientName: string;
     fileId: string;
     handleId: string;
     lastReconnectTime?: Date;
@@ -1099,7 +1103,21 @@ export { HttpOperationResponse }
 
 export { HttpRequestBody }
 
-export { IHttpClient }
+// @public
+export interface HttpResponse {
+    headers: HttpHeaders;
+    request: WebResource;
+    status: number;
+}
+
+// @public
+export function isPipelineLike(pipeline: unknown): pipeline is PipelineLike;
+
+// @public
+export enum KnownShareTokenIntent {
+    // (undocumented)
+    Backup = "backup"
+}
 
 // @public
 export interface LeaseAccessConditions {
@@ -1115,11 +1133,7 @@ export interface LeaseOperationOptions extends CommonOptions {
 }
 
 // @public
-export type LeaseOperationResponse = LeaseOperationResponseHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: LeaseOperationResponseHeaders;
-    };
-};
+export type LeaseOperationResponse = WithResponse<LeaseOperationResponseHeaders, LeaseOperationResponseHeaders>;
 
 // @public
 export interface LeaseOperationResponseHeaders {
@@ -1224,13 +1238,13 @@ export interface Metrics {
 }
 
 // @public
-export function newPipeline(credential?: Credential_2, pipelineOptions?: StoragePipelineOptions): Pipeline;
+export function newPipeline(credential?: Credential_2 | TokenCredential, pipelineOptions?: StoragePipelineOptions): Pipeline;
 
 // @public
 export type PermissionCopyModeType = "source" | "override";
 
 // @public
-export class Pipeline {
+export class Pipeline implements PipelineLike {
     constructor(factories: RequestPolicyFactory[], options?: PipelineOptions);
     readonly factories: RequestPolicyFactory[];
     readonly options: PipelineOptions;
@@ -1238,8 +1252,16 @@ export class Pipeline {
 }
 
 // @public
+export interface PipelineLike {
+    readonly factories: RequestPolicyFactory[];
+    readonly options: PipelineOptions;
+    toServiceClientOptions(): ServiceClientOptions;
+}
+
+// @public
 export interface PipelineOptions {
-    httpClient?: IHttpClient;
+    httpClient?: RequestPolicy;
+    shareTokenIntent?: ShareTokenIntent;
 }
 
 // @public
@@ -1255,11 +1277,39 @@ export interface RangeModel {
     start: number;
 }
 
+// @public
+export type RawFileDownloadResponse = FileDownloadHeaders & {
+    blobBody?: Promise<Blob>;
+    readableStreamBody?: NodeJS.ReadableStream;
+};
+
+export { RequestPolicy as IHttpClient }
 export { RequestPolicy }
 
 export { RequestPolicyFactory }
 
 export { RequestPolicyOptions }
+
+// @public
+export interface ResponseLike {
+    _response: HttpResponse;
+}
+
+// @public
+export interface ResponseWithBody<Headers, Body> {
+    _response: HttpResponse & {
+        parsedHeaders: Headers;
+        bodyAsText: string;
+        parsedBody: Body;
+    };
+}
+
+// @public
+export interface ResponseWithHeaders<Headers> {
+    _response: HttpResponse & {
+        parsedHeaders: Headers;
+    };
+}
 
 export { RestError }
 
@@ -1304,6 +1354,12 @@ export class SASQueryParameters {
 }
 
 // @public
+export interface ServiceClientOptions {
+    httpClient?: RequestPolicy;
+    requestPolicyFactories?: RequestPolicyFactory[] | ((defaultRequestPolicyFactories: RequestPolicyFactory[]) => void | RequestPolicyFactory[]);
+}
+
+// @public
 export interface ServiceGenerateAccountSasUrlOptions {
     ipRange?: SasIPRange;
     protocol?: SASProtocol;
@@ -1324,13 +1380,7 @@ export interface ServiceGetPropertiesOptions extends CommonOptions {
 }
 
 // @public
-export type ServiceGetPropertiesResponse = ServiceGetPropertiesHeaders & FileServiceProperties & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: FileServiceProperties;
-        parsedHeaders: ServiceGetPropertiesHeaders;
-    };
-};
+export type ServiceGetPropertiesResponse = WithResponse<ServiceGetPropertiesHeaders & FileServiceProperties, ServiceGetPropertiesHeaders, FileServiceProperties>;
 
 // @public
 export interface ServiceListSharesOptions extends CommonOptions {
@@ -1349,13 +1399,7 @@ export interface ServiceListSharesSegmentHeaders {
 }
 
 // @public
-export type ServiceListSharesSegmentResponse = ListSharesResponse & ServiceListSharesSegmentHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: ServiceListSharesSegmentHeaders;
-        bodyAsText: string;
-        parsedBody: ListSharesResponseModel;
-    };
-};
+export type ServiceListSharesSegmentResponse = WithResponse<ListSharesResponse & ServiceListSharesSegmentHeaders, ServiceListSharesSegmentHeaders, ListSharesResponseModel>;
 
 // @public
 export interface ServiceSetPropertiesHeaders {
@@ -1370,11 +1414,7 @@ export interface ServiceSetPropertiesOptions extends CommonOptions {
 }
 
 // @public
-export type ServiceSetPropertiesResponse = ServiceSetPropertiesHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ServiceSetPropertiesHeaders;
-    };
-};
+export type ServiceSetPropertiesResponse = WithResponse<ServiceSetPropertiesHeaders, ServiceSetPropertiesHeaders>;
 
 // @public
 export interface ServiceUndeleteShareOptions extends CommonOptions {
@@ -1386,15 +1426,15 @@ export interface SetPropertiesResponse extends FileSetHTTPHeadersResponse {
 }
 
 // @public
-export type ShareAccessTier = "TransactionOptimized" | "Hot" | "Cool";
+export type ShareAccessTier = "TransactionOptimized" | "Hot" | "Cool" | "Premium";
 
 // Warning: (ae-forgotten-export) The symbol "StorageClient" needs to be exported by the entry point index.d.ts
 //
 // @public
 export class ShareClient extends StorageClient {
-    constructor(connectionString: string, name: string, options?: StoragePipelineOptions);
-    constructor(url: string, credential?: Credential_2, options?: StoragePipelineOptions);
-    constructor(url: string, pipeline: Pipeline);
+    constructor(connectionString: string, name: string, options?: ShareClientOptions);
+    constructor(url: string, credential?: Credential_2 | TokenCredential, options?: ShareClientOptions);
+    constructor(url: string, pipeline: Pipeline, options?: ShareClientConfig);
     create(options?: ShareCreateOptions): Promise<ShareCreateResponse>;
     createDirectory(directoryName: string, options?: DirectoryCreateOptions): Promise<{
         directoryClient: ShareDirectoryClient;
@@ -1405,18 +1445,20 @@ export class ShareClient extends StorageClient {
         fileCreateResponse: FileCreateResponse;
     }>;
     createIfNotExists(options?: ShareCreateOptions): Promise<ShareCreateIfNotExistsResponse>;
-    createPermission(filePermission: string, options?: ShareCreatePermissionOptions): Promise<ShareCreatePermissionResponse>;
+    createPermission(filePermission: string | SharePermission, options?: ShareCreatePermissionOptions): Promise<ShareCreatePermissionResponse>;
     createSnapshot(options?: ShareCreateSnapshotOptions): Promise<ShareCreateSnapshotResponse>;
     delete(options?: ShareDeleteMethodOptions): Promise<ShareDeleteResponse>;
     deleteDirectory(directoryName: string, options?: DirectoryDeleteOptions): Promise<DirectoryDeleteResponse>;
     deleteFile(fileName: string, options?: FileDeleteOptions): Promise<FileDeleteResponse>;
     deleteIfExists(options?: ShareDeleteMethodOptions): Promise<ShareDeleteIfExistsResponse>;
     exists(options?: ShareExistsOptions): Promise<boolean>;
+    generateSasStringToSign(options: ShareGenerateSasUrlOptions): string;
     generateSasUrl(options: ShareGenerateSasUrlOptions): string;
     getAccessPolicy(options?: ShareGetAccessPolicyOptions): Promise<ShareGetAccessPolicyResponse>;
     getDirectoryClient(directoryName: string): ShareDirectoryClient;
     getPermission(filePermissionKey: string, options?: ShareGetPermissionOptions): Promise<ShareGetPermissionResponse>;
     getProperties(options?: ShareGetPropertiesOptions): Promise<ShareGetPropertiesResponse>;
+    getShareLeaseClient(proposeLeaseId?: string): ShareLeaseClient;
     getStatistics(options?: ShareGetStatisticsOptions): Promise<ShareGetStatisticsResponse>;
     get name(): string;
     get rootDirectoryClient(): ShareDirectoryClient;
@@ -1428,13 +1470,28 @@ export class ShareClient extends StorageClient {
     withSnapshot(snapshot: string): ShareClient;
 }
 
+// @public (undocumented)
+export interface ShareClientConfig {
+    allowSourceTrailingDot?: boolean;
+    allowTrailingDot?: boolean;
+    fileRequestIntent?: ShareTokenIntent;
+}
+
+// @public (undocumented)
+export type ShareClientOptions = StoragePipelineOptions & ShareClientConfig;
+
 // @public
 export interface ShareCreateHeaders {
     date?: Date;
     errorCode?: string;
     etag?: string;
     lastModified?: Date;
+    maxBurstCreditsForIops?: number;
+    quota?: number;
     requestId?: string;
+    shareIncludedBurstIops?: number;
+    shareProvisionedBandwidthMibps?: number;
+    shareProvisionedIops?: number;
     version?: string;
 }
 
@@ -1447,12 +1504,18 @@ export interface ShareCreateIfNotExistsResponse extends ShareCreateResponse {
 export interface ShareCreateOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     accessTier?: ShareAccessTier;
+    enableSnapshotVirtualDirectoryAccess?: boolean;
     metadata?: {
         [propertyName: string]: string;
     };
+    paidBurstingEnabled?: boolean;
+    paidBurstingMaxBandwidthMibps?: number;
+    paidBurstingMaxIops?: number;
     protocols?: ShareProtocols;
     quota?: number;
     rootSquash?: ShareRootSquash;
+    shareProvisionedBandwidthMibps?: number;
+    shareProvisionedIops?: number;
 }
 
 // @public
@@ -1470,18 +1533,10 @@ export interface ShareCreatePermissionOptions extends CommonOptions {
 }
 
 // @public
-export type ShareCreatePermissionResponse = ShareCreatePermissionHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareCreatePermissionHeaders;
-    };
-};
+export type ShareCreatePermissionResponse = WithResponse<ShareCreatePermissionHeaders, ShareCreatePermissionHeaders>;
 
 // @public
-export type ShareCreateResponse = ShareCreateHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareCreateHeaders;
-    };
-};
+export type ShareCreateResponse = WithResponse<ShareCreateHeaders, ShareCreateHeaders>;
 
 // @public
 export interface ShareCreateSnapshotHeaders {
@@ -1503,17 +1558,15 @@ export interface ShareCreateSnapshotOptions extends CommonOptions {
 }
 
 // @public
-export type ShareCreateSnapshotResponse = ShareCreateSnapshotHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareCreateSnapshotHeaders;
-    };
-};
+export type ShareCreateSnapshotResponse = WithResponse<ShareCreateSnapshotHeaders, ShareCreateSnapshotHeaders>;
 
 // @public
 export interface ShareDeleteHeaders {
     date?: Date;
     errorCode?: string;
     requestId?: string;
+    snapshotUsageBytes?: number;
+    usageBytes?: number;
     version?: string;
 }
 
@@ -1530,16 +1583,12 @@ export interface ShareDeleteMethodOptions extends CommonOptions {
 }
 
 // @public
-export type ShareDeleteResponse = ShareDeleteHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareDeleteHeaders;
-    };
-};
+export type ShareDeleteResponse = WithResponse<ShareDeleteHeaders, ShareDeleteHeaders>;
 
 // @public
 export class ShareDirectoryClient extends StorageClient {
-    constructor(url: string, credential?: Credential_2, options?: StoragePipelineOptions);
-    constructor(url: string, pipeline: Pipeline);
+    constructor(url: string, credential?: Credential_2 | TokenCredential, options?: ShareClientOptions);
+    constructor(url: string, pipeline: Pipeline, options?: ShareClientConfig);
     create(options?: DirectoryCreateOptions): Promise<DirectoryCreateResponse>;
     createFile(fileName: string, size: number, options?: FileCreateOptions): Promise<{
         fileClient: ShareFileClient;
@@ -1568,6 +1617,10 @@ export class ShareDirectoryClient extends StorageClient {
     listHandles(options?: DirectoryListHandlesOptions): PagedAsyncIterableIterator<HandleItem, DirectoryListHandlesResponse>;
     get name(): string;
     get path(): string;
+    rename(destinationPath: string, options?: DirectoryRenameOptions): Promise<{
+        destinationDirectoryClient: ShareDirectoryClient;
+        directoryRenameResponse: DirectoryRenameResponse;
+    }>;
     setMetadata(metadata?: Metadata, options?: DirectorySetMetadataOptions): Promise<DirectorySetMetadataResponse>;
     setProperties(properties?: DirectoryProperties): Promise<DirectorySetPropertiesResponse>;
     get shareName(): string;
@@ -1581,8 +1634,8 @@ export interface ShareExistsOptions extends CommonOptions {
 
 // @public
 export class ShareFileClient extends StorageClient {
-    constructor(url: string, credential?: Credential_2, options?: StoragePipelineOptions);
-    constructor(url: string, pipeline: Pipeline);
+    constructor(url: string, credential?: Credential_2 | TokenCredential, options?: ShareClientOptions);
+    constructor(url: string, pipeline: Pipeline, options?: ShareClientConfig);
     abortCopyFromURL(copyId: string, options?: FileAbortCopyFromURLOptions): Promise<FileAbortCopyResponse>;
     clearRange(offset: number, contentLength: number, options?: FileClearRangeOptions): Promise<FileUploadRangeResponse>;
     create(size: number, options?: FileCreateOptions): Promise<FileCreateResponse>;
@@ -1595,6 +1648,7 @@ export class ShareFileClient extends StorageClient {
     exists(options?: FileExistsOptions): Promise<boolean>;
     forceCloseAllHandles(options?: FileForceCloseHandlesOptions): Promise<CloseHandlesInfo>;
     forceCloseHandle(handleId: string, options?: FileForceCloseHandlesOptions): Promise<FileForceCloseHandlesResponse>;
+    generateSasStringToSign(options: FileGenerateSasUrlOptions): string;
     generateSasUrl(options: FileGenerateSasUrlOptions): string;
     getProperties(options?: FileGetPropertiesOptions): Promise<FileGetPropertiesResponse>;
     getRangeList(options?: FileGetRangeListOptions): Promise<FileGetRangeListResponse>;
@@ -1603,6 +1657,10 @@ export class ShareFileClient extends StorageClient {
     listHandles(options?: FileListHandlesOptions): PagedAsyncIterableIterator<HandleItem, FileListHandlesResponse>;
     get name(): string;
     get path(): string;
+    rename(destinationPath: string, options?: FileRenameOptions): Promise<{
+        destinationFileClient: ShareFileClient;
+        fileRenameResponse: FileRenameResponse;
+    }>;
     resize(length: number, options?: FileResizeOptions): Promise<FileSetHTTPHeadersResponse>;
     setHttpHeaders(fileHttpHeaders?: FileHttpHeaders, options?: FileSetHttpHeadersOptions): Promise<FileSetHTTPHeadersResponse>;
     setMetadata(metadata?: Metadata, options?: FileSetMetadataOptions): Promise<FileSetMetadataResponse>;
@@ -1618,6 +1676,9 @@ export class ShareFileClient extends StorageClient {
     uploadStream(stream: Readable, size: number, bufferSize: number, maxBuffers: number, options?: FileUploadStreamOptions): Promise<void>;
     withShareSnapshot(shareSnapshot: string): ShareFileClient;
 }
+
+// @public
+export type ShareFileHandleAccessRights = "Read" | "Write" | "Delete";
 
 // @public
 export interface ShareFileRangeList {
@@ -1649,15 +1710,9 @@ export interface ShareGetAccessPolicyOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type ShareGetAccessPolicyResponse = {
+export type ShareGetAccessPolicyResponse = WithResponse<{
     signedIdentifiers: SignedIdentifier[];
-} & ShareGetAccessPolicyHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: ShareGetAccessPolicyHeaders;
-        bodyAsText: string;
-        parsedBody: SignedIdentifierModel[];
-    };
-};
+} & ShareGetAccessPolicyHeaders, ShareGetAccessPolicyHeaders, SignedIdentifierModel[]>;
 
 // @public
 export interface ShareGetPermissionHeaders {
@@ -1670,16 +1725,11 @@ export interface ShareGetPermissionHeaders {
 // @public
 export interface ShareGetPermissionOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
+    filePermissionFormat?: FilePermissionFormat;
 }
 
 // @public
-export type ShareGetPermissionResponse = ShareGetPermissionHeaders & SharePermission & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: SharePermission;
-        parsedHeaders: ShareGetPermissionHeaders;
-    };
-};
+export type ShareGetPermissionResponse = WithResponse<ShareGetPermissionHeaders & SharePermission, ShareGetPermissionHeaders, SharePermission>;
 
 // @public
 export interface ShareGetPropertiesHeaders {
@@ -1688,16 +1738,25 @@ export interface ShareGetPropertiesHeaders {
     accessTierTransitionState?: string;
     date?: Date;
     enabledProtocols?: string;
+    enableSnapshotVirtualDirectoryAccess?: boolean;
     errorCode?: string;
     etag?: string;
+    includedBurstIops?: number;
     lastModified?: Date;
     leaseDuration?: LeaseDurationType;
     leaseState?: LeaseStateType;
     leaseStatus?: LeaseStatusType;
+    maxBurstCreditsForIops?: number;
     metadata?: {
         [propertyName: string]: string;
     };
+    nextAllowedProvisionedBandwidthDowngradeTime?: Date;
+    nextAllowedProvisionedIopsDowngradeTime?: Date;
     nextAllowedQuotaDowngradeTime?: Date;
+    paidBurstingEnabled?: boolean;
+    paidBurstingMaxBandwidthMibps?: number;
+    paidBurstingMaxIops?: number;
+    provisionedBandwidthMibps?: number;
     provisionedEgressMBps?: number;
     provisionedIngressMBps?: number;
     provisionedIops?: number;
@@ -1719,11 +1778,7 @@ export type ShareGetPropertiesResponse = ShareGetPropertiesResponseModel & {
 };
 
 // @public
-export type ShareGetPropertiesResponseModel = ShareGetPropertiesHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareGetPropertiesHeaders;
-    };
-};
+export type ShareGetPropertiesResponseModel = WithResponse<ShareGetPropertiesHeaders, ShareGetPropertiesHeaders>;
 
 // @public
 export interface ShareGetStatisticsHeaders {
@@ -1747,13 +1802,7 @@ export type ShareGetStatisticsResponse = ShareGetStatisticsResponseModel & {
 };
 
 // @public
-export type ShareGetStatisticsResponseModel = ShareGetStatisticsHeaders & ShareStats & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: ShareStats;
-        parsedHeaders: ShareGetStatisticsHeaders;
-    };
-};
+export type ShareGetStatisticsResponseModel = WithResponse<ShareGetStatisticsHeaders & ShareStats, ShareGetStatisticsHeaders, ShareStats>;
 
 // @public
 export interface ShareItem {
@@ -1791,7 +1840,7 @@ export interface ShareItemInternal {
 
 // @public
 export class ShareLeaseClient {
-    constructor(client: ShareFileClient, leaseId?: string);
+    constructor(client: ShareFileClient | ShareClient, leaseId?: string);
     acquireLease(duration?: number, options?: LeaseOperationOptions): Promise<LeaseOperationResponse>;
     breakLease(options?: LeaseOperationOptions): Promise<LeaseOperationResponse>;
     changeLease(proposedLeaseId: string, options?: LeaseOperationOptions): Promise<LeaseOperationResponse>;
@@ -1803,6 +1852,8 @@ export class ShareLeaseClient {
 
 // @public
 export interface SharePermission {
+    // (undocumented)
+    format?: FilePermissionFormat;
     permission: string;
 }
 
@@ -1824,14 +1875,32 @@ export interface SharePropertiesInternal {
     // (undocumented)
     enabledProtocols?: string;
     // (undocumented)
+    enableSnapshotVirtualDirectoryAccess?: boolean;
+    // (undocumented)
     etag: string;
+    // (undocumented)
+    includedBurstIops?: number;
     // (undocumented)
     lastModified: Date;
     leaseDuration?: LeaseDurationType;
     leaseState?: LeaseStateType;
     leaseStatus?: LeaseStatusType;
     // (undocumented)
+    maxBurstCreditsForIops?: number;
+    // (undocumented)
+    nextAllowedProvisionedBandwidthDowngradeTime?: Date;
+    // (undocumented)
+    nextAllowedProvisionedIopsDowngradeTime?: Date;
+    // (undocumented)
     nextAllowedQuotaDowngradeTime?: Date;
+    // (undocumented)
+    paidBurstingEnabled?: boolean;
+    // (undocumented)
+    paidBurstingMaxBandwidthMibps?: number;
+    // (undocumented)
+    paidBurstingMaxIops?: number;
+    // (undocumented)
+    provisionedBandwidthMiBps?: number;
     // (undocumented)
     provisionedEgressMBps?: number;
     // (undocumented)
@@ -1873,15 +1942,16 @@ export class ShareSASPermissions {
 
 // @public
 export class ShareServiceClient extends StorageClient {
-    constructor(url: string, credential?: Credential_2, options?: StoragePipelineOptions);
-    constructor(url: string, pipeline: Pipeline);
+    constructor(url: string, credential?: Credential_2 | TokenCredential, options?: ShareClientOptions);
+    constructor(url: string, pipeline: Pipeline, options?: ShareClientConfig);
     createShare(shareName: string, options?: ShareCreateOptions): Promise<{
         shareCreateResponse: ShareCreateResponse;
         shareClient: ShareClient;
     }>;
     deleteShare(shareName: string, options?: ShareDeleteMethodOptions): Promise<ShareDeleteResponse>;
-    static fromConnectionString(connectionString: string, options?: StoragePipelineOptions): ShareServiceClient;
+    static fromConnectionString(connectionString: string, options?: ShareClientOptions): ShareServiceClient;
     generateAccountSasUrl(expiresOn?: Date, permissions?: AccountSASPermissions, resourceTypes?: string, options?: ServiceGenerateAccountSasUrlOptions): string;
+    generateSasStringToSign(expiresOn?: Date, permissions?: AccountSASPermissions, resourceTypes?: string, options?: ServiceGenerateAccountSasUrlOptions): string;
     getProperties(options?: ServiceGetPropertiesOptions): Promise<ServiceGetPropertiesResponse>;
     getShareClient(shareName: string): ShareClient;
     listShares(options?: ServiceListSharesOptions): PagedAsyncIterableIterator<ShareItem, ServiceListSharesSegmentResponse>;
@@ -1906,11 +1976,7 @@ export interface ShareSetAccessPolicyOptions extends CommonOptions {
 }
 
 // @public
-export type ShareSetAccessPolicyResponse = ShareSetAccessPolicyHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareSetAccessPolicyHeaders;
-    };
-};
+export type ShareSetAccessPolicyResponse = WithResponse<ShareSetAccessPolicyHeaders, ShareGetAccessPolicyHeaders>;
 
 // @public
 export interface ShareSetMetadataHeaders {
@@ -1929,18 +1995,22 @@ export interface ShareSetMetadataOptions extends CommonOptions {
 }
 
 // @public
-export type ShareSetMetadataResponse = ShareSetMetadataHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareSetMetadataHeaders;
-    };
-};
+export type ShareSetMetadataResponse = WithResponse<ShareSetMetadataHeaders, ShareSetMetadataHeaders>;
 
 // @public
 export interface ShareSetPropertiesHeaders {
     date?: Date;
     errorCode?: string;
     etag?: string;
+    includedBurstIops?: number;
     lastModified?: Date;
+    maxBurstCreditsForIops?: number;
+    nextAllowedProvisionedBandwidthDowngradeTime?: Date;
+    nextAllowedProvisionedIopsDowngradeTime?: Date;
+    nextAllowedQuotaDowngradeTime?: Date;
+    provisionedBandwidthMibps?: number;
+    provisionedIops?: number;
+    quota?: number;
     requestId?: string;
     version?: string;
 }
@@ -1949,17 +2019,19 @@ export interface ShareSetPropertiesHeaders {
 export interface ShareSetPropertiesOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     accessTier?: ShareAccessTier;
+    enableSnapshotVirtualDirectoryAccess?: boolean;
     leaseAccessConditions?: LeaseAccessConditions;
+    paidBurstingEnabled?: boolean;
+    paidBurstingMaxBandwidthMibps?: number;
+    paidBurstingMaxIops?: number;
     quotaInGB?: number;
     rootSquash?: ShareRootSquash;
+    shareProvisionedBandwidthMibps?: number;
+    shareProvisionedIops?: number;
 }
 
 // @public
-export type ShareSetPropertiesResponse = ShareSetPropertiesHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: ShareSetPropertiesHeaders;
-    };
-};
+export type ShareSetPropertiesResponse = WithResponse<ShareSetPropertiesHeaders, ShareSetPropertiesHeaders>;
 
 // @public
 export type ShareSetQuotaHeaders = ShareSetPropertiesHeaders;
@@ -1971,7 +2043,7 @@ export interface ShareSetQuotaOptions extends CommonOptions {
 }
 
 // @public
-export type ShareSetQuotaResponse = ShareSetPropertiesResponse;
+export type ShareSetQuotaResponse = WithResponse<ShareSetQuotaHeaders, ShareSetQuotaHeaders>;
 
 // @public
 export interface ShareSmbSettings {
@@ -1982,6 +2054,9 @@ export interface ShareSmbSettings {
 export interface ShareStats {
     shareUsageBytes: number;
 }
+
+// @public
+export type ShareTokenIntent = string;
 
 // @public
 export interface SignedIdentifier {
@@ -2022,12 +2097,21 @@ export class StorageBrowserPolicyFactory implements RequestPolicyFactory {
 }
 
 // @public
+export enum StorageFileAudience {
+    StorageOAuthScopes = "https://storage.azure.com/.default"
+}
+
+// @public
+export const StorageOAuthScopes: string | string[];
+
+// @public
 export interface StoragePipelineOptions {
-    httpClient?: IHttpClient;
+    audience?: string;
+    httpClient?: RequestPolicy;
     keepAliveOptions?: KeepAliveOptions;
-    proxyOptions?: ProxyOptions;
+    proxyOptions?: ProxySettings;
     retryOptions?: StorageRetryOptions;
-    userAgentOptions?: UserAgentOptions;
+    userAgentOptions?: UserAgentPolicyOptions;
 }
 
 // @public
@@ -2080,6 +2164,9 @@ export type TimeNowType = "now";
 export type TimePreserveType = "preserve";
 
 export { WebResource }
+
+// @public
+export type WithResponse<T, Headers = undefined, Body = undefined> = T & (Body extends object ? ResponseWithBody<Headers, Body> : Headers extends object ? ResponseWithHeaders<Headers> : ResponseLike);
 
 // (No @packageDocumentation comment for this package)
 

@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { KeyCredential } from "@azure/core-auth";
-import {
+import type { KeyCredential } from "@azure/core-auth";
+import type {
   PipelinePolicy,
   PipelineRequest,
+  PipelineResponse,
   SendRequest,
-  PipelineResponse
 } from "@azure/core-rest-pipeline";
 
 const API_KEY_HEADER_NAME = "api-key";
@@ -24,6 +24,6 @@ export function createSearchApiKeyCredentialPolicy(credential: KeyCredential): P
         request.headers.set(API_KEY_HEADER_NAME, credential.key);
       }
       return next(request);
-    }
+    },
   };
 }

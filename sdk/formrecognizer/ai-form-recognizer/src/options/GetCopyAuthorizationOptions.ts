@@ -1,14 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions } from "@azure/core-client";
+import type { OperationOptions } from "@azure/core-client";
+import type { CommonModelCreationOptions } from "./BuildModelOptions";
 
 /**
  * Options for the get copy authorization method.
  */
-export interface GetCopyAuthorizationOptions extends OperationOptions {
-  /**
-   * A textual description of the model (can be any text).
-   */
-  description?: string;
-}
+export interface GetCopyAuthorizationOptions extends OperationOptions, CommonModelCreationOptions {}

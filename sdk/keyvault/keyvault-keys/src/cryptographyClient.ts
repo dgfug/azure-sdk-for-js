@@ -1,45 +1,46 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions, TokenCredential } from "@azure/core-http";
-import {
-  JsonWebKey,
-  KeyVaultKey,
+import type { OperationOptions } from "@azure/core-client";
+import type { TokenCredential } from "@azure/core-auth";
+import type {
   CryptographyClientOptions,
   GetKeyOptions,
+  JsonWebKey,
   KeyOperation,
-  KnownKeyOperations
-} from "./keysModels";
-import {
+  KeyVaultKey,
+} from "./keysModels.js";
+import { KnownKeyOperations } from "./keysModels.js";
+import type {
+  AesCbcEncryptParameters,
+  AesCbcEncryptionAlgorithm,
+  CryptographyClientKey,
+  DecryptOptions,
+  DecryptParameters,
+  DecryptResult,
+  EncryptOptions,
+  EncryptParameters,
+  EncryptResult,
   EncryptionAlgorithm,
   KeyWrapAlgorithm,
-  WrapResult,
-  UnwrapResult,
-  DecryptResult,
-  SignatureAlgorithm,
-  SignResult,
-  VerifyResult,
-  EncryptResult,
-  EncryptOptions,
-  DecryptOptions,
-  WrapKeyOptions,
-  UnwrapKeyOptions,
-  EncryptParameters,
   SignOptions,
+  SignResult,
+  SignatureAlgorithm,
+  UnwrapKeyOptions,
+  UnwrapResult,
   VerifyOptions,
-  DecryptParameters,
-  CryptographyClientKey,
-  AesCbcEncryptParameters,
-  AesCbcEncryptionAlgorithm
-} from "./cryptographyClientModels";
-import { RemoteCryptographyProvider } from "./cryptography/remoteCryptographyProvider";
-import { randomBytes } from "./cryptography/crypto";
-import { CryptographyProvider, CryptographyProviderOperation } from "./cryptography/models";
-import { RsaCryptographyProvider } from "./cryptography/rsaCryptographyProvider";
-import { AesCryptographyProvider } from "./cryptography/aesCryptographyProvider";
-import { createTraceFunction } from "../../keyvault-common/src";
-
-const withTrace = createTraceFunction("Azure.KeyVault.Keys.CryptographyClient");
+  VerifyResult,
+  WrapKeyOptions,
+  WrapResult,
+} from "./cryptographyClientModels.js";
+import { RemoteCryptographyProvider } from "./cryptography/remoteCryptographyProvider.js";
+import { randomBytes } from "./cryptography/crypto.js";
+import type { CryptographyProvider, CryptographyProviderOperation } from "./cryptography/models.js";
+import { RsaCryptographyProvider } from "./cryptography/rsaCryptographyProvider.js";
+import { AesCryptographyProvider } from "./cryptography/aesCryptographyProvider.js";
+import { tracingClient } from "./tracing.js";
+import { isRestError } from "@azure/core-rest-pipeline";
+import { logger } from "./log.js";
 
 /**
  * A client used to perform cryptographic operations on an Azure Key vault key
@@ -82,7 +83,7 @@ export class CryptographyClient {
   constructor(
     key: string | KeyVaultKey,
     credential: TokenCredential,
-    pipelineOptions?: CryptographyClientOptions
+    pipelineOptions?: CryptographyClientOptions,
   );
   /**
    * Constructs a new instance of the Cryptography client for the given key in local mode.
@@ -107,27 +108,27 @@ export class CryptographyClient {
   constructor(
     key: string | KeyVaultKey | JsonWebKey,
     credential?: TokenCredential,
-    pipelineOptions: CryptographyClientOptions = {}
+    pipelineOptions: CryptographyClientOptions = {},
   ) {
     if (typeof key === "string") {
       // Key URL for remote-local operations.
       this.key = {
         kind: "identifier",
-        value: key
+        value: key,
       };
       this.remoteProvider = new RemoteCryptographyProvider(key, credential!, pipelineOptions);
     } else if ("name" in key) {
       // KeyVault key for remote-local operations.
       this.key = {
         kind: "KeyVaultKey",
-        value: key
+        value: key,
       };
       this.remoteProvider = new RemoteCryptographyProvider(key, credential!, pipelineOptions);
     } else {
       // JsonWebKey for local-only operations.
       this.key = {
         kind: "JsonWebKey",
-        value: key
+        value: key,
       };
     }
   }
@@ -143,7 +144,7 @@ export class CryptographyClient {
    * The ID of the key used to perform cryptographic operations for the client.
    */
   get keyID(): string | undefined {
-    if (this.key.kind === "identifier") {
+    if (this.key.kind === "identifier" || this.key.kind === "remoteOnlyIdentifier") {
       return this.key.value;
     } else if (this.key.kind === "KeyVaultKey") {
       return this.key.value.id;
@@ -167,7 +168,7 @@ export class CryptographyClient {
    */
   public encrypt(
     encryptParameters: EncryptParameters,
-    options?: EncryptOptions
+    options?: EncryptOptions,
   ): Promise<EncryptResult>;
   /**
    * Encrypts the given plaintext with the specified cryptography algorithm
@@ -185,7 +186,7 @@ export class CryptographyClient {
   public encrypt(
     algorithm: EncryptionAlgorithm,
     plaintext: Uint8Array,
-    options?: EncryptOptions
+    options?: EncryptOptions,
   ): Promise<EncryptResult>;
   public encrypt(
     ...args:
@@ -193,13 +194,13 @@ export class CryptographyClient {
       | [EncryptionAlgorithm, Uint8Array, EncryptOptions?]
   ): Promise<EncryptResult> {
     const [parameters, options] = this.disambiguateEncryptArguments(args);
-    return withTrace("encrypt", options, async (updatedOptions) => {
+    return tracingClient.withSpan("CryptographyClient.encrypt", options, async (updatedOptions) => {
       this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Encrypt);
       this.initializeIV(parameters);
       const provider = await this.getProvider("encrypt", parameters.algorithm, updatedOptions);
       try {
         return provider.encrypt(parameters, updatedOptions);
-      } catch (error) {
+      } catch (error: any) {
         if (this.remoteProvider) {
           return this.remoteProvider.encrypt(parameters, updatedOptions);
         }
@@ -216,7 +217,7 @@ export class CryptographyClient {
       "A192CBC",
       "A192CBCPAD",
       "A256CBC",
-      "A256CBCPAD"
+      "A256CBCPAD",
     ];
 
     if (parameters.algorithm in algorithmsRequiringIV) {
@@ -225,9 +226,9 @@ export class CryptographyClient {
         if (!cbcParams.iv) {
           cbcParams.iv = randomBytes(16);
         }
-      } catch (e) {
+      } catch (e: any) {
         throw new Error(
-          `Unable to initialize IV for algorithm ${parameters.algorithm}. You may pass a valid IV to avoid this error. Error: ${e.message}`
+          `Unable to initialize IV for algorithm ${parameters.algorithm}. You may pass a valid IV to avoid this error. Error: ${e.message}`,
         );
       }
     }
@@ -238,16 +239,16 @@ export class CryptographyClient {
    * @param args - The encrypt arguments
    */
   private disambiguateEncryptArguments(
-    args: [EncryptParameters, EncryptOptions?] | [string, Uint8Array, EncryptOptions?]
+    args: [EncryptParameters, EncryptOptions?] | [string, Uint8Array, EncryptOptions?],
   ): [EncryptParameters, EncryptOptions] {
     if (typeof args[0] === "string") {
       // Sample shape: ["RSA1_5", buffer, options]
       return [
         {
           algorithm: args[0],
-          plaintext: args[1]
+          plaintext: args[1],
         } as EncryptParameters,
-        args[2] || {}
+        args[2] || {},
       ];
     } else {
       // Sample shape: [{ algorithm: "RSA1_5", plaintext: buffer }, options]
@@ -258,6 +259,8 @@ export class CryptographyClient {
   /**
    * Decrypts the given ciphertext with the specified decryption parameters.
    * Depending on the algorithm used in the decryption parameters, the set of possible decryption parameters will change.
+   *
+   * Microsoft recommends you not use CBC without first ensuring the integrity of the ciphertext using, for example, an HMAC. See https://docs.microsoft.com/dotnet/standard/security/vulnerabilities-cbc-mode for more information.
    *
    * Example usage:
    * ```ts
@@ -270,7 +273,7 @@ export class CryptographyClient {
    */
   public async decrypt(
     decryptParameters: DecryptParameters,
-    options?: DecryptOptions
+    options?: DecryptOptions,
   ): Promise<DecryptResult>;
   /**
    * Decrypts the given ciphertext with the specified cryptography algorithm
@@ -280,6 +283,9 @@ export class CryptographyClient {
    * let client = new CryptographyClient(keyVaultKey, credentials);
    * let result = await client.decrypt("RSA1_5", encryptedBuffer);
    * ```
+   *
+   * Microsoft recommends you not use CBC without first ensuring the integrity of the ciphertext using, for example, an HMAC. See https://docs.microsoft.com/dotnet/standard/security/vulnerabilities-cbc-mode for more information.
+   *
    * @param algorithm - The algorithm to use.
    * @param ciphertext - The text to decrypt.
    * @param options - Additional options.
@@ -288,7 +294,7 @@ export class CryptographyClient {
   public decrypt(
     algorithm: EncryptionAlgorithm,
     ciphertext: Uint8Array,
-    options?: DecryptOptions
+    options?: DecryptOptions,
   ): Promise<DecryptResult>;
   public decrypt(
     ...args:
@@ -297,12 +303,12 @@ export class CryptographyClient {
   ): Promise<DecryptResult> {
     const [parameters, options] = this.disambiguateDecryptArguments(args);
 
-    return withTrace("decrypt", options, async (updatedOptions) => {
+    return tracingClient.withSpan("CryptographyClient.decrypt", options, async (updatedOptions) => {
       this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Decrypt);
       const provider = await this.getProvider("decrypt", parameters.algorithm, updatedOptions);
       try {
         return provider.decrypt(parameters, updatedOptions);
-      } catch (error) {
+      } catch (error: any) {
         if (this.remoteProvider) {
           return this.remoteProvider.decrypt(parameters, updatedOptions);
         }
@@ -316,16 +322,16 @@ export class CryptographyClient {
    * @param args - The decrypt arguments
    */
   private disambiguateDecryptArguments(
-    args: [DecryptParameters, DecryptOptions?] | [string, Uint8Array, DecryptOptions?]
+    args: [DecryptParameters, DecryptOptions?] | [string, Uint8Array, DecryptOptions?],
   ): [DecryptParameters, DecryptOptions] {
     if (typeof args[0] === "string") {
       // Sample shape: ["RSA1_5", encryptedBuffer, options]
       return [
         {
           algorithm: args[0],
-          ciphertext: args[1]
+          ciphertext: args[1],
         } as DecryptParameters,
-        args[2] || {}
+        args[2] || {},
       ];
     } else {
       // Sample shape: [{ algorithm: "RSA1_5", ciphertext: encryptedBuffer }, options]
@@ -348,14 +354,14 @@ export class CryptographyClient {
   public wrapKey(
     algorithm: KeyWrapAlgorithm,
     key: Uint8Array,
-    options: WrapKeyOptions = {}
+    options: WrapKeyOptions = {},
   ): Promise<WrapResult> {
-    return withTrace("wrapKey", options, async (updatedOptions) => {
+    return tracingClient.withSpan("CryptographyClient.wrapKey", options, async (updatedOptions) => {
       this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.WrapKey);
       const provider = await this.getProvider("wrapKey", algorithm, updatedOptions);
       try {
         return provider.wrapKey(algorithm, key, updatedOptions);
-      } catch (err) {
+      } catch (err: any) {
         if (this.remoteProvider) {
           return this.remoteProvider.wrapKey(algorithm, key, options);
         }
@@ -379,20 +385,24 @@ export class CryptographyClient {
   public unwrapKey(
     algorithm: KeyWrapAlgorithm,
     encryptedKey: Uint8Array,
-    options: UnwrapKeyOptions = {}
+    options: UnwrapKeyOptions = {},
   ): Promise<UnwrapResult> {
-    return withTrace("unwrapKey", options, async (updatedOptions) => {
-      this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.UnwrapKey);
-      const provider = await this.getProvider("unwrapKey", algorithm, updatedOptions);
-      try {
-        return provider.unwrapKey(algorithm, encryptedKey, updatedOptions);
-      } catch (err) {
-        if (this.remoteProvider) {
-          return this.remoteProvider.unwrapKey(algorithm, encryptedKey, options);
+    return tracingClient.withSpan(
+      "CryptographyClient.unwrapKey",
+      options,
+      async (updatedOptions) => {
+        this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.UnwrapKey);
+        const provider = await this.getProvider("unwrapKey", algorithm, updatedOptions);
+        try {
+          return provider.unwrapKey(algorithm, encryptedKey, updatedOptions);
+        } catch (err: any) {
+          if (this.remoteProvider) {
+            return this.remoteProvider.unwrapKey(algorithm, encryptedKey, options);
+          }
+          throw err;
         }
-        throw err;
-      }
-    });
+      },
+    );
   }
 
   /**
@@ -410,14 +420,14 @@ export class CryptographyClient {
   public sign(
     algorithm: SignatureAlgorithm,
     digest: Uint8Array,
-    options: SignOptions = {}
+    options: SignOptions = {},
   ): Promise<SignResult> {
-    return withTrace("sign", options, async (updatedOptions) => {
+    return tracingClient.withSpan("CryptographyClient.sign", options, async (updatedOptions) => {
       this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Sign);
       const provider = await this.getProvider("sign", algorithm, updatedOptions);
       try {
         return provider.sign(algorithm, digest, updatedOptions);
-      } catch (err) {
+      } catch (err: any) {
         if (this.remoteProvider) {
           return this.remoteProvider.sign(algorithm, digest, updatedOptions);
         }
@@ -443,14 +453,14 @@ export class CryptographyClient {
     algorithm: SignatureAlgorithm,
     digest: Uint8Array,
     signature: Uint8Array,
-    options: VerifyOptions = {}
+    options: VerifyOptions = {},
   ): Promise<VerifyResult> {
-    return withTrace("verify", options, async (updatedOptions) => {
+    return tracingClient.withSpan("CryptographyClient.verify", options, async (updatedOptions) => {
       this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Verify);
       const provider = await this.getProvider("verify", algorithm, updatedOptions);
       try {
         return provider.verify(algorithm, digest, signature, updatedOptions);
-      } catch (err) {
+      } catch (err: any) {
         if (this.remoteProvider) {
           return this.remoteProvider.verify(algorithm, digest, signature, updatedOptions);
         }
@@ -474,20 +484,25 @@ export class CryptographyClient {
   public signData(
     algorithm: SignatureAlgorithm,
     data: Uint8Array,
-    options: SignOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: SignOptions = {},
   ): Promise<SignResult> {
-    return withTrace("signData", options, async (updatedOptions) => {
-      this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Sign);
-      const provider = await this.getProvider("signData", algorithm, updatedOptions);
-      try {
-        return provider.signData(algorithm, data, updatedOptions);
-      } catch (err) {
-        if (this.remoteProvider) {
-          return this.remoteProvider.signData(algorithm, data, options);
+    return tracingClient.withSpan(
+      "CryptographyClient.signData",
+      options,
+      async (updatedOptions) => {
+        this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Sign);
+        const provider = await this.getProvider("signData", algorithm, updatedOptions);
+        try {
+          return provider.signData(algorithm, data, updatedOptions);
+        } catch (err: any) {
+          if (this.remoteProvider) {
+            return this.remoteProvider.signData(algorithm, data, options);
+          }
+          throw err;
         }
-        throw err;
-      }
-    });
+      },
+    );
   }
 
   /**
@@ -507,25 +522,29 @@ export class CryptographyClient {
     algorithm: SignatureAlgorithm,
     data: Uint8Array,
     signature: Uint8Array,
-    options: VerifyOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: VerifyOptions = {},
   ): Promise<VerifyResult> {
-    return withTrace("verifyData", options, async (updatedOptions) => {
-      this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Verify);
-      const provider = await this.getProvider("verifyData", algorithm, updatedOptions);
-      try {
-        return provider.verifyData(algorithm, data, signature, updatedOptions);
-      } catch (err) {
-        if (this.remoteProvider) {
-          return this.remoteProvider.verifyData(algorithm, data, signature, updatedOptions);
+    return tracingClient.withSpan(
+      "CryptographyClient.verifyData",
+      options,
+      async (updatedOptions) => {
+        this.ensureValid(await this.fetchKey(updatedOptions), KnownKeyOperations.Verify);
+        const provider = await this.getProvider("verifyData", algorithm, updatedOptions);
+        try {
+          return provider.verifyData(algorithm, data, signature, updatedOptions);
+        } catch (err: any) {
+          if (this.remoteProvider) {
+            return this.remoteProvider.verifyData(algorithm, data, signature, updatedOptions);
+          }
+          throw err;
         }
-        throw err;
-      }
-    });
+      },
+    );
   }
 
   /**
-   * @internal
-   * Retrieves the {@link JsonWebKey} from the Key Vault.
+   * Retrieves the {@link JsonWebKey} from the Key Vault, if possible. Returns undefined if the key could not be retrieved due to insufficient permissions.
    *
    * Example usage:
    * ```ts
@@ -533,7 +552,7 @@ export class CryptographyClient {
    * let result = await client.getKeyMaterial();
    * ```
    */
-  private async getKeyMaterial(options: GetKeyOptions): Promise<JsonWebKey> {
+  private async getKeyMaterial(options: GetKeyOptions): Promise<JsonWebKey | undefined> {
     const key = await this.fetchKey(options);
 
     switch (key.kind) {
@@ -542,21 +561,39 @@ export class CryptographyClient {
       case "KeyVaultKey":
         return key.value.key!;
       default:
-        throw new Error("Failed to exchange Key ID for an actual KeyVault Key.");
+        return undefined;
     }
   }
 
   /**
    * Returns the underlying key used for cryptographic operations.
-   * If needed, fetches the key from KeyVault and exchanges the ID for the actual key.
+   * If needed, attempts to fetch the key from KeyVault and exchanges the ID for the actual key.
    * @param options - The additional options.
    */
   private async fetchKey<T extends OperationOptions>(options: T): Promise<CryptographyClientKey> {
     if (this.key.kind === "identifier") {
       // Exchange the identifier with the actual key when needed
-      const key = await this.remoteProvider!.getKey(options);
-      this.key = { kind: "KeyVaultKey", value: key };
+      let key: KeyVaultKey | undefined;
+      try {
+        key = await this.remoteProvider!.getKey(options);
+      } catch (e: unknown) {
+        if (isRestError(e) && e.statusCode === 403) {
+          // If we don't have permission to get the key, we'll fall back to using the remote provider.
+          // Marking the key as a remoteOnlyIdentifier will ensure that we don't attempt to fetch the key again.
+          logger.verbose(
+            `Permission denied to get key ${this.key.value}. Falling back to remote operation.`,
+          );
+          this.key = { kind: "remoteOnlyIdentifier", value: this.key.value };
+        } else {
+          throw e;
+        }
+      }
+
+      if (key) {
+        this.key = { kind: "KeyVaultKey", value: key };
+      }
     }
+
     return this.key;
   }
 
@@ -571,15 +608,19 @@ export class CryptographyClient {
   private async getProvider<T extends OperationOptions>(
     operation: CryptographyProviderOperation,
     algorithm: string,
-    options: T
+    options: T,
   ): Promise<CryptographyProvider> {
     if (!this.providers) {
       const keyMaterial = await this.getKeyMaterial(options);
+      this.providers = [];
+
       // Add local crypto providers as needed
-      this.providers = [
-        new RsaCryptographyProvider(keyMaterial),
-        new AesCryptographyProvider(keyMaterial)
-      ];
+      if (keyMaterial) {
+        this.providers.push(
+          new RsaCryptographyProvider(keyMaterial),
+          new AesCryptographyProvider(keyMaterial),
+        );
+      }
 
       // If the remote provider exists, we're in hybrid-mode. Otherwise we're in local-only mode.
       // If we're in hybrid mode the remote provider is used as a catch-all and should be last in the list.
@@ -594,7 +635,7 @@ export class CryptographyClient {
       throw new Error(
         `Unable to support operation: "${operation}" with algorithm: "${algorithm}" ${
           this.key.kind === "JsonWebKey" ? "using a local JsonWebKey" : ""
-        }`
+        }`,
       );
     }
 

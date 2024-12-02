@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Demonstrates the use of a getModelUri and isValidDtmi, helper functions for interacting with DTMIs.
@@ -20,13 +20,13 @@ function main() {
   // local repository fully qualified path to a model file
   const fullyQualifiedLocalPath = getModelUri(
     "dtmi:com:example:Thermostat;1",
-    "file:///path/to/repository/"
+    "file:///path/to/repository/",
   );
   console.log(fullyQualifiedLocalPath);
 
   const fullyQualifiedRemotePath = getModelUri(
     "dtmi:com:example:Thermostat;1",
-    "https://contoso.com/models"
+    "https://contoso.com/models",
   );
   console.log(fullyQualifiedRemotePath);
 }

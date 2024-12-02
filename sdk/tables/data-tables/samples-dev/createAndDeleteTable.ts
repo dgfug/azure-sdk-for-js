@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /**
  * This sample demonstrates create and delete a table
  *
@@ -8,16 +8,13 @@
  */
 
 import { TableServiceClient, TableClient } from "@azure/data-tables";
-import { v4 } from "uuid";
-
-// Load the .env file if it exists
-import * as dotenv from "dotenv";
-dotenv.config();
+import { randomUUID } from "@azure/core-util";
+import "dotenv/config";
 
 const sasConnectionString = process.env["SAS_CONNECTION_STRING"] || "";
-const tableSufix = v4().replace(/-/g, "");
+const tableSufix = randomUUID().replace(/-/g, "");
 
-async function createAndDeleteTable() {
+async function createAndDeleteTable(): Promise<void> {
   console.log("== Delete and create table Sample ==");
 
   // See authenticationMethods sample for other options of creating a new client
@@ -31,7 +28,7 @@ async function createAndDeleteTable() {
   await serviceClient.deleteTable(tableName);
 }
 
-async function createAndDeleteTableWithTableClient() {
+async function createAndDeleteTableWithTableClient(): Promise<void> {
   // A table can also be created and deleted using a TableClient
   console.log("== Delete and create table with TableClient Sample ==");
 
@@ -47,7 +44,7 @@ async function createAndDeleteTableWithTableClient() {
   await client.deleteTable();
 }
 
-export async function main() {
+export async function main(): Promise<void> {
   await createAndDeleteTable();
   await createAndDeleteTableWithTableClient();
 }

@@ -6,179 +6,52 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import * as coreClient from "@azure/core-client";
 
-export const PhoneNumberSearchRequest: coreHttp.CompositeMapper = {
+export const PhoneNumberAreaCodes: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "PhoneNumberSearchRequest",
+    className: "PhoneNumberAreaCodes",
     modelProperties: {
-      phoneNumberType: {
-        serializedName: "phoneNumberType",
-        required: true,
-        type: {
-          name: "Enum",
-          allowedValues: ["geographic", "tollFree"]
-        }
-      },
-      assignmentType: {
-        serializedName: "assignmentType",
-        required: true,
-        type: {
-          name: "Enum",
-          allowedValues: ["person", "application"]
-        }
-      },
-      capabilities: {
-        serializedName: "capabilities",
-        type: {
-          name: "Composite",
-          className: "PhoneNumberCapabilities"
-        }
-      },
-      areaCode: {
-        serializedName: "areaCode",
-        type: {
-          name: "String"
-        }
-      },
-      quantity: {
-        defaultValue: 1,
-        constraints: {
-          InclusiveMaximum: 2147483647,
-          InclusiveMinimum: 1
-        },
-        serializedName: "quantity",
-        type: {
-          name: "Number"
-        }
-      }
-    }
-  }
-};
-
-export const PhoneNumberCapabilities: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "PhoneNumberCapabilities",
-    modelProperties: {
-      calling: {
-        serializedName: "calling",
-        required: true,
-        type: {
-          name: "Enum",
-          allowedValues: ["none", "inbound", "outbound", "inbound+outbound"]
-        }
-      },
-      sms: {
-        serializedName: "sms",
-        required: true,
-        type: {
-          name: "Enum",
-          allowedValues: ["none", "inbound", "outbound", "inbound+outbound"]
-        }
-      }
-    }
-  }
-};
-
-export const PhoneNumberSearchResult: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "PhoneNumberSearchResult",
-    modelProperties: {
-      searchId: {
-        serializedName: "searchId",
-        required: true,
-        type: {
-          name: "String"
-        }
-      },
-      phoneNumbers: {
-        serializedName: "phoneNumbers",
+      areaCodes: {
+        serializedName: "areaCodes",
         required: true,
         type: {
           name: "Sequence",
           element: {
             type: {
-              name: "String"
-            }
-          }
-        }
+              name: "Composite",
+              className: "PhoneNumberAreaCode",
+            },
+          },
+        },
       },
-      phoneNumberType: {
-        serializedName: "phoneNumberType",
-        required: true,
+      nextLink: {
+        serializedName: "nextLink",
         type: {
-          name: "Enum",
-          allowedValues: ["geographic", "tollFree"]
-        }
+          name: "String",
+        },
       },
-      assignmentType: {
-        serializedName: "assignmentType",
-        required: true,
-        type: {
-          name: "Enum",
-          allowedValues: ["person", "application"]
-        }
-      },
-      capabilities: {
-        serializedName: "capabilities",
-        type: {
-          name: "Composite",
-          className: "PhoneNumberCapabilities"
-        }
-      },
-      cost: {
-        serializedName: "cost",
-        type: {
-          name: "Composite",
-          className: "PhoneNumberCost"
-        }
-      },
-      searchExpiresBy: {
-        serializedName: "searchExpiresBy",
-        required: true,
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const PhoneNumberCost: coreHttp.CompositeMapper = {
+export const PhoneNumberAreaCode: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "PhoneNumberCost",
+    className: "PhoneNumberAreaCode",
     modelProperties: {
-      amount: {
-        serializedName: "amount",
-        required: true,
+      areaCode: {
+        serializedName: "areaCode",
         type: {
-          name: "Number"
-        }
+          name: "String",
+        },
       },
-      currencyCode: {
-        serializedName: "currencyCode",
-        required: true,
-        type: {
-          name: "String"
-        }
-      },
-      billingFrequency: {
-        defaultValue: "monthly",
-        isConstant: true,
-        serializedName: "billingFrequency",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const CommunicationErrorResponse: coreHttp.CompositeMapper = {
+export const CommunicationErrorResponse: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "CommunicationErrorResponse",
@@ -187,14 +60,14 @@ export const CommunicationErrorResponse: coreHttp.CompositeMapper = {
         serializedName: "error",
         type: {
           name: "Composite",
-          className: "CommunicationError"
-        }
-      }
-    }
-  }
+          className: "CommunicationError",
+        },
+      },
+    },
+  },
 };
 
-export const CommunicationError: coreHttp.CompositeMapper = {
+export const CommunicationError: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "CommunicationError",
@@ -203,22 +76,22 @@ export const CommunicationError: coreHttp.CompositeMapper = {
         serializedName: "code",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       message: {
         serializedName: "message",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       target: {
         serializedName: "target",
         readOnly: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       details: {
         serializedName: "details",
@@ -228,23 +101,384 @@ export const CommunicationError: coreHttp.CompositeMapper = {
           element: {
             type: {
               name: "Composite",
-              className: "CommunicationError"
-            }
-          }
-        }
+              className: "CommunicationError",
+            },
+          },
+        },
       },
       innerError: {
         serializedName: "innererror",
         type: {
           name: "Composite",
-          className: "CommunicationError"
-        }
-      }
-    }
-  }
+          className: "CommunicationError",
+        },
+      },
+    },
+  },
 };
 
-export const PhoneNumberPurchaseRequest: coreHttp.CompositeMapper = {
+export const PhoneNumberCountries: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberCountries",
+    modelProperties: {
+      countries: {
+        serializedName: "countries",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "PhoneNumberCountry",
+            },
+          },
+        },
+      },
+      nextLink: {
+        serializedName: "nextLink",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberCountry: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberCountry",
+    modelProperties: {
+      localizedName: {
+        serializedName: "localizedName",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      countryCode: {
+        serializedName: "countryCode",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberLocalities: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberLocalities",
+    modelProperties: {
+      phoneNumberLocalities: {
+        serializedName: "phoneNumberLocalities",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "PhoneNumberLocality",
+            },
+          },
+        },
+      },
+      nextLink: {
+        serializedName: "nextLink",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberLocality: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberLocality",
+    modelProperties: {
+      localizedName: {
+        serializedName: "localizedName",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      administrativeDivision: {
+        serializedName: "administrativeDivision",
+        type: {
+          name: "Composite",
+          className: "PhoneNumberAdministrativeDivision",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberAdministrativeDivision: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberAdministrativeDivision",
+    modelProperties: {
+      localizedName: {
+        serializedName: "localizedName",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      abbreviatedName: {
+        serializedName: "abbreviatedName",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const OfferingsResponse: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OfferingsResponse",
+    modelProperties: {
+      phoneNumberOfferings: {
+        serializedName: "phoneNumberOfferings",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "PhoneNumberOffering",
+            },
+          },
+        },
+      },
+      nextLink: {
+        serializedName: "nextLink",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberOffering: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberOffering",
+    modelProperties: {
+      phoneNumberType: {
+        serializedName: "phoneNumberType",
+        type: {
+          name: "String",
+        },
+      },
+      assignmentType: {
+        serializedName: "assignmentType",
+        type: {
+          name: "String",
+        },
+      },
+      availableCapabilities: {
+        serializedName: "availableCapabilities",
+        type: {
+          name: "Composite",
+          className: "PhoneNumberCapabilities",
+        },
+      },
+      cost: {
+        serializedName: "cost",
+        type: {
+          name: "Composite",
+          className: "PhoneNumberCost",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberCapabilities: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberCapabilities",
+    modelProperties: {
+      calling: {
+        serializedName: "calling",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      sms: {
+        serializedName: "sms",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberCost: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberCost",
+    modelProperties: {
+      amount: {
+        serializedName: "amount",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+      currencyCode: {
+        serializedName: "currencyCode",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      billingFrequency: {
+        defaultValue: "monthly",
+        isConstant: true,
+        serializedName: "billingFrequency",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberSearchRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberSearchRequest",
+    modelProperties: {
+      phoneNumberType: {
+        serializedName: "phoneNumberType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      assignmentType: {
+        serializedName: "assignmentType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      capabilities: {
+        serializedName: "capabilities",
+        type: {
+          name: "Composite",
+          className: "PhoneNumberCapabilities",
+        },
+      },
+      areaCode: {
+        serializedName: "areaCode",
+        type: {
+          name: "String",
+        },
+      },
+      quantity: {
+        defaultValue: 1,
+        constraints: {
+          InclusiveMaximum: 2147483647,
+          InclusiveMinimum: 1,
+        },
+        serializedName: "quantity",
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberSearchResult: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PhoneNumberSearchResult",
+    modelProperties: {
+      searchId: {
+        serializedName: "searchId",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      phoneNumbers: {
+        serializedName: "phoneNumbers",
+        required: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      phoneNumberType: {
+        serializedName: "phoneNumberType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      assignmentType: {
+        serializedName: "assignmentType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      capabilities: {
+        serializedName: "capabilities",
+        type: {
+          name: "Composite",
+          className: "PhoneNumberCapabilities",
+        },
+      },
+      cost: {
+        serializedName: "cost",
+        type: {
+          name: "Composite",
+          className: "PhoneNumberCost",
+        },
+      },
+      searchExpiresBy: {
+        serializedName: "searchExpiresBy",
+        required: true,
+        type: {
+          name: "DateTime",
+        },
+      },
+      errorCode: {
+        serializedName: "errorCode",
+        type: {
+          name: "Number",
+        },
+      },
+      error: {
+        serializedName: "error",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumberPurchaseRequest: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "PhoneNumberPurchaseRequest",
@@ -252,78 +486,71 @@ export const PhoneNumberPurchaseRequest: coreHttp.CompositeMapper = {
       searchId: {
         serializedName: "searchId",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const PhoneNumberOperation: coreHttp.CompositeMapper = {
+export const PhoneNumberOperation: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "PhoneNumberOperation",
     modelProperties: {
+      operationType: {
+        serializedName: "operationType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
       status: {
         serializedName: "status",
         required: true,
         type: {
-          name: "Enum",
-          allowedValues: ["notStarted", "running", "succeeded", "failed"]
-        }
+          name: "String",
+        },
       },
       resourceLocation: {
         serializedName: "resourceLocation",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       createdDateTime: {
         serializedName: "createdDateTime",
         required: true,
         type: {
-          name: "DateTime"
-        }
+          name: "DateTime",
+        },
       },
       error: {
         serializedName: "error",
         type: {
           name: "Composite",
-          className: "CommunicationError"
-        }
+          className: "CommunicationError",
+        },
       },
       id: {
         serializedName: "id",
         required: true,
         type: {
-          name: "String"
-        }
-      },
-      operationType: {
-        serializedName: "operationType",
-        required: true,
-        type: {
-          name: "Enum",
-          allowedValues: [
-            "purchase",
-            "releasePhoneNumber",
-            "search",
-            "updatePhoneNumberCapabilities"
-          ]
-        }
+          name: "String",
+        },
       },
       lastActionDateTime: {
         serializedName: "lastActionDateTime",
         readOnly: true,
         type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
+          name: "DateTime",
+        },
+      },
+    },
+  },
 };
 
-export const PhoneNumberCapabilitiesRequest: coreHttp.CompositeMapper = {
+export const PhoneNumberCapabilitiesRequest: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "PhoneNumberCapabilitiesRequest",
@@ -331,22 +558,20 @@ export const PhoneNumberCapabilitiesRequest: coreHttp.CompositeMapper = {
       calling: {
         serializedName: "calling",
         type: {
-          name: "Enum",
-          allowedValues: ["none", "inbound", "outbound", "inbound+outbound"]
-        }
+          name: "String",
+        },
       },
       sms: {
         serializedName: "sms",
         type: {
-          name: "Enum",
-          allowedValues: ["none", "inbound", "outbound", "inbound+outbound"]
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const PurchasedPhoneNumber: coreHttp.CompositeMapper = {
+export const PurchasedPhoneNumber: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "PurchasedPhoneNumber",
@@ -355,65 +580,63 @@ export const PurchasedPhoneNumber: coreHttp.CompositeMapper = {
         serializedName: "id",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       phoneNumber: {
         serializedName: "phoneNumber",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       countryCode: {
         serializedName: "countryCode",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       phoneNumberType: {
         serializedName: "phoneNumberType",
         required: true,
         type: {
-          name: "Enum",
-          allowedValues: ["geographic", "tollFree"]
-        }
+          name: "String",
+        },
       },
       capabilities: {
         serializedName: "capabilities",
         type: {
           name: "Composite",
-          className: "PhoneNumberCapabilities"
-        }
+          className: "PhoneNumberCapabilities",
+        },
       },
       assignmentType: {
         serializedName: "assignmentType",
         required: true,
         type: {
-          name: "Enum",
-          allowedValues: ["person", "application"]
-        }
+          name: "String",
+        },
       },
       purchaseDate: {
         serializedName: "purchaseDate",
         required: true,
         type: {
-          name: "DateTime"
-        }
+          name: "DateTime",
+        },
       },
       cost: {
         serializedName: "cost",
         type: {
           name: "Composite",
-          className: "PhoneNumberCost"
-        }
-      }
-    }
-  }
+          className: "PhoneNumberCost",
+        },
+      },
+    },
+  },
 };
 
-export const PurchasedPhoneNumbers: coreHttp.CompositeMapper = {
+export const PurchasedPhoneNumbers: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "PurchasedPhoneNumbers",
@@ -426,82 +649,223 @@ export const PurchasedPhoneNumbers: coreHttp.CompositeMapper = {
           element: {
             type: {
               name: "Composite",
-              className: "PurchasedPhoneNumber"
-            }
-          }
-        }
+              className: "PurchasedPhoneNumber",
+            },
+          },
+        },
       },
       nextLink: {
         serializedName: "nextLink",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const PhoneNumbersSearchAvailablePhoneNumbersHeaders: coreHttp.CompositeMapper = {
+export const OperatorInformationRequest: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "PhoneNumbersSearchAvailablePhoneNumbersHeaders",
+    className: "OperatorInformationRequest",
     modelProperties: {
-      location: {
-        serializedName: "location",
+      phoneNumbers: {
+        serializedName: "phoneNumbers",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
       },
-      operationLocation: {
-        serializedName: "operation-location",
+      options: {
+        serializedName: "options",
         type: {
-          name: "String"
-        }
+          name: "Composite",
+          className: "OperatorInformationOptions",
+        },
       },
-      operationId: {
-        serializedName: "operation-id",
-        type: {
-          name: "String"
-        }
-      },
-      searchId: {
-        serializedName: "search-id",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const PhoneNumbersPurchasePhoneNumbersHeaders: coreHttp.CompositeMapper = {
+export const OperatorInformationOptions: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "PhoneNumbersPurchasePhoneNumbersHeaders",
+    className: "OperatorInformationOptions",
     modelProperties: {
-      operationLocation: {
-        serializedName: "operation-location",
+      includeAdditionalOperatorDetails: {
+        serializedName: "includeAdditionalOperatorDetails",
         type: {
-          name: "String"
-        }
+          name: "Boolean",
+        },
       },
-      operationId: {
-        serializedName: "operation-id",
-        type: {
-          name: "String"
-        }
-      },
-      purchaseId: {
-        serializedName: "purchase-id",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const PhoneNumbersGetOperationHeaders: coreHttp.CompositeMapper = {
+export const OperatorInformationResult: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OperatorInformationResult",
+    modelProperties: {
+      values: {
+        serializedName: "values",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "OperatorInformation",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const OperatorInformation: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OperatorInformation",
+    modelProperties: {
+      phoneNumber: {
+        serializedName: "phoneNumber",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      nationalFormat: {
+        serializedName: "nationalFormat",
+        type: {
+          name: "String",
+        },
+      },
+      internationalFormat: {
+        serializedName: "internationalFormat",
+        type: {
+          name: "String",
+        },
+      },
+      isoCountryCode: {
+        serializedName: "isoCountryCode",
+        type: {
+          name: "String",
+        },
+      },
+      numberType: {
+        serializedName: "numberType",
+        type: {
+          name: "String",
+        },
+      },
+      operatorDetails: {
+        serializedName: "operatorDetails",
+        type: {
+          name: "Composite",
+          className: "OperatorDetails",
+        },
+      },
+    },
+  },
+};
+
+export const OperatorDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OperatorDetails",
+    modelProperties: {
+      name: {
+        serializedName: "name",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      mobileNetworkCode: {
+        serializedName: "mobileNetworkCode",
+        type: {
+          name: "String",
+        },
+      },
+      mobileCountryCode: {
+        serializedName: "mobileCountryCode",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PhoneNumbersSearchAvailablePhoneNumbersHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "PhoneNumbersSearchAvailablePhoneNumbersHeaders",
+      modelProperties: {
+        location: {
+          serializedName: "location",
+          type: {
+            name: "String",
+          },
+        },
+        operationLocation: {
+          serializedName: "operation-location",
+          type: {
+            name: "String",
+          },
+        },
+        operationId: {
+          serializedName: "operation-id",
+          type: {
+            name: "String",
+          },
+        },
+        searchId: {
+          serializedName: "search-id",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const PhoneNumbersPurchasePhoneNumbersHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "PhoneNumbersPurchasePhoneNumbersHeaders",
+      modelProperties: {
+        operationLocation: {
+          serializedName: "operation-location",
+          type: {
+            name: "String",
+          },
+        },
+        operationId: {
+          serializedName: "operation-id",
+          type: {
+            name: "String",
+          },
+        },
+        purchaseId: {
+          serializedName: "purchase-id",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const PhoneNumbersGetOperationHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "PhoneNumbersGetOperationHeaders",
@@ -509,69 +873,71 @@ export const PhoneNumbersGetOperationHeaders: coreHttp.CompositeMapper = {
       location: {
         serializedName: "location",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const PhoneNumbersUpdateCapabilitiesHeaders: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "PhoneNumbersUpdateCapabilitiesHeaders",
-    modelProperties: {
-      location: {
-        serializedName: "location",
-        type: {
-          name: "String"
-        }
+export const PhoneNumbersUpdateCapabilitiesHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "PhoneNumbersUpdateCapabilitiesHeaders",
+      modelProperties: {
+        location: {
+          serializedName: "location",
+          type: {
+            name: "String",
+          },
+        },
+        operationLocation: {
+          serializedName: "operation-location",
+          type: {
+            name: "String",
+          },
+        },
+        operationId: {
+          serializedName: "operation-id",
+          type: {
+            name: "String",
+          },
+        },
+        capabilitiesId: {
+          serializedName: "capabilities-id",
+          type: {
+            name: "String",
+          },
+        },
       },
-      operationLocation: {
-        serializedName: "operation-location",
-        type: {
-          name: "String"
-        }
-      },
-      operationId: {
-        serializedName: "operation-id",
-        type: {
-          name: "String"
-        }
-      },
-      capabilitiesId: {
-        serializedName: "capabilities-id",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+    },
+  };
 
-export const PhoneNumbersReleasePhoneNumberHeaders: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "PhoneNumbersReleasePhoneNumberHeaders",
-    modelProperties: {
-      operationLocation: {
-        serializedName: "operation-location",
-        type: {
-          name: "String"
-        }
+export const PhoneNumbersReleasePhoneNumberHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "PhoneNumbersReleasePhoneNumberHeaders",
+      modelProperties: {
+        operationLocation: {
+          serializedName: "operation-location",
+          type: {
+            name: "String",
+          },
+        },
+        operationId: {
+          serializedName: "operation-id",
+          type: {
+            name: "String",
+          },
+        },
+        releaseId: {
+          serializedName: "release-id",
+          type: {
+            name: "String",
+          },
+        },
       },
-      operationId: {
-        serializedName: "operation-id",
-        type: {
-          name: "String"
-        }
-      },
-      releaseId: {
-        serializedName: "release-id",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+    },
+  };

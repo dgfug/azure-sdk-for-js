@@ -1,26 +1,27 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredential } from "@azure/core-auth";
-import {
+import type {
+  CommonClientOptions,
+  OperationArguments,
+  OperationRequest,
+  OperationSpec,
+} from "./interfaces.js";
+import type {
   HttpClient,
+  Pipeline,
   PipelineRequest,
   PipelineResponse,
-  Pipeline,
-  createPipelineRequest
 } from "@azure/core-rest-pipeline";
-import {
-  OperationArguments,
-  OperationSpec,
-  OperationRequest,
-  CommonClientOptions
-} from "./interfaces";
-import { getStreamingResponseStatusCodes } from "./interfaceHelpers";
-import { getRequestUrl } from "./urlHelpers";
-import { flattenResponse } from "./utils";
-import { getCachedDefaultHttpClient } from "./httpClientCache";
-import { getOperationRequestInfo } from "./operationHelpers";
-import { createClientPipeline } from "./pipeline";
+import { createPipelineRequest } from "@azure/core-rest-pipeline";
+import type { TokenCredential } from "@azure/core-auth";
+import { createClientPipeline } from "./pipeline.js";
+import { flattenResponse } from "./utils.js";
+import { getCachedDefaultHttpClient } from "./httpClientCache.js";
+import { getOperationRequestInfo } from "./operationHelpers.js";
+import { getRequestUrl } from "./urlHelpers.js";
+import { getStreamingResponseStatusCodes } from "./interfaceHelpers.js";
+import { logger } from "./log.js";
 
 /**
  * Options to be provided while creating the client.
@@ -29,8 +30,15 @@ export interface ServiceClientOptions extends CommonClientOptions {
   /**
    * If specified, this is the base URI that requests will be made against for this ServiceClient.
    * If it is not specified, then all OperationSpecs must contain a baseUrl property.
+   * @deprecated This property is deprecated and will be removed soon, please use endpoint instead
    */
   baseUri?: string;
+  /**
+   * If specified, this is the endpoint that requests will be made against for this ServiceClient.
+   * If it is not specified, then all OperationSpecs must contain a baseUrl property.
+   * to encourage customer to use endpoint, we mark the baseUri as deprecated.
+   */
+  endpoint?: string;
   /**
    * If specified, will be used to build the BearerTokenAuthenticationPolicy.
    */
@@ -58,7 +66,7 @@ export class ServiceClient {
    * If specified, this is the base URI that requests will be made against for this ServiceClient.
    * If it is not specified, then all OperationSpecs must contain a baseUrl property.
    */
-  private readonly _baseUri?: string;
+  private readonly _endpoint?: string;
 
   /**
    * The default request content type for the service.
@@ -83,16 +91,30 @@ export class ServiceClient {
 
   /**
    * The ServiceClient constructor
-   * @param credential - The credentials used for authentication with the service.
    * @param options - The service client options that govern the behavior of the client.
    */
   constructor(options: ServiceClientOptions = {}) {
     this._requestContentType = options.requestContentType;
-    this._baseUri = options.baseUri;
+    this._endpoint = options.endpoint ?? options.baseUri;
+    if (options.baseUri) {
+      logger.warning(
+        "The baseUri option for SDK Clients has been deprecated, please use endpoint instead.",
+      );
+    }
     this._allowInsecureConnection = options.allowInsecureConnection;
     this._httpClient = options.httpClient || getCachedDefaultHttpClient();
 
     this.pipeline = options.pipeline || createDefaultPipeline(options);
+    if (options.additionalPolicies?.length) {
+      for (const { policy, position } of options.additionalPolicies) {
+        // Sign happens after Retry and is commonly needed to occur
+        // before policies that intercept post-retry.
+        const afterPhase = position === "perRetry" ? "Sign" : undefined;
+        this.pipeline.addPolicy(policy, {
+          afterPhase,
+        });
+      }
+    }
   }
 
   /**
@@ -110,22 +132,22 @@ export class ServiceClient {
    */
   async sendOperationRequest<T>(
     operationArguments: OperationArguments,
-    operationSpec: OperationSpec
+    operationSpec: OperationSpec,
   ): Promise<T> {
-    const baseUri: string | undefined = operationSpec.baseUrl || this._baseUri;
-    if (!baseUri) {
+    const endpoint: string | undefined = operationSpec.baseUrl || this._endpoint;
+    if (!endpoint) {
       throw new Error(
-        "If operationSpec.baseUrl is not specified, then the ServiceClient must have a baseUri string property that contains the base URL to use."
+        "If operationSpec.baseUrl is not specified, then the ServiceClient must have a endpoint string property that contains the base URL to use.",
       );
     }
 
     // Templatized URLs sometimes reference properties on the ServiceClient child class,
     // so we have to pass `this` below in order to search these properties if they're
     // not part of OperationArguments
-    const url = getRequestUrl(baseUri, operationSpec, operationArguments, this);
+    const url = getRequestUrl(endpoint, operationSpec, operationArguments, this);
 
     const request: OperationRequest = createPipelineRequest({
-      url
+      url,
     });
     request.method = operationSpec.httpMethod;
     const operationInfo = getOperationRequestInfo(request);
@@ -184,18 +206,23 @@ export class ServiceClient {
       const rawResponse = await this.sendRequest(request);
       const flatResponse = flattenResponse(
         rawResponse,
-        operationSpec.responses[rawResponse.status]
+        operationSpec.responses[rawResponse.status],
       ) as T;
       if (options?.onResponse) {
         options.onResponse(rawResponse, flatResponse);
       }
       return flatResponse;
-    } catch (error) {
-      if (error.response) {
-        error.details = flattenResponse(
-          error.response,
-          operationSpec.responses[error.statusCode] || operationSpec.responses["default"]
+    } catch (error: any) {
+      if (typeof error === "object" && error?.response) {
+        const rawResponse = error.response;
+        const flatResponse = flattenResponse(
+          rawResponse,
+          operationSpec.responses[error.statusCode] || operationSpec.responses["default"],
         );
+        error.details = flatResponse;
+        if (options?.onResponse) {
+          options.onResponse(rawResponse, flatResponse, error);
+        }
       }
       throw error;
     }
@@ -211,16 +238,17 @@ function createDefaultPipeline(options: ServiceClientOptions): Pipeline {
 
   return createClientPipeline({
     ...options,
-    credentialOptions
+    credentialOptions,
   });
 }
 
 function getCredentialScopes(options: ServiceClientOptions): string | string[] | undefined {
   if (options.credentialScopes) {
-    const scopes = options.credentialScopes;
-    return Array.isArray(scopes)
-      ? scopes.map((scope) => new URL(scope).toString())
-      : new URL(scopes).toString();
+    return options.credentialScopes;
+  }
+
+  if (options.endpoint) {
+    return `${options.endpoint}/.default`;
   }
 
   if (options.baseUri) {
@@ -229,7 +257,7 @@ function getCredentialScopes(options: ServiceClientOptions): string | string[] |
 
   if (options.credential && !options.credentialScopes) {
     throw new Error(
-      `When using credentials, the ServiceClientOptions must contain either a baseUri or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`
+      `When using credentials, the ServiceClientOptions must contain either a endpoint or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`,
     );
   }
 

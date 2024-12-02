@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export * from "./constants";
-export * from "./logger";
-export * from "./tracing";
+export * from "./constants.js";
+export * from "./logger.js";

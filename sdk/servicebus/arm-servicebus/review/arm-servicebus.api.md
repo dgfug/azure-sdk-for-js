@@ -32,27 +32,19 @@ export interface Action {
 }
 
 // @public
-export type ArmDisasterRecovery = Resource & {
-    readonly provisioningState?: ProvisioningStateDR;
-    readonly pendingReplicationOperationsCount?: number;
-    partnerNamespace?: string;
+export interface ArmDisasterRecovery extends ProxyResource {
     alternateName?: string;
+    partnerNamespace?: string;
+    readonly pendingReplicationOperationsCount?: number;
+    readonly provisioningState?: ProvisioningStateDR;
     readonly role?: RoleDisasterRecovery;
-};
+    readonly systemData?: SystemData;
+}
 
 // @public
 export interface ArmDisasterRecoveryListResult {
     readonly nextLink?: string;
     value?: ArmDisasterRecovery[];
-}
-
-// @public
-export interface CaptureDescription {
-    destination?: Destination;
-    enabled?: boolean;
-    encoding?: EncodingCaptureDescription;
-    intervalInSeconds?: number;
-    sizeLimitInBytes?: number;
 }
 
 // @public
@@ -90,15 +82,10 @@ export interface CorrelationFilter {
 }
 
 // @public
-export type DefaultAction = string;
+export type CreatedByType = string;
 
 // @public
-export interface Destination {
-    archiveNameFormat?: string;
-    blobContainer?: string;
-    name?: string;
-    storageAccountResourceId?: string;
-}
+export type DefaultAction = string;
 
 // @public
 export interface DisasterRecoveryConfigs {
@@ -191,12 +178,10 @@ export interface DisasterRecoveryConfigsListOptionalParams extends coreClient.Op
 export type DisasterRecoveryConfigsListResponse = ArmDisasterRecoveryListResult;
 
 // @public
-export type EncodingCaptureDescription = "Avro" | "AvroDeflate";
-
-// @public
 export interface Encryption {
     keySource?: "Microsoft.KeyVault";
-    keyVaultProperties?: KeyVaultProperties;
+    keyVaultProperties?: KeyVaultProperties[];
+    requireInfrastructureEncryption?: boolean;
 }
 
 // @public
@@ -226,42 +211,6 @@ export interface ErrorResponseError {
 }
 
 // @public
-export type Eventhub = Resource & {
-    readonly partitionIds?: string[];
-    readonly createdAt?: Date;
-    readonly updatedAt?: Date;
-    messageRetentionInDays?: number;
-    partitionCount?: number;
-    status?: EntityStatus;
-    captureDescription?: CaptureDescription;
-};
-
-// @public
-export interface EventHubListResult {
-    readonly nextLink?: string;
-    value?: Eventhub[];
-}
-
-// @public
-export interface EventHubs {
-    listByNamespace(resourceGroupName: string, namespaceName: string, options?: EventHubsListByNamespaceOptionalParams): PagedAsyncIterableIterator<Eventhub>;
-}
-
-// @public
-export interface EventHubsListByNamespaceNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type EventHubsListByNamespaceNextResponse = EventHubListResult;
-
-// @public
-export interface EventHubsListByNamespaceOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type EventHubsListByNamespaceResponse = EventHubListResult;
-
-// @public
 export interface FailoverProperties {
     isSafeFailover?: boolean;
 }
@@ -270,26 +219,16 @@ export interface FailoverProperties {
 export type FilterType = "SqlFilter" | "CorrelationFilter";
 
 // @public
+export function getContinuationToken(page: unknown): string | undefined;
+
+// @public
 export interface Identity {
-    principalId?: string;
-    tenantId?: string;
-    type?: "SystemAssigned";
-}
-
-// @public
-export type IPAction = string;
-
-// @public
-export type IpFilterRule = Resource & {
-    ipMask?: string;
-    action?: IPAction;
-    filterName?: string;
-};
-
-// @public
-export interface IpFilterRuleListResult {
-    nextLink?: string;
-    value?: IpFilterRule[];
+    readonly principalId?: string;
+    readonly tenantId?: string;
+    type?: ManagedServiceIdentityType;
+    userAssignedIdentities?: {
+        [propertyName: string]: UserAssignedIdentity;
+    };
 }
 
 // @public
@@ -298,65 +237,77 @@ export { KeyType_2 as KeyType }
 
 // @public
 export interface KeyVaultProperties {
+    // (undocumented)
+    identity?: UserAssignedIdentityProperties;
     keyName?: string;
     keyVaultUri?: string;
+    keyVersion?: string;
+}
+
+// @public
+export enum KnownCreatedByType {
+    Application = "Application",
+    Key = "Key",
+    ManagedIdentity = "ManagedIdentity",
+    User = "User"
 }
 
 // @public
 export enum KnownDefaultAction {
-    // (undocumented)
     Allow = "Allow",
-    // (undocumented)
     Deny = "Deny"
 }
 
 // @public
 export enum KnownEndPointProvisioningState {
-    // (undocumented)
     Canceled = "Canceled",
-    // (undocumented)
     Creating = "Creating",
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Succeeded = "Succeeded",
-    // (undocumented)
     Updating = "Updating"
 }
 
 // @public
-export enum KnownIPAction {
-    // (undocumented)
-    Accept = "Accept",
-    // (undocumented)
-    Reject = "Reject"
-}
-
-// @public
 export enum KnownMigrationConfigurationName {
-    // (undocumented)
     Default = "$default"
 }
 
 // @public
 export enum KnownNetworkRuleIPAction {
-    // (undocumented)
     Allow = "Allow"
 }
 
 // @public
 export enum KnownPrivateLinkConnectionStatus {
-    // (undocumented)
     Approved = "Approved",
-    // (undocumented)
     Disconnected = "Disconnected",
-    // (undocumented)
     Pending = "Pending",
-    // (undocumented)
     Rejected = "Rejected"
 }
+
+// @public
+export enum KnownPublicNetworkAccess {
+    Disabled = "Disabled",
+    Enabled = "Enabled",
+    SecuredByPerimeter = "SecuredByPerimeter"
+}
+
+// @public
+export enum KnownPublicNetworkAccessFlag {
+    Disabled = "Disabled",
+    Enabled = "Enabled"
+}
+
+// @public
+export enum KnownTlsVersion {
+    One0 = "1.0",
+    One1 = "1.1",
+    One2 = "1.2"
+}
+
+// @public
+export type ManagedServiceIdentityType = "SystemAssigned" | "UserAssigned" | "SystemAssigned, UserAssigned" | "None";
 
 // @public
 export interface MessageCountDetails {
@@ -374,13 +325,14 @@ export interface MigrationConfigListResult {
 }
 
 // @public
-export type MigrationConfigProperties = Resource & {
-    readonly provisioningState?: string;
-    readonly pendingReplicationOperationsCount?: number;
-    targetNamespace?: string;
-    postMigrationName?: string;
+export interface MigrationConfigProperties extends ProxyResource {
     readonly migrationState?: string;
-};
+    readonly pendingReplicationOperationsCount?: number;
+    postMigrationName?: string;
+    readonly provisioningState?: string;
+    readonly systemData?: SystemData;
+    targetNamespace?: string;
+}
 
 // @public
 export interface MigrationConfigs {
@@ -446,25 +398,16 @@ export interface Namespaces {
     beginDeleteAndWait(resourceGroupName: string, namespaceName: string, options?: NamespacesDeleteOptionalParams): Promise<void>;
     checkNameAvailability(parameters: CheckNameAvailability, options?: NamespacesCheckNameAvailabilityOptionalParams): Promise<NamespacesCheckNameAvailabilityResponse>;
     createOrUpdateAuthorizationRule(resourceGroupName: string, namespaceName: string, authorizationRuleName: string, parameters: SBAuthorizationRule, options?: NamespacesCreateOrUpdateAuthorizationRuleOptionalParams): Promise<NamespacesCreateOrUpdateAuthorizationRuleResponse>;
-    createOrUpdateIpFilterRule(resourceGroupName: string, namespaceName: string, ipFilterRuleName: string, parameters: IpFilterRule, options?: NamespacesCreateOrUpdateIpFilterRuleOptionalParams): Promise<NamespacesCreateOrUpdateIpFilterRuleResponse>;
     createOrUpdateNetworkRuleSet(resourceGroupName: string, namespaceName: string, parameters: NetworkRuleSet, options?: NamespacesCreateOrUpdateNetworkRuleSetOptionalParams): Promise<NamespacesCreateOrUpdateNetworkRuleSetResponse>;
-    createOrUpdateVirtualNetworkRule(resourceGroupName: string, namespaceName: string, virtualNetworkRuleName: string, parameters: VirtualNetworkRule, options?: NamespacesCreateOrUpdateVirtualNetworkRuleOptionalParams): Promise<NamespacesCreateOrUpdateVirtualNetworkRuleResponse>;
     deleteAuthorizationRule(resourceGroupName: string, namespaceName: string, authorizationRuleName: string, options?: NamespacesDeleteAuthorizationRuleOptionalParams): Promise<void>;
-    deleteIpFilterRule(resourceGroupName: string, namespaceName: string, ipFilterRuleName: string, options?: NamespacesDeleteIpFilterRuleOptionalParams): Promise<void>;
-    deleteVirtualNetworkRule(resourceGroupName: string, namespaceName: string, virtualNetworkRuleName: string, options?: NamespacesDeleteVirtualNetworkRuleOptionalParams): Promise<void>;
     get(resourceGroupName: string, namespaceName: string, options?: NamespacesGetOptionalParams): Promise<NamespacesGetResponse>;
     getAuthorizationRule(resourceGroupName: string, namespaceName: string, authorizationRuleName: string, options?: NamespacesGetAuthorizationRuleOptionalParams): Promise<NamespacesGetAuthorizationRuleResponse>;
-    getIpFilterRule(resourceGroupName: string, namespaceName: string, ipFilterRuleName: string, options?: NamespacesGetIpFilterRuleOptionalParams): Promise<NamespacesGetIpFilterRuleResponse>;
     getNetworkRuleSet(resourceGroupName: string, namespaceName: string, options?: NamespacesGetNetworkRuleSetOptionalParams): Promise<NamespacesGetNetworkRuleSetResponse>;
-    getVirtualNetworkRule(resourceGroupName: string, namespaceName: string, virtualNetworkRuleName: string, options?: NamespacesGetVirtualNetworkRuleOptionalParams): Promise<NamespacesGetVirtualNetworkRuleResponse>;
     list(options?: NamespacesListOptionalParams): PagedAsyncIterableIterator<SBNamespace>;
     listAuthorizationRules(resourceGroupName: string, namespaceName: string, options?: NamespacesListAuthorizationRulesOptionalParams): PagedAsyncIterableIterator<SBAuthorizationRule>;
     listByResourceGroup(resourceGroupName: string, options?: NamespacesListByResourceGroupOptionalParams): PagedAsyncIterableIterator<SBNamespace>;
-    listIpFilterRules(resourceGroupName: string, namespaceName: string, options?: NamespacesListIpFilterRulesOptionalParams): PagedAsyncIterableIterator<IpFilterRule>;
     listKeys(resourceGroupName: string, namespaceName: string, authorizationRuleName: string, options?: NamespacesListKeysOptionalParams): Promise<NamespacesListKeysResponse>;
     listNetworkRuleSets(resourceGroupName: string, namespaceName: string, options?: NamespacesListNetworkRuleSetsOptionalParams): PagedAsyncIterableIterator<NetworkRuleSet>;
-    listVirtualNetworkRules(resourceGroupName: string, namespaceName: string, options?: NamespacesListVirtualNetworkRulesOptionalParams): PagedAsyncIterableIterator<VirtualNetworkRule>;
-    migrate(resourceGroupName: string, namespaceName: string, parameters: SBNamespaceMigrate, options?: NamespacesMigrateOptionalParams): Promise<void>;
     regenerateKeys(resourceGroupName: string, namespaceName: string, authorizationRuleName: string, parameters: RegenerateAccessKeyParameters, options?: NamespacesRegenerateKeysOptionalParams): Promise<NamespacesRegenerateKeysResponse>;
     update(resourceGroupName: string, namespaceName: string, parameters: SBNamespaceUpdateParameters, options?: NamespacesUpdateOptionalParams): Promise<NamespacesUpdateResponse>;
 }
@@ -484,13 +427,6 @@ export interface NamespacesCreateOrUpdateAuthorizationRuleOptionalParams extends
 export type NamespacesCreateOrUpdateAuthorizationRuleResponse = SBAuthorizationRule;
 
 // @public
-export interface NamespacesCreateOrUpdateIpFilterRuleOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesCreateOrUpdateIpFilterRuleResponse = IpFilterRule;
-
-// @public
 export interface NamespacesCreateOrUpdateNetworkRuleSetOptionalParams extends coreClient.OperationOptions {
 }
 
@@ -507,18 +443,7 @@ export interface NamespacesCreateOrUpdateOptionalParams extends coreClient.Opera
 export type NamespacesCreateOrUpdateResponse = SBNamespace;
 
 // @public
-export interface NamespacesCreateOrUpdateVirtualNetworkRuleOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesCreateOrUpdateVirtualNetworkRuleResponse = VirtualNetworkRule;
-
-// @public
 export interface NamespacesDeleteAuthorizationRuleOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export interface NamespacesDeleteIpFilterRuleOptionalParams extends coreClient.OperationOptions {
 }
 
 // @public
@@ -528,22 +453,11 @@ export interface NamespacesDeleteOptionalParams extends coreClient.OperationOpti
 }
 
 // @public
-export interface NamespacesDeleteVirtualNetworkRuleOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
 export interface NamespacesGetAuthorizationRuleOptionalParams extends coreClient.OperationOptions {
 }
 
 // @public
 export type NamespacesGetAuthorizationRuleResponse = SBAuthorizationRule;
-
-// @public
-export interface NamespacesGetIpFilterRuleOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesGetIpFilterRuleResponse = IpFilterRule;
 
 // @public
 export interface NamespacesGetNetworkRuleSetOptionalParams extends coreClient.OperationOptions {
@@ -558,13 +472,6 @@ export interface NamespacesGetOptionalParams extends coreClient.OperationOptions
 
 // @public
 export type NamespacesGetResponse = SBNamespace;
-
-// @public
-export interface NamespacesGetVirtualNetworkRuleOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesGetVirtualNetworkRuleResponse = VirtualNetworkRule;
 
 // @public
 export interface NamespacesListAuthorizationRulesNextOptionalParams extends coreClient.OperationOptions {
@@ -593,20 +500,6 @@ export interface NamespacesListByResourceGroupOptionalParams extends coreClient.
 
 // @public
 export type NamespacesListByResourceGroupResponse = SBNamespaceListResult;
-
-// @public
-export interface NamespacesListIpFilterRulesNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesListIpFilterRulesNextResponse = IpFilterRuleListResult;
-
-// @public
-export interface NamespacesListIpFilterRulesOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesListIpFilterRulesResponse = IpFilterRuleListResult;
 
 // @public
 export interface NamespacesListKeysOptionalParams extends coreClient.OperationOptions {
@@ -644,24 +537,6 @@ export interface NamespacesListOptionalParams extends coreClient.OperationOption
 export type NamespacesListResponse = SBNamespaceListResult;
 
 // @public
-export interface NamespacesListVirtualNetworkRulesNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesListVirtualNetworkRulesNextResponse = VirtualNetworkRuleListResult;
-
-// @public
-export interface NamespacesListVirtualNetworkRulesOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type NamespacesListVirtualNetworkRulesResponse = VirtualNetworkRuleListResult;
-
-// @public
-export interface NamespacesMigrateOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
 export interface NamespacesRegenerateKeysOptionalParams extends coreClient.OperationOptions {
 }
 
@@ -676,17 +551,17 @@ export interface NamespacesUpdateOptionalParams extends coreClient.OperationOpti
 export type NamespacesUpdateResponse = SBNamespace;
 
 // @public
-export type NameSpaceType = "Messaging" | "NotificationHub" | "Mixed" | "EventHub" | "Relay";
-
-// @public
 export type NetworkRuleIPAction = string;
 
 // @public
-export type NetworkRuleSet = Resource & {
+export interface NetworkRuleSet extends ProxyResource {
     defaultAction?: DefaultAction;
-    virtualNetworkRules?: NWRuleSetVirtualNetworkRules[];
     ipRules?: NWRuleSetIpRules[];
-};
+    publicNetworkAccess?: PublicNetworkAccessFlag;
+    readonly systemData?: SystemData;
+    trustedServiceAccessEnabled?: boolean;
+    virtualNetworkRules?: NWRuleSetVirtualNetworkRules[];
+}
 
 // @public
 export interface NetworkRuleSetListResult {
@@ -709,11 +584,15 @@ export interface NWRuleSetVirtualNetworkRules {
 // @public
 export interface Operation {
     display?: OperationDisplay;
+    isDataAction?: boolean;
     readonly name?: string;
+    origin?: string;
+    properties?: Record<string, unknown>;
 }
 
 // @public
 export interface OperationDisplay {
+    readonly description?: string;
     readonly operation?: string;
     readonly provider?: string;
     readonly resource?: string;
@@ -745,52 +624,17 @@ export interface OperationsListOptionalParams extends coreClient.OperationOption
 export type OperationsListResponse = OperationListResult;
 
 // @public
-export type PremiumMessagingRegions = ResourceNamespacePatch & {
-    properties?: PremiumMessagingRegionsProperties;
-};
-
-// @public
-export interface PremiumMessagingRegionsListResult {
-    readonly nextLink?: string;
-    value?: PremiumMessagingRegions[];
-}
-
-// @public
-export interface PremiumMessagingRegionsOperations {
-    list(options?: PremiumMessagingRegionsOperationsListOptionalParams): PagedAsyncIterableIterator<PremiumMessagingRegions>;
-}
-
-// @public
-export interface PremiumMessagingRegionsOperationsListNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type PremiumMessagingRegionsOperationsListNextResponse = PremiumMessagingRegionsListResult;
-
-// @public
-export interface PremiumMessagingRegionsOperationsListOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type PremiumMessagingRegionsOperationsListResponse = PremiumMessagingRegionsListResult;
-
-// @public (undocumented)
-export interface PremiumMessagingRegionsProperties {
-    readonly code?: string;
-    readonly fullName?: string;
-}
-
-// @public
 export interface PrivateEndpoint {
     id?: string;
 }
 
 // @public
-export type PrivateEndpointConnection = Resource & {
+export interface PrivateEndpointConnection extends ProxyResource {
     privateEndpoint?: PrivateEndpoint;
     privateLinkServiceConnectionState?: ConnectionState;
     provisioningState?: EndPointProvisioningState;
-};
+    readonly systemData?: SystemData;
+}
 
 // @public
 export interface PrivateEndpointConnectionListResult {
@@ -877,6 +721,20 @@ export interface PrivateLinkResourcesListResult {
 export type ProvisioningStateDR = "Accepted" | "Succeeded" | "Failed";
 
 // @public
+export interface ProxyResource {
+    readonly id?: string;
+    readonly location?: string;
+    readonly name?: string;
+    readonly type?: string;
+}
+
+// @public
+export type PublicNetworkAccess = string;
+
+// @public
+export type PublicNetworkAccessFlag = string;
+
+// @public
 export interface Queues {
     createOrUpdate(resourceGroupName: string, namespaceName: string, queueName: string, parameters: SBQueue, options?: QueuesCreateOrUpdateOptionalParams): Promise<QueuesCreateOrUpdateResponse>;
     createOrUpdateAuthorizationRule(resourceGroupName: string, namespaceName: string, queueName: string, authorizationRuleName: string, parameters: SBAuthorizationRule, options?: QueuesCreateOrUpdateAuthorizationRuleOptionalParams): Promise<QueuesCreateOrUpdateAuthorizationRuleResponse>;
@@ -942,8 +800,6 @@ export type QueuesListAuthorizationRulesResponse = SBAuthorizationRuleListResult
 
 // @public
 export interface QueuesListByNamespaceNextOptionalParams extends coreClient.OperationOptions {
-    skip?: number;
-    top?: number;
 }
 
 // @public
@@ -979,25 +835,6 @@ export interface RegenerateAccessKeyParameters {
 }
 
 // @public
-export interface Regions {
-    listBySku(sku: string, options?: RegionsListBySkuOptionalParams): PagedAsyncIterableIterator<PremiumMessagingRegions>;
-}
-
-// @public
-export interface RegionsListBySkuNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type RegionsListBySkuNextResponse = PremiumMessagingRegionsListResult;
-
-// @public
-export interface RegionsListBySkuOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type RegionsListBySkuResponse = PremiumMessagingRegionsListResult;
-
-// @public
 export interface Resource {
     readonly id?: string;
     readonly name?: string;
@@ -1005,23 +842,24 @@ export interface Resource {
 }
 
 // @public
-export type ResourceNamespacePatch = Resource & {
+export interface ResourceNamespacePatch extends Resource {
     location?: string;
     tags?: {
         [propertyName: string]: string;
     };
-};
+}
 
 // @public
 export type RoleDisasterRecovery = "Primary" | "PrimaryNotReplicating" | "Secondary";
 
 // @public
-export type Rule = Resource & {
+export interface Rule extends ProxyResource {
     action?: Action;
+    correlationFilter?: CorrelationFilter;
     filterType?: FilterType;
     sqlFilter?: SqlFilter;
-    correlationFilter?: CorrelationFilter;
-};
+    readonly systemData?: SystemData;
+}
 
 // @public
 export interface RuleListResult {
@@ -1057,8 +895,6 @@ export type RulesGetResponse = Rule;
 
 // @public
 export interface RulesListBySubscriptionsNextOptionalParams extends coreClient.OperationOptions {
-    skip?: number;
-    top?: number;
 }
 
 // @public
@@ -1074,9 +910,10 @@ export interface RulesListBySubscriptionsOptionalParams extends coreClient.Opera
 export type RulesListBySubscriptionsResponse = RuleListResult;
 
 // @public
-export type SBAuthorizationRule = Resource & {
+export interface SBAuthorizationRule extends ProxyResource {
     rights?: AccessRights[];
-};
+    readonly systemData?: SystemData;
+}
 
 // @public
 export interface SBAuthorizationRuleListResult {
@@ -1085,18 +922,32 @@ export interface SBAuthorizationRuleListResult {
 }
 
 // @public
-export type SBNamespace = TrackedResource & {
-    sku?: SBSku;
-    identity?: Identity;
-    readonly provisioningState?: string;
-    readonly status?: string;
+export interface SBClientAffineProperties {
+    clientId?: string;
+    isDurable?: boolean;
+    isShared?: boolean;
+}
+
+// @public
+export interface SBNamespace extends TrackedResource {
+    alternateName?: string;
     readonly createdAt?: Date;
-    readonly updatedAt?: Date;
-    readonly serviceBusEndpoint?: string;
-    readonly metricId?: string;
-    zoneRedundant?: boolean;
+    disableLocalAuth?: boolean;
     encryption?: Encryption;
-};
+    identity?: Identity;
+    readonly metricId?: string;
+    minimumTlsVersion?: TlsVersion;
+    premiumMessagingPartitions?: number;
+    privateEndpointConnections?: PrivateEndpointConnection[];
+    readonly provisioningState?: string;
+    publicNetworkAccess?: PublicNetworkAccess;
+    readonly serviceBusEndpoint?: string;
+    sku?: SBSku;
+    readonly status?: string;
+    readonly systemData?: SystemData;
+    readonly updatedAt?: Date;
+    zoneRedundant?: boolean;
+}
 
 // @public
 export interface SBNamespaceListResult {
@@ -1105,48 +956,47 @@ export interface SBNamespaceListResult {
 }
 
 // @public
-export interface SBNamespaceMigrate {
-    targetNamespaceType: NameSpaceType;
+export interface SBNamespaceUpdateParameters extends ResourceNamespacePatch {
+    alternateName?: string;
+    readonly createdAt?: Date;
+    disableLocalAuth?: boolean;
+    encryption?: Encryption;
+    identity?: Identity;
+    readonly metricId?: string;
+    privateEndpointConnections?: PrivateEndpointConnection[];
+    readonly provisioningState?: string;
+    readonly serviceBusEndpoint?: string;
+    sku?: SBSku;
+    readonly status?: string;
+    readonly updatedAt?: Date;
 }
 
 // @public
-export type SBNamespaceUpdateParameters = ResourceNamespacePatch & {
-    sku?: SBSku;
-    identity?: Identity;
-    readonly provisioningState?: string;
-    readonly status?: string;
-    readonly createdAt?: Date;
-    readonly updatedAt?: Date;
-    readonly serviceBusEndpoint?: string;
-    readonly metricId?: string;
-    zoneRedundant?: boolean;
-    encryption?: Encryption;
-};
-
-// @public
-export type SBQueue = Resource & {
+export interface SBQueue extends ProxyResource {
+    readonly accessedAt?: Date;
+    autoDeleteOnIdle?: string;
     readonly countDetails?: MessageCountDetails;
     readonly createdAt?: Date;
-    readonly updatedAt?: Date;
-    readonly accessedAt?: Date;
-    readonly sizeInBytes?: number;
-    readonly messageCount?: number;
+    deadLetteringOnMessageExpiration?: boolean;
+    defaultMessageTimeToLive?: string;
+    duplicateDetectionHistoryTimeWindow?: string;
+    enableBatchedOperations?: boolean;
+    enableExpress?: boolean;
+    enablePartitioning?: boolean;
+    forwardDeadLetteredMessagesTo?: string;
+    forwardTo?: string;
     lockDuration?: string;
+    maxDeliveryCount?: number;
+    maxMessageSizeInKilobytes?: number;
     maxSizeInMegabytes?: number;
+    readonly messageCount?: number;
     requiresDuplicateDetection?: boolean;
     requiresSession?: boolean;
-    defaultMessageTimeToLive?: string;
-    deadLetteringOnMessageExpiration?: boolean;
-    duplicateDetectionHistoryTimeWindow?: string;
-    maxDeliveryCount?: number;
+    readonly sizeInBytes?: number;
     status?: EntityStatus;
-    enableBatchedOperations?: boolean;
-    autoDeleteOnIdle?: string;
-    enablePartitioning?: boolean;
-    enableExpress?: boolean;
-    forwardTo?: string;
-    forwardDeadLetteredMessagesTo?: string;
-};
+    readonly systemData?: SystemData;
+    readonly updatedAt?: Date;
+}
 
 // @public
 export interface SBQueueListResult {
@@ -1162,25 +1012,28 @@ export interface SBSku {
 }
 
 // @public
-export type SBSubscription = Resource & {
-    readonly messageCount?: number;
-    readonly createdAt?: Date;
+export interface SBSubscription extends ProxyResource {
     readonly accessedAt?: Date;
-    readonly updatedAt?: Date;
+    autoDeleteOnIdle?: string;
+    clientAffineProperties?: SBClientAffineProperties;
     readonly countDetails?: MessageCountDetails;
-    lockDuration?: string;
-    requiresSession?: boolean;
-    defaultMessageTimeToLive?: string;
+    readonly createdAt?: Date;
     deadLetteringOnFilterEvaluationExceptions?: boolean;
     deadLetteringOnMessageExpiration?: boolean;
+    defaultMessageTimeToLive?: string;
     duplicateDetectionHistoryTimeWindow?: string;
-    maxDeliveryCount?: number;
-    status?: EntityStatus;
     enableBatchedOperations?: boolean;
-    autoDeleteOnIdle?: string;
-    forwardTo?: string;
     forwardDeadLetteredMessagesTo?: string;
-};
+    forwardTo?: string;
+    isClientAffine?: boolean;
+    lockDuration?: string;
+    maxDeliveryCount?: number;
+    readonly messageCount?: number;
+    requiresSession?: boolean;
+    status?: EntityStatus;
+    readonly systemData?: SystemData;
+    readonly updatedAt?: Date;
+}
 
 // @public
 export interface SBSubscriptionListResult {
@@ -1189,24 +1042,26 @@ export interface SBSubscriptionListResult {
 }
 
 // @public
-export type SBTopic = Resource & {
-    readonly sizeInBytes?: number;
-    readonly createdAt?: Date;
-    readonly updatedAt?: Date;
+export interface SBTopic extends ProxyResource {
     readonly accessedAt?: Date;
-    readonly subscriptionCount?: number;
+    autoDeleteOnIdle?: string;
     readonly countDetails?: MessageCountDetails;
+    readonly createdAt?: Date;
     defaultMessageTimeToLive?: string;
-    maxSizeInMegabytes?: number;
-    requiresDuplicateDetection?: boolean;
     duplicateDetectionHistoryTimeWindow?: string;
     enableBatchedOperations?: boolean;
-    status?: EntityStatus;
-    supportOrdering?: boolean;
-    autoDeleteOnIdle?: string;
-    enablePartitioning?: boolean;
     enableExpress?: boolean;
-};
+    enablePartitioning?: boolean;
+    maxMessageSizeInKilobytes?: number;
+    maxSizeInMegabytes?: number;
+    requiresDuplicateDetection?: boolean;
+    readonly sizeInBytes?: number;
+    status?: EntityStatus;
+    readonly subscriptionCount?: number;
+    supportOrdering?: boolean;
+    readonly systemData?: SystemData;
+    readonly updatedAt?: Date;
+}
 
 // @public
 export interface SBTopicListResult {
@@ -1215,12 +1070,14 @@ export interface SBTopicListResult {
 }
 
 // @public (undocumented)
-export class ServiceBusManagementClient extends ServiceBusManagementClientContext {
+export class ServiceBusManagementClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: ServiceBusManagementClientOptionalParams);
     // (undocumented)
-    disasterRecoveryConfigs: DisasterRecoveryConfigs;
+    apiVersion: string;
     // (undocumented)
-    eventHubs: EventHubs;
+    disasterRecoveryConfigs: DisasterRecoveryConfigs;
     // (undocumented)
     migrationConfigs: MigrationConfigs;
     // (undocumented)
@@ -1228,32 +1085,19 @@ export class ServiceBusManagementClient extends ServiceBusManagementClientContex
     // (undocumented)
     operations: Operations;
     // (undocumented)
-    premiumMessagingRegionsOperations: PremiumMessagingRegionsOperations;
-    // (undocumented)
     privateEndpointConnections: PrivateEndpointConnections;
     // (undocumented)
     privateLinkResources: PrivateLinkResources;
     // (undocumented)
     queues: Queues;
     // (undocumented)
-    regions: Regions;
-    // (undocumented)
     rules: Rules;
+    // (undocumented)
+    subscriptionId: string;
     // (undocumented)
     subscriptions: Subscriptions;
     // (undocumented)
     topics: Topics;
-}
-
-// @public (undocumented)
-export class ServiceBusManagementClientContext extends coreClient.ServiceClient {
-    // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: ServiceBusManagementClientOptionalParams);
-    // (undocumented)
-    apiVersion: string;
-    // (undocumented)
-    subscriptionId: string;
 }
 
 // @public
@@ -1277,7 +1121,8 @@ export interface SqlFilter {
 }
 
 // @public
-export type SqlRuleAction = Action & {};
+export interface SqlRuleAction extends Action {
+}
 
 // @public
 export interface Subnet {
@@ -1312,8 +1157,6 @@ export type SubscriptionsGetResponse = SBSubscription;
 
 // @public
 export interface SubscriptionsListByTopicNextOptionalParams extends coreClient.OperationOptions {
-    skip?: number;
-    top?: number;
 }
 
 // @public
@@ -1327,6 +1170,19 @@ export interface SubscriptionsListByTopicOptionalParams extends coreClient.Opera
 
 // @public
 export type SubscriptionsListByTopicResponse = SBSubscriptionListResult;
+
+// @public
+export interface SystemData {
+    createdAt?: Date;
+    createdBy?: string;
+    createdByType?: CreatedByType;
+    lastModifiedAt?: Date;
+    lastModifiedBy?: string;
+    lastModifiedByType?: CreatedByType;
+}
+
+// @public
+export type TlsVersion = string;
 
 // @public
 export interface Topics {
@@ -1394,8 +1250,6 @@ export type TopicsListAuthorizationRulesResponse = SBAuthorizationRuleListResult
 
 // @public
 export interface TopicsListByNamespaceNextOptionalParams extends coreClient.OperationOptions {
-    skip?: number;
-    top?: number;
 }
 
 // @public
@@ -1425,25 +1279,25 @@ export interface TopicsRegenerateKeysOptionalParams extends coreClient.Operation
 export type TopicsRegenerateKeysResponse = AccessKeys;
 
 // @public
-export type TrackedResource = Resource & {
+export interface TrackedResource extends Resource {
     location: string;
     tags?: {
         [propertyName: string]: string;
     };
-};
+}
 
 // @public
 export type UnavailableReason = "None" | "InvalidName" | "SubscriptionIsDisabled" | "NameInUse" | "NameInLockdown" | "TooManyNamespaceInCurrentSubscription";
 
 // @public
-export type VirtualNetworkRule = Resource & {
-    virtualNetworkSubnetId?: string;
-};
+export interface UserAssignedIdentity {
+    readonly clientId?: string;
+    readonly principalId?: string;
+}
 
-// @public
-export interface VirtualNetworkRuleListResult {
-    nextLink?: string;
-    value?: VirtualNetworkRule[];
+// @public (undocumented)
+export interface UserAssignedIdentityProperties {
+    userAssignedIdentity?: string;
 }
 
 // (No @packageDocumentation comment for this package)

@@ -1,24 +1,22 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  ServiceBusMessage,
-  ServiceBusMessageImpl,
-  toRheaMessage
-} from "../../../src/serviceBusMessage";
-import {
+import type { ServiceBusMessage } from "../../../src/serviceBusMessage.js";
+import { ServiceBusMessageImpl, toRheaMessage } from "../../../src/serviceBusMessage.js";
+import type {
   Delivery,
-  uuid_to_string,
   MessageAnnotations,
   DeliveryAnnotations,
-  Message as RheaMessage
+  Message as RheaMessage,
 } from "rhea-promise";
-import chai from "chai";
-import { ConnectionConfig, Constants } from "@azure/core-amqp";
-import { defaultDataTransformer } from "../../../src/dataTransformer";
-import { ServiceBusMessageBatchImpl } from "../../../src/serviceBusMessageBatch";
-import { ConnectionContext } from "../../../src/connectionContext";
-const assert = chai.assert;
+import { uuid_to_string } from "rhea-promise";
+import type { ConnectionConfig } from "@azure/core-amqp";
+import { Constants } from "@azure/core-amqp";
+import { defaultDataTransformer } from "../../../src/dataTransformer.js";
+import { ServiceBusMessageBatchImpl } from "../../../src/serviceBusMessageBatch.js";
+import type { ConnectionContext } from "../../../src/connectionContext.js";
+import { describe, it } from "vitest";
+import { assert } from "../../public/utils/chai.js";
 
 const fakeDelivery = {} as Delivery;
 
@@ -28,10 +26,10 @@ describe("ServiceBusMessageImpl unit tests", () => {
     message_annotations[Constants.enqueuedTime] = Date.now();
     const amqpMessage: RheaMessage = {
       body: "hello",
-      message_annotations
+      message_annotations,
     };
 
-    const fakeDeliveryTag = new Buffer(16);
+    const fakeDeliveryTag = Buffer.alloc(16);
     for (let i = 0; i < fakeDeliveryTag.length; i++) {
       fakeDeliveryTag[i] = Math.floor(Math.random() * 255);
     }
@@ -42,7 +40,9 @@ describe("ServiceBusMessageImpl unit tests", () => {
         amqpMessage,
         { tag: fakeDeliveryTag } as Delivery,
         false,
-        "peekLock"
+        "peekLock",
+        false,
+        false,
       );
 
       assert.equal(sbMessage.lockToken, expectedLockToken, "Unexpected lock token found");
@@ -53,7 +53,9 @@ describe("ServiceBusMessageImpl unit tests", () => {
         amqpMessage,
         { tag: fakeDeliveryTag } as Delivery,
         false,
-        "receiveAndDelete"
+        "receiveAndDelete",
+        false,
+        false,
       );
 
       assert.equal(!!sbMessage.lockToken, false, "Unexpected lock token found");
@@ -70,7 +72,7 @@ describe("ServiceBusMessageImpl unit tests", () => {
     const delivery_annotations: DeliveryAnnotations = {
       delivery_annotations_one: "delivery_annotations_one_value",
       delivery_annotations_two: "delivery_annotations_two_value",
-      delivery_annotations_three: "delivery_annotations_three_value"
+      delivery_annotations_three: "delivery_annotations_three_value",
     };
 
     const timestamp = new Date();
@@ -82,8 +84,8 @@ describe("ServiceBusMessageImpl unit tests", () => {
         topLevelDate: timestamp,
         child: {
           nestedDate: timestamp,
-          children: [timestamp, { deepDate: timestamp }]
-        }
+          children: [timestamp, { deepDate: timestamp }],
+        },
       },
       delivery_count: 2,
       first_acquirer: true,
@@ -102,20 +104,33 @@ describe("ServiceBusMessageImpl unit tests", () => {
       group_sequence: 98723560,
       reply_to_group_id: "random_replyToGroupId",
       subject: "random_subject",
-      user_id: "random_user_id"
+      user_id: "random_user_id",
     };
 
-    const sbMessage = new ServiceBusMessageImpl(amqpMessage, fakeDelivery, false, "peekLock");
+    const sbMessage = new ServiceBusMessageImpl(
+      amqpMessage,
+      fakeDelivery,
+      false,
+      "peekLock",
+      false,
+      false,
+    );
 
     it("headers match", () => {
       assert.equal(sbMessage._rawAmqpMessage.header?.firstAcquirer, amqpMessage.first_acquirer);
-      assert.equal(sbMessage._rawAmqpMessage.header?.timeToLive, amqpMessage.ttl);
+      assert.equal(
+        sbMessage._rawAmqpMessage.header?.timeToLive,
+        amqpMessage.absolute_expiry_time!.getTime() - amqpMessage.creation_time!.getTime(),
+      );
       assert.equal(sbMessage._rawAmqpMessage.header?.durable, amqpMessage.durable);
       assert.equal(sbMessage._rawAmqpMessage.header?.priority, amqpMessage.priority);
       assert.equal(sbMessage._rawAmqpMessage.header?.deliveryCount, amqpMessage.delivery_count);
 
       assert.equal(sbMessage.deliveryCount, amqpMessage.delivery_count);
-      assert.equal(sbMessage.timeToLive, amqpMessage.ttl);
+      assert.equal(
+        sbMessage.timeToLive,
+        amqpMessage.absolute_expiry_time!.getTime() - amqpMessage.creation_time!.getTime(),
+      );
     });
 
     it("message annotations match", () => {
@@ -128,7 +143,7 @@ describe("ServiceBusMessageImpl unit tests", () => {
           assert.equal(
             sbMessage._rawAmqpMessage.messageAnnotations[key],
             message_annotations[key],
-            `Unexpected value for key: ${key}`
+            `Unexpected value for key: ${key}`,
           );
         }
       }
@@ -136,7 +151,7 @@ describe("ServiceBusMessageImpl unit tests", () => {
       assert.equal(
         sbMessage.partitionKey,
         message_annotations[Constants.partitionKey],
-        "Unexpected Partition Key"
+        "Unexpected Partition Key",
       );
 
       // assert.equal(
@@ -156,7 +171,7 @@ describe("ServiceBusMessageImpl unit tests", () => {
           assert.equal(
             sbMessage._rawAmqpMessage.deliveryAnnotations[key],
             delivery_annotations[key],
-            `Unexpected value for key: ${key}`
+            `Unexpected value for key: ${key}`,
           );
         }
       }
@@ -170,20 +185,20 @@ describe("ServiceBusMessageImpl unit tests", () => {
       assert.equal(sbMessage._rawAmqpMessage.properties?.contentType, amqpMessage.content_type);
       assert.equal(
         sbMessage._rawAmqpMessage.properties?.contentEncoding,
-        amqpMessage.content_encoding
+        amqpMessage.content_encoding,
       );
       assert.equal(
         sbMessage._rawAmqpMessage.properties?.absoluteExpiryTime,
-        amqpMessage.absolute_expiry_time?.getTime()
+        amqpMessage.absolute_expiry_time?.getTime(),
       );
       assert.equal(
         sbMessage._rawAmqpMessage.properties?.creationTime,
-        amqpMessage.creation_time!.getTime()
+        amqpMessage.creation_time!.getTime(),
       );
       assert.equal(sbMessage._rawAmqpMessage.properties?.groupId, amqpMessage.group_id);
       assert.equal(
         sbMessage._rawAmqpMessage.properties?.replyToGroupId,
-        amqpMessage.reply_to_group_id
+        amqpMessage.reply_to_group_id,
       );
       assert.equal(sbMessage._rawAmqpMessage.properties?.groupSequence, amqpMessage.group_sequence);
       assert.equal(sbMessage._rawAmqpMessage.properties?.subject, amqpMessage.subject);
@@ -197,27 +212,27 @@ describe("ServiceBusMessageImpl unit tests", () => {
       assert.equal(sbMessage._rawAmqpMessage.properties?.groupId, sbMessage.sessionId);
       assert.equal(
         sbMessage._rawAmqpMessage.properties?.replyToGroupId,
-        sbMessage.replyToSessionId
+        sbMessage.replyToSessionId,
       );
       assert.equal(sbMessage._rawAmqpMessage.properties?.subject, sbMessage.subject);
       assert.deepEqual(sbMessage.applicationProperties, {
         topLevelDate: timestamp.getTime(),
         child: {
           nestedDate: timestamp.getTime(),
-          children: [timestamp.getTime(), { deepDate: timestamp.getTime() }]
-        }
+          children: [timestamp.getTime(), { deepDate: timestamp.getTime() }],
+        },
       });
       assert.deepEqual(sbMessage._rawAmqpMessage.applicationProperties, {
         topLevelDate: timestamp.getTime(),
         child: {
           nestedDate: timestamp.getTime(),
-          children: [timestamp.getTime(), { deepDate: timestamp.getTime() }]
-        }
+          children: [timestamp.getTime(), { deepDate: timestamp.getTime() }],
+        },
       });
     });
   });
 
-  describe("ServiceBusMessage validations", function(): void {
+  describe("ServiceBusMessage validations", function (): void {
     const longString =
       "A very very very very very very very very very very very very very very very very very very very very very very very very very long string.";
 
@@ -229,44 +244,44 @@ describe("ServiceBusMessageImpl unit tests", () => {
       {
         message: { body: "", contentType: 1 as any },
         expectedErrorMessage: "The property 'contentType' on the message must be of type 'string'",
-        title: "contentType is of invalid type"
+        title: "contentType is of invalid type",
       },
       {
         message: { body: "", subject: 1 as any },
         expectedErrorMessage: "The property 'label' on the message must be of type 'string'",
-        title: "label is of invalid type"
+        title: "label is of invalid type",
       },
       {
         message: { body: "", to: 1 as any },
         expectedErrorMessage: "The property 'to' on the message must be of type 'string'",
-        title: "to is of invalid type"
+        title: "to is of invalid type",
       },
       {
         message: { body: "", replyToSessionId: 1 as any },
         expectedErrorMessage:
           "The property 'replyToSessionId' on the message must be of type 'string'",
-        title: "replyToSessionId is of invalid type"
+        title: "replyToSessionId is of invalid type",
       },
       {
         message: { body: "", sessionId: 1 as any },
         expectedErrorMessage: "The property 'sessionId' on the message must be of type 'string'",
-        title: "sessionId is of invalid type"
+        title: "sessionId is of invalid type",
       },
       {
         message: { body: "", replyTo: 1 as any },
         expectedErrorMessage: "The property 'replyTo' on the message must be of type 'string'",
-        title: "replyTo is of invalid type"
+        title: "replyTo is of invalid type",
       },
       {
         message: { body: "", timeToLive: "" as any },
         expectedErrorMessage: "The property 'timeToLive' on the message must be of type 'number'",
-        title: "timeToLive is of invalid type"
+        title: "timeToLive is of invalid type",
       },
       {
         message: { body: "", partitionKey: longString },
         expectedErrorMessage:
           "Length of 'partitionKey' property on the message cannot be greater than 128 characters.",
-        title: "partitionKey is longer than 128 characters"
+        title: "partitionKey is longer than 128 characters",
       },
       // {
       //   message: { body: "", viaPartitionKey: longString },
@@ -278,63 +293,63 @@ describe("ServiceBusMessageImpl unit tests", () => {
         message: { body: "", sessionId: longString },
         expectedErrorMessage:
           "Length of 'sessionId' property on the message cannot be greater than 128 characters.",
-        title: "sessionId is longer than 128 characters"
+        title: "sessionId is longer than 128 characters",
       },
       {
         message: { body: "", messageId: longString },
         expectedErrorMessage:
           "Length of 'messageId' property on the message cannot be greater than 128 characters.",
-        title: "messageId is longer than 128 characters"
+        title: "messageId is longer than 128 characters",
       },
       {
         message: { body: "", messageId: {} as any },
         expectedErrorMessage:
           "The property 'messageId' on the message must be of type string, number or Buffer",
-        title: "messageId is of invalid type"
+        title: "messageId is of invalid type",
       },
       {
         message: { body: "", correlationId: {} as any },
         expectedErrorMessage:
           "The property 'correlationId' on the message must be of type string, number or Buffer",
-        title: "correlationId is of invalid type"
-      }
+        title: "correlationId is of invalid type",
+      },
     ];
 
     describe("toRheaMessage", () => {
-      testInputs.forEach(function(testInput: {
+      testInputs.forEach(function (testInput: {
         message: ServiceBusMessage;
         expectedErrorMessage: string;
         title: string;
       }): void {
-        it(testInput.title, async function(): Promise<void> {
+        it(testInput.title, async function (): Promise<void> {
           assert.throws(
             () => toRheaMessage(testInput.message, defaultDataTransformer),
-            testInput.expectedErrorMessage
+            testInput.expectedErrorMessage,
           );
         });
       });
     });
 
     describe("ServiceBusMessageBatch.tryAdd()", () => {
-      testInputs.forEach(function(testInput: {
+      testInputs.forEach(function (testInput: {
         message: ServiceBusMessage;
         expectedErrorMessage: string;
         title: string;
       }): void {
         // this test is basically the same as the above, but it's good to make sure all the code paths
         // are properly calling through to toRheaMessage.
-        it(testInput.title, async function(): Promise<void> {
+        it(testInput.title, async function (): Promise<void> {
           const fakeConnectionContext: ConnectionContext = {
             config: {
-              entityPath: "hello"
-            } as ConnectionConfig
+              entityPath: "hello",
+            } as ConnectionConfig,
           } as ConnectionContext;
 
           const batch = new ServiceBusMessageBatchImpl(fakeConnectionContext, 2048);
 
           assert.throws(
             () => batch.tryAddMessage(testInput.message),
-            testInput.expectedErrorMessage
+            testInput.expectedErrorMessage,
           );
         });
       });

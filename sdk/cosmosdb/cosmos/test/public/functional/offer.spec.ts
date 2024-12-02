@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import assert from "assert";
-import { Context } from "mocha";
-import { Suite } from "mocha";
+import type { Context } from "mocha";
+import type { Suite } from "mocha";
 import { Constants, CosmosClient } from "../../../src";
 import { endpoint } from "../common/_testConfig";
 import { masterKey } from "../common/_fakeTestSecrets";
@@ -11,10 +11,10 @@ import { getTestContainer, removeAllDatabases } from "../common/TestHelpers";
 const client = new CosmosClient({
   endpoint,
   key: masterKey,
-  connectionPolicy: { enableBackgroundEndpointRefreshing: false }
+  connectionPolicy: { enableBackgroundEndpointRefreshing: false },
 });
 
-const validateOfferResponseBody = function(offer: any): void {
+const validateOfferResponseBody = function (offer: any): void {
   assert(offer.id, "Id cannot be null");
   assert(offer._rid, "Resource Id (Rid) cannot be null");
   assert(offer._self, "Self Link cannot be null");
@@ -22,16 +22,16 @@ const validateOfferResponseBody = function(offer: any): void {
   assert(offer._self.indexOf(offer.id) !== -1, "Offer id not contained in offer self link.");
 };
 
-describe("NodeJS CRUD Tests", function(this: Suite) {
+describe("NodeJS CRUD Tests", function (this: Suite) {
   this.timeout(process.env.MOCHA_TIMEOUT || 10000);
 
-  beforeEach(async function(this: Context) {
+  beforeEach(async function (this: Context) {
     this.timeout(process.env.MOCHA_TIMEOUT || 10000);
     await removeAllDatabases();
   });
 
-  describe("Validate Offer CRUD", function() {
-    it("nativeApi Should do offer read and query operations successfully name based single partition collection", async function() {
+  describe("Validate Offer CRUD", function () {
+    it("nativeApi Should do offer read and query operations successfully name based single partition collection", async function () {
       const mbInBytes = 1024 * 1024;
       const offerThroughput = 400;
       const container = await getTestContainer("Validate Offer CRUD");
@@ -48,7 +48,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
             const items = obj.split("=");
             map[items[0]] = items[1];
             return map;
-          }, {}).collectionSize
+          }, {}).collectionSize,
       );
       assert.equal(collectionSize, 10 * mbInBytes, "Collection size is unexpected");
 
@@ -58,7 +58,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
       assert.equal(
         expectedOffer.content.offerThroughput,
         offerThroughput,
-        "Expected offerThroughput to be " + offerThroughput
+        "Expected offerThroughput to be " + offerThroughput,
       );
       validateOfferResponseBody(expectedOffer);
 
@@ -77,9 +77,9 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
         parameters: [
           {
             name: "@id",
-            value: expectedOffer.id
-          }
-        ]
+            value: expectedOffer.id,
+          },
+        ],
       };
       const { resources: offers2 } = await client.offers.query(querySpec).fetchAll();
       assert.equal(offers2.length, 1);
@@ -91,13 +91,13 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
       try {
         await client.offer(expectedOffer.id).read();
         assert.fail("Must throw after delete");
-      } catch (err) {
+      } catch (err: any) {
         const notFoundErrorCode = 404;
         assert.equal(err.code, notFoundErrorCode, "response should return error code 404");
       }
     });
 
-    it("nativeApi Should do offer replace operations successfully name based", async function() {
+    it("nativeApi Should do offer replace operations successfully name based", async function () {
       await getTestContainer("Validate Offer CRUD");
       const { resources: offers } = await client.offers.readAll().fetchAll();
       assert.equal(offers.length, 1);
@@ -123,7 +123,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
         offerBadId._rid = "NotAllowed";
         await client.offer(offerBadId._self).replace(offerBadId);
         assert.fail("Must throw after replace with bad id");
-      } catch (err) {
+      } catch (err: any) {
         // check for 400 or 401 since some backends validate auth first
         assert(err.code === 400 || err.code === 401);
       }

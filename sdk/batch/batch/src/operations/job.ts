@@ -26,45 +26,6 @@ export class Job {
   }
 
   /**
-   * Statistics are aggregated across all Jobs that have ever existed in the Account, from Account
-   * creation to the last update time of the statistics. The statistics may not be immediately
-   * available. The Batch service performs periodic roll-up of statistics. The typical delay is about
-   * 30 minutes.
-   * @summary Gets lifetime summary statistics for all of the Jobs in the specified Account.
-   * @param [options] The optional parameters
-   * @returns Promise<Models.JobGetAllLifetimeStatisticsResponse>
-   */
-  getAllLifetimeStatistics(
-    options?: Models.JobGetAllLifetimeStatisticsOptionalParams
-  ): Promise<Models.JobGetAllLifetimeStatisticsResponse>;
-  /**
-   * @param callback The callback
-   */
-  getAllLifetimeStatistics(callback: msRest.ServiceCallback<Models.JobStatistics>): void;
-  /**
-   * @param options The optional parameters
-   * @param callback The callback
-   */
-  getAllLifetimeStatistics(
-    options: Models.JobGetAllLifetimeStatisticsOptionalParams,
-    callback: msRest.ServiceCallback<Models.JobStatistics>
-  ): void;
-  getAllLifetimeStatistics(
-    options?:
-      | Models.JobGetAllLifetimeStatisticsOptionalParams
-      | msRest.ServiceCallback<Models.JobStatistics>,
-    callback?: msRest.ServiceCallback<Models.JobStatistics>
-  ): Promise<Models.JobGetAllLifetimeStatisticsResponse> {
-    return this.client.sendOperationRequest(
-      {
-        options
-      },
-      getAllLifetimeStatisticsOperationSpec,
-      callback
-    ) as Promise<Models.JobGetAllLifetimeStatisticsResponse>;
-  }
-
-  /**
    * Deleting a Job also deletes all Tasks that are part of that Job, and all Job statistics. This
    * also overrides the retention period for Task data; that is, if the Job contains Tasks which are
    * still retained on Compute Nodes, the Batch services deletes those Tasks' working directories and
@@ -77,10 +38,7 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobDeleteResponse>
    */
-  deleteMethod(
-    jobId: string,
-    options?: Models.JobDeleteMethodOptionalParams
-  ): Promise<Models.JobDeleteResponse>;
+  deleteMethod(jobId: string, options?: Models.JobDeleteMethodOptionalParams): Promise<Models.JobDeleteResponse>;
   /**
    * @param jobId The ID of the Job to delete.
    * @param callback The callback
@@ -91,24 +49,15 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  deleteMethod(
-    jobId: string,
-    options: Models.JobDeleteMethodOptionalParams,
-    callback: msRest.ServiceCallback<void>
-  ): void;
-  deleteMethod(
-    jobId: string,
-    options?: Models.JobDeleteMethodOptionalParams | msRest.ServiceCallback<void>,
-    callback?: msRest.ServiceCallback<void>
-  ): Promise<Models.JobDeleteResponse> {
+  deleteMethod(jobId: string, options: Models.JobDeleteMethodOptionalParams, callback: msRest.ServiceCallback<void>): void;
+  deleteMethod(jobId: string, options?: Models.JobDeleteMethodOptionalParams | msRest.ServiceCallback<void>, callback?: msRest.ServiceCallback<void>): Promise<Models.JobDeleteResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
         options
       },
       deleteMethodOperationSpec,
-      callback
-    ) as Promise<Models.JobDeleteResponse>;
+      callback) as Promise<Models.JobDeleteResponse>;
   }
 
   /**
@@ -128,24 +77,15 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  get(
-    jobId: string,
-    options: Models.JobGetOptionalParams,
-    callback: msRest.ServiceCallback<Models.CloudJob>
-  ): void;
-  get(
-    jobId: string,
-    options?: Models.JobGetOptionalParams | msRest.ServiceCallback<Models.CloudJob>,
-    callback?: msRest.ServiceCallback<Models.CloudJob>
-  ): Promise<Models.JobGetResponse> {
+  get(jobId: string, options: Models.JobGetOptionalParams, callback: msRest.ServiceCallback<Models.CloudJob>): void;
+  get(jobId: string, options?: Models.JobGetOptionalParams | msRest.ServiceCallback<Models.CloudJob>, callback?: msRest.ServiceCallback<Models.CloudJob>): Promise<Models.JobGetResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
         options
       },
       getOperationSpec,
-      callback
-    ) as Promise<Models.JobGetResponse>;
+      callback) as Promise<Models.JobGetResponse>;
   }
 
   /**
@@ -158,39 +98,21 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobPatchResponse>
    */
-  patch(
-    jobId: string,
-    jobPatchParameter: Models.JobPatchParameter,
-    options?: Models.JobPatchOptionalParams
-  ): Promise<Models.JobPatchResponse>;
+  patch(jobId: string, jobPatchParameter: Models.JobPatchParameter, options?: Models.JobPatchOptionalParams): Promise<Models.JobPatchResponse>;
   /**
    * @param jobId The ID of the Job whose properties you want to update.
    * @param jobPatchParameter The parameters for the request.
    * @param callback The callback
    */
-  patch(
-    jobId: string,
-    jobPatchParameter: Models.JobPatchParameter,
-    callback: msRest.ServiceCallback<void>
-  ): void;
+  patch(jobId: string, jobPatchParameter: Models.JobPatchParameter, callback: msRest.ServiceCallback<void>): void;
   /**
    * @param jobId The ID of the Job whose properties you want to update.
    * @param jobPatchParameter The parameters for the request.
    * @param options The optional parameters
    * @param callback The callback
    */
-  patch(
-    jobId: string,
-    jobPatchParameter: Models.JobPatchParameter,
-    options: Models.JobPatchOptionalParams,
-    callback: msRest.ServiceCallback<void>
-  ): void;
-  patch(
-    jobId: string,
-    jobPatchParameter: Models.JobPatchParameter,
-    options?: Models.JobPatchOptionalParams | msRest.ServiceCallback<void>,
-    callback?: msRest.ServiceCallback<void>
-  ): Promise<Models.JobPatchResponse> {
+  patch(jobId: string, jobPatchParameter: Models.JobPatchParameter, options: Models.JobPatchOptionalParams, callback: msRest.ServiceCallback<void>): void;
+  patch(jobId: string, jobPatchParameter: Models.JobPatchParameter, options?: Models.JobPatchOptionalParams | msRest.ServiceCallback<void>, callback?: msRest.ServiceCallback<void>): Promise<Models.JobPatchResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
@@ -198,8 +120,7 @@ export class Job {
         options
       },
       patchOperationSpec,
-      callback
-    ) as Promise<Models.JobPatchResponse>;
+      callback) as Promise<Models.JobPatchResponse>;
   }
 
   /**
@@ -212,39 +133,21 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobUpdateResponse>
    */
-  update(
-    jobId: string,
-    jobUpdateParameter: Models.JobUpdateParameter,
-    options?: Models.JobUpdateOptionalParams
-  ): Promise<Models.JobUpdateResponse>;
+  update(jobId: string, jobUpdateParameter: Models.JobUpdateParameter, options?: Models.JobUpdateOptionalParams): Promise<Models.JobUpdateResponse>;
   /**
    * @param jobId The ID of the Job whose properties you want to update.
    * @param jobUpdateParameter The parameters for the request.
    * @param callback The callback
    */
-  update(
-    jobId: string,
-    jobUpdateParameter: Models.JobUpdateParameter,
-    callback: msRest.ServiceCallback<void>
-  ): void;
+  update(jobId: string, jobUpdateParameter: Models.JobUpdateParameter, callback: msRest.ServiceCallback<void>): void;
   /**
    * @param jobId The ID of the Job whose properties you want to update.
    * @param jobUpdateParameter The parameters for the request.
    * @param options The optional parameters
    * @param callback The callback
    */
-  update(
-    jobId: string,
-    jobUpdateParameter: Models.JobUpdateParameter,
-    options: Models.JobUpdateOptionalParams,
-    callback: msRest.ServiceCallback<void>
-  ): void;
-  update(
-    jobId: string,
-    jobUpdateParameter: Models.JobUpdateParameter,
-    options?: Models.JobUpdateOptionalParams | msRest.ServiceCallback<void>,
-    callback?: msRest.ServiceCallback<void>
-  ): Promise<Models.JobUpdateResponse> {
+  update(jobId: string, jobUpdateParameter: Models.JobUpdateParameter, options: Models.JobUpdateOptionalParams, callback: msRest.ServiceCallback<void>): void;
+  update(jobId: string, jobUpdateParameter: Models.JobUpdateParameter, options?: Models.JobUpdateOptionalParams | msRest.ServiceCallback<void>, callback?: msRest.ServiceCallback<void>): Promise<Models.JobUpdateResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
@@ -252,8 +155,7 @@ export class Job {
         options
       },
       updateOperationSpec,
-      callback
-    ) as Promise<Models.JobUpdateResponse>;
+      callback) as Promise<Models.JobUpdateResponse>;
   }
 
   /**
@@ -271,22 +173,14 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobDisableResponse>
    */
-  disable(
-    jobId: string,
-    disableTasks: Models.DisableJobOption,
-    options?: Models.JobDisableOptionalParams
-  ): Promise<Models.JobDisableResponse>;
+  disable(jobId: string, disableTasks: Models.DisableJobOption, options?: Models.JobDisableOptionalParams): Promise<Models.JobDisableResponse>;
   /**
    * @param jobId The ID of the Job to disable.
    * @param disableTasks What to do with active Tasks associated with the Job. Possible values
    * include: 'requeue', 'terminate', 'wait'
    * @param callback The callback
    */
-  disable(
-    jobId: string,
-    disableTasks: Models.DisableJobOption,
-    callback: msRest.ServiceCallback<void>
-  ): void;
+  disable(jobId: string, disableTasks: Models.DisableJobOption, callback: msRest.ServiceCallback<void>): void;
   /**
    * @param jobId The ID of the Job to disable.
    * @param disableTasks What to do with active Tasks associated with the Job. Possible values
@@ -294,18 +188,8 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  disable(
-    jobId: string,
-    disableTasks: Models.DisableJobOption,
-    options: Models.JobDisableOptionalParams,
-    callback: msRest.ServiceCallback<void>
-  ): void;
-  disable(
-    jobId: string,
-    disableTasks: Models.DisableJobOption,
-    options?: Models.JobDisableOptionalParams | msRest.ServiceCallback<void>,
-    callback?: msRest.ServiceCallback<void>
-  ): Promise<Models.JobDisableResponse> {
+  disable(jobId: string, disableTasks: Models.DisableJobOption, options: Models.JobDisableOptionalParams, callback: msRest.ServiceCallback<void>): void;
+  disable(jobId: string, disableTasks: Models.DisableJobOption, options?: Models.JobDisableOptionalParams | msRest.ServiceCallback<void>, callback?: msRest.ServiceCallback<void>): Promise<Models.JobDisableResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
@@ -313,8 +197,7 @@ export class Job {
         options
       },
       disableOperationSpec,
-      callback
-    ) as Promise<Models.JobDisableResponse>;
+      callback) as Promise<Models.JobDisableResponse>;
   }
 
   /**
@@ -328,10 +211,7 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobEnableResponse>
    */
-  enable(
-    jobId: string,
-    options?: Models.JobEnableOptionalParams
-  ): Promise<Models.JobEnableResponse>;
+  enable(jobId: string, options?: Models.JobEnableOptionalParams): Promise<Models.JobEnableResponse>;
   /**
    * @param jobId The ID of the Job to enable.
    * @param callback The callback
@@ -342,24 +222,15 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  enable(
-    jobId: string,
-    options: Models.JobEnableOptionalParams,
-    callback: msRest.ServiceCallback<void>
-  ): void;
-  enable(
-    jobId: string,
-    options?: Models.JobEnableOptionalParams | msRest.ServiceCallback<void>,
-    callback?: msRest.ServiceCallback<void>
-  ): Promise<Models.JobEnableResponse> {
+  enable(jobId: string, options: Models.JobEnableOptionalParams, callback: msRest.ServiceCallback<void>): void;
+  enable(jobId: string, options?: Models.JobEnableOptionalParams | msRest.ServiceCallback<void>, callback?: msRest.ServiceCallback<void>): Promise<Models.JobEnableResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
         options
       },
       enableOperationSpec,
-      callback
-    ) as Promise<Models.JobEnableResponse>;
+      callback) as Promise<Models.JobEnableResponse>;
   }
 
   /**
@@ -373,10 +244,7 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobTerminateResponse>
    */
-  terminate(
-    jobId: string,
-    options?: Models.JobTerminateOptionalParams
-  ): Promise<Models.JobTerminateResponse>;
+  terminate(jobId: string, options?: Models.JobTerminateOptionalParams): Promise<Models.JobTerminateResponse>;
   /**
    * @param jobId The ID of the Job to terminate.
    * @param callback The callback
@@ -387,24 +255,15 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  terminate(
-    jobId: string,
-    options: Models.JobTerminateOptionalParams,
-    callback: msRest.ServiceCallback<void>
-  ): void;
-  terminate(
-    jobId: string,
-    options?: Models.JobTerminateOptionalParams | msRest.ServiceCallback<void>,
-    callback?: msRest.ServiceCallback<void>
-  ): Promise<Models.JobTerminateResponse> {
+  terminate(jobId: string, options: Models.JobTerminateOptionalParams, callback: msRest.ServiceCallback<void>): void;
+  terminate(jobId: string, options?: Models.JobTerminateOptionalParams | msRest.ServiceCallback<void>, callback?: msRest.ServiceCallback<void>): Promise<Models.JobTerminateResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
         options
       },
       terminateOperationSpec,
-      callback
-    ) as Promise<Models.JobTerminateResponse>;
+      callback) as Promise<Models.JobTerminateResponse>;
   }
 
   /**
@@ -420,10 +279,7 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobAddResponse>
    */
-  add(
-    job: Models.JobAddParameter,
-    options?: Models.JobAddOptionalParams
-  ): Promise<Models.JobAddResponse>;
+  add(job: Models.JobAddParameter, options?: Models.JobAddOptionalParams): Promise<Models.JobAddResponse>;
   /**
    * @param job The Job to be added.
    * @param callback The callback
@@ -434,24 +290,15 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  add(
-    job: Models.JobAddParameter,
-    options: Models.JobAddOptionalParams,
-    callback: msRest.ServiceCallback<void>
-  ): void;
-  add(
-    job: Models.JobAddParameter,
-    options?: Models.JobAddOptionalParams | msRest.ServiceCallback<void>,
-    callback?: msRest.ServiceCallback<void>
-  ): Promise<Models.JobAddResponse> {
+  add(job: Models.JobAddParameter, options: Models.JobAddOptionalParams, callback: msRest.ServiceCallback<void>): void;
+  add(job: Models.JobAddParameter, options?: Models.JobAddOptionalParams | msRest.ServiceCallback<void>, callback?: msRest.ServiceCallback<void>): Promise<Models.JobAddResponse> {
     return this.client.sendOperationRequest(
       {
         job,
         options
       },
       addOperationSpec,
-      callback
-    ) as Promise<Models.JobAddResponse>;
+      callback) as Promise<Models.JobAddResponse>;
   }
 
   /**
@@ -468,21 +315,14 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  list(
-    options: Models.JobListOptionalParams,
-    callback: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): void;
-  list(
-    options?: Models.JobListOptionalParams | msRest.ServiceCallback<Models.CloudJobListResult>,
-    callback?: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): Promise<Models.JobListResponse> {
+  list(options: Models.JobListOptionalParams, callback: msRest.ServiceCallback<Models.CloudJobListResult>): void;
+  list(options?: Models.JobListOptionalParams | msRest.ServiceCallback<Models.CloudJobListResult>, callback?: msRest.ServiceCallback<Models.CloudJobListResult>): Promise<Models.JobListResponse> {
     return this.client.sendOperationRequest(
       {
         options
       },
       listOperationSpec,
-      callback
-    ) as Promise<Models.JobListResponse>;
+      callback) as Promise<Models.JobListResponse>;
   }
 
   /**
@@ -491,43 +331,26 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobListFromJobScheduleResponse>
    */
-  listFromJobSchedule(
-    jobScheduleId: string,
-    options?: Models.JobListFromJobScheduleOptionalParams
-  ): Promise<Models.JobListFromJobScheduleResponse>;
+  listFromJobSchedule(jobScheduleId: string, options?: Models.JobListFromJobScheduleOptionalParams): Promise<Models.JobListFromJobScheduleResponse>;
   /**
    * @param jobScheduleId The ID of the Job Schedule from which you want to get a list of Jobs.
    * @param callback The callback
    */
-  listFromJobSchedule(
-    jobScheduleId: string,
-    callback: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): void;
+  listFromJobSchedule(jobScheduleId: string, callback: msRest.ServiceCallback<Models.CloudJobListResult>): void;
   /**
    * @param jobScheduleId The ID of the Job Schedule from which you want to get a list of Jobs.
    * @param options The optional parameters
    * @param callback The callback
    */
-  listFromJobSchedule(
-    jobScheduleId: string,
-    options: Models.JobListFromJobScheduleOptionalParams,
-    callback: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): void;
-  listFromJobSchedule(
-    jobScheduleId: string,
-    options?:
-      | Models.JobListFromJobScheduleOptionalParams
-      | msRest.ServiceCallback<Models.CloudJobListResult>,
-    callback?: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): Promise<Models.JobListFromJobScheduleResponse> {
+  listFromJobSchedule(jobScheduleId: string, options: Models.JobListFromJobScheduleOptionalParams, callback: msRest.ServiceCallback<Models.CloudJobListResult>): void;
+  listFromJobSchedule(jobScheduleId: string, options?: Models.JobListFromJobScheduleOptionalParams | msRest.ServiceCallback<Models.CloudJobListResult>, callback?: msRest.ServiceCallback<Models.CloudJobListResult>): Promise<Models.JobListFromJobScheduleResponse> {
     return this.client.sendOperationRequest(
       {
         jobScheduleId,
         options
       },
       listFromJobScheduleOperationSpec,
-      callback
-    ) as Promise<Models.JobListFromJobScheduleResponse>;
+      callback) as Promise<Models.JobListFromJobScheduleResponse>;
   }
 
   /**
@@ -542,43 +365,26 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>
    */
-  listPreparationAndReleaseTaskStatus(
-    jobId: string,
-    options?: Models.JobListPreparationAndReleaseTaskStatusOptionalParams
-  ): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
+  listPreparationAndReleaseTaskStatus(jobId: string, options?: Models.JobListPreparationAndReleaseTaskStatusOptionalParams): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
   /**
    * @param jobId The ID of the Job.
    * @param callback The callback
    */
-  listPreparationAndReleaseTaskStatus(
-    jobId: string,
-    callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>
-  ): void;
+  listPreparationAndReleaseTaskStatus(jobId: string, callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>): void;
   /**
    * @param jobId The ID of the Job.
    * @param options The optional parameters
    * @param callback The callback
    */
-  listPreparationAndReleaseTaskStatus(
-    jobId: string,
-    options: Models.JobListPreparationAndReleaseTaskStatusOptionalParams,
-    callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>
-  ): void;
-  listPreparationAndReleaseTaskStatus(
-    jobId: string,
-    options?:
-      | Models.JobListPreparationAndReleaseTaskStatusOptionalParams
-      | msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>,
-    callback?: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>
-  ): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse> {
+  listPreparationAndReleaseTaskStatus(jobId: string, options: Models.JobListPreparationAndReleaseTaskStatusOptionalParams, callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>): void;
+  listPreparationAndReleaseTaskStatus(jobId: string, options?: Models.JobListPreparationAndReleaseTaskStatusOptionalParams | msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>, callback?: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
         options
       },
       listPreparationAndReleaseTaskStatusOperationSpec,
-      callback
-    ) as Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
+      callback) as Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
   }
 
   /**
@@ -591,10 +397,7 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobGetTaskCountsResponse>
    */
-  getTaskCounts(
-    jobId: string,
-    options?: Models.JobGetTaskCountsOptionalParams
-  ): Promise<Models.JobGetTaskCountsResponse>;
+  getTaskCounts(jobId: string, options?: Models.JobGetTaskCountsOptionalParams): Promise<Models.JobGetTaskCountsResponse>;
   /**
    * @param jobId The ID of the Job.
    * @param callback The callback
@@ -605,26 +408,15 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  getTaskCounts(
-    jobId: string,
-    options: Models.JobGetTaskCountsOptionalParams,
-    callback: msRest.ServiceCallback<Models.TaskCountsResult>
-  ): void;
-  getTaskCounts(
-    jobId: string,
-    options?:
-      | Models.JobGetTaskCountsOptionalParams
-      | msRest.ServiceCallback<Models.TaskCountsResult>,
-    callback?: msRest.ServiceCallback<Models.TaskCountsResult>
-  ): Promise<Models.JobGetTaskCountsResponse> {
+  getTaskCounts(jobId: string, options: Models.JobGetTaskCountsOptionalParams, callback: msRest.ServiceCallback<Models.TaskCountsResult>): void;
+  getTaskCounts(jobId: string, options?: Models.JobGetTaskCountsOptionalParams | msRest.ServiceCallback<Models.TaskCountsResult>, callback?: msRest.ServiceCallback<Models.TaskCountsResult>): Promise<Models.JobGetTaskCountsResponse> {
     return this.client.sendOperationRequest(
       {
         jobId,
         options
       },
       getTaskCountsOperationSpec,
-      callback
-    ) as Promise<Models.JobGetTaskCountsResponse>;
+      callback) as Promise<Models.JobGetTaskCountsResponse>;
   }
 
   /**
@@ -633,10 +425,7 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobListResponse>
    */
-  listNext(
-    nextPageLink: string,
-    options?: Models.JobListNextOptionalParams
-  ): Promise<Models.JobListResponse>;
+  listNext(nextPageLink: string, options?: Models.JobListNextOptionalParams): Promise<Models.JobListResponse>;
   /**
    * @param nextPageLink The NextLink from the previous successful call to List operation.
    * @param callback The callback
@@ -647,24 +436,15 @@ export class Job {
    * @param options The optional parameters
    * @param callback The callback
    */
-  listNext(
-    nextPageLink: string,
-    options: Models.JobListNextOptionalParams,
-    callback: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): void;
-  listNext(
-    nextPageLink: string,
-    options?: Models.JobListNextOptionalParams | msRest.ServiceCallback<Models.CloudJobListResult>,
-    callback?: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): Promise<Models.JobListResponse> {
+  listNext(nextPageLink: string, options: Models.JobListNextOptionalParams, callback: msRest.ServiceCallback<Models.CloudJobListResult>): void;
+  listNext(nextPageLink: string, options?: Models.JobListNextOptionalParams | msRest.ServiceCallback<Models.CloudJobListResult>, callback?: msRest.ServiceCallback<Models.CloudJobListResult>): Promise<Models.JobListResponse> {
     return this.client.sendOperationRequest(
       {
         nextPageLink,
         options
       },
       listNextOperationSpec,
-      callback
-    ) as Promise<Models.JobListResponse>;
+      callback) as Promise<Models.JobListResponse>;
   }
 
   /**
@@ -673,43 +453,26 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobListFromJobScheduleResponse>
    */
-  listFromJobScheduleNext(
-    nextPageLink: string,
-    options?: Models.JobListFromJobScheduleNextOptionalParams
-  ): Promise<Models.JobListFromJobScheduleResponse>;
+  listFromJobScheduleNext(nextPageLink: string, options?: Models.JobListFromJobScheduleNextOptionalParams): Promise<Models.JobListFromJobScheduleResponse>;
   /**
    * @param nextPageLink The NextLink from the previous successful call to List operation.
    * @param callback The callback
    */
-  listFromJobScheduleNext(
-    nextPageLink: string,
-    callback: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): void;
+  listFromJobScheduleNext(nextPageLink: string, callback: msRest.ServiceCallback<Models.CloudJobListResult>): void;
   /**
    * @param nextPageLink The NextLink from the previous successful call to List operation.
    * @param options The optional parameters
    * @param callback The callback
    */
-  listFromJobScheduleNext(
-    nextPageLink: string,
-    options: Models.JobListFromJobScheduleNextOptionalParams,
-    callback: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): void;
-  listFromJobScheduleNext(
-    nextPageLink: string,
-    options?:
-      | Models.JobListFromJobScheduleNextOptionalParams
-      | msRest.ServiceCallback<Models.CloudJobListResult>,
-    callback?: msRest.ServiceCallback<Models.CloudJobListResult>
-  ): Promise<Models.JobListFromJobScheduleResponse> {
+  listFromJobScheduleNext(nextPageLink: string, options: Models.JobListFromJobScheduleNextOptionalParams, callback: msRest.ServiceCallback<Models.CloudJobListResult>): void;
+  listFromJobScheduleNext(nextPageLink: string, options?: Models.JobListFromJobScheduleNextOptionalParams | msRest.ServiceCallback<Models.CloudJobListResult>, callback?: msRest.ServiceCallback<Models.CloudJobListResult>): Promise<Models.JobListFromJobScheduleResponse> {
     return this.client.sendOperationRequest(
       {
         nextPageLink,
         options
       },
       listFromJobScheduleNextOperationSpec,
-      callback
-    ) as Promise<Models.JobListFromJobScheduleResponse>;
+      callback) as Promise<Models.JobListFromJobScheduleResponse>;
   }
 
   /**
@@ -724,86 +487,52 @@ export class Job {
    * @param [options] The optional parameters
    * @returns Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>
    */
-  listPreparationAndReleaseTaskStatusNext(
-    nextPageLink: string,
-    options?: Models.JobListPreparationAndReleaseTaskStatusNextOptionalParams
-  ): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
+  listPreparationAndReleaseTaskStatusNext(nextPageLink: string, options?: Models.JobListPreparationAndReleaseTaskStatusNextOptionalParams): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
   /**
    * @param nextPageLink The NextLink from the previous successful call to List operation.
    * @param callback The callback
    */
-  listPreparationAndReleaseTaskStatusNext(
-    nextPageLink: string,
-    callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>
-  ): void;
+  listPreparationAndReleaseTaskStatusNext(nextPageLink: string, callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>): void;
   /**
    * @param nextPageLink The NextLink from the previous successful call to List operation.
    * @param options The optional parameters
    * @param callback The callback
    */
-  listPreparationAndReleaseTaskStatusNext(
-    nextPageLink: string,
-    options: Models.JobListPreparationAndReleaseTaskStatusNextOptionalParams,
-    callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>
-  ): void;
-  listPreparationAndReleaseTaskStatusNext(
-    nextPageLink: string,
-    options?:
-      | Models.JobListPreparationAndReleaseTaskStatusNextOptionalParams
-      | msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>,
-    callback?: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>
-  ): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse> {
+  listPreparationAndReleaseTaskStatusNext(nextPageLink: string, options: Models.JobListPreparationAndReleaseTaskStatusNextOptionalParams, callback: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>): void;
+  listPreparationAndReleaseTaskStatusNext(nextPageLink: string, options?: Models.JobListPreparationAndReleaseTaskStatusNextOptionalParams | msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>, callback?: msRest.ServiceCallback<Models.CloudJobListPreparationAndReleaseTaskStatusResult>): Promise<Models.JobListPreparationAndReleaseTaskStatusResponse> {
     return this.client.sendOperationRequest(
       {
         nextPageLink,
         options
       },
       listPreparationAndReleaseTaskStatusNextOperationSpec,
-      callback
-    ) as Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
+      callback) as Promise<Models.JobListPreparationAndReleaseTaskStatusResponse>;
   }
 }
 
 // Operation Specifications
 const serializer = new msRest.Serializer(Mappers);
-const getAllLifetimeStatisticsOperationSpec: msRest.OperationSpec = {
-  httpMethod: "GET",
-  path: "lifetimejobstats",
-  urlParameters: [Parameters.batchUrl],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout19],
-  headerParameters: [
-    Parameters.acceptLanguage,
-    Parameters.clientRequestId24,
-    Parameters.returnClientRequestId24,
-    Parameters.ocpDate24
-  ],
-  responses: {
-    200: {
-      bodyMapper: Mappers.JobStatistics,
-      headersMapper: Mappers.JobGetAllLifetimeStatisticsHeaders
-    },
-    default: {
-      bodyMapper: Mappers.BatchError,
-      headersMapper: Mappers.JobGetAllLifetimeStatisticsHeaders
-    }
-  },
-  serializer
-};
-
 const deleteMethodOperationSpec: msRest.OperationSpec = {
   httpMethod: "DELETE",
   path: "jobs/{jobId}",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout20],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout41,
+    Parameters.force2
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId25,
-    Parameters.returnClientRequestId25,
-    Parameters.ocpDate25,
-    Parameters.ifMatch8,
-    Parameters.ifNoneMatch8,
-    Parameters.ifModifiedSince8,
-    Parameters.ifUnmodifiedSince8
+    Parameters.clientRequestId50,
+    Parameters.returnClientRequestId50,
+    Parameters.ocpDate50,
+    Parameters.ifMatch16,
+    Parameters.ifNoneMatch16,
+    Parameters.ifModifiedSince20,
+    Parameters.ifUnmodifiedSince20
   ],
   responses: {
     202: {
@@ -820,22 +549,25 @@ const deleteMethodOperationSpec: msRest.OperationSpec = {
 const getOperationSpec: msRest.OperationSpec = {
   httpMethod: "GET",
   path: "jobs/{jobId}",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
   queryParameters: [
     Parameters.apiVersion,
-    Parameters.select2,
-    Parameters.expand2,
-    Parameters.timeout21
+    Parameters.select6,
+    Parameters.expand4,
+    Parameters.timeout42
   ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId26,
-    Parameters.returnClientRequestId26,
-    Parameters.ocpDate26,
-    Parameters.ifMatch9,
-    Parameters.ifNoneMatch9,
-    Parameters.ifModifiedSince9,
-    Parameters.ifUnmodifiedSince9
+    Parameters.clientRequestId51,
+    Parameters.returnClientRequestId51,
+    Parameters.ocpDate51,
+    Parameters.ifMatch17,
+    Parameters.ifNoneMatch17,
+    Parameters.ifModifiedSince21,
+    Parameters.ifUnmodifiedSince21
   ],
   responses: {
     200: {
@@ -853,17 +585,23 @@ const getOperationSpec: msRest.OperationSpec = {
 const patchOperationSpec: msRest.OperationSpec = {
   httpMethod: "PATCH",
   path: "jobs/{jobId}",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout22],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout43
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId27,
-    Parameters.returnClientRequestId27,
-    Parameters.ocpDate27,
-    Parameters.ifMatch10,
-    Parameters.ifNoneMatch10,
-    Parameters.ifModifiedSince10,
-    Parameters.ifUnmodifiedSince10
+    Parameters.clientRequestId52,
+    Parameters.returnClientRequestId52,
+    Parameters.ocpDate52,
+    Parameters.ifMatch18,
+    Parameters.ifNoneMatch18,
+    Parameters.ifModifiedSince22,
+    Parameters.ifUnmodifiedSince22
   ],
   requestBody: {
     parameterPath: "jobPatchParameter",
@@ -888,17 +626,23 @@ const patchOperationSpec: msRest.OperationSpec = {
 const updateOperationSpec: msRest.OperationSpec = {
   httpMethod: "PUT",
   path: "jobs/{jobId}",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout23],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout44
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId28,
-    Parameters.returnClientRequestId28,
-    Parameters.ocpDate28,
-    Parameters.ifMatch11,
-    Parameters.ifNoneMatch11,
-    Parameters.ifModifiedSince11,
-    Parameters.ifUnmodifiedSince11
+    Parameters.clientRequestId53,
+    Parameters.returnClientRequestId53,
+    Parameters.ocpDate53,
+    Parameters.ifMatch19,
+    Parameters.ifNoneMatch19,
+    Parameters.ifModifiedSince23,
+    Parameters.ifUnmodifiedSince23
   ],
   requestBody: {
     parameterPath: "jobUpdateParameter",
@@ -923,17 +667,23 @@ const updateOperationSpec: msRest.OperationSpec = {
 const disableOperationSpec: msRest.OperationSpec = {
   httpMethod: "POST",
   path: "jobs/{jobId}/disable",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout24],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout45
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId29,
-    Parameters.returnClientRequestId29,
-    Parameters.ocpDate29,
-    Parameters.ifMatch12,
-    Parameters.ifNoneMatch12,
-    Parameters.ifModifiedSince12,
-    Parameters.ifUnmodifiedSince12
+    Parameters.clientRequestId54,
+    Parameters.returnClientRequestId54,
+    Parameters.ocpDate54,
+    Parameters.ifMatch20,
+    Parameters.ifNoneMatch20,
+    Parameters.ifModifiedSince24,
+    Parameters.ifUnmodifiedSince24
   ],
   requestBody: {
     parameterPath: {
@@ -960,17 +710,23 @@ const disableOperationSpec: msRest.OperationSpec = {
 const enableOperationSpec: msRest.OperationSpec = {
   httpMethod: "POST",
   path: "jobs/{jobId}/enable",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout25],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout46
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId30,
-    Parameters.returnClientRequestId30,
-    Parameters.ocpDate30,
-    Parameters.ifMatch13,
-    Parameters.ifNoneMatch13,
-    Parameters.ifModifiedSince13,
-    Parameters.ifUnmodifiedSince13
+    Parameters.clientRequestId55,
+    Parameters.returnClientRequestId55,
+    Parameters.ocpDate55,
+    Parameters.ifMatch21,
+    Parameters.ifNoneMatch21,
+    Parameters.ifModifiedSince25,
+    Parameters.ifUnmodifiedSince25
   ],
   responses: {
     202: {
@@ -987,21 +743,31 @@ const enableOperationSpec: msRest.OperationSpec = {
 const terminateOperationSpec: msRest.OperationSpec = {
   httpMethod: "POST",
   path: "jobs/{jobId}/terminate",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout26],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout47,
+    Parameters.force3
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId31,
-    Parameters.returnClientRequestId31,
-    Parameters.ocpDate31,
-    Parameters.ifMatch14,
-    Parameters.ifNoneMatch14,
-    Parameters.ifModifiedSince14,
-    Parameters.ifUnmodifiedSince14
+    Parameters.clientRequestId56,
+    Parameters.returnClientRequestId56,
+    Parameters.ocpDate56,
+    Parameters.ifMatch22,
+    Parameters.ifNoneMatch22,
+    Parameters.ifModifiedSince26,
+    Parameters.ifUnmodifiedSince26
   ],
   requestBody: {
     parameterPath: {
-      terminateReason: ["options", "terminateReason"]
+      terminateReason: [
+        "options",
+        "terminateReason"
+      ]
     },
     mapper: Mappers.JobTerminateParameter
   },
@@ -1021,13 +787,18 @@ const terminateOperationSpec: msRest.OperationSpec = {
 const addOperationSpec: msRest.OperationSpec = {
   httpMethod: "POST",
   path: "jobs",
-  urlParameters: [Parameters.batchUrl],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout27],
+  urlParameters: [
+    Parameters.batchUrl
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout48
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId32,
-    Parameters.returnClientRequestId32,
-    Parameters.ocpDate32
+    Parameters.clientRequestId57,
+    Parameters.returnClientRequestId57,
+    Parameters.ocpDate57
   ],
   requestBody: {
     parameterPath: "job",
@@ -1052,20 +823,22 @@ const addOperationSpec: msRest.OperationSpec = {
 const listOperationSpec: msRest.OperationSpec = {
   httpMethod: "GET",
   path: "jobs",
-  urlParameters: [Parameters.batchUrl],
+  urlParameters: [
+    Parameters.batchUrl
+  ],
   queryParameters: [
     Parameters.apiVersion,
-    Parameters.filter4,
-    Parameters.select3,
-    Parameters.expand3,
-    Parameters.maxResults5,
-    Parameters.timeout28
+    Parameters.filter8,
+    Parameters.select7,
+    Parameters.expand5,
+    Parameters.maxResults9,
+    Parameters.timeout49
   ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId33,
-    Parameters.returnClientRequestId33,
-    Parameters.ocpDate33
+    Parameters.clientRequestId58,
+    Parameters.returnClientRequestId58,
+    Parameters.ocpDate58
   ],
   responses: {
     200: {
@@ -1083,20 +856,23 @@ const listOperationSpec: msRest.OperationSpec = {
 const listFromJobScheduleOperationSpec: msRest.OperationSpec = {
   httpMethod: "GET",
   path: "jobschedules/{jobScheduleId}/jobs",
-  urlParameters: [Parameters.batchUrl, Parameters.jobScheduleId],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobScheduleId
+  ],
   queryParameters: [
     Parameters.apiVersion,
-    Parameters.filter5,
-    Parameters.select4,
-    Parameters.expand4,
-    Parameters.maxResults6,
-    Parameters.timeout29
+    Parameters.filter9,
+    Parameters.select8,
+    Parameters.expand6,
+    Parameters.maxResults10,
+    Parameters.timeout50
   ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId34,
-    Parameters.returnClientRequestId34,
-    Parameters.ocpDate34
+    Parameters.clientRequestId59,
+    Parameters.returnClientRequestId59,
+    Parameters.ocpDate59
   ],
   responses: {
     200: {
@@ -1114,19 +890,22 @@ const listFromJobScheduleOperationSpec: msRest.OperationSpec = {
 const listPreparationAndReleaseTaskStatusOperationSpec: msRest.OperationSpec = {
   httpMethod: "GET",
   path: "jobs/{jobId}/jobpreparationandreleasetaskstatus",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
   queryParameters: [
     Parameters.apiVersion,
-    Parameters.filter6,
-    Parameters.select5,
-    Parameters.maxResults7,
-    Parameters.timeout30
+    Parameters.filter10,
+    Parameters.select9,
+    Parameters.maxResults11,
+    Parameters.timeout51
   ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId35,
-    Parameters.returnClientRequestId35,
-    Parameters.ocpDate35
+    Parameters.clientRequestId60,
+    Parameters.returnClientRequestId60,
+    Parameters.ocpDate60
   ],
   responses: {
     200: {
@@ -1144,13 +923,19 @@ const listPreparationAndReleaseTaskStatusOperationSpec: msRest.OperationSpec = {
 const getTaskCountsOperationSpec: msRest.OperationSpec = {
   httpMethod: "GET",
   path: "jobs/{jobId}/taskcounts",
-  urlParameters: [Parameters.batchUrl, Parameters.jobId],
-  queryParameters: [Parameters.apiVersion, Parameters.timeout31],
+  urlParameters: [
+    Parameters.batchUrl,
+    Parameters.jobId
+  ],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.timeout52
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId36,
-    Parameters.returnClientRequestId36,
-    Parameters.ocpDate36
+    Parameters.clientRequestId61,
+    Parameters.returnClientRequestId61,
+    Parameters.ocpDate61
   ],
   responses: {
     200: {
@@ -1169,13 +954,17 @@ const listNextOperationSpec: msRest.OperationSpec = {
   httpMethod: "GET",
   baseUrl: "{batchUrl}",
   path: "{nextLink}",
-  urlParameters: [Parameters.nextPageLink],
-  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.nextPageLink
+  ],
+  queryParameters: [
+    Parameters.apiVersion
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId37,
-    Parameters.returnClientRequestId37,
-    Parameters.ocpDate37
+    Parameters.clientRequestId62,
+    Parameters.returnClientRequestId62,
+    Parameters.ocpDate62
   ],
   responses: {
     200: {
@@ -1194,13 +983,17 @@ const listFromJobScheduleNextOperationSpec: msRest.OperationSpec = {
   httpMethod: "GET",
   baseUrl: "{batchUrl}",
   path: "{nextLink}",
-  urlParameters: [Parameters.nextPageLink],
-  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.nextPageLink
+  ],
+  queryParameters: [
+    Parameters.apiVersion
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId38,
-    Parameters.returnClientRequestId38,
-    Parameters.ocpDate38
+    Parameters.clientRequestId63,
+    Parameters.returnClientRequestId63,
+    Parameters.ocpDate63
   ],
   responses: {
     200: {
@@ -1219,13 +1012,17 @@ const listPreparationAndReleaseTaskStatusNextOperationSpec: msRest.OperationSpec
   httpMethod: "GET",
   baseUrl: "{batchUrl}",
   path: "{nextLink}",
-  urlParameters: [Parameters.nextPageLink],
-  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.nextPageLink
+  ],
+  queryParameters: [
+    Parameters.apiVersion
+  ],
   headerParameters: [
     Parameters.acceptLanguage,
-    Parameters.clientRequestId39,
-    Parameters.returnClientRequestId39,
-    Parameters.ocpDate39
+    Parameters.clientRequestId64,
+    Parameters.returnClientRequestId64,
+    Parameters.ocpDate64
   ],
   responses: {
     200: {

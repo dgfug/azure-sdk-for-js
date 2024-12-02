@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CheckpointStore } from "./eventProcessor";
-import { CloseReason } from "./models/public";
-import { ReceivedEventData } from "./eventData";
-import { LastEnqueuedEventProperties } from "./eventHubReceiver";
-import {
+import type {
   BasicPartitionProperties,
   PartitionContext,
-  SubscriptionEventHandlers
-} from "./eventHubConsumerClientModels";
-import { logger } from "./log";
+  SubscriptionEventHandlers,
+} from "./eventHubConsumerClientModels.js";
+import type { CheckpointStore } from "./eventProcessor.js";
+import type { CloseReason } from "./models/public.js";
+import type { LastEnqueuedEventProperties } from "./partitionReceiver.js";
+import type { ReceivedEventData } from "./eventData.js";
+import { logger } from "./logger.js";
 
 /**
  * A checkpoint is meant to represent the last successfully processed event by the user from a particular
@@ -48,7 +48,7 @@ export interface Checkpoint {
   /**
    * The offset of the event.
    */
-  offset: number;
+  offset: string;
 }
 
 /**
@@ -69,7 +69,7 @@ export class PartitionProcessor implements PartitionContext {
     private _checkpointStore: CheckpointStore,
     private _context: BasicPartitionProperties & {
       eventProcessorId: string;
-    }
+    },
   ) {}
 
   /**
@@ -135,9 +135,7 @@ export class PartitionProcessor implements PartitionContext {
    * events are received.
    */
   async initialize(): Promise<void> {
-    if (this._eventHandlers.processInitialize) {
-      await this._eventHandlers.processInitialize(this);
-    }
+    return this._eventHandlers.processInitialize?.(this);
   }
 
   /**
@@ -171,7 +169,7 @@ export class PartitionProcessor implements PartitionContext {
     if (this._eventHandlers.processError) {
       try {
         await this._eventHandlers.processError(error, this);
-      } catch (err) {
+      } catch (err: any) {
         logger.verbose(`Error thrown from user's processError handler : ${err}`);
       }
     }
@@ -192,7 +190,7 @@ export class PartitionProcessor implements PartitionContext {
       consumerGroup: this._context.consumerGroup,
       partitionId: this._context.partitionId,
       sequenceNumber: eventData.sequenceNumber,
-      offset: eventData.offset
+      offset: eventData.offset,
     };
 
     await this._checkpointStore!.updateCheckpoint(checkpoint);

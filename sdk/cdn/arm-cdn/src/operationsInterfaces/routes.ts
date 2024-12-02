@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Route,
   RoutesListByEndpointOptionalParams,
@@ -18,7 +18,7 @@ import {
   RouteUpdateParameters,
   RoutesUpdateOptionalParams,
   RoutesUpdateResponse,
-  RoutesDeleteOptionalParams
+  RoutesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -27,7 +27,8 @@ export interface Routes {
   /**
    * Lists all of the existing origins within a profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param options The options parameters.
    */
@@ -35,13 +36,14 @@ export interface Routes {
     resourceGroupName: string,
     profileName: string,
     endpointName: string,
-    options?: RoutesListByEndpointOptionalParams
+    options?: RoutesListByEndpointOptionalParams,
   ): PagedAsyncIterableIterator<Route>;
   /**
    * Gets an existing route with the specified route name under the specified subscription, resource
    * group, profile, and AzureFrontDoor endpoint.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param routeName Name of the routing rule.
    * @param options The options parameters.
@@ -51,13 +53,14 @@ export interface Routes {
     profileName: string,
     endpointName: string,
     routeName: string,
-    options?: RoutesGetOptionalParams
+    options?: RoutesGetOptionalParams,
   ): Promise<RoutesGetResponse>;
   /**
    * Creates a new route with the specified route name under the specified subscription, resource group,
    * profile, and AzureFrontDoor endpoint.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param routeName Name of the routing rule.
    * @param route Route properties
@@ -69,15 +72,16 @@ export interface Routes {
     endpointName: string,
     routeName: string,
     route: Route,
-    options?: RoutesCreateOptionalParams
+    options?: RoutesCreateOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<RoutesCreateResponse>, RoutesCreateResponse>
+    SimplePollerLike<OperationState<RoutesCreateResponse>, RoutesCreateResponse>
   >;
   /**
    * Creates a new route with the specified route name under the specified subscription, resource group,
    * profile, and AzureFrontDoor endpoint.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param routeName Name of the routing rule.
    * @param route Route properties
@@ -89,13 +93,14 @@ export interface Routes {
     endpointName: string,
     routeName: string,
     route: Route,
-    options?: RoutesCreateOptionalParams
+    options?: RoutesCreateOptionalParams,
   ): Promise<RoutesCreateResponse>;
   /**
    * Updates an existing route with the specified route name under the specified subscription, resource
    * group, profile, and AzureFrontDoor endpoint.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param routeName Name of the routing rule.
    * @param routeUpdateProperties Route update properties
@@ -107,15 +112,16 @@ export interface Routes {
     endpointName: string,
     routeName: string,
     routeUpdateProperties: RouteUpdateParameters,
-    options?: RoutesUpdateOptionalParams
+    options?: RoutesUpdateOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<RoutesUpdateResponse>, RoutesUpdateResponse>
+    SimplePollerLike<OperationState<RoutesUpdateResponse>, RoutesUpdateResponse>
   >;
   /**
    * Updates an existing route with the specified route name under the specified subscription, resource
    * group, profile, and AzureFrontDoor endpoint.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param routeName Name of the routing rule.
    * @param routeUpdateProperties Route update properties
@@ -127,13 +133,14 @@ export interface Routes {
     endpointName: string,
     routeName: string,
     routeUpdateProperties: RouteUpdateParameters,
-    options?: RoutesUpdateOptionalParams
+    options?: RoutesUpdateOptionalParams,
   ): Promise<RoutesUpdateResponse>;
   /**
    * Deletes an existing route with the specified route name under the specified subscription, resource
    * group, profile, and AzureFrontDoor endpoint.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param routeName Name of the routing rule.
    * @param options The options parameters.
@@ -143,13 +150,14 @@ export interface Routes {
     profileName: string,
     endpointName: string,
     routeName: string,
-    options?: RoutesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: RoutesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes an existing route with the specified route name under the specified subscription, resource
    * group, profile, and AzureFrontDoor endpoint.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param endpointName Name of the endpoint under the profile which is unique globally.
    * @param routeName Name of the routing rule.
    * @param options The options parameters.
@@ -159,6 +167,6 @@ export interface Routes {
     profileName: string,
     endpointName: string,
     routeName: string,
-    options?: RoutesDeleteOptionalParams
+    options?: RoutesDeleteOptionalParams,
   ): Promise<void>;
 }

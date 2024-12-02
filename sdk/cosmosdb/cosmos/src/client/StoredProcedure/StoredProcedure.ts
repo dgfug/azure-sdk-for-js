@@ -1,19 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
 import {
   createStoredProcedureUri,
   getIdFromLink,
   getPathFromLink,
   isResourceValid,
-  ResourceType
+  ResourceType,
 } from "../../common";
-import { PartitionKey } from "../../documents/PartitionKey";
+import type { PartitionKey } from "../../documents/PartitionKey";
 import { undefinedPartitionKey } from "../../extractPartitionKey";
-import { RequestOptions, ResourceResponse } from "../../request";
-import { Container } from "../Container";
-import { StoredProcedureDefinition } from "./StoredProcedureDefinition";
+import type { RequestOptions } from "../../request";
+import { ResourceResponse } from "../../request";
+import { readPartitionKeyDefinition } from "../ClientUtils";
+import type { Container } from "../Container";
+import type { StoredProcedureDefinition } from "./StoredProcedureDefinition";
 import { StoredProcedureResponse } from "./StoredProcedureResponse";
+import { getEmptyCosmosDiagnostics, withDiagnostics } from "../../utils/diagnostics";
 
 /**
  * Operations for reading, replacing, deleting, or executing a specific, existing stored procedure by id.
@@ -36,22 +40,32 @@ export class StoredProcedure {
   constructor(
     public readonly container: Container,
     public readonly id: string,
-    private readonly clientContext: ClientContext
+    private readonly clientContext: ClientContext,
   ) {}
 
   /**
    * Read the {@link StoredProcedureDefinition} for the given {@link StoredProcedure}.
    */
   public async read(options?: RequestOptions): Promise<StoredProcedureResponse> {
-    const path = getPathFromLink(this.url);
-    const id = getIdFromLink(this.url);
-    const response = await this.clientContext.read<StoredProcedureDefinition>({
-      path,
-      resourceType: ResourceType.sproc,
-      resourceId: id,
-      options
-    });
-    return new StoredProcedureResponse(response.result, response.headers, response.code, this);
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      const path = getPathFromLink(this.url);
+      const id = getIdFromLink(this.url);
+
+      const response = await this.clientContext.read<StoredProcedureDefinition>({
+        path,
+        resourceType: ResourceType.sproc,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      return new StoredProcedureResponse(
+        response.result,
+        response.headers,
+        response.code,
+        this,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 
   /**
@@ -60,44 +74,62 @@ export class StoredProcedure {
    */
   public async replace(
     body: StoredProcedureDefinition,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<StoredProcedureResponse> {
-    if (body.body) {
-      body.body = body.body.toString();
-    }
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      if (body.body) {
+        body.body = body.body.toString();
+      }
 
-    const err = {};
-    if (!isResourceValid(body, err)) {
-      throw err;
-    }
+      const err = {};
+      if (!isResourceValid(body, err)) {
+        throw err;
+      }
 
-    const path = getPathFromLink(this.url);
-    const id = getIdFromLink(this.url);
+      const path = getPathFromLink(this.url);
+      const id = getIdFromLink(this.url);
 
-    const response = await this.clientContext.replace<StoredProcedureDefinition>({
-      body,
-      path,
-      resourceType: ResourceType.sproc,
-      resourceId: id,
-      options
-    });
-    return new StoredProcedureResponse(response.result, response.headers, response.code, this);
+      const response = await this.clientContext.replace<StoredProcedureDefinition>({
+        body,
+        path,
+        resourceType: ResourceType.sproc,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      return new StoredProcedureResponse(
+        response.result,
+        response.headers,
+        response.code,
+        this,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 
   /**
    * Delete the given {@link StoredProcedure}.
    */
   public async delete(options?: RequestOptions): Promise<StoredProcedureResponse> {
-    const path = getPathFromLink(this.url);
-    const id = getIdFromLink(this.url);
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      const path = getPathFromLink(this.url);
+      const id = getIdFromLink(this.url);
 
-    const response = await this.clientContext.delete<StoredProcedureDefinition>({
-      path,
-      resourceType: ResourceType.sproc,
-      resourceId: id,
-      options
-    });
-    return new StoredProcedureResponse(response.result, response.headers, response.code, this);
+      const response = await this.clientContext.delete<StoredProcedureDefinition>({
+        path,
+        resourceType: ResourceType.sproc,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      return new StoredProcedureResponse(
+        response.result,
+        response.headers,
+        response.code,
+        this,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 
   /**
@@ -113,20 +145,29 @@ export class StoredProcedure {
   public async execute<T = any>(
     partitionKey: PartitionKey,
     params?: any[],
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<ResourceResponse<T>> {
-    if (partitionKey === undefined) {
-      const {
-        resource: partitionKeyDefinition
-      } = await this.container.readPartitionKeyDefinition();
-      partitionKey = undefinedPartitionKey(partitionKeyDefinition);
-    }
-    const response = await this.clientContext.execute<T>({
-      sprocLink: this.url,
-      params,
-      options,
-      partitionKey
-    });
-    return new ResourceResponse<T>(response.result, response.headers, response.code);
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      if (partitionKey === undefined) {
+        const partitionKeyResponse = await readPartitionKeyDefinition(
+          diagnosticNode,
+          this.container,
+        );
+        partitionKey = undefinedPartitionKey(partitionKeyResponse);
+      }
+      const response = await this.clientContext.execute<T>({
+        sprocLink: this.url,
+        params,
+        options,
+        partitionKey,
+        diagnosticNode,
+      });
+      return new ResourceResponse<T>(
+        response.result,
+        response.headers,
+        response.code,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 }

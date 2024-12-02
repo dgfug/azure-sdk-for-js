@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   QueryStatistics,
   ManagedDatabaseQueriesListByQueryOptionalParams,
   ManagedDatabaseQueriesGetOptionalParams,
-  ManagedDatabaseQueriesGetResponse
+  ManagedDatabaseQueriesGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface ManagedDatabaseQueries {
     managedInstanceName: string,
     databaseName: string,
     queryId: string,
-    options?: ManagedDatabaseQueriesListByQueryOptionalParams
+    options?: ManagedDatabaseQueriesListByQueryOptionalParams,
   ): PagedAsyncIterableIterator<QueryStatistics>;
   /**
    * Get query by query id.
@@ -48,6 +47,6 @@ export interface ManagedDatabaseQueries {
     managedInstanceName: string,
     databaseName: string,
     queryId: string,
-    options?: ManagedDatabaseQueriesGetOptionalParams
+    options?: ManagedDatabaseQueriesGetOptionalParams,
   ): Promise<ManagedDatabaseQueriesGetResponse>;
 }

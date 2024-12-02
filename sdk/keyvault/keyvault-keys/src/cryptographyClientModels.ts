@@ -1,26 +1,58 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CryptographyOptions, KeyVaultKey } from "./keysModels";
+import type { CryptographyOptions, KeyVaultKey } from "./keysModels.js";
 
+import type { JsonWebKey } from "./generated/models/index.js";
 import {
-  JsonWebKey,
+  JsonWebKeyEncryptionAlgorithm as EncryptionAlgorithm,
   JsonWebKeyCurveName as KeyCurveName,
   KnownJsonWebKeyCurveName as KnownKeyCurveNames,
-  JsonWebKeyEncryptionAlgorithm as EncryptionAlgorithm,
-  KnownJsonWebKeyEncryptionAlgorithm as KnownEncryptionAlgorithms,
+  KnownJsonWebKeySignatureAlgorithm as KnownSignatureAlgorithms,
   JsonWebKeySignatureAlgorithm as SignatureAlgorithm,
-  KnownJsonWebKeySignatureAlgorithm as KnownSignatureAlgorithms
-} from "./generated/models";
+} from "./generated/models/index.js";
 
 export {
   KeyCurveName,
   KnownKeyCurveNames,
   EncryptionAlgorithm,
-  KnownEncryptionAlgorithms,
   SignatureAlgorithm,
-  KnownSignatureAlgorithms
+  KnownSignatureAlgorithms,
 };
+
+/** Known values of {@link EncryptionAlgorithm} that the service accepts. */
+export enum KnownEncryptionAlgorithms {
+  /** Encryption Algorithm - RSA-OAEP */
+  RSAOaep = "RSA-OAEP",
+  /** Encryption Algorithm - RSA-OAEP-256 */
+  RSAOaep256 = "RSA-OAEP-256",
+  /** Encryption Algorithm - RSA1_5 */
+  RSA15 = "RSA1_5",
+  /** Encryption Algorithm - A128GCM */
+  A128GCM = "A128GCM",
+  /** Encryption Algorithm - A192GCM */
+  A192GCM = "A192GCM",
+  /** Encryption Algorithm - A256GCM */
+  A256GCM = "A256GCM",
+  /** Encryption Algorithm - A128KW */
+  A128KW = "A128KW",
+  /** Encryption Algorithm - A192KW */
+  A192KW = "A192KW",
+  /** Encryption Algorithm - A256KW */
+  A256KW = "A256KW",
+  /** Encryption Algorithm - A128CBC */
+  A128CBC = "A128CBC",
+  /** Encryption Algorithm - A192CBC */
+  A192CBC = "A192CBC",
+  /** Encryption Algorithm - A256CBC */
+  A256CBC = "A256CBC",
+  /** Encryption Algorithm - A128CBCPAD */
+  A128Cbcpad = "A128CBCPAD",
+  /** Encryption Algorithm - A192CBCPAD */
+  A192Cbcpad = "A192CBCPAD",
+  /** Encryption Algorithm - A256CBCPAD */
+  A256Cbcpad = "A256CBCPAD",
+}
 
 /**
  * Supported algorithms for key wrapping/unwrapping
@@ -251,6 +283,8 @@ export interface AesCbcEncryptParameters {
   /**
    * The initialization vector used for encryption. If omitted we will attempt to generate an IV using crypto's `randomBytes` functionality.
    * An error will be thrown if creating an IV fails, and you may recover by passing in your own cryptographically secure IV.
+   *
+   * When passing your own IV, make sure you use a cryptographically random, non-repeating IV.
    */
   iv?: Uint8Array;
 }
@@ -315,7 +349,8 @@ export interface AesCbcDecryptParameters {
    * The initialization vector used during encryption.
    */
   /**
-   * The ciphertext to decrypt.
+   * The ciphertext to decrypt. Microsoft recommends you not use CBC without first ensuring the integrity of the ciphertext using an HMAC, for example.
+   * See https://docs.microsoft.com/dotnet/standard/security/vulnerabilities-cbc-mode for more information.
    */
   ciphertext: Uint8Array;
   /**
@@ -337,11 +372,16 @@ export type DecryptParameters =
  * The key may be an identifier (URL) to a KeyVault key, the actual KeyVault key,
  * or a local-only JsonWebKey.
  *
- * If an identifier is used, it will be exchanged for a {@link KeyVaultKey} during the first operation call.
+ * If an identifier is used, an attempt will be made to exchange it for a {@link KeyVaultKey} during the first operation call. If this attempt fails, the identifier
+ * will become a remote-only identifier and the {@link CryptographyClient} will only be able to perform remote operations.
  */
 export type CryptographyClientKey =
   | {
       kind: "identifier";
+      value: string;
+    }
+  | {
+      kind: "remoteOnlyIdentifier";
       value: string;
     }
   | {

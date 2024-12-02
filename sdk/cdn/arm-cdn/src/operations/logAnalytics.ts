@@ -10,7 +10,7 @@ import { LogAnalytics } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CdnManagementClientContext } from "../cdnManagementClientContext";
+import { CdnManagementClient } from "../cdnManagementClient";
 import {
   LogMetric,
   LogMetricsGranularity,
@@ -30,25 +30,26 @@ import {
   LogAnalyticsGetWafLogAnalyticsMetricsResponse,
   WafRankingType,
   LogAnalyticsGetWafLogAnalyticsRankingsOptionalParams,
-  LogAnalyticsGetWafLogAnalyticsRankingsResponse
+  LogAnalyticsGetWafLogAnalyticsRankingsResponse,
 } from "../models";
 
 /** Class containing LogAnalytics operations. */
 export class LogAnalyticsImpl implements LogAnalytics {
-  private readonly client: CdnManagementClientContext;
+  private readonly client: CdnManagementClient;
 
   /**
    * Initialize a new instance of the class LogAnalytics class.
    * @param client Reference to the service client
    */
-  constructor(client: CdnManagementClientContext) {
+  constructor(client: CdnManagementClient) {
     this.client = client;
   }
 
   /**
    * Get log report for AFD profile
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param metrics Array of LogMetric
    * @param dateTimeBegin
    * @param dateTimeEnd
@@ -66,7 +67,7 @@ export class LogAnalyticsImpl implements LogAnalytics {
     granularity: LogMetricsGranularity,
     customDomains: string[],
     protocols: string[],
-    options?: LogAnalyticsGetLogAnalyticsMetricsOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsMetricsOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsMetricsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -78,16 +79,17 @@ export class LogAnalyticsImpl implements LogAnalytics {
         granularity,
         customDomains,
         protocols,
-        options
+        options,
       },
-      getLogAnalyticsMetricsOperationSpec
+      getLogAnalyticsMetricsOperationSpec,
     );
   }
 
   /**
    * Get log analytics ranking report for AFD profile
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param rankings Array of LogRanking
    * @param metrics Array of LogRankingMetric
    * @param maxRanking
@@ -103,7 +105,7 @@ export class LogAnalyticsImpl implements LogAnalytics {
     maxRanking: number,
     dateTimeBegin: Date,
     dateTimeEnd: Date,
-    options?: LogAnalyticsGetLogAnalyticsRankingsOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsRankingsOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsRankingsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -114,50 +116,53 @@ export class LogAnalyticsImpl implements LogAnalytics {
         maxRanking,
         dateTimeBegin,
         dateTimeEnd,
-        options
+        options,
       },
-      getLogAnalyticsRankingsOperationSpec
+      getLogAnalyticsRankingsOperationSpec,
     );
   }
 
   /**
    * Get all available location names for AFD log analytics report.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param options The options parameters.
    */
   getLogAnalyticsLocations(
     resourceGroupName: string,
     profileName: string,
-    options?: LogAnalyticsGetLogAnalyticsLocationsOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsLocationsOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsLocationsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, options },
-      getLogAnalyticsLocationsOperationSpec
+      getLogAnalyticsLocationsOperationSpec,
     );
   }
 
   /**
    * Get all endpoints and custom domains available for AFD log report
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param options The options parameters.
    */
   getLogAnalyticsResources(
     resourceGroupName: string,
     profileName: string,
-    options?: LogAnalyticsGetLogAnalyticsResourcesOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsResourcesOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsResourcesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, options },
-      getLogAnalyticsResourcesOperationSpec
+      getLogAnalyticsResourcesOperationSpec,
     );
   }
 
   /**
    * Get Waf related log analytics report for AFD profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param metrics Array of WafMetric
    * @param dateTimeBegin
    * @param dateTimeEnd
@@ -171,7 +176,7 @@ export class LogAnalyticsImpl implements LogAnalytics {
     dateTimeBegin: Date,
     dateTimeEnd: Date,
     granularity: WafGranularity,
-    options?: LogAnalyticsGetWafLogAnalyticsMetricsOptionalParams
+    options?: LogAnalyticsGetWafLogAnalyticsMetricsOptionalParams,
   ): Promise<LogAnalyticsGetWafLogAnalyticsMetricsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -181,16 +186,17 @@ export class LogAnalyticsImpl implements LogAnalytics {
         dateTimeBegin,
         dateTimeEnd,
         granularity,
-        options
+        options,
       },
-      getWafLogAnalyticsMetricsOperationSpec
+      getWafLogAnalyticsMetricsOperationSpec,
     );
   }
 
   /**
    * Get WAF log analytics charts for AFD profile
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param metrics Array of WafMetric
    * @param dateTimeBegin
    * @param dateTimeEnd
@@ -206,7 +212,7 @@ export class LogAnalyticsImpl implements LogAnalytics {
     dateTimeEnd: Date,
     maxRanking: number,
     rankings: WafRankingType[],
-    options?: LogAnalyticsGetWafLogAnalyticsRankingsOptionalParams
+    options?: LogAnalyticsGetWafLogAnalyticsRankingsOptionalParams,
   ): Promise<LogAnalyticsGetWafLogAnalyticsRankingsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -217,9 +223,9 @@ export class LogAnalyticsImpl implements LogAnalytics {
         dateTimeEnd,
         maxRanking,
         rankings,
-        options
+        options,
       },
-      getWafLogAnalyticsRankingsOperationSpec
+      getWafLogAnalyticsRankingsOperationSpec,
     );
   }
 }
@@ -227,16 +233,15 @@ export class LogAnalyticsImpl implements LogAnalytics {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getLogAnalyticsMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsMetrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsMetrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricsResponse
+      bodyMapper: Mappers.MetricsResponse,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
@@ -248,28 +253,27 @@ const getLogAnalyticsMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.continents,
     Parameters.countryOrRegions,
     Parameters.customDomains,
-    Parameters.protocols
+    Parameters.protocols,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getLogAnalyticsRankingsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsRankings",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsRankings",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RankingsResponse
+      bodyMapper: Mappers.RankingsResponse,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
@@ -278,72 +282,69 @@ const getLogAnalyticsRankingsOperationSpec: coreClient.OperationSpec = {
     Parameters.rankings,
     Parameters.metrics1,
     Parameters.maxRanking,
-    Parameters.customDomains1
+    Parameters.customDomains1,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getLogAnalyticsLocationsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsLocations",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsLocations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ContinentsResponse
+      bodyMapper: Mappers.ContinentsResponse,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getLogAnalyticsResourcesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsResources",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getLogAnalyticsResources",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourcesResponse
+      bodyMapper: Mappers.ResourcesResponse,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getWafLogAnalyticsMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getWafLogAnalyticsMetrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getWafLogAnalyticsMetrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.WafMetricsResponse
+      bodyMapper: Mappers.WafMetricsResponse,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
@@ -353,28 +354,27 @@ const getWafLogAnalyticsMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.granularity1,
     Parameters.actions,
     Parameters.groupBy1,
-    Parameters.ruleTypes
+    Parameters.ruleTypes,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getWafLogAnalyticsRankingsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getWafLogAnalyticsRankings",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getWafLogAnalyticsRankings",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.WafRankingsResponse
+      bodyMapper: Mappers.WafRankingsResponse,
     },
     default: {
-      bodyMapper: Mappers.AfdErrorResponse
-    }
+      bodyMapper: Mappers.AfdErrorResponse,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
@@ -384,14 +384,14 @@ const getWafLogAnalyticsRankingsOperationSpec: coreClient.OperationSpec = {
     Parameters.metrics2,
     Parameters.actions,
     Parameters.ruleTypes,
-    Parameters.rankings1
+    Parameters.rankings1,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

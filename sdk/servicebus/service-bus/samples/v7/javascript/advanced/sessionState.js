@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates usage of SessionState.
@@ -22,15 +22,16 @@
  */
 
 const { ServiceBusClient } = require("@azure/service-bus");
+const { DefaultAzureCredential } = require("@azure/identity");
 
 // Load the .env file if it exists
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const userEventsQueueName = process.env.QUEUE_NAME_WITH_SESSIONS || "<queue name>";
-const sbClient = new ServiceBusClient(connectionString);
+const credential = new DefaultAzureCredential();
+const sbClient = new ServiceBusClient(fqdn, credential);
 
 async function main() {
   try {
@@ -46,13 +47,13 @@ async function runScenario() {
     { event_name: "Add Item", event_details: "Milk" },
     { event_name: "Add Item", event_details: "Bread" },
     { event_name: "Add Item", event_details: "Eggs" },
-    { event_name: "Checkout", event_details: "Success" }
+    { event_name: "Checkout", event_details: "Success" },
   ];
 
   const shoppingEventsDataBob = [
     { event_name: "Add Item", event_details: "Pencil" },
     { event_name: "Add Item", event_details: "Paper" },
-    { event_name: "Add Item", event_details: "Stapler" }
+    { event_name: "Add Item", event_details: "Stapler" },
   ];
 
   // Simulating user events
@@ -103,7 +104,7 @@ async function sendMessagesForSession(shoppingEvents, sessionId) {
     const message = {
       sessionId: sessionId,
       body: shoppingEvents[index],
-      subject: "Shopping Step"
+      subject: "Shopping Step",
     };
     await sender.sendMessages(message);
   }
@@ -115,7 +116,7 @@ async function processMessageFromSession(sessionId) {
   const sessionReceiver = await sbClient.acceptSession(userEventsQueueName, sessionId);
 
   const messages = await sessionReceiver.receiveMessages(1, {
-    maxWaitTimeInMs: 10000
+    maxWaitTimeInMs: 10000,
   });
 
   // Custom logic for processing the messages
@@ -136,7 +137,7 @@ async function processMessageFromSession(sessionId) {
     }
 
     console.log(
-      `Received message: Customer '${sessionReceiver.sessionId}': '${messages[0].body.event_name} ${messages[0].body.event_details}'`
+      `Received message: Customer '${sessionReceiver.sessionId}': '${messages[0].body.event_name} ${messages[0].body.event_details}'`,
     );
     await sessionReceiver.completeMessage(messages[0]);
   } else {
@@ -150,3 +151,5 @@ main().catch((err) => {
   console.log("Session State - Error occurred: ", err);
   process.exit(1);
 });
+
+module.exports = { main };

@@ -1,16 +1,29 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RequestParameters } from "@azure-rest/core-client";
-import { CheckPrincipalAccessRequest, RoleAssignmentRequest } from "./models";
+import type { RawHttpHeadersInput } from "@azure/core-rest-pipeline";
+import type { RequestParameters } from "@azure-rest/core-client";
+import type { CheckPrincipalAccessRequest, RoleAssignmentRequest } from "./models.js";
 
 export interface RoleAssignmentsCheckPrincipalAccessBodyParam {
   /** Details of scope, list of actions and principal. */
   body: CheckPrincipalAccessRequest;
 }
 
-export type RoleAssignmentsCheckPrincipalAccessParameters = RoleAssignmentsCheckPrincipalAccessBodyParam &
-  RequestParameters;
+export interface RoleAssignmentsCheckPrincipalAccessMediaTypesParam {
+  /** Request content type */
+  contentType?: "application/json" | "text/json";
+}
+
+export type RoleAssignmentsCheckPrincipalAccessParameters =
+  RoleAssignmentsCheckPrincipalAccessMediaTypesParam &
+    RoleAssignmentsCheckPrincipalAccessBodyParam &
+    RequestParameters;
+
+export interface RoleAssignmentsListRoleAssignmentsHeaders {
+  /** Continuation token. */
+  "x-ms-continuation"?: string;
+}
 
 export interface RoleAssignmentsListRoleAssignmentsQueryParamProperties {
   /** Synapse Built-In Role Id. */
@@ -25,16 +38,29 @@ export interface RoleAssignmentsListRoleAssignmentsQueryParam {
   queryParameters?: RoleAssignmentsListRoleAssignmentsQueryParamProperties;
 }
 
-export type RoleAssignmentsListRoleAssignmentsParameters = RoleAssignmentsListRoleAssignmentsQueryParam &
-  RequestParameters;
+export interface RoleAssignmentsListRoleAssignmentsHeaderParam {
+  headers: RawHttpHeadersInput & RoleAssignmentsListRoleAssignmentsHeaders;
+}
+
+export type RoleAssignmentsListRoleAssignmentsParameters =
+  RoleAssignmentsListRoleAssignmentsQueryParam &
+    RoleAssignmentsListRoleAssignmentsHeaderParam &
+    RequestParameters;
 
 export interface RoleAssignmentsCreateRoleAssignmentBodyParam {
   /** Details of role id, scope and object id. */
   body: RoleAssignmentRequest;
 }
 
-export type RoleAssignmentsCreateRoleAssignmentParameters = RoleAssignmentsCreateRoleAssignmentBodyParam &
-  RequestParameters;
+export interface RoleAssignmentsCreateRoleAssignmentMediaTypesParam {
+  /** Request content type */
+  contentType?: "application/json" | "text/json";
+}
+
+export type RoleAssignmentsCreateRoleAssignmentParameters =
+  RoleAssignmentsCreateRoleAssignmentMediaTypesParam &
+    RoleAssignmentsCreateRoleAssignmentBodyParam &
+    RequestParameters;
 export type RoleAssignmentsGetRoleAssignmentByIdParameters = RequestParameters;
 
 export interface RoleAssignmentsDeleteRoleAssignmentByIdQueryParamProperties {
@@ -46,8 +72,8 @@ export interface RoleAssignmentsDeleteRoleAssignmentByIdQueryParam {
   queryParameters?: RoleAssignmentsDeleteRoleAssignmentByIdQueryParamProperties;
 }
 
-export type RoleAssignmentsDeleteRoleAssignmentByIdParameters = RoleAssignmentsDeleteRoleAssignmentByIdQueryParam &
-  RequestParameters;
+export type RoleAssignmentsDeleteRoleAssignmentByIdParameters =
+  RoleAssignmentsDeleteRoleAssignmentByIdQueryParam & RequestParameters;
 
 export interface RoleDefinitionsListRoleDefinitionsQueryParamProperties {
   /** Is a Synapse Built-In Role or not. */
@@ -60,7 +86,7 @@ export interface RoleDefinitionsListRoleDefinitionsQueryParam {
   queryParameters?: RoleDefinitionsListRoleDefinitionsQueryParamProperties;
 }
 
-export type RoleDefinitionsListRoleDefinitionsParameters = RoleDefinitionsListRoleDefinitionsQueryParam &
-  RequestParameters;
+export type RoleDefinitionsListRoleDefinitionsParameters =
+  RoleDefinitionsListRoleDefinitionsQueryParam & RequestParameters;
 export type RoleDefinitionsGetRoleDefinitionByIdParameters = RequestParameters;
 export type RoleDefinitionsListScopesParameters = RequestParameters;

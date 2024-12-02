@@ -6,11 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   InboundSecurityRule,
   InboundSecurityRuleCreateOrUpdateOptionalParams,
-  InboundSecurityRuleCreateOrUpdateResponse
+  InboundSecurityRuleCreateOrUpdateResponse,
+  InboundSecurityRuleGetOptionalParams,
+  InboundSecurityRuleGetResponse,
 } from "../models";
 
 /** Interface representing a InboundSecurityRuleOperations. */
@@ -29,10 +31,10 @@ export interface InboundSecurityRuleOperations {
     networkVirtualApplianceName: string,
     ruleCollectionName: string,
     parameters: InboundSecurityRule,
-    options?: InboundSecurityRuleCreateOrUpdateOptionalParams
+    options?: InboundSecurityRuleCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<InboundSecurityRuleCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<InboundSecurityRuleCreateOrUpdateResponse>,
       InboundSecurityRuleCreateOrUpdateResponse
     >
   >;
@@ -50,6 +52,19 @@ export interface InboundSecurityRuleOperations {
     networkVirtualApplianceName: string,
     ruleCollectionName: string,
     parameters: InboundSecurityRule,
-    options?: InboundSecurityRuleCreateOrUpdateOptionalParams
+    options?: InboundSecurityRuleCreateOrUpdateOptionalParams,
   ): Promise<InboundSecurityRuleCreateOrUpdateResponse>;
+  /**
+   * Retrieves the available specified Network Virtual Appliance Inbound Security Rules Collection.
+   * @param resourceGroupName The name of the resource group.
+   * @param networkVirtualApplianceName The name of the Network Virtual Appliance.
+   * @param ruleCollectionName The name of security rule collection.
+   * @param options The options parameters.
+   */
+  get(
+    resourceGroupName: string,
+    networkVirtualApplianceName: string,
+    ruleCollectionName: string,
+    options?: InboundSecurityRuleGetOptionalParams,
+  ): Promise<InboundSecurityRuleGetResponse>;
 }

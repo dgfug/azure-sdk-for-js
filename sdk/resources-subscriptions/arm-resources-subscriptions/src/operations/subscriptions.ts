@@ -6,36 +6,39 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Subscriptions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SubscriptionClientContext } from "../subscriptionClientContext";
+import { SubscriptionClient } from "../subscriptionClient";
 import {
   Location,
   SubscriptionsListLocationsOptionalParams,
+  SubscriptionsListLocationsResponse,
   Subscription,
   SubscriptionsListNextOptionalParams,
   SubscriptionsListOptionalParams,
-  SubscriptionsListLocationsResponse,
+  SubscriptionsListResponse,
   SubscriptionsGetOptionalParams,
   SubscriptionsGetResponse,
-  SubscriptionsListResponse,
+  CheckZonePeersRequest,
+  SubscriptionsCheckZonePeersOptionalParams,
+  SubscriptionsCheckZonePeersResponse,
   SubscriptionsListNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Subscriptions operations. */
 export class SubscriptionsImpl implements Subscriptions {
-  private readonly client: SubscriptionClientContext;
+  private readonly client: SubscriptionClient;
 
   /**
    * Initialize a new instance of the class Subscriptions class.
    * @param client Reference to the service client
    */
-  constructor(client: SubscriptionClientContext) {
+  constructor(client: SubscriptionClient) {
     this.client = client;
   }
 
@@ -57,17 +60,22 @@ export class SubscriptionsImpl implements Subscriptions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listLocationsPagingPage(subscriptionId, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listLocationsPagingPage(subscriptionId, options, settings);
       }
     };
   }
 
   private async *listLocationsPagingPage(
     subscriptionId: string,
-    options?: SubscriptionsListLocationsOptionalParams
+    options?: SubscriptionsListLocationsOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<Location[]> {
-    let result = await this._listLocations(subscriptionId, options);
+    let result: SubscriptionsListLocationsResponse;
+    result = await this._listLocations(subscriptionId, options);
     yield result.value || [];
   }
 
@@ -98,22 +106,34 @@ export class SubscriptionsImpl implements Subscriptions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
       }
     };
   }
 
   private async *listPagingPage(
-    options?: SubscriptionsListOptionalParams
+    options?: SubscriptionsListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Subscription[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SubscriptionsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -164,6 +184,23 @@ export class SubscriptionsImpl implements Subscriptions {
     options?: SubscriptionsListOptionalParams
   ): Promise<SubscriptionsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
+  }
+
+  /**
+   * Compares a subscriptions logical zone mapping
+   * @param subscriptionId The ID of the target subscription.
+   * @param parameters Parameters for checking zone peers.
+   * @param options The options parameters.
+   */
+  checkZonePeers(
+    subscriptionId: string,
+    parameters: CheckZonePeersRequest,
+    options?: SubscriptionsCheckZonePeersOptionalParams
+  ): Promise<SubscriptionsCheckZonePeersResponse> {
+    return this.client.sendOperationRequest(
+      { subscriptionId, parameters, options },
+      checkZonePeersOperationSpec
+    );
   }
 
   /**
@@ -232,6 +269,25 @@ const listOperationSpec: coreClient.OperationSpec = {
   headerParameters: [Parameters.accept],
   serializer
 };
+const checkZonePeersOperationSpec: coreClient.OperationSpec = {
+  path:
+    "/subscriptions/{subscriptionId}/providers/Microsoft.Resources/checkZonePeers/",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.CheckZonePeersResult
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponseAutoGenerated
+    }
+  },
+  requestBody: Parameters.parameters,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.$host, Parameters.subscriptionId],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer
+};
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
@@ -243,7 +299,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.nextLink],
   headerParameters: [Parameters.accept],
   serializer

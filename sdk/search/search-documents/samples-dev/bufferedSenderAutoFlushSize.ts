@@ -1,19 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Demonstrates the SearchIndexingBufferedSender with Autoflush based on size.
  */
 
+import { DefaultAzureCredential } from "@azure/identity";
 import {
-  SearchIndexingBufferedSender,
-  AzureKeyCredential,
-  SearchClient,
   GeographyPoint,
-  SearchIndexClient
+  SearchClient,
+  SearchIndexClient,
+  SearchIndexingBufferedSender,
 } from "@azure/search-documents";
-import { createIndex, documentKeyRetriever, WAIT_TIME, delay } from "./setup";
-import { Hotel } from "./interfaces";
+import type { Hotel } from "./interfaces";
+import { createIndex, delay, documentKeyRetriever, WAIT_TIME } from "./setup";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -26,7 +26,6 @@ dotenv.config();
  * by default.
  */
 const endpoint = process.env.ENDPOINT || "";
-const apiKey = process.env.SEARCH_API_ADMIN_KEY || "";
 const TEST_INDEX_NAME = "example-index-sample-4";
 
 function getDocumentsArray(size: number): Hotel[] {
@@ -51,75 +50,77 @@ function getDocumentsArray(size: number): Hotel[] {
       rating: 5,
       location: new GeographyPoint({
         longitude: -122.131577,
-        latitude: 47.678581
-      })
+        latitude: 47.678581,
+      }),
     });
   }
   return array;
 }
 
-async function main() {
-  if (!endpoint || !apiKey) {
-    console.log("Make sure to set valid values for endpoint and apiKey with proper authorization.");
+async function main(): Promise<void> {
+  if (!endpoint) {
+    console.log("Be sure to set a valid endpoint with proper authorization.");
     return;
   }
 
   console.log(`Running SearchIndexingBufferedSender-uploadDocuments-With Auto Flush Sizes Sample`);
 
-  const credential = new AzureKeyCredential(apiKey);
+  const credential = new DefaultAzureCredential();
   const searchClient: SearchClient<Hotel> = new SearchClient<Hotel>(
     endpoint,
     TEST_INDEX_NAME,
-    credential
+    credential,
   );
   const indexClient: SearchIndexClient = new SearchIndexClient(endpoint, credential);
 
-  await createIndex(indexClient, TEST_INDEX_NAME);
-  await delay(WAIT_TIME);
-
-  const bufferedClient = new SearchIndexingBufferedSender<Hotel>(
-    searchClient,
-    documentKeyRetriever,
-    {
-      autoFlush: true
-    }
-  );
-
-  bufferedClient.on("batchAdded", (response: any) => {
-    console.log(`Batch Added Event has been receieved: ${response}`);
-  });
-
-  bufferedClient.on("beforeDocumentSent", (response: any) => {
-    console.log(`Before Document Sent Event has been receieved: ${response}`);
-  });
-
-  bufferedClient.on("batchSucceeded", (response: any) => {
-    console.log("Batch Succeeded Event has been receieved....");
-    console.log(response);
-  });
-
-  bufferedClient.on("batchFailed", (response: any) => {
-    console.log("Batch Failed Event has been receieved....");
-    console.log(response);
-  });
-
-  const documents: Hotel[] = getDocumentsArray(1001);
-  bufferedClient.uploadDocuments(documents);
-
-  await WAIT_TIME;
-
-  let count = await searchClient.getDocumentsCount();
-  while (count !== documents.length) {
+  try {
+    await createIndex(indexClient, TEST_INDEX_NAME);
     await delay(WAIT_TIME);
-    count = await searchClient.getDocumentsCount();
-  }
 
-  // When the autoFlush is set to true, the user
-  // has to call the dispose method to clear the
-  // timer.
-  bufferedClient.dispose();
-  await indexClient.deleteIndex(TEST_INDEX_NAME);
-  await delay(WAIT_TIME);
+    const bufferedClient = new SearchIndexingBufferedSender<Hotel>(
+      searchClient,
+      documentKeyRetriever,
+      {
+        autoFlush: true,
+      },
+    );
+
+    bufferedClient.on("batchAdded", (response: any) => {
+      console.log(`Batch Added Event has been receieved: ${response}`);
+    });
+
+    bufferedClient.on("beforeDocumentSent", (response: any) => {
+      console.log(`Before Document Sent Event has been receieved: ${response}`);
+    });
+
+    bufferedClient.on("batchSucceeded", (response: any) => {
+      console.log("Batch Succeeded Event has been receieved....");
+      console.log(response);
+    });
+
+    bufferedClient.on("batchFailed", (response: any) => {
+      console.log("Batch Failed Event has been receieved....");
+      console.log(response);
+    });
+
+    const documents: Hotel[] = getDocumentsArray(1001);
+    await bufferedClient.uploadDocuments(documents);
+
+    await delay(WAIT_TIME);
+
+    let count = await searchClient.getDocumentsCount();
+    while (count !== documents.length) {
+      await delay(WAIT_TIME);
+      count = await searchClient.getDocumentsCount();
+    }
+
+    // When the autoFlush is set to true, the user
+    // has to call the dispose method to clear the
+    // timer.
+    bufferedClient.dispose();
+  } finally {
+    await indexClient.deleteIndex(TEST_INDEX_NAME);
+  }
 }
 
 main();

@@ -1,21 +1,24 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { PartitionKeyRange, Resource } from "../client";
-import { ClientContext } from "../ClientContext";
+// Licensed under the MIT License.
+import type { PartitionKeyRange, Resource } from "../client";
+import type { ClientContext } from "../ClientContext";
 import {
   Constants,
   getIdFromLink,
   getPathFromLink,
   ResourceType,
   StatusCodes,
-  SubStatusCodes
+  SubStatusCodes,
 } from "../common";
-import { FeedOptions } from "../request";
-import { Response } from "../request";
+import type { DiagnosticNodeInternal } from "../diagnostics/DiagnosticNodeInternal";
+import type { FeedOptions } from "../request";
+import type { Response } from "../request";
+import type { FetchFunctionCallback } from "./defaultQueryExecutionContext";
 import { DefaultQueryExecutionContext } from "./defaultQueryExecutionContext";
 import { FetchResult, FetchResultType } from "./FetchResult";
-import { CosmosHeaders, getInitialHeader, mergeHeaders } from "./headerUtils";
-import { SqlQuerySpec } from "./index";
+import type { CosmosHeaders } from "./headerUtils";
+import { getInitialHeader, mergeHeaders } from "./headerUtils";
+import type { SqlQuerySpec } from "./index";
 
 /** @hidden */
 export class DocumentProducer {
@@ -44,7 +47,8 @@ export class DocumentProducer {
     collectionLink: string,
     query: SqlQuerySpec,
     targetPartitionKeyRange: PartitionKeyRange,
-    options: FeedOptions
+    options: FeedOptions,
+    correlatedActivityId: string,
   ) {
     // TODO: any options
     this.collectionLink = collectionLink;
@@ -59,7 +63,11 @@ export class DocumentProducer {
     this.continuationToken = undefined;
     this.respHeaders = getInitialHeader();
 
-    this.internalExecutionContext = new DefaultQueryExecutionContext(options, this.fetchFunction);
+    this.internalExecutionContext = new DefaultQueryExecutionContext(
+      options,
+      this.fetchFunction,
+      correlatedActivityId,
+    );
   }
   /**
    * Synchronously gives the contiguous buffered results (stops at the first non result) if any
@@ -85,9 +93,13 @@ export class DocumentProducer {
     return bufferedResults;
   }
 
-  public fetchFunction = async (options: FeedOptions): Promise<Response<Resource>> => {
+  public fetchFunction: FetchFunctionCallback = async (
+    diagnosticNode: DiagnosticNodeInternal,
+    options: FeedOptions,
+    correlatedActivityId: string,
+  ): Promise<Response<Resource>> => {
     const path = getPathFromLink(this.collectionLink, ResourceType.item);
-
+    diagnosticNode.addData({ partitionKeyRangeId: this.targetPartitionKeyRange.id });
     const id = getIdFromLink(this.collectionLink);
 
     return this.clientContext.queryFeed({
@@ -95,11 +107,11 @@ export class DocumentProducer {
       resourceType: ResourceType.item,
       resourceId: id,
       resultFn: (result: any) => result.Documents,
-
       query: this.query,
       options,
-
-      partitionKeyRangeId: this.targetPartitionKeyRange["id"]
+      diagnosticNode,
+      partitionKeyRangeId: this.targetPartitionKeyRange["id"],
+      correlatedActivityId: correlatedActivityId,
     });
   };
 
@@ -153,16 +165,14 @@ export class DocumentProducer {
   /**
    * Fetches and bufferes the next page of results and executes the given callback
    */
-  public async bufferMore(): Promise<Response<any>> {
+  public async bufferMore(diagnosticNode: DiagnosticNodeInternal): Promise<Response<any>> {
     if (this.err) {
       throw this.err;
     }
 
     try {
-      const {
-        result: resources,
-        headers: headerResponse
-      } = await this.internalExecutionContext.fetchMore();
+      const { result: resources, headers: headerResponse } =
+        await this.internalExecutionContext.fetchMore(diagnosticNode);
       ++this.generation;
       this._updateStates(undefined, resources === undefined);
       if (resources !== undefined) {
@@ -180,13 +190,12 @@ export class DocumentProducer {
 
         // Wraping query metrics in a object where the keys are the partition key range.
         headerResponse[Constants.HttpHeaders.QueryMetrics] = {};
-        headerResponse[Constants.HttpHeaders.QueryMetrics][
-          this.targetPartitionKeyRange.id
-        ] = queryMetrics;
+        headerResponse[Constants.HttpHeaders.QueryMetrics][this.targetPartitionKeyRange.id] =
+          queryMetrics;
       }
 
       return { result: resources, headers: headerResponse };
-    } catch (err) {
+    } catch (err: any) {
       // TODO: any error
       if (DocumentProducer._needPartitionKeyRangeCacheRefresh(err)) {
         // Split just happend
@@ -194,7 +203,10 @@ export class DocumentProducer {
         const bufferedError = new FetchResult(undefined, err);
         this.fetchResults.push(bufferedError);
         // Putting a dummy result so that the rest of code flows
-        return { result: [bufferedError], headers: err.headers };
+        return {
+          result: [bufferedError],
+          headers: err.headers,
+        };
       } else {
         this._updateStates(err, err.resources === undefined);
         throw err;
@@ -214,14 +226,14 @@ export class DocumentProducer {
   /**
    * Fetches the next element in the DocumentProducer.
    */
-  public async nextItem(): Promise<Response<any>> {
+  public async nextItem(diagnosticNode: DiagnosticNodeInternal): Promise<Response<any>> {
     if (this.err) {
       this._updateStates(this.err, undefined);
       throw this.err;
     }
 
     try {
-      const { result, headers } = await this.current();
+      const { result, headers } = await this.current(diagnosticNode);
 
       const fetchResult = this.fetchResults.shift();
       this._updateStates(undefined, result === undefined);
@@ -237,7 +249,7 @@ export class DocumentProducer {
         case FetchResultType.Result:
           return { result: fetchResult.feedResponse, headers };
       }
-    } catch (err) {
+    } catch (err: any) {
       this._updateStates(err, err.item === undefined);
       throw err;
     }
@@ -246,7 +258,7 @@ export class DocumentProducer {
   /**
    * Retrieve the current element on the DocumentProducer.
    */
-  public async current(): Promise<Response<any>> {
+  public async current(diagnosticNode: DiagnosticNodeInternal): Promise<Response<any>> {
     // If something is buffered just give that
     if (this.fetchResults.length > 0) {
       const fetchResult = this.fetchResults[0];
@@ -255,7 +267,7 @@ export class DocumentProducer {
         case FetchResultType.Done:
           return {
             result: undefined,
-            headers: this._getAndResetActiveResponseHeaders()
+            headers: this._getAndResetActiveResponseHeaders(),
           };
         case FetchResultType.Exception:
           fetchResult.error.headers = this._getAndResetActiveResponseHeaders();
@@ -263,7 +275,7 @@ export class DocumentProducer {
         case FetchResultType.Result:
           return {
             result: fetchResult.feedResponse,
-            headers: this._getAndResetActiveResponseHeaders()
+            headers: this._getAndResetActiveResponseHeaders(),
           };
       }
     }
@@ -272,16 +284,16 @@ export class DocumentProducer {
     if (this.allFetched) {
       return {
         result: undefined,
-        headers: this._getAndResetActiveResponseHeaders()
+        headers: this._getAndResetActiveResponseHeaders(),
       };
     }
 
     // If there are no more bufferd items and there are still items to be fetched then buffer more
-    const { result, headers } = await this.bufferMore();
+    const { result, headers } = await this.bufferMore(diagnosticNode);
     mergeHeaders(this.respHeaders, headers);
     if (result === undefined) {
       return { result: undefined, headers: this.respHeaders };
     }
-    return this.current();
+    return this.current(diagnosticNode);
   }
 }

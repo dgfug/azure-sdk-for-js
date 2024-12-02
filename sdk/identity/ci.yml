@@ -30,5 +30,8 @@ extends:
         safeName: azureidentity
       - name: azure-identity-cache-persistence
         safeName: azureidentitycachepersistence
+      - name: azure-identity-broker
+        safeName: azureidentitybroker
       - name: azure-identity-vscode
         safeName: azureidentityvscode
+        skipPublishDocMs: true

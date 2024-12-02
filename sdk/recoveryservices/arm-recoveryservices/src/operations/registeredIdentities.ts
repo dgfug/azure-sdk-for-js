@@ -10,25 +10,24 @@ import { RegisteredIdentities } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { RecoveryServicesClientContext } from "../recoveryServicesClientContext";
+import { RecoveryServicesClient } from "../recoveryServicesClient";
 import { RegisteredIdentitiesDeleteOptionalParams } from "../models";
 
 /** Class containing RegisteredIdentities operations. */
 export class RegisteredIdentitiesImpl implements RegisteredIdentities {
-  private readonly client: RecoveryServicesClientContext;
+  private readonly client: RecoveryServicesClient;
 
   /**
    * Initialize a new instance of the class RegisteredIdentities class.
    * @param client Reference to the service client
    */
-  constructor(client: RecoveryServicesClientContext) {
+  constructor(client: RecoveryServicesClient) {
     this.client = client;
   }
 
   /**
    * Unregisters the given container from your Recovery Services vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param identityName Name of the protection container to unregister.
    * @param options The options parameters.
@@ -37,11 +36,11 @@ export class RegisteredIdentitiesImpl implements RegisteredIdentities {
     resourceGroupName: string,
     vaultName: string,
     identityName: string,
-    options?: RegisteredIdentitiesDeleteOptionalParams
+    options?: RegisteredIdentitiesDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vaultName, identityName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 }
@@ -49,8 +48,7 @@ export class RegisteredIdentitiesImpl implements RegisteredIdentities {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/registeredIdentities/{identityName}",
+  path: "/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/registeredIdentities/{identityName}",
   httpMethod: "DELETE",
   responses: { 204: {} },
   queryParameters: [Parameters.apiVersion],
@@ -59,7 +57,7 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.vaultName,
-    Parameters.identityName
+    Parameters.identityName,
   ],
-  serializer
+  serializer,
 };

@@ -14,7 +14,7 @@ import {
 import {
   QueryBody as QueryBodyMapper,
   BatchRequest as BatchRequestMapper
-} from "../models/mappers";
+} from "../models/mappers.js";
 
 export const accept: OperationParameter = {
   parameterPath: "accept",
@@ -97,6 +97,18 @@ export const prefer: OperationParameter = {
       name: "String"
     }
   }
+};
+
+export const resourceId: OperationURLParameter = {
+  parameterPath: "resourceId",
+  mapper: {
+    serializedName: "resourceId",
+    required: true,
+    type: {
+      name: "String"
+    }
+  },
+  skipEncoding: true
 };
 
 export const body1: OperationParameter = {

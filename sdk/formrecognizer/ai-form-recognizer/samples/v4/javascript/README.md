@@ -16,23 +16,17 @@ These sample programs show how to use the JavaScript client libraries for Azure 
 | **File Name**                                           | **Description**                                                                            |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | [composeModel.js][composemodel]                         | create a composed model from several individual labeled models                             |
-| [analyzeBusinessCard.js][analyzebusinesscard]           | extract data from a business card document                                                 |
 | [analyzeDocumentByModelId.js][analyzedocumentbymodelid] | analyze a document using a model by ID                                                     |
-| [analyzeIdentityDocument.js][analyzeidentitydocument]   | extract data from an identity document                                                     |
-| [analyzeInvoice.js][analyzeinvoice]                     | extract data from an invoice document                                                      |
-| [analyzeReceipt.js][analyzereceipt]                     | extract data from a receipt document                                                       |
 | [analyzeReceiptByModelId.js][analyzereceiptbymodelid]   | use the "prebuilt-receipt" model ID to extract data from a receipt document (weakly-typed) |
 | [buildModel.js][buildmodel]                             | build a model with a single document type from a training data set                         |
 | [copyModel.js][copymodel]                               | copy a model from one resource to another                                                  |
-| [extractGenericDocument.js][extractgenericdocument]     | use the prebuilt (generic) document model to extract key-value pairs and entities          |
-| [extractLayout.js][extractlayout]                       | use the prebuilt layout model to extract basic document elements only                      |
 | [getInfo.js][getinfo]                                   | get information about the count and limit of custom models in the resource                 |
 | [getModel.js][getmodel]                                 | get information about a model by its ID                                                    |
 | [listModels.js][listmodels]                             | iterate over the models in a resource                                                      |
 
 ## Prerequisites
 
-The sample programs are compatible with [LTS versions of Node.js](https://nodejs.org/about/releases/).
+The sample programs are compatible with [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule).
 
 You need [an Azure subscription][freesub] and the following Azure resources to run these sample programs:
 
@@ -63,7 +57,7 @@ node composeModel.js
 Alternatively, run a single sample with the correct environment variables set (setting up the `.env` file is not required if you do this), for example (cross-platform):
 
 ```bash
-npx cross-env FORM_RECOGNIZER_ENDPOINT="<form recognizer endpoint>" FORM_RECOGNIZER_API_KEY="<form recognizer api key>" PURCHASE_ORDER_SUPPLIES_SAS_URL="<purchase order supplies sas url>" PURCHASE_ORDER_EQUIPMENT_SAS_URL="<purchase order equipment sas url>" PURCHASE_ORDER_FURNITURE_SAS_URL="<purchase order furniture sas url>" PURCHASE_ORDER_CLEANING_SUPPLIES_SAS_URL="<purchase order cleaning supplies sas url>" node composeModel.js
+npx dev-tool run vendored cross-env FORM_RECOGNIZER_ENDPOINT="<form recognizer endpoint>" FORM_RECOGNIZER_API_KEY="<form recognizer api key>" PURCHASE_ORDER_SUPPLIES_SAS_URL="<purchase order supplies sas url>" PURCHASE_ORDER_EQUIPMENT_SAS_URL="<purchase order equipment sas url>" PURCHASE_ORDER_FURNITURE_SAS_URL="<purchase order furniture sas url>" PURCHASE_ORDER_CLEANING_SUPPLIES_SAS_URL="<purchase order cleaning supplies sas url>" node composeModel.js
 ```
 
 ## Next Steps
@@ -71,19 +65,16 @@ npx cross-env FORM_RECOGNIZER_ENDPOINT="<form recognizer endpoint>" FORM_RECOGNI
 Take a look at our [API Documentation][apiref] for more information about the APIs that are available in the clients.
 
 [composemodel]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/composeModel.js
-[analyzebusinesscard]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/analyzeBusinessCard.js
 [analyzedocumentbymodelid]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/analyzeDocumentByModelId.js
-[analyzeidentitydocument]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/analyzeIdentityDocument.js
-[analyzeinvoice]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/analyzeInvoice.js
-[analyzereceipt]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/analyzeReceipt.js
 [analyzereceiptbymodelid]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/analyzeReceiptByModelId.js
 [buildmodel]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/buildModel.js
 [copymodel]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/copyModel.js
-[extractgenericdocument]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/extractGenericDocument.js
+[extractgeneraldocument]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/extractGeneralDocument.js
 [extractlayout]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/extractLayout.js
 [getinfo]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/getInfo.js
 [getmodel]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/getModel.js
 [listmodels]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/listModels.js
+[readdocument]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/javascript/readDocument.js
 [apiref]: https://docs.microsoft.com/javascript/api/@azure/ai-form-recognizer
 [freesub]: https://azure.microsoft.com/free/
 [createinstance_azurecognitiveservicesaccount]: https://docs.microsoft.com/azure/cognitive-services/cognitive-services-apis-create-account

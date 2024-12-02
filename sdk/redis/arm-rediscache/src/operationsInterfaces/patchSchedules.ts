@@ -15,7 +15,7 @@ import {
   PatchSchedulesCreateOrUpdateResponse,
   PatchSchedulesDeleteOptionalParams,
   PatchSchedulesGetOptionalParams,
-  PatchSchedulesGetResponse
+  PatchSchedulesGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -23,33 +23,33 @@ import {
 export interface PatchSchedules {
   /**
    * Gets all patch schedules in the specified redis cache (there is only one).
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param cacheName The name of the Redis cache.
    * @param options The options parameters.
    */
   listByRedisResource(
     resourceGroupName: string,
     cacheName: string,
-    options?: PatchSchedulesListByRedisResourceOptionalParams
+    options?: PatchSchedulesListByRedisResourceOptionalParams,
   ): PagedAsyncIterableIterator<RedisPatchSchedule>;
   /**
    * Create or replace the patching schedule for Redis cache.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param name The name of the Redis cache.
-   * @param parameters Parameters to set the patching schedule for Redis cache.
    * @param defaultParam Default string modeled as parameter for auto generation to work correctly.
+   * @param parameters Parameters to set the patching schedule for Redis cache.
    * @param options The options parameters.
    */
   createOrUpdate(
     resourceGroupName: string,
     name: string,
-    parameters: RedisPatchSchedule,
     defaultParam: DefaultName,
-    options?: PatchSchedulesCreateOrUpdateOptionalParams
+    parameters: RedisPatchSchedule,
+    options?: PatchSchedulesCreateOrUpdateOptionalParams,
   ): Promise<PatchSchedulesCreateOrUpdateResponse>;
   /**
    * Deletes the patching schedule of a redis cache.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param name The name of the redis cache.
    * @param defaultParam Default string modeled as parameter for auto generation to work correctly.
    * @param options The options parameters.
@@ -58,11 +58,11 @@ export interface PatchSchedules {
     resourceGroupName: string,
     name: string,
     defaultParam: DefaultName,
-    options?: PatchSchedulesDeleteOptionalParams
+    options?: PatchSchedulesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the patching schedule of a redis cache.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param name The name of the redis cache.
    * @param defaultParam Default string modeled as parameter for auto generation to work correctly.
    * @param options The options parameters.
@@ -71,6 +71,6 @@ export interface PatchSchedules {
     resourceGroupName: string,
     name: string,
     defaultParam: DefaultName,
-    options?: PatchSchedulesGetOptionalParams
+    options?: PatchSchedulesGetOptionalParams,
   ): Promise<PatchSchedulesGetResponse>;
 }

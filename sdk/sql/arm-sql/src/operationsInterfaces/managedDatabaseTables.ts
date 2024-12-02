@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   DatabaseTable,
   ManagedDatabaseTablesListBySchemaOptionalParams,
   ManagedDatabaseTablesGetOptionalParams,
-  ManagedDatabaseTablesGetResponse
+  ManagedDatabaseTablesGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface ManagedDatabaseTables {
     managedInstanceName: string,
     databaseName: string,
     schemaName: string,
-    options?: ManagedDatabaseTablesListBySchemaOptionalParams
+    options?: ManagedDatabaseTablesListBySchemaOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseTable>;
   /**
    * Get managed database table
@@ -50,6 +49,6 @@ export interface ManagedDatabaseTables {
     databaseName: string,
     schemaName: string,
     tableName: string,
-    options?: ManagedDatabaseTablesGetOptionalParams
+    options?: ManagedDatabaseTablesGetOptionalParams,
   ): Promise<ManagedDatabaseTablesGetResponse>;
 }

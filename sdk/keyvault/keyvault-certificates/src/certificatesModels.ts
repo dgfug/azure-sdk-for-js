@@ -1,27 +1,36 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as coreHttp from "@azure/core-http";
-import {
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type * as coreClient from "@azure/core-client";
+import type { ExtendedCommonClientOptions } from "@azure/core-http-compat";
+import type { CancelOnProgress, PollOperationState } from "@azure/core-lro";
+import type {
   DeletionRecoveryLevel,
   KeyUsageType,
   JsonWebKeyType as CertificateKeyType,
-  JsonWebKeyCurveName as CertificateKeyCurveName
-} from "./generated/models";
+  JsonWebKeyCurveName as CertificateKeyCurveName,
+} from "./generated/models/index.js";
 
 /**
  * The latest supported KeyVault service API version
  */
-export const LATEST_API_VERSION = "7.3-preview";
+export const LATEST_API_VERSION = "7.5";
 
 /**
- * The optional parameters accepted by the KeyVault's KeyClient
+ * The optional parameters accepted by the KeyVault's CertificateClient
  */
-export interface CertificateClientOptions extends coreHttp.PipelineOptions {
+export interface CertificateClientOptions extends ExtendedCommonClientOptions {
   /**
    * The accepted versions of the KeyVault's service API.
    */
-  serviceVersion?: "7.0" | "7.1" | "7.2" | "7.3-preview";
+  serviceVersion?: "7.0" | "7.1" | "7.2" | "7.3" | "7.4" | "7.5";
+
+  /**
+   * Whether to disable verification that the authentication challenge resource matches the Key Vault domain.
+   * Defaults to false.
+   */
+  disableChallengeResourceVerification?: boolean;
 }
 
 /**
@@ -192,7 +201,7 @@ export enum WellKnownIssuerNames {
   /**
    * For certificates whose issuer will be defined later
    */
-  Unknown = "Unknown"
+  Unknown = "Unknown",
 }
 
 /**
@@ -382,7 +391,7 @@ export type ImportCertificatePolicy = CertificatePolicyProperties &
  */
 export const DefaultCertificatePolicy = {
   issuerName: "Self",
-  subject: "cn=MyCert"
+  subject: "cn=MyCert",
 };
 
 /**
@@ -439,12 +448,17 @@ export interface CertificateProperties {
   readonly vaultUrl?: string;
   /**
    * The version of certificate. May be undefined.
+   * **NOTE: This property will not be serialized. It can only be populated by the server.**
    */
   readonly version?: string;
   /**
    * Thumbprint of the certificate.
    */
   readonly x509Thumbprint?: Uint8Array;
+  /**
+   * Thumbprint of the certifiate encoded as a hex string.
+   */
+  readonly x509ThumbprintString?: string;
   /**
    * The retention dates of the softDelete data.
    * The value should be `>=7` and `<=90` when softDelete enabled.
@@ -481,7 +495,7 @@ export interface DeletedCertificate extends KeyVaultCertificateWithPolicy {
  * An interface representing the optional parameters that can be
  * passed to {@link beginCreateCertificate}, {@link beginDeleteCertificate} and {@link beginRecoverDeletedCertificate}
  */
-export interface CertificatePollerOptions extends coreHttp.OperationOptions {
+export interface CertificatePollerOptions extends coreClient.OperationOptions {
   /**
    * Time between each polling
    */
@@ -522,38 +536,38 @@ export type GetCertificateOperationOptions = CertificatePollerOptions;
  */
 export interface CreateCertificateOptions
   extends CertificateProperties,
-    coreHttp.OperationOptions {}
+    coreClient.OperationOptions {}
 
 /**
  * Options for {@link cancelCertificateOperation}.
  */
-export type CancelCertificateOperationOptions = coreHttp.OperationOptions;
+export type CancelCertificateOperationOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link backupCertificate}.
  */
-export type BackupCertificateOptions = coreHttp.OperationOptions;
+export type BackupCertificateOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link deleteCertificateOperation}.
  */
-export type DeleteCertificateOperationOptions = coreHttp.OperationOptions;
+export type DeleteCertificateOperationOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link deleteCertificate}.
  * @internal
  */
-export type DeleteCertificateOptions = coreHttp.OperationOptions;
+export type DeleteCertificateOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link deleteContacts}.
  */
-export type DeleteContactsOptions = coreHttp.OperationOptions;
+export type DeleteContactsOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link importCertificate}.
  */
-export interface ImportCertificateOptions extends coreHttp.OperationOptions {
+export interface ImportCertificateOptions extends coreClient.OperationOptions {
   /**
    * Determines whether the object is enabled.
    */
@@ -576,17 +590,17 @@ export interface ImportCertificateOptions extends coreHttp.OperationOptions {
 /**
  * Options for {@link deleteIssuer}.
  */
-export type DeleteIssuerOptions = coreHttp.OperationOptions;
+export type DeleteIssuerOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link setContacts}.
  */
-export type SetContactsOptions = coreHttp.OperationOptions;
+export type SetContactsOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link createIssuer}.
  */
-export interface CreateIssuerOptions extends coreHttp.OperationOptions {
+export interface CreateIssuerOptions extends coreClient.OperationOptions {
   /**
    * The user name/account name/account id.
    */
@@ -612,7 +626,7 @@ export interface CreateIssuerOptions extends coreHttp.OperationOptions {
 /**
  * Options for {@link purgeDeletedCertificate}.
  */
-export type PurgeDeletedCertificateOptions = coreHttp.OperationOptions;
+export type PurgeDeletedCertificateOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link updateIssuer}.
@@ -627,37 +641,37 @@ export interface UpdateIssuerOptions extends CreateIssuerOptions {
 /**
  * Options for {@link getContacts}.
  */
-export type GetContactsOptions = coreHttp.OperationOptions;
+export type GetContactsOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link getIssuer}.
  */
-export type GetIssuerOptions = coreHttp.OperationOptions;
+export type GetIssuerOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link getPlainCertificateOperation}.
  */
-export type GetPlainCertificateOperationOptions = coreHttp.OperationOptions;
+export type GetPlainCertificateOperationOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link getCertificateVersion}.
  */
-export type GetCertificateVersionOptions = coreHttp.OperationOptions;
+export type GetCertificateVersionOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link getCertificatePolicy}.
  */
-export type GetCertificatePolicyOptions = coreHttp.OperationOptions;
+export type GetCertificatePolicyOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link getDeletedCertificate}.
  */
-export type GetDeletedCertificateOptions = coreHttp.OperationOptions;
+export type GetDeletedCertificateOptions = coreClient.OperationOptions;
 
 /**
  * Options for {@link getCertificate}.
  */
-export type GetCertificateOptions = coreHttp.OperationOptions;
+export type GetCertificateOptions = coreClient.OperationOptions;
 
 /**
  * An interface representing the shape of the Certificate Tags. The tags are just string key-value pairs.
@@ -669,12 +683,12 @@ export type CertificateTags = { [propertyName: string]: string };
  */
 export interface UpdateCertificatePropertiesOptions
   extends CertificateProperties,
-    coreHttp.OperationOptions {}
+    coreClient.OperationOptions {}
 
 /**
  * Options for {@link updateCertificatePolicy}.
  */
-export type UpdateCertificatePolicyOptions = coreHttp.OperationOptions;
+export type UpdateCertificatePolicyOptions = coreClient.OperationOptions;
 
 /**
  * An interface representing the properties of a certificate issuer
@@ -731,7 +745,7 @@ export interface CertificateIssuer extends IssuerProperties {
 /**
  * An interface representing optional parameters for CertificateClient paged operations passed to {@link listPropertiesOfCertificates}.
  */
-export interface ListPropertiesOfCertificatesOptions extends coreHttp.OperationOptions {
+export interface ListPropertiesOfCertificatesOptions extends coreClient.OperationOptions {
   /**
    * Specifies whether to include certificates which are not completely provisioned.
    */
@@ -741,17 +755,17 @@ export interface ListPropertiesOfCertificatesOptions extends coreHttp.OperationO
 /**
  * An interface representing optional parameters for CertificateClient paged operations passed to {@link listPropertiesOfCertificateVersions}.
  */
-export type ListPropertiesOfCertificateVersionsOptions = coreHttp.OperationOptions;
+export type ListPropertiesOfCertificateVersionsOptions = coreClient.OperationOptions;
 
 /**
  * An interface representing optional parameters for CertificateClient paged operations passed to {@link listPropertiesOfIssuers}.
  */
-export type ListPropertiesOfIssuersOptions = coreHttp.OperationOptions;
+export type ListPropertiesOfIssuersOptions = coreClient.OperationOptions;
 
 /**
  * An interface representing optional parameters for CertificateClient paged operations passed to {@link listDeletedCertificates}.
  */
-export interface ListDeletedCertificatesOptions extends coreHttp.OperationOptions {
+export interface ListDeletedCertificatesOptions extends coreClient.OperationOptions {
   /**
    * Specifies whether to include certificates which are not completely provisioned.
    */
@@ -761,18 +775,18 @@ export interface ListDeletedCertificatesOptions extends coreHttp.OperationOption
 /**
  * An interface representing optional parameters for {@link mergeCertificate}.
  */
-export type MergeCertificateOptions = coreHttp.OperationOptions;
+export type MergeCertificateOptions = coreClient.OperationOptions;
 
 /**
  * An interface representing optional parameters for {@link recoverDeletedCertificate}.
  * @internal
  */
-export type RecoverDeletedCertificateOptions = coreHttp.OperationOptions;
+export type RecoverDeletedCertificateOptions = coreClient.OperationOptions;
 
 /**
  * An interface representing optional parameters for {@link restoreCertificateBackup}.
  */
-export type RestoreCertificateBackupOptions = coreHttp.OperationOptions;
+export type RestoreCertificateBackupOptions = coreClient.OperationOptions;
 
 /**
  * The shape of the contact information for the vault certificates.
@@ -831,7 +845,7 @@ export enum KnownCertificateKeyCurveNames {
   /**
    * P-256K Key Curve.
    */
-  P256K = "P-256K"
+  P256K = "P-256K",
 }
 
 /** Known values of {@link CertificateKeyType} that the service accepts. */
@@ -859,11 +873,11 @@ export enum KnownCertificateKeyTypes {
   /**
    * oct-HSM Key Type
    */
-  OctHSM = "oct-HSM"
+  OctHSM = "oct-HSM",
 }
 
 /** Known values of {@link KeyUsageType} that the service accepts. */
-export const enum KnownKeyUsageTypes {
+export enum KnownKeyUsageTypes {
   /**
    * DigitalSignature Usage Type.
    */
@@ -899,5 +913,61 @@ export const enum KnownKeyUsageTypes {
   /**
    * DecipherOnly Usage Type.
    */
-  DecipherOnly = "decipherOnly"
+  DecipherOnly = "decipherOnly",
+}
+
+/**
+ * Abstract representation of a poller, intended to expose just the minimal API that the user needs to work with.
+ */
+export interface PollerLikeWithCancellation<TState extends PollOperationState<TResult>, TResult> {
+  /**
+   * Returns a promise that will resolve once a single polling request finishes.
+   * It does this by calling the update method of the Poller's operation.
+   */
+  poll(options?: { abortSignal?: AbortSignalLike }): Promise<void>;
+  /**
+   * Returns a promise that will resolve once the underlying operation is completed.
+   */
+  pollUntilDone(): Promise<TResult>;
+  /**
+   * Invokes the provided callback after each polling is completed,
+   * sending the current state of the poller's operation.
+   *
+   * It returns a method that can be used to stop receiving updates on the given callback function.
+   */
+  onProgress(callback: (state: TState) => void): CancelOnProgress;
+  /**
+   * Returns true if the poller has finished polling.
+   */
+  isDone(): boolean;
+  /**
+   * Stops the poller. After this, no manual or automated requests can be sent.
+   */
+  stopPolling(): void;
+  /**
+   * Returns true if the poller is stopped.
+   */
+  isStopped(): boolean;
+  /**
+   * Attempts to cancel the underlying operation.
+   */
+  cancelOperation(options?: { abortSignal?: AbortSignalLike }): Promise<void>;
+  /**
+   * Returns the state of the operation.
+   * The TState defined in PollerLike can be a subset of the TState defined in
+   * the Poller implementation.
+   */
+  getOperationState(): TState;
+  /**
+   * Returns the result value of the operation,
+   * regardless of the state of the poller.
+   * It can return undefined or an incomplete form of the final TResult value
+   * depending on the implementation.
+   */
+  getResult(): TResult | undefined;
+  /**
+   * Returns a serialized version of the poller's operation
+   * by invoking the operation's toString method.
+   */
+  toString(): string;
 }

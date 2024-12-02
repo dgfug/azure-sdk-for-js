@@ -1,16 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  Conversion,
-  AssetConversionSettings,
+import type {
   AssetConversionOutput,
-  KnownAssetConversionStatus
+  AssetConversionSettings,
+  Conversion,
 } from "../generated/models/index";
-import {
-  RemoteRenderingServiceError,
-  createRemoteRenderingServiceError
-} from "../remoteRenderingServiceError";
+import { KnownAssetConversionStatus } from "../generated/models/index";
+import type { RemoteRenderingServiceError } from "../remoteRenderingServiceError";
+import { createRemoteRenderingServiceError } from "../remoteRenderingServiceError";
 
 /** Properties available for an AssetConversion in any state. */
 export interface AssetConversionBase {
@@ -74,35 +72,35 @@ export function assetConversionFromConversion(conversion: Conversion): AssetConv
   const baseProperties: AssetConversionBase = {
     conversionId: conversion.conversionId,
     settings: conversion.settings,
-    createdOn: conversion.createdOn
+    createdOn: conversion.createdOn,
   };
   switch (conversion.status) {
     case KnownAssetConversionStatus.NotStarted:
       return {
         status: "NotStarted",
-        ...baseProperties
+        ...baseProperties,
       };
     case KnownAssetConversionStatus.Running:
       return {
         status: "Running",
-        ...baseProperties
+        ...baseProperties,
       };
     case KnownAssetConversionStatus.Succeeded:
       return {
         status: "Succeeded",
         ...baseProperties,
-        output: conversion.output!
+        output: conversion.output!,
       };
     case KnownAssetConversionStatus.Cancelled:
       return {
         status: "Cancelled",
-        ...baseProperties
+        ...baseProperties,
       };
     case KnownAssetConversionStatus.Failed:
       return {
         status: "Failed",
         ...baseProperties,
-        error: createRemoteRenderingServiceError(conversion.error!)
+        error: createRemoteRenderingServiceError(conversion.error!),
       };
     default:
       throw new Error("Unrecognized AssetConversionStatus returned by the service");

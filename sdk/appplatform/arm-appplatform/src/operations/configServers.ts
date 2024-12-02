@@ -10,9 +10,13 @@ import { ConfigServers } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { AppPlatformManagementClientContext } from "../appPlatformManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { AppPlatformManagementClient } from "../appPlatformManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   ConfigServersGetOptionalParams,
   ConfigServersGetResponse,
@@ -28,13 +32,13 @@ import {
 
 /** Class containing ConfigServers operations. */
 export class ConfigServersImpl implements ConfigServers {
-  private readonly client: AppPlatformManagementClientContext;
+  private readonly client: AppPlatformManagementClient;
 
   /**
    * Initialize a new instance of the class ConfigServers class.
    * @param client Reference to the service client
    */
-  constructor(client: AppPlatformManagementClientContext) {
+  constructor(client: AppPlatformManagementClient) {
     this.client = client;
   }
 
@@ -70,8 +74,8 @@ export class ConfigServersImpl implements ConfigServers {
     configServerResource: ConfigServerResource,
     options?: ConfigServersUpdatePutOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<ConfigServersUpdatePutResponse>,
+    SimplePollerLike<
+      OperationState<ConfigServersUpdatePutResponse>,
       ConfigServersUpdatePutResponse
     >
   > {
@@ -81,7 +85,7 @@ export class ConfigServersImpl implements ConfigServers {
     ): Promise<ConfigServersUpdatePutResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -114,16 +118,20 @@ export class ConfigServersImpl implements ConfigServers {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, configServerResource, options },
-      updatePutOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, serviceName, configServerResource, options },
+      spec: updatePutOperationSpec
     });
+    const poller = await createHttpPoller<
+      ConfigServersUpdatePutResponse,
+      OperationState<ConfigServersUpdatePutResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -163,8 +171,8 @@ export class ConfigServersImpl implements ConfigServers {
     configServerResource: ConfigServerResource,
     options?: ConfigServersUpdatePatchOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<ConfigServersUpdatePatchResponse>,
+    SimplePollerLike<
+      OperationState<ConfigServersUpdatePatchResponse>,
       ConfigServersUpdatePatchResponse
     >
   > {
@@ -174,7 +182,7 @@ export class ConfigServersImpl implements ConfigServers {
     ): Promise<ConfigServersUpdatePatchResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -207,16 +215,20 @@ export class ConfigServersImpl implements ConfigServers {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, configServerResource, options },
-      updatePatchOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, serviceName, configServerResource, options },
+      spec: updatePatchOperationSpec
     });
+    const poller = await createHttpPoller<
+      ConfigServersUpdatePatchResponse,
+      OperationState<ConfigServersUpdatePatchResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -256,8 +268,8 @@ export class ConfigServersImpl implements ConfigServers {
     configServerSettings: ConfigServerSettings,
     options?: ConfigServersValidateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<ConfigServersValidateResponse>,
+    SimplePollerLike<
+      OperationState<ConfigServersValidateResponse>,
       ConfigServersValidateResponse
     >
   > {
@@ -267,7 +279,7 @@ export class ConfigServersImpl implements ConfigServers {
     ): Promise<ConfigServersValidateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -300,16 +312,21 @@ export class ConfigServersImpl implements ConfigServers {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, configServerSettings, options },
-      validateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, serviceName, configServerSettings, options },
+      spec: validateOperationSpec
     });
+    const poller = await createHttpPoller<
+      ConfigServersValidateResponse,
+      OperationState<ConfigServersValidateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**

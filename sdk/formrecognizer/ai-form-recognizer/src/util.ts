@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { isTokenCredential, KeyCredential, TokenCredential } from "@azure/core-auth";
+import type { KeyCredential, TokenCredential } from "@azure/core-auth";
+import { isTokenCredential } from "@azure/core-auth";
 import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
 import { createFormRecognizerAzureKeyCredentialPolicy } from "./azureKeyCredentialPolicy";
-import { DEFAULT_COGNITIVE_SCOPE } from "./constants";
-import { GeneratedClient, GeneratedClientOptionalParams } from "./generated";
+import { DEFAULT_COGNITIVE_SCOPE, FORM_RECOGNIZER_API_VERSION } from "./constants";
+import type { GeneratedClientOptionalParams } from "./generated";
+import { GeneratedClient } from "./generated";
 import { DEFAULT_GENERATED_CLIENT_OPTIONS } from "./options/FormRecognizerClientOptions";
 
 import * as Mappers from "./generated/models/mappers";
@@ -14,9 +16,6 @@ export { Mappers };
 
 // This is used for URL request processing.
 export const SERIALIZER = createSerializer(Mappers, false);
-
-/** @internal */
-export const identity = <T>(x: T): T => x;
 
 /**
  * Type-strong uncapitalization.
@@ -33,6 +32,14 @@ export const capitalize = <S extends string = string>(s: S): Capitalize<S> =>
   (s.substring(0, 1).toUpperCase() + s.substring(1)) as Capitalize<S>;
 
 /**
+ * Tests if a string looks like it begins with an acronym, i.e. it starts with two capital letters.
+ * @internal
+ */
+export const isAcronymic = (s: string): boolean => {
+  return /^[A-Z][A-Z]/.test(s);
+};
+
+/**
  * Map an optional value through a function
  * @internal
  */
@@ -46,11 +53,12 @@ export const maybemap = <T1, T2>(value: T1 | undefined, f: (v: T1) => T2): T2 | 
 export function makeServiceClient(
   endpoint: string,
   credential: KeyCredential | TokenCredential,
-  options: GeneratedClientOptionalParams
+  options: GeneratedClientOptionalParams,
 ): GeneratedClient {
   const client = new GeneratedClient(endpoint?.replace(/\/$/, ""), {
     ...DEFAULT_GENERATED_CLIENT_OPTIONS,
     ...options,
+    apiVersion: FORM_RECOGNIZER_API_VERSION,
   });
 
   const authPolicy = isTokenCredential(credential)

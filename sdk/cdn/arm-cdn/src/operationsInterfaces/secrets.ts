@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Secret,
   SecretsListByProfileOptionalParams,
@@ -15,10 +15,7 @@ import {
   SecretsGetResponse,
   SecretsCreateOptionalParams,
   SecretsCreateResponse,
-  SecretProperties,
-  SecretsUpdateOptionalParams,
-  SecretsUpdateResponse,
-  SecretsDeleteOptionalParams
+  SecretsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -27,18 +24,20 @@ export interface Secrets {
   /**
    * Lists existing AzureFrontDoor secrets.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param options The options parameters.
    */
   listByProfile(
     resourceGroupName: string,
     profileName: string,
-    options?: SecretsListByProfileOptionalParams
+    options?: SecretsListByProfileOptionalParams,
   ): PagedAsyncIterableIterator<Secret>;
   /**
    * Gets an existing Secret within a profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param secretName Name of the Secret under the profile.
    * @param options The options parameters.
    */
@@ -46,12 +45,13 @@ export interface Secrets {
     resourceGroupName: string,
     profileName: string,
     secretName: string,
-    options?: SecretsGetOptionalParams
+    options?: SecretsGetOptionalParams,
   ): Promise<SecretsGetResponse>;
   /**
    * Creates a new Secret within the specified profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param secretName Name of the Secret under the profile.
    * @param secret The Secret properties.
    * @param options The options parameters.
@@ -61,14 +61,18 @@ export interface Secrets {
     profileName: string,
     secretName: string,
     secret: Secret,
-    options?: SecretsCreateOptionalParams
+    options?: SecretsCreateOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<SecretsCreateResponse>, SecretsCreateResponse>
+    SimplePollerLike<
+      OperationState<SecretsCreateResponse>,
+      SecretsCreateResponse
+    >
   >;
   /**
    * Creates a new Secret within the specified profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param secretName Name of the Secret under the profile.
    * @param secret The Secret properties.
    * @param options The options parameters.
@@ -78,44 +82,13 @@ export interface Secrets {
     profileName: string,
     secretName: string,
     secret: Secret,
-    options?: SecretsCreateOptionalParams
+    options?: SecretsCreateOptionalParams,
   ): Promise<SecretsCreateResponse>;
-  /**
-   * Updates an existing Secret within a profile.
-   * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
-   * @param secretName Name of the Secret under the profile.
-   * @param secretProperties Secret properties
-   * @param options The options parameters.
-   */
-  beginUpdate(
-    resourceGroupName: string,
-    profileName: string,
-    secretName: string,
-    secretProperties: SecretProperties,
-    options?: SecretsUpdateOptionalParams
-  ): Promise<
-    PollerLike<PollOperationState<SecretsUpdateResponse>, SecretsUpdateResponse>
-  >;
-  /**
-   * Updates an existing Secret within a profile.
-   * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
-   * @param secretName Name of the Secret under the profile.
-   * @param secretProperties Secret properties
-   * @param options The options parameters.
-   */
-  beginUpdateAndWait(
-    resourceGroupName: string,
-    profileName: string,
-    secretName: string,
-    secretProperties: SecretProperties,
-    options?: SecretsUpdateOptionalParams
-  ): Promise<SecretsUpdateResponse>;
   /**
    * Deletes an existing Secret within profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param secretName Name of the Secret under the profile.
    * @param options The options parameters.
    */
@@ -123,12 +96,13 @@ export interface Secrets {
     resourceGroupName: string,
     profileName: string,
     secretName: string,
-    options?: SecretsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SecretsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes an existing Secret within profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param secretName Name of the Secret under the profile.
    * @param options The options parameters.
    */
@@ -136,6 +110,6 @@ export interface Secrets {
     resourceGroupName: string,
     profileName: string,
     secretName: string,
-    options?: SecretsDeleteOptionalParams
+    options?: SecretsDeleteOptionalParams,
   ): Promise<void>;
 }

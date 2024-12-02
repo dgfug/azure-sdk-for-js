@@ -4,11 +4,11 @@
 
 ```ts
 
-import { CommunicationUserIdentifier } from '@azure/communication-common';
-import { KeyCredential } from '@azure/core-auth';
-import { OperationOptions } from '@azure/core-http';
-import { PipelineOptions } from '@azure/core-http';
-import { TokenCredential } from '@azure/core-auth';
+import type { CommonClientOptions } from '@azure/core-client';
+import type { CommunicationUserIdentifier } from '@azure/communication-common';
+import type { KeyCredential } from '@azure/core-auth';
+import type { OperationOptions } from '@azure/core-client';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export interface CommunicationAccessToken {
@@ -22,15 +22,15 @@ export class CommunicationIdentityClient {
     constructor(endpoint: string, credential: KeyCredential, options?: CommunicationIdentityClientOptions);
     constructor(endpoint: string, credential: TokenCredential, options?: CommunicationIdentityClientOptions);
     createUser(options?: OperationOptions): Promise<CommunicationUserIdentifier>;
-    createUserAndToken(scopes: TokenScope[], options?: OperationOptions): Promise<CommunicationUserToken>;
+    createUserAndToken(scopes: TokenScope[], options?: CreateUserAndTokenOptions): Promise<CommunicationUserToken>;
     deleteUser(user: CommunicationUserIdentifier, options?: OperationOptions): Promise<void>;
-    getToken(user: CommunicationUserIdentifier, scopes: TokenScope[], options?: OperationOptions): Promise<CommunicationAccessToken>;
-    getTokenForTeamsUser(teamsUserAadToken: string, options?: OperationOptions): Promise<CommunicationAccessToken>;
+    getToken(user: CommunicationUserIdentifier, scopes: TokenScope[], options?: GetTokenOptions): Promise<CommunicationAccessToken>;
+    getTokenForTeamsUser(options: GetTokenForTeamsUserOptions): Promise<CommunicationAccessToken>;
     revokeTokens(user: CommunicationUserIdentifier, options?: OperationOptions): Promise<void>;
 }
 
 // @public
-export interface CommunicationIdentityClientOptions extends PipelineOptions {
+export interface CommunicationIdentityClientOptions extends CommonClientOptions {
 }
 
 // @public
@@ -39,7 +39,24 @@ export interface CommunicationUserToken extends CommunicationAccessToken {
 }
 
 // @public
-export type TokenScope = "chat" | "voip";
+export interface CreateUserAndTokenOptions extends OperationOptions {
+    tokenExpiresInMinutes?: number;
+}
+
+// @public
+export interface GetTokenForTeamsUserOptions extends OperationOptions {
+    clientId: string;
+    teamsUserAadToken: string;
+    userObjectId: string;
+}
+
+// @public
+export interface GetTokenOptions extends OperationOptions {
+    tokenExpiresInMinutes?: number;
+}
+
+// @public
+export type TokenScope = "chat" | "voip" | "chat.join" | "chat.join.limited" | "voip.join";
 
 // (No @packageDocumentation comment for this package)
 

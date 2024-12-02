@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license
+// Licensed under the MIT License
 
 import fs from "fs-extra";
-import path from "path";
+import path from "node:path";
 
 export function findSamplesRelativeDir(samplesDir: string): string {
   const dirs = [];
@@ -17,9 +17,6 @@ export function findSamplesRelativeDir(samplesDir: string): string {
   if (dirs.length === 0) {
     return `samples`;
   } else {
-    return `samples/${dirs
-      .sort()
-      .slice(-1)
-      .pop()}`;
+    return `samples/${dirs.sort().slice(-1).pop()}`;
   }
 }

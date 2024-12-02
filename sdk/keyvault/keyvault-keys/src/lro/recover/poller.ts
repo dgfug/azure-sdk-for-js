@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RecoverDeletedKeyPollOperation, RecoverDeletedKeyPollOperationState } from "./operation";
-import { KeyVaultKey } from "../../keysModels";
-import { KeyVaultKeyPoller, KeyVaultKeyPollerOptions } from "../keyVaultKeyPoller";
+import type { RecoverDeletedKeyPollOperationState } from "./operation.js";
+import { RecoverDeletedKeyPollOperation } from "./operation.js";
+import type { KeyVaultKey } from "../../keysModels.js";
+import type { KeyVaultKeyPollerOptions } from "../keyVaultKeyPoller.js";
+import { KeyVaultKeyPoller } from "../keyVaultKeyPoller.js";
 
 /**
  * Class that deletes a poller that waits until a key finishes being deleted
@@ -24,11 +26,11 @@ export class RecoverDeletedKeyPoller extends KeyVaultKeyPoller<
     const operation = new RecoverDeletedKeyPollOperation(
       {
         ...state,
-        name
+        name,
       },
       vaultUrl,
       client,
-      operationOptions
+      operationOptions,
     );
 
     super(operation);

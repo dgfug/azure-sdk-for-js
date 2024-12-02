@@ -1,21 +1,21 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 
 // We need to set up the plugin for the tests!
 
-import { useIdentityPlugin } from "../../../../identity/src";
+import { useIdentityPlugin } from "@azure/identity";
 
 // The persistence tests have to run on the same version of Node that's used to
-// install dependencies, currently 14.
+// install dependencies, currently 16.
 // TODO: We need a better solution for this, but this will do for now.
-if (!process.versions.node.startsWith("14")) {
+if (!process.versions.node.startsWith("16")) {
   console.warn(
     "WARNING: skipping persistence tests on incompatible node version:",
-    process.version
+    process.version,
   );
-  console.warn("Persistence tests are only compatible with Node 14.");
+  console.warn("Persistence tests are only compatible with Node 16.");
   process.exit(0);
 }
 
@@ -28,6 +28,6 @@ export const createPersistence: typeof import("../../../src/provider").createPer
   return create(...args);
 };
 
-before(function() {
+before(function () {
   useIdentityPlugin(require("../../../src").cachePersistencePlugin);
 });

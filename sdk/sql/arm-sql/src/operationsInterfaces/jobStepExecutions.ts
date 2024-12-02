@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   JobExecution,
   JobStepExecutionsListByJobExecutionOptionalParams,
   JobStepExecutionsGetOptionalParams,
-  JobStepExecutionsGetResponse
+  JobStepExecutionsGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -34,7 +33,7 @@ export interface JobStepExecutions {
     jobAgentName: string,
     jobName: string,
     jobExecutionId: string,
-    options?: JobStepExecutionsListByJobExecutionOptionalParams
+    options?: JobStepExecutionsListByJobExecutionOptionalParams,
   ): PagedAsyncIterableIterator<JobExecution>;
   /**
    * Gets a step execution of a job execution.
@@ -54,6 +53,6 @@ export interface JobStepExecutions {
     jobName: string,
     jobExecutionId: string,
     stepName: string,
-    options?: JobStepExecutionsGetOptionalParams
+    options?: JobStepExecutionsGetOptionalParams,
   ): Promise<JobStepExecutionsGetResponse>;
 }

@@ -1,5 +1,62 @@
 # Release History
 
+## 1.6.3 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 1.6.2 (2024-04-09)
+
+### Other Changes
+
+- Revert TypeScript output target to ES2017.
+
+## 1.6.1 (2024-03-20)
+
+### Other Changes
+
+- Add top-level `browser` field to `package.json` as fallback for legacy bundlers that do not support the `exports` field.
+
+## 1.6.0 (2024-03-12)
+
+### Other Changes
+
+- Migrated the codebase to ESM. This change is internal and should not affect customers.
+- Migrated unit tests to vitest.
+
+## 1.5.0 (2023-02-02)
+
+### Features Added
+
+- Add basic types from cadl azure core.
+
+## 1.4.0 (2022-11-03)
+
+### Features Added
+
+- Add `toElements` function to convert a page to a list of elements
+
+### Other Changes
+
+- Allow `PagedResault.getPage()` to return `undefined`, indicating no more pages left. This avoids having to return a page of empty array in the scenario where the total number of elements is unknown, service doesn't indicate whether there are more results, and we rely on service returning empty result to know that enumeration is done.
+
+## 1.3.0 (2022-05-18)
+
+### Other Changes
+
+- The default implementation of `byPage` now supports using the continuationToken option as a URL for the page to get first.
+
+## 1.2.1 (2022-01-06)
+
+### Bugs Fixed
+
+- Use a TS v3.4-friendly iterator protocol [PR# 19507](https://github.com/Azure/azure-sdk-for-js/pull/19507). Fixed [Issue 19394](https://github.com/Azure/azure-sdk-for-js/issues/19394)
+
 ## 1.2.0 (2021-08-30)
 
 ### Features Added

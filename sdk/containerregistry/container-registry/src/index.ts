@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export * from "./containerRegistryClient";
 export {
@@ -7,7 +7,7 @@ export {
   DeleteRepositoryOptions,
   GetRepositoryPropertiesOptions,
   UpdateRepositoryPropertiesOptions,
-  ListManifestPropertiesOptions
+  ListManifestPropertiesOptions,
 } from "./containerRepository";
 export {
   RegistryArtifact,
@@ -17,6 +17,7 @@ export {
   GetTagPropertiesOptions,
   UpdateManifestPropertiesOptions,
   UpdateTagPropertiesOptions,
-  ListTagPropertiesOptions
+  ListTagPropertiesOptions,
 } from "./registryArtifact";
 export * from "./models";
+export * from "./content";

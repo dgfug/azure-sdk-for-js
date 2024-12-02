@@ -6,29 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { Usages } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageManagementClientContext } from "../storageManagementClientContext";
+import { StorageManagementClient } from "../storageManagementClient";
 import {
   Usage,
   UsagesListByLocationOptionalParams,
-  UsagesListByLocationResponse
+  UsagesListByLocationResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a Usages. */
+/** Class containing Usages operations. */
 export class UsagesImpl implements Usages {
-  private readonly client: StorageManagementClientContext;
+  private readonly client: StorageManagementClient;
 
   /**
    * Initialize a new instance of the class Usages class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageManagementClientContext) {
+  constructor(client: StorageManagementClient) {
     this.client = client;
   }
 
@@ -39,7 +38,7 @@ export class UsagesImpl implements Usages {
    */
   public listByLocation(
     location: string,
-    options?: UsagesListByLocationOptionalParams
+    options?: UsagesListByLocationOptionalParams,
   ): PagedAsyncIterableIterator<Usage> {
     const iter = this.listByLocationPagingAll(location, options);
     return {
@@ -49,23 +48,28 @@ export class UsagesImpl implements Usages {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByLocationPagingPage(location, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByLocationPagingPage(location, options, settings);
+      },
     };
   }
 
   private async *listByLocationPagingPage(
     location: string,
-    options?: UsagesListByLocationOptionalParams
+    options?: UsagesListByLocationOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Usage[]> {
-    let result = await this._listByLocation(location, options);
+    let result: UsagesListByLocationResponse;
+    result = await this._listByLocation(location, options);
     yield result.value || [];
   }
 
   private async *listByLocationPagingAll(
     location: string,
-    options?: UsagesListByLocationOptionalParams
+    options?: UsagesListByLocationOptionalParams,
   ): AsyncIterableIterator<Usage> {
     for await (const page of this.listByLocationPagingPage(location, options)) {
       yield* page;
@@ -79,11 +83,11 @@ export class UsagesImpl implements Usages {
    */
   private _listByLocation(
     location: string,
-    options?: UsagesListByLocationOptionalParams
+    options?: UsagesListByLocationOptionalParams,
   ): Promise<UsagesListByLocationResponse> {
     return this.client.sendOperationRequest(
       { location, options },
-      listByLocationOperationSpec
+      listByLocationOperationSpec,
     );
   }
 }
@@ -91,20 +95,19 @@ export class UsagesImpl implements Usages {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByLocationOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Storage/locations/{location}/usages",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Storage/locations/{location}/usages",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UsageListResult
-    }
+      bodyMapper: Mappers.UsageListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

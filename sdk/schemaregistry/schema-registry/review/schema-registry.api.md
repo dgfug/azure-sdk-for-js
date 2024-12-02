@@ -4,9 +4,9 @@
 
 ```ts
 
-import { CommonClientOptions } from '@azure/core-client';
-import { OperationOptions } from '@azure/core-client';
-import { TokenCredential } from '@azure/core-auth';
+import type { CommonClientOptions } from '@azure/core-client';
+import type { OperationOptions } from '@azure/core-client';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export interface GetSchemaOptions extends OperationOptions {
@@ -14,6 +14,13 @@ export interface GetSchemaOptions extends OperationOptions {
 
 // @public
 export interface GetSchemaPropertiesOptions extends OperationOptions {
+}
+
+// @public
+export enum KnownSchemaFormats {
+    Avro = "Avro",
+    Custom = "Custom",
+    Json = "Json"
 }
 
 // @public
@@ -37,7 +44,10 @@ export interface SchemaDescription {
 // @public
 export interface SchemaProperties {
     format: string;
+    groupName: string;
     id: string;
+    name: string;
+    version: number;
 }
 
 // @public
@@ -52,6 +62,7 @@ export class SchemaRegistryClient implements SchemaRegistry {
     constructor(fullyQualifiedNamespace: string, credential: TokenCredential, options?: SchemaRegistryClientOptions);
     readonly fullyQualifiedNamespace: string;
     getSchema(schemaId: string, options?: GetSchemaOptions): Promise<Schema>;
+    getSchema(name: string, groupName: string, version: number, options?: GetSchemaOptions): Promise<Schema>;
     getSchemaProperties(schema: SchemaDescription, options?: GetSchemaPropertiesOptions): Promise<SchemaProperties>;
     registerSchema(schema: SchemaDescription, options?: RegisterSchemaOptions): Promise<SchemaProperties>;
 }

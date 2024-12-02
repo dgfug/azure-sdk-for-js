@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { UserSubscription } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   SubscriptionContract,
   UserSubscriptionListNextOptionalParams,
@@ -25,19 +26,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing UserSubscription operations. */
 export class UserSubscriptionImpl implements UserSubscription {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class UserSubscription class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists the collection of subscriptions of the specified user.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param userId User identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -61,12 +62,16 @@ export class UserSubscriptionImpl implements UserSubscription {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           serviceName,
           userId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -76,16 +81,23 @@ export class UserSubscriptionImpl implements UserSubscription {
     resourceGroupName: string,
     serviceName: string,
     userId: string,
-    options?: UserSubscriptionListOptionalParams
+    options?: UserSubscriptionListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<SubscriptionContract[]> {
-    let result = await this._list(
-      resourceGroupName,
-      serviceName,
-      userId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: UserSubscriptionListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        serviceName,
+        userId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -95,7 +107,9 @@ export class UserSubscriptionImpl implements UserSubscription {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -117,7 +131,7 @@ export class UserSubscriptionImpl implements UserSubscription {
 
   /**
    * Lists the collection of subscriptions of the specified user.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param userId User identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -136,7 +150,7 @@ export class UserSubscriptionImpl implements UserSubscription {
 
   /**
    * Gets the specified Subscription entity associated with a particular user.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param userId User identifier. Must be unique in the current API Management service instance.
    * @param sid Subscription entity Identifier. The entity represents the association between a user and
@@ -158,7 +172,7 @@ export class UserSubscriptionImpl implements UserSubscription {
 
   /**
    * ListNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param userId User identifier. Must be unique in the current API Management service instance.
    * @param nextLink The nextLink from the previous successful call to the List method.
@@ -244,12 +258,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

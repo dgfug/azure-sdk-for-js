@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServerKey,
   ServerKeysListByServerOptionalParams,
@@ -16,7 +15,7 @@ import {
   ServerKeysGetResponse,
   ServerKeysCreateOrUpdateOptionalParams,
   ServerKeysCreateOrUpdateResponse,
-  ServerKeysDeleteOptionalParams
+  ServerKeysDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface ServerKeys {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerKeysListByServerOptionalParams
+    options?: ServerKeysListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerKey>;
   /**
    * Gets a server key.
@@ -46,7 +45,7 @@ export interface ServerKeys {
     resourceGroupName: string,
     serverName: string,
     keyName: string,
-    options?: ServerKeysGetOptionalParams
+    options?: ServerKeysGetOptionalParams,
   ): Promise<ServerKeysGetResponse>;
   /**
    * Creates or updates a server key.
@@ -65,10 +64,10 @@ export interface ServerKeys {
     serverName: string,
     keyName: string,
     parameters: ServerKey,
-    options?: ServerKeysCreateOrUpdateOptionalParams
+    options?: ServerKeysCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ServerKeysCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ServerKeysCreateOrUpdateResponse>,
       ServerKeysCreateOrUpdateResponse
     >
   >;
@@ -89,7 +88,7 @@ export interface ServerKeys {
     serverName: string,
     keyName: string,
     parameters: ServerKey,
-    options?: ServerKeysCreateOrUpdateOptionalParams
+    options?: ServerKeysCreateOrUpdateOptionalParams,
   ): Promise<ServerKeysCreateOrUpdateResponse>;
   /**
    * Deletes the server key with the given name.
@@ -103,8 +102,8 @@ export interface ServerKeys {
     resourceGroupName: string,
     serverName: string,
     keyName: string,
-    options?: ServerKeysDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ServerKeysDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the server key with the given name.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -117,6 +116,6 @@ export interface ServerKeys {
     resourceGroupName: string,
     serverName: string,
     keyName: string,
-    options?: ServerKeysDeleteOptionalParams
+    options?: ServerKeysDeleteOptionalParams,
   ): Promise<void>;
 }

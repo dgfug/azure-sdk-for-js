@@ -6,33 +6,36 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Deployments } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ResourceManagementClientContext } from "../resourceManagementClientContext";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
-import { LroEngine } from "../lro";
-import { CoreClientLro, shouldDeserializeLro } from "../coreClientLro";
+import { ResourceManagementClient } from "../resourceManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   DeploymentExtended,
   DeploymentsListAtScopeNextOptionalParams,
   DeploymentsListAtScopeOptionalParams,
+  DeploymentsListAtScopeResponse,
   DeploymentsListAtTenantScopeNextOptionalParams,
   DeploymentsListAtTenantScopeOptionalParams,
+  DeploymentsListAtTenantScopeResponse,
   DeploymentsListAtManagementGroupScopeNextOptionalParams,
   DeploymentsListAtManagementGroupScopeOptionalParams,
+  DeploymentsListAtManagementGroupScopeResponse,
   DeploymentsListAtSubscriptionScopeNextOptionalParams,
   DeploymentsListAtSubscriptionScopeOptionalParams,
+  DeploymentsListAtSubscriptionScopeResponse,
   DeploymentsListByResourceGroupNextOptionalParams,
   DeploymentsListByResourceGroupOptionalParams,
-  DeploymentsListAtScopeNextNextOptionalParams,
-  DeploymentsListAtTenantScopeNextNextOptionalParams,
-  DeploymentsListAtManagementGroupScopeNextNextOptionalParams,
-  DeploymentsListAtSubscriptionScopeNextNextOptionalParams,
-  DeploymentsListByResourceGroupNextNextOptionalParams,
+  DeploymentsListByResourceGroupResponse,
   DeploymentsDeleteAtScopeOptionalParams,
   DeploymentsCheckExistenceAtScopeOptionalParams,
   DeploymentsCheckExistenceAtScopeResponse,
@@ -46,7 +49,6 @@ import {
   DeploymentsValidateAtScopeResponse,
   DeploymentsExportTemplateAtScopeOptionalParams,
   DeploymentsExportTemplateAtScopeResponse,
-  DeploymentsListAtScopeResponse,
   DeploymentsDeleteAtTenantScopeOptionalParams,
   DeploymentsCheckExistenceAtTenantScopeOptionalParams,
   DeploymentsCheckExistenceAtTenantScopeResponse,
@@ -63,7 +65,6 @@ import {
   DeploymentsWhatIfAtTenantScopeResponse,
   DeploymentsExportTemplateAtTenantScopeOptionalParams,
   DeploymentsExportTemplateAtTenantScopeResponse,
-  DeploymentsListAtTenantScopeResponse,
   DeploymentsDeleteAtManagementGroupScopeOptionalParams,
   DeploymentsCheckExistenceAtManagementGroupScopeOptionalParams,
   DeploymentsCheckExistenceAtManagementGroupScopeResponse,
@@ -78,7 +79,6 @@ import {
   DeploymentsWhatIfAtManagementGroupScopeResponse,
   DeploymentsExportTemplateAtManagementGroupScopeOptionalParams,
   DeploymentsExportTemplateAtManagementGroupScopeResponse,
-  DeploymentsListAtManagementGroupScopeResponse,
   DeploymentsDeleteAtSubscriptionScopeOptionalParams,
   DeploymentsCheckExistenceAtSubscriptionScopeOptionalParams,
   DeploymentsCheckExistenceAtSubscriptionScopeResponse,
@@ -94,7 +94,6 @@ import {
   DeploymentsWhatIfAtSubscriptionScopeResponse,
   DeploymentsExportTemplateAtSubscriptionScopeOptionalParams,
   DeploymentsExportTemplateAtSubscriptionScopeResponse,
-  DeploymentsListAtSubscriptionScopeResponse,
   DeploymentsDeleteOptionalParams,
   DeploymentsCheckExistenceOptionalParams,
   DeploymentsCheckExistenceResponse,
@@ -109,31 +108,25 @@ import {
   DeploymentsWhatIfResponse,
   DeploymentsExportTemplateOptionalParams,
   DeploymentsExportTemplateResponse,
-  DeploymentsListByResourceGroupResponse,
   DeploymentsCalculateTemplateHashOptionalParams,
   DeploymentsCalculateTemplateHashResponse,
   DeploymentsListAtScopeNextResponse,
   DeploymentsListAtTenantScopeNextResponse,
   DeploymentsListAtManagementGroupScopeNextResponse,
   DeploymentsListAtSubscriptionScopeNextResponse,
-  DeploymentsListByResourceGroupNextResponse,
-  DeploymentsListAtScopeNextNextResponse,
-  DeploymentsListAtTenantScopeNextNextResponse,
-  DeploymentsListAtManagementGroupScopeNextNextResponse,
-  DeploymentsListAtSubscriptionScopeNextNextResponse,
-  DeploymentsListByResourceGroupNextNextResponse
+  DeploymentsListByResourceGroupNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a Deployments. */
+/** Class containing Deployments operations. */
 export class DeploymentsImpl implements Deployments {
-  private readonly client: ResourceManagementClientContext;
+  private readonly client: ResourceManagementClient;
 
   /**
    * Initialize a new instance of the class Deployments class.
    * @param client Reference to the service client
    */
-  constructor(client: ResourceManagementClientContext) {
+  constructor(client: ResourceManagementClient) {
     this.client = client;
   }
 
@@ -154,23 +147,35 @@ export class DeploymentsImpl implements Deployments {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAtScopePagingPage(scope, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAtScopePagingPage(scope, options, settings);
       }
     };
   }
 
   private async *listAtScopePagingPage(
     scope: string,
-    options?: DeploymentsListAtScopeOptionalParams
+    options?: DeploymentsListAtScopeOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtScope(scope, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DeploymentsListAtScopeResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAtScope(scope, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAtScopeNext(scope, continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -198,22 +203,34 @@ export class DeploymentsImpl implements Deployments {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAtTenantScopePagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAtTenantScopePagingPage(options, settings);
       }
     };
   }
 
   private async *listAtTenantScopePagingPage(
-    options?: DeploymentsListAtTenantScopeOptionalParams
+    options?: DeploymentsListAtTenantScopeOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtTenantScope(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DeploymentsListAtTenantScopeResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAtTenantScope(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAtTenantScopeNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -242,19 +259,33 @@ export class DeploymentsImpl implements Deployments {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAtManagementGroupScopePagingPage(groupId, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAtManagementGroupScopePagingPage(
+          groupId,
+          options,
+          settings
+        );
       }
     };
   }
 
   private async *listAtManagementGroupScopePagingPage(
     groupId: string,
-    options?: DeploymentsListAtManagementGroupScopeOptionalParams
+    options?: DeploymentsListAtManagementGroupScopeOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtManagementGroupScope(groupId, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DeploymentsListAtManagementGroupScopeResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAtManagementGroupScope(groupId, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAtManagementGroupScopeNext(
         groupId,
@@ -262,7 +293,9 @@ export class DeploymentsImpl implements Deployments {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -293,25 +326,37 @@ export class DeploymentsImpl implements Deployments {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAtSubscriptionScopePagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAtSubscriptionScopePagingPage(options, settings);
       }
     };
   }
 
   private async *listAtSubscriptionScopePagingPage(
-    options?: DeploymentsListAtSubscriptionScopeOptionalParams
+    options?: DeploymentsListAtSubscriptionScopeOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtSubscriptionScope(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DeploymentsListAtSubscriptionScopeResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAtSubscriptionScope(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAtSubscriptionScopeNext(
         continuationToken,
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -341,19 +386,33 @@ export class DeploymentsImpl implements Deployments {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings
+        );
       }
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: DeploymentsListByResourceGroupOptionalParams
+    options?: DeploymentsListByResourceGroupOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DeploymentsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
@@ -361,7 +420,9 @@ export class DeploymentsImpl implements Deployments {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -371,311 +432,6 @@ export class DeploymentsImpl implements Deployments {
   ): AsyncIterableIterator<DeploymentExtended> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
-    )) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListAtScopeNext
-   * @param scope The resource scope.
-   * @param nextLink The nextLink from the previous successful call to the ListAtScope method.
-   * @param options The options parameters.
-   */
-  public listAtScopeNext(
-    scope: string,
-    nextLink: string,
-    options?: DeploymentsListAtScopeNextOptionalParams
-  ): PagedAsyncIterableIterator<DeploymentExtended> {
-    const iter = this.listAtScopeNextPagingAll(scope, nextLink, options);
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listAtScopeNextPagingPage(scope, nextLink, options);
-      }
-    };
-  }
-
-  private async *listAtScopeNextPagingPage(
-    scope: string,
-    nextLink: string,
-    options?: DeploymentsListAtScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtScopeNext(scope, nextLink, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listAtScopeNextNext(
-        scope,
-        continuationToken,
-        options
-      );
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listAtScopeNextPagingAll(
-    scope: string,
-    nextLink: string,
-    options?: DeploymentsListAtScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended> {
-    for await (const page of this.listAtScopeNextPagingPage(
-      scope,
-      nextLink,
-      options
-    )) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListAtTenantScopeNext
-   * @param nextLink The nextLink from the previous successful call to the ListAtTenantScope method.
-   * @param options The options parameters.
-   */
-  public listAtTenantScopeNext(
-    nextLink: string,
-    options?: DeploymentsListAtTenantScopeNextOptionalParams
-  ): PagedAsyncIterableIterator<DeploymentExtended> {
-    const iter = this.listAtTenantScopeNextPagingAll(nextLink, options);
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listAtTenantScopeNextPagingPage(nextLink, options);
-      }
-    };
-  }
-
-  private async *listAtTenantScopeNextPagingPage(
-    nextLink: string,
-    options?: DeploymentsListAtTenantScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtTenantScopeNext(nextLink, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listAtTenantScopeNextNext(
-        continuationToken,
-        options
-      );
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listAtTenantScopeNextPagingAll(
-    nextLink: string,
-    options?: DeploymentsListAtTenantScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended> {
-    for await (const page of this.listAtTenantScopeNextPagingPage(
-      nextLink,
-      options
-    )) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListAtManagementGroupScopeNext
-   * @param groupId The management group ID.
-   * @param nextLink The nextLink from the previous successful call to the ListAtManagementGroupScope
-   *                 method.
-   * @param options The options parameters.
-   */
-  public listAtManagementGroupScopeNext(
-    groupId: string,
-    nextLink: string,
-    options?: DeploymentsListAtManagementGroupScopeNextOptionalParams
-  ): PagedAsyncIterableIterator<DeploymentExtended> {
-    const iter = this.listAtManagementGroupScopeNextPagingAll(
-      groupId,
-      nextLink,
-      options
-    );
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listAtManagementGroupScopeNextPagingPage(
-          groupId,
-          nextLink,
-          options
-        );
-      }
-    };
-  }
-
-  private async *listAtManagementGroupScopeNextPagingPage(
-    groupId: string,
-    nextLink: string,
-    options?: DeploymentsListAtManagementGroupScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtManagementGroupScopeNext(
-      groupId,
-      nextLink,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listAtManagementGroupScopeNextNext(
-        groupId,
-        continuationToken,
-        options
-      );
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listAtManagementGroupScopeNextPagingAll(
-    groupId: string,
-    nextLink: string,
-    options?: DeploymentsListAtManagementGroupScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended> {
-    for await (const page of this.listAtManagementGroupScopeNextPagingPage(
-      groupId,
-      nextLink,
-      options
-    )) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListAtSubscriptionScopeNext
-   * @param nextLink The nextLink from the previous successful call to the ListAtSubscriptionScope
-   *                 method.
-   * @param options The options parameters.
-   */
-  public listAtSubscriptionScopeNext(
-    nextLink: string,
-    options?: DeploymentsListAtSubscriptionScopeNextOptionalParams
-  ): PagedAsyncIterableIterator<DeploymentExtended> {
-    const iter = this.listAtSubscriptionScopeNextPagingAll(nextLink, options);
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listAtSubscriptionScopeNextPagingPage(nextLink, options);
-      }
-    };
-  }
-
-  private async *listAtSubscriptionScopeNextPagingPage(
-    nextLink: string,
-    options?: DeploymentsListAtSubscriptionScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listAtSubscriptionScopeNext(nextLink, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listAtSubscriptionScopeNextNext(
-        continuationToken,
-        options
-      );
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listAtSubscriptionScopeNextPagingAll(
-    nextLink: string,
-    options?: DeploymentsListAtSubscriptionScopeNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended> {
-    for await (const page of this.listAtSubscriptionScopeNextPagingPage(
-      nextLink,
-      options
-    )) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListByResourceGroupNext
-   * @param resourceGroupName The name of the resource group with the deployments to get. The name is
-   *                          case insensitive.
-   * @param nextLink The nextLink from the previous successful call to the ListByResourceGroup method.
-   * @param options The options parameters.
-   */
-  public listByResourceGroupNext(
-    resourceGroupName: string,
-    nextLink: string,
-    options?: DeploymentsListByResourceGroupNextOptionalParams
-  ): PagedAsyncIterableIterator<DeploymentExtended> {
-    const iter = this.listByResourceGroupNextPagingAll(
-      resourceGroupName,
-      nextLink,
-      options
-    );
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listByResourceGroupNextPagingPage(
-          resourceGroupName,
-          nextLink,
-          options
-        );
-      }
-    };
-  }
-
-  private async *listByResourceGroupNextPagingPage(
-    resourceGroupName: string,
-    nextLink: string,
-    options?: DeploymentsListByResourceGroupNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended[]> {
-    let result = await this._listByResourceGroupNext(
-      resourceGroupName,
-      nextLink,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listByResourceGroupNextNext(
-        resourceGroupName,
-        continuationToken,
-        options
-      );
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listByResourceGroupNextPagingAll(
-    resourceGroupName: string,
-    nextLink: string,
-    options?: DeploymentsListByResourceGroupNextOptionalParams
-  ): AsyncIterableIterator<DeploymentExtended> {
-    for await (const page of this.listByResourceGroupNextPagingPage(
-      resourceGroupName,
-      nextLink,
       options
     )) {
       yield* page;
@@ -698,14 +454,14 @@ export class DeploymentsImpl implements Deployments {
     scope: string,
     deploymentName: string,
     options?: DeploymentsDeleteAtScopeOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -738,12 +494,17 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { scope, deploymentName, options },
-      deleteAtScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { scope, deploymentName, options },
+      spec: deleteAtScopeOperationSpec
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -801,8 +562,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: Deployment,
     options?: DeploymentsCreateOrUpdateAtScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsCreateOrUpdateAtScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsCreateOrUpdateAtScopeResponse>,
       DeploymentsCreateOrUpdateAtScopeResponse
     >
   > {
@@ -812,7 +573,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsCreateOrUpdateAtScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -845,12 +606,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { scope, deploymentName, parameters, options },
-      createOrUpdateAtScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { scope, deploymentName, parameters, options },
+      spec: createOrUpdateAtScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsCreateOrUpdateAtScopeResponse,
+      OperationState<DeploymentsCreateOrUpdateAtScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -925,8 +694,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: Deployment,
     options?: DeploymentsValidateAtScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsValidateAtScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsValidateAtScopeResponse>,
       DeploymentsValidateAtScopeResponse
     >
   > {
@@ -936,7 +705,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsValidateAtScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -969,12 +738,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { scope, deploymentName, parameters, options },
-      validateAtScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { scope, deploymentName, parameters, options },
+      spec: validateAtScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsValidateAtScopeResponse,
+      OperationState<DeploymentsValidateAtScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1046,14 +823,14 @@ export class DeploymentsImpl implements Deployments {
   async beginDeleteAtTenantScope(
     deploymentName: string,
     options?: DeploymentsDeleteAtTenantScopeOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1086,12 +863,17 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, options },
-      deleteAtTenantScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, options },
+      spec: deleteAtTenantScopeOperationSpec
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1139,8 +921,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: ScopedDeployment,
     options?: DeploymentsCreateOrUpdateAtTenantScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsCreateOrUpdateAtTenantScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsCreateOrUpdateAtTenantScopeResponse>,
       DeploymentsCreateOrUpdateAtTenantScopeResponse
     >
   > {
@@ -1150,7 +932,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsCreateOrUpdateAtTenantScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1183,12 +965,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, parameters, options },
-      createOrUpdateAtTenantScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, parameters, options },
+      spec: createOrUpdateAtTenantScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsCreateOrUpdateAtTenantScopeResponse,
+      OperationState<DeploymentsCreateOrUpdateAtTenantScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1254,8 +1044,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: ScopedDeployment,
     options?: DeploymentsValidateAtTenantScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsValidateAtTenantScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsValidateAtTenantScopeResponse>,
       DeploymentsValidateAtTenantScopeResponse
     >
   > {
@@ -1265,7 +1055,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsValidateAtTenantScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1298,12 +1088,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, parameters, options },
-      validateAtTenantScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, parameters, options },
+      spec: validateAtTenantScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsValidateAtTenantScopeResponse,
+      OperationState<DeploymentsValidateAtTenantScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1337,8 +1135,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: ScopedDeploymentWhatIf,
     options?: DeploymentsWhatIfAtTenantScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsWhatIfAtTenantScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsWhatIfAtTenantScopeResponse>,
       DeploymentsWhatIfAtTenantScopeResponse
     >
   > {
@@ -1348,7 +1146,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsWhatIfAtTenantScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1381,13 +1179,21 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, parameters, options },
-      whatIfAtTenantScopeOperationSpec,
-      "location"
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, parameters, options },
+      spec: whatIfAtTenantScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsWhatIfAtTenantScopeResponse,
+      OperationState<DeploymentsWhatIfAtTenantScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1453,14 +1259,14 @@ export class DeploymentsImpl implements Deployments {
     groupId: string,
     deploymentName: string,
     options?: DeploymentsDeleteAtManagementGroupScopeOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1493,12 +1299,17 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { groupId, deploymentName, options },
-      deleteAtManagementGroupScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { groupId, deploymentName, options },
+      spec: deleteAtManagementGroupScopeOperationSpec
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1556,10 +1367,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: ScopedDeployment,
     options?: DeploymentsCreateOrUpdateAtManagementGroupScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        DeploymentsCreateOrUpdateAtManagementGroupScopeResponse
-      >,
+    SimplePollerLike<
+      OperationState<DeploymentsCreateOrUpdateAtManagementGroupScopeResponse>,
       DeploymentsCreateOrUpdateAtManagementGroupScopeResponse
     >
   > {
@@ -1569,7 +1378,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsCreateOrUpdateAtManagementGroupScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1602,12 +1411,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { groupId, deploymentName, parameters, options },
-      createOrUpdateAtManagementGroupScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { groupId, deploymentName, parameters, options },
+      spec: createOrUpdateAtManagementGroupScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsCreateOrUpdateAtManagementGroupScopeResponse,
+      OperationState<DeploymentsCreateOrUpdateAtManagementGroupScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1682,8 +1499,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: ScopedDeployment,
     options?: DeploymentsValidateAtManagementGroupScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsValidateAtManagementGroupScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsValidateAtManagementGroupScopeResponse>,
       DeploymentsValidateAtManagementGroupScopeResponse
     >
   > {
@@ -1693,7 +1510,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsValidateAtManagementGroupScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1726,12 +1543,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { groupId, deploymentName, parameters, options },
-      validateAtManagementGroupScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { groupId, deploymentName, parameters, options },
+      spec: validateAtManagementGroupScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsValidateAtManagementGroupScopeResponse,
+      OperationState<DeploymentsValidateAtManagementGroupScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1771,8 +1596,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: ScopedDeploymentWhatIf,
     options?: DeploymentsWhatIfAtManagementGroupScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsWhatIfAtManagementGroupScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsWhatIfAtManagementGroupScopeResponse>,
       DeploymentsWhatIfAtManagementGroupScopeResponse
     >
   > {
@@ -1782,7 +1607,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsWhatIfAtManagementGroupScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1815,13 +1640,21 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { groupId, deploymentName, parameters, options },
-      whatIfAtManagementGroupScopeOperationSpec,
-      "location"
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { groupId, deploymentName, parameters, options },
+      spec: whatIfAtManagementGroupScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsWhatIfAtManagementGroupScopeResponse,
+      OperationState<DeploymentsWhatIfAtManagementGroupScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1893,14 +1726,14 @@ export class DeploymentsImpl implements Deployments {
   async beginDeleteAtSubscriptionScope(
     deploymentName: string,
     options?: DeploymentsDeleteAtSubscriptionScopeOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -1933,12 +1766,17 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, options },
-      deleteAtSubscriptionScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, options },
+      spec: deleteAtSubscriptionScopeOperationSpec
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1989,8 +1827,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: Deployment,
     options?: DeploymentsCreateOrUpdateAtSubscriptionScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>,
       DeploymentsCreateOrUpdateAtSubscriptionScopeResponse
     >
   > {
@@ -2000,7 +1838,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsCreateOrUpdateAtSubscriptionScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -2033,12 +1871,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, parameters, options },
-      createOrUpdateAtSubscriptionScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, parameters, options },
+      spec: createOrUpdateAtSubscriptionScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsCreateOrUpdateAtSubscriptionScopeResponse,
+      OperationState<DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -2104,8 +1950,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: Deployment,
     options?: DeploymentsValidateAtSubscriptionScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsValidateAtSubscriptionScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsValidateAtSubscriptionScopeResponse>,
       DeploymentsValidateAtSubscriptionScopeResponse
     >
   > {
@@ -2115,7 +1961,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsValidateAtSubscriptionScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -2148,12 +1994,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, parameters, options },
-      validateAtSubscriptionScopeOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, parameters, options },
+      spec: validateAtSubscriptionScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsValidateAtSubscriptionScopeResponse,
+      OperationState<DeploymentsValidateAtSubscriptionScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -2187,8 +2041,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: DeploymentWhatIf,
     options?: DeploymentsWhatIfAtSubscriptionScopeOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsWhatIfAtSubscriptionScopeResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsWhatIfAtSubscriptionScopeResponse>,
       DeploymentsWhatIfAtSubscriptionScopeResponse
     >
   > {
@@ -2198,7 +2052,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsWhatIfAtSubscriptionScopeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -2231,13 +2085,21 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { deploymentName, parameters, options },
-      whatIfAtSubscriptionScopeOperationSpec,
-      "location"
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { deploymentName, parameters, options },
+      spec: whatIfAtSubscriptionScopeOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsWhatIfAtSubscriptionScopeResponse,
+      OperationState<DeploymentsWhatIfAtSubscriptionScopeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -2305,14 +2167,14 @@ export class DeploymentsImpl implements Deployments {
     resourceGroupName: string,
     deploymentName: string,
     options?: DeploymentsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -2345,12 +2207,17 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { resourceGroupName, deploymentName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, deploymentName, options },
+      spec: deleteOperationSpec
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -2412,8 +2279,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: Deployment,
     options?: DeploymentsCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsCreateOrUpdateResponse>,
       DeploymentsCreateOrUpdateResponse
     >
   > {
@@ -2423,7 +2290,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -2456,12 +2323,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { resourceGroupName, deploymentName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, deploymentName, parameters, options },
+      spec: createOrUpdateOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsCreateOrUpdateResponse,
+      OperationState<DeploymentsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -2538,8 +2413,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: Deployment,
     options?: DeploymentsValidateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsValidateResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsValidateResponse>,
       DeploymentsValidateResponse
     >
   > {
@@ -2549,7 +2424,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsValidateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -2582,12 +2457,20 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { resourceGroupName, deploymentName, parameters, options },
-      validateOperationSpec
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, deploymentName, parameters, options },
+      spec: validateOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsValidateResponse,
+      OperationState<DeploymentsValidateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -2628,8 +2511,8 @@ export class DeploymentsImpl implements Deployments {
     parameters: DeploymentWhatIf,
     options?: DeploymentsWhatIfOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsWhatIfResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsWhatIfResponse>,
       DeploymentsWhatIfResponse
     >
   > {
@@ -2639,7 +2522,7 @@ export class DeploymentsImpl implements Deployments {
     ): Promise<DeploymentsWhatIfResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -2672,13 +2555,21 @@ export class DeploymentsImpl implements Deployments {
       };
     };
 
-    const lro = new CoreClientLro(
-      sendOperation,
-      { resourceGroupName, deploymentName, parameters, options },
-      whatIfOperationSpec,
-      "location"
-    );
-    return new LroEngine(lro, { intervalInMs: options?.updateIntervalInMs });
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, deploymentName, parameters, options },
+      spec: whatIfOperationSpec
+    });
+    const poller = await createHttpPoller<
+      DeploymentsWhatIfResponse,
+      OperationState<DeploymentsWhatIfResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -2833,91 +2724,6 @@ export class DeploymentsImpl implements Deployments {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
       listByResourceGroupNextOperationSpec
-    );
-  }
-
-  /**
-   * ListAtScopeNextNext
-   * @param scope The resource scope.
-   * @param nextLink The nextLink from the previous successful call to the ListAtScopeNext method.
-   * @param options The options parameters.
-   */
-  private _listAtScopeNextNext(
-    scope: string,
-    nextLink: string,
-    options?: DeploymentsListAtScopeNextNextOptionalParams
-  ): Promise<DeploymentsListAtScopeNextNextResponse> {
-    return this.client.sendOperationRequest(
-      { scope, nextLink, options },
-      listAtScopeNextNextOperationSpec
-    );
-  }
-
-  /**
-   * ListAtTenantScopeNextNext
-   * @param nextLink The nextLink from the previous successful call to the ListAtTenantScopeNext method.
-   * @param options The options parameters.
-   */
-  private _listAtTenantScopeNextNext(
-    nextLink: string,
-    options?: DeploymentsListAtTenantScopeNextNextOptionalParams
-  ): Promise<DeploymentsListAtTenantScopeNextNextResponse> {
-    return this.client.sendOperationRequest(
-      { nextLink, options },
-      listAtTenantScopeNextNextOperationSpec
-    );
-  }
-
-  /**
-   * ListAtManagementGroupScopeNextNext
-   * @param groupId The management group ID.
-   * @param nextLink The nextLink from the previous successful call to the ListAtManagementGroupScopeNext
-   *                 method.
-   * @param options The options parameters.
-   */
-  private _listAtManagementGroupScopeNextNext(
-    groupId: string,
-    nextLink: string,
-    options?: DeploymentsListAtManagementGroupScopeNextNextOptionalParams
-  ): Promise<DeploymentsListAtManagementGroupScopeNextNextResponse> {
-    return this.client.sendOperationRequest(
-      { groupId, nextLink, options },
-      listAtManagementGroupScopeNextNextOperationSpec
-    );
-  }
-
-  /**
-   * ListAtSubscriptionScopeNextNext
-   * @param nextLink The nextLink from the previous successful call to the ListAtSubscriptionScopeNext
-   *                 method.
-   * @param options The options parameters.
-   */
-  private _listAtSubscriptionScopeNextNext(
-    nextLink: string,
-    options?: DeploymentsListAtSubscriptionScopeNextNextOptionalParams
-  ): Promise<DeploymentsListAtSubscriptionScopeNextNextResponse> {
-    return this.client.sendOperationRequest(
-      { nextLink, options },
-      listAtSubscriptionScopeNextNextOperationSpec
-    );
-  }
-
-  /**
-   * ListByResourceGroupNextNext
-   * @param resourceGroupName The name of the resource group with the deployments to get. The name is
-   *                          case insensitive.
-   * @param nextLink The nextLink from the previous successful call to the ListByResourceGroupNext
-   *                 method.
-   * @param options The options parameters.
-   */
-  private _listByResourceGroupNextNext(
-    resourceGroupName: string,
-    nextLink: string,
-    options?: DeploymentsListByResourceGroupNextNextOptionalParams
-  ): Promise<DeploymentsListByResourceGroupNextNextResponse> {
-    return this.client.sendOperationRequest(
-      { resourceGroupName, nextLink, options },
-      listByResourceGroupNextNextOperationSpec
     );
   }
 }
@@ -3968,7 +3774,6 @@ const listAtScopeNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [Parameters.$host, Parameters.nextLink, Parameters.scope],
   headerParameters: [Parameters.accept],
   serializer
@@ -3984,7 +3789,6 @@ const listAtTenantScopeNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [Parameters.$host, Parameters.nextLink],
   headerParameters: [Parameters.accept],
   serializer
@@ -4000,7 +3804,6 @@ const listAtManagementGroupScopeNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [Parameters.$host, Parameters.nextLink, Parameters.groupId],
   headerParameters: [Parameters.accept],
   serializer
@@ -4016,7 +3819,6 @@ const listAtSubscriptionScopeNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
@@ -4036,96 +3838,6 @@ const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.nextLink,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listAtScopeNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.DeploymentListResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
-  urlParameters: [Parameters.$host, Parameters.nextLink, Parameters.scope],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listAtTenantScopeNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.DeploymentListResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
-  urlParameters: [Parameters.$host, Parameters.nextLink],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listAtManagementGroupScopeNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.DeploymentListResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
-  urlParameters: [Parameters.$host, Parameters.nextLink, Parameters.groupId],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listAtSubscriptionScopeNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.DeploymentListResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.nextLink,
-    Parameters.subscriptionId
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listByResourceGroupNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.DeploymentListResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,

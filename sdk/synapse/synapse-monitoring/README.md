@@ -12,7 +12,7 @@ npm install @azure/synapse-monitoring
 
 ### Currently supported environments
 
-- [LTS versions of Node.js](https://nodejs.org/about/releases/)
+- [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule)
 - Latest versions of Safari, Chrome, Edge, and Firefox.
 
 See our [support policy](https://github.com/Azure/azure-sdk-for-js/blob/main/SUPPORT.md) for more details.
@@ -28,8 +28,8 @@ import { DefaultAzureCredential } from "@azure/identity";
 export async function main(): Promise<void> {
   const credential = new DefaultAzureCredential();
 
-  let client = new MonitoringClient(credential, "https://mysynapse.dev.azuresynapse.net");
-  let output = await client.monitoring.getSparkJobList();
+  const client = new MonitoringClient(credential, "https://mysynapse.dev.azuresynapse.net");
+  const output = await client.monitoring.getSparkJobList();
   console.log("output:", output);
 }
 ```
@@ -44,7 +44,7 @@ export async function main(): Promise<void> {
 
 Enabling logging may help uncover useful information about failures. In order to see a log of HTTP requests and responses, set the `AZURE_LOG_LEVEL` environment variable to `info`. Alternatively, logging can be enabled at runtime by calling `setLogLevel` in the `@azure/logger`:
 
-```javascript
+```ts
 import { setLogLevel } from "@azure/logger";
 
 setLogLevel("info");

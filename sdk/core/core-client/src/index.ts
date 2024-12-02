@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export { createSerializer, MapperTypeNames } from "./serializer";
-export { ServiceClient, ServiceClientOptions } from "./serviceClient";
-export { createClientPipeline, InternalClientPipelineOptions } from "./pipeline";
+export { createSerializer, MapperTypeNames } from "./serializer.js";
+export { ServiceClient, ServiceClientOptions } from "./serviceClient.js";
+export { createClientPipeline, InternalClientPipelineOptions } from "./pipeline.js";
 export {
   OperationSpec,
   OperationArguments,
@@ -39,18 +39,19 @@ export {
   XmlOptions,
   SerializerOptions,
   RawResponseCallback,
-  CommonClientOptions
-} from "./interfaces";
+  CommonClientOptions,
+  AdditionalPolicyConfig,
+} from "./interfaces.js";
 export {
   deserializationPolicy,
   deserializationPolicyName,
   DeserializationPolicyOptions,
-  DeserializationContentTypes
-} from "./deserializationPolicy";
+  DeserializationContentTypes,
+} from "./deserializationPolicy.js";
 export {
   serializationPolicy,
   serializationPolicyName,
-  SerializationPolicyOptions
-} from "./serializationPolicy";
-export { authorizeRequestOnClaimChallenge } from "./authorizeRequestOnClaimChallenge";
-import "@azure/core-asynciterator-polyfill";
+  SerializationPolicyOptions,
+} from "./serializationPolicy.js";
+export { authorizeRequestOnClaimChallenge } from "./authorizeRequestOnClaimChallenge.js";
+export { authorizeRequestOnTenantChallenge } from "./authorizeRequestOnTenantChallenge.js";

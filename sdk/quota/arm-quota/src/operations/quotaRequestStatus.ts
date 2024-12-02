@@ -6,32 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { QuotaRequestStatus } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { AzureQuotaExtensionAPIContext } from "../azureQuotaExtensionAPIContext";
+import { AzureQuotaExtensionAPI } from "../azureQuotaExtensionAPI";
 import {
   QuotaRequestDetails,
   QuotaRequestStatusListNextOptionalParams,
   QuotaRequestStatusListOptionalParams,
+  QuotaRequestStatusListResponse,
   QuotaRequestStatusGetOptionalParams,
   QuotaRequestStatusGetResponse,
-  QuotaRequestStatusListResponse,
-  QuotaRequestStatusListNextResponse
+  QuotaRequestStatusListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing QuotaRequestStatus operations. */
 export class QuotaRequestStatusImpl implements QuotaRequestStatus {
-  private readonly client: AzureQuotaExtensionAPIContext;
+  private readonly client: AzureQuotaExtensionAPI;
 
   /**
    * Initialize a new instance of the class QuotaRequestStatus class.
    * @param client Reference to the service client
    */
-  constructor(client: AzureQuotaExtensionAPIContext) {
+  constructor(client: AzureQuotaExtensionAPI) {
     this.client = client;
   }
 
@@ -47,7 +48,7 @@ export class QuotaRequestStatusImpl implements QuotaRequestStatus {
    */
   public list(
     scope: string,
-    options?: QuotaRequestStatusListOptionalParams
+    options?: QuotaRequestStatusListOptionalParams,
   ): PagedAsyncIterableIterator<QuotaRequestDetails> {
     const iter = this.listPagingAll(scope, options);
     return {
@@ -57,29 +58,41 @@ export class QuotaRequestStatusImpl implements QuotaRequestStatus {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(scope, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(scope, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     scope: string,
-    options?: QuotaRequestStatusListOptionalParams
+    options?: QuotaRequestStatusListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<QuotaRequestDetails[]> {
-    let result = await this._list(scope, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: QuotaRequestStatusListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(scope, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(scope, continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     scope: string,
-    options?: QuotaRequestStatusListOptionalParams
+    options?: QuotaRequestStatusListOptionalParams,
   ): AsyncIterableIterator<QuotaRequestDetails> {
     for await (const page of this.listPagingPage(scope, options)) {
       yield* page;
@@ -101,12 +114,9 @@ export class QuotaRequestStatusImpl implements QuotaRequestStatus {
   get(
     id: string,
     scope: string,
-    options?: QuotaRequestStatusGetOptionalParams
+    options?: QuotaRequestStatusGetOptionalParams,
   ): Promise<QuotaRequestStatusGetResponse> {
-    return this.client.sendOperationRequest(
-      { id, scope, options },
-      getOperationSpec
-    );
+    return this.client.sendOperationRequest({ id, scope, options }, getOperationSpec);
   }
 
   /**
@@ -121,12 +131,9 @@ export class QuotaRequestStatusImpl implements QuotaRequestStatus {
    */
   private _list(
     scope: string,
-    options?: QuotaRequestStatusListOptionalParams
+    options?: QuotaRequestStatusListOptionalParams,
   ): Promise<QuotaRequestStatusListResponse> {
-    return this.client.sendOperationRequest(
-      { scope, options },
-      listOperationSpec
-    );
+    return this.client.sendOperationRequest({ scope, options }, listOperationSpec);
   }
 
   /**
@@ -142,12 +149,9 @@ export class QuotaRequestStatusImpl implements QuotaRequestStatus {
   private _listNext(
     scope: string,
     nextLink: string,
-    options?: QuotaRequestStatusListNextOptionalParams
+    options?: QuotaRequestStatusListNextOptionalParams,
   ): Promise<QuotaRequestStatusListNextResponse> {
-    return this.client.sendOperationRequest(
-      { scope, nextLink, options },
-      listNextOperationSpec
-    );
+    return this.client.sendOperationRequest({ scope, nextLink, options }, listNextOperationSpec);
   }
 }
 // Operation Specifications
@@ -158,56 +162,50 @@ const getOperationSpec: coreClient.OperationSpec = {
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.QuotaRequestDetails
+      bodyMapper: Mappers.QuotaRequestDetails,
     },
     default: {
-      bodyMapper: Mappers.ExceptionResponse
-    }
+      bodyMapper: Mappers.ExceptionResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.scope, Parameters.id],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
   path: "/{scope}/providers/Microsoft.Quota/quotaRequests",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.QuotaRequestDetailsList
+      bodyMapper: Mappers.QuotaRequestDetailsList,
     },
     default: {
-      bodyMapper: Mappers.ExceptionResponse
-    }
+      bodyMapper: Mappers.ExceptionResponse,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
-    Parameters.filter,
+    Parameters.filter1,
     Parameters.top,
-    Parameters.skiptoken
+    Parameters.skiptoken,
   ],
   urlParameters: [Parameters.$host, Parameters.scope],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.QuotaRequestDetailsList
+      bodyMapper: Mappers.QuotaRequestDetailsList,
     },
     default: {
-      bodyMapper: Mappers.ExceptionResponse
-    }
+      bodyMapper: Mappers.ExceptionResponse,
+    },
   },
-  queryParameters: [
-    Parameters.apiVersion,
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skiptoken
-  ],
-  urlParameters: [Parameters.$host, Parameters.scope, Parameters.nextLink],
+  urlParameters: [Parameters.$host, Parameters.nextLink, Parameters.scope],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

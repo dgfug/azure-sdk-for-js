@@ -1,40 +1,34 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-naming-subclients rule.
- * @author Arpan Laha
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-naming-subclients";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-naming-subclients", rule, {
   valid: [
     // normal valid example
     {
-      code: "class ExampleClient { getSubClient(): SubClient {}; };"
+      code: "class ExampleClient { getSubClient(): SubClient {}; };",
     },
     // bad name but returning the same class
     {
-      code: "class ExampleClient { getExampleClient(): ExampleClient {}; };"
+      code: "class ExampleClient { getExampleClient(): ExampleClient {}; };",
     },
     // bad name in a non-client class
     {
-      code: "class Example { get(): SubClient {}; };"
-    }
+      code: "class Example { get(): SubClient {}; };",
+    },
   ],
   invalid: [
     // single
@@ -43,9 +37,9 @@ ruleTester.run("ts-naming-subclients", rule, {
       errors: [
         {
           message:
-            "ExampleClient's method get returns a subclient of type SubClient and should be called getSubClient"
-        }
-      ]
+            "ExampleClient's method get returns a subclient of type SubClient and should be called getSubClient",
+        },
+      ],
     },
     // multiple
     {
@@ -53,13 +47,13 @@ ruleTester.run("ts-naming-subclients", rule, {
       errors: [
         {
           message:
-            "ExampleClient's method get returns a subclient of type SubClient and should be called getSubClient"
+            "ExampleClient's method get returns a subclient of type SubClient and should be called getSubClient",
         },
         {
           message:
-            "ExampleClient's method get2 returns a subclient of type SubSubClient and should be called getSubSubClient"
-        }
-      ]
-    }
-  ]
+            "ExampleClient's method get2 returns a subclient of type SubSubClient and should be called getSubSubClient",
+        },
+      ],
+    },
+  ],
 });

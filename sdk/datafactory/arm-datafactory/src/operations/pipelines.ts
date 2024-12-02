@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Pipelines } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DataFactoryManagementClientContext } from "../dataFactoryManagementClientContext";
+import { DataFactoryManagementClient } from "../dataFactoryManagementClient";
 import {
   PipelineResource,
   PipelinesListByFactoryNextOptionalParams,
@@ -24,19 +25,19 @@ import {
   PipelinesDeleteOptionalParams,
   PipelinesCreateRunOptionalParams,
   PipelinesCreateRunResponse,
-  PipelinesListByFactoryNextResponse
+  PipelinesListByFactoryNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Pipelines operations. */
 export class PipelinesImpl implements Pipelines {
-  private readonly client: DataFactoryManagementClientContext;
+  private readonly client: DataFactoryManagementClient;
 
   /**
    * Initialize a new instance of the class Pipelines class.
    * @param client Reference to the service client
    */
-  constructor(client: DataFactoryManagementClientContext) {
+  constructor(client: DataFactoryManagementClient) {
     this.client = client;
   }
 
@@ -49,12 +50,12 @@ export class PipelinesImpl implements Pipelines {
   public listByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: PipelinesListByFactoryOptionalParams
+    options?: PipelinesListByFactoryOptionalParams,
   ): PagedAsyncIterableIterator<PipelineResource> {
     const iter = this.listByFactoryPagingAll(
       resourceGroupName,
       factoryName,
-      options
+      options,
     );
     return {
       next() {
@@ -63,49 +64,62 @@ export class PipelinesImpl implements Pipelines {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByFactoryPagingPage(
           resourceGroupName,
           factoryName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByFactoryPagingPage(
     resourceGroupName: string,
     factoryName: string,
-    options?: PipelinesListByFactoryOptionalParams
+    options?: PipelinesListByFactoryOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<PipelineResource[]> {
-    let result = await this._listByFactory(
-      resourceGroupName,
-      factoryName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: PipelinesListByFactoryResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByFactory(
+        resourceGroupName,
+        factoryName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByFactoryNext(
         resourceGroupName,
         factoryName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByFactoryPagingAll(
     resourceGroupName: string,
     factoryName: string,
-    options?: PipelinesListByFactoryOptionalParams
+    options?: PipelinesListByFactoryOptionalParams,
   ): AsyncIterableIterator<PipelineResource> {
     for await (const page of this.listByFactoryPagingPage(
       resourceGroupName,
       factoryName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -120,11 +134,11 @@ export class PipelinesImpl implements Pipelines {
   private _listByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: PipelinesListByFactoryOptionalParams
+    options?: PipelinesListByFactoryOptionalParams,
   ): Promise<PipelinesListByFactoryResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, options },
-      listByFactoryOperationSpec
+      listByFactoryOperationSpec,
     );
   }
 
@@ -141,11 +155,11 @@ export class PipelinesImpl implements Pipelines {
     factoryName: string,
     pipelineName: string,
     pipeline: PipelineResource,
-    options?: PipelinesCreateOrUpdateOptionalParams
+    options?: PipelinesCreateOrUpdateOptionalParams,
   ): Promise<PipelinesCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, pipelineName, pipeline, options },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -160,11 +174,11 @@ export class PipelinesImpl implements Pipelines {
     resourceGroupName: string,
     factoryName: string,
     pipelineName: string,
-    options?: PipelinesGetOptionalParams
+    options?: PipelinesGetOptionalParams,
   ): Promise<PipelinesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, pipelineName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -179,11 +193,11 @@ export class PipelinesImpl implements Pipelines {
     resourceGroupName: string,
     factoryName: string,
     pipelineName: string,
-    options?: PipelinesDeleteOptionalParams
+    options?: PipelinesDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, pipelineName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -198,11 +212,11 @@ export class PipelinesImpl implements Pipelines {
     resourceGroupName: string,
     factoryName: string,
     pipelineName: string,
-    options?: PipelinesCreateRunOptionalParams
+    options?: PipelinesCreateRunOptionalParams,
   ): Promise<PipelinesCreateRunResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, pipelineName, options },
-      createRunOperationSpec
+      createRunOperationSpec,
     );
   }
 
@@ -217,11 +231,11 @@ export class PipelinesImpl implements Pipelines {
     resourceGroupName: string,
     factoryName: string,
     nextLink: string,
-    options?: PipelinesListByFactoryNextOptionalParams
+    options?: PipelinesListByFactoryNextOptionalParams,
   ): Promise<PipelinesListByFactoryNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, nextLink, options },
-      listByFactoryNextOperationSpec
+      listByFactoryNextOperationSpec,
     );
   }
 }
@@ -229,38 +243,36 @@ export class PipelinesImpl implements Pipelines {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByFactoryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PipelineListResponse
+      bodyMapper: Mappers.PipelineListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.PipelineResource
+      bodyMapper: Mappers.PipelineResource,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.pipeline,
   queryParameters: [Parameters.apiVersion],
@@ -269,28 +281,27 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.pipelineName
+    Parameters.pipelineName,
   ],
   headerParameters: [
     Parameters.accept,
     Parameters.contentType,
-    Parameters.ifMatch
+    Parameters.ifMatch,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PipelineResource
+      bodyMapper: Mappers.PipelineResource,
     },
     304: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -298,21 +309,20 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.pipelineName
+    Parameters.pipelineName,
   ],
   headerParameters: [Parameters.accept, Parameters.ifNoneMatch],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -320,22 +330,21 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.pipelineName
+    Parameters.pipelineName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createRunOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}/createRun",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/pipelines/{pipelineName}/createRun",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.CreateRunResponse
+      bodyMapper: Mappers.CreateRunResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.parameters,
   queryParameters: [
@@ -343,38 +352,37 @@ const createRunOperationSpec: coreClient.OperationSpec = {
     Parameters.referencePipelineRunId,
     Parameters.isRecovery,
     Parameters.startActivityName,
-    Parameters.startFromFailure
+    Parameters.startFromFailure,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.pipelineName
+    Parameters.pipelineName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByFactoryNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PipelineListResponse
+      bodyMapper: Mappers.PipelineListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

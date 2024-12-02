@@ -6,13 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ManagedInstanceOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   ManagedInstanceOperation,
   ManagedInstanceOperationsListByManagedInstanceNextOptionalParams,
@@ -21,20 +21,21 @@ import {
   ManagedInstanceOperationsGetOptionalParams,
   ManagedInstanceOperationsGetResponse,
   ManagedInstanceOperationsCancelOptionalParams,
-  ManagedInstanceOperationsListByManagedInstanceNextResponse
+  ManagedInstanceOperationsListByManagedInstanceNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ManagedInstanceOperations operations. */
 export class ManagedInstanceOperationsImpl
-  implements ManagedInstanceOperations {
-  private readonly client: SqlManagementClientContext;
+  implements ManagedInstanceOperations
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ManagedInstanceOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -48,12 +49,12 @@ export class ManagedInstanceOperationsImpl
   public listByManagedInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams
+    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceOperation> {
     const iter = this.listByManagedInstancePagingAll(
       resourceGroupName,
       managedInstanceName,
-      options
+      options,
     );
     return {
       next() {
@@ -62,49 +63,62 @@ export class ManagedInstanceOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByManagedInstancePagingPage(
           resourceGroupName,
           managedInstanceName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByManagedInstancePagingPage(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams
+    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ManagedInstanceOperation[]> {
-    let result = await this._listByManagedInstance(
-      resourceGroupName,
-      managedInstanceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ManagedInstanceOperationsListByManagedInstanceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByManagedInstance(
+        resourceGroupName,
+        managedInstanceName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByManagedInstanceNext(
         resourceGroupName,
         managedInstanceName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByManagedInstancePagingAll(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams
+    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams,
   ): AsyncIterableIterator<ManagedInstanceOperation> {
     for await (const page of this.listByManagedInstancePagingPage(
       resourceGroupName,
       managedInstanceName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -120,11 +134,11 @@ export class ManagedInstanceOperationsImpl
   private _listByManagedInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams
+    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams,
   ): Promise<ManagedInstanceOperationsListByManagedInstanceResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, options },
-      listByManagedInstanceOperationSpec
+      listByManagedInstanceOperationSpec,
     );
   }
 
@@ -140,11 +154,11 @@ export class ManagedInstanceOperationsImpl
     resourceGroupName: string,
     managedInstanceName: string,
     operationId: string,
-    options?: ManagedInstanceOperationsGetOptionalParams
+    options?: ManagedInstanceOperationsGetOptionalParams,
   ): Promise<ManagedInstanceOperationsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, operationId, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -160,11 +174,11 @@ export class ManagedInstanceOperationsImpl
     resourceGroupName: string,
     managedInstanceName: string,
     operationId: string,
-    options?: ManagedInstanceOperationsCancelOptionalParams
+    options?: ManagedInstanceOperationsCancelOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, operationId, options },
-      cancelOperationSpec
+      cancelOperationSpec,
     );
   }
 
@@ -180,11 +194,11 @@ export class ManagedInstanceOperationsImpl
     resourceGroupName: string,
     managedInstanceName: string,
     nextLink: string,
-    options?: ManagedInstanceOperationsListByManagedInstanceNextOptionalParams
+    options?: ManagedInstanceOperationsListByManagedInstanceNextOptionalParams,
   ): Promise<ManagedInstanceOperationsListByManagedInstanceNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, nextLink, options },
-      listByManagedInstanceNextOperationSpec
+      listByManagedInstanceNextOperationSpec,
     );
   }
 }
@@ -192,78 +206,74 @@ export class ManagedInstanceOperationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByManagedInstanceOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/operations",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/operations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstanceOperationListResult
+      bodyMapper: Mappers.ManagedInstanceOperationListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.managedInstanceName
+    Parameters.managedInstanceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/operations/{operationId}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/operations/{operationId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstanceOperation
+      bodyMapper: Mappers.ManagedInstanceOperation,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.operationId,
-    Parameters.managedInstanceName
+    Parameters.managedInstanceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const cancelOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/operations/{operationId}/cancel",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/operations/{operationId}/cancel",
   httpMethod: "POST",
   responses: { 200: {}, default: {} },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.operationId,
-    Parameters.managedInstanceName
+    Parameters.managedInstanceName,
   ],
-  serializer
+  serializer,
 };
 const listByManagedInstanceNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstanceOperationListResult
+      bodyMapper: Mappers.ManagedInstanceOperationListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.nextLink,
-    Parameters.managedInstanceName
+    Parameters.managedInstanceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * Represents permission Scope Values.
@@ -101,5 +101,5 @@ export enum PermissionScopeValues {
     PermissionScopeValues.ScopeItemUpsertValue |
     PermissionScopeValues.ScopeItemDeleteValue,
 
-  NoneValue = 0
+  NoneValue = 0,
 }

@@ -22,55 +22,6 @@ export type ServiceResourceUpdatePropertiesUnion =
   | StatefulServiceUpdateProperties
   | StatelessServiceUpdateProperties;
 
-/** The resource model definition. */
-export interface Resource {
-  /**
-   * Azure resource identifier.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly id?: string;
-  /**
-   * Azure resource name.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly name?: string;
-  /**
-   * Azure resource type.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly type?: string;
-  /** Azure resource location. */
-  location: string;
-  /** Azure resource tags. */
-  tags?: { [propertyName: string]: string };
-  /**
-   * Azure resource etag.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly etag?: string;
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
-}
-
-/** Metadata pertaining to creation and last modification of the resource. */
-export interface SystemData {
-  /** The identity that created the resource. */
-  createdBy?: string;
-  /** The type of identity that created the resource. */
-  createdByType?: string;
-  /** The timestamp of resource creation (UTC). */
-  createdAt?: Date;
-  /** The identity that last modified the resource. */
-  lastModifiedBy?: string;
-  /** The type of identity that last modified the resource. */
-  lastModifiedByType?: string;
-  /** The timestamp of resource last modification (UTC). */
-  lastModifiedAt?: Date;
-}
-
 /** The detail of the Service Fabric runtime version result */
 export interface ClusterVersionDetails {
   /** The Service Fabric runtime version of the cluster. */
@@ -373,6 +324,55 @@ export interface NotificationTarget {
   receivers: string[];
 }
 
+/** The resource model definition. */
+export interface Resource {
+  /**
+   * Azure resource identifier.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+  /**
+   * Azure resource name.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Azure resource type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /** Azure resource location. */
+  location: string;
+  /** Azure resource tags. */
+  tags?: { [propertyName: string]: string };
+  /**
+   * Azure resource etag.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly etag?: string;
+  /**
+   * Metadata pertaining to creation and last modification of the resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly systemData?: SystemData;
+}
+
+/** Metadata pertaining to creation and last modification of the resource. */
+export interface SystemData {
+  /** The identity that created the resource. */
+  createdBy?: string;
+  /** The type of identity that created the resource. */
+  createdByType?: string;
+  /** The timestamp of resource creation (UTC). */
+  createdAt?: Date;
+  /** The identity that last modified the resource. */
+  lastModifiedBy?: string;
+  /** The type of identity that last modified the resource. */
+  lastModifiedByType?: string;
+  /** The timestamp of resource last modification (UTC). */
+  lastModifiedAt?: Date;
+}
+
 /** The structure of the error. */
 export interface ErrorModel {
   /** The error details. */
@@ -401,7 +401,7 @@ export interface ClusterUpdateParameters {
   clientCertificateCommonNames?: ClientCertificateCommonName[];
   /** The list of client certificates referenced by thumbprint that are allowed to manage the cluster. This will overwrite the existing list. */
   clientCertificateThumbprints?: ClientCertificateThumbprint[];
-  /** The Service Fabric runtime version of the cluster. This property can only by set the user when **upgradeMode** is set to 'Manual'. To get list of available Service Fabric versions for new clusters use [ClusterVersion API](./ClusterVersion.md). To get the list of available version for existing clusters use **availableClusterVersions**. */
+  /** The Service Fabric runtime version of the cluster. This property can only by set the user when **upgradeMode** is set to 'Manual'. To get list of available Service Fabric versions for new clusters use [ClusterVersion API](https://learn.microsoft.com/rest/api/servicefabric/cluster-versions/list). To get the list of available version for existing clusters use **availableClusterVersions**. */
   clusterCodeVersion?: string;
   /** Indicates if the event store service is enabled. */
   eventStoreServiceEnabled?: boolean;
@@ -762,6 +762,12 @@ export interface ApplicationResourceList {
   readonly nextLink?: string;
 }
 
+/** Describes how the service is partitioned. */
+export interface PartitionSchemeDescription {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  partitionScheme: "Named" | "Singleton" | "UniformInt64Range";
+}
+
 /** The common service resource properties. */
 export interface ServiceResourcePropertiesBase {
   /** The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)". */
@@ -801,13 +807,7 @@ export interface ServiceLoadMetricDescription {
 /** Describes the policy to be used for placement of a Service Fabric service. */
 export interface ServicePlacementPolicyDescription {
   /** Polymorphic discriminator, which specifies the different types this object can be */
-  type: "undefined";
-}
-
-/** Describes how the service is partitioned. */
-export interface PartitionSchemeDescription {
-  /** Polymorphic discriminator, which specifies the different types this object can be */
-  partitionScheme: "Named" | "Singleton" | "UniformInt64Range";
+  type: "ServicePlacementPolicyDescription";
 }
 
 /** The list of service resources. */
@@ -824,7 +824,7 @@ export interface ServiceResourceList {
  * The cluster resource
  *
  */
-export type Cluster = Resource & {
+export interface Cluster extends Resource {
   /** The list of add-on features to enable in the cluster. */
   addOnFeatures?: AddOnFeatures[];
   /**
@@ -842,7 +842,7 @@ export type Cluster = Resource & {
   clientCertificateCommonNames?: ClientCertificateCommonName[];
   /** The list of client certificates referenced by thumbprint that are allowed to manage the cluster. */
   clientCertificateThumbprints?: ClientCertificateThumbprint[];
-  /** The Service Fabric runtime version of the cluster. This property can only by set the user when **upgradeMode** is set to 'Manual'. To get list of available Service Fabric versions for new clusters use [ClusterVersion API](./ClusterVersion.md). To get the list of available version for existing clusters use **availableClusterVersions**. */
+  /** The Service Fabric runtime version of the cluster. This property can only by set the user when **upgradeMode** is set to 'Manual'. To get list of available Service Fabric versions for new clusters use [ClusterVersion API](https://learn.microsoft.com/rest/api/servicefabric/cluster-versions/list). To get the list of available version for existing clusters use **availableClusterVersions**. */
   clusterCodeVersion?: string;
   /**
    * The Azure Resource Provider endpoint. A system service in the cluster connects to this  endpoint.
@@ -925,19 +925,19 @@ export type Cluster = Resource & {
   waveUpgradePaused?: boolean;
   /** Indicates a list of notification channels for cluster events. */
   notifications?: Notification[];
-};
+}
 
 /** The application type name resource */
-export type ApplicationTypeResource = ProxyResource & {
+export interface ApplicationTypeResource extends ProxyResource {
   /**
    * The current deployment or provisioning state, which only appears in the response.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly provisioningState?: string;
-};
+}
 
 /** An application type version resource for the specified application type name resource. */
-export type ApplicationTypeVersionResource = ProxyResource & {
+export interface ApplicationTypeVersionResource extends ProxyResource {
   /**
    * The current deployment or provisioning state, which only appears in the response
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -950,10 +950,10 @@ export type ApplicationTypeVersionResource = ProxyResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly defaultParameterList?: { [propertyName: string]: string };
-};
+}
 
 /** The application resource. */
-export type ApplicationResource = ProxyResource & {
+export interface ApplicationResource extends ProxyResource {
   /** Describes the managed identities for an Azure resource. */
   identity?: ManagedIdentity;
   /** The version of the application type as defined in the application manifest. */
@@ -979,10 +979,10 @@ export type ApplicationResource = ProxyResource & {
   readonly provisioningState?: string;
   /** The application type name as defined in the application manifest. */
   typeName?: string;
-};
+}
 
 /** The application resource for patch operations. */
-export type ApplicationResourceUpdate = ProxyResource & {
+export interface ApplicationResourceUpdate extends ProxyResource {
   /** The version of the application type as defined in the application manifest. */
   typeVersion?: string;
   /** List of application parameters with overridden values from their default values specified in the application manifest. */
@@ -999,10 +999,10 @@ export type ApplicationResourceUpdate = ProxyResource & {
   metrics?: ApplicationMetricDescription[];
   /** List of user assigned identities for the application, each mapped to a friendly name. */
   managedIdentities?: ApplicationUserAssignedIdentity[];
-};
+}
 
 /** The service resource. */
-export type ServiceResource = ProxyResource & {
+export interface ServiceResource extends ProxyResource {
   /** The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)". */
   placementConstraints?: string;
   /** A list that describes the correlation of the service with other services. */
@@ -1028,10 +1028,10 @@ export type ServiceResource = ProxyResource & {
   servicePackageActivationMode?: ArmServicePackageActivationMode;
   /** Dns name used for the service. If this is specified, then the service can be accessed via its DNS name instead of service name. */
   serviceDnsName?: string;
-};
+}
 
 /** The service resource for patch operations. */
-export type ServiceResourceUpdate = ProxyResource & {
+export interface ServiceResourceUpdate extends ProxyResource {
   /** The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)". */
   placementConstraints?: string;
   /** A list that describes the correlation of the service with other services. */
@@ -1044,10 +1044,11 @@ export type ServiceResourceUpdate = ProxyResource & {
   defaultMoveCost?: MoveCost;
   /** The kind of service (Stateless or Stateful). */
   serviceKind?: ServiceKind;
-};
+}
 
 /** The application resource properties. */
-export type ApplicationResourceProperties = ApplicationResourceUpdateProperties & {
+export interface ApplicationResourceProperties
+  extends ApplicationResourceUpdateProperties {
   /**
    * The current deployment or provisioning state, which only appears in the response
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -1055,51 +1056,29 @@ export type ApplicationResourceProperties = ApplicationResourceUpdateProperties 
   readonly provisioningState?: string;
   /** The application type name as defined in the application manifest. */
   typeName?: string;
-};
-
-/** The service resource properties. */
-export type ServiceResourceProperties = ServiceResourcePropertiesBase & {
-  /**
-   * The current deployment or provisioning state, which only appears in the response
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly provisioningState?: string;
-  /** The kind of service (Stateless or Stateful). */
-  serviceKind: ServiceKind;
-  /** The name of the service type */
-  serviceTypeName?: string;
-  /** Describes how the service is partitioned. */
-  partitionDescription?: PartitionSchemeDescriptionUnion;
-  /** The activation Mode of the service package */
-  servicePackageActivationMode?: ArmServicePackageActivationMode;
-  /** Dns name used for the service. If this is specified, then the service can be accessed via its DNS name instead of service name. */
-  serviceDnsName?: string;
-};
-
-/** The service resource properties for patch operations. */
-export type ServiceResourceUpdateProperties = ServiceResourcePropertiesBase & {
-  /** The kind of service (Stateless or Stateful). */
-  serviceKind: ServiceKind;
-};
+}
 
 /** Describes the named partition scheme of the service. */
-export type NamedPartitionSchemeDescription = PartitionSchemeDescription & {
+export interface NamedPartitionSchemeDescription
+  extends PartitionSchemeDescription {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   partitionScheme: "Named";
   /** The number of partitions. */
   count: number;
   /** Array of size specified by the ‘count’ parameter, for the names of the partitions. */
   names: string[];
-};
+}
 
 /** SingletonPartitionSchemeDescription */
-export type SingletonPartitionSchemeDescription = PartitionSchemeDescription & {
+export interface SingletonPartitionSchemeDescription
+  extends PartitionSchemeDescription {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   partitionScheme: "Singleton";
-};
+}
 
 /** Describes a partitioning scheme where an integer range is allocated evenly across a number of partitions. */
-export type UniformInt64RangePartitionSchemeDescription = PartitionSchemeDescription & {
+export interface UniformInt64RangePartitionSchemeDescription
+  extends PartitionSchemeDescription {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   partitionScheme: "UniformInt64Range";
   /** The number of partitions. */
@@ -1116,10 +1095,39 @@ export type UniformInt64RangePartitionSchemeDescription = PartitionSchemeDescrip
    *
    */
   highKey: string;
-};
+}
+
+/** The service resource properties. */
+export interface ServiceResourceProperties
+  extends ServiceResourcePropertiesBase {
+  /**
+   * The current deployment or provisioning state, which only appears in the response
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: string;
+  /** The kind of service (Stateless or Stateful). */
+  serviceKind: ServiceKind;
+  /** The name of the service type */
+  serviceTypeName?: string;
+  /** Describes how the service is partitioned. */
+  partitionDescription?: PartitionSchemeDescriptionUnion;
+  /** The activation Mode of the service package */
+  servicePackageActivationMode?: ArmServicePackageActivationMode;
+  /** Dns name used for the service. If this is specified, then the service can be accessed via its DNS name instead of service name. */
+  serviceDnsName?: string;
+}
+
+/** The service resource properties for patch operations. */
+export interface ServiceResourceUpdateProperties
+  extends ServiceResourcePropertiesBase {
+  /** The kind of service (Stateless or Stateful). */
+  serviceKind: ServiceKind;
+}
 
 /** The properties of a stateful service resource. */
-export type StatefulServiceProperties = ServiceResourceProperties & {
+export interface StatefulServiceProperties extends ServiceResourceProperties {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  serviceKind: "Stateful";
   /** A flag indicating whether this is a persistent service which stores states on the local disk. If it is then the value of this property is true, if not it is false. */
   hasPersistedState?: boolean;
   /** The target replica set size as a number. */
@@ -1132,18 +1140,23 @@ export type StatefulServiceProperties = ServiceResourceProperties & {
   quorumLossWaitDuration?: Date;
   /** The definition on how long StandBy replicas should be maintained before being removed, represented in ISO 8601 format (hh:mm:ss.s). */
   standByReplicaKeepDuration?: Date;
-};
+}
 
 /** The properties of a stateless service resource. */
-export type StatelessServiceProperties = ServiceResourceProperties & {
+export interface StatelessServiceProperties extends ServiceResourceProperties {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  serviceKind: "Stateless";
   /** The instance count. */
   instanceCount?: number;
-  /** Delay duration for RequestDrain feature to ensures that the endpoint advertised by the stateless instance is removed before the delay starts prior to closing the instance. This delay enables existing requests to drain gracefully before the instance actually goes down (https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-application-upgrade-advanced#avoid-connection-drops-during-stateless-service-planned-downtime-preview). It is first interpreted as a string representing an ISO 8601 duration. If that fails, then it is interpreted as a number representing the total number of milliseconds. */
+  /** Delay duration for RequestDrain feature to ensures that the endpoint advertised by the stateless instance is removed before the delay starts prior to closing the instance. This delay enables existing requests to drain gracefully before the instance actually goes down (https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-application-upgrade-advanced#avoid-connection-drops-during-stateless-service-planned-downtime-preview). It is represented in ISO 8601 format (hh:mm:ss.s). */
   instanceCloseDelayDuration?: string;
-};
+}
 
 /** The properties of a stateful service resource for patch operations. */
-export type StatefulServiceUpdateProperties = ServiceResourceUpdateProperties & {
+export interface StatefulServiceUpdateProperties
+  extends ServiceResourceUpdateProperties {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  serviceKind: "Stateful";
   /** The target replica set size as a number. */
   targetReplicaSetSize?: number;
   /** The minimum replica set size as a number. */
@@ -1154,21 +1167,28 @@ export type StatefulServiceUpdateProperties = ServiceResourceUpdateProperties & 
   quorumLossWaitDuration?: Date;
   /** The definition on how long StandBy replicas should be maintained before being removed, represented in ISO 8601 format (hh:mm:ss.s). */
   standByReplicaKeepDuration?: Date;
-};
+}
 
 /** The properties of a stateless service resource for patch operations. */
-export type StatelessServiceUpdateProperties = ServiceResourceUpdateProperties & {
+export interface StatelessServiceUpdateProperties
+  extends ServiceResourceUpdateProperties {
+  /** Polymorphic discriminator, which specifies the different types this object can be */
+  serviceKind: "Stateless";
   /** The instance count. */
   instanceCount?: number;
-  /** Delay duration for RequestDrain feature to ensures that the endpoint advertised by the stateless instance is removed before the delay starts prior to closing the instance. This delay enables existing requests to drain gracefully before the instance actually goes down (https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-application-upgrade-advanced#avoid-connection-drops-during-stateless-service-planned-downtime-preview). It is first interpreted as a string representing an ISO 8601 duration. If that fails, then it is interpreted as a number representing the total number of milliseconds. */
+  /** Delay duration for RequestDrain feature to ensures that the endpoint advertised by the stateless instance is removed before the delay starts prior to closing the instance. This delay enables existing requests to drain gracefully before the instance actually goes down (https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-application-upgrade-advanced#avoid-connection-drops-during-stateless-service-planned-downtime-preview). It is first interpreted as a string representing an ISO 8601 duration. It is represented in ISO 8601 format (hh:mm:ss.s). */
   instanceCloseDelayDuration?: string;
-};
+}
 
 /** Known values of {@link AddOnFeatures} that the service accepts. */
 export enum KnownAddOnFeatures {
+  /** RepairManager */
   RepairManager = "RepairManager",
+  /** DnsService */
   DnsService = "DnsService",
+  /** BackupRestoreService */
   BackupRestoreService = "BackupRestoreService",
+  /** ResourceMonitorService */
   ResourceMonitorService = "ResourceMonitorService"
 }
 
@@ -1186,7 +1206,9 @@ export type AddOnFeatures = string;
 
 /** Known values of {@link ClusterEnvironment} that the service accepts. */
 export enum KnownClusterEnvironment {
+  /** Windows */
   Windows = "Windows",
+  /** Linux */
   Linux = "Linux"
 }
 
@@ -1202,13 +1224,21 @@ export type ClusterEnvironment = string;
 
 /** Known values of {@link StoreName} that the service accepts. */
 export enum KnownStoreName {
+  /** AddressBook */
   AddressBook = "AddressBook",
+  /** AuthRoot */
   AuthRoot = "AuthRoot",
+  /** CertificateAuthority */
   CertificateAuthority = "CertificateAuthority",
+  /** Disallowed */
   Disallowed = "Disallowed",
+  /** My */
   My = "My",
+  /** Root */
   Root = "Root",
+  /** TrustedPeople */
   TrustedPeople = "TrustedPeople",
+  /** TrustedPublisher */
   TrustedPublisher = "TrustedPublisher"
 }
 
@@ -1230,15 +1260,25 @@ export type StoreName = string;
 
 /** Known values of {@link ClusterState} that the service accepts. */
 export enum KnownClusterState {
+  /** WaitingForNodes */
   WaitingForNodes = "WaitingForNodes",
+  /** Deploying */
   Deploying = "Deploying",
+  /** BaselineUpgrade */
   BaselineUpgrade = "BaselineUpgrade",
+  /** UpdatingUserConfiguration */
   UpdatingUserConfiguration = "UpdatingUserConfiguration",
+  /** UpdatingUserCertificate */
   UpdatingUserCertificate = "UpdatingUserCertificate",
+  /** UpdatingInfrastructure */
   UpdatingInfrastructure = "UpdatingInfrastructure",
+  /** EnforcingClusterVersion */
   EnforcingClusterVersion = "EnforcingClusterVersion",
+  /** UpgradeServiceUnreachable */
   UpgradeServiceUnreachable = "UpgradeServiceUnreachable",
+  /** AutoScale */
   AutoScale = "AutoScale",
+  /** Ready */
   Ready = "Ready"
 }
 
@@ -1262,8 +1302,11 @@ export type ClusterState = string;
 
 /** Known values of {@link DurabilityLevel} that the service accepts. */
 export enum KnownDurabilityLevel {
+  /** Bronze */
   Bronze = "Bronze",
+  /** Silver */
   Silver = "Silver",
+  /** Gold */
   Gold = "Gold"
 }
 
@@ -1280,9 +1323,13 @@ export type DurabilityLevel = string;
 
 /** Known values of {@link ProvisioningState} that the service accepts. */
 export enum KnownProvisioningState {
+  /** Updating */
   Updating = "Updating",
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Failed */
   Failed = "Failed",
+  /** Canceled */
   Canceled = "Canceled"
 }
 
@@ -1300,10 +1347,15 @@ export type ProvisioningState = string;
 
 /** Known values of {@link ReliabilityLevel} that the service accepts. */
 export enum KnownReliabilityLevel {
+  /** None */
   None = "None",
+  /** Bronze */
   Bronze = "Bronze",
+  /** Silver */
   Silver = "Silver",
+  /** Gold */
   Gold = "Gold",
+  /** Platinum */
   Platinum = "Platinum"
 }
 
@@ -1376,7 +1428,7 @@ export type VmssZonalUpgradeMode = string;
 
 /** Known values of {@link ClusterUpgradeCadence} that the service accepts. */
 export enum KnownClusterUpgradeCadence {
-  /** Cluster upgrade starts immediately after a new version is rolled out. Recommended for Test/Dev clusters. */
+  /** Cluster upgrade starts immediately after a new version is rolled out. Recommended for Test\/Dev clusters. */
   Wave0 = "Wave0",
   /** Cluster upgrade starts 7 days after a new version is rolled out. Recommended for Pre-prod clusters. */
   Wave1 = "Wave1",
@@ -1446,21 +1498,23 @@ export enum KnownNotificationChannel {
  */
 export type NotificationChannel = string;
 
-/** Known values of {@link Enum14} that the service accepts. */
-export enum KnownEnum14 {
+/** Known values of {@link ClusterVersionsEnvironment} that the service accepts. */
+export enum KnownClusterVersionsEnvironment {
+  /** Windows */
   Windows = "Windows",
+  /** Linux */
   Linux = "Linux"
 }
 
 /**
- * Defines values for Enum14. \
- * {@link KnownEnum14} can be used interchangeably with Enum14,
+ * Defines values for ClusterVersionsEnvironment. \
+ * {@link KnownClusterVersionsEnvironment} can be used interchangeably with ClusterVersionsEnvironment,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
  * **Windows** \
  * **Linux**
  */
-export type Enum14 = string;
+export type ClusterVersionsEnvironment = string;
 
 /** Known values of {@link ArmUpgradeFailureAction} that the service accepts. */
 export enum KnownArmUpgradeFailureAction {
@@ -1503,6 +1557,69 @@ export enum KnownRollingUpgradeMode {
  * **Monitored**: The upgrade will stop after completing each upgrade domain and automatically monitor health before proceeding. The value is 3
  */
 export type RollingUpgradeMode = string;
+
+/** Known values of {@link ServiceKind} that the service accepts. */
+export enum KnownServiceKind {
+  /** Indicates the service kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. */
+  Invalid = "Invalid",
+  /** Does not use Service Fabric to make its state highly available or reliable. The value is 1. */
+  Stateless = "Stateless",
+  /** Uses Service Fabric to make its state or part of its state highly available and reliable. The value is 2. */
+  Stateful = "Stateful"
+}
+
+/**
+ * Defines values for ServiceKind. \
+ * {@link KnownServiceKind} can be used interchangeably with ServiceKind,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Invalid**: Indicates the service kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. \
+ * **Stateless**: Does not use Service Fabric to make its state highly available or reliable. The value is 1. \
+ * **Stateful**: Uses Service Fabric to make its state or part of its state highly available and reliable. The value is 2.
+ */
+export type ServiceKind = string;
+
+/** Known values of {@link PartitionScheme} that the service accepts. */
+export enum KnownPartitionScheme {
+  /** Indicates the partition kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. */
+  Invalid = "Invalid",
+  /** Indicates that the partition is based on string names, and is a SingletonPartitionSchemeDescription object, The value is 1. */
+  Singleton = "Singleton",
+  /** Indicates that the partition is based on Int64 key ranges, and is a UniformInt64RangePartitionSchemeDescription object. The value is 2. */
+  UniformInt64Range = "UniformInt64Range",
+  /** Indicates that the partition is based on string names, and is a NamedPartitionSchemeDescription object. The value is 3 */
+  Named = "Named"
+}
+
+/**
+ * Defines values for PartitionScheme. \
+ * {@link KnownPartitionScheme} can be used interchangeably with PartitionScheme,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Invalid**: Indicates the partition kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. \
+ * **Singleton**: Indicates that the partition is based on string names, and is a SingletonPartitionSchemeDescription object, The value is 1. \
+ * **UniformInt64Range**: Indicates that the partition is based on Int64 key ranges, and is a UniformInt64RangePartitionSchemeDescription object. The value is 2. \
+ * **Named**: Indicates that the partition is based on string names, and is a NamedPartitionSchemeDescription object. The value is 3
+ */
+export type PartitionScheme = string;
+
+/** Known values of {@link ArmServicePackageActivationMode} that the service accepts. */
+export enum KnownArmServicePackageActivationMode {
+  /** Indicates the application package activation mode will use shared process. */
+  SharedProcess = "SharedProcess",
+  /** Indicates the application package activation mode will use exclusive process. */
+  ExclusiveProcess = "ExclusiveProcess"
+}
+
+/**
+ * Defines values for ArmServicePackageActivationMode. \
+ * {@link KnownArmServicePackageActivationMode} can be used interchangeably with ArmServicePackageActivationMode,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **SharedProcess**: Indicates the application package activation mode will use shared process. \
+ * **ExclusiveProcess**: Indicates the application package activation mode will use exclusive process.
+ */
+export type ArmServicePackageActivationMode = string;
 
 /** Known values of {@link ServiceCorrelationScheme} that the service accepts. */
 export enum KnownServiceCorrelationScheme {
@@ -1605,69 +1722,6 @@ export enum KnownMoveCost {
  * **High**: Specifies the move cost of the service as High. The value is 3.
  */
 export type MoveCost = string;
-
-/** Known values of {@link ServiceKind} that the service accepts. */
-export enum KnownServiceKind {
-  /** Indicates the service kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. */
-  Invalid = "Invalid",
-  /** Does not use Service Fabric to make its state highly available or reliable. The value is 1. */
-  Stateless = "Stateless",
-  /** Uses Service Fabric to make its state or part of its state highly available and reliable. The value is 2. */
-  Stateful = "Stateful"
-}
-
-/**
- * Defines values for ServiceKind. \
- * {@link KnownServiceKind} can be used interchangeably with ServiceKind,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Invalid**: Indicates the service kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. \
- * **Stateless**: Does not use Service Fabric to make its state highly available or reliable. The value is 1. \
- * **Stateful**: Uses Service Fabric to make its state or part of its state highly available and reliable. The value is 2.
- */
-export type ServiceKind = string;
-
-/** Known values of {@link PartitionScheme} that the service accepts. */
-export enum KnownPartitionScheme {
-  /** Indicates the partition kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. */
-  Invalid = "Invalid",
-  /** Indicates that the partition is based on string names, and is a SingletonPartitionSchemeDescription object, The value is 1. */
-  Singleton = "Singleton",
-  /** Indicates that the partition is based on Int64 key ranges, and is a UniformInt64RangePartitionSchemeDescription object. The value is 2. */
-  UniformInt64Range = "UniformInt64Range",
-  /** Indicates that the partition is based on string names, and is a NamedPartitionSchemeDescription object. The value is 3 */
-  Named = "Named"
-}
-
-/**
- * Defines values for PartitionScheme. \
- * {@link KnownPartitionScheme} can be used interchangeably with PartitionScheme,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Invalid**: Indicates the partition kind is invalid. All Service Fabric enumerations have the invalid type. The value is zero. \
- * **Singleton**: Indicates that the partition is based on string names, and is a SingletonPartitionSchemeDescription object, The value is 1. \
- * **UniformInt64Range**: Indicates that the partition is based on Int64 key ranges, and is a UniformInt64RangePartitionSchemeDescription object. The value is 2. \
- * **Named**: Indicates that the partition is based on string names, and is a NamedPartitionSchemeDescription object. The value is 3
- */
-export type PartitionScheme = string;
-
-/** Known values of {@link ArmServicePackageActivationMode} that the service accepts. */
-export enum KnownArmServicePackageActivationMode {
-  /** Indicates the application package activation mode will use shared process. */
-  SharedProcess = "SharedProcess",
-  /** Indicates the application package activation mode will use exclusive process. */
-  ExclusiveProcess = "ExclusiveProcess"
-}
-
-/**
- * Defines values for ArmServicePackageActivationMode. \
- * {@link KnownArmServicePackageActivationMode} can be used interchangeably with ArmServicePackageActivationMode,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **SharedProcess**: Indicates the application package activation mode will use shared process. \
- * **ExclusiveProcess**: Indicates the application package activation mode will use exclusive process.
- */
-export type ArmServicePackageActivationMode = string;
 /** Defines values for ManagedIdentityType. */
 export type ManagedIdentityType =
   | "SystemAssigned"
@@ -1733,6 +1787,20 @@ export interface ClustersListUpgradableVersionsOptionalParams
 
 /** Contains response data for the listUpgradableVersions operation. */
 export type ClustersListUpgradableVersionsResponse = UpgradableVersionPathResult;
+
+/** Optional parameters. */
+export interface ClustersListByResourceGroupNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByResourceGroupNext operation. */
+export type ClustersListByResourceGroupNextResponse = ClusterListResult;
+
+/** Optional parameters. */
+export interface ClustersListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ClustersListNextResponse = ClusterListResult;
 
 /** Optional parameters. */
 export interface ClusterVersionsGetOptionalParams
@@ -1807,6 +1875,13 @@ export interface ApplicationTypesListOptionalParams
 export type ApplicationTypesListResponse = ApplicationTypeResourceList;
 
 /** Optional parameters. */
+export interface ApplicationTypesListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ApplicationTypesListNextResponse = ApplicationTypeResourceList;
+
+/** Optional parameters. */
 export interface ApplicationTypeVersionsGetOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -1840,6 +1915,13 @@ export interface ApplicationTypeVersionsListOptionalParams
 
 /** Contains response data for the list operation. */
 export type ApplicationTypeVersionsListResponse = ApplicationTypeVersionResourceList;
+
+/** Optional parameters. */
+export interface ApplicationTypeVersionsListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ApplicationTypeVersionsListNextResponse = ApplicationTypeVersionResourceList;
 
 /** Optional parameters. */
 export interface ApplicationsGetOptionalParams
@@ -1889,6 +1971,13 @@ export interface ApplicationsListOptionalParams
 export type ApplicationsListResponse = ApplicationResourceList;
 
 /** Optional parameters. */
+export interface ApplicationsListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ApplicationsListNextResponse = ApplicationResourceList;
+
+/** Optional parameters. */
 export interface ServicesGetOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -1934,6 +2023,13 @@ export interface ServicesListOptionalParams
 
 /** Contains response data for the list operation. */
 export type ServicesListResponse = ServiceResourceList;
+
+/** Optional parameters. */
+export interface ServicesListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ServicesListNextResponse = ServiceResourceList;
 
 /** Optional parameters. */
 export interface ServiceFabricManagementClientOptionalParams

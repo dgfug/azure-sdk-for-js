@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { createClientLogger } from "@azure/logger";
-import { isObjectWithProperties } from "./util/typeGuards";
+import { isObjectWithProperties } from "@azure/core-util";
 
 /**
  * The \@azure/logger configuration for this package.

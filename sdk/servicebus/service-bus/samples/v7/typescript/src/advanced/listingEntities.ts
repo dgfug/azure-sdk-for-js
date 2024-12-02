@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how the ServiceBusAdministrationClient can be used to list the entities of a service bus namespace.
@@ -9,16 +9,18 @@
  * @summary Demonstrates how the ServiceBusAdministrationClient can be used to list the entities of a service bus namespace
  */
 import { ServiceBusAdministrationClient } from "@azure/service-bus";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 
 export async function main() {
-  const serviceBusAdministrationClient = new ServiceBusAdministrationClient(connectionString);
+  const credential = new DefaultAzureCredential();
+  const serviceBusAdministrationClient = new ServiceBusAdministrationClient(fqdn, credential);
   const baseQueueName = "random-queue";
   const numberOfQueues = 7;
 
@@ -112,7 +114,7 @@ export async function main() {
   // Passing next marker as continuationToken
   iterator = serviceBusAdministrationClient.listQueues().byPage({
     continuationToken: marker,
-    maxPageSize: 10
+    maxPageSize: 10,
   });
   queuesPage = await iterator.next();
   // Prints 10 queue names

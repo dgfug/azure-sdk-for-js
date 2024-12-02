@@ -1,16 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import * as assert from "assert";
-import { Context } from "mocha";
-import { env, Recorder } from "@azure-tools/test-recorder";
+// Licensed under the MIT License.
+import type { Recorder } from "@azure-tools/test-recorder";
+import { env } from "@azure-tools/test-recorder";
 import { PollerStoppedError } from "@azure/core-lro";
 
-import { SecretClient, DeletedSecret } from "../../src";
-import { assertThrowsAbortError } from "../utils/utils.common";
-import { testPollerProperties } from "../utils/recorderUtils";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
+import { afterEach, assert, beforeEach, describe, it } from "vitest";
+import type { DeletedSecret, SecretClient } from "../../src/index.js";
+import { testPollerProperties } from "./utils/recorderUtils.js";
+import { authenticate } from "./utils/testAuthentication.js";
+import type TestClient from "./utils/testClient.js";
 
 describe("Secrets client - Long Running Operations - delete", () => {
   const secretPrefix = `lroDelete${env.CERTIFICATE_NAME || "SecretName"}`;
@@ -19,24 +17,22 @@ describe("Secrets client - Long Running Operations - delete", () => {
   let testClient: TestClient;
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    const authentication = await authenticate(this);
+  beforeEach(async function (ctx) {
+    const authentication = await authenticate(ctx);
     secretSuffix = authentication.secretSuffix;
     client = authentication.client;
     testClient = authentication.testClient;
     recorder = authentication.recorder;
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
   // The tests follow
 
-  it("can wait until a secret is deleted", async function(this: Context) {
-    const secretName = testClient.formatName(
-      `${secretPrefix}-${this!.test!.title}-${secretSuffix}`
-    );
+  it("can wait until a secret is deleted", async function (ctx) {
+    const secretName = testClient.formatName(`${secretPrefix}-${ctx.task.name}-${secretSuffix}`);
     await client.setSecret(secretName, "value");
     const poller = await client.beginDeleteSecret(secretName, testPollerProperties);
     assert.ok(poller.getOperationState().isStarted);
@@ -52,10 +48,8 @@ describe("Secrets client - Long Running Operations - delete", () => {
     assert.equal(poller.getOperationState().result!.name, secretName);
   });
 
-  it("can resume from a stopped poller", async function(this: Context) {
-    const secretName = testClient.formatName(
-      `${secretPrefix}-${this!.test!.title}-${secretSuffix}`
-    );
+  it("can resume from a stopped poller", async function (ctx) {
+    const secretName = testClient.formatName(`${secretPrefix}-${ctx.task.name}-${secretSuffix}`);
     await client.setSecret(secretName, "value");
     const poller = await client.beginDeleteSecret(secretName, testPollerProperties);
     assert.ok(poller.getOperationState().isStarted);
@@ -74,24 +68,12 @@ describe("Secrets client - Long Running Operations - delete", () => {
 
     const resumePoller = await client.beginDeleteSecret(secretName, {
       resumeFrom: serialized,
-      ...testPollerProperties
+      ...testPollerProperties,
     });
 
     assert.ok(resumePoller.getOperationState().isStarted);
     const deletedSecret: DeletedSecret = await resumePoller.pollUntilDone();
     assert.equal(deletedSecret.name, secretName);
     assert.ok(resumePoller.getOperationState().isCompleted);
-  });
-
-  // On playback mode, the tests happen too fast for the timeout to work
-  it("can attempt to delete a secret with requestOptions timeout", async function(this: Context) {
-    recorder.skip(undefined, "Timeout tests don't work on playback mode.");
-    const secretName = testClient.formatName(
-      `${secretPrefix}-${this!.test!.title}-${secretSuffix}`
-    );
-    await client.setSecret(secretName, "value");
-    await assertThrowsAbortError(async () => {
-      await client.beginDeleteSecret(secretName, { requestOptions: { timeout: 1 } });
-    });
   });
 });

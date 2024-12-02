@@ -6,14 +6,19 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ExpressRouteCrossConnectionPeerings } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   ExpressRouteCrossConnectionPeering,
   ExpressRouteCrossConnectionPeeringsListNextOptionalParams,
@@ -24,20 +29,21 @@ import {
   ExpressRouteCrossConnectionPeeringsGetResponse,
   ExpressRouteCrossConnectionPeeringsCreateOrUpdateOptionalParams,
   ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse,
-  ExpressRouteCrossConnectionPeeringsListNextResponse
+  ExpressRouteCrossConnectionPeeringsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ExpressRouteCrossConnectionPeerings operations. */
 export class ExpressRouteCrossConnectionPeeringsImpl
-  implements ExpressRouteCrossConnectionPeerings {
-  private readonly client: NetworkManagementClientContext;
+  implements ExpressRouteCrossConnectionPeerings
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class ExpressRouteCrossConnectionPeerings class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -50,12 +56,12 @@ export class ExpressRouteCrossConnectionPeeringsImpl
   public list(
     resourceGroupName: string,
     crossConnectionName: string,
-    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteCrossConnectionPeering> {
     const iter = this.listPagingAll(
       resourceGroupName,
       crossConnectionName,
-      options
+      options,
     );
     return {
       next() {
@@ -64,49 +70,62 @@ export class ExpressRouteCrossConnectionPeeringsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           crossConnectionName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     crossConnectionName: string,
-    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ExpressRouteCrossConnectionPeering[]> {
-    let result = await this._list(
-      resourceGroupName,
-      crossConnectionName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ExpressRouteCrossConnectionPeeringsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        crossConnectionName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         crossConnectionName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     crossConnectionName: string,
-    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams,
   ): AsyncIterableIterator<ExpressRouteCrossConnectionPeering> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       crossConnectionName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -121,11 +140,11 @@ export class ExpressRouteCrossConnectionPeeringsImpl
   private _list(
     resourceGroupName: string,
     crossConnectionName: string,
-    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsListOptionalParams,
   ): Promise<ExpressRouteCrossConnectionPeeringsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, crossConnectionName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -140,25 +159,24 @@ export class ExpressRouteCrossConnectionPeeringsImpl
     resourceGroupName: string,
     crossConnectionName: string,
     peeringName: string,
-    options?: ExpressRouteCrossConnectionPeeringsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ExpressRouteCrossConnectionPeeringsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -167,8 +185,8 @@ export class ExpressRouteCrossConnectionPeeringsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -176,21 +194,23 @@ export class ExpressRouteCrossConnectionPeeringsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, crossConnectionName, peeringName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, crossConnectionName, peeringName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -204,13 +224,13 @@ export class ExpressRouteCrossConnectionPeeringsImpl
     resourceGroupName: string,
     crossConnectionName: string,
     peeringName: string,
-    options?: ExpressRouteCrossConnectionPeeringsDeleteOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       crossConnectionName,
       peeringName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -226,11 +246,11 @@ export class ExpressRouteCrossConnectionPeeringsImpl
     resourceGroupName: string,
     crossConnectionName: string,
     peeringName: string,
-    options?: ExpressRouteCrossConnectionPeeringsGetOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsGetOptionalParams,
   ): Promise<ExpressRouteCrossConnectionPeeringsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, crossConnectionName, peeringName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -248,32 +268,29 @@ export class ExpressRouteCrossConnectionPeeringsImpl
     crossConnectionName: string,
     peeringName: string,
     peeringParameters: ExpressRouteCrossConnectionPeering,
-    options?: ExpressRouteCrossConnectionPeeringsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse>,
       ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -282,8 +299,8 @@ export class ExpressRouteCrossConnectionPeeringsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -291,27 +308,32 @@ export class ExpressRouteCrossConnectionPeeringsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         crossConnectionName,
         peeringName,
         peeringParameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse,
+      OperationState<ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -328,14 +350,14 @@ export class ExpressRouteCrossConnectionPeeringsImpl
     crossConnectionName: string,
     peeringName: string,
     peeringParameters: ExpressRouteCrossConnectionPeering,
-    options?: ExpressRouteCrossConnectionPeeringsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRouteCrossConnectionPeeringsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       crossConnectionName,
       peeringName,
       peeringParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -351,11 +373,11 @@ export class ExpressRouteCrossConnectionPeeringsImpl
     resourceGroupName: string,
     crossConnectionName: string,
     nextLink: string,
-    options?: ExpressRouteCrossConnectionPeeringsListNextOptionalParams
+    options?: ExpressRouteCrossConnectionPeeringsListNextOptionalParams,
   ): Promise<ExpressRouteCrossConnectionPeeringsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, crossConnectionName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -363,30 +385,28 @@ export class ExpressRouteCrossConnectionPeeringsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteCrossConnectionPeeringList
+      bodyMapper: Mappers.ExpressRouteCrossConnectionPeeringList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.crossConnectionName
+    Parameters.crossConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings/{peeringName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings/{peeringName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -394,8 +414,8 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -403,22 +423,21 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.peeringName,
-    Parameters.crossConnectionName
+    Parameters.crossConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings/{peeringName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings/{peeringName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering
+      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -426,31 +445,30 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.peeringName,
-    Parameters.crossConnectionName
+    Parameters.crossConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings/{peeringName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteCrossConnections/{crossConnectionName}/peerings/{peeringName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering
+      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering,
     },
     201: {
-      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering
+      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering,
     },
     202: {
-      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering
+      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering,
     },
     204: {
-      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering
+      bodyMapper: Mappers.ExpressRouteCrossConnectionPeering,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.peeringParameters1,
   queryParameters: [Parameters.apiVersion],
@@ -459,31 +477,30 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.peeringName,
-    Parameters.crossConnectionName
+    Parameters.crossConnectionName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteCrossConnectionPeeringList
+      bodyMapper: Mappers.ExpressRouteCrossConnectionPeeringList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.crossConnectionName
+    Parameters.crossConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

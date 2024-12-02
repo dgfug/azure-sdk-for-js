@@ -1,34 +1,40 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
+import { assert } from "chai";
 import { Buffer } from "buffer";
 import * as fs from "fs";
+import type { Context } from "mocha";
 import * as path from "path";
-import * as zlib from "zlib";
 import { Duplex } from "stream";
+import * as zlib from "zlib";
 
-import { isPlaybackMode, record, Recorder } from "@azure-tools/test-recorder";
+import { isLiveMode, Recorder } from "@azure-tools/test-recorder";
 
+import type { ShareClient, ShareDirectoryClient, StorageSharedKeyCredential } from "../../src";
 import {
   FileSASPermissions,
   generateFileSASQueryParameters,
+  getFileServiceAccountAudience,
   newPipeline,
-  ShareClient,
-  ShareDirectoryClient,
   ShareFileClient,
-  StorageSharedKeyCredential
 } from "../../src";
 import { readStreamToLocalFileWithLogs } from "../../test/utils/testutils.node";
 import {
   bodyToString,
+  configureStorageClient,
   createRandomLocalFile,
-  getBlobServceClient,
+  getAccountName,
+  getBlobServiceClient,
   getBSU,
   getTokenCredential,
-  recorderEnvSetup
+  getUniqueName,
+  recorderEnvSetup,
+  SimpleTokenCredential,
+  uriSanitizers,
 } from "../utils";
-import { Context } from "mocha";
+import { isNode } from "@azure/core-util";
+import { createTestCredential } from "@azure-tools/test-credential";
 
 describe("FileClient Node.js only", () => {
   let shareName: string;
@@ -42,30 +48,98 @@ describe("FileClient Node.js only", () => {
 
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    const serviceClient = getBSU();
-    shareName = recorder.getUniqueName("share");
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
+    const serviceClient = getBSU(recorder);
+    await recorder.addSanitizers(
+      {
+        removeHeaderSanitizer: {
+          headersForRemoval: [
+            "x-ms-file-rename-source",
+            "x-ms-copy-source",
+            "x-ms-copy-source-authorization",
+          ],
+        },
+        uriSanitizers,
+      },
+      ["record", "playback"],
+    );
+    shareName = recorder.variable("share", getUniqueName("share"));
     shareClient = serviceClient.getShareClient(shareName);
     await shareClient.create();
 
-    dirName = recorder.getUniqueName("dir");
+    dirName = recorder.variable("dir", getUniqueName("dir"));
     dirClient = shareClient.getDirectoryClient(dirName);
     await dirClient.create();
 
-    fileName = recorder.getUniqueName("file");
+    fileName = recorder.variable("file", getUniqueName("file"));
     fileClient = dirClient.getFileClient(fileName);
   });
 
-  afterEach(async function(this: Context) {
-    if (!this.currentTest?.isPending()) {
+  afterEach(async function (this: Context) {
+    if (shareClient) {
       await shareClient.delete();
-      await recorder.stop();
     }
+    await recorder.stop();
   });
 
-  it("uploadData - large Buffer as data", async () => {
-    recorder.skip("node", "Temp File - recorder doesn't support saving the file");
+  it("Default audience should work", async () => {
+    await fileClient.create(1024);
+    const fileClientWithOAuthToken = new ShareFileClient(fileClient.url, createTestCredential(), {
+      fileRequestIntent: "backup",
+    });
+    configureStorageClient(recorder, fileClientWithOAuthToken);
+
+    const exist = await fileClientWithOAuthToken.exists();
+    assert.equal(exist, true);
+  });
+
+  it("Customized audience should work", async () => {
+    await fileClient.create(1024);
+    const fileClientWithOAuthToken = new ShareFileClient(fileClient.url, createTestCredential(), {
+      audience: getFileServiceAccountAudience(getAccountName()),
+      fileRequestIntent: "backup",
+    });
+    configureStorageClient(recorder, fileClientWithOAuthToken);
+    const exist = await fileClientWithOAuthToken.exists();
+    assert.equal(exist, true);
+  });
+
+  it("Bad audience should work", async () => {
+    await fileClient.create(1024);
+    const token = await createTestCredential().getToken(
+      "https://badaudience.file.core.windows.net/.default",
+    );
+    const fileClientWithSimpleOAuthToken = new ShareFileClient(
+      fileClient.url,
+      new SimpleTokenCredential(token!.token, new Date(token!.expiresOnTimestamp)),
+      {
+        fileRequestIntent: "backup",
+      },
+    );
+
+    configureStorageClient(recorder, fileClientWithSimpleOAuthToken);
+    try {
+      await fileClientWithSimpleOAuthToken.exists();
+      assert.fail("Should fail with 401");
+    } catch (err) {
+      assert.strictEqual((err as any).statusCode, 401);
+    }
+
+    const fileClientWithOAuthToken = new ShareFileClient(fileClient.url, createTestCredential(), {
+      audience: "https://badaudience.file.core.windows.net/.default",
+      fileRequestIntent: "backup",
+    });
+    configureStorageClient(recorder, fileClientWithOAuthToken);
+    const exist = await fileClientWithOAuthToken.exists();
+    assert.equal(exist, true);
+  });
+
+  it("uploadData - large Buffer as data", async function () {
+    if (isNode && !isLiveMode()) {
+      this.skip();
+    }
     await fileClient.create(257 * 1024 * 1024 * 1024);
     const tempFolderPath = "temp";
     if (!fs.existsSync(tempFolderPath)) {
@@ -75,7 +149,10 @@ describe("FileClient Node.js only", () => {
     await fileClient.uploadData(fs.readFileSync(tempFileLarge));
 
     const downloadResponse = await fileClient.download();
-    const downloadedFile = path.join(tempFolderPath, recorder.getUniqueName("downloadfile."));
+    const downloadedFile = path.join(
+      tempFolderPath,
+      recorder.variable("downloadfile.", getUniqueName("downloadfile.")),
+    );
     await readStreamToLocalFileWithLogs(downloadResponse.readableStreamBody!, downloadedFile);
 
     const downloadedData = await fs.readFileSync(downloadedFile);
@@ -86,7 +163,7 @@ describe("FileClient Node.js only", () => {
   }).timeout(timeoutForLargeFileUploadingTest);
 
   it("upload with buffer and default parameters", async () => {
-    const body: string = recorder.getUniqueName("randomstring");
+    const body: string = recorder.variable("randomstring", getUniqueName("randomstring"));
     const bodyBuffer = Buffer.from(body);
 
     await fileClient.create(body.length);
@@ -102,7 +179,7 @@ describe("FileClient Node.js only", () => {
   });
 
   it("upload with Node.js stream", async () => {
-    const body: string = recorder.getUniqueName("randomstring");
+    const body: string = recorder.variable("randomstring", getUniqueName("randomstring"));
 
     await fileClient.create(body.length);
     await fileClient.uploadRange(
@@ -113,14 +190,14 @@ describe("FileClient Node.js only", () => {
         return duplexStream;
       },
       0,
-      body.length
+      body.length,
     );
     const result = await fileClient.download(0);
     assert.deepStrictEqual(await bodyToString(result, body.length), body);
   });
 
   it("upload with Chinese string body and default parameters", async () => {
-    const body: string = recorder.getUniqueName("randomstring你好");
+    const body: string = recorder.variable("randomstring你好", getUniqueName("randomstring你好"));
     const bodyLength = Buffer.byteLength(body);
 
     await fileClient.create(bodyLength);
@@ -133,13 +210,13 @@ describe("FileClient Node.js only", () => {
     await fileClient.create(content.length);
     const metadata = {
       a: "a",
-      b: "b"
+      b: "b",
     };
     await fileClient.setMetadata(metadata);
 
-    const factories = (fileClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
     const newClient = new ShareFileClient(fileClient.url, credential);
+    configureStorageClient(recorder, newClient);
 
     const result = await newClient.getProperties();
 
@@ -154,17 +231,17 @@ describe("FileClient Node.js only", () => {
     await fileClient.create(content.length);
     const metadata = {
       a: "a",
-      b: "b"
+      b: "b",
     };
     await fileClient.setMetadata(metadata);
 
-    const factories = (fileClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
     const newClient = new ShareFileClient(fileClient.url, credential, {
       retryOptions: {
-        maxTries: 5
-      }
+        maxTries: 5,
+      },
     });
+    configureStorageClient(recorder, newClient);
 
     const result = await newClient.getProperties();
 
@@ -179,14 +256,14 @@ describe("FileClient Node.js only", () => {
     await fileClient.create(content.length);
     const metadata = {
       a: "a",
-      b: "b"
+      b: "b",
     };
     await fileClient.setMetadata(metadata);
 
-    const factories = (fileClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
     const pipeline = newPipeline(credential);
     const newClient = new ShareFileClient(fileClient.url, pipeline);
+    configureStorageClient(recorder, newClient);
 
     const result = await newClient.getProperties();
 
@@ -204,21 +281,20 @@ describe("FileClient Node.js only", () => {
     await fileClient.uploadRange(fileContent, 0, fileContent.length);
 
     // Get a SAS for fileURL
-    const factories = (fileClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
-    const expiresOn = recorder.newDate("now");
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
+    const expiresOn = new Date(recorder.variable("now", new Date().toISOString()));
     expiresOn.setDate(expiresOn.getDate() + 1);
     const sas = generateFileSASQueryParameters(
       {
         expiresOn,
         shareName,
         filePath: `${dirName}/${fileName}`,
-        permissions: FileSASPermissions.parse("r")
+        permissions: FileSASPermissions.parse("r"),
       },
-      credential
+      credential,
     );
 
-    const fileName2 = recorder.getUniqueName("file2");
+    const fileName2 = recorder.variable("file2", getUniqueName("file2"));
     const fileURL2 = dirClient.getFileClient(fileName2);
 
     await fileURL2.create(1024);
@@ -233,41 +309,91 @@ describe("FileClient Node.js only", () => {
     assert.equal(await bodyToString(range2, 512), "b".repeat(512));
   });
 
-  it("uploadRangeFromURL - source bearer token", async function(this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this case, when the STG78 feature is enabled in production.
+  it("uploadRangeFromURL - destination OAuth", async function (this: Context) {
+    // Pipeline config doesn't support well for file OAuth, disable live test for now.
+    // Should add this back after pipeline config is enabled.
+    if (isLiveMode()) {
       this.skip();
     }
-    const blobServiceClient = getBlobServceClient();
-    const containerClient = blobServiceClient.getContainerClient(
-      recorder.getUniqueName("container")
+    await fileClient.create(1024);
+
+    const fileContent = "a".repeat(512) + "b".repeat(512);
+    await fileClient.uploadRange(fileContent, 0, fileContent.length);
+
+    // Get a SAS for fileURL
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
+    const expiresOn = new Date(recorder.variable("now", new Date().toISOString()));
+    expiresOn.setDate(expiresOn.getDate() + 1);
+    const sas = generateFileSASQueryParameters(
+      {
+        expiresOn,
+        shareName,
+        filePath: `${dirName}/${fileName}`,
+        permissions: FileSASPermissions.parse("r"),
+      },
+      credential,
     );
-    await containerClient.create();
-    const blockBlob = containerClient.getBlockBlobClient(recorder.getUniqueName("blockBlob"));
 
-    const blobContent = "a".repeat(512) + "b".repeat(512);
-
-    await blockBlob.upload(blobContent, blobContent.length);
-
-    const fileName2 = recorder.getUniqueName("file2");
-    const tokenCredential = getTokenCredential();
-    const accessToken = await tokenCredential.getToken([]);
+    const fileName2 = recorder.variable("file2", getUniqueName("file2"));
     const fileURL2 = dirClient.getFileClient(fileName2);
-
-    await fileURL2.create(1024);
-
-    await fileURL2.uploadRangeFromURL(blockBlob.url, 0, 0, 512, {
-      sourceAuthorization: {
-        scheme: "Bearer",
-        value: accessToken!.token
-      }
+    const fileClientWithOAuthToken = new ShareFileClient(fileURL2.url, createTestCredential(), {
+      fileRequestIntent: "backup",
     });
 
-    await fileURL2.uploadRangeFromURL(blockBlob.url, 512, 512, 512, {
-      sourceAuthorization: {
-        scheme: "Bearer",
-        value: accessToken!.token
-      }
+    configureStorageClient(recorder, fileClientWithOAuthToken);
+    await fileClientWithOAuthToken.create(1024);
+
+    await fileClientWithOAuthToken.uploadRangeFromURL(`${fileClient.url}?${sas}`, 0, 0, 512);
+    await fileClientWithOAuthToken.uploadRangeFromURL(`${fileClient.url}?${sas}`, 512, 512, 512);
+
+    const range1 = await fileURL2.download(0, 512);
+    const range2 = await fileURL2.download(512, 512);
+
+    assert.equal(await bodyToString(range1, 512), "a".repeat(512));
+    assert.equal(await bodyToString(range2, 512), "b".repeat(512));
+  });
+
+  it("uploadRangeFromURL with fileLastWriteOn", async () => {
+    await fileClient.create(1024);
+
+    const fileContent = "a".repeat(512) + "b".repeat(512);
+    await fileClient.uploadRange(fileContent, 0, fileContent.length);
+
+    // Get a SAS for fileURL
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
+    const expiresOn = new Date(recorder.variable("now", new Date().toISOString()));
+    expiresOn.setDate(expiresOn.getDate() + 1);
+    const sas = generateFileSASQueryParameters(
+      {
+        expiresOn,
+        shareName,
+        filePath: `${dirName}/${fileName}`,
+        permissions: FileSASPermissions.parse("r"),
+      },
+      credential,
+    );
+
+    const fileName2 = recorder.variable("file2", getUniqueName("file2"));
+    const fileURL2 = dirClient.getFileClient(fileName2);
+
+    const createResult = await fileURL2.create(1024);
+    const uploadRangeResult = await fileURL2.uploadRangeFromURL(
+      `${fileClient.url}?${sas}`,
+      0,
+      0,
+      512,
+      {
+        fileLastWrittenMode: "Preserve",
+      },
+    );
+    assert.deepStrictEqual(
+      createResult.fileLastWriteOn,
+      uploadRangeResult.fileLastWriteTime,
+      "File last write time should be expected.",
+    );
+
+    await fileURL2.uploadRangeFromURL(`${fileClient.url}?${sas}`, 512, 512, 512, {
+      fileLastWrittenMode: "Now",
     });
 
     const range1 = await fileURL2.download(0, 512);
@@ -277,15 +403,136 @@ describe("FileClient Node.js only", () => {
     assert.equal(await bodyToString(range2, 512), "b".repeat(512));
   });
 
-  it("should not decompress during downloading", async () => {
+  it("uploadRangeFromURL - source bearer token", async function (this: Context) {
+    const blobServiceClient = getBlobServiceClient(recorder);
+    const containerClient = blobServiceClient.getContainerClient(
+      recorder.variable("container", getUniqueName("container")),
+    );
+    await containerClient.create();
+    const blockBlob = containerClient.getBlockBlobClient(
+      recorder.variable("blockBlob", getUniqueName("blockBlob")),
+    );
+
+    const blobContent = "a".repeat(512) + "b".repeat(512);
+
+    await blockBlob.upload(blobContent, blobContent.length);
+
+    const fileName2 = recorder.variable("file2", getUniqueName("file2"));
+    const tokenCredential = getTokenCredential();
+    const accessToken = await tokenCredential.getToken(["https://storage.azure.com/.default"]);
+    const fileURL2 = dirClient.getFileClient(fileName2);
+
+    await fileURL2.create(1024);
+
+    await fileURL2.uploadRangeFromURL(blockBlob.url, 0, 0, 512, {
+      sourceAuthorization: {
+        scheme: "Bearer",
+        value: accessToken!.token,
+      },
+    });
+
+    await fileURL2.uploadRangeFromURL(blockBlob.url, 512, 512, 512, {
+      sourceAuthorization: {
+        scheme: "Bearer",
+        value: accessToken!.token,
+      },
+    });
+
+    const range1 = await fileURL2.download(0, 512);
+    const range2 = await fileURL2.download(512, 512);
+
+    assert.equal(await bodyToString(range1, 512), "a".repeat(512));
+    assert.equal(await bodyToString(range2, 512), "b".repeat(512));
+  });
+
+  // [Copy source error code] Feature is pending on service side, skip test case for now.
+  it.skip("uploadRangeFromURL - should fail with copy source error message", async function (this: Context) {
+    await fileClient.create(1024);
+
+    const fileContent = "a".repeat(512) + "b".repeat(512);
+    await fileClient.uploadRange(fileContent, 0, fileContent.length);
+
+    // Get a SAS for fileURL
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
+    const expiresOn = new Date(recorder.variable("now", new Date().toISOString()));
+    expiresOn.setDate(expiresOn.getDate() - 1);
+    const sas = generateFileSASQueryParameters(
+      {
+        expiresOn,
+        shareName,
+        filePath: `${dirName}/${fileName}`,
+        permissions: FileSASPermissions.parse("r"),
+      },
+      credential,
+    );
+
+    const fileName2 = recorder.variable("file2", getUniqueName("file2"));
+    const fileURL2 = dirClient.getFileClient(fileName2);
+
+    await fileURL2.create(1024);
+
+    try {
+      await fileURL2.uploadRangeFromURL(`${fileClient.url}?${sas}`, 0, 0, 512);
+    } catch (err) {
+      assert.deepEqual((err as any).details.errorCode, "CannotVerifyCopySource");
+      assert.deepEqual((err as any).details.copySourceStatusCode, 403);
+      assert.deepEqual((err as any).details.copySourceErrorCode, "AuthenticationFailed");
+      assert.deepEqual(
+        (err as any).details.copySourceErrorMessage,
+        "Server failed to authenticate the request. Make sure the value of Authorization header is formed correctly including the signature.",
+      );
+    }
+  });
+
+  // [Copy source error code] Feature is pending on service side, skip the test case for now.
+  it.skip("startCopyFromURL - should fail with copy source error message", async function (this: Context) {
+    await fileClient.create(1024);
+
+    // Get a SAS for fileURL
+    const credential = fileClient["credential"] as StorageSharedKeyCredential;
+    const expiresOn = new Date(recorder.variable("now", new Date().toISOString()));
+    expiresOn.setDate(expiresOn.getDate() - 1);
+    const sas = generateFileSASQueryParameters(
+      {
+        expiresOn,
+        shareName,
+        filePath: `${dirName}/${fileName}`,
+        permissions: FileSASPermissions.parse("r"),
+      },
+      credential,
+    );
+
+    const fileName2 = recorder.variable("file2", getUniqueName("file2"));
+    const fileURL2 = dirClient.getFileClient(fileName2);
+
+    await fileURL2.create(1024);
+
+    try {
+      await fileURL2.startCopyFromURL(`${fileClient.url}?${sas}`);
+    } catch (err) {
+      assert.deepEqual((err as any).details.errorCode, "CannotVerifyCopySource");
+      assert.deepEqual((err as any).details.copySourceStatusCode, 403);
+      assert.deepEqual((err as any).details.copySourceErrorCode, "AuthenticationFailed");
+      assert.deepEqual(
+        (err as any).details.copySourceErrorMessage,
+        "Server failed to authenticate the request. Make sure the value of Authorization header is formed correctly including the signature.",
+      );
+    }
+  });
+
+  it("should not decompress during downloading", async function () {
+    // recorder doesn't save binary payload correctly
+    if (!isLiveMode()) {
+      this.skip();
+    }
     const body: string = "hello world body string!";
     const deflated = zlib.deflateSync(body);
 
     await fileClient.uploadData(deflated, {
       fileHttpHeaders: {
         fileContentEncoding: "deflate",
-        fileContentType: "text/plain"
-      }
+        fileContentType: "text/plain",
+      },
     });
 
     const downloaded = await fileClient.downloadToBuffer();

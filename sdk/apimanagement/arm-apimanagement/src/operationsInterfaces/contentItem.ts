@@ -24,7 +24,7 @@ import {
 export interface ContentItem {
   /**
    * Lists developer portal's content items specified by the provided content type.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param options The options parameters.
@@ -38,7 +38,7 @@ export interface ContentItem {
   /**
    * Returns the entity state (ETag) version of the developer portal's content item specified by its
    * identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param contentItemId Content item identifier.
@@ -53,7 +53,7 @@ export interface ContentItem {
   ): Promise<ContentItemGetEntityTagResponse>;
   /**
    * Returns the developer portal's content item specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param contentItemId Content item identifier.
@@ -68,10 +68,11 @@ export interface ContentItem {
   ): Promise<ContentItemGetResponse>;
   /**
    * Creates a new developer portal's content item specified by the provided content type.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param contentItemId Content item identifier.
+   * @param parameters Create or update parameters.
    * @param options The options parameters.
    */
   createOrUpdate(
@@ -79,11 +80,12 @@ export interface ContentItem {
     serviceName: string,
     contentTypeId: string,
     contentItemId: string,
+    parameters: ContentItemContract,
     options?: ContentItemCreateOrUpdateOptionalParams
   ): Promise<ContentItemCreateOrUpdateResponse>;
   /**
    * Removes the specified developer portal's content item.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param contentItemId Content item identifier.

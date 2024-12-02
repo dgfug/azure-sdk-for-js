@@ -6,12 +6,12 @@ const ApiExtractor = require("@microsoft/api-extractor");
 const NodeCoreLib = require("@microsoft/node-core-library");
 const config = NodeCoreLib.JsonFile.loadAndValidate(
   "api-extractor.json",
-  ApiExtractor.Extractor.jsonSchema
+  ApiExtractor.Extractor.jsonSchema,
 );
 
 // This interface provides additional runtime state that is NOT part of the config file
 const options = {
-  localBuild: process.argv.indexOf("--ship") < 0
+  localBuild: process.argv.indexOf("--ship") < 0,
 };
 const extractor = new ApiExtractor.Extractor(config, options);
 extractor.processProject();

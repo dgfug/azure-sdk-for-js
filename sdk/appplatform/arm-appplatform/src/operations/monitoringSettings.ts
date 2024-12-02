@@ -10,9 +10,13 @@ import { MonitoringSettings } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { AppPlatformManagementClientContext } from "../appPlatformManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { AppPlatformManagementClient } from "../appPlatformManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   MonitoringSettingsGetOptionalParams,
   MonitoringSettingsGetResponse,
@@ -25,13 +29,13 @@ import {
 
 /** Class containing MonitoringSettings operations. */
 export class MonitoringSettingsImpl implements MonitoringSettings {
-  private readonly client: AppPlatformManagementClientContext;
+  private readonly client: AppPlatformManagementClient;
 
   /**
    * Initialize a new instance of the class MonitoringSettings class.
    * @param client Reference to the service client
    */
-  constructor(client: AppPlatformManagementClientContext) {
+  constructor(client: AppPlatformManagementClient) {
     this.client = client;
   }
 
@@ -67,8 +71,8 @@ export class MonitoringSettingsImpl implements MonitoringSettings {
     monitoringSettingResource: MonitoringSettingResource,
     options?: MonitoringSettingsUpdatePutOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<MonitoringSettingsUpdatePutResponse>,
+    SimplePollerLike<
+      OperationState<MonitoringSettingsUpdatePutResponse>,
       MonitoringSettingsUpdatePutResponse
     >
   > {
@@ -78,7 +82,7 @@ export class MonitoringSettingsImpl implements MonitoringSettings {
     ): Promise<MonitoringSettingsUpdatePutResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -111,16 +115,25 @@ export class MonitoringSettingsImpl implements MonitoringSettings {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, monitoringSettingResource, options },
-      updatePutOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        monitoringSettingResource,
+        options
+      },
+      spec: updatePutOperationSpec
     });
+    const poller = await createHttpPoller<
+      MonitoringSettingsUpdatePutResponse,
+      OperationState<MonitoringSettingsUpdatePutResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -160,8 +173,8 @@ export class MonitoringSettingsImpl implements MonitoringSettings {
     monitoringSettingResource: MonitoringSettingResource,
     options?: MonitoringSettingsUpdatePatchOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<MonitoringSettingsUpdatePatchResponse>,
+    SimplePollerLike<
+      OperationState<MonitoringSettingsUpdatePatchResponse>,
       MonitoringSettingsUpdatePatchResponse
     >
   > {
@@ -171,7 +184,7 @@ export class MonitoringSettingsImpl implements MonitoringSettings {
     ): Promise<MonitoringSettingsUpdatePatchResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -204,16 +217,25 @@ export class MonitoringSettingsImpl implements MonitoringSettings {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, monitoringSettingResource, options },
-      updatePatchOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        monitoringSettingResource,
+        options
+      },
+      spec: updatePatchOperationSpec
     });
+    const poller = await createHttpPoller<
+      MonitoringSettingsUpdatePatchResponse,
+      OperationState<MonitoringSettingsUpdatePatchResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**

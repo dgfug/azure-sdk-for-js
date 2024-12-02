@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   TimeZone,
   TimeZonesListByLocationOptionalParams,
   TimeZonesGetOptionalParams,
-  TimeZonesGetResponse
+  TimeZonesGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -25,7 +24,7 @@ export interface TimeZones {
    */
   listByLocation(
     locationName: string,
-    options?: TimeZonesListByLocationOptionalParams
+    options?: TimeZonesListByLocationOptionalParams,
   ): PagedAsyncIterableIterator<TimeZone>;
   /**
    * Gets a managed instance time zone.
@@ -36,6 +35,6 @@ export interface TimeZones {
   get(
     locationName: string,
     timeZoneId: string,
-    options?: TimeZonesGetOptionalParams
+    options?: TimeZonesGetOptionalParams,
   ): Promise<TimeZonesGetResponse>;
 }

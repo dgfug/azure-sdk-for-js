@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VpnServerConfiguration,
   VpnServerConfigurationsListByResourceGroupOptionalParams,
@@ -19,7 +19,7 @@ import {
   TagsObject,
   VpnServerConfigurationsUpdateTagsOptionalParams,
   VpnServerConfigurationsUpdateTagsResponse,
-  VpnServerConfigurationsDeleteOptionalParams
+  VpnServerConfigurationsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,14 +32,14 @@ export interface VpnServerConfigurations {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: VpnServerConfigurationsListByResourceGroupOptionalParams
+    options?: VpnServerConfigurationsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<VpnServerConfiguration>;
   /**
    * Lists all the VpnServerConfigurations in a subscription.
    * @param options The options parameters.
    */
   list(
-    options?: VpnServerConfigurationsListOptionalParams
+    options?: VpnServerConfigurationsListOptionalParams,
   ): PagedAsyncIterableIterator<VpnServerConfiguration>;
   /**
    * Retrieves the details of a VpnServerConfiguration.
@@ -50,7 +50,7 @@ export interface VpnServerConfigurations {
   get(
     resourceGroupName: string,
     vpnServerConfigurationName: string,
-    options?: VpnServerConfigurationsGetOptionalParams
+    options?: VpnServerConfigurationsGetOptionalParams,
   ): Promise<VpnServerConfigurationsGetResponse>;
   /**
    * Creates a VpnServerConfiguration resource if it doesn't exist else updates the existing
@@ -65,10 +65,10 @@ export interface VpnServerConfigurations {
     resourceGroupName: string,
     vpnServerConfigurationName: string,
     vpnServerConfigurationParameters: VpnServerConfiguration,
-    options?: VpnServerConfigurationsCreateOrUpdateOptionalParams
+    options?: VpnServerConfigurationsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VpnServerConfigurationsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VpnServerConfigurationsCreateOrUpdateResponse>,
       VpnServerConfigurationsCreateOrUpdateResponse
     >
   >;
@@ -85,7 +85,7 @@ export interface VpnServerConfigurations {
     resourceGroupName: string,
     vpnServerConfigurationName: string,
     vpnServerConfigurationParameters: VpnServerConfiguration,
-    options?: VpnServerConfigurationsCreateOrUpdateOptionalParams
+    options?: VpnServerConfigurationsCreateOrUpdateOptionalParams,
   ): Promise<VpnServerConfigurationsCreateOrUpdateResponse>;
   /**
    * Updates VpnServerConfiguration tags.
@@ -98,7 +98,7 @@ export interface VpnServerConfigurations {
     resourceGroupName: string,
     vpnServerConfigurationName: string,
     vpnServerConfigurationParameters: TagsObject,
-    options?: VpnServerConfigurationsUpdateTagsOptionalParams
+    options?: VpnServerConfigurationsUpdateTagsOptionalParams,
   ): Promise<VpnServerConfigurationsUpdateTagsResponse>;
   /**
    * Deletes a VpnServerConfiguration.
@@ -109,8 +109,8 @@ export interface VpnServerConfigurations {
   beginDelete(
     resourceGroupName: string,
     vpnServerConfigurationName: string,
-    options?: VpnServerConfigurationsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VpnServerConfigurationsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a VpnServerConfiguration.
    * @param resourceGroupName The resource group name of the VpnServerConfiguration.
@@ -120,6 +120,6 @@ export interface VpnServerConfigurations {
   beginDeleteAndWait(
     resourceGroupName: string,
     vpnServerConfigurationName: string,
-    options?: VpnServerConfigurationsDeleteOptionalParams
+    options?: VpnServerConfigurationsDeleteOptionalParams,
   ): Promise<void>;
 }

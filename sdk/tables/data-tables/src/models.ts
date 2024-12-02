@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TableGetAccessPolicyHeaders, TableInsertEntityHeaders } from "./generated/models";
-import { OperationOptions, CommonClientOptions } from "@azure/core-client";
+import type { CommonClientOptions, OperationOptions } from "@azure/core-client";
+import type {
+  TableGetAccessPolicyHeaders,
+  TableInsertEntityHeaders,
+} from "./generated/models/index.js";
 
 /**
  * Represents the Create or Delete Entity operation to be included in a Transaction request
@@ -14,7 +17,8 @@ export type CreateDeleteEntityAction = ["create" | "delete", TableEntity];
  */
 export type UpdateEntityAction =
   | ["update" | "upsert", TableEntity]
-  | ["update" | "upsert", TableEntity, "Merge" | "Replace"];
+  | ["update" | "upsert", TableEntity, "Merge" | "Replace"]
+  | ["update" | "upsert", TableEntity, "Merge" | "Replace", UpdateTableEntityOptions | undefined];
 
 /**
  * Represents the union of all the available transactional actions
@@ -201,12 +205,12 @@ export interface Edm<T extends EdmTypes> {
   value: T extends "Binary"
     ? string
     : T extends "Boolean"
-    ? boolean
-    : T extends "Double"
-    ? number
-    : T extends "Int32"
-    ? number
-    : string;
+      ? boolean
+      : T extends "Double"
+        ? number
+        : T extends "Int32"
+          ? number
+          : string;
   /**
    * The type of the entity property
    */

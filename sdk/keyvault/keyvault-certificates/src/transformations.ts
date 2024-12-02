@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import { uint8ArrayToString } from "@azure/core-util";
+import type {
   ArrayOneOrMore,
   CertificateContentType,
   CertificateOperation,
@@ -13,9 +14,9 @@ import {
   KeyVaultCertificateWithPolicy,
   SubjectAlternativeNames,
   CertificateContact,
-  CertificateOperationError
-} from "./certificatesModels";
-import {
+  CertificateOperationError,
+} from "./certificatesModels.js";
+import type {
   CertificateAttributes,
   CertificateBundle,
   CertificatePolicy as CoreCertificatePolicy,
@@ -28,9 +29,9 @@ import {
   CertificateOperation as CoreCertificateOperation,
   Contacts as CoreContacts,
   JsonWebKeyType as CertificateKeyType,
-  ErrorModel
-} from "./generated/models";
-import { parseKeyVaultCertificateIdentifier } from "./identifier";
+  ErrorModel,
+} from "./generated/models/index.js";
+import { parseKeyVaultCertificateIdentifier } from "./identifier.js";
 
 export function toCoreAttributes(properties: CertificateProperties): CertificateAttributes {
   return {
@@ -39,21 +40,21 @@ export function toCoreAttributes(properties: CertificateProperties): Certificate
     notBefore: properties.notBefore,
     expires: properties.expiresOn,
     created: properties.createdOn,
-    updated: properties.updatedOn
+    updated: properties.updatedOn,
   };
 }
 
 export function toCorePolicy(
   id: string | undefined,
   policy: CertificatePolicy,
-  attributes: CertificateAttributes = {}
+  attributes: CertificateAttributes = {},
 ): CoreCertificatePolicy {
   let subjectAlternativeNames: CoreSubjectAlternativeNames = {};
   if (policy.subjectAlternativeNames) {
     subjectAlternativeNames = {
       emails: policy.subjectAlternativeNames.emails,
       dnsNames: policy.subjectAlternativeNames.dnsNames,
-      upns: policy.subjectAlternativeNames.userPrincipalNames
+      upns: policy.subjectAlternativeNames.userPrincipalNames,
     };
   }
 
@@ -64,8 +65,8 @@ export function toCorePolicy(
           action: { actionType: action.action },
           trigger: {
             lifetimePercentage: action.lifetimePercentage,
-            daysBeforeExpiry: action.daysBeforeExpiry
-          }
+            daysBeforeExpiry: action.daysBeforeExpiry,
+          },
         }))
       : undefined,
     keyProperties: {
@@ -73,24 +74,24 @@ export function toCorePolicy(
       keySize: policy.keySize,
       reuseKey: policy.reuseKey,
       curve: policy.keyCurveName,
-      exportable: policy.exportable
+      exportable: policy.exportable,
     },
     secretProperties: {
-      contentType: policy.contentType
+      contentType: policy.contentType,
     },
     x509CertificateProperties: {
       subject: policy.subject,
       ekus: policy.enhancedKeyUsage,
       subjectAlternativeNames,
       keyUsage: policy.keyUsage,
-      validityInMonths: policy.validityInMonths
+      validityInMonths: policy.validityInMonths,
     },
     issuerParameters: {
       name: policy.issuerName,
       certificateType: policy.certificateType,
-      certificateTransparency: policy.certificateTransparency
+      certificateTransparency: policy.certificateTransparency,
     },
-    attributes
+    attributes,
   };
 }
 
@@ -104,19 +105,19 @@ export function toPublicPolicy(policy: CoreCertificatePolicy = {}): CertificateP
       if (names.emails && names.emails.length) {
         subjectAlternativeNames = {
           ...subjectAlternativeNames,
-          emails: names.emails as ArrayOneOrMore<string>
+          emails: names.emails as ArrayOneOrMore<string>,
         };
       }
       if (names.dnsNames && names.dnsNames.length) {
         subjectAlternativeNames = {
           ...subjectAlternativeNames,
-          dnsNames: names.dnsNames as ArrayOneOrMore<string>
+          dnsNames: names.dnsNames as ArrayOneOrMore<string>,
         };
       }
       if (names.upns && names.upns.length) {
         subjectAlternativeNames = {
           ...subjectAlternativeNames,
-          userPrincipalNames: names.upns as ArrayOneOrMore<string>
+          userPrincipalNames: names.upns as ArrayOneOrMore<string>,
         };
       }
     }
@@ -127,7 +128,7 @@ export function toPublicPolicy(policy: CoreCertificatePolicy = {}): CertificateP
       ? policy.lifetimeActions.map((action) => ({
           action: action.action ? action.action.actionType : undefined,
           daysBeforeExpiry: action.trigger ? action.trigger.daysBeforeExpiry : undefined,
-          lifetimePercentage: action.trigger ? action.trigger.lifetimePercentage : undefined
+          lifetimePercentage: action.trigger ? action.trigger.lifetimePercentage : undefined,
         }))
       : undefined,
     contentType: policy.secretProperties
@@ -137,7 +138,7 @@ export function toPublicPolicy(policy: CoreCertificatePolicy = {}): CertificateP
     keyUsage: x509Properties.keyUsage,
     validityInMonths: x509Properties.validityInMonths,
     subject: x509Properties.subject,
-    subjectAlternativeNames: subjectAlternativeNames!
+    subjectAlternativeNames: subjectAlternativeNames!,
   };
 
   if (policy.attributes) {
@@ -174,7 +175,7 @@ export function toPublicIssuer(issuer: IssuerBundle = {}): CertificateIssuer {
     password: issuer.credentials && issuer.credentials.password,
     enabled: attributes.enabled,
     createdOn: attributes.created,
-    updatedOn: attributes.updated
+    updatedOn: attributes.updated,
   };
 
   if (issuer.organizationDetails) {
@@ -184,7 +185,7 @@ export function toPublicIssuer(issuer: IssuerBundle = {}): CertificateIssuer {
           email: x.emailAddress,
           phone: x.phone,
           firstName: x.firstName,
-          lastName: x.lastName
+          lastName: x.lastName,
         }))
       : undefined;
   }
@@ -192,7 +193,7 @@ export function toPublicIssuer(issuer: IssuerBundle = {}): CertificateIssuer {
 }
 
 export function getCertificateFromCertificateBundle(
-  certificateBundle: CertificateBundle
+  certificateBundle: CertificateBundle,
 ): KeyVaultCertificate {
   const parsedId = parseKeyVaultCertificateIdentifier(certificateBundle.id!);
 
@@ -211,7 +212,10 @@ export function getCertificateFromCertificateBundle(
     version: parsedId.version,
     tags: certificateBundle.tags,
     x509Thumbprint: certificateBundle.x509Thumbprint,
-    recoverableDays: attributes.recoverableDays
+    x509ThumbprintString:
+      certificateBundle.x509Thumbprint &&
+      uint8ArrayToString(certificateBundle.x509Thumbprint, "hex"),
+    recoverableDays: attributes.recoverableDays,
   };
 
   return {
@@ -219,12 +223,12 @@ export function getCertificateFromCertificateBundle(
     secretId: certificateBundle.sid,
     name: parsedId.name,
     cer: certificateBundle.cer,
-    properties: abstractProperties
+    properties: abstractProperties,
   };
 }
 
 export function getCertificateWithPolicyFromCertificateBundle(
-  certificateBundle: CertificateBundle
+  certificateBundle: CertificateBundle,
 ): KeyVaultCertificateWithPolicy {
   const parsedId = parseKeyVaultCertificateIdentifier(certificateBundle.id!);
 
@@ -244,7 +248,10 @@ export function getCertificateWithPolicyFromCertificateBundle(
     version: parsedId.version,
     tags: certificateBundle.tags,
     x509Thumbprint: certificateBundle.x509Thumbprint,
-    recoverableDays: attributes.recoverableDays
+    x509ThumbprintString:
+      certificateBundle.x509Thumbprint &&
+      uint8ArrayToString(certificateBundle.x509Thumbprint, "hex"),
+    recoverableDays: attributes.recoverableDays,
   };
 
   return {
@@ -253,16 +260,15 @@ export function getCertificateWithPolicyFromCertificateBundle(
     name: parsedId.name,
     cer: certificateBundle.cer,
     policy,
-    properties: abstractProperties
+    properties: abstractProperties,
   };
 }
 
 export function getDeletedCertificateFromDeletedCertificateBundle(
-  certificateBundle: DeletedCertificateBundle
+  certificateBundle: DeletedCertificateBundle,
 ): DeletedCertificate {
-  const certificate: KeyVaultCertificateWithPolicy = getCertificateWithPolicyFromCertificateBundle(
-    certificateBundle
-  );
+  const certificate: KeyVaultCertificateWithPolicy =
+    getCertificateWithPolicyFromCertificateBundle(certificateBundle);
 
   return {
     policy: certificate.policy,
@@ -274,7 +280,7 @@ export function getDeletedCertificateFromDeletedCertificateBundle(
     properties: certificate.properties,
     recoveryId: certificateBundle.recoveryId,
     scheduledPurgeDate: certificateBundle.scheduledPurgeDate,
-    deletedOn: certificateBundle.deletedDate
+    deletedOn: certificateBundle.deletedDate,
   };
 }
 
@@ -295,9 +301,10 @@ export function getDeletedCertificateFromItem(item: DeletedCertificateItem): Del
     id: item.id,
     tags: item.tags,
     x509Thumbprint: item.x509Thumbprint,
+    x509ThumbprintString: item.x509Thumbprint && uint8ArrayToString(item.x509Thumbprint, "hex"),
 
     recoverableDays: item.attributes?.recoverableDays,
-    recoveryLevel: item.attributes?.recoveryLevel
+    recoveryLevel: item.attributes?.recoveryLevel,
   };
 
   return {
@@ -305,18 +312,18 @@ export function getDeletedCertificateFromItem(item: DeletedCertificateItem): Del
     recoveryId: item.recoveryId,
     scheduledPurgeDate: item.scheduledPurgeDate,
     name: parsedId.name,
-    properties: abstractProperties
+    properties: abstractProperties,
   };
 }
 
 function getCertificateOperationErrorFromErrorModel(
-  error?: ErrorModel | null
+  error?: ErrorModel | null,
 ): CertificateOperationError | undefined {
   if (error) {
     return {
       code: error.code,
       innerError: getCertificateOperationErrorFromErrorModel(error.innerError),
-      message: error.message
+      message: error.message,
     };
   }
   return undefined;
@@ -325,7 +332,7 @@ function getCertificateOperationErrorFromErrorModel(
 export function getCertificateOperationFromCoreOperation(
   certificateName: string,
   vaultUrl: string,
-  operation: CoreCertificateOperation
+  operation: CoreCertificateOperation,
 ): CertificateOperation {
   return {
     cancellationRequested: operation.cancellationRequested,
@@ -344,20 +351,20 @@ export function getCertificateOperationFromCoreOperation(
     status: operation.status,
     statusDetails: operation.statusDetails,
     target: operation.target,
-    vaultUrl: vaultUrl
+    vaultUrl: vaultUrl,
   };
 }
 
 export function coreContactsToCertificateContacts(contacts: CoreContacts): CertificateContact[] {
   return contacts.contactList
     ? contacts.contactList.map(
-        (x) => ({ email: x.emailAddress, phone: x.phone, name: x.name } as CertificateContact)
+        (x) => ({ email: x.emailAddress, phone: x.phone, name: x.name }) as CertificateContact,
       )
     : [];
 }
 
 export function getPropertiesFromCertificateBundle(
-  certificateBundle: CertificateBundle
+  certificateBundle: CertificateBundle,
 ): CertificateProperties {
   const parsedId = parseKeyVaultCertificateIdentifier(certificateBundle.id!);
   const attributes: CertificateAttributes = certificateBundle.attributes || {};
@@ -375,7 +382,10 @@ export function getPropertiesFromCertificateBundle(
     version: parsedId.version,
     tags: certificateBundle.tags,
     x509Thumbprint: certificateBundle.x509Thumbprint,
-    recoverableDays: attributes.recoverableDays
+    x509ThumbprintString:
+      certificateBundle.x509Thumbprint &&
+      uint8ArrayToString(certificateBundle.x509Thumbprint, "hex"),
+    recoverableDays: attributes.recoverableDays,
   };
 
   return abstractProperties;

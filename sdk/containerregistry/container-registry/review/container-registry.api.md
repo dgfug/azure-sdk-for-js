@@ -4,13 +4,13 @@
 
 ```ts
 
-/// <reference types="node" />
-/// <reference lib="esnext.asynciterable" />
+import type { CommonClientOptions } from '@azure/core-client';
+import type { OperationOptions } from '@azure/core-client';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { TokenCredential } from '@azure/core-auth';
 
-import { OperationOptions } from '@azure/core-client';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PipelineOptions } from '@azure/core-rest-pipeline';
-import { TokenCredential } from '@azure/core-auth';
+// @public
+export type ArtifactManifestOrder = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
 
 // @public
 export interface ArtifactManifestPlatform {
@@ -33,9 +33,12 @@ export interface ArtifactManifestProperties {
     readonly registryLoginServer: string;
     readonly relatedArtifacts: ArtifactManifestPlatform[];
     readonly repositoryName: string;
-    readonly size?: number;
+    readonly sizeInBytes?: number;
     readonly tags: string[];
 }
+
+// @public
+export type ArtifactTagOrder = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
 
 // @public
 export interface ArtifactTagProperties {
@@ -63,7 +66,26 @@ export class ContainerRegistryClient {
 }
 
 // @public
-export interface ContainerRegistryClientOptions extends PipelineOptions {
+export interface ContainerRegistryClientOptions extends CommonClientOptions {
+    audience?: string;
+    serviceVersion?: "2021-07-01";
+}
+
+// @public
+export class ContainerRegistryContentClient {
+    constructor(endpoint: string, repositoryName: string, credential: TokenCredential, options?: ContainerRegistryContentClientOptions);
+    deleteBlob(digest: string, options?: DeleteBlobOptions): Promise<void>;
+    deleteManifest(digest: string, options?: DeleteManifestOptions): Promise<void>;
+    downloadBlob(digest: string, options?: DownloadBlobOptions): Promise<DownloadBlobResult>;
+    readonly endpoint: string;
+    getManifest(tagOrDigest: string, options?: GetManifestOptions): Promise<GetManifestResult>;
+    readonly repositoryName: string;
+    setManifest(manifest: Buffer | NodeJS.ReadableStream | OciImageManifest | Record<string, unknown>, options?: SetManifestOptions): Promise<SetManifestResult>;
+    uploadBlob(blob: NodeJS.ReadableStream | Buffer, options?: UploadBlobOptions): Promise<UploadBlobResult>;
+}
+
+// @public
+export interface ContainerRegistryContentClientOptions extends CommonClientOptions {
     audience?: string;
     serviceVersion?: "2021-07-01";
 }
@@ -98,6 +120,14 @@ export interface DeleteArtifactOptions extends OperationOptions {
 }
 
 // @public
+export interface DeleteBlobOptions extends OperationOptions {
+}
+
+// @public
+export interface DeleteManifestOptions extends OperationOptions {
+}
+
+// @public
 export interface DeleteRepositoryOptions extends OperationOptions {
 }
 
@@ -106,7 +136,34 @@ export interface DeleteTagOptions extends OperationOptions {
 }
 
 // @public
+export class DigestMismatchError extends Error {
+    constructor(message: string);
+}
+
+// @public
+export interface DownloadBlobOptions extends OperationOptions {
+}
+
+// @public
+export interface DownloadBlobResult {
+    content: NodeJS.ReadableStream;
+    digest: string;
+}
+
+// @public
+export interface GetManifestOptions extends OperationOptions {
+}
+
+// @public
 export interface GetManifestPropertiesOptions extends OperationOptions {
+}
+
+// @public
+export interface GetManifestResult {
+    content: Buffer;
+    digest: string;
+    manifest: Record<string, unknown>;
+    mediaType: string;
 }
 
 // @public
@@ -155,14 +212,21 @@ export enum KnownArtifactOperatingSystem {
 // @public
 export enum KnownContainerRegistryAudience {
     AzureResourceManagerChina = "https://management.chinacloudapi.cn",
+    // @deprecated
     AzureResourceManagerGermany = "https://management.microsoftazure.de",
     AzureResourceManagerGovernment = "https://management.usgovcloudapi.net",
     AzureResourceManagerPublicCloud = "https://management.azure.com"
 }
 
 // @public
+export enum KnownManifestMediaType {
+    DockerManifest = "application/vnd.docker.distribution.manifest.v2+json",
+    OciImageManifest = "application/vnd.oci.image.manifest.v1+json"
+}
+
+// @public
 export interface ListManifestPropertiesOptions extends OperationOptions {
-    orderBy?: ManifestOrderBy;
+    order?: ArtifactManifestOrder;
 }
 
 // @public
@@ -171,16 +235,48 @@ export interface ListRepositoriesOptions extends OperationOptions {
 
 // @public
 export interface ListTagPropertiesOptions extends OperationOptions {
-    orderBy?: TagOrderBy;
+    order?: ArtifactTagOrder;
 }
-
-// @public
-export type ManifestOrderBy = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
 
 // @public
 export interface ManifestPageResponse extends Array<ArtifactManifestProperties> {
     continuationToken?: string;
 }
+
+// @public
+export interface OciAnnotations extends Record<string, unknown> {
+    "org.opencontainers.image.authors"?: string;
+    "org.opencontainers.image.created"?: string;
+    "org.opencontainers.image.description"?: string;
+    "org.opencontainers.image.documentation"?: string;
+    "org.opencontainers.image.licenses"?: string;
+    "org.opencontainers.image.ref.name"?: string;
+    "org.opencontainers.image.revision"?: string;
+    "org.opencontainers.image.source"?: string;
+    "org.opencontainers.image.title"?: string;
+    "org.opencontainers.image.url"?: string;
+    "org.opencontainers.image.vendor"?: string;
+    "org.opencontainers.image.version"?: string;
+}
+
+// @public
+export interface OciDescriptor {
+    annotations?: OciAnnotations;
+    digest: string;
+    mediaType: string;
+    size: number;
+    urls?: string[];
+}
+
+// @public
+export type OciImageManifest = {
+    schemaVersion: 2;
+    mediaType?: `${KnownManifestMediaType.OciImageManifest}`;
+    artifactType?: string;
+    config: OciDescriptor;
+    layers: OciDescriptor[];
+    annotations?: OciAnnotations;
+};
 
 // @public
 export interface RegistryArtifact {
@@ -202,7 +298,15 @@ export interface RepositoryPageResponse extends Array<string> {
 }
 
 // @public
-export type TagOrderBy = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
+export interface SetManifestOptions extends OperationOptions {
+    mediaType?: string;
+    tag?: string;
+}
+
+// @public
+export interface SetManifestResult {
+    digest: string;
+}
 
 // @public
 export interface TagPageResponse extends Array<ArtifactTagProperties> {
@@ -231,6 +335,16 @@ export interface UpdateTagPropertiesOptions extends OperationOptions {
     canList?: boolean;
     canRead?: boolean;
     canWrite?: boolean;
+}
+
+// @public
+export interface UploadBlobOptions extends OperationOptions {
+}
+
+// @public
+export interface UploadBlobResult {
+    digest: string;
+    sizeInBytes: number;
 }
 
 // (No @packageDocumentation comment for this package)

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   LocalNetworkGateway,
   LocalNetworkGatewaysListOptionalParams,
@@ -18,7 +18,7 @@ import {
   LocalNetworkGatewaysDeleteOptionalParams,
   TagsObject,
   LocalNetworkGatewaysUpdateTagsOptionalParams,
-  LocalNetworkGatewaysUpdateTagsResponse
+  LocalNetworkGatewaysUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -31,7 +31,7 @@ export interface LocalNetworkGateways {
    */
   list(
     resourceGroupName: string,
-    options?: LocalNetworkGatewaysListOptionalParams
+    options?: LocalNetworkGatewaysListOptionalParams,
   ): PagedAsyncIterableIterator<LocalNetworkGateway>;
   /**
    * Creates or updates a local network gateway in the specified resource group.
@@ -44,10 +44,10 @@ export interface LocalNetworkGateways {
     resourceGroupName: string,
     localNetworkGatewayName: string,
     parameters: LocalNetworkGateway,
-    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams
+    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<LocalNetworkGatewaysCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<LocalNetworkGatewaysCreateOrUpdateResponse>,
       LocalNetworkGatewaysCreateOrUpdateResponse
     >
   >;
@@ -62,7 +62,7 @@ export interface LocalNetworkGateways {
     resourceGroupName: string,
     localNetworkGatewayName: string,
     parameters: LocalNetworkGateway,
-    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams
+    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams,
   ): Promise<LocalNetworkGatewaysCreateOrUpdateResponse>;
   /**
    * Gets the specified local network gateway in a resource group.
@@ -73,7 +73,7 @@ export interface LocalNetworkGateways {
   get(
     resourceGroupName: string,
     localNetworkGatewayName: string,
-    options?: LocalNetworkGatewaysGetOptionalParams
+    options?: LocalNetworkGatewaysGetOptionalParams,
   ): Promise<LocalNetworkGatewaysGetResponse>;
   /**
    * Deletes the specified local network gateway.
@@ -84,8 +84,8 @@ export interface LocalNetworkGateways {
   beginDelete(
     resourceGroupName: string,
     localNetworkGatewayName: string,
-    options?: LocalNetworkGatewaysDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: LocalNetworkGatewaysDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified local network gateway.
    * @param resourceGroupName The name of the resource group.
@@ -95,7 +95,7 @@ export interface LocalNetworkGateways {
   beginDeleteAndWait(
     resourceGroupName: string,
     localNetworkGatewayName: string,
-    options?: LocalNetworkGatewaysDeleteOptionalParams
+    options?: LocalNetworkGatewaysDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Updates a local network gateway tags.
@@ -108,6 +108,6 @@ export interface LocalNetworkGateways {
     resourceGroupName: string,
     localNetworkGatewayName: string,
     parameters: TagsObject,
-    options?: LocalNetworkGatewaysUpdateTagsOptionalParams
+    options?: LocalNetworkGatewaysUpdateTagsOptionalParams,
   ): Promise<LocalNetworkGatewaysUpdateTagsResponse>;
 }

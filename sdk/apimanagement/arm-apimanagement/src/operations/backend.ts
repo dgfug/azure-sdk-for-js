@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Backend } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   BackendContract,
   BackendListByServiceNextOptionalParams,
@@ -34,19 +35,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Backend operations. */
 export class BackendImpl implements Backend {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class Backend class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists a collection of backends in the specified service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -67,11 +68,15 @@ export class BackendImpl implements Backend {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -80,15 +85,22 @@ export class BackendImpl implements Backend {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: BackendListByServiceOptionalParams
+    options?: BackendListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<BackendContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: BackendListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -97,7 +109,9 @@ export class BackendImpl implements Backend {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -117,7 +131,7 @@ export class BackendImpl implements Backend {
 
   /**
    * Lists a collection of backends in the specified service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -134,7 +148,7 @@ export class BackendImpl implements Backend {
 
   /**
    * Gets the entity state (Etag) version of the backend specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param backendId Identifier of the Backend entity. Must be unique in the current API Management
    *                  service instance.
@@ -154,7 +168,7 @@ export class BackendImpl implements Backend {
 
   /**
    * Gets the details of the backend specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param backendId Identifier of the Backend entity. Must be unique in the current API Management
    *                  service instance.
@@ -174,7 +188,7 @@ export class BackendImpl implements Backend {
 
   /**
    * Creates or Updates a backend.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param backendId Identifier of the Backend entity. Must be unique in the current API Management
    *                  service instance.
@@ -196,7 +210,7 @@ export class BackendImpl implements Backend {
 
   /**
    * Updates an existing backend.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param backendId Identifier of the Backend entity. Must be unique in the current API Management
    *                  service instance.
@@ -228,7 +242,7 @@ export class BackendImpl implements Backend {
 
   /**
    * Deletes the specified backend.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param backendId Identifier of the Backend entity. Must be unique in the current API Management
    *                  service instance.
@@ -250,9 +264,9 @@ export class BackendImpl implements Backend {
   }
 
   /**
-   * Notifies the APIM proxy to create a new connection to the backend after the specified timeout. If no
-   * timeout was specified, timeout of 2 minutes is used.
-   * @param resourceGroupName The name of the resource group.
+   * Notifies the API Management gateway to create a new connection to the backend after the specified
+   * timeout. If no timeout was specified, timeout of 2 minutes is used.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param backendId Identifier of the Backend entity. Must be unique in the current API Management
    *                  service instance.
@@ -272,7 +286,7 @@ export class BackendImpl implements Backend {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -383,7 +397,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters18,
+  requestBody: Parameters.parameters27,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -413,7 +427,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters19,
+  requestBody: Parameters.parameters28,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -462,7 +476,7 @@ const reconnectOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters20,
+  requestBody: Parameters.parameters29,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -486,12 +500,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

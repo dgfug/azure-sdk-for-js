@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { assert, AssertionError } from "chai";
-import { DeviceCodeCredential } from "../../../src";
-import { VisualStudioCodeCredential } from "../../../src";
+// Licensed under the MIT License.
+import { DeviceCodeCredential } from "../../../src/index.js";
+import { VisualStudioCodeCredential } from "../../../src/index.js";
+import { describe, it, assert } from "vitest";
 
 /**
  * A helper to assert that a Promise rejects.
@@ -11,10 +10,10 @@ import { VisualStudioCodeCredential } from "../../../src";
 async function assertRejects(p: Promise<unknown>, regexp: RegExp): Promise<void> {
   try {
     await p;
-  } catch (e) {
+  } catch (e: any) {
     if (!regexp.test(e.message)) {
       throw new AssertionError(
-        `The input did not match the regular expression ${regexp}. Input:\n\n'${e.message}'`
+        `The input did not match the regular expression ${regexp}. Input:\n\n'${e.message}'`,
       );
     }
     return;
@@ -22,21 +21,21 @@ async function assertRejects(p: Promise<unknown>, regexp: RegExp): Promise<void>
   throw new AssertionError("Expected the function body to throw.");
 }
 
-describe("Plugin API", function(this: Mocha.Suite) {
-  it("Setting persistence options throws if not initialized", function() {
+describe("Plugin API", function (this: Mocha.Suite) {
+  it("Setting persistence options throws if not initialized", function () {
     assert.throws(() => {
       new DeviceCodeCredential({
         tokenCachePersistenceOptions: {
-          enabled: true
-        }
+          enabled: true,
+        },
       });
     }, /no persistence provider.*@azure\/identity-cache-persistence/);
   });
 
-  it("Calling getToken on VisualStudioCodeCredential throws if not initialized", async function() {
+  it("Calling getToken on VisualStudioCodeCredential throws if not initialized", async function () {
     await assertRejects(
       new VisualStudioCodeCredential().getToken("https://graph.microsoft.com/.default"),
-      /No implementation of `VisualStudioCodeCredential`.*@azure\/identity-vscode/
+      /No implementation of `VisualStudioCodeCredential`.*@azure\/identity-vscode/,
     );
   });
 });

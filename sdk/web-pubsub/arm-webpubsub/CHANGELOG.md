@@ -1,6 +1,6 @@
 # Release History
 
-## 1.0.0-beta.2 (Unreleased)
+## 1.2.1 (Unreleased)
 
 ### Features Added
 
@@ -10,22 +10,204 @@
 
 ### Other Changes
 
-## 1.0.0-beta.1 (2021-08-25)
+## 1.2.0 (2024-09-11)
+    
+### Features Added
 
-    - Bump major version
+  - Added operation group WebPubSubReplicas
+  - Added operation group WebPubSubReplicaSharedPrivateLinkResources
+  - Added operation WebPubSub.listReplicaSkus
+  - Added Interface IPRule
+  - Added Interface Replica
+  - Added Interface ReplicaList
+  - Added Interface WebPubSubListReplicaSkusOptionalParams
+  - Added Interface WebPubSubRegenerateKeyHeaders
+  - Added Interface WebPubSubReplicasCreateOrUpdateOptionalParams
+  - Added Interface WebPubSubReplicasDeleteOptionalParams
+  - Added Interface WebPubSubReplicasGetOptionalParams
+  - Added Interface WebPubSubReplicaSharedPrivateLinkResourcesCreateOrUpdateOptionalParams
+  - Added Interface WebPubSubReplicaSharedPrivateLinkResourcesGetOptionalParams
+  - Added Interface WebPubSubReplicaSharedPrivateLinkResourcesListNextOptionalParams
+  - Added Interface WebPubSubReplicaSharedPrivateLinkResourcesListOptionalParams
+  - Added Interface WebPubSubReplicasListNextOptionalParams
+  - Added Interface WebPubSubReplicasListOptionalParams
+  - Added Interface WebPubSubReplicasRestartHeaders
+  - Added Interface WebPubSubReplicasRestartOptionalParams
+  - Added Interface WebPubSubReplicasUpdateHeaders
+  - Added Interface WebPubSubReplicasUpdateOptionalParams
+  - Added Interface WebPubSubRestartHeaders
+  - Added Interface WebPubSubSocketIOSettings
+  - Added Interface WebPubSubUpdateHeaders
+  - Added Type Alias ServiceKind
+  - Added Type Alias WebPubSubListReplicaSkusResponse
+  - Added Type Alias WebPubSubReplicasCreateOrUpdateResponse
+  - Added Type Alias WebPubSubReplicasGetResponse
+  - Added Type Alias WebPubSubReplicaSharedPrivateLinkResourcesCreateOrUpdateResponse
+  - Added Type Alias WebPubSubReplicaSharedPrivateLinkResourcesGetResponse
+  - Added Type Alias WebPubSubReplicaSharedPrivateLinkResourcesListNextResponse
+  - Added Type Alias WebPubSubReplicaSharedPrivateLinkResourcesListResponse
+  - Added Type Alias WebPubSubReplicasListNextResponse
+  - Added Type Alias WebPubSubReplicasListResponse
+  - Added Type Alias WebPubSubReplicasRestartResponse
+  - Added Type Alias WebPubSubReplicasUpdateResponse
+  - Added Type Alias WebPubSubRestartResponse
+  - Interface Resource has a new optional parameter systemData
+  - Interface WebPubSubHubProperties has a new optional parameter webSocketKeepAliveIntervalInSeconds
+  - Interface WebPubSubNetworkACLs has a new optional parameter ipRules
+  - Interface WebPubSubResource has a new optional parameter kind
+  - Interface WebPubSubResource has a new optional parameter regionEndpointEnabled
+  - Interface WebPubSubResource has a new optional parameter resourceStopped
+  - Interface WebPubSubResource has a new optional parameter socketIO
+  - Added Enum KnownServiceKind
+  - Interface CustomCertificate no longer has parameter systemData
+  - Interface CustomDomain no longer has parameter systemData
+  - Interface PrivateEndpointConnection no longer has parameter systemData
+  - Interface SharedPrivateLinkResource no longer has parameter systemData
+  - Interface WebPubSubHub no longer has parameter systemData
+  - Interface WebPubSubResource no longer has parameter systemData
+  - Parameter location of interface TrackedResource is now required
+    
+    
+## 2.0.0-beta.2 (2023-10-10)
+    
+### Features Added
 
-## 0.1.0-beta.1 (2021-07-27)
+  - Added operation group WebPubSubReplicas
+  - Added operation WebPubSub.listReplicaSkus
+  - Added Interface IPRule
+  - Added Interface Replica
+  - Added Interface ReplicaList
+  - Added Interface WebPubSubListReplicaSkusOptionalParams
+  - Added Interface WebPubSubRegenerateKeyHeaders
+  - Added Interface WebPubSubReplicasCreateOrUpdateOptionalParams
+  - Added Interface WebPubSubReplicasDeleteOptionalParams
+  - Added Interface WebPubSubReplicasGetOptionalParams
+  - Added Interface WebPubSubReplicasListNextOptionalParams
+  - Added Interface WebPubSubReplicasListOptionalParams
+  - Added Interface WebPubSubReplicasRestartHeaders
+  - Added Interface WebPubSubReplicasRestartOptionalParams
+  - Added Interface WebPubSubReplicasUpdateHeaders
+  - Added Interface WebPubSubReplicasUpdateOptionalParams
+  - Added Interface WebPubSubRestartHeaders
+  - Added Interface WebPubSubUpdateHeaders
+  - Added Type Alias ServiceKind
+  - Added Type Alias WebPubSubListReplicaSkusResponse
+  - Added Type Alias WebPubSubReplicasCreateOrUpdateResponse
+  - Added Type Alias WebPubSubReplicasGetResponse
+  - Added Type Alias WebPubSubReplicasListNextResponse
+  - Added Type Alias WebPubSubReplicasListResponse
+  - Added Type Alias WebPubSubReplicasRestartResponse
+  - Added Type Alias WebPubSubReplicasUpdateResponse
+  - Added Type Alias WebPubSubRestartResponse
+  - Interface Resource has a new optional parameter systemData
+  - Interface WebPubSubNetworkACLs has a new optional parameter ipRules
+  - Interface WebPubSubResource has a new optional parameter kind
+  - Interface WebPubSubResource has a new optional parameter regionEndpointEnabled
+  - Interface WebPubSubResource has a new optional parameter resourceStopped
+  - Added Enum KnownServiceKind
 
-This is the first preview for the new version of the `@azure/arm-webpubsub` package that follows the new [guidelines for TypeScript SDKs](https://azure.github.io/azure-sdk/typescript_introduction.html) for Azure services.
+### Breaking Changes
 
-While this package remains auto generated, the SDK generator itself has undergone changes to comply with the above guidelines in order to generate packages that are idiomatic to the JavaScript/TypeScript ecosystem and consistent with other packages for Azure services. For more on this, please see [State of the Azure SDK 2021](https://devblogs.microsoft.com/azure-sdk/state-of-the-azure-sdk-2021/).
+  - Parameter location of interface TrackedResource is now required
+    
+    
+## 2.0.0-beta.1 (2023-07-11)
+    
+### Features Added
 
-Please note that this version has breaking changes, all of which were made after careful consideration during the authoring of the guidelines and user studies.
+  - Added operation group WebPubSubReplicas
+  - Added operation WebPubSub.listReplicaSkus
+  - Added Interface Replica
+  - Added Interface ReplicaList
+  - Added Interface WebPubSubListReplicaSkusOptionalParams
+  - Added Interface WebPubSubRegenerateKeyHeaders
+  - Added Interface WebPubSubReplicasCreateOrUpdateOptionalParams
+  - Added Interface WebPubSubReplicasDeleteOptionalParams
+  - Added Interface WebPubSubReplicasGetOptionalParams
+  - Added Interface WebPubSubReplicasListNextOptionalParams
+  - Added Interface WebPubSubReplicasListOptionalParams
+  - Added Interface WebPubSubReplicasRestartHeaders
+  - Added Interface WebPubSubReplicasRestartOptionalParams
+  - Added Interface WebPubSubReplicasUpdateHeaders
+  - Added Interface WebPubSubReplicasUpdateOptionalParams
+  - Added Interface WebPubSubRestartHeaders
+  - Added Interface WebPubSubUpdateHeaders
+  - Added Type Alias ServiceKind
+  - Added Type Alias WebPubSubListReplicaSkusResponse
+  - Added Type Alias WebPubSubReplicasCreateOrUpdateResponse
+  - Added Type Alias WebPubSubReplicasGetResponse
+  - Added Type Alias WebPubSubReplicasListNextResponse
+  - Added Type Alias WebPubSubReplicasListResponse
+  - Added Type Alias WebPubSubReplicasRestartResponse
+  - Added Type Alias WebPubSubReplicasUpdateResponse
+  - Added Type Alias WebPubSubRestartResponse
+  - Interface Resource has a new optional parameter systemData
+  - Interface WebPubSubResource has a new optional parameter kind
+  - Added Enum KnownServiceKind
+  - Interface CustomCertificate no longer has parameter systemData
+  - Interface CustomDomain no longer has parameter systemData
+  - Interface PrivateEndpointConnection no longer has parameter systemData
+  - Interface SharedPrivateLinkResource no longer has parameter systemData
+  - Interface WebPubSubHub no longer has parameter systemData
+  - Interface WebPubSubResource no longer has parameter systemData
 
-**Noteworthy changes and features**
+### Breaking Changes
 
-- Authentication: The packages `@azure/ms-rest-nodeauth` or `@azure/ms-rest-browserauth` are no longer supported. Use package [@azure/identity](https://www.npmjs.com/package/@azure/identity) instead. Select a credential from Azure Identity examples based on the authentication method of your choice.
-- Callbacks: Method overloads that used callbacks have been removed and the use of promises is encouraged instead.
-- List operations now return an iterable result that follows the `PagedAsyncIterableIterator` interface as opposed to the previous model where you had to make a new request using the link to the next page.
-- Long running operations i.e. the Lro related object returned by methods whose names started with `begin`, now uses `pollUntilDone` to check whether the request is finished, instead of `pollUntilFinished`. To get the final result, use the corresponding method that will have the suffix `AndWait`.
-- The SDK only supports ECMAScript 2015 (ES6) and beyond, all projects that referenced this SDK should be upgraded to use ES6.
+  - Parameter location of interface TrackedResource is now required
+    
+ 
+## 1.1.0 (2023-03-09)
+    
+### Features Added
+
+  - Added operation group WebPubSubCustomCertificates
+  - Added operation group WebPubSubCustomDomains
+  - Added Interface CustomCertificate
+  - Added Interface CustomCertificateList
+  - Added Interface CustomDomain
+  - Added Interface CustomDomainList
+  - Added Interface EventHubEndpoint
+  - Added Interface EventListener_2
+  - Added Interface EventListenerEndpoint
+  - Added Interface EventListenerFilter
+  - Added Interface EventNameFilter
+  - Added Interface PrivateEndpointACL
+  - Added Interface PrivateEndpointConnection
+  - Added Interface PrivateLinkResource
+  - Added Interface ProxyResource
+  - Added Interface ResourceReference
+  - Added Interface SharedPrivateLinkResource
+  - Added Interface TrackedResource
+  - Added Interface WebPubSubCustomCertificatesCreateOrUpdateOptionalParams
+  - Added Interface WebPubSubCustomCertificatesDeleteOptionalParams
+  - Added Interface WebPubSubCustomCertificatesGetOptionalParams
+  - Added Interface WebPubSubCustomCertificatesListNextOptionalParams
+  - Added Interface WebPubSubCustomCertificatesListOptionalParams
+  - Added Interface WebPubSubCustomDomainsCreateOrUpdateOptionalParams
+  - Added Interface WebPubSubCustomDomainsDeleteOptionalParams
+  - Added Interface WebPubSubCustomDomainsGetOptionalParams
+  - Added Interface WebPubSubCustomDomainsListNextOptionalParams
+  - Added Interface WebPubSubCustomDomainsListOptionalParams
+  - Added Interface WebPubSubHub
+  - Added Interface WebPubSubResource
+  - Added Type Alias EventListenerEndpointDiscriminator
+  - Added Type Alias EventListenerEndpointUnion
+  - Added Type Alias EventListenerFilterDiscriminator
+  - Added Type Alias EventListenerFilterUnion
+  - Added Type Alias WebPubSubCustomCertificatesCreateOrUpdateResponse
+  - Added Type Alias WebPubSubCustomCertificatesGetResponse
+  - Added Type Alias WebPubSubCustomCertificatesListNextResponse
+  - Added Type Alias WebPubSubCustomCertificatesListResponse
+  - Added Type Alias WebPubSubCustomDomainsCreateOrUpdateResponse
+  - Added Type Alias WebPubSubCustomDomainsGetResponse
+  - Added Type Alias WebPubSubCustomDomainsListNextResponse
+  - Added Type Alias WebPubSubCustomDomainsListResponse
+  - Interface WebPubSubHubProperties has a new optional parameter eventListeners
+  - Added Enum KnownEventListenerEndpointDiscriminator
+  - Added Enum KnownEventListenerFilterDiscriminator
+  - Added function getContinuationToken
+    
+    
+## 1.0.0 (2021-12-16)
+
+- The package of @azure/arm-webpubsub is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart ).

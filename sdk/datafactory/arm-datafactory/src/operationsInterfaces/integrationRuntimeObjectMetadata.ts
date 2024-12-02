@@ -6,12 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   IntegrationRuntimeObjectMetadataRefreshOptionalParams,
   IntegrationRuntimeObjectMetadataRefreshResponse,
   IntegrationRuntimeObjectMetadataGetOptionalParams,
-  IntegrationRuntimeObjectMetadataGetResponse
+  IntegrationRuntimeObjectMetadataGetResponse,
 } from "../models";
 
 /** Interface representing a IntegrationRuntimeObjectMetadata. */
@@ -27,10 +27,10 @@ export interface IntegrationRuntimeObjectMetadata {
     resourceGroupName: string,
     factoryName: string,
     integrationRuntimeName: string,
-    options?: IntegrationRuntimeObjectMetadataRefreshOptionalParams
+    options?: IntegrationRuntimeObjectMetadataRefreshOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<IntegrationRuntimeObjectMetadataRefreshResponse>,
+    SimplePollerLike<
+      OperationState<IntegrationRuntimeObjectMetadataRefreshResponse>,
       IntegrationRuntimeObjectMetadataRefreshResponse
     >
   >;
@@ -45,7 +45,7 @@ export interface IntegrationRuntimeObjectMetadata {
     resourceGroupName: string,
     factoryName: string,
     integrationRuntimeName: string,
-    options?: IntegrationRuntimeObjectMetadataRefreshOptionalParams
+    options?: IntegrationRuntimeObjectMetadataRefreshOptionalParams,
   ): Promise<IntegrationRuntimeObjectMetadataRefreshResponse>;
   /**
    * Get a SSIS integration runtime object metadata by specified path. The return is pageable metadata
@@ -59,6 +59,6 @@ export interface IntegrationRuntimeObjectMetadata {
     resourceGroupName: string,
     factoryName: string,
     integrationRuntimeName: string,
-    options?: IntegrationRuntimeObjectMetadataGetOptionalParams
+    options?: IntegrationRuntimeObjectMetadataGetOptionalParams,
   ): Promise<IntegrationRuntimeObjectMetadataGetResponse>;
 }

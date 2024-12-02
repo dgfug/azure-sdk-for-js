@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export {
-  SchemaRegistryAvroSerializer,
-  SchemaRegistryAvroSerializerOptions
-} from "./schemaRegistryAvroSerializer";
+export { AvroSerializer } from "./avroSerializer.js";
+
+export * from "./models.js";

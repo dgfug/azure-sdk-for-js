@@ -1,65 +1,65 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import assert from "assert";
-import { Suite } from "mocha";
+import type { Suite } from "mocha";
 import { CosmosClient, PermissionMode } from "../../../src";
-import { PermissionDefinition } from "../../../src/";
+import type { PermissionDefinition } from "../../../src/";
 import { endpoint } from "../common/_testConfig";
 import { masterKey } from "../common/_fakeTestSecrets";
 import {
   createOrUpsertPermission,
   getTestContainer,
   getTestDatabase,
-  removeAllDatabases
+  removeAllDatabases,
 } from "../common/TestHelpers";
 
-describe("NodeJS CRUD Tests", function(this: Suite) {
+describe("NodeJS CRUD Tests", function (this: Suite) {
   this.timeout(process.env.MOCHA_TIMEOUT || 10000);
-  beforeEach(async function() {
+  beforeEach(async function () {
     await removeAllDatabases();
   });
 
-  describe("Validate Authorization", function() {
-    it("should handle all the key options", async function() {
+  describe("Validate Authorization", function () {
+    it("should handle all the key options", async function () {
       const clientOptionsKey = new CosmosClient({
         endpoint,
         key: masterKey,
-        connectionPolicy: { enableBackgroundEndpointRefreshing: false }
+        connectionPolicy: { enableBackgroundEndpointRefreshing: false },
       });
       assert(
         undefined !== (await clientOptionsKey.databases.readAll().fetchAll()),
-        "Should be able to fetch list of databases"
+        "Should be able to fetch list of databases",
       );
 
       const clientOptionsAuthKey = new CosmosClient({
         endpoint,
         key: masterKey,
-        connectionPolicy: { enableBackgroundEndpointRefreshing: false }
+        connectionPolicy: { enableBackgroundEndpointRefreshing: false },
       });
       assert(
         undefined !== (await clientOptionsAuthKey.databases.readAll().fetchAll()),
-        "Should be able to fetch list of databases"
+        "Should be able to fetch list of databases",
       );
 
       const clientOptionsAuthMasterKey = new CosmosClient({
         endpoint,
         key: masterKey,
-        connectionPolicy: { enableBackgroundEndpointRefreshing: false }
+        connectionPolicy: { enableBackgroundEndpointRefreshing: false },
       });
       assert(
         undefined !== (await clientOptionsAuthMasterKey.databases.readAll().fetchAll()),
-        "Should be able to fetch list of databases"
+        "Should be able to fetch list of databases",
       );
     });
 
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    const setupEntities = async function(isUpsertTest: boolean) {
+    const setupEntities = async function (isUpsertTest: boolean) {
       // create database
       const database = await getTestDatabase("Validate Authorization database");
       // create container1
 
       const { resource: container1 } = await database.containers.create({
-        id: "Validate Authorization container"
+        id: "Validate Authorization container",
       });
       // create document1
       const { resource: document1 } = await database
@@ -72,7 +72,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
 
       // create container 2
       const { resource: container2 } = await database.containers.create({
-        id: "sample container2"
+        id: "sample container2",
       });
 
       // create user1
@@ -80,27 +80,27 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
       let permission = {
         id: "permission On Coll1",
         permissionMode: PermissionMode.Read,
-        resource: (container1 as any)._self
+        resource: (container1 as any)._self,
       }; // TODO: any rid stuff
       // create permission for container1
       const { resource: permissionOnColl1 } = await createOrUpsertPermission(
         database.user(user1.id),
         permission,
         undefined,
-        isUpsertTest
+        isUpsertTest,
       );
       assert((permissionOnColl1 as any)._token !== undefined, "permission token is invalid");
       permission = {
         id: "permission On Doc1",
         permissionMode: PermissionMode.All,
-        resource: (document2 as any)._self // TODO: any rid
+        resource: (document2 as any)._self, // TODO: any rid
       };
       // create permission for document 2
       const { resource: permissionOnDoc2 } = await createOrUpsertPermission(
         database.user(user1.id),
         permission,
         undefined,
-        isUpsertTest
+        isUpsertTest,
       );
       assert((permissionOnDoc2 as any)._token !== undefined, "permission token is invalid"); // TODO: any rid
 
@@ -109,14 +109,14 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
       permission = {
         id: "permission On coll2",
         permissionMode: PermissionMode.All,
-        resource: (container2 as any)._self // TODO: any rid
+        resource: (container2 as any)._self, // TODO: any rid
       };
       // create permission on container 2
       const { resource: permissionOnColl2 } = await createOrUpsertPermission(
         database.user(user2.id),
         permission,
         undefined,
-        isUpsertTest
+        isUpsertTest,
       );
       const entities = {
         database,
@@ -128,18 +128,18 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
         user2,
         permissionOnColl1,
         permissionOnDoc2,
-        permissionOnColl2
+        permissionOnColl2,
       };
 
       return entities;
     };
 
-    const authorizationCRUDTest = async function(isUpsertTest: boolean): Promise<void> {
+    const authorizationCRUDTest = async function (isUpsertTest: boolean): Promise<void> {
       try {
         const badclient = new CosmosClient({ endpoint });
         await badclient.databases.readAll().fetchAll();
         assert.fail("Must fail");
-      } catch (err) {
+      } catch (err: any) {
         assert(err !== undefined, "error should not be undefined");
         const unauthorizedErrorCode = 401;
         assert.equal(err.code, unauthorizedErrorCode, "error code should be equal to 401");
@@ -155,7 +155,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
       const col1Client = new CosmosClient({
         endpoint,
         resourceTokens,
-        connectionPolicy: { enableBackgroundEndpointRefreshing: false }
+        connectionPolicy: { enableBackgroundEndpointRefreshing: false },
       });
 
       // 1. Success-- Use Col1 Permission to Read
@@ -167,12 +167,9 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
 
       // 2. Failure-- Use Col1 Permission to delete
       try {
-        await col1Client
-          .database(entities.database.id)
-          .container(entities.coll1.id)
-          .delete();
+        await col1Client.database(entities.database.id).container(entities.coll1.id).delete();
         assert.fail("must fail if no permission");
-      } catch (err) {
+      } catch (err: any) {
         assert(err !== undefined, "expected to fail, no permission to delete");
         assert.equal(err.code, 403, "Must return a code for not authorized");
       }
@@ -196,7 +193,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
       assert.equal(
         successDoc.id,
         entities.doc1.id,
-        "Expected to read children using parent permissions"
+        "Expected to read children using parent permissions",
       );
       // TODO: Permission Feed uses RID right now
       /*
@@ -215,18 +212,18 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
             */
     };
 
-    const authorizationCRUDOverMultiplePartitionsTest = async function(): Promise<void> {
+    const authorizationCRUDOverMultiplePartitionsTest = async function (): Promise<void> {
       // create database
       // create container
       const partitionKey = "key";
       const containerDefinition = {
         id: "coll1",
-        partitionKey: { paths: ["/" + partitionKey] }
+        partitionKey: { paths: ["/" + partitionKey] },
       };
       const container = await getTestContainer(
         "authorization CRUD multiple partitons",
         undefined,
-        containerDefinition
+        containerDefinition,
       );
       // create user
       const { resource: userDef } = await container.database.users.create({ id: "user1" });
@@ -237,7 +234,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
         id: "permission1",
         permissionMode: PermissionMode.All,
         resource: container.url,
-        resourcePartitionKey: [key]
+        resourcePartitionKey: [key],
       };
 
       // create permission
@@ -249,7 +246,7 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
       const restrictedClient = new CosmosClient({
         endpoint,
         resourceTokens,
-        connectionPolicy: { enableBackgroundEndpointRefreshing: false }
+        connectionPolicy: { enableBackgroundEndpointRefreshing: false },
       });
       await restrictedClient
         .database(container.database.id)
@@ -261,31 +258,31 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
           .container(container.id)
           .items.create({ id: "document2", key: 2 });
         assert.fail("Must throw unauthorized on read");
-      } catch (err) {
+      } catch (err: any) {
         const unauthorizedErrorCode = 403;
         assert.equal(err.code, unauthorizedErrorCode);
       }
     };
 
-    it("Should do authorization successfully name based", async function() {
+    it("Should do authorization successfully name based", async function () {
       await authorizationCRUDTest(false);
     });
 
-    it("Should do authorization successfully name based with upsert", async function() {
+    it("Should do authorization successfully name based with upsert", async function () {
       await authorizationCRUDTest(true);
     });
 
-    it("Should do authorization over multiple partitions successfully name based", async function() {
+    it("Should do authorization over multiple partitions successfully name based", async function () {
       await authorizationCRUDOverMultiplePartitionsTest();
     });
 
-    it("should allow deletion of a doc with container token", async function() {
+    it("should allow deletion of a doc with container token", async function () {
       const container = await getTestContainer("Validate Authorization container");
 
       const { resource: item } = await container.items.create({
         id: "coll1doc1",
         foo: "bar",
-        key: "value"
+        key: "value",
       });
 
       // Create User
@@ -297,22 +294,22 @@ describe("NodeJS CRUD Tests", function(this: Suite) {
         {
           id: "permission On Coll1",
           permissionMode: PermissionMode.All,
-          resource: (await container.read()).resource._self
+          resource: (await container.read()).resource._self,
         },
         undefined,
-        false
+        false,
       );
 
       const resourceTokens = {
-        [`dbs/${container.database.id}/colls/${container.id}`]: permission._token
+        [`dbs/${container.database.id}/colls/${container.id}`]: permission._token,
       };
 
       const client = new CosmosClient({
         resourceTokens: resourceTokens,
         endpoint: endpoint,
         connectionPolicy: {
-          enableEndpointDiscovery: false
-        }
+          enableEndpointDiscovery: false,
+        },
       });
 
       const { statusCode } = await client

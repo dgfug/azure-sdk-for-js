@@ -6,24 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { DatabaseAccounts } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   DatabaseAccountGetResults,
   DatabaseAccountsListOptionalParams,
+  DatabaseAccountsListResponse,
   DatabaseAccountsListByResourceGroupOptionalParams,
+  DatabaseAccountsListByResourceGroupResponse,
   Metric,
   DatabaseAccountsListMetricsOptionalParams,
+  DatabaseAccountsListMetricsResponse,
   Usage,
   DatabaseAccountsListUsagesOptionalParams,
+  DatabaseAccountsListUsagesResponse,
   MetricDefinition,
   DatabaseAccountsListMetricDefinitionsOptionalParams,
+  DatabaseAccountsListMetricDefinitionsResponse,
   DatabaseAccountsGetOptionalParams,
   DatabaseAccountsGetResponse,
   DatabaseAccountUpdateParameters,
@@ -33,10 +42,10 @@ import {
   DatabaseAccountsCreateOrUpdateOptionalParams,
   DatabaseAccountsCreateOrUpdateResponse,
   DatabaseAccountsDeleteOptionalParams,
+  DatabaseAccountsDeleteResponse,
   FailoverPolicies,
   DatabaseAccountsFailoverPriorityChangeOptionalParams,
-  DatabaseAccountsListResponse,
-  DatabaseAccountsListByResourceGroupResponse,
+  DatabaseAccountsFailoverPriorityChangeResponse,
   DatabaseAccountsListKeysOptionalParams,
   DatabaseAccountsListKeysResponse,
   DatabaseAccountsListConnectionStringsOptionalParams,
@@ -52,21 +61,18 @@ import {
   DatabaseAccountsRegenerateKeyOptionalParams,
   DatabaseAccountsCheckNameExistsOptionalParams,
   DatabaseAccountsCheckNameExistsResponse,
-  DatabaseAccountsListMetricsResponse,
-  DatabaseAccountsListUsagesResponse,
-  DatabaseAccountsListMetricDefinitionsResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DatabaseAccounts operations. */
 export class DatabaseAccountsImpl implements DatabaseAccounts {
-  private readonly client: CosmosDBManagementClientContext;
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class DatabaseAccounts class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -75,7 +81,7 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
    * @param options The options parameters.
    */
   public list(
-    options?: DatabaseAccountsListOptionalParams
+    options?: DatabaseAccountsListOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseAccountGetResults> {
     const iter = this.listPagingAll(options);
     return {
@@ -85,21 +91,26 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: DatabaseAccountsListOptionalParams
+    options?: DatabaseAccountsListOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<DatabaseAccountGetResults[]> {
-    let result = await this._list(options);
+    let result: DatabaseAccountsListResponse;
+    result = await this._list(options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
-    options?: DatabaseAccountsListOptionalParams
+    options?: DatabaseAccountsListOptionalParams,
   ): AsyncIterableIterator<DatabaseAccountGetResults> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -113,7 +124,7 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: DatabaseAccountsListByResourceGroupOptionalParams
+    options?: DatabaseAccountsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseAccountGetResults> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -123,27 +134,36 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: DatabaseAccountsListByResourceGroupOptionalParams
+    options?: DatabaseAccountsListByResourceGroupOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<DatabaseAccountGetResults[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
+    let result: DatabaseAccountsListByResourceGroupResponse;
+    result = await this._listByResourceGroup(resourceGroupName, options);
     yield result.value || [];
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: DatabaseAccountsListByResourceGroupOptionalParams
+    options?: DatabaseAccountsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<DatabaseAccountGetResults> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -162,13 +182,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     filter: string,
-    options?: DatabaseAccountsListMetricsOptionalParams
+    options?: DatabaseAccountsListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<Metric> {
     const iter = this.listMetricsPagingAll(
       resourceGroupName,
       accountName,
       filter,
-      options
+      options,
     );
     return {
       next() {
@@ -177,14 +197,18 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricsPagingPage(
           resourceGroupName,
           accountName,
           filter,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -192,13 +216,15 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     filter: string,
-    options?: DatabaseAccountsListMetricsOptionalParams
+    options?: DatabaseAccountsListMetricsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Metric[]> {
-    let result = await this._listMetrics(
+    let result: DatabaseAccountsListMetricsResponse;
+    result = await this._listMetrics(
       resourceGroupName,
       accountName,
       filter,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -207,13 +233,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     filter: string,
-    options?: DatabaseAccountsListMetricsOptionalParams
+    options?: DatabaseAccountsListMetricsOptionalParams,
   ): AsyncIterableIterator<Metric> {
     for await (const page of this.listMetricsPagingPage(
       resourceGroupName,
       accountName,
       filter,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -228,12 +254,12 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   public listUsages(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListUsagesOptionalParams
+    options?: DatabaseAccountsListUsagesOptionalParams,
   ): PagedAsyncIterableIterator<Usage> {
     const iter = this.listUsagesPagingAll(
       resourceGroupName,
       accountName,
-      options
+      options,
     );
     return {
       next() {
@@ -242,38 +268,40 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listUsagesPagingPage(
           resourceGroupName,
           accountName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listUsagesPagingPage(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListUsagesOptionalParams
+    options?: DatabaseAccountsListUsagesOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Usage[]> {
-    let result = await this._listUsages(
-      resourceGroupName,
-      accountName,
-      options
-    );
+    let result: DatabaseAccountsListUsagesResponse;
+    result = await this._listUsages(resourceGroupName, accountName, options);
     yield result.value || [];
   }
 
   private async *listUsagesPagingAll(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListUsagesOptionalParams
+    options?: DatabaseAccountsListUsagesOptionalParams,
   ): AsyncIterableIterator<Usage> {
     for await (const page of this.listUsagesPagingPage(
       resourceGroupName,
       accountName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -288,12 +316,12 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   public listMetricDefinitions(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListMetricDefinitionsOptionalParams
+    options?: DatabaseAccountsListMetricDefinitionsOptionalParams,
   ): PagedAsyncIterableIterator<MetricDefinition> {
     const iter = this.listMetricDefinitionsPagingAll(
       resourceGroupName,
       accountName,
-      options
+      options,
     );
     return {
       next() {
@@ -302,25 +330,31 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricDefinitionsPagingPage(
           resourceGroupName,
           accountName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listMetricDefinitionsPagingPage(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListMetricDefinitionsOptionalParams
+    options?: DatabaseAccountsListMetricDefinitionsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<MetricDefinition[]> {
-    let result = await this._listMetricDefinitions(
+    let result: DatabaseAccountsListMetricDefinitionsResponse;
+    result = await this._listMetricDefinitions(
       resourceGroupName,
       accountName,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -328,12 +362,12 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   private async *listMetricDefinitionsPagingAll(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListMetricDefinitionsOptionalParams
+    options?: DatabaseAccountsListMetricDefinitionsOptionalParams,
   ): AsyncIterableIterator<MetricDefinition> {
     for await (const page of this.listMetricDefinitionsPagingPage(
       resourceGroupName,
       accountName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -348,11 +382,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   get(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsGetOptionalParams
+    options?: DatabaseAccountsGetOptionalParams,
   ): Promise<DatabaseAccountsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -367,30 +401,29 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     updateParameters: DatabaseAccountUpdateParameters,
-    options?: DatabaseAccountsUpdateOptionalParams
+    options?: DatabaseAccountsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DatabaseAccountsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DatabaseAccountsUpdateResponse>,
       DatabaseAccountsUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DatabaseAccountsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -399,8 +432,8 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -408,20 +441,25 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, accountName, updateParameters, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, accountName, updateParameters, options },
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DatabaseAccountsUpdateResponse,
+      OperationState<DatabaseAccountsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -435,13 +473,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     updateParameters: DatabaseAccountUpdateParameters,
-    options?: DatabaseAccountsUpdateOptionalParams
+    options?: DatabaseAccountsUpdateOptionalParams,
   ): Promise<DatabaseAccountsUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       accountName,
       updateParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -458,30 +496,29 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     createUpdateParameters: DatabaseAccountCreateUpdateParameters,
-    options?: DatabaseAccountsCreateOrUpdateOptionalParams
+    options?: DatabaseAccountsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DatabaseAccountsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DatabaseAccountsCreateOrUpdateResponse>,
       DatabaseAccountsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DatabaseAccountsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -490,8 +527,8 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -499,20 +536,25 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, accountName, createUpdateParameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, accountName, createUpdateParameters, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DatabaseAccountsCreateOrUpdateResponse,
+      OperationState<DatabaseAccountsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -527,13 +569,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     createUpdateParameters: DatabaseAccountCreateUpdateParameters,
-    options?: DatabaseAccountsCreateOrUpdateOptionalParams
+    options?: DatabaseAccountsCreateOrUpdateOptionalParams,
   ): Promise<DatabaseAccountsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       accountName,
       createUpdateParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -547,25 +589,29 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   async beginDelete(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DatabaseAccountsDeleteOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DatabaseAccountsDeleteResponse>,
+      DatabaseAccountsDeleteResponse
+    >
+  > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<void> => {
+      spec: coreClient.OperationSpec,
+    ): Promise<DatabaseAccountsDeleteResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -574,8 +620,8 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -583,20 +629,25 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, accountName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, accountName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DatabaseAccountsDeleteResponse,
+      OperationState<DatabaseAccountsDeleteResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -608,12 +659,12 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   async beginDeleteAndWait(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsDeleteOptionalParams
-  ): Promise<void> {
+    options?: DatabaseAccountsDeleteOptionalParams,
+  ): Promise<DatabaseAccountsDeleteResponse> {
     const poller = await this.beginDelete(
       resourceGroupName,
       accountName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -632,25 +683,29 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     failoverParameters: FailoverPolicies,
-    options?: DatabaseAccountsFailoverPriorityChangeOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DatabaseAccountsFailoverPriorityChangeOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DatabaseAccountsFailoverPriorityChangeResponse>,
+      DatabaseAccountsFailoverPriorityChangeResponse
+    >
+  > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<void> => {
+      spec: coreClient.OperationSpec,
+    ): Promise<DatabaseAccountsFailoverPriorityChangeResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -659,8 +714,8 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -668,20 +723,25 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, accountName, failoverParameters, options },
-      failoverPriorityChangeOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, accountName, failoverParameters, options },
+      spec: failoverPriorityChangeOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DatabaseAccountsFailoverPriorityChangeResponse,
+      OperationState<DatabaseAccountsFailoverPriorityChangeResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -698,13 +758,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     failoverParameters: FailoverPolicies,
-    options?: DatabaseAccountsFailoverPriorityChangeOptionalParams
-  ): Promise<void> {
+    options?: DatabaseAccountsFailoverPriorityChangeOptionalParams,
+  ): Promise<DatabaseAccountsFailoverPriorityChangeResponse> {
     const poller = await this.beginFailoverPriorityChange(
       resourceGroupName,
       accountName,
       failoverParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -714,7 +774,7 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
    * @param options The options parameters.
    */
   private _list(
-    options?: DatabaseAccountsListOptionalParams
+    options?: DatabaseAccountsListOptionalParams,
   ): Promise<DatabaseAccountsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -726,11 +786,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: DatabaseAccountsListByResourceGroupOptionalParams
+    options?: DatabaseAccountsListByResourceGroupOptionalParams,
   ): Promise<DatabaseAccountsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -743,11 +803,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   listKeys(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListKeysOptionalParams
+    options?: DatabaseAccountsListKeysOptionalParams,
   ): Promise<DatabaseAccountsListKeysResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listKeysOperationSpec
+      listKeysOperationSpec,
     );
   }
 
@@ -760,11 +820,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   listConnectionStrings(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListConnectionStringsOptionalParams
+    options?: DatabaseAccountsListConnectionStringsOptionalParams,
   ): Promise<DatabaseAccountsListConnectionStringsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listConnectionStringsOperationSpec
+      listConnectionStringsOperationSpec,
     );
   }
 
@@ -779,25 +839,24 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     regionParameterForOffline: RegionForOnlineOffline,
-    options?: DatabaseAccountsOfflineRegionOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DatabaseAccountsOfflineRegionOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -806,8 +865,8 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -815,20 +874,27 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, accountName, regionParameterForOffline, options },
-      offlineRegionOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        accountName,
+        regionParameterForOffline,
+        options,
+      },
+      spec: offlineRegionOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -842,13 +908,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     regionParameterForOffline: RegionForOnlineOffline,
-    options?: DatabaseAccountsOfflineRegionOptionalParams
+    options?: DatabaseAccountsOfflineRegionOptionalParams,
   ): Promise<void> {
     const poller = await this.beginOfflineRegion(
       resourceGroupName,
       accountName,
       regionParameterForOffline,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -864,25 +930,24 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     regionParameterForOnline: RegionForOnlineOffline,
-    options?: DatabaseAccountsOnlineRegionOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DatabaseAccountsOnlineRegionOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -891,8 +956,8 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -900,20 +965,27 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, accountName, regionParameterForOnline, options },
-      onlineRegionOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        accountName,
+        regionParameterForOnline,
+        options,
+      },
+      spec: onlineRegionOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -927,13 +999,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     regionParameterForOnline: RegionForOnlineOffline,
-    options?: DatabaseAccountsOnlineRegionOptionalParams
+    options?: DatabaseAccountsOnlineRegionOptionalParams,
   ): Promise<void> {
     const poller = await this.beginOnlineRegion(
       resourceGroupName,
       accountName,
       regionParameterForOnline,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -947,11 +1019,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   getReadOnlyKeys(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsGetReadOnlyKeysOptionalParams
+    options?: DatabaseAccountsGetReadOnlyKeysOptionalParams,
   ): Promise<DatabaseAccountsGetReadOnlyKeysResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      getReadOnlyKeysOperationSpec
+      getReadOnlyKeysOperationSpec,
     );
   }
 
@@ -964,11 +1036,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   listReadOnlyKeys(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListReadOnlyKeysOptionalParams
+    options?: DatabaseAccountsListReadOnlyKeysOptionalParams,
   ): Promise<DatabaseAccountsListReadOnlyKeysResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listReadOnlyKeysOperationSpec
+      listReadOnlyKeysOperationSpec,
     );
   }
 
@@ -983,25 +1055,24 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     keyToRegenerate: DatabaseAccountRegenerateKeyParameters,
-    options?: DatabaseAccountsRegenerateKeyOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DatabaseAccountsRegenerateKeyOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -1010,8 +1081,8 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -1019,20 +1090,22 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, accountName, keyToRegenerate, options },
-      regenerateKeyOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, accountName, keyToRegenerate, options },
+      spec: regenerateKeyOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1046,13 +1119,13 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     keyToRegenerate: DatabaseAccountRegenerateKeyParameters,
-    options?: DatabaseAccountsRegenerateKeyOptionalParams
+    options?: DatabaseAccountsRegenerateKeyOptionalParams,
   ): Promise<void> {
     const poller = await this.beginRegenerateKey(
       resourceGroupName,
       accountName,
       keyToRegenerate,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -1065,11 +1138,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
    */
   checkNameExists(
     accountName: string,
-    options?: DatabaseAccountsCheckNameExistsOptionalParams
+    options?: DatabaseAccountsCheckNameExistsOptionalParams,
   ): Promise<DatabaseAccountsCheckNameExistsResponse> {
     return this.client.sendOperationRequest(
       { accountName, options },
-      checkNameExistsOperationSpec
+      checkNameExistsOperationSpec,
     );
   }
 
@@ -1086,11 +1159,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
     resourceGroupName: string,
     accountName: string,
     filter: string,
-    options?: DatabaseAccountsListMetricsOptionalParams
+    options?: DatabaseAccountsListMetricsOptionalParams,
   ): Promise<DatabaseAccountsListMetricsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, filter, options },
-      listMetricsOperationSpec
+      listMetricsOperationSpec,
     );
   }
 
@@ -1103,11 +1176,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   private _listUsages(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListUsagesOptionalParams
+    options?: DatabaseAccountsListUsagesOptionalParams,
   ): Promise<DatabaseAccountsListUsagesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listUsagesOperationSpec
+      listUsagesOperationSpec,
     );
   }
 
@@ -1120,11 +1193,11 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
   private _listMetricDefinitions(
     resourceGroupName: string,
     accountName: string,
-    options?: DatabaseAccountsListMetricDefinitionsOptionalParams
+    options?: DatabaseAccountsListMetricDefinitionsOptionalParams,
   ): Promise<DatabaseAccountsListMetricDefinitionsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listMetricDefinitionsOperationSpec
+      listMetricDefinitionsOperationSpec,
     );
   }
 }
@@ -1132,41 +1205,39 @@ export class DatabaseAccountsImpl implements DatabaseAccounts {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
-    }
+      bodyMapper: Mappers.DatabaseAccountGetResults,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
+      bodyMapper: Mappers.DatabaseAccountGetResults,
     },
     201: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
+      bodyMapper: Mappers.DatabaseAccountGetResults,
     },
     202: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
+      bodyMapper: Mappers.DatabaseAccountGetResults,
     },
     204: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
-    }
+      bodyMapper: Mappers.DatabaseAccountGetResults,
+    },
   },
   requestBody: Parameters.updateParameters,
   queryParameters: [Parameters.apiVersion],
@@ -1174,29 +1245,28 @@ const updateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
+      bodyMapper: Mappers.DatabaseAccountGetResults,
     },
     201: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
+      bodyMapper: Mappers.DatabaseAccountGetResults,
     },
     202: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
+      bodyMapper: Mappers.DatabaseAccountGetResults,
     },
     204: {
-      bodyMapper: Mappers.DatabaseAccountGetResults
-    }
+      bodyMapper: Mappers.DatabaseAccountGetResults,
+    },
   },
   requestBody: Parameters.createUpdateParameters,
   queryParameters: [Parameters.apiVersion],
@@ -1204,116 +1274,135 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}",
   httpMethod: "DELETE",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {
+      headersMapper: Mappers.DatabaseAccountsDeleteHeaders,
+    },
+    201: {
+      headersMapper: Mappers.DatabaseAccountsDeleteHeaders,
+    },
+    202: {
+      headersMapper: Mappers.DatabaseAccountsDeleteHeaders,
+    },
+    204: {
+      headersMapper: Mappers.DatabaseAccountsDeleteHeaders,
+    },
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
-  serializer
+  serializer,
 };
 const failoverPriorityChangeOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/failoverPriorityChange",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/failoverPriorityChange",
   httpMethod: "POST",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {
+      headersMapper: Mappers.DatabaseAccountsFailoverPriorityChangeHeaders,
+    },
+    201: {
+      headersMapper: Mappers.DatabaseAccountsFailoverPriorityChangeHeaders,
+    },
+    202: {
+      headersMapper: Mappers.DatabaseAccountsFailoverPriorityChangeHeaders,
+    },
+    204: {
+      headersMapper: Mappers.DatabaseAccountsFailoverPriorityChangeHeaders,
+    },
+  },
   requestBody: Parameters.failoverParameters,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/databaseAccounts",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/databaseAccounts",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountsListResult
-    }
+      bodyMapper: Mappers.DatabaseAccountsListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountsListResult
-    }
+      bodyMapper: Mappers.DatabaseAccountsListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listKeysOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listKeys",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listKeys",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountListKeysResult
-    }
+      bodyMapper: Mappers.DatabaseAccountListKeysResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listConnectionStringsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountListConnectionStringsResult
-    }
+      bodyMapper: Mappers.DatabaseAccountListConnectionStringsResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const offlineRegionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/offlineRegion",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/offlineRegion",
   httpMethod: "POST",
   responses: {
     200: {},
@@ -1321,8 +1410,8 @@ const offlineRegionOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.regionParameterForOffline,
   queryParameters: [Parameters.apiVersion],
@@ -1330,15 +1419,14 @@ const offlineRegionOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const onlineRegionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/onlineRegion",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/onlineRegion",
   httpMethod: "POST",
   responses: {
     200: {},
@@ -1346,8 +1434,8 @@ const onlineRegionOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.regionParameterForOnline,
   queryParameters: [Parameters.apiVersion],
@@ -1355,53 +1443,50 @@ const onlineRegionOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getReadOnlyKeysOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/readonlykeys",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/readonlykeys",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountListReadOnlyKeysResult
-    }
+      bodyMapper: Mappers.DatabaseAccountListReadOnlyKeysResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listReadOnlyKeysOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/readonlykeys",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/readonlykeys",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseAccountListReadOnlyKeysResult
-    }
+      bodyMapper: Mappers.DatabaseAccountListReadOnlyKeysResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const regenerateKeyOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/regenerateKey",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/regenerateKey",
   httpMethod: "POST",
   responses: { 200: {}, 201: {}, 202: {}, 204: {} },
   requestBody: Parameters.keyToRegenerate,
@@ -1410,11 +1495,11 @@ const regenerateKeyOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const checkNameExistsOperationSpec: coreClient.OperationSpec = {
   path: "/providers/Microsoft.DocumentDB/databaseAccountNames/{accountName}",
@@ -1422,62 +1507,59 @@ const checkNameExistsOperationSpec: coreClient.OperationSpec = {
   responses: { 200: {}, 404: {} },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.accountName],
-  serializer
+  serializer,
 };
 const listMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/metrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/metrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricListResult
-    }
+      bodyMapper: Mappers.MetricListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listUsagesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/usages",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/usages",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UsagesResult
-    }
+      bodyMapper: Mappers.UsagesResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listMetricDefinitionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/metricDefinitions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/metricDefinitions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricDefinitionsListResult
-    }
+      bodyMapper: Mappers.MetricDefinitionsListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName
+    Parameters.accountName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

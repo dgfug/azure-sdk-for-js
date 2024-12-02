@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
-import { getRequestUrl, appendQueryParams } from "../src/urlHelpers";
-import {
+import { describe, it, assert } from "vitest";
+import type {
+  OperationQueryParameter,
   OperationSpec,
   OperationURLParameter,
-  createSerializer,
-  OperationQueryParameter
-} from "../src";
+} from "../src/index.js";
+import { createSerializer } from "../src/index.js";
+import { appendQueryParams, getRequestUrl } from "../src/urlHelpers.js";
 
-describe("getRequestUrl", function() {
+describe("getRequestUrl", function () {
   const urlParameter: OperationURLParameter = {
     parameterPath: "url",
     mapper: {
@@ -18,10 +18,10 @@ describe("getRequestUrl", function() {
       required: true,
       xmlName: "url",
       type: {
-        name: "String"
-      }
+        name: "String",
+      },
     },
-    skipEncoding: true
+    skipEncoding: true,
   };
 
   const tableParameter: OperationURLParameter = {
@@ -31,9 +31,9 @@ describe("getRequestUrl", function() {
       required: true,
       xmlName: "table",
       type: {
-        name: "String"
-      }
-    }
+        name: "String",
+      },
+    },
   };
 
   const serializer = createSerializer({}, false);
@@ -43,53 +43,53 @@ describe("getRequestUrl", function() {
     httpMethod: "DELETE",
     responses: {},
     urlParameters: [urlParameter, tableParameter],
-    serializer
+    serializer,
   };
 
-  it("should handle nested replacements", function() {
+  it("should handle nested replacements", function () {
     const result = getRequestUrl(
       "{url}",
       operationSpec,
       { table: "TestTable" },
-      { url: "https://test.com" }
+      { url: "https://test.com" },
     );
     assert.strictEqual(result, "https://test.com/Tables('TestTable')");
   });
 
-  it("should handle query parameters on the base url", function() {
+  it("should handle query parameters on the base url", function () {
     const result = getRequestUrl(
       "{url}",
       operationSpec,
       { table: "TestTable" },
-      { url: "https://test.com?superSecretKey=awesome" }
+      { url: "https://test.com?superSecretKey=awesome" },
     );
     assert.strictEqual(result, "https://test.com/Tables('TestTable')?superSecretKey=awesome");
   });
 
-  it("should not modify needlessly encoded query parameters", function() {
+  it("should not modify needlessly encoded query parameters", function () {
     const specWithQueryParams: OperationSpec = {
       ...operationSpec,
       queryParameters: [
         {
           parameterPath: "extraValue",
           mapper: { type: { name: "String" }, serializedName: "extraValue", required: true },
-          skipEncoding: true
-        }
-      ]
+          skipEncoding: true,
+        },
+      ],
     };
     const result = getRequestUrl(
       "{url}",
       specWithQueryParams,
       { table: "TestTable", extraValue: "%27blah%27" },
-      { url: "https://test.com?superSecretKey=Qai%2B4%2FIM%3D" }
+      { url: "https://test.com?superSecretKey=Qai%2B4%2FIM%3D" },
     );
     assert.strictEqual(
       result,
-      "https://test.com/Tables('TestTable')?superSecretKey=Qai%2B4%2FIM%3D&extraValue=%27blah%27"
+      "https://test.com/Tables('TestTable')?superSecretKey=Qai%2B4%2FIM%3D&extraValue=%27blah%27",
     );
   });
 
-  it("should allow empty query parameter value", function() {
+  it("should allow empty query parameter value", function () {
     const stringQuery: OperationQueryParameter = {
       parameterPath: "stringQuery",
       mapper: {
@@ -97,9 +97,9 @@ describe("getRequestUrl", function() {
         isConstant: true,
         serializedName: "stringQuery",
         type: {
-          name: "String"
-        }
-      }
+          name: "String",
+        },
+      },
     };
     const result = getRequestUrl(
       "https://test.com",
@@ -108,15 +108,15 @@ describe("getRequestUrl", function() {
         httpMethod: "GET",
         responses: {},
         queryParameters: [stringQuery],
-        serializer
+        serializer,
       },
       {},
-      {}
+      {},
     );
     assert.strictEqual(result, "https://test.com/path?stringQuery=");
   });
 
-  it("should work with replacement having both path and search part", function() {
+  it("should work with replacement having both path and search part", function () {
     const result = getRequestUrl(
       "https://test.com/",
       {
@@ -131,20 +131,20 @@ describe("getRequestUrl", function() {
               serializedName: "nextLink",
               required: true,
               type: {
-                name: "String"
-              }
+                name: "String",
+              },
             },
-            skipEncoding: true
-          }
-        ]
+            skipEncoding: true,
+          },
+        ],
       },
       { nextLink: "/path?abc%3Ddef" },
-      {}
+      {},
     );
     assert.strictEqual(result, "https://test.com/path?abc%3Ddef");
   });
 
-  it("should create url when there is no existing value", function() {
+  it("should create url when there is no existing value", function () {
     const url: string =
       "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename";
 
@@ -155,11 +155,11 @@ describe("getRequestUrl", function() {
 
     assert.strictEqual(
       res,
-      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01"
+      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01",
     );
   });
 
-  it("should create url when the existing value is an array and the new value is not an array", function() {
+  it("should create url when the existing value is an array and the new value is not an array", function () {
     const url: string =
       "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01";
 
@@ -172,11 +172,11 @@ describe("getRequestUrl", function() {
 
     assert.strictEqual(
       res,
-      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01&api-version=2022-08-01"
+      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01&api-version=2022-08-01",
     );
   });
 
-  it("should create url when the existing value is an array and the new value is also the same array", function() {
+  it("should create url when the existing value is an array and the new value is also the same array", function () {
     const url: string =
       "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01";
 
@@ -189,11 +189,11 @@ describe("getRequestUrl", function() {
 
     assert.strictEqual(
       res,
-      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01"
+      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01",
     );
   });
 
-  it("should create url when the existing value is an array and the new value is a different array", function() {
+  it("should create url when the existing value is an array and the new value is a different array", function () {
     const url: string =
       "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01";
 
@@ -206,11 +206,11 @@ describe("getRequestUrl", function() {
 
     assert.strictEqual(
       res,
-      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01&api-version=2022-08-01&api-version=2023-08-01"
+      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01&api-version=2022-08-01&api-version=2023-08-01",
     );
   });
 
-  it("should create url when the existing value is not an array and the new value is the same value", function() {
+  it("should create url when the existing value is not an array and the new value is the same value", function () {
     const url: string =
       "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01";
 
@@ -221,11 +221,11 @@ describe("getRequestUrl", function() {
 
     assert.strictEqual(
       res,
-      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01"
+      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01",
     );
   });
 
-  it("should create url when the existing value is not an array and the new value is a different value", function() {
+  it("should create url when the existing value is not an array and the new value is a different value", function () {
     const url: string =
       "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01";
 
@@ -236,11 +236,11 @@ describe("getRequestUrl", function() {
 
     assert.strictEqual(
       res,
-      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2021-08-01"
+      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2021-08-01",
     );
   });
 
-  it("should create url when the existing value is not an array and the new value is an array", function() {
+  it("should create url when the existing value is not an array and the new value is an array", function () {
     const url: string =
       "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01";
 
@@ -250,7 +250,7 @@ describe("getRequestUrl", function() {
     const res: string = appendQueryParams(url, queryParams, new Set<string>());
     assert.strictEqual(
       res,
-      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01&api-version=2022-08-01"
+      "https://management.azure.com/subscriptions/subscription-id/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/samplename?api-version=2020-08-01&api-version=2021-08-01&api-version=2022-08-01",
     );
   });
 });

@@ -6,30 +6,30 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { Locations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   LocationGetResult,
   LocationsListOptionalParams,
   LocationsListResponse,
   LocationsGetOptionalParams,
-  LocationsGetResponse
+  LocationsGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Locations operations. */
 export class LocationsImpl implements Locations {
-  private readonly client: CosmosDBManagementClientContext;
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class Locations class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -38,7 +38,7 @@ export class LocationsImpl implements Locations {
    * @param options The options parameters.
    */
   public list(
-    options?: LocationsListOptionalParams
+    options?: LocationsListOptionalParams,
   ): PagedAsyncIterableIterator<LocationGetResult> {
     const iter = this.listPagingAll(options);
     return {
@@ -48,21 +48,26 @@ export class LocationsImpl implements Locations {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: LocationsListOptionalParams
+    options?: LocationsListOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<LocationGetResult[]> {
-    let result = await this._list(options);
+    let result: LocationsListResponse;
+    result = await this._list(options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
-    options?: LocationsListOptionalParams
+    options?: LocationsListOptionalParams,
   ): AsyncIterableIterator<LocationGetResult> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -74,7 +79,7 @@ export class LocationsImpl implements Locations {
    * @param options The options parameters.
    */
   private _list(
-    options?: LocationsListOptionalParams
+    options?: LocationsListOptionalParams,
   ): Promise<LocationsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -86,11 +91,11 @@ export class LocationsImpl implements Locations {
    */
   get(
     location: string,
-    options?: LocationsGetOptionalParams
+    options?: LocationsGetOptionalParams,
   ): Promise<LocationsGetResponse> {
     return this.client.sendOperationRequest(
       { location, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 }
@@ -98,40 +103,38 @@ export class LocationsImpl implements Locations {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LocationListResult
+      bodyMapper: Mappers.LocationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LocationGetResult
+      bodyMapper: Mappers.LocationGetResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location1
+    Parameters.location1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

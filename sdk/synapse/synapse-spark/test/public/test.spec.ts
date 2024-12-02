@@ -1,16 +1,19 @@
-import { Recorder } from "@azure-tools/test-recorder";
-import { assert } from "chai";
-import { SparkClient } from "../../src";
-import { createClient, createRecorder } from "./utils/recordedClient";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import type { Recorder } from "@azure-tools/test-recorder";
+import type { SparkClient } from "../../src/index.js";
+import { createClient, createRecorder } from "./utils/recordedClient.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 describe("Synapse Managed Private Endpoints", () => {
   let recorder: Recorder;
   let client: SparkClient;
 
-  beforeEach(function() {
-    recorder = createRecorder(this);
+  beforeEach(async (ctx) => {
+    recorder = await createRecorder(ctx);
     const spark_pool_name = "testsparkpool";
-    client = createClient(spark_pool_name);
+    client = createClient(spark_pool_name, recorder.configureClientOptions({}));
   });
 
   afterEach(async () => {
@@ -26,7 +29,7 @@ describe("Synapse Managed Private Endpoints", () => {
       driverCores: 4,
       executorMemory: "28g",
       executorCores: 4,
-      executorCount: 2
+      executorCount: 2,
     });
 
     assert.isDefined(result);

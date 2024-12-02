@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how the scheduleMessages() function can be used to schedule messages to
@@ -12,13 +12,13 @@
  */
 
 const { delay, ServiceBusClient } = require("@azure/service-bus");
+const { DefaultAzureCredential } = require("@azure/identity");
 
 // Load the .env file if it exists
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
 
 const listOfScientists = [
@@ -31,11 +31,12 @@ const listOfScientists = [
   { lastName: "Faraday", firstName: "Michael" },
   { lastName: "Galilei", firstName: "Galileo" },
   { lastName: "Kepler", firstName: "Johannes" },
-  { lastName: "Kopernikus", firstName: "Nikolaus" }
+  { lastName: "Kopernikus", firstName: "Nikolaus" },
 ];
 
 async function main() {
-  const sbClient = new ServiceBusClient(connectionString);
+  const credential = new DefaultAzureCredential();
+  const sbClient = new ServiceBusClient(fqdn, credential);
   try {
     await sendScheduledMessages(sbClient);
 
@@ -52,14 +53,14 @@ async function sendScheduledMessages(sbClient) {
 
   const messages = listOfScientists.map((scientist) => ({
     body: `${scientist.firstName} ${scientist.lastName}`,
-    subject: "Scientist"
+    subject: "Scientist",
   }));
 
   const timeNowUtc = new Date(Date.now());
   const scheduledEnqueueTimeUtc = new Date(Date.now() + 10000);
   console.log(`Time now in UTC: ${timeNowUtc}`);
   console.log(
-    `Messages will appear in Service Bus after 10 seconds at: ${scheduledEnqueueTimeUtc}`
+    `Messages will appear in Service Bus after 10 seconds at: ${scheduledEnqueueTimeUtc}`,
   );
 
   await sender.scheduleMessages(messages, scheduledEnqueueTimeUtc);
@@ -84,7 +85,7 @@ async function receiveMessages(sbClient) {
 
   queueReceiver.subscribe({
     processMessage,
-    processError
+    processError,
   });
   await delay(5000);
   await queueReceiver.close();
@@ -97,7 +98,7 @@ async function receiveMessages(sbClient) {
 
   queueReceiver.subscribe({
     processMessage,
-    processError
+    processError,
   });
 
   await delay(5000);
@@ -111,3 +112,5 @@ main().catch((err) => {
   console.log("ScheduleMessages Sample - Error occurred: ", err);
   process.exit(1);
 });
+
+module.exports = { main };

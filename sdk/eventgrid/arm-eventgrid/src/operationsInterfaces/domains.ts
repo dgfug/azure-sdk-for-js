@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Domain,
   DomainsListBySubscriptionOptionalParams,
@@ -23,7 +23,7 @@ import {
   DomainsListSharedAccessKeysResponse,
   DomainRegenerateKeyRequest,
   DomainsRegenerateKeyOptionalParams,
-  DomainsRegenerateKeyResponse
+  DomainsRegenerateKeyResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -34,7 +34,7 @@ export interface Domains {
    * @param options The options parameters.
    */
   listBySubscription(
-    options?: DomainsListBySubscriptionOptionalParams
+    options?: DomainsListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<Domain>;
   /**
    * List all the domains under a resource group.
@@ -43,7 +43,7 @@ export interface Domains {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: DomainsListByResourceGroupOptionalParams
+    options?: DomainsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Domain>;
   /**
    * Get properties of a domain.
@@ -54,7 +54,7 @@ export interface Domains {
   get(
     resourceGroupName: string,
     domainName: string,
-    options?: DomainsGetOptionalParams
+    options?: DomainsGetOptionalParams,
   ): Promise<DomainsGetResponse>;
   /**
    * Asynchronously creates or updates a new domain with the specified parameters.
@@ -67,10 +67,10 @@ export interface Domains {
     resourceGroupName: string,
     domainName: string,
     domainInfo: Domain,
-    options?: DomainsCreateOrUpdateOptionalParams
+    options?: DomainsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DomainsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DomainsCreateOrUpdateResponse>,
       DomainsCreateOrUpdateResponse
     >
   >;
@@ -85,7 +85,7 @@ export interface Domains {
     resourceGroupName: string,
     domainName: string,
     domainInfo: Domain,
-    options?: DomainsCreateOrUpdateOptionalParams
+    options?: DomainsCreateOrUpdateOptionalParams,
   ): Promise<DomainsCreateOrUpdateResponse>;
   /**
    * Delete existing domain.
@@ -96,8 +96,8 @@ export interface Domains {
   beginDelete(
     resourceGroupName: string,
     domainName: string,
-    options?: DomainsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DomainsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete existing domain.
    * @param resourceGroupName The name of the resource group within the user's subscription.
@@ -107,7 +107,7 @@ export interface Domains {
   beginDeleteAndWait(
     resourceGroupName: string,
     domainName: string,
-    options?: DomainsDeleteOptionalParams
+    options?: DomainsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Asynchronously updates a domain with the specified parameters.
@@ -120,8 +120,8 @@ export interface Domains {
     resourceGroupName: string,
     domainName: string,
     domainUpdateParameters: DomainUpdateParameters,
-    options?: DomainsUpdateOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DomainsUpdateOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Asynchronously updates a domain with the specified parameters.
    * @param resourceGroupName The name of the resource group within the user's subscription.
@@ -133,7 +133,7 @@ export interface Domains {
     resourceGroupName: string,
     domainName: string,
     domainUpdateParameters: DomainUpdateParameters,
-    options?: DomainsUpdateOptionalParams
+    options?: DomainsUpdateOptionalParams,
   ): Promise<void>;
   /**
    * List the two keys used to publish to a domain.
@@ -144,7 +144,7 @@ export interface Domains {
   listSharedAccessKeys(
     resourceGroupName: string,
     domainName: string,
-    options?: DomainsListSharedAccessKeysOptionalParams
+    options?: DomainsListSharedAccessKeysOptionalParams,
   ): Promise<DomainsListSharedAccessKeysResponse>;
   /**
    * Regenerate a shared access key for a domain.
@@ -157,6 +157,6 @@ export interface Domains {
     resourceGroupName: string,
     domainName: string,
     regenerateKeyRequest: DomainRegenerateKeyRequest,
-    options?: DomainsRegenerateKeyOptionalParams
+    options?: DomainsRegenerateKeyOptionalParams,
   ): Promise<DomainsRegenerateKeyResponse>;
 }

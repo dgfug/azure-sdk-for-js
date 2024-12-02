@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { assert } from "chai";
 import { retrieveJwtExpirationTimestamp } from "../src/util/jwt";
@@ -19,15 +19,15 @@ describe("jwt", () => {
   it("parse with invalid argument", () => {
     assert.throws(
       () => retrieveJwtExpirationTimestamp(undefined!),
-      "Argument cannot be null or empty: 'jwt'."
+      "Argument cannot be null or empty: 'jwt'.",
     );
     assert.throws(
       () => retrieveJwtExpirationTimestamp(null!),
-      "Argument cannot be null or empty: 'jwt'."
+      "Argument cannot be null or empty: 'jwt'.",
     );
     assert.throws(
       () => retrieveJwtExpirationTimestamp(""),
-      "Argument cannot be null or empty: 'jwt'."
+      "Argument cannot be null or empty: 'jwt'.",
     );
   });
 
@@ -53,7 +53,7 @@ describe("jwt", () => {
 
     assert.throws(
       () => retrieveJwtExpirationTimestamp(jwtValue),
-      "Invalid JWT payload structure. No expiration."
+      "Invalid JWT payload structure. No expiration.",
     );
   });
 });

@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { PerfOptionDictionary, getEnvVar } from "@azure/test-utils-perf";
+// Licensed under the MIT License.
+import { PerfOptionDictionary, getEnvVar } from "@azure-tools/test-perf";
 import { MonitorQueryLog } from "./monitorQueryLog.spec";
 
 type MonitorQueryTestOptions = Record<string, unknown>;
@@ -19,7 +19,7 @@ export class LogQueryTest extends MonitorQueryLog<MonitorQueryTestOptions> {
   async run(): Promise<void> {
     await this.client.queryWorkspace(this.workspaceId, this.query, {
       startTime: new Date("2021-07-25"),
-      endTime: new Date("2021-07-26")
+      endTime: new Date("2021-07-26"),
     });
   }
 }

@@ -1,5 +1,5 @@
 import { SearchDocumentsBase, SearchDocumentsTestOptions } from "./core/searchDocumentsBase.spec";
-import { PerfOptionDictionary } from "@azure/test-utils-perf";
+import { PerfOptionDictionary } from "@azure-tools/test-perf";
 
 export class AutoCompleteTest extends SearchDocumentsBase<SearchDocumentsTestOptions> {
   public options: PerfOptionDictionary<SearchDocumentsTestOptions> = {
@@ -8,8 +8,8 @@ export class AutoCompleteTest extends SearchDocumentsBase<SearchDocumentsTestOpt
       description: "Number of Documents to be created",
       shortName: "dc",
       longName: "documentsCount",
-      defaultValue: 10
-    }
+      defaultValue: 10,
+    },
   };
 
   constructor() {

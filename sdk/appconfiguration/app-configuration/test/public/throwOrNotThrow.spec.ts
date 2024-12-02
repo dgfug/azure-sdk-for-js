@@ -1,16 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AppConfigurationClient, ConfigurationSetting } from "../../src";
+import type { AppConfigurationClient, ConfigurationSetting } from "../../src/index.js";
+import type { Recorder } from "@azure-tools/test-recorder";
 import {
+  assertThrowsRestError,
   createAppConfigurationClientForTests,
   deleteKeyCompletely,
-  assertThrowsRestError,
-  startRecorder
-} from "./utils/testHelpers";
-import * as assert from "assert";
-import { Recorder } from "@azure-tools/test-recorder";
-import { Context } from "mocha";
+  startRecorder,
+} from "./utils/testHelpers.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 // There's been discussion on other teams about what errors are thrown when. This
 // is the file where I've documented the throws/notThrows cases to make coordination
@@ -21,12 +20,12 @@ describe("Various error cases", () => {
   let recorder: Recorder;
   const nonMatchingETag = "never-match-etag";
 
-  beforeEach(function(this: Context) {
-    recorder = startRecorder(this);
-    client = createAppConfigurationClientForTests() || this.skip();
+  beforeEach(async function (ctx) {
+    recorder = await startRecorder(ctx);
+    client = createAppConfigurationClientForTests(recorder.configureClientOptions({}));
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
@@ -36,15 +35,15 @@ describe("Various error cases", () => {
 
     beforeEach(async () => {
       addedSetting = await client.addConfigurationSetting({
-        key: recorder.getUniqueName(`etags`),
-        value: "world"
+        key: recorder.variable(`etags`, `etags${Math.floor(Math.random() * 1000)}`),
+        value: "world",
       });
 
       nonExistentKey = "non-existent key " + addedSetting.key;
     });
 
-    afterEach(async function(this: Context) {
-      if (!this.currentTest?.isPending()) {
+    afterEach(async function (ctx) {
+      if (!ctx.task.pending) {
         await deleteKeyCompletely([addedSetting.key], client);
       }
     });
@@ -52,7 +51,7 @@ describe("Various error cases", () => {
     it("get: Non-existent key throws 404", async () => {
       await assertThrowsRestError(
         () => client.getConfigurationSetting({ key: nonExistentKey }),
-        404
+        404,
       );
     });
 
@@ -66,11 +65,11 @@ describe("Various error cases", () => {
           client.setConfigurationSetting(
             {
               ...addedSetting,
-              etag: nonMatchingETag // purposefully make the etag not match the server
+              etag: nonMatchingETag, // purposefully make the etag not match the server
             },
-            { onlyIfUnchanged: true }
+            { onlyIfUnchanged: true },
           ),
-        412
+        412,
       );
     });
 
@@ -97,22 +96,22 @@ describe("Various error cases", () => {
 
       // the 'no label' value for 'hello'
       addedSetting = await client.addConfigurationSetting({
-        key: recorder.getUniqueName(`etags`),
-        value: "world"
+        key: recorder.variable(`etags`, `etags${Math.floor(Math.random() * 1000)}`),
+        value: "world",
       });
 
       nonExistentKey = "bogus key " + addedSetting.key;
     });
 
-    afterEach(async function(this: Context) {
-      if (!this.currentTest?.isPending()) {
+    afterEach(async function (ctx) {
+      if (!ctx.task.pending) {
         await deleteKeyCompletely([addedSetting.key], client);
       }
     });
 
     it("get: value is unchanged from etag (304) using ifNoneMatch, sets all properties to undefined", async () => {
       const response = await client.getConfigurationSetting(addedSetting, {
-        onlyIfChanged: true
+        onlyIfChanged: true,
       });
 
       assert.equal(304, response.statusCode);

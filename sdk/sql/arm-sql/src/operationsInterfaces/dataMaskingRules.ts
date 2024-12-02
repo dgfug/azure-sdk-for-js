@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   DataMaskingRule,
   DataMaskingRulesListByDatabaseOptionalParams,
   DataMaskingRulesCreateOrUpdateOptionalParams,
-  DataMaskingRulesCreateOrUpdateResponse
+  DataMaskingRulesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +29,7 @@ export interface DataMaskingRules {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DataMaskingRulesListByDatabaseOptionalParams
+    options?: DataMaskingRulesListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<DataMaskingRule>;
   /**
    * Creates or updates a database data masking rule.
@@ -48,6 +47,6 @@ export interface DataMaskingRules {
     databaseName: string,
     dataMaskingRuleName: string,
     parameters: DataMaskingRule,
-    options?: DataMaskingRulesCreateOrUpdateOptionalParams
+    options?: DataMaskingRulesCreateOrUpdateOptionalParams,
   ): Promise<DataMaskingRulesCreateOrUpdateResponse>;
 }

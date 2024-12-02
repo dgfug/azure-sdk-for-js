@@ -1,9 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AvroReadable } from "./AvroReadable";
-import { KeyValuePair } from "./utils/utils.common";
-import { AbortSignalLike } from "@azure/abort-controller";
+// TODO: Do a review of the Object usage and non-interfaces
+/* eslint-disable @azure/azure-sdk/ts-use-interface-parameters */
+
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { AvroReadable } from "./AvroReadable";
+import type { KeyValuePair } from "./utils/utils.common";
 
 /**
  * Options to configure the AvroParser read methods.
@@ -28,10 +31,10 @@ export class AvroParser {
   public static async readFixedBytes(
     stream: AvroReadable,
     length: number,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<Uint8Array> {
     const bytes = await stream.read(length, { abortSignal: options.abortSignal });
-    if (bytes.length != length) {
+    if (bytes.length !== length) {
       throw new Error("Hit stream end.");
     }
     return bytes;
@@ -45,7 +48,7 @@ export class AvroParser {
    */
   private static async readByte(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<number> {
     const buf = await AvroParser.readFixedBytes(stream, 1, options);
     return buf[0];
@@ -56,7 +59,7 @@ export class AvroParser {
   // zig-zag: https://developers.google.com/protocol-buffers/docs/encoding?csw=1#types
   private static async readZigZagLong(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<number> {
     let zigZagEncoded = 0;
     let significanceInBit = 0;
@@ -71,6 +74,7 @@ export class AvroParser {
 
     if (haveMoreByte) {
       // Switch to float arithmetic
+      // eslint-disable-next-line no-self-assign
       zigZagEncoded = zigZagEncoded;
       significanceInFloat = 268435456; // 2 ** 28.
       do {
@@ -91,14 +95,14 @@ export class AvroParser {
 
   public static async readLong(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<number> {
     return AvroParser.readZigZagLong(stream, options);
   }
 
   public static async readInt(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<number> {
     return AvroParser.readZigZagLong(stream, options);
   }
@@ -109,12 +113,12 @@ export class AvroParser {
 
   public static async readBoolean(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<boolean> {
     const b = await AvroParser.readByte(stream, options);
-    if (b == 1) {
+    if (b === 1) {
       return true;
-    } else if (b == 0) {
+    } else if (b === 0) {
       return false;
     } else {
       throw new Error("Byte was not a boolean.");
@@ -123,7 +127,7 @@ export class AvroParser {
 
   public static async readFloat(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<number> {
     const u8arr = await AvroParser.readFixedBytes(stream, 4, options);
     const view = new DataView(u8arr.buffer, u8arr.byteOffset, u8arr.byteLength);
@@ -132,7 +136,7 @@ export class AvroParser {
 
   public static async readDouble(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<number> {
     const u8arr = await AvroParser.readFixedBytes(stream, 8, options);
     const view = new DataView(u8arr.buffer, u8arr.byteOffset, u8arr.byteLength);
@@ -141,29 +145,21 @@ export class AvroParser {
 
   public static async readBytes(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<Uint8Array> {
     const size = await AvroParser.readLong(stream, options);
     if (size < 0) {
       throw new Error("Bytes size was negative.");
     }
 
-    return await stream.read(size, { abortSignal: options.abortSignal });
+    return stream.read(size, { abortSignal: options.abortSignal });
   }
 
   public static async readString(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<string> {
     const u8arr = await AvroParser.readBytes(stream, options);
-
-    // polyfill TextDecoder to be backward compatible with older
-    // nodejs that doesn't expose TextDecoder as a global variable
-    if (typeof TextDecoder === "undefined" && typeof require !== "undefined") {
-      (global as any).TextDecoder = require("util").TextDecoder;
-    }
-
-    // FUTURE: need TextDecoder polyfill for IE
     const utf8decoder = new TextDecoder();
     return utf8decoder.decode(u8arr);
   }
@@ -171,7 +167,7 @@ export class AvroParser {
   private static async readMapPair<T>(
     stream: AvroReadable,
     readItemMethod: (s: AvroReadable, options?: AvroParserReadOptions) => Promise<T>,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<KeyValuePair<T>> {
     const key = await AvroParser.readString(stream, options);
     // FUTURE: this won't work with readFixed (currently not supported) which needs a length as the parameter.
@@ -182,13 +178,13 @@ export class AvroParser {
   public static async readMap<T>(
     stream: AvroReadable,
     readItemMethod: (s: AvroReadable, options?: AvroParserReadOptions) => Promise<T>,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<Record<string, T>> {
-    const readPairMethod = async (
-      stream: AvroReadable,
-      options: AvroParserReadOptions = {}
+    const readPairMethod = (
+      s: AvroReadable,
+      opts: AvroParserReadOptions = {},
     ): Promise<KeyValuePair<T>> => {
-      return await AvroParser.readMapPair(stream, readItemMethod, options);
+      return AvroParser.readMapPair(s, readItemMethod, opts);
     };
 
     const pairs: KeyValuePair<T>[] = await AvroParser.readArray(stream, readPairMethod, options);
@@ -203,12 +199,12 @@ export class AvroParser {
   private static async readArray<T>(
     stream: AvroReadable,
     readItemMethod: (s: AvroReadable, options?: AvroParserReadOptions) => Promise<T>,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
   ): Promise<T[]> {
     const items: T[] = [];
     for (
       let count = await AvroParser.readLong(stream, options);
-      count != 0;
+      count !== 0;
       count = await AvroParser.readLong(stream, options)
     ) {
       if (count < 0) {
@@ -237,7 +233,7 @@ enum AvroComplex {
   ARRAY = "array",
   MAP = "map",
   UNION = "union",
-  FIXED = "fixed"
+  FIXED = "fixed",
 }
 
 interface ObjectSchema {
@@ -250,18 +246,30 @@ interface ObjectSchema {
   size?: number;
 }
 
+enum AvroPrimitive {
+  NULL = "null",
+  BOOLEAN = "boolean",
+  INT = "int",
+  LONG = "long",
+  FLOAT = "float",
+  DOUBLE = "double",
+  BYTES = "bytes",
+  STRING = "string",
+}
+
 export abstract class AvroType {
   /**
    * Reads an object from the stream.
    */
   public abstract read(
     stream: AvroReadable,
-    options?: AvroParserReadOptions
-  ): Promise<Object | null>;
+    options?: AvroParserReadOptions,
+  ): Promise<Object | null>; // eslint-disable-line @typescript-eslint/no-wrapper-object-types
 
   /**
    * Determines the AvroType from the Avro Schema.
    */
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   public static fromSchema(schema: string | Object): AvroType {
     if (typeof schema === "string") {
       return AvroType.fromStringSchema(schema);
@@ -297,7 +305,9 @@ export abstract class AvroType {
     // Primitives can be defined as strings or objects
     try {
       return AvroType.fromStringSchema(type);
-    } catch (err) {}
+    } catch {
+      // no-op
+    }
 
     switch (type) {
       case AvroComplex.RECORD:
@@ -308,6 +318,7 @@ export abstract class AvroType {
           throw new Error(`Required attribute 'name' doesn't exist on schema: ${schema}`);
         }
 
+        // eslint-disable-next-line no-case-declarations
         const fields: Record<string, AvroType> = {};
         if (!schema.fields) {
           throw new Error(`Required attribute 'fields' doesn't exist on schema: ${schema}`);
@@ -337,17 +348,6 @@ export abstract class AvroType {
   }
 }
 
-enum AvroPrimitive {
-  NULL = "null",
-  BOOLEAN = "boolean",
-  INT = "int",
-  LONG = "long",
-  FLOAT = "float",
-  DOUBLE = "double",
-  BYTES = "bytes",
-  STRING = "string"
-}
-
 class AvroPrimitiveType extends AvroType {
   private _primitive: AvroPrimitive;
 
@@ -356,27 +356,25 @@ class AvroPrimitiveType extends AvroType {
     this._primitive = primitive;
   }
 
-  public async read(
-    stream: AvroReadable,
-    options: AvroParserReadOptions = {}
-  ): Promise<Object | null> {
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  public read(stream: AvroReadable, options: AvroParserReadOptions = {}): Promise<Object | null> {
     switch (this._primitive) {
       case AvroPrimitive.NULL:
-        return await AvroParser.readNull();
+        return AvroParser.readNull();
       case AvroPrimitive.BOOLEAN:
-        return await AvroParser.readBoolean(stream, options);
+        return AvroParser.readBoolean(stream, options);
       case AvroPrimitive.INT:
-        return await AvroParser.readInt(stream, options);
+        return AvroParser.readInt(stream, options);
       case AvroPrimitive.LONG:
-        return await AvroParser.readLong(stream, options);
+        return AvroParser.readLong(stream, options);
       case AvroPrimitive.FLOAT:
-        return await AvroParser.readFloat(stream, options);
+        return AvroParser.readFloat(stream, options);
       case AvroPrimitive.DOUBLE:
-        return await AvroParser.readDouble(stream, options);
+        return AvroParser.readDouble(stream, options);
       case AvroPrimitive.BYTES:
-        return await AvroParser.readBytes(stream, options);
+        return AvroParser.readBytes(stream, options);
       case AvroPrimitive.STRING:
-        return await AvroParser.readString(stream, options);
+        return AvroParser.readString(stream, options);
       default:
         throw new Error("Unknown Avro Primitive");
     }
@@ -391,6 +389,7 @@ class AvroEnumType extends AvroType {
     this._symbols = symbols;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   public async read(stream: AvroReadable, options: AvroParserReadOptions = {}): Promise<Object> {
     const value = await AvroParser.readInt(stream, options);
     return this._symbols[value];
@@ -407,10 +406,11 @@ class AvroUnionType extends AvroType {
 
   public async read(
     stream: AvroReadable,
-    options: AvroParserReadOptions = {}
+    options: AvroParserReadOptions = {},
+    // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   ): Promise<Object | null> {
     const typeIndex = await AvroParser.readInt(stream, options);
-    return await this._types[typeIndex].read(stream, options);
+    return this._types[typeIndex].read(stream, options);
   }
 }
 
@@ -422,14 +422,16 @@ class AvroMapType extends AvroType {
     this._itemType = itemType;
   }
 
-  public async read(stream: AvroReadable, options: AvroParserReadOptions = {}): Promise<Object> {
-    const readItemMethod = async (
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  public read(stream: AvroReadable, options: AvroParserReadOptions = {}): Promise<Object> {
+    const readItemMethod = (
       s: AvroReadable,
-      options?: AvroParserReadOptions
+      opts?: AvroParserReadOptions,
+      // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
     ): Promise<Object | null> => {
-      return await this._itemType.read(s, options);
+      return this._itemType.read(s, opts);
     };
-    return await AvroParser.readMap(stream, readItemMethod, options);
+    return AvroParser.readMap(stream, readItemMethod, options);
   }
 }
 
@@ -443,11 +445,13 @@ class AvroRecordType extends AvroType {
     this._name = name;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   public async read(stream: AvroReadable, options: AvroParserReadOptions = {}): Promise<Object> {
+    // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
     const record: Record<string, Object | null> = {};
     record["$schema"] = this._name;
     for (const key in this._fields) {
-      if (this._fields.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(this._fields, key)) {
         record[key] = await this._fields[key].read(stream, options);
       }
     }

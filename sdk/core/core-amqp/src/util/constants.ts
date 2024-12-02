@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export const Constants = {
   associatedLinkName: "associated-link-name",
@@ -14,6 +14,7 @@ export const Constants = {
   publisher: "x-opt-publisher-name",
   viaPartitionKey: "x-opt-via-partition-key",
   deadLetterSource: "x-opt-deadletter-source",
+  messageState: "x-opt-message-state",
   enqueuedTimeAnnotation: `amqp.annotation.x-opt-enqueued-time`,
   offsetAnnotation: `amqp.annotation.x-opt-offset`,
   sequenceNumberAnnotation: `amqp.annotation.x-opt-sequence-number`,
@@ -28,6 +29,7 @@ export const Constants = {
   partitionId: "partitionId",
   readOperation: "READ",
   TLS: "tls",
+  TCP: "tcp",
   establishConnection: "establishConnection",
   defaultConsumerGroup: "$default",
   eventHub: "eventhub",
@@ -73,6 +75,7 @@ export const Constants = {
   minDurationValue: -922337203685477,
   // https://github.com/Azure/azure-amqp/blob/master/Microsoft.Azure.Amqp/Amqp/AmqpConstants.cs#L47
   maxAbsoluteExpiryTime: new Date("9999-12-31T07:59:59.000Z").getTime(),
+  maxUint32Value: 4294967295,
   aadTokenValidityMarginInMs: 5000,
   connectionReconnectDelay: 300,
   defaultMaxRetries: 3,
@@ -83,6 +86,7 @@ export const Constants = {
   dispositionStatus: "disposition-status",
   fromSequenceNumber: "from-sequence-number",
   messageCount: "message-count",
+  enqueuedTimeUtc: "enqueued-time-utc",
   lockTokens: "lock-tokens",
   messageIdMapKey: "message-id",
   sequenceNumberMapKey: "sequence-number",
@@ -103,6 +107,7 @@ export const Constants = {
     renewLock: "com.microsoft:renew-lock",
     peekMessage: "com.microsoft:peek-message",
     receiveBySequenceNumber: "com.microsoft:receive-by-sequence-number",
+    deleteMessages: "com.microsoft:batch-delete-messages",
     updateDisposition: "com.microsoft:update-disposition",
     renewSessionLock: "com.microsoft:renew-session-lock",
     setSessionState: "com.microsoft:set-session-state",
@@ -110,7 +115,7 @@ export const Constants = {
     enumerateSessions: "com.microsoft:get-message-sessions",
     addRule: "com.microsoft:add-rule",
     removeRule: "com.microsoft:remove-rule",
-    enumerateRules: "com.microsoft:enumerate-rules"
+    enumerateRules: "com.microsoft:enumerate-rules",
   },
   descriptorCodes: {
     ruleDescriptionList: 1335734829060,
@@ -118,6 +123,12 @@ export const Constants = {
     correlationFilterList: 83483426825,
     sqlRuleActionList: 1335734829062,
     trueFilterList: 83483426823,
-    falseFilterList: 83483426824
-  }
+    falseFilterList: 83483426824,
+  },
 } as const;
+
+/**
+ * The standard error message accompanying an AbortError.
+ * @hidden
+ */
+export const StandardAbortMessage = "The operation was aborted.";

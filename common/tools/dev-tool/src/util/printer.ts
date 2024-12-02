@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import chalk from "chalk";
-import path from "path";
+import path from "node:path";
 
 const printModes = ["info", "warn", "error", "success", "debug"] as const;
 
 export type Fn<T = void> = (...values: any[]) => T;
-export type ModeMap<T> = { [k in typeof printModes[number]]: T };
+export type ModeMap<T> = { [k in (typeof printModes)[number]]: T };
 
 // Compute the base directory of the dev-tool command package
 // We must do this specially for the printer module because using
@@ -49,7 +49,7 @@ let backend: PrinterBackend = {
   log: console.log,
   info: console.info,
   warn: console.warn,
-  trace: console.trace
+  trace: console.trace,
 };
 
 /**
@@ -62,7 +62,7 @@ let backend: PrinterBackend = {
 export function updateBackend(update: Partial<PrinterBackend>): void {
   backend = {
     ...backend,
-    ...update
+    ...update,
   };
 }
 
@@ -74,7 +74,7 @@ function getCaller(): NodeJS.CallSite | undefined {
 
   let caller: NodeJS.CallSite | undefined = undefined;
   try {
-    const error = (new Error() as any) as { stack: NodeJS.CallSite[] };
+    const error = new Error() as any as { stack: NodeJS.CallSite[] };
 
     Error.prepareStackTrace = (_, stack) => stack;
 
@@ -98,7 +98,7 @@ const colors: ModeMap<Fn<string>> = {
   warn: chalk.yellow,
   error: chalk.red,
   debug: chalk.magenta,
-  success: chalk.green
+  success: chalk.green,
 };
 
 const finalLogger: ModeMap<Fn> = {
@@ -115,12 +115,13 @@ const finalLogger: ModeMap<Fn> = {
     if (process.env.DEBUG) {
       const caller = getCaller();
       const fileName = caller?.getFileName()?.split(DEV_TOOL_PATH)?.[1];
-      const callerInfo = `(@ ${fileName ? fileName : "<unknown>"}#${caller?.getFunctionName() ??
-        "<anonymous>"}:${caller?.getLineNumber()}:${caller?.getColumnNumber()})`;
+      const callerInfo = `(@ ${fileName ? fileName : "<unknown>"}#${
+        caller?.getFunctionName() ?? "<anonymous>"
+      }:${caller?.getLineNumber()}:${caller?.getColumnNumber()})`;
       backend.error(values[0], colors.debug(callerInfo), ...values.slice(1));
     }
   },
-  success: console.info
+  success: console.info,
 };
 
 /**
@@ -147,11 +148,14 @@ const finalLogger: ModeMap<Fn> = {
  */
 export function createPrinter(name: string): Printer {
   const prefix = "[" + name + "]";
-  const base = ((...values: string[]) => console.log(chalk.reset(prefix, ...values))) as Printer;
+  const base = ((...values: string[]) => {
+    console.log(chalk.reset(prefix, ...values));
+  }) as Printer;
 
   for (const mode of printModes) {
-    base[mode] = (...values: string[]) =>
+    base[mode] = (...values: string[]) => {
       finalLogger[mode](...[prefix, ...values].map((value: string) => colors[mode](value)));
+    };
   }
   return base;
 }

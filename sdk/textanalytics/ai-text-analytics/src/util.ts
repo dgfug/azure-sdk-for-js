@@ -1,25 +1,20 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { RestError } from "@azure/core-rest-pipeline";
-import { FullOperationResponse, OperationOptions, OperationSpec } from "@azure/core-client";
-import { SpanStatusCode } from "@azure/core-tracing";
 import { logger } from "./logger";
-import {
+import type {
   ErrorResponse,
-  GeneratedClient,
-  InnerError,
   StringIndexType as GeneratedStringIndexType,
-  TextAnalyticsError
+  InnerError,
+  TextAnalyticsError,
 } from "./generated";
-import { TextAnalyticsAction } from "./textAnalyticsAction";
-import { createSpan } from "./tracing";
-import { LroResponse } from "@azure/core-lro";
+import type { TextAnalyticsAction } from "./textAnalyticsAction";
 
 /**
  * @internal
  */
-export interface IdObject {
+interface IdObject {
   id: string;
 }
 
@@ -33,7 +28,7 @@ export interface IdObject {
  */
 export function sortResponseIdObjects<T extends IdObject, U extends IdObject>(
   sortedArray: T[],
-  unsortedArray: U[]
+  unsortedArray: U[],
 ): U[] {
   const unsortedMap = new Map<string, U>();
   for (const item of unsortedArray) {
@@ -43,7 +38,7 @@ export function sortResponseIdObjects<T extends IdObject, U extends IdObject>(
   if (unsortedArray.length !== sortedArray.length) {
     const ordinal = unsortedArray.length > sortedArray.length ? "more" : "fewer";
     logger.warning(
-      `The service returned ${ordinal} responses than inputs. Some errors may be treated as fatal.`
+      `The service returned ${ordinal} responses than inputs. Some errors may be treated as fatal.`,
     );
   }
 
@@ -76,7 +71,7 @@ export function parseAssessmentIndex(pointer: string): AssessmentIndex {
     const assessmentIndex: AssessmentIndex = {
       document: parseInt(res[1]),
       sentence: parseInt(res[2]),
-      assessment: parseInt(res[3])
+      assessment: parseInt(res[3]),
     };
     return assessmentIndex;
   } else {
@@ -110,7 +105,7 @@ export type StringIndexType = "TextElement_v8" | "UnicodeCodePoint" | "Utf16Code
  * @internal
  */
 export function addStrEncodingParam<Options extends { stringIndexType?: StringIndexType }>(
-  options: Options
+  options: Options,
 ): Options & { stringIndexType: StringIndexType } {
   return { ...options, stringIndexType: options.stringIndexType || jsEncodingUnit };
 }
@@ -121,13 +116,13 @@ export function addStrEncodingParam<Options extends { stringIndexType?: StringIn
  * @internal
  */
 export function setStrEncodingParam<X extends { stringIndexType?: GeneratedStringIndexType }>(
-  x: X
+  x: X,
 ): X & { stringIndexType: GeneratedStringIndexType } {
   return { ...x, stringIndexType: x.stringIndexType || jsEncodingUnit };
 }
 
 export function setStrEncodingParamValue(
-  stringIndexType?: GeneratedStringIndexType
+  stringIndexType?: GeneratedStringIndexType,
 ): GeneratedStringIndexType {
   return stringIndexType || jsEncodingUnit;
 }
@@ -137,7 +132,7 @@ export function setStrEncodingParamValue(
  * @internal
  */
 export function setOpinionMining<X extends { includeOpinionMining?: boolean }>(
-  x: X
+  x: X,
 ): X & { opinionMining?: boolean } {
   return { ...x, opinionMining: x.includeOpinionMining };
 }
@@ -147,48 +142,51 @@ export function setOpinionMining<X extends { includeOpinionMining?: boolean }>(
  * @internal
  */
 export function setCategoriesFilter<X extends { categoriesFilter?: string[] }>(
-  x: X
+  x: X,
 ): X & { piiCategories?: string[] } {
   return { ...x, piiCategories: x.categoriesFilter };
-}
-
-export function setSentenceCount<X extends { maxSentenceCount?: number }>(
-  x: X
-): X & { sentenceCount?: number } {
-  return { ...x, sentenceCount: x.maxSentenceCount };
-}
-
-export function setOrderBy<X extends { orderBy?: string }>(x: X): X & { sortBy?: string } {
-  return { ...x, sortBy: x.orderBy };
 }
 
 /**
  * @internal
  */
 export function addParamsToTask<X extends TextAnalyticsAction>(
-  action: X
+  action: X,
 ): { parameters?: Omit<X, "actionName">; taskName?: string } {
   const { actionName, ...params } = action;
   return { parameters: params, taskName: actionName };
 }
 
 /**
- * Set the modelVersion property with default if it does not exist in x.
- * @param options - operation options bag that has a {@link StringIndexType}
  * @internal
  */
-export function setModelVersionParam<X extends { modelVersion?: string }>(
-  x: X
-): X & { modelVersion: string } {
-  return { ...x, modelVersion: x.modelVersion || "latest" };
+interface PageParam {
+  top: number;
+  skip: number;
 }
 
 /**
  * @internal
  */
-export interface PageParam {
-  top: number;
-  skip: number;
+export function nextLinkToTopAndSkip(nextLink: string): PageParam {
+  const url = new URL(nextLink);
+  const searchParams = new URLSearchParams(url.searchParams);
+  let top: number;
+  if (searchParams.has("$top")) {
+    top = parseInt(searchParams.get("$top")!);
+  } else {
+    throw new Error(`nextLink URL does not have the $top param: ${nextLink}`);
+  }
+  let skip: number;
+  if (searchParams.has("$skip")) {
+    skip = parseInt(searchParams.get("$skip")!);
+  } else {
+    throw new Error(`nextLink URL does not have the $skip param: ${nextLink}`);
+  }
+  return {
+    skip: skip,
+    top: top,
+  };
 }
 
 /**
@@ -209,36 +207,49 @@ function appendReadableErrorMessage(currentMessage: string, innerMessage: string
 
 /**
  * @internal
- * parses incoming errors from the service and if the inner error code is
- * InvalidDocumentBatch, it exposes that as the statusCode instead.
+ * parses incoming errors from the service/
  * @param error - the incoming error
  */
-export function compileError(errorResponse: unknown): any {
-  const castErrorResponse = errorResponse as {
+function transformError(errorResponse: unknown): any {
+  const strongErrorResponse = errorResponse as {
     response: {
       parsedBody?: ErrorResponse;
     };
     statusCode: number;
   };
-  const topLevelError = castErrorResponse.response.parsedBody?.error;
+  if (!strongErrorResponse.response) {
+    throw errorResponse;
+  }
+  const topLevelError = strongErrorResponse.response.parsedBody?.error;
   if (!topLevelError) return errorResponse;
-  let errorMessage = topLevelError.message || "";
-  let invalidDocumentBatchCode = false;
+  let errorMessage = topLevelError.message;
+  let code = topLevelError.code;
   function unwrap(error: TextAnalyticsError | InnerError): TextAnalyticsError {
-    if (error?.innererror !== undefined && error.innererror.message !== undefined) {
-      if (error.innererror.code === "InvalidDocumentBatch") {
-        invalidDocumentBatchCode = true;
+    const innerError = error.innererror;
+    if (innerError) {
+      if (innerError.message) {
+        errorMessage = appendReadableErrorMessage(errorMessage, innerError.message);
       }
-      errorMessage = appendReadableErrorMessage(errorMessage, error.innererror.message);
-      return unwrap(error.innererror);
+      if (innerError.code) {
+        code = innerError.code;
+      }
+      return unwrap(innerError);
     }
     return error as TextAnalyticsError;
   }
   unwrap(topLevelError);
   return new RestError(errorMessage, {
-    code: invalidDocumentBatchCode ? "InvalidDocumentBatch" : topLevelError.code,
-    statusCode: castErrorResponse.statusCode
+    code: code === "InvalidDocumentBatch" ? code : topLevelError.code,
+    statusCode: strongErrorResponse.statusCode,
   });
+}
+
+export async function throwError<T>(p: Promise<T>): Promise<T> {
+  try {
+    return await p;
+  } catch (e: unknown) {
+    throw transformError(e);
+  }
 }
 
 /**
@@ -256,73 +267,4 @@ export function delay(timeInMs: number): Promise<void> {
  */
 export function compose<T1, T2, T3>(fn1: (x: T1) => T2, fn2: (y: T2) => T3): (x: T1) => T3 {
   return (value: T1) => fn2(fn1(value));
-}
-
-/**
- * @internal
- */
-export async function getRawResponse<TOptions extends OperationOptions, TResult>(
-  f: (options: TOptions) => Promise<TResult>,
-  options: TOptions
-): Promise<LroResponse<TResult>> {
-  const { onResponse } = options || {};
-  let rawResponse: FullOperationResponse | undefined = undefined;
-  const flatResponse = await f({
-    ...options,
-    onResponse: (response: FullOperationResponse, flatResponseParam: unknown) => {
-      rawResponse = response;
-      onResponse?.(response, flatResponseParam);
-    }
-  });
-  return {
-    flatResponse,
-    rawResponse: {
-      statusCode: rawResponse!.status,
-      headers: rawResponse!.headers.toJSON(),
-      body: rawResponse!.parsedBody
-    }
-  };
-}
-
-/**
- * @internal
- */
-export async function sendGetRequest<TOptions extends OperationOptions>(
-  // eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
-  client: GeneratedClient,
-  spec: OperationSpec,
-  spanStr: string,
-  options: TOptions,
-  path: string
-): Promise<LroResponse<unknown>> {
-  const { span, updatedOptions: finalOptions } = createSpan(
-    `TextAnalyticsClient-${spanStr}`,
-    options
-  );
-  try {
-    const { flatResponse, rawResponse } = await getRawResponse(
-      (paramOptions) =>
-        client.sendOperationRequest(
-          { options: paramOptions },
-          {
-            ...spec,
-            path,
-            httpMethod: "GET"
-          }
-        ),
-      finalOptions
-    );
-    return {
-      flatResponse: flatResponse,
-      rawResponse
-    };
-  } catch (e) {
-    span.setStatus({
-      code: SpanStatusCode.ERROR,
-      message: e.message
-    });
-    throw e;
-  } finally {
-    span.end();
-  }
 }

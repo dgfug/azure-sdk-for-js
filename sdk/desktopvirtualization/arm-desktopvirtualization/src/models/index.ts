@@ -79,10 +79,29 @@ export interface CloudErrorProperties {
   message?: string;
 }
 
-/** The resource model definition containing the full set of allowed properties for a resource. Except properties bag, there cannot be a top level property outside of this set. */
-export interface ResourceModelWithAllowedPropertySet {
+/** The private endpoint resource. */
+export interface PrivateEndpoint {
   /**
-   * Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+   * The ARM identifier for private endpoint.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+}
+
+/** A collection of information about the state of the connection between service consumer and provider. */
+export interface PrivateLinkServiceConnectionState {
+  /** Indicates whether the connection has been Approved/Rejected/Removed by the owner of the service. */
+  status?: PrivateEndpointServiceConnectionStatus;
+  /** The reason for approval/rejection of the connection. */
+  description?: string;
+  /** A message indicating if changes on the service provider require any updates on the consumer. */
+  actionsRequired?: string;
+}
+
+/** Common fields that are returned in the response for all Azure Resource Manager resources */
+export interface Resource {
+  /**
+   * Fully qualified resource ID for the resource. E.g. "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly id?: string;
@@ -96,33 +115,38 @@ export interface ResourceModelWithAllowedPropertySet {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly type?: string;
-  /** The geo-location where the resource lives */
-  location?: string;
-  /** The fully qualified resource ID of the resource that manages this resource. Indicates if this resource is managed by another Azure resource. If this is present, complete mode deployment will not delete the resource if it is removed from the template since it is managed by another resource. */
-  managedBy?: string;
-  /** Metadata used by portal/tooling/etc to render different UX experiences for resources of the same type; e.g. ApiApps are a kind of Microsoft.Web/sites type.  If supported, the resource provider must validate and persist this value. */
-  kind?: string;
   /**
-   * The etag field is *not* required. If it is provided in the response body, it must also be provided as a header per the normal etag convention.  Entity tags are used for comparing two or more entities from the same requested resource. HTTP/1.1 uses entity tags in the etag (section 14.19), If-Match (section 14.24), If-None-Match (section 14.26), and If-Range (section 14.27) header fields.
+   * Azure Resource Manager metadata containing createdBy and modifiedBy information.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly etag?: string;
-  /** Resource tags. */
-  tags?: { [propertyName: string]: string };
-  identity?: ResourceModelWithAllowedPropertySetIdentity;
-  sku?: ResourceModelWithAllowedPropertySetSku;
-  plan?: ResourceModelWithAllowedPropertySetPlan;
+  readonly systemData?: SystemData;
+}
+
+/** Metadata pertaining to creation and last modification of the resource. */
+export interface SystemData {
+  /** The identity that created the resource. */
+  createdBy?: string;
+  /** The type of identity that created the resource. */
+  createdByType?: CreatedByType;
+  /** The timestamp of resource creation (UTC). */
+  createdAt?: Date;
+  /** The identity that last modified the resource. */
+  lastModifiedBy?: string;
+  /** The type of identity that last modified the resource. */
+  lastModifiedByType?: CreatedByType;
+  /** The timestamp of resource last modification (UTC) */
+  lastModifiedAt?: Date;
 }
 
 /** Identity for the resource. */
 export interface Identity {
   /**
-   * The principal ID of resource identity.
+   * The principal ID of resource identity. The value must be an UUID.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly principalId?: string;
   /**
-   * The tenant ID of resource.
+   * The tenant ID of resource. The value must be an UUID.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly tenantId?: string;
@@ -132,7 +156,7 @@ export interface Identity {
 
 /** The resource model definition representing SKU */
 export interface Sku {
-  /** The name of the SKU. Ex - P3. It is typically a letter+number code */
+  /** The name of the SKU. E.g. P3. It is typically a letter+number code */
   name: string;
   /** This field is required to be implemented by the Resource Provider if the service has more than one tier, but is not required on a PUT. */
   tier?: SkuTier;
@@ -158,22 +182,6 @@ export interface Plan {
   version?: string;
 }
 
-/** Metadata pertaining to creation and last modification of the resource. */
-export interface SystemData {
-  /** The identity that created the resource. */
-  createdBy?: string;
-  /** The type of identity that created the resource. */
-  createdByType?: CreatedByType;
-  /** The timestamp of resource creation (UTC). */
-  createdAt?: Date;
-  /** The identity that last modified the resource. */
-  lastModifiedBy?: string;
-  /** The type of identity that last modified the resource. */
-  lastModifiedByType?: CreatedByType;
-  /** The timestamp of resource last modification (UTC) */
-  lastModifiedAt?: Date;
-}
-
 /** Workspace properties that can be patched. */
 export interface WorkspacePatch {
   /** tags to be updated */
@@ -188,6 +196,28 @@ export interface WorkspacePatch {
   publicNetworkAccess?: PublicNetworkAccess;
 }
 
+/** List of private endpoint connection associated with the specified storage account */
+export interface PrivateEndpointConnectionListResultWithSystemData {
+  /** Array of private endpoint connections */
+  value?: PrivateEndpointConnectionWithSystemData[];
+  /**
+   * Link to the next page of results.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** A list of private link resources */
+export interface PrivateLinkResourceListResult {
+  /** Array of private link resources */
+  value?: PrivateLinkResource[];
+  /**
+   * Link to the next page of results.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
 /** List of Workspace definitions. */
 export interface WorkspaceList {
   /** List of Workspace definitions. */
@@ -199,9 +229,9 @@ export interface WorkspaceList {
   readonly nextLink?: string;
 }
 
-/** Scaling plan schedule. */
+/** A ScalingPlanPooledSchedule. */
 export interface ScalingSchedule {
-  /** Name of the scaling schedule. */
+  /** Name of the ScalingPlanPooledSchedule. */
   name?: string;
   /** Set of days of the week on which this schedule is active. */
   daysOfWeek?: ScalingScheduleDaysOfWeekItem[];
@@ -284,31 +314,82 @@ export interface ScalingPlanList {
   readonly nextLink?: string;
 }
 
-/** Properties for arm migration. */
-export interface MigrationRequestProperties {
-  /** The type of operation for migration. */
-  operation?: Operation;
-  /** The path to the legacy object to migrate. */
-  migrationPath?: string;
+/** List of ScalingPlanPooledSchedule definitions. */
+export interface ScalingPlanPooledScheduleList {
+  /** List of ScalingPlanPooledSchedule definitions. */
+  value?: ScalingPlanPooledSchedule[];
+  /**
+   * Link to the next page of results.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
 }
 
-/** Common fields that are returned in the response for all Azure Resource Manager resources */
-export interface Resource {
+/** ScalingPlanPersonalSchedule properties that can be patched. */
+export interface ScalingPlanPersonalSchedulePatch {
+  /** Set of days of the week on which this schedule is active. */
+  daysOfWeek?: DayOfWeek[];
+  /** Starting time for ramp up period. */
+  rampUpStartTime?: Time;
+  /** The desired startup behavior during the ramp up period for personal vms in the hostpool. */
+  rampUpAutoStartHosts?: StartupBehavior;
+  /** The desired configuration of Start VM On Connect for the hostpool during the ramp up phase. If this is disabled, session hosts must be turned on using rampUpAutoStartHosts or by turning them on manually. */
+  rampUpStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the ramp up period. */
+  rampUpActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the ramp up period. */
+  rampUpMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the ramp up period. */
+  rampUpActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the ramp up period. */
+  rampUpMinutesToWaitOnLogoff?: number;
+  /** Starting time for peak period. */
+  peakStartTime?: Time;
+  /** The desired configuration of Start VM On Connect for the hostpool during the peak phase. */
+  peakStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the peak period. */
+  peakActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the peak period. */
+  peakMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the peak period. */
+  peakActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the peak period. */
+  peakMinutesToWaitOnLogoff?: number;
+  /** Starting time for ramp down period. */
+  rampDownStartTime?: Time;
+  /** The desired configuration of Start VM On Connect for the hostpool during the ramp down phase. */
+  rampDownStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the ramp down period. */
+  rampDownActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the ramp down period. */
+  rampDownMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the ramp down period. */
+  rampDownActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the ramp down period. */
+  rampDownMinutesToWaitOnLogoff?: number;
+  /** Starting time for off-peak period. */
+  offPeakStartTime?: Time;
+  /** The desired configuration of Start VM On Connect for the hostpool during the off-peak phase. */
+  offPeakStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the off-peak period. */
+  offPeakActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the off-peak period. */
+  offPeakMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the off-peak period. */
+  offPeakActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the off-peak period. */
+  offPeakMinutesToWaitOnLogoff?: number;
+}
+
+/** List of ScalingPlanPersonalSchedule definitions. */
+export interface ScalingPlanPersonalScheduleList {
+  /** List of ScalingPlanPersonalSchedule definitions. */
+  value?: ScalingPlanPersonalSchedule[];
   /**
-   * Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+   * Link to the next page of results.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly id?: string;
-  /**
-   * The name of the resource
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly name?: string;
-  /**
-   * The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly type?: string;
+  readonly nextLink?: string;
 }
 
 /** List of ApplicationGroup definitions. */
@@ -403,12 +484,52 @@ export interface RegistrationInfo {
   registrationTokenOperation?: RegistrationTokenOperation;
 }
 
+/** The session host configuration for updating agent, monitoring agent, and stack component. */
+export interface AgentUpdateProperties {
+  /** The type of maintenance for session host components. */
+  type?: SessionHostComponentUpdateType;
+  /** Whether to use localTime of the virtual machine. */
+  useSessionHostLocalTime?: boolean;
+  /** Time zone for maintenance as defined in https://docs.microsoft.com/en-us/dotnet/api/system.timezoneinfo.findsystemtimezonebyid?view=net-5.0. Must be set if useLocalTime is true. */
+  maintenanceWindowTimeZone?: string;
+  /** List of maintenance windows. Maintenance windows are 2 hours long. */
+  maintenanceWindows?: MaintenanceWindowProperties[];
+}
+
+/** Maintenance window starting hour and day of week. */
+export interface MaintenanceWindowProperties {
+  /** The update start hour of the day. (0 - 23) */
+  hour?: number;
+  /** Day of the week. */
+  dayOfWeek?: DayOfWeek;
+}
+
 /** Represents a RegistrationInfo definition. */
 export interface RegistrationInfoPatch {
   /** Expiration time of registration token. */
   expirationTime?: Date;
   /** The type of resetting the token. */
   registrationTokenOperation?: RegistrationTokenOperation;
+}
+
+/** The session host configuration for updating agent, monitoring agent, and stack component. */
+export interface AgentUpdatePatchProperties {
+  /** The type of maintenance for session host components. */
+  type?: SessionHostComponentUpdateType;
+  /** Whether to use localTime of the virtual machine. */
+  useSessionHostLocalTime?: boolean;
+  /** Time zone for maintenance as defined in https://docs.microsoft.com/en-us/dotnet/api/system.timezoneinfo.findsystemtimezonebyid?view=net-5.0. Must be set if useLocalTime is true. */
+  maintenanceWindowTimeZone?: string;
+  /** List of maintenance windows. Maintenance windows are 2 hours long. */
+  maintenanceWindows?: MaintenanceWindowPatchProperties[];
+}
+
+/** Maintenance window starting hour and day of week. */
+export interface MaintenanceWindowPatchProperties {
+  /** The update start hour of the day. (0 - 23) */
+  hour?: number;
+  /** Day of the week. */
+  dayOfWeek?: DayOfWeek;
 }
 
 /** List of HostPool definitions. */
@@ -420,6 +541,25 @@ export interface HostPoolList {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly nextLink?: string;
+}
+
+/** List of RegistrationToken definitions. */
+export interface RegistrationTokenList {
+  /** List of RegistrationToken definitions. */
+  value?: RegistrationTokenMinimal[];
+  /**
+   * Link to the next page of results.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Represents a Minimal set of properties for RegistrationToken definition. */
+export interface RegistrationTokenMinimal {
+  /** Expiration time of registration token. */
+  expirationTime?: Date;
+  /** The registration token base64 encoded string. */
+  token?: string;
 }
 
 /** List of UserSession definitions. */
@@ -521,6 +661,127 @@ export interface MsixPackageList {
   readonly nextLink?: string;
 }
 
+/** Information to import app attach package */
+export interface ImportPackageInfoRequest {
+  /** URI to Image */
+  path?: string;
+  /** Possible device architectures that an app attach package can be configured for */
+  packageArchitecture?: AppAttachPackageArchitectures;
+}
+
+/** List of App Attach Package definitions. */
+export interface AppAttachPackageList {
+  /** List of App Attach Package definitions. */
+  value?: AppAttachPackage[];
+  /**
+   * Link to the next page of results.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Schema for App Attach Package properties. */
+export interface AppAttachPackageProperties {
+  /**
+   * The provisioning state of the App Attach Package.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: ProvisioningState;
+  /** Detailed properties for App Attach Package */
+  image?: AppAttachPackageInfoProperties;
+  /** List of Hostpool resource Ids. */
+  hostPoolReferences?: string[];
+  /** URL path to certificate name located in keyVault */
+  keyVaultURL?: string;
+  /** Parameter indicating how the health check should behave if this package fails staging */
+  failHealthCheckOnStagingFailure?: FailHealthCheckOnStagingFailure;
+}
+
+/** Schema for Import Package Information properties. */
+export interface AppAttachPackageInfoProperties {
+  /** Alias of App Attach Package. Assigned at import time */
+  packageAlias?: string;
+  /** VHD/CIM image path on Network Share. */
+  imagePath?: string;
+  /** Package Name from appxmanifest.xml. */
+  packageName?: string;
+  /** Package Family Name from appxmanifest.xml. Contains Package Name and Publisher name. */
+  packageFamilyName?: string;
+  /** Package Full Name from appxmanifest.xml. */
+  packageFullName?: string;
+  /** User friendly Name to be displayed in the portal. */
+  displayName?: string;
+  /** Relative Path to the package inside the image. */
+  packageRelativePath?: string;
+  /** Specifies how to register Package in feed. */
+  isRegularRegistration?: boolean;
+  /** Make this version of the package the active one across the hostpool. */
+  isActive?: boolean;
+  /** List of package dependencies. */
+  packageDependencies?: MsixPackageDependencies[];
+  /** Package version found in the appxmanifest.xml. */
+  version?: string;
+  /** Date Package was last updated, found in the appxmanifest.xml. */
+  lastUpdated?: Date;
+  /** List of package applications. */
+  packageApplications?: MsixPackageApplications[];
+  /** Certificate name found in the appxmanifest.xml. */
+  certificateName?: string;
+  /** Date certificate expires, found in the appxmanifest.xml. */
+  certificateExpiry?: Date;
+  /** Is package timestamped so it can ignore the certificate expiry date */
+  isPackageTimestamped?: PackageTimestamped;
+}
+
+/** Common error response for all Azure Resource Manager APIs to return error details for failed operations. (This also follows the OData error response format.). */
+export interface ErrorResponse {
+  /** The error object. */
+  error?: ErrorDetail;
+}
+
+/** The error detail. */
+export interface ErrorDetail {
+  /**
+   * The error code.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly code?: string;
+  /**
+   * The error message.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly message?: string;
+  /**
+   * The error target.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly target?: string;
+  /**
+   * The error details.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly details?: ErrorDetail[];
+  /**
+   * The error additional info.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly additionalInfo?: ErrorAdditionalInfo[];
+}
+
+/** The resource management error additional info. */
+export interface ErrorAdditionalInfo {
+  /**
+   * The additional info type.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /**
+   * The additional info.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly info?: Record<string, unknown>;
+}
+
 /** Represents URI referring to MSIX Image */
 export interface MsixImageURI {
   /** URI to Image */
@@ -538,6 +799,18 @@ export interface ExpandMsixImageList {
   readonly nextLink?: string;
 }
 
+/** Schema for patchable fields on an App Attach Package. */
+export interface AppAttachPackagePatchProperties {
+  /** Detailed properties for App Attach Package */
+  image?: AppAttachPackageInfoProperties;
+  /** List of Hostpool resource Ids. */
+  hostPoolReferences?: string[];
+  /** URL path to certificate name located in keyVault */
+  keyVaultURL?: string;
+  /** Parameter indicating how the health check should behave if this package fails staging */
+  failHealthCheckOnStagingFailure?: FailHealthCheckOnStagingFailure;
+}
+
 /** Represents message sent to a UserSession. */
 export interface SendMessage {
   /** Title of message. */
@@ -546,216 +819,141 @@ export interface SendMessage {
   messageBody?: string;
 }
 
-/** List of private endpoint connection associated with the specified storage account */
-export interface PrivateEndpointConnectionListResultWithSystemData {
-  /** Array of private endpoint connections */
-  value?: PrivateEndpointConnectionWithSystemData[];
+/** The private endpoint connection resource. */
+export interface PrivateEndpointConnection extends Resource {
   /**
-   * Link to the next page of results.
+   * The group ids for the private endpoint resource.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly nextLink?: string;
+  readonly groupIds?: string[];
+  /** The private endpoint resource. */
+  privateEndpoint?: PrivateEndpoint;
+  /** A collection of information about the state of the connection between service consumer and provider. */
+  privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;
+  /**
+   * The provisioning state of the private endpoint connection resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: PrivateEndpointConnectionProvisioningState;
 }
 
-/** The Private Endpoint resource. */
-export interface PrivateEndpoint {
-  /**
-   * The ARM identifier for Private Endpoint
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly id?: string;
+/** The resource model definition for an Azure Resource Manager tracked top level resource which has 'tags' and a 'location' */
+export interface TrackedResource extends Resource {
+  /** Resource tags. */
+  tags?: { [propertyName: string]: string };
+  /** The geo-location where the resource lives */
+  location: string;
 }
 
-/** A collection of information about the state of the connection between service consumer and provider. */
-export interface PrivateLinkServiceConnectionState {
-  /** Indicates whether the connection has been Approved/Rejected/Removed by the owner of the service. */
-  status?: PrivateEndpointServiceConnectionStatus;
-  /** The reason for approval/rejection of the connection. */
-  description?: string;
-  /** A message indicating if changes on the service provider require any updates on the consumer. */
-  actionsRequired?: string;
+/** A private link resource */
+export interface PrivateLinkResource extends Resource {
+  /**
+   * The private link resource group id.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly groupId?: string;
+  /**
+   * The private link resource required member names.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly requiredMembers?: string[];
+  /** The private link resource Private link DNS zone name. */
+  requiredZoneNames?: string[];
 }
 
-/** A list of private link resources */
-export interface PrivateLinkResourceListResult {
-  /** Array of private link resources */
-  value?: PrivateLinkResource[];
-  /**
-   * Link to the next page of results.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly nextLink?: string;
+/** Represents a ScalingPlanPooledSchedule definition. */
+export interface ScalingPlanPooledSchedule extends Resource {
+  /** Set of days of the week on which this schedule is active. */
+  daysOfWeek?: DayOfWeek[];
+  /** Starting time for ramp up period. */
+  rampUpStartTime?: Time;
+  /** Load balancing algorithm for ramp up period. */
+  rampUpLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
+  /** Minimum host percentage for ramp up period. */
+  rampUpMinimumHostsPct?: number;
+  /** Capacity threshold for ramp up period. */
+  rampUpCapacityThresholdPct?: number;
+  /** Starting time for peak period. */
+  peakStartTime?: Time;
+  /** Load balancing algorithm for peak period. */
+  peakLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
+  /** Starting time for ramp down period. */
+  rampDownStartTime?: Time;
+  /** Load balancing algorithm for ramp down period. */
+  rampDownLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
+  /** Minimum host percentage for ramp down period. */
+  rampDownMinimumHostsPct?: number;
+  /** Capacity threshold for ramp down period. */
+  rampDownCapacityThresholdPct?: number;
+  /** Should users be logged off forcefully from hosts. */
+  rampDownForceLogoffUsers?: boolean;
+  /** Specifies when to stop hosts during ramp down period. */
+  rampDownStopHostsWhen?: StopHostsWhen;
+  /** Number of minutes to wait to stop hosts during ramp down period. */
+  rampDownWaitTimeMinutes?: number;
+  /** Notification message for users during ramp down period. */
+  rampDownNotificationMessage?: string;
+  /** Starting time for off-peak period. */
+  offPeakStartTime?: Time;
+  /** Load balancing algorithm for off-peak period. */
+  offPeakLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
 }
 
-/** Represents a Workspace definition. */
-export type Workspace = ResourceModelWithAllowedPropertySet & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
-  /**
-   * ObjectId of Workspace. (internal use)
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly objectId?: string;
-  /** Description of Workspace. */
-  description?: string;
-  /** Friendly name of Workspace. */
-  friendlyName?: string;
-  /** List of applicationGroup resource Ids. */
-  applicationGroupReferences?: string[];
-  /**
-   * Is cloud pc resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly cloudPcResource?: boolean;
-  /** Enabled allows this resource to be accessed from both public and private networks, Disabled allows this resource to only be accessed via private endpoints */
-  publicNetworkAccess?: PublicNetworkAccess;
-};
+/** ScalingPlanPooledSchedule properties that can be patched. */
+export interface ScalingPlanPooledSchedulePatch extends Resource {
+  /** Set of days of the week on which this schedule is active. */
+  daysOfWeek?: DayOfWeek[];
+  /** Starting time for ramp up period. */
+  rampUpStartTime?: Time;
+  /** Load balancing algorithm for ramp up period. */
+  rampUpLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
+  /** Minimum host percentage for ramp up period. */
+  rampUpMinimumHostsPct?: number;
+  /** Capacity threshold for ramp up period. */
+  rampUpCapacityThresholdPct?: number;
+  /** Starting time for peak period. */
+  peakStartTime?: Time;
+  /** Load balancing algorithm for peak period. */
+  peakLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
+  /** Starting time for ramp down period. */
+  rampDownStartTime?: Time;
+  /** Load balancing algorithm for ramp down period. */
+  rampDownLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
+  /** Minimum host percentage for ramp down period. */
+  rampDownMinimumHostsPct?: number;
+  /** Capacity threshold for ramp down period. */
+  rampDownCapacityThresholdPct?: number;
+  /** Should users be logged off forcefully from hosts. */
+  rampDownForceLogoffUsers?: boolean;
+  /** Specifies when to stop hosts during ramp down period. */
+  rampDownStopHostsWhen?: StopHostsWhen;
+  /** Number of minutes to wait to stop hosts during ramp down period. */
+  rampDownWaitTimeMinutes?: number;
+  /** Notification message for users during ramp down period. */
+  rampDownNotificationMessage?: string;
+  /** Starting time for off-peak period. */
+  offPeakStartTime?: Time;
+  /** Load balancing algorithm for off-peak period. */
+  offPeakLoadBalancingAlgorithm?: SessionHostLoadBalancingAlgorithm;
+}
 
-/** Represents a scaling plan definition. */
-export type ScalingPlan = ResourceModelWithAllowedPropertySet & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
-  /**
-   * ObjectId of scaling plan. (internal use)
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly objectId?: string;
-  /** Description of scaling plan. */
-  description?: string;
-  /** User friendly name of scaling plan. */
-  friendlyName?: string;
-  /** Timezone of the scaling plan. */
-  timeZone?: string;
-  /** HostPool type for desktop. */
-  hostPoolType?: ScalingHostPoolType;
-  /** Exclusion tag for scaling plan. */
-  exclusionTag?: string;
-  /** List of ScalingSchedule definitions. */
-  schedules?: ScalingSchedule[];
-  /** List of ScalingHostPoolReference definitions. */
-  hostPoolReferences?: ScalingHostPoolReference[];
-};
-
-/** Represents a ApplicationGroup definition. */
-export type ApplicationGroup = ResourceModelWithAllowedPropertySet & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
-  /**
-   * ObjectId of ApplicationGroup. (internal use)
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly objectId?: string;
-  /** Description of ApplicationGroup. */
-  description?: string;
-  /** Friendly name of ApplicationGroup. */
-  friendlyName?: string;
-  /** HostPool arm path of ApplicationGroup. */
-  hostPoolArmPath: string;
-  /**
-   * Workspace arm path of ApplicationGroup.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly workspaceArmPath?: string;
-  /** Resource Type of ApplicationGroup. */
-  applicationGroupType: ApplicationGroupType;
-  /** The registration info of HostPool. */
-  migrationRequest?: MigrationRequestProperties;
-  /**
-   * Is cloud pc resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly cloudPcResource?: boolean;
-};
-
-/** Represents a HostPool definition. */
-export type HostPool = ResourceModelWithAllowedPropertySet & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
-  /**
-   * ObjectId of HostPool. (internal use)
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly objectId?: string;
-  /** Friendly name of HostPool. */
-  friendlyName?: string;
-  /** Description of HostPool. */
-  description?: string;
-  /** HostPool type for desktop. */
-  hostPoolType: HostPoolType;
-  /** PersonalDesktopAssignment type for HostPool. */
-  personalDesktopAssignmentType?: PersonalDesktopAssignmentType;
-  /** Custom rdp property of HostPool. */
-  customRdpProperty?: string;
-  /** The max session limit of HostPool. */
-  maxSessionLimit?: number;
-  /** The type of the load balancer. */
-  loadBalancerType: LoadBalancerType;
-  /** The ring number of HostPool. */
-  ring?: number;
-  /** Is validation environment. */
-  validationEnvironment?: boolean;
-  /** The registration info of HostPool. */
-  registrationInfo?: RegistrationInfo;
-  /** VM template for sessionhosts configuration within hostpool. */
-  vmTemplate?: string;
-  /**
-   * List of applicationGroup links.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly applicationGroupReferences?: string[];
-  /** URL to customer ADFS server for signing WVD SSO certificates. */
-  ssoadfsAuthority?: string;
-  /** ClientId for the registered Relying Party used to issue WVD SSO certificates. */
-  ssoClientId?: string;
-  /** Path to Azure KeyVault storing the secret used for communication to ADFS. */
-  ssoClientSecretKeyVaultPath?: string;
-  /** The type of single sign on Secret Type. */
-  ssoSecretType?: SSOSecretType;
-  /** The type of preferred application group type, default to Desktop Application Group */
-  preferredAppGroupType: PreferredAppGroupType;
-  /** The flag to turn on/off StartVMOnConnect feature. */
-  startVMOnConnect?: boolean;
-  /** The registration info of HostPool. */
-  migrationRequest?: MigrationRequestProperties;
-  /**
-   * Is cloud pc resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly cloudPcResource?: boolean;
-  /** Enabled allows this resource to be accessed from both public and private networks, Disabled allows this resource to only be accessed via private endpoints */
-  publicNetworkAccess?: PublicNetworkAccess;
-};
-
-export type ResourceModelWithAllowedPropertySetIdentity = Identity & {};
-
-export type ResourceModelWithAllowedPropertySetSku = Sku & {};
-
-export type ResourceModelWithAllowedPropertySetPlan = Plan & {};
+/** The resource model definition for a Azure Resource Manager proxy resource. It will not have tags and a location */
+export interface ProxyResource extends Resource { }
 
 /** ApplicationGroup properties that can be patched. */
-export type ApplicationGroupPatch = Resource & {
+export interface ApplicationGroupPatch extends Resource {
   /** tags to be updated */
   tags?: { [propertyName: string]: string };
   /** Description of ApplicationGroup. */
   description?: string;
   /** Friendly name of ApplicationGroup. */
   friendlyName?: string;
-};
+  /** Boolean representing whether the applicationGroup is show in the feed. */
+  showInFeed?: boolean;
+}
 
 /** Represents a StartMenuItem definition. */
-export type StartMenuItem = Resource & {
+export interface StartMenuItem extends Resource {
   /** Alias of StartMenuItem. */
   appAlias?: string;
   /** Path to the file of StartMenuItem. */
@@ -766,15 +964,10 @@ export type StartMenuItem = Resource & {
   iconPath?: string;
   /** Index of the icon. */
   iconIndex?: number;
-};
+}
 
 /** Schema for Application properties. */
-export type Application = Resource & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
+export interface Application extends Resource {
   /**
    * ObjectId of Application. (internal use)
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -812,15 +1005,10 @@ export type Application = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly iconContent?: Uint8Array;
-};
+}
 
 /** Schema for Desktop properties. */
-export type Desktop = Resource & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
+export interface Desktop extends Resource {
   /**
    * ObjectId of Desktop. (internal use)
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -840,10 +1028,10 @@ export type Desktop = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly iconContent?: Uint8Array;
-};
+}
 
 /** HostPool properties that can be patched. */
-export type HostPoolPatch = Resource & {
+export interface HostPoolPatch extends Resource {
   /** tags to be updated */
   tags?: { [propertyName: string]: string };
   /** Friendly name of HostPool. */
@@ -879,16 +1067,13 @@ export type HostPoolPatch = Resource & {
   /** The flag to turn on/off StartVMOnConnect feature. */
   startVMOnConnect?: boolean;
   /** Enabled to allow this resource to be access from the public network */
-  publicNetworkAccess?: PublicNetworkAccess;
-};
+  publicNetworkAccess?: HostpoolPublicNetworkAccess;
+  /** The session host configuration for updating agent, monitoring agent, and stack component. */
+  agentUpdate?: AgentUpdatePatchProperties;
+}
 
 /** Represents a UserSession definition. */
-export type UserSession = Resource & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
+export interface UserSession extends Resource {
   /**
    * ObjectId of user session. (internal use)
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -904,15 +1089,10 @@ export type UserSession = Resource & {
   activeDirectoryUserName?: string;
   /** The timestamp of the user session create. */
   createTime?: Date;
-};
+}
 
 /** Represents a SessionHost definition. */
-export type SessionHost = Resource & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
+export interface SessionHost extends Resource {
   /**
    * ObjectId of SessionHost. (internal use)
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -938,6 +1118,8 @@ export type SessionHost = Resource & {
   readonly resourceId?: string;
   /** User assigned to SessionHost. */
   assignedUser?: string;
+  /** Friendly name of SessionHost */
+  friendlyName?: string;
   /** Status for a SessionHost. */
   status?: Status;
   /**
@@ -963,23 +1145,20 @@ export type SessionHost = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly sessionHostHealthCheckResults?: SessionHostHealthCheckReport[];
-};
+}
 
 /** SessionHost properties that can be patched. */
-export type SessionHostPatch = Resource & {
+export interface SessionHostPatch extends Resource {
   /** Allow a new session. */
   allowNewSession?: boolean;
   /** User assigned to SessionHost. */
   assignedUser?: string;
-};
+  /** Friendly name of SessionHost */
+  friendlyName?: string;
+}
 
 /** Schema for MSIX Package properties. */
-export type MsixPackage = Resource & {
-  /**
-   * Metadata pertaining to creation and last modification of the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly systemData?: SystemData;
+export interface MsixPackage extends Resource {
   /** VHD/CIM image path on Network Share. */
   imagePath?: string;
   /** Package Name from appxmanifest.xml. */
@@ -996,26 +1175,26 @@ export type MsixPackage = Resource & {
   isActive?: boolean;
   /** List of package dependencies. */
   packageDependencies?: MsixPackageDependencies[];
-  /** Package Version found in the appxmanifest.xml. */
+  /** Package version found in the appxmanifest.xml. */
   version?: string;
   /** Date Package was last updated, found in the appxmanifest.xml. */
   lastUpdated?: Date;
   /** List of package applications. */
   packageApplications?: MsixPackageApplications[];
-};
+}
 
 /** MSIX Package properties that can be patched. */
-export type MsixPackagePatch = Resource & {
+export interface MsixPackagePatch extends Resource {
   /** Set a version of the package to be active across hostpool. */
   isActive?: boolean;
   /** Set Registration mode. Regular or Delayed. */
   isRegularRegistration?: boolean;
   /** Display name for MSIX Package. */
   displayName?: string;
-};
+}
 
 /** Represents the definition of contents retrieved after expanding the MSIX Image. */
-export type ExpandMsixImage = Resource & {
+export interface ExpandMsixImage extends Resource {
   /** Alias of MSIX Package. */
   packageAlias?: string;
   /** VHD/CIM image path on Network Share. */
@@ -1036,55 +1215,331 @@ export type ExpandMsixImage = Resource & {
   isActive?: boolean;
   /** List of package dependencies. */
   packageDependencies?: MsixPackageDependencies[];
-  /** Package Version found in the appxmanifest.xml. */
+  /** Package version found in the appxmanifest.xml. */
   version?: string;
   /** Date Package was last updated, found in the appxmanifest.xml. */
   lastUpdated?: Date;
   /** List of package applications. */
   packageApplications?: MsixPackageApplications[];
-};
+  /** Certificate name found in the appxmanifest.xml. */
+  certificateName?: string;
+  /** Date certificate expires, found in the appxmanifest.xml. */
+  certificateExpiry?: Date;
+}
+
+/** Schema for updatable App Attach Package properties. */
+export interface AppAttachPackagePatch extends Resource {
+  /** Detailed properties for App Attach Package */
+  properties?: AppAttachPackagePatchProperties;
+}
+
+export interface ResourceModelWithAllowedPropertySetIdentity extends Identity { }
+
+export interface ResourceModelWithAllowedPropertySetSku extends Sku { }
+
+export interface ResourceModelWithAllowedPropertySetPlan extends Plan { }
 
 /** The Private Endpoint Connection resource. */
-export type PrivateEndpointConnection = Resource & {
-  /** The resource of private end point. */
-  privateEndpoint?: PrivateEndpoint;
-  /** A collection of information about the state of the connection between service consumer and provider. */
-  privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;
-  /** The provisioning state of the private endpoint connection resource. */
-  provisioningState?: PrivateEndpointConnectionProvisioningState;
-};
+export interface PrivateEndpointConnectionWithSystemData
+  extends PrivateEndpointConnection { }
 
-/** A private link resource */
-export type PrivateLinkResource = Resource & {
+/** The resource model definition containing the full set of allowed properties for a resource. Except properties bag, there cannot be a top level property outside of this set. */
+export interface ResourceModelWithAllowedPropertySet extends TrackedResource {
+  /** The fully qualified resource ID of the resource that manages this resource. Indicates if this resource is managed by another Azure resource. If this is present, complete mode deployment will not delete the resource if it is removed from the template since it is managed by another resource. */
+  managedBy?: string;
+  /** Metadata used by portal/tooling/etc to render different UX experiences for resources of the same type. E.g. ApiApps are a kind of Microsoft.Web/sites type.  If supported, the resource provider must validate and persist this value. */
+  kind?: string;
   /**
-   * The private link resource group id.
+   * The etag field is *not* required. If it is provided in the response body, it must also be provided as a header per the normal etag convention.  Entity tags are used for comparing two or more entities from the same requested resource. HTTP/1.1 uses entity tags in the etag (section 14.19), If-Match (section 14.24), If-None-Match (section 14.26), and If-Range (section 14.27) header fields.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly groupId?: string;
-  /**
-   * The private link resource required member names.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly requiredMembers?: string[];
-  /** The private link resource Private link DNS zone name. */
-  requiredZoneNames?: string[];
-};
+  readonly etag?: string;
+  identity?: ResourceModelWithAllowedPropertySetIdentity;
+  sku?: ResourceModelWithAllowedPropertySetSku;
+  plan?: ResourceModelWithAllowedPropertySetPlan;
+}
 
-/** The Private Endpoint Connection resource. */
-export type PrivateEndpointConnectionWithSystemData = PrivateEndpointConnection & {
+/** Schema for App Attach Package properties. */
+export interface AppAttachPackage extends TrackedResource {
+  /** Detailed properties for App Attach Package */
+  properties: AppAttachPackageProperties;
+}
+
+/** Represents a ScalingPlanPersonalSchedule definition. */
+export interface ScalingPlanPersonalSchedule extends ProxyResource {
+  /** Set of days of the week on which this schedule is active. */
+  daysOfWeek?: DayOfWeek[];
+  /** Starting time for ramp up period. */
+  rampUpStartTime?: Time;
+  /** The desired startup behavior during the ramp up period for personal vms in the hostpool. */
+  rampUpAutoStartHosts?: StartupBehavior;
+  /** The desired configuration of Start VM On Connect for the hostpool during the ramp up phase. If this is disabled, session hosts must be turned on using rampUpAutoStartHosts or by turning them on manually. */
+  rampUpStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the ramp up period. */
+  rampUpActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the ramp up period. */
+  rampUpMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the ramp up period. */
+  rampUpActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the ramp up period. */
+  rampUpMinutesToWaitOnLogoff?: number;
+  /** Starting time for peak period. */
+  peakStartTime?: Time;
+  /** The desired configuration of Start VM On Connect for the hostpool during the peak phase. */
+  peakStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the peak period. */
+  peakActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the peak period. */
+  peakMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the peak period. */
+  peakActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the peak period. */
+  peakMinutesToWaitOnLogoff?: number;
+  /** Starting time for ramp down period. */
+  rampDownStartTime?: Time;
+  /** The desired configuration of Start VM On Connect for the hostpool during the ramp down phase. */
+  rampDownStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the ramp down period. */
+  rampDownActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the ramp down period. */
+  rampDownMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the ramp down period. */
+  rampDownActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the ramp down period. */
+  rampDownMinutesToWaitOnLogoff?: number;
+  /** Starting time for off-peak period. */
+  offPeakStartTime?: Time;
+  /** The desired configuration of Start VM On Connect for the hostpool during the off-peak phase. */
+  offPeakStartVMOnConnect?: SetStartVMOnConnect;
+  /** Action to be taken after a user disconnect during the off-peak period. */
+  offPeakActionOnDisconnect?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user disconnects during the off-peak period. */
+  offPeakMinutesToWaitOnDisconnect?: number;
+  /** Action to be taken after a logoff during the off-peak period. */
+  offPeakActionOnLogoff?: SessionHandlingOperation;
+  /** The time in minutes to wait before performing the desired session handling action when a user logs off during the off-peak period. */
+  offPeakMinutesToWaitOnLogoff?: number;
+}
+
+/** Represents a Workspace definition. */
+export interface Workspace extends ResourceModelWithAllowedPropertySet {
   /**
-   * Metadata pertaining to creation and last modification of the resource.
+   * ObjectId of Workspace. (internal use)
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly systemData?: SystemData;
-};
+  readonly objectId?: string;
+  /** Description of Workspace. */
+  description?: string;
+  /** Friendly name of Workspace. */
+  friendlyName?: string;
+  /** List of applicationGroup resource Ids. */
+  applicationGroupReferences?: string[];
+  /**
+   * Is cloud pc resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly cloudPcResource?: boolean;
+  /** Enabled allows this resource to be accessed from both public and private networks, Disabled allows this resource to only be accessed via private endpoints */
+  publicNetworkAccess?: PublicNetworkAccess;
+  /**
+   * List of private endpoint connection associated with the specified resource
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly privateEndpointConnections?: PrivateEndpointConnection[];
+}
+
+/** Represents a scaling plan definition. */
+export interface ScalingPlan extends ResourceModelWithAllowedPropertySet {
+  /**
+   * ObjectId of scaling plan. (internal use)
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly objectId?: string;
+  /** Description of scaling plan. */
+  description?: string;
+  /** User friendly name of scaling plan. */
+  friendlyName?: string;
+  /** Timezone of the scaling plan. */
+  timeZone: string;
+  /** HostPool type for desktop. */
+  hostPoolType?: ScalingHostPoolType;
+  /** Exclusion tag for scaling plan. */
+  exclusionTag?: string;
+  /** List of ScalingPlanPooledSchedule definitions. */
+  schedules?: ScalingSchedule[];
+  /** List of ScalingHostPoolReference definitions. */
+  hostPoolReferences?: ScalingHostPoolReference[];
+}
+
+/** Represents a ApplicationGroup definition. */
+export interface ApplicationGroup extends ResourceModelWithAllowedPropertySet {
+  /**
+   * ObjectId of ApplicationGroup. (internal use)
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly objectId?: string;
+  /** Description of ApplicationGroup. */
+  description?: string;
+  /** Friendly name of ApplicationGroup. */
+  friendlyName?: string;
+  /** HostPool arm path of ApplicationGroup. */
+  hostPoolArmPath: string;
+  /**
+   * Workspace arm path of ApplicationGroup.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly workspaceArmPath?: string;
+  /** Resource Type of ApplicationGroup. */
+  applicationGroupType: ApplicationGroupType;
+  /**
+   * Is cloud pc resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly cloudPcResource?: boolean;
+  /** Boolean representing whether the applicationGroup is show in the feed. */
+  showInFeed?: boolean;
+}
+
+/** Represents a HostPool definition. */
+export interface HostPool extends ResourceModelWithAllowedPropertySet {
+  /**
+   * ObjectId of HostPool. (internal use)
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly objectId?: string;
+  /** Friendly name of HostPool. */
+  friendlyName?: string;
+  /** Description of HostPool. */
+  description?: string;
+  /** HostPool type for desktop. */
+  hostPoolType: HostPoolType;
+  /** PersonalDesktopAssignment type for HostPool. */
+  personalDesktopAssignmentType?: PersonalDesktopAssignmentType;
+  /** Custom rdp property of HostPool. */
+  customRdpProperty?: string;
+  /** The max session limit of HostPool. */
+  maxSessionLimit?: number;
+  /** The type of the load balancer. */
+  loadBalancerType: LoadBalancerType;
+  /** The ring number of HostPool. */
+  ring?: number;
+  /** Is validation environment. */
+  validationEnvironment?: boolean;
+  /** The registration info of HostPool. */
+  registrationInfo?: RegistrationInfo;
+  /** VM template for sessionhosts configuration within hostpool. */
+  vmTemplate?: string;
+  /**
+   * List of applicationGroup links.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly applicationGroupReferences?: string[];
+  /**
+   * List of App Attach Package links.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly appAttachPackageReferences?: string[];
+  /** URL to customer ADFS server for signing WVD SSO certificates. */
+  ssoadfsAuthority?: string;
+  /** ClientId for the registered Relying Party used to issue WVD SSO certificates. */
+  ssoClientId?: string;
+  /** Path to Azure KeyVault storing the secret used for communication to ADFS. */
+  ssoClientSecretKeyVaultPath?: string;
+  /** The type of single sign on Secret Type. */
+  ssoSecretType?: SSOSecretType;
+  /** The type of preferred application group type, default to Desktop Application Group */
+  preferredAppGroupType: PreferredAppGroupType;
+  /** The flag to turn on/off StartVMOnConnect feature. */
+  startVMOnConnect?: boolean;
+  /**
+   * Is cloud pc resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly cloudPcResource?: boolean;
+  /** Enabled allows this resource to be accessed from both public and private networks, Disabled allows this resource to only be accessed via private endpoints */
+  publicNetworkAccess?: HostpoolPublicNetworkAccess;
+  /** The session host configuration for updating agent, monitoring agent, and stack component. */
+  agentUpdate?: AgentUpdateProperties;
+  /**
+   * List of private endpoint connection associated with the specified resource
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly privateEndpointConnections?: PrivateEndpointConnection[];
+}
+
+/** Known values of {@link PublicNetworkAccess} that the service accepts. */
+export enum KnownPublicNetworkAccess {
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+}
+
+/**
+ * Defines values for PublicNetworkAccess. \
+ * {@link KnownPublicNetworkAccess} can be used interchangeably with PublicNetworkAccess,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled** \
+ * **Disabled**
+ */
+export type PublicNetworkAccess = string;
+
+/** Known values of {@link PrivateEndpointServiceConnectionStatus} that the service accepts. */
+export enum KnownPrivateEndpointServiceConnectionStatus {
+  /** Pending */
+  Pending = "Pending",
+  /** Approved */
+  Approved = "Approved",
+  /** Rejected */
+  Rejected = "Rejected",
+}
+
+/**
+ * Defines values for PrivateEndpointServiceConnectionStatus. \
+ * {@link KnownPrivateEndpointServiceConnectionStatus} can be used interchangeably with PrivateEndpointServiceConnectionStatus,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Pending** \
+ * **Approved** \
+ * **Rejected**
+ */
+export type PrivateEndpointServiceConnectionStatus = string;
+
+/** Known values of {@link PrivateEndpointConnectionProvisioningState} that the service accepts. */
+export enum KnownPrivateEndpointConnectionProvisioningState {
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Creating */
+  Creating = "Creating",
+  /** Deleting */
+  Deleting = "Deleting",
+  /** Failed */
+  Failed = "Failed",
+}
+
+/**
+ * Defines values for PrivateEndpointConnectionProvisioningState. \
+ * {@link KnownPrivateEndpointConnectionProvisioningState} can be used interchangeably with PrivateEndpointConnectionProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Succeeded** \
+ * **Creating** \
+ * **Deleting** \
+ * **Failed**
+ */
+export type PrivateEndpointConnectionProvisioningState = string;
 
 /** Known values of {@link CreatedByType} that the service accepts. */
 export enum KnownCreatedByType {
+  /** User */
   User = "User",
+  /** Application */
   Application = "Application",
+  /** ManagedIdentity */
   ManagedIdentity = "ManagedIdentity",
-  Key = "Key"
+  /** Key */
+  Key = "Key",
 }
 
 /**
@@ -1099,26 +1554,10 @@ export enum KnownCreatedByType {
  */
 export type CreatedByType = string;
 
-/** Known values of {@link PublicNetworkAccess} that the service accepts. */
-export enum KnownPublicNetworkAccess {
-  Enabled = "Enabled",
-  Disabled = "Disabled"
-}
-
-/**
- * Defines values for PublicNetworkAccess. \
- * {@link KnownPublicNetworkAccess} can be used interchangeably with PublicNetworkAccess,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Enabled** \
- * **Disabled**
- */
-export type PublicNetworkAccess = string;
-
 /** Known values of {@link ScalingHostPoolType} that the service accepts. */
 export enum KnownScalingHostPoolType {
   /** Users get a new (random) SessionHost every time it connects to the HostPool. */
-  Pooled = "Pooled"
+  Pooled = "Pooled",
 }
 
 /**
@@ -1132,13 +1571,20 @@ export type ScalingHostPoolType = string;
 
 /** Known values of {@link ScalingScheduleDaysOfWeekItem} that the service accepts. */
 export enum KnownScalingScheduleDaysOfWeekItem {
+  /** Sunday */
   Sunday = "Sunday",
+  /** Monday */
   Monday = "Monday",
+  /** Tuesday */
   Tuesday = "Tuesday",
+  /** Wednesday */
   Wednesday = "Wednesday",
+  /** Thursday */
   Thursday = "Thursday",
+  /** Friday */
   Friday = "Friday",
-  Saturday = "Saturday"
+  /** Saturday */
+  Saturday = "Saturday",
 }
 
 /**
@@ -1158,8 +1604,10 @@ export type ScalingScheduleDaysOfWeekItem = string;
 
 /** Known values of {@link SessionHostLoadBalancingAlgorithm} that the service accepts. */
 export enum KnownSessionHostLoadBalancingAlgorithm {
+  /** BreadthFirst */
   BreadthFirst = "BreadthFirst",
-  DepthFirst = "DepthFirst"
+  /** DepthFirst */
+  DepthFirst = "DepthFirst",
 }
 
 /**
@@ -1174,8 +1622,10 @@ export type SessionHostLoadBalancingAlgorithm = string;
 
 /** Known values of {@link StopHostsWhen} that the service accepts. */
 export enum KnownStopHostsWhen {
+  /** ZeroSessions */
   ZeroSessions = "ZeroSessions",
-  ZeroActiveSessions = "ZeroActiveSessions"
+  /** ZeroActiveSessions */
+  ZeroActiveSessions = "ZeroActiveSessions",
 }
 
 /**
@@ -1188,10 +1638,72 @@ export enum KnownStopHostsWhen {
  */
 export type StopHostsWhen = string;
 
+/** Known values of {@link StartupBehavior} that the service accepts. */
+export enum KnownStartupBehavior {
+  /** Session hosts will not be started by the service. This setting depends on Start VM on Connect to be enabled to start the session hosts. */
+  None = "None",
+  /** Session hosts with an assigned user will be started during Ramp Up */
+  WithAssignedUser = "WithAssignedUser",
+  /** All personal session hosts in the hostpool will be started during ramp up. */
+  All = "All",
+}
+
+/**
+ * Defines values for StartupBehavior. \
+ * {@link KnownStartupBehavior} can be used interchangeably with StartupBehavior,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **None**: Session hosts will not be started by the service. This setting depends on Start VM on Connect to be enabled to start the session hosts. \
+ * **WithAssignedUser**: Session hosts with an assigned user will be started during Ramp Up \
+ * **All**: All personal session hosts in the hostpool will be started during ramp up.
+ */
+export type StartupBehavior = string;
+
+/** Known values of {@link SetStartVMOnConnect} that the service accepts. */
+export enum KnownSetStartVMOnConnect {
+  /** Enable */
+  Enable = "Enable",
+  /** Disable */
+  Disable = "Disable",
+}
+
+/**
+ * Defines values for SetStartVMOnConnect. \
+ * {@link KnownSetStartVMOnConnect} can be used interchangeably with SetStartVMOnConnect,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enable** \
+ * **Disable**
+ */
+export type SetStartVMOnConnect = string;
+
+/** Known values of {@link SessionHandlingOperation} that the service accepts. */
+export enum KnownSessionHandlingOperation {
+  /** None */
+  None = "None",
+  /** Deallocate */
+  Deallocate = "Deallocate",
+  /** Hibernate */
+  Hibernate = "Hibernate",
+}
+
+/**
+ * Defines values for SessionHandlingOperation. \
+ * {@link KnownSessionHandlingOperation} can be used interchangeably with SessionHandlingOperation,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **None** \
+ * **Deallocate** \
+ * **Hibernate**
+ */
+export type SessionHandlingOperation = string;
+
 /** Known values of {@link ApplicationGroupType} that the service accepts. */
 export enum KnownApplicationGroupType {
+  /** RemoteApp */
   RemoteApp = "RemoteApp",
-  Desktop = "Desktop"
+  /** Desktop */
+  Desktop = "Desktop",
 }
 
 /**
@@ -1204,37 +1716,12 @@ export enum KnownApplicationGroupType {
  */
 export type ApplicationGroupType = string;
 
-/** Known values of {@link Operation} that the service accepts. */
-export enum KnownOperation {
-  /** Start the migration. */
-  Start = "Start",
-  /** Revoke the migration. */
-  Revoke = "Revoke",
-  /** Complete the migration. */
-  Complete = "Complete",
-  /** Hide the hostpool. */
-  Hide = "Hide",
-  /** Unhide the hostpool. */
-  Unhide = "Unhide"
-}
-
-/**
- * Defines values for Operation. \
- * {@link KnownOperation} can be used interchangeably with Operation,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **Start**: Start the migration. \
- * **Revoke**: Revoke the migration. \
- * **Complete**: Complete the migration. \
- * **Hide**: Hide the hostpool. \
- * **Unhide**: Unhide the hostpool.
- */
-export type Operation = string;
-
 /** Known values of {@link RemoteApplicationType} that the service accepts. */
 export enum KnownRemoteApplicationType {
+  /** InBuilt */
   InBuilt = "InBuilt",
-  MsixApplication = "MsixApplication"
+  /** MsixApplication */
+  MsixApplication = "MsixApplication",
 }
 
 /**
@@ -1249,9 +1736,12 @@ export type RemoteApplicationType = string;
 
 /** Known values of {@link CommandLineSetting} that the service accepts. */
 export enum KnownCommandLineSetting {
+  /** DoNotAllow */
   DoNotAllow = "DoNotAllow",
+  /** Allow */
   Allow = "Allow",
-  Require = "Require"
+  /** Require */
+  Require = "Require",
 }
 
 /**
@@ -1272,7 +1762,7 @@ export enum KnownHostPoolType {
   /** Users get a new (random) SessionHost every time it connects to the HostPool. */
   Pooled = "Pooled",
   /** Users assign their own machines, load balancing logic remains the same as Personal. PersonalDesktopAssignmentType must be Direct. */
-  BYODesktop = "BYODesktop"
+  BYODesktop = "BYODesktop",
 }
 
 /**
@@ -1288,8 +1778,10 @@ export type HostPoolType = string;
 
 /** Known values of {@link PersonalDesktopAssignmentType} that the service accepts. */
 export enum KnownPersonalDesktopAssignmentType {
+  /** Automatic */
   Automatic = "Automatic",
-  Direct = "Direct"
+  /** Direct */
+  Direct = "Direct",
 }
 
 /**
@@ -1304,9 +1796,12 @@ export type PersonalDesktopAssignmentType = string;
 
 /** Known values of {@link LoadBalancerType} that the service accepts. */
 export enum KnownLoadBalancerType {
+  /** BreadthFirst */
   BreadthFirst = "BreadthFirst",
+  /** DepthFirst */
   DepthFirst = "DepthFirst",
-  Persistent = "Persistent"
+  /** Persistent */
+  Persistent = "Persistent",
 }
 
 /**
@@ -1322,9 +1817,12 @@ export type LoadBalancerType = string;
 
 /** Known values of {@link RegistrationTokenOperation} that the service accepts. */
 export enum KnownRegistrationTokenOperation {
+  /** Delete */
   Delete = "Delete",
+  /** None */
   None = "None",
-  Update = "Update"
+  /** Update */
+  Update = "Update",
 }
 
 /**
@@ -1340,10 +1838,14 @@ export type RegistrationTokenOperation = string;
 
 /** Known values of {@link SSOSecretType} that the service accepts. */
 export enum KnownSSOSecretType {
+  /** SharedKey */
   SharedKey = "SharedKey",
+  /** Certificate */
   Certificate = "Certificate",
+  /** SharedKeyInKeyVault */
   SharedKeyInKeyVault = "SharedKeyInKeyVault",
-  CertificateInKeyVault = "CertificateInKeyVault"
+  /** CertificateInKeyVault */
+  CertificateInKeyVault = "CertificateInKeyVault",
 }
 
 /**
@@ -1360,9 +1862,12 @@ export type SSOSecretType = string;
 
 /** Known values of {@link PreferredAppGroupType} that the service accepts. */
 export enum KnownPreferredAppGroupType {
+  /** None */
   None = "None",
+  /** Desktop */
   Desktop = "Desktop",
-  RailApplications = "RailApplications"
+  /** RailApplications */
+  RailApplications = "RailApplications",
 }
 
 /**
@@ -1376,10 +1881,54 @@ export enum KnownPreferredAppGroupType {
  */
 export type PreferredAppGroupType = string;
 
+/** Known values of {@link HostpoolPublicNetworkAccess} that the service accepts. */
+export enum KnownHostpoolPublicNetworkAccess {
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+  /** EnabledForSessionHostsOnly */
+  EnabledForSessionHostsOnly = "EnabledForSessionHostsOnly",
+  /** EnabledForClientsOnly */
+  EnabledForClientsOnly = "EnabledForClientsOnly",
+}
+
+/**
+ * Defines values for HostpoolPublicNetworkAccess. \
+ * {@link KnownHostpoolPublicNetworkAccess} can be used interchangeably with HostpoolPublicNetworkAccess,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled** \
+ * **Disabled** \
+ * **EnabledForSessionHostsOnly** \
+ * **EnabledForClientsOnly**
+ */
+export type HostpoolPublicNetworkAccess = string;
+
+/** Known values of {@link SessionHostComponentUpdateType} that the service accepts. */
+export enum KnownSessionHostComponentUpdateType {
+  /** Agent and other agent side components are delivery schedule is controlled by WVD Infra. */
+  Default = "Default",
+  /** TenantAdmin have opted in for Scheduled Component Update feature. */
+  Scheduled = "Scheduled",
+}
+
+/**
+ * Defines values for SessionHostComponentUpdateType. \
+ * {@link KnownSessionHostComponentUpdateType} can be used interchangeably with SessionHostComponentUpdateType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Default**: Agent and other agent side components are delivery schedule is controlled by WVD Infra. \
+ * **Scheduled**: TenantAdmin have opted in for Scheduled Component Update feature.
+ */
+export type SessionHostComponentUpdateType = string;
+
 /** Known values of {@link ApplicationType} that the service accepts. */
 export enum KnownApplicationType {
+  /** RemoteApp */
   RemoteApp = "RemoteApp",
-  Desktop = "Desktop"
+  /** Desktop */
+  Desktop = "Desktop",
 }
 
 /**
@@ -1394,12 +1943,18 @@ export type ApplicationType = string;
 
 /** Known values of {@link SessionState} that the service accepts. */
 export enum KnownSessionState {
+  /** Unknown */
   Unknown = "Unknown",
+  /** Active */
   Active = "Active",
+  /** Disconnected */
   Disconnected = "Disconnected",
+  /** Pending */
   Pending = "Pending",
+  /** LogOff */
   LogOff = "LogOff",
-  UserProfileDiskMounted = "UserProfileDiskMounted"
+  /** UserProfileDiskMounted */
+  UserProfileDiskMounted = "UserProfileDiskMounted",
 }
 
 /**
@@ -1426,7 +1981,7 @@ export enum KnownStatus {
   Shutdown = "Shutdown",
   /** The Session Host is unavailable because it is currently disconnected. */
   Disconnected = "Disconnected",
-  /** Session Host is unavailable because currently an upgrade of RDAgent/side-by-side stack is in progress. Note: this state will be removed once the upgrade completes and the host is able to accept connections. */
+  /** Session Host is unavailable because currently an upgrade of RDAgent\/side-by-side stack is in progress. Note: this state will be removed once the upgrade completes and the host is able to accept connections. */
   Upgrading = "Upgrading",
   /** Session Host is unavailable because the critical component upgrade (agent, side-by-side stack, etc.) failed. */
   UpgradeFailed = "UpgradeFailed",
@@ -1441,7 +1996,7 @@ export enum KnownStatus {
   /** FSLogix is in an unhealthy state on the session host. */
   FSLogixNotHealthy = "FSLogixNotHealthy",
   /** New status to inform admins that the health on their endpoint needs to be fixed. The connections might not fail, as these issues are not fatal. */
-  NeedsAssistance = "NeedsAssistance"
+  NeedsAssistance = "NeedsAssistance",
 }
 
 /**
@@ -1466,11 +2021,16 @@ export type Status = string;
 
 /** Known values of {@link UpdateState} that the service accepts. */
 export enum KnownUpdateState {
+  /** Initial */
   Initial = "Initial",
+  /** Pending */
   Pending = "Pending",
+  /** Started */
   Started = "Started",
+  /** Succeeded */
   Succeeded = "Succeeded",
-  Failed = "Failed"
+  /** Failed */
+  Failed = "Failed",
 }
 
 /**
@@ -1488,28 +2048,28 @@ export type UpdateState = string;
 
 /** Known values of {@link HealthCheckName} that the service accepts. */
 export enum KnownHealthCheckName {
-  /** Verifies the SessionHost is joined to a domain. If this check fails is classified as fatal as no connection can succeed if the SessionHost is not joined to the domain. */
+  /** Verifies the SessionHost is joined to a domain. If this check fails is classified as fatal as no connection can succeed if the SessionHost is not joined to the domain. (Currently Enabled) */
   DomainJoinedCheck = "DomainJoinedCheck",
-  /** Verifies the SessionHost is not experiencing domain trust issues that will prevent authentication on SessionHost at connection time when session is created. If this check fails is classified as fatal as no connection can succeed if we cannot reach the domain for authentication on the SessionHost. */
+  /** Verifies the SessionHost is not experiencing domain trust issues that will prevent authentication on SessionHost at connection time when session is created. If this check fails is classified as fatal as no connection can succeed if we cannot reach the domain for authentication on the SessionHost. (Currently Enabled) */
   DomainTrustCheck = "DomainTrustCheck",
-  /** Verifies the FSLogix service is up and running to make sure users' profiles are loaded in the session. If this check fails is classified as fatal as even if the connection can succeed, user experience is bad as the user profile cannot be loaded and user will get a temporary profile in the session. */
+  /** Verifies the FSLogix service is up and running to make sure users' profiles are loaded in the session. If this check fails is classified as fatal as even if the connection can succeed, user experience is bad as the user profile cannot be loaded and user will get a temporary profile in the session. (Currently Disabled) */
   FSLogixHealthCheck = "FSLogixHealthCheck",
-  /** Verifies that the SxS stack is up and running so connections can succeed. If this check fails is classified as fatal as no connection can succeed if the SxS stack is not ready. */
+  /** Verifies that the SxS stack is up and running so connections can succeed. If this check fails is classified as fatal as no connection can succeed if the SxS stack is not ready. (Currently Enabled) */
   SxSStackListenerCheck = "SxSStackListenerCheck",
-  /** Verifies that the required WVD service and Geneva URLs are reachable from the SessionHost. These URLs are: RdTokenUri, RdBrokerURI, RdDiagnosticsUri and storage blob URLs for agent monitoring (geneva). If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is unable to store warm path data (logs, operations ...). */
+  /** Verifies that the required WVD service and Geneva URLs are reachable from the SessionHost. These URLs are: RdTokenUri, RdBrokerURI, RdDiagnosticsUri and storage blob URLs for agent monitoring (geneva). If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is unable to store warm path data (logs, operations ...). (Currently Disabled) */
   UrlsAccessibleCheck = "UrlsAccessibleCheck",
-  /** Verifies that the required Geneva agent is running. If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is missing or running (possibly) older version. */
+  /** Verifies that the required Geneva agent is running. If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is missing or running (possibly) older version. (Currently Enabled) */
   MonitoringAgentCheck = "MonitoringAgentCheck",
-  /** Verifies the domain the SessionHost is joined to is still reachable. If this check fails is classified as fatal as no connection can succeed if the domain the SessionHost is joined is not reachable at the time of connection. */
+  /** Verifies the domain the SessionHost is joined to is still reachable. If this check fails is classified as fatal as no connection can succeed if the domain the SessionHost is joined is not reachable at the time of connection. (Currently Disabled) */
   DomainReachable = "DomainReachable",
-  /** Verifies whether the WebRTCRedirector component is healthy. The WebRTCRedirector component is used to optimize video and audio performance in Microsoft Teams. This checks whether the component is still running, and whether there is a higher version available. If this check fails, it is non fatal and the machine still can service connections, main issue may be the WebRTCRedirector component has to be restarted or updated. */
+  /** Verifies whether the WebRTCRedirector component is healthy. The WebRTCRedirector component is used to optimize video and audio performance in Microsoft Teams. This checks whether the component is still running, and whether there is a higher version available. If this check fails, it is non fatal and the machine still can service connections, main issue may be the WebRTCRedirector component has to be restarted or updated. (Currently Disabled) */
   WebRTCRedirectorCheck = "WebRTCRedirectorCheck",
-  /** Verifies the value of SecurityLayer registration key. If the value is 0 (SecurityLayer.RDP) this check fails with Error code = NativeMethodErrorCode.E_FAIL and is fatal. If the value is 1 (SecurityLayer.Negotiate) this check fails with Error code = NativeMethodErrorCode.ERROR_SUCCESS and is non fatal. */
+  /** Verifies the value of SecurityLayer registration key. If the value is 0 (SecurityLayer.RDP) this check fails with Error code = NativeMethodErrorCode.E_FAIL and is fatal. If the value is 1 (SecurityLayer.Negotiate) this check fails with Error code = NativeMethodErrorCode.ERROR_SUCCESS and is non fatal. (Currently Disabled) */
   SupportedEncryptionCheck = "SupportedEncryptionCheck",
-  /** Verifies the metadata service is accessible and return compute properties. */
+  /** Verifies the metadata service is accessible and return compute properties. (Currently Enabled) */
   MetaDataServiceCheck = "MetaDataServiceCheck",
-  /** Verifies that the AppAttachService is healthy (there were no issues during package staging). The AppAttachService is used to enable the staging/registration (and eventual deregistration/destaging) of MSIX apps that have been set up by the tenant admin. This checks whether the component had any failures during package staging. Failures in staging will prevent some MSIX apps from working properly for the end user. If this check fails, it is non fatal and the machine still can service connections, main issue may be certain apps will not work for end-users. */
-  AppAttachHealthCheck = "AppAttachHealthCheck"
+  /** Verifies that the AppAttachService is healthy (there were no issues during package staging). The AppAttachService is used to enable the staging\/registration (and eventual deregistration\/destaging) of MSIX apps that have been set up by the tenant admin. This checks whether the component had any failures during package staging. Failures in staging will prevent some MSIX apps from working properly for the end user. If this check fails, it is non fatal and the machine still can service connections, main issue may be certain apps will not work for end-users. (Currently Enabled) */
+  AppAttachHealthCheck = "AppAttachHealthCheck",
 }
 
 /**
@@ -1517,17 +2077,17 @@ export enum KnownHealthCheckName {
  * {@link KnownHealthCheckName} can be used interchangeably with HealthCheckName,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
- * **DomainJoinedCheck**: Verifies the SessionHost is joined to a domain. If this check fails is classified as fatal as no connection can succeed if the SessionHost is not joined to the domain. \
- * **DomainTrustCheck**: Verifies the SessionHost is not experiencing domain trust issues that will prevent authentication on SessionHost at connection time when session is created. If this check fails is classified as fatal as no connection can succeed if we cannot reach the domain for authentication on the SessionHost. \
- * **FSLogixHealthCheck**: Verifies the FSLogix service is up and running to make sure users' profiles are loaded in the session. If this check fails is classified as fatal as even if the connection can succeed, user experience is bad as the user profile cannot be loaded and user will get a temporary profile in the session. \
- * **SxSStackListenerCheck**: Verifies that the SxS stack is up and running so connections can succeed. If this check fails is classified as fatal as no connection can succeed if the SxS stack is not ready. \
- * **UrlsAccessibleCheck**: Verifies that the required WVD service and Geneva URLs are reachable from the SessionHost. These URLs are: RdTokenUri, RdBrokerURI, RdDiagnosticsUri and storage blob URLs for agent monitoring (geneva). If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is unable to store warm path data (logs, operations ...). \
- * **MonitoringAgentCheck**: Verifies that the required Geneva agent is running. If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is missing or running (possibly) older version. \
- * **DomainReachable**: Verifies the domain the SessionHost is joined to is still reachable. If this check fails is classified as fatal as no connection can succeed if the domain the SessionHost is joined is not reachable at the time of connection. \
- * **WebRTCRedirectorCheck**: Verifies whether the WebRTCRedirector component is healthy. The WebRTCRedirector component is used to optimize video and audio performance in Microsoft Teams. This checks whether the component is still running, and whether there is a higher version available. If this check fails, it is non fatal and the machine still can service connections, main issue may be the WebRTCRedirector component has to be restarted or updated. \
- * **SupportedEncryptionCheck**: Verifies the value of SecurityLayer registration key. If the value is 0 (SecurityLayer.RDP) this check fails with Error code = NativeMethodErrorCode.E_FAIL and is fatal. If the value is 1 (SecurityLayer.Negotiate) this check fails with Error code = NativeMethodErrorCode.ERROR_SUCCESS and is non fatal. \
- * **MetaDataServiceCheck**: Verifies the metadata service is accessible and return compute properties. \
- * **AppAttachHealthCheck**: Verifies that the AppAttachService is healthy (there were no issues during package staging). The AppAttachService is used to enable the staging\/registration (and eventual deregistration\/destaging) of MSIX apps that have been set up by the tenant admin. This checks whether the component had any failures during package staging. Failures in staging will prevent some MSIX apps from working properly for the end user. If this check fails, it is non fatal and the machine still can service connections, main issue may be certain apps will not work for end-users.
+ * **DomainJoinedCheck**: Verifies the SessionHost is joined to a domain. If this check fails is classified as fatal as no connection can succeed if the SessionHost is not joined to the domain. (Currently Enabled) \
+ * **DomainTrustCheck**: Verifies the SessionHost is not experiencing domain trust issues that will prevent authentication on SessionHost at connection time when session is created. If this check fails is classified as fatal as no connection can succeed if we cannot reach the domain for authentication on the SessionHost. (Currently Enabled) \
+ * **FSLogixHealthCheck**: Verifies the FSLogix service is up and running to make sure users' profiles are loaded in the session. If this check fails is classified as fatal as even if the connection can succeed, user experience is bad as the user profile cannot be loaded and user will get a temporary profile in the session. (Currently Disabled) \
+ * **SxSStackListenerCheck**: Verifies that the SxS stack is up and running so connections can succeed. If this check fails is classified as fatal as no connection can succeed if the SxS stack is not ready. (Currently Enabled) \
+ * **UrlsAccessibleCheck**: Verifies that the required WVD service and Geneva URLs are reachable from the SessionHost. These URLs are: RdTokenUri, RdBrokerURI, RdDiagnosticsUri and storage blob URLs for agent monitoring (geneva). If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is unable to store warm path data (logs, operations ...). (Currently Disabled) \
+ * **MonitoringAgentCheck**: Verifies that the required Geneva agent is running. If this check fails, it is non fatal and the machine still can service connections, main issue may be that monitoring agent is missing or running (possibly) older version. (Currently Enabled) \
+ * **DomainReachable**: Verifies the domain the SessionHost is joined to is still reachable. If this check fails is classified as fatal as no connection can succeed if the domain the SessionHost is joined is not reachable at the time of connection. (Currently Disabled) \
+ * **WebRTCRedirectorCheck**: Verifies whether the WebRTCRedirector component is healthy. The WebRTCRedirector component is used to optimize video and audio performance in Microsoft Teams. This checks whether the component is still running, and whether there is a higher version available. If this check fails, it is non fatal and the machine still can service connections, main issue may be the WebRTCRedirector component has to be restarted or updated. (Currently Disabled) \
+ * **SupportedEncryptionCheck**: Verifies the value of SecurityLayer registration key. If the value is 0 (SecurityLayer.RDP) this check fails with Error code = NativeMethodErrorCode.E_FAIL and is fatal. If the value is 1 (SecurityLayer.Negotiate) this check fails with Error code = NativeMethodErrorCode.ERROR_SUCCESS and is non fatal. (Currently Disabled) \
+ * **MetaDataServiceCheck**: Verifies the metadata service is accessible and return compute properties. (Currently Enabled) \
+ * **AppAttachHealthCheck**: Verifies that the AppAttachService is healthy (there were no issues during package staging). The AppAttachService is used to enable the staging\/registration (and eventual deregistration\/destaging) of MSIX apps that have been set up by the tenant admin. This checks whether the component had any failures during package staging. Failures in staging will prevent some MSIX apps from working properly for the end user. If this check fails, it is non fatal and the machine still can service connections, main issue may be certain apps will not work for end-users. (Currently Enabled)
  */
 export type HealthCheckName = string;
 
@@ -1540,7 +2100,7 @@ export enum KnownHealthCheckResult {
   /** Health check failed. */
   HealthCheckFailed = "HealthCheckFailed",
   /** We received a Shutdown notification. */
-  SessionHostShutdown = "SessionHostShutdown"
+  SessionHostShutdown = "SessionHostShutdown",
 }
 
 /**
@@ -1555,77 +2115,144 @@ export enum KnownHealthCheckResult {
  */
 export type HealthCheckResult = string;
 
-/** Known values of {@link PrivateEndpointServiceConnectionStatus} that the service accepts. */
-export enum KnownPrivateEndpointServiceConnectionStatus {
-  Pending = "Pending",
-  Approved = "Approved",
-  Rejected = "Rejected"
+/** Known values of {@link AppAttachPackageArchitectures} that the service accepts. */
+export enum KnownAppAttachPackageArchitectures {
+  /** ARM */
+  ARM = "ARM",
+  /** ARM64 */
+  ARM64 = "ARM64",
+  /** X86 */
+  X86 = "x86",
+  /** X64 */
+  X64 = "x64",
+  /** Neutral */
+  Neutral = "Neutral",
+  /** X86A64 */
+  X86A64 = "x86a64",
+  /** ALL */
+  ALL = "ALL",
 }
 
 /**
- * Defines values for PrivateEndpointServiceConnectionStatus. \
- * {@link KnownPrivateEndpointServiceConnectionStatus} can be used interchangeably with PrivateEndpointServiceConnectionStatus,
+ * Defines values for AppAttachPackageArchitectures. \
+ * {@link KnownAppAttachPackageArchitectures} can be used interchangeably with AppAttachPackageArchitectures,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
- * **Pending** \
- * **Approved** \
- * **Rejected**
+ * **ARM** \
+ * **ARM64** \
+ * **x86** \
+ * **x64** \
+ * **Neutral** \
+ * **x86a64** \
+ * **ALL**
  */
-export type PrivateEndpointServiceConnectionStatus = string;
+export type AppAttachPackageArchitectures = string;
 
-/** Known values of {@link PrivateEndpointConnectionProvisioningState} that the service accepts. */
-export enum KnownPrivateEndpointConnectionProvisioningState {
+/** Known values of {@link ProvisioningState} that the service accepts. */
+export enum KnownProvisioningState {
+  /** Succeeded */
   Succeeded = "Succeeded",
-  Creating = "Creating",
-  Deleting = "Deleting",
-  Failed = "Failed"
+  /** Provisioning */
+  Provisioning = "Provisioning",
+  /** Failed */
+  Failed = "Failed",
+  /** Canceled */
+  Canceled = "Canceled",
 }
 
 /**
- * Defines values for PrivateEndpointConnectionProvisioningState. \
- * {@link KnownPrivateEndpointConnectionProvisioningState} can be used interchangeably with PrivateEndpointConnectionProvisioningState,
+ * Defines values for ProvisioningState. \
+ * {@link KnownProvisioningState} can be used interchangeably with ProvisioningState,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
  * **Succeeded** \
- * **Creating** \
- * **Deleting** \
- * **Failed**
+ * **Provisioning** \
+ * **Failed** \
+ * **Canceled**
  */
-export type PrivateEndpointConnectionProvisioningState = string;
+export type ProvisioningState = string;
+
+/** Known values of {@link PackageTimestamped} that the service accepts. */
+export enum KnownPackageTimestamped {
+  /** Timestamped */
+  Timestamped = "Timestamped",
+  /** NotTimestamped */
+  NotTimestamped = "NotTimestamped",
+}
+
+/**
+ * Defines values for PackageTimestamped. \
+ * {@link KnownPackageTimestamped} can be used interchangeably with PackageTimestamped,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Timestamped** \
+ * **NotTimestamped**
+ */
+export type PackageTimestamped = string;
+
+/** Known values of {@link FailHealthCheckOnStagingFailure} that the service accepts. */
+export enum KnownFailHealthCheckOnStagingFailure {
+  /** Unhealthy */
+  Unhealthy = "Unhealthy",
+  /** NeedsAssistance */
+  NeedsAssistance = "NeedsAssistance",
+  /** DoNotFail */
+  DoNotFail = "DoNotFail",
+}
+
+/**
+ * Defines values for FailHealthCheckOnStagingFailure. \
+ * {@link KnownFailHealthCheckOnStagingFailure} can be used interchangeably with FailHealthCheckOnStagingFailure,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Unhealthy** \
+ * **NeedsAssistance** \
+ * **DoNotFail**
+ */
+export type FailHealthCheckOnStagingFailure = string;
 /** Defines values for SkuTier. */
 export type SkuTier = "Free" | "Basic" | "Standard" | "Premium";
+/** Defines values for DayOfWeek. */
+export type DayOfWeek =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday"
+  | "Sunday";
 
 /** Optional parameters. */
 export interface OperationsListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the list operation. */
 export type OperationsListResponse = ResourceProviderOperationList;
 
 /** Optional parameters. */
 export interface OperationsListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type OperationsListNextResponse = ResourceProviderOperationList;
 
 /** Optional parameters. */
 export interface WorkspacesGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type WorkspacesGetResponse = Workspace;
 
 /** Optional parameters. */
 export interface WorkspacesCreateOrUpdateOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the createOrUpdate operation. */
 export type WorkspacesCreateOrUpdateResponse = Workspace;
 
 /** Optional parameters. */
 export interface WorkspacesDeleteOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Optional parameters. */
 export interface WorkspacesUpdateOptionalParams
@@ -1639,49 +2266,181 @@ export type WorkspacesUpdateResponse = Workspace;
 
 /** Optional parameters. */
 export interface WorkspacesListByResourceGroupOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the listByResourceGroup operation. */
 export type WorkspacesListByResourceGroupResponse = WorkspaceList;
 
 /** Optional parameters. */
 export interface WorkspacesListBySubscriptionOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listBySubscription operation. */
 export type WorkspacesListBySubscriptionResponse = WorkspaceList;
 
 /** Optional parameters. */
 export interface WorkspacesListByResourceGroupNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listByResourceGroupNext operation. */
 export type WorkspacesListByResourceGroupNextResponse = WorkspaceList;
 
 /** Optional parameters. */
 export interface WorkspacesListBySubscriptionNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listBySubscriptionNext operation. */
 export type WorkspacesListBySubscriptionNextResponse = WorkspaceList;
 
 /** Optional parameters. */
+export interface PrivateEndpointConnectionsListByWorkspaceOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listByWorkspace operation. */
+export type PrivateEndpointConnectionsListByWorkspaceResponse =
+  PrivateEndpointConnectionListResultWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsGetByWorkspaceOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the getByWorkspace operation. */
+export type PrivateEndpointConnectionsGetByWorkspaceResponse =
+  PrivateEndpointConnectionWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsDeleteByWorkspaceOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsUpdateByWorkspaceOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the updateByWorkspace operation. */
+export type PrivateEndpointConnectionsUpdateByWorkspaceResponse =
+  PrivateEndpointConnectionWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsListByHostPoolOptionalParams
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
+
+/** Contains response data for the listByHostPool operation. */
+export type PrivateEndpointConnectionsListByHostPoolResponse =
+  PrivateEndpointConnectionListResultWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsGetByHostPoolOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the getByHostPool operation. */
+export type PrivateEndpointConnectionsGetByHostPoolResponse =
+  PrivateEndpointConnectionWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsDeleteByHostPoolOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsUpdateByHostPoolOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the updateByHostPool operation. */
+export type PrivateEndpointConnectionsUpdateByHostPoolResponse =
+  PrivateEndpointConnectionWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsListByWorkspaceNextOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listByWorkspaceNext operation. */
+export type PrivateEndpointConnectionsListByWorkspaceNextResponse =
+  PrivateEndpointConnectionListResultWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateEndpointConnectionsListByHostPoolNextOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listByHostPoolNext operation. */
+export type PrivateEndpointConnectionsListByHostPoolNextResponse =
+  PrivateEndpointConnectionListResultWithSystemData;
+
+/** Optional parameters. */
+export interface PrivateLinkResourcesListByWorkspaceOptionalParams
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
+
+/** Contains response data for the listByWorkspace operation. */
+export type PrivateLinkResourcesListByWorkspaceResponse =
+  PrivateLinkResourceListResult;
+
+/** Optional parameters. */
+export interface PrivateLinkResourcesListByHostPoolOptionalParams
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
+
+/** Contains response data for the listByHostPool operation. */
+export type PrivateLinkResourcesListByHostPoolResponse =
+  PrivateLinkResourceListResult;
+
+/** Optional parameters. */
+export interface PrivateLinkResourcesListByWorkspaceNextOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listByWorkspaceNext operation. */
+export type PrivateLinkResourcesListByWorkspaceNextResponse =
+  PrivateLinkResourceListResult;
+
+/** Optional parameters. */
+export interface PrivateLinkResourcesListByHostPoolNextOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listByHostPoolNext operation. */
+export type PrivateLinkResourcesListByHostPoolNextResponse =
+  PrivateLinkResourceListResult;
+
+/** Optional parameters. */
 export interface ScalingPlansGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type ScalingPlansGetResponse = ScalingPlan;
 
 /** Optional parameters. */
 export interface ScalingPlansCreateOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the create operation. */
 export type ScalingPlansCreateResponse = ScalingPlan;
 
 /** Optional parameters. */
 export interface ScalingPlansDeleteOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Optional parameters. */
 export interface ScalingPlansUpdateOptionalParams
@@ -1695,63 +2454,191 @@ export type ScalingPlansUpdateResponse = ScalingPlan;
 
 /** Optional parameters. */
 export interface ScalingPlansListByResourceGroupOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the listByResourceGroup operation. */
 export type ScalingPlansListByResourceGroupResponse = ScalingPlanList;
 
 /** Optional parameters. */
 export interface ScalingPlansListBySubscriptionOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the listBySubscription operation. */
 export type ScalingPlansListBySubscriptionResponse = ScalingPlanList;
 
 /** Optional parameters. */
 export interface ScalingPlansListByHostPoolOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the listByHostPool operation. */
 export type ScalingPlansListByHostPoolResponse = ScalingPlanList;
 
 /** Optional parameters. */
 export interface ScalingPlansListByResourceGroupNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listByResourceGroupNext operation. */
 export type ScalingPlansListByResourceGroupNextResponse = ScalingPlanList;
 
 /** Optional parameters. */
 export interface ScalingPlansListBySubscriptionNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listBySubscriptionNext operation. */
 export type ScalingPlansListBySubscriptionNextResponse = ScalingPlanList;
 
 /** Optional parameters. */
 export interface ScalingPlansListByHostPoolNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listByHostPoolNext operation. */
 export type ScalingPlansListByHostPoolNextResponse = ScalingPlanList;
 
 /** Optional parameters. */
+export interface ScalingPlanPooledSchedulesGetOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the get operation. */
+export type ScalingPlanPooledSchedulesGetResponse = ScalingPlanPooledSchedule;
+
+/** Optional parameters. */
+export interface ScalingPlanPooledSchedulesCreateOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the create operation. */
+export type ScalingPlanPooledSchedulesCreateResponse =
+  ScalingPlanPooledSchedule;
+
+/** Optional parameters. */
+export interface ScalingPlanPooledSchedulesDeleteOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Optional parameters. */
+export interface ScalingPlanPooledSchedulesUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** Object containing ScalingPlanPooledSchedule definitions. */
+  scalingPlanSchedule?: ScalingPlanPooledSchedulePatch;
+}
+
+/** Contains response data for the update operation. */
+export type ScalingPlanPooledSchedulesUpdateResponse =
+  ScalingPlanPooledSchedule;
+
+/** Optional parameters. */
+export interface ScalingPlanPooledSchedulesListOptionalParams
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
+
+/** Contains response data for the list operation. */
+export type ScalingPlanPooledSchedulesListResponse =
+  ScalingPlanPooledScheduleList;
+
+/** Optional parameters. */
+export interface ScalingPlanPooledSchedulesListNextOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listNext operation. */
+export type ScalingPlanPooledSchedulesListNextResponse =
+  ScalingPlanPooledScheduleList;
+
+/** Optional parameters. */
+export interface ScalingPlanPersonalSchedulesGetOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the get operation. */
+export type ScalingPlanPersonalSchedulesGetResponse =
+  ScalingPlanPersonalSchedule;
+
+/** Optional parameters. */
+export interface ScalingPlanPersonalSchedulesCreateOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the create operation. */
+export type ScalingPlanPersonalSchedulesCreateResponse =
+  ScalingPlanPersonalSchedule;
+
+/** Optional parameters. */
+export interface ScalingPlanPersonalSchedulesDeleteOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Optional parameters. */
+export interface ScalingPlanPersonalSchedulesUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** Object containing ScalingPlanPersonalSchedule definitions. */
+  scalingPlanSchedule?: ScalingPlanPersonalSchedulePatch;
+}
+
+/** Contains response data for the update operation. */
+export type ScalingPlanPersonalSchedulesUpdateResponse =
+  ScalingPlanPersonalSchedule;
+
+/** Optional parameters. */
+export interface ScalingPlanPersonalSchedulesListOptionalParams
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
+
+/** Contains response data for the list operation. */
+export type ScalingPlanPersonalSchedulesListResponse =
+  ScalingPlanPersonalScheduleList;
+
+/** Optional parameters. */
+export interface ScalingPlanPersonalSchedulesListNextOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listNext operation. */
+export type ScalingPlanPersonalSchedulesListNextResponse =
+  ScalingPlanPersonalScheduleList;
+
+/** Optional parameters. */
 export interface ApplicationGroupsGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type ApplicationGroupsGetResponse = ApplicationGroup;
 
 /** Optional parameters. */
 export interface ApplicationGroupsCreateOrUpdateOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the createOrUpdate operation. */
 export type ApplicationGroupsCreateOrUpdateResponse = ApplicationGroup;
 
 /** Optional parameters. */
 export interface ApplicationGroupsDeleteOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Optional parameters. */
 export interface ApplicationGroupsUpdateOptionalParams
@@ -1766,6 +2653,12 @@ export type ApplicationGroupsUpdateResponse = ApplicationGroup;
 /** Optional parameters. */
 export interface ApplicationGroupsListByResourceGroupOptionalParams
   extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
   /** OData filter expression. Valid properties for filtering are applicationGroupType. */
   filter?: string;
 }
@@ -1785,55 +2678,58 @@ export type ApplicationGroupsListBySubscriptionResponse = ApplicationGroupList;
 
 /** Optional parameters. */
 export interface ApplicationGroupsListByResourceGroupNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** OData filter expression. Valid properties for filtering are applicationGroupType. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listByResourceGroupNext operation. */
-export type ApplicationGroupsListByResourceGroupNextResponse = ApplicationGroupList;
+export type ApplicationGroupsListByResourceGroupNextResponse =
+  ApplicationGroupList;
 
 /** Optional parameters. */
 export interface ApplicationGroupsListBySubscriptionNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** OData filter expression. Valid properties for filtering are applicationGroupType. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listBySubscriptionNext operation. */
-export type ApplicationGroupsListBySubscriptionNextResponse = ApplicationGroupList;
+export type ApplicationGroupsListBySubscriptionNextResponse =
+  ApplicationGroupList;
 
 /** Optional parameters. */
 export interface StartMenuItemsListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the list operation. */
 export type StartMenuItemsListResponse = StartMenuItemList;
 
 /** Optional parameters. */
 export interface StartMenuItemsListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type StartMenuItemsListNextResponse = StartMenuItemList;
 
 /** Optional parameters. */
 export interface ApplicationsGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type ApplicationsGetResponse = Application;
 
 /** Optional parameters. */
 export interface ApplicationsCreateOrUpdateOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the createOrUpdate operation. */
 export type ApplicationsCreateOrUpdateResponse = Application;
 
 /** Optional parameters. */
 export interface ApplicationsDeleteOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Optional parameters. */
 export interface ApplicationsUpdateOptionalParams
@@ -1847,21 +2743,28 @@ export type ApplicationsUpdateResponse = Application;
 
 /** Optional parameters. */
 export interface ApplicationsListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the list operation. */
 export type ApplicationsListResponse = ApplicationList;
 
 /** Optional parameters. */
 export interface ApplicationsListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type ApplicationsListNextResponse = ApplicationList;
 
 /** Optional parameters. */
 export interface DesktopsGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type DesktopsGetResponse = Desktop;
@@ -1878,28 +2781,35 @@ export type DesktopsUpdateResponse = Desktop;
 
 /** Optional parameters. */
 export interface DesktopsListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the list operation. */
 export type DesktopsListResponse = DesktopList;
 
 /** Optional parameters. */
 export interface DesktopsListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type DesktopsListNextResponse = DesktopList;
 
 /** Optional parameters. */
 export interface HostPoolsGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type HostPoolsGetResponse = HostPool;
 
 /** Optional parameters. */
 export interface HostPoolsCreateOrUpdateOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the createOrUpdate operation. */
 export type HostPoolsCreateOrUpdateResponse = HostPool;
@@ -1923,35 +2833,56 @@ export type HostPoolsUpdateResponse = HostPool;
 
 /** Optional parameters. */
 export interface HostPoolsListByResourceGroupOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the listByResourceGroup operation. */
 export type HostPoolsListByResourceGroupResponse = HostPoolList;
 
 /** Optional parameters. */
 export interface HostPoolsListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the list operation. */
 export type HostPoolsListResponse = HostPoolList;
 
 /** Optional parameters. */
 export interface HostPoolsRetrieveRegistrationTokenOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the retrieveRegistrationToken operation. */
 export type HostPoolsRetrieveRegistrationTokenResponse = RegistrationInfo;
 
 /** Optional parameters. */
+export interface HostPoolsListRegistrationTokensOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the listRegistrationTokens operation. */
+export type HostPoolsListRegistrationTokensResponse = RegistrationTokenList;
+
+/** Optional parameters. */
 export interface HostPoolsListByResourceGroupNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listByResourceGroupNext operation. */
 export type HostPoolsListByResourceGroupNextResponse = HostPoolList;
 
 /** Optional parameters. */
 export interface HostPoolsListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type HostPoolsListNextResponse = HostPoolList;
@@ -1959,6 +2890,12 @@ export type HostPoolsListNextResponse = HostPoolList;
 /** Optional parameters. */
 export interface UserSessionsListByHostPoolOptionalParams
   extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
   /** OData filter expression. Valid properties for filtering are userprincipalname and sessionstate. */
   filter?: string;
 }
@@ -1968,7 +2905,7 @@ export type UserSessionsListByHostPoolResponse = UserSessionList;
 
 /** Optional parameters. */
 export interface UserSessionsGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type UserSessionsGetResponse = UserSession;
@@ -1982,14 +2919,21 @@ export interface UserSessionsDeleteOptionalParams
 
 /** Optional parameters. */
 export interface UserSessionsListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the list operation. */
 export type UserSessionsListResponse = UserSessionList;
 
 /** Optional parameters. */
 export interface UserSessionsDisconnectOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Optional parameters. */
 export interface UserSessionsSendMessageOptionalParams
@@ -2000,24 +2944,21 @@ export interface UserSessionsSendMessageOptionalParams
 
 /** Optional parameters. */
 export interface UserSessionsListByHostPoolNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** OData filter expression. Valid properties for filtering are userprincipalname and sessionstate. */
-  filter?: string;
-}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listByHostPoolNext operation. */
 export type UserSessionsListByHostPoolNextResponse = UserSessionList;
 
 /** Optional parameters. */
 export interface UserSessionsListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type UserSessionsListNextResponse = UserSessionList;
 
 /** Optional parameters. */
 export interface SessionHostsGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type SessionHostsGetResponse = SessionHost;
@@ -2043,35 +2984,42 @@ export type SessionHostsUpdateResponse = SessionHost;
 
 /** Optional parameters. */
 export interface SessionHostsListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the list operation. */
 export type SessionHostsListResponse = SessionHostList;
 
 /** Optional parameters. */
 export interface SessionHostsListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type SessionHostsListNextResponse = SessionHostList;
 
 /** Optional parameters. */
 export interface MsixPackagesGetOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the get operation. */
 export type MsixPackagesGetResponse = MsixPackage;
 
 /** Optional parameters. */
 export interface MsixPackagesCreateOrUpdateOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the createOrUpdate operation. */
 export type MsixPackagesCreateOrUpdateResponse = MsixPackage;
 
 /** Optional parameters. */
 export interface MsixPackagesDeleteOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Optional parameters. */
 export interface MsixPackagesUpdateOptionalParams
@@ -2085,123 +3033,116 @@ export type MsixPackagesUpdateResponse = MsixPackage;
 
 /** Optional parameters. */
 export interface MsixPackagesListOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Number of items per page. */
+  pageSize?: number;
+  /** Indicates whether the collection is descending. */
+  isDescending?: boolean;
+  /** Initial number of items to skip. */
+  initialSkip?: number;
+}
 
 /** Contains response data for the list operation. */
 export type MsixPackagesListResponse = MsixPackageList;
 
 /** Optional parameters. */
 export interface MsixPackagesListNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the listNext operation. */
 export type MsixPackagesListNextResponse = MsixPackageList;
 
 /** Optional parameters. */
+export interface AppAttachPackageInfoImportOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the import operation. */
+export type AppAttachPackageInfoImportResponse = AppAttachPackageList;
+
+/** Optional parameters. */
+export interface AppAttachPackageInfoImportNextOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the importNext operation. */
+export type AppAttachPackageInfoImportNextResponse = AppAttachPackageList;
+
+/** Optional parameters. */
 export interface MsixImagesExpandOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the expand operation. */
 export type MsixImagesExpandResponse = ExpandMsixImageList;
 
 /** Optional parameters. */
 export interface MsixImagesExpandNextOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions { }
 
 /** Contains response data for the expandNext operation. */
 export type MsixImagesExpandNextResponse = ExpandMsixImageList;
 
 /** Optional parameters. */
-export interface PrivateEndpointConnectionsListByHostPoolOptionalParams
-  extends coreClient.OperationOptions {}
+export interface AppAttachPackageGetOptionalParams
+  extends coreClient.OperationOptions { }
 
-/** Contains response data for the listByHostPool operation. */
-export type PrivateEndpointConnectionsListByHostPoolResponse = PrivateEndpointConnectionListResultWithSystemData;
-
-/** Optional parameters. */
-export interface PrivateEndpointConnectionsGetByHostPoolOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the getByHostPool operation. */
-export type PrivateEndpointConnectionsGetByHostPoolResponse = PrivateEndpointConnectionWithSystemData;
+/** Contains response data for the get operation. */
+export type AppAttachPackageGetResponse = AppAttachPackage;
 
 /** Optional parameters. */
-export interface PrivateEndpointConnectionsDeleteByHostPoolOptionalParams
-  extends coreClient.OperationOptions {}
+export interface AppAttachPackageCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions { }
+
+/** Contains response data for the createOrUpdate operation. */
+export type AppAttachPackageCreateOrUpdateResponse = AppAttachPackage;
 
 /** Optional parameters. */
-export interface PrivateEndpointConnectionsUpdateByHostPoolOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the updateByHostPool operation. */
-export type PrivateEndpointConnectionsUpdateByHostPoolResponse = PrivateEndpointConnectionWithSystemData;
+export interface AppAttachPackageDeleteOptionalParams
+  extends coreClient.OperationOptions { }
 
 /** Optional parameters. */
-export interface PrivateEndpointConnectionsListByWorkspaceOptionalParams
-  extends coreClient.OperationOptions {}
+export interface AppAttachPackageUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** Object containing App Attach Package definition. */
+  appAttachPackagePatch?: AppAttachPackagePatch;
+}
 
-/** Contains response data for the listByWorkspace operation. */
-export type PrivateEndpointConnectionsListByWorkspaceResponse = PrivateEndpointConnectionListResultWithSystemData;
-
-/** Optional parameters. */
-export interface PrivateEndpointConnectionsGetByWorkspaceOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the getByWorkspace operation. */
-export type PrivateEndpointConnectionsGetByWorkspaceResponse = PrivateEndpointConnectionWithSystemData;
+/** Contains response data for the update operation. */
+export type AppAttachPackageUpdateResponse = AppAttachPackage;
 
 /** Optional parameters. */
-export interface PrivateEndpointConnectionsDeleteByWorkspaceOptionalParams
-  extends coreClient.OperationOptions {}
+export interface AppAttachPackageListByResourceGroupOptionalParams
+  extends coreClient.OperationOptions {
+  /** OData filter expression. Valid properties for filtering are package name and host pool. */
+  filter?: string;
+}
+
+/** Contains response data for the listByResourceGroup operation. */
+export type AppAttachPackageListByResourceGroupResponse = AppAttachPackageList;
 
 /** Optional parameters. */
-export interface PrivateEndpointConnectionsUpdateByWorkspaceOptionalParams
-  extends coreClient.OperationOptions {}
+export interface AppAttachPackageListBySubscriptionOptionalParams
+  extends coreClient.OperationOptions {
+  /** OData filter expression. Valid properties for filtering are package name, host pool, and resource group. */
+  filter?: string;
+}
 
-/** Contains response data for the updateByWorkspace operation. */
-export type PrivateEndpointConnectionsUpdateByWorkspaceResponse = PrivateEndpointConnectionWithSystemData;
-
-/** Optional parameters. */
-export interface PrivateEndpointConnectionsListByHostPoolNextOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the listByHostPoolNext operation. */
-export type PrivateEndpointConnectionsListByHostPoolNextResponse = PrivateEndpointConnectionListResultWithSystemData;
+/** Contains response data for the listBySubscription operation. */
+export type AppAttachPackageListBySubscriptionResponse = AppAttachPackageList;
 
 /** Optional parameters. */
-export interface PrivateEndpointConnectionsListByWorkspaceNextOptionalParams
-  extends coreClient.OperationOptions {}
+export interface AppAttachPackageListByResourceGroupNextOptionalParams
+  extends coreClient.OperationOptions { }
 
-/** Contains response data for the listByWorkspaceNext operation. */
-export type PrivateEndpointConnectionsListByWorkspaceNextResponse = PrivateEndpointConnectionListResultWithSystemData;
-
-/** Optional parameters. */
-export interface PrivateLinkResourcesListByHostPoolOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the listByHostPool operation. */
-export type PrivateLinkResourcesListByHostPoolResponse = PrivateLinkResourceListResult;
+/** Contains response data for the listByResourceGroupNext operation. */
+export type AppAttachPackageListByResourceGroupNextResponse =
+  AppAttachPackageList;
 
 /** Optional parameters. */
-export interface PrivateLinkResourcesListByWorkspaceOptionalParams
-  extends coreClient.OperationOptions {}
+export interface AppAttachPackageListBySubscriptionNextOptionalParams
+  extends coreClient.OperationOptions { }
 
-/** Contains response data for the listByWorkspace operation. */
-export type PrivateLinkResourcesListByWorkspaceResponse = PrivateLinkResourceListResult;
-
-/** Optional parameters. */
-export interface PrivateLinkResourcesListByHostPoolNextOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the listByHostPoolNext operation. */
-export type PrivateLinkResourcesListByHostPoolNextResponse = PrivateLinkResourceListResult;
-
-/** Optional parameters. */
-export interface PrivateLinkResourcesListByWorkspaceNextOptionalParams
-  extends coreClient.OperationOptions {}
-
-/** Contains response data for the listByWorkspaceNext operation. */
-export type PrivateLinkResourcesListByWorkspaceNextResponse = PrivateLinkResourceListResult;
+/** Contains response data for the listBySubscriptionNext operation. */
+export type AppAttachPackageListBySubscriptionNextResponse =
+  AppAttachPackageList;
 
 /** Optional parameters. */
 export interface DesktopVirtualizationAPIClientOptionalParams

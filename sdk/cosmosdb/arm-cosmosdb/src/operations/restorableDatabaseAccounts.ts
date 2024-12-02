@@ -6,33 +6,34 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { RestorableDatabaseAccounts } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   RestorableDatabaseAccountGetResult,
   RestorableDatabaseAccountsListByLocationOptionalParams,
-  RestorableDatabaseAccountsListOptionalParams,
   RestorableDatabaseAccountsListByLocationResponse,
+  RestorableDatabaseAccountsListOptionalParams,
   RestorableDatabaseAccountsListResponse,
   RestorableDatabaseAccountsGetByLocationOptionalParams,
-  RestorableDatabaseAccountsGetByLocationResponse
+  RestorableDatabaseAccountsGetByLocationResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RestorableDatabaseAccounts operations. */
 export class RestorableDatabaseAccountsImpl
-  implements RestorableDatabaseAccounts {
-  private readonly client: CosmosDBManagementClientContext;
+  implements RestorableDatabaseAccounts
+{
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class RestorableDatabaseAccounts class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -45,7 +46,7 @@ export class RestorableDatabaseAccountsImpl
    */
   public listByLocation(
     location: string,
-    options?: RestorableDatabaseAccountsListByLocationOptionalParams
+    options?: RestorableDatabaseAccountsListByLocationOptionalParams,
   ): PagedAsyncIterableIterator<RestorableDatabaseAccountGetResult> {
     const iter = this.listByLocationPagingAll(location, options);
     return {
@@ -55,23 +56,28 @@ export class RestorableDatabaseAccountsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByLocationPagingPage(location, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByLocationPagingPage(location, options, settings);
+      },
     };
   }
 
   private async *listByLocationPagingPage(
     location: string,
-    options?: RestorableDatabaseAccountsListByLocationOptionalParams
+    options?: RestorableDatabaseAccountsListByLocationOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<RestorableDatabaseAccountGetResult[]> {
-    let result = await this._listByLocation(location, options);
+    let result: RestorableDatabaseAccountsListByLocationResponse;
+    result = await this._listByLocation(location, options);
     yield result.value || [];
   }
 
   private async *listByLocationPagingAll(
     location: string,
-    options?: RestorableDatabaseAccountsListByLocationOptionalParams
+    options?: RestorableDatabaseAccountsListByLocationOptionalParams,
   ): AsyncIterableIterator<RestorableDatabaseAccountGetResult> {
     for await (const page of this.listByLocationPagingPage(location, options)) {
       yield* page;
@@ -84,7 +90,7 @@ export class RestorableDatabaseAccountsImpl
    * @param options The options parameters.
    */
   public list(
-    options?: RestorableDatabaseAccountsListOptionalParams
+    options?: RestorableDatabaseAccountsListOptionalParams,
   ): PagedAsyncIterableIterator<RestorableDatabaseAccountGetResult> {
     const iter = this.listPagingAll(options);
     return {
@@ -94,21 +100,26 @@ export class RestorableDatabaseAccountsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: RestorableDatabaseAccountsListOptionalParams
+    options?: RestorableDatabaseAccountsListOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<RestorableDatabaseAccountGetResult[]> {
-    let result = await this._list(options);
+    let result: RestorableDatabaseAccountsListResponse;
+    result = await this._list(options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
-    options?: RestorableDatabaseAccountsListOptionalParams
+    options?: RestorableDatabaseAccountsListOptionalParams,
   ): AsyncIterableIterator<RestorableDatabaseAccountGetResult> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -124,11 +135,11 @@ export class RestorableDatabaseAccountsImpl
    */
   private _listByLocation(
     location: string,
-    options?: RestorableDatabaseAccountsListByLocationOptionalParams
+    options?: RestorableDatabaseAccountsListByLocationOptionalParams,
   ): Promise<RestorableDatabaseAccountsListByLocationResponse> {
     return this.client.sendOperationRequest(
       { location, options },
-      listByLocationOperationSpec
+      listByLocationOperationSpec,
     );
   }
 
@@ -138,7 +149,7 @@ export class RestorableDatabaseAccountsImpl
    * @param options The options parameters.
    */
   private _list(
-    options?: RestorableDatabaseAccountsListOptionalParams
+    options?: RestorableDatabaseAccountsListOptionalParams,
   ): Promise<RestorableDatabaseAccountsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -153,11 +164,11 @@ export class RestorableDatabaseAccountsImpl
   getByLocation(
     location: string,
     instanceId: string,
-    options?: RestorableDatabaseAccountsGetByLocationOptionalParams
+    options?: RestorableDatabaseAccountsGetByLocationOptionalParams,
   ): Promise<RestorableDatabaseAccountsGetByLocationResponse> {
     return this.client.sendOperationRequest(
       { location, instanceId, options },
-      getByLocationOperationSpec
+      getByLocationOperationSpec,
     );
   }
 }
@@ -165,62 +176,59 @@ export class RestorableDatabaseAccountsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByLocationOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorableDatabaseAccountsListResult
+      bodyMapper: Mappers.RestorableDatabaseAccountsListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.location1
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/restorableDatabaseAccounts",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.RestorableDatabaseAccountsListResult
+      bodyMapper: Mappers.ErrorResponse,
     },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [Parameters.$host, Parameters.subscriptionId],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getByLocationOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.RestorableDatabaseAccountGetResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.location1,
-    Parameters.instanceId
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const listOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/restorableDatabaseAccounts",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.RestorableDatabaseAccountsListResult,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.$host, Parameters.subscriptionId],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const getByLocationOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.RestorableDatabaseAccountGetResult,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.location1,
+    Parameters.instanceId,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };

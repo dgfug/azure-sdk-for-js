@@ -5,28 +5,8 @@
 ```ts
 
 // @public
-export class AbortController {
-    constructor(parentSignals?: AbortSignalLike[]);
-    constructor(...parentSignals: AbortSignalLike[]);
-    abort(): void;
-    get signal(): AbortSignal;
-    static timeout(ms: number): AbortSignal;
-}
-
-// @public
 export class AbortError extends Error {
     constructor(message?: string);
-}
-
-// @public
-export class AbortSignal implements AbortSignalLike {
-    constructor();
-    get aborted(): boolean;
-    addEventListener(_type: "abort", listener: (this: AbortSignalLike, ev: any) => any): void;
-    dispatchEvent(_event: Event): boolean;
-    static get none(): AbortSignal;
-    onabort: ((ev?: Event) => any) | null;
-    removeEventListener(_type: "abort", listener: (this: AbortSignalLike, ev: any) => any): void;
 }
 
 // @public
@@ -35,7 +15,6 @@ export interface AbortSignalLike {
     addEventListener(type: "abort", listener: (this: AbortSignalLike, ev: any) => any, options?: any): void;
     removeEventListener(type: "abort", listener: (this: AbortSignalLike, ev: any) => any, options?: any): void;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

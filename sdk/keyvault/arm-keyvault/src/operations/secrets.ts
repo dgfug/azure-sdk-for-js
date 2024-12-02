@@ -6,17 +6,18 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Secrets } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { KeyVaultManagementClientContext } from "../keyVaultManagementClientContext";
+import { KeyVaultManagementClient } from "../keyVaultManagementClient";
 import {
   Secret,
   SecretsListNextOptionalParams,
   SecretsListOptionalParams,
+  SecretsListResponse,
   SecretCreateOrUpdateParameters,
   SecretsCreateOrUpdateOptionalParams,
   SecretsCreateOrUpdateResponse,
@@ -25,20 +26,19 @@ import {
   SecretsUpdateResponse,
   SecretsGetOptionalParams,
   SecretsGetResponse,
-  SecretsListResponse,
   SecretsListNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a Secrets. */
+/** Class containing Secrets operations. */
 export class SecretsImpl implements Secrets {
-  private readonly client: KeyVaultManagementClientContext;
+  private readonly client: KeyVaultManagementClient;
 
   /**
    * Initialize a new instance of the class Secrets class.
    * @param client Reference to the service client
    */
-  constructor(client: KeyVaultManagementClientContext) {
+  constructor(client: KeyVaultManagementClient) {
     this.client = client;
   }
 
@@ -63,8 +63,16 @@ export class SecretsImpl implements Secrets {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, vaultName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          vaultName,
+          options,
+          settings
+        );
       }
     };
   }
@@ -72,11 +80,18 @@ export class SecretsImpl implements Secrets {
   private async *listPagingPage(
     resourceGroupName: string,
     vaultName: string,
-    options?: SecretsListOptionalParams
+    options?: SecretsListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Secret[]> {
-    let result = await this._list(resourceGroupName, vaultName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SecretsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, vaultName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -85,7 +100,9 @@ export class SecretsImpl implements Secrets {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -109,7 +126,9 @@ export class SecretsImpl implements Secrets {
    * with vault secrets.
    * @param resourceGroupName The name of the Resource Group to which the vault belongs.
    * @param vaultName Name of the vault
-   * @param secretName Name of the secret
+   * @param secretName Name of the secret. The value you provide may be copied globally for the purpose
+   *                   of running the service. The value provided should not include personally identifiable or sensitive
+   *                   information.
    * @param parameters Parameters to create or update the secret
    * @param options The options parameters.
    */
@@ -224,7 +243,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  requestBody: Parameters.parameters5,
+  requestBody: Parameters.parameters6,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -252,7 +271,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  requestBody: Parameters.parameters6,
+  requestBody: Parameters.parameters7,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -321,7 +340,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.top],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

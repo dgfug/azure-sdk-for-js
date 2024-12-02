@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   NetworkInterfaceTapConfiguration,
   NetworkInterfaceTapConfigurationsListOptionalParams,
@@ -15,7 +15,7 @@ import {
   NetworkInterfaceTapConfigurationsGetOptionalParams,
   NetworkInterfaceTapConfigurationsGetResponse,
   NetworkInterfaceTapConfigurationsCreateOrUpdateOptionalParams,
-  NetworkInterfaceTapConfigurationsCreateOrUpdateResponse
+  NetworkInterfaceTapConfigurationsCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface NetworkInterfaceTapConfigurations {
   list(
     resourceGroupName: string,
     networkInterfaceName: string,
-    options?: NetworkInterfaceTapConfigurationsListOptionalParams
+    options?: NetworkInterfaceTapConfigurationsListOptionalParams,
   ): PagedAsyncIterableIterator<NetworkInterfaceTapConfiguration>;
   /**
    * Deletes the specified tap configuration from the NetworkInterface.
@@ -43,8 +43,8 @@ export interface NetworkInterfaceTapConfigurations {
     resourceGroupName: string,
     networkInterfaceName: string,
     tapConfigurationName: string,
-    options?: NetworkInterfaceTapConfigurationsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: NetworkInterfaceTapConfigurationsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified tap configuration from the NetworkInterface.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface NetworkInterfaceTapConfigurations {
     resourceGroupName: string,
     networkInterfaceName: string,
     tapConfigurationName: string,
-    options?: NetworkInterfaceTapConfigurationsDeleteOptionalParams
+    options?: NetworkInterfaceTapConfigurationsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Get the specified tap configuration on a network interface.
@@ -69,7 +69,7 @@ export interface NetworkInterfaceTapConfigurations {
     resourceGroupName: string,
     networkInterfaceName: string,
     tapConfigurationName: string,
-    options?: NetworkInterfaceTapConfigurationsGetOptionalParams
+    options?: NetworkInterfaceTapConfigurationsGetOptionalParams,
   ): Promise<NetworkInterfaceTapConfigurationsGetResponse>;
   /**
    * Creates or updates a Tap configuration in the specified NetworkInterface.
@@ -85,12 +85,10 @@ export interface NetworkInterfaceTapConfigurations {
     networkInterfaceName: string,
     tapConfigurationName: string,
     tapConfigurationParameters: NetworkInterfaceTapConfiguration,
-    options?: NetworkInterfaceTapConfigurationsCreateOrUpdateOptionalParams
+    options?: NetworkInterfaceTapConfigurationsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        NetworkInterfaceTapConfigurationsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<NetworkInterfaceTapConfigurationsCreateOrUpdateResponse>,
       NetworkInterfaceTapConfigurationsCreateOrUpdateResponse
     >
   >;
@@ -108,6 +106,6 @@ export interface NetworkInterfaceTapConfigurations {
     networkInterfaceName: string,
     tapConfigurationName: string,
     tapConfigurationParameters: NetworkInterfaceTapConfiguration,
-    options?: NetworkInterfaceTapConfigurationsCreateOrUpdateOptionalParams
+    options?: NetworkInterfaceTapConfigurationsCreateOrUpdateOptionalParams,
   ): Promise<NetworkInterfaceTapConfigurationsCreateOrUpdateResponse>;
 }

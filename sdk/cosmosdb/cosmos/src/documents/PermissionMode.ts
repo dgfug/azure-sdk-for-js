@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /**
  * Enum for permission mode values.
  */
@@ -9,5 +9,5 @@ export enum PermissionMode {
   /** Permission applicable for read operations only. */
   Read = "read",
   /** Permission applicable for all operations. */
-  All = "all"
+  All = "all",
 }

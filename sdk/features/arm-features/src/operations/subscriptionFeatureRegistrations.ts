@@ -6,41 +6,41 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { SubscriptionFeatureRegistrations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { FeatureClientContext } from "../featureClientContext";
+import { FeatureClient } from "../featureClient";
 import {
   SubscriptionFeatureRegistration,
   SubscriptionFeatureRegistrationsListBySubscriptionNextOptionalParams,
   SubscriptionFeatureRegistrationsListBySubscriptionOptionalParams,
+  SubscriptionFeatureRegistrationsListBySubscriptionResponse,
   SubscriptionFeatureRegistrationsListAllBySubscriptionNextOptionalParams,
   SubscriptionFeatureRegistrationsListAllBySubscriptionOptionalParams,
+  SubscriptionFeatureRegistrationsListAllBySubscriptionResponse,
   SubscriptionFeatureRegistrationsGetOptionalParams,
   SubscriptionFeatureRegistrationsGetResponse,
   SubscriptionFeatureRegistrationsCreateOrUpdateOptionalParams,
   SubscriptionFeatureRegistrationsCreateOrUpdateResponse,
   SubscriptionFeatureRegistrationsDeleteOptionalParams,
-  SubscriptionFeatureRegistrationsListBySubscriptionResponse,
-  SubscriptionFeatureRegistrationsListAllBySubscriptionResponse,
   SubscriptionFeatureRegistrationsListBySubscriptionNextResponse,
   SubscriptionFeatureRegistrationsListAllBySubscriptionNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a SubscriptionFeatureRegistrations. */
+/** Class containing SubscriptionFeatureRegistrations operations. */
 export class SubscriptionFeatureRegistrationsImpl
   implements SubscriptionFeatureRegistrations {
-  private readonly client: FeatureClientContext;
+  private readonly client: FeatureClient;
 
   /**
    * Initialize a new instance of the class SubscriptionFeatureRegistrations class.
    * @param client Reference to the service client
    */
-  constructor(client: FeatureClientContext) {
+  constructor(client: FeatureClient) {
     this.client = client;
   }
 
@@ -61,19 +61,33 @@ export class SubscriptionFeatureRegistrationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySubscriptionPagingPage(providerNamespace, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySubscriptionPagingPage(
+          providerNamespace,
+          options,
+          settings
+        );
       }
     };
   }
 
   private async *listBySubscriptionPagingPage(
     providerNamespace: string,
-    options?: SubscriptionFeatureRegistrationsListBySubscriptionOptionalParams
+    options?: SubscriptionFeatureRegistrationsListBySubscriptionOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<SubscriptionFeatureRegistration[]> {
-    let result = await this._listBySubscription(providerNamespace, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SubscriptionFeatureRegistrationsListBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySubscription(providerNamespace, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySubscriptionNext(
         providerNamespace,
@@ -81,7 +95,9 @@ export class SubscriptionFeatureRegistrationsImpl
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -112,25 +128,37 @@ export class SubscriptionFeatureRegistrationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllBySubscriptionPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllBySubscriptionPagingPage(options, settings);
       }
     };
   }
 
   private async *listAllBySubscriptionPagingPage(
-    options?: SubscriptionFeatureRegistrationsListAllBySubscriptionOptionalParams
+    options?: SubscriptionFeatureRegistrationsListAllBySubscriptionOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<SubscriptionFeatureRegistration[]> {
-    let result = await this._listAllBySubscription(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SubscriptionFeatureRegistrationsListAllBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAllBySubscription(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllBySubscriptionNext(
         continuationToken,
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 

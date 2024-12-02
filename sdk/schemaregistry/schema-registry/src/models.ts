@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CommonClientOptions, OperationOptions } from "@azure/core-client";
+import type { CommonClientOptions, OperationOptions } from "@azure/core-client";
 
 /**
  * Properties of a schema.
@@ -9,12 +9,16 @@ import { CommonClientOptions, OperationOptions } from "@azure/core-client";
 export interface SchemaProperties {
   /** ID that uniquely identifies a schema in the registry namespace. */
   id: string;
-
   /**
    * Serialization type of schema.
-   * Currently only 'avro' is supported, but this is subject to change.
    */
   format: string;
+  /** Schema group under which schema is or should be registered. */
+  groupName: string;
+  /** Name of schema. */
+  name: string;
+  /** The version of schema */
+  version: number;
 }
 
 /**
@@ -23,16 +27,12 @@ export interface SchemaProperties {
 export interface SchemaDescription {
   /** Schema group under which schema is or should be registered. */
   groupName: string;
-
-  /** Name of schema.*/
+  /** Name of schema. */
   name: string;
-
   /**
    * The format of schema and it must match the serialization type of the schema's group.
-   * "Avro" is the only currently accepted value at the time of this package's release.
    */
   format: string;
-
   /** String representation of schema. */
   definition: string;
 }
@@ -52,7 +52,7 @@ export interface Schema {
  */
 export interface SchemaRegistryClientOptions extends CommonClientOptions {
   /**
-   * The service API version to use in requests. The default is "2021-10".
+   * The service API version to use in requests. The default is "2022-10".
    */
   apiVersion?: string;
 }
@@ -91,9 +91,8 @@ export interface SchemaRegistry {
    */
   registerSchema(
     schema: SchemaDescription,
-    options?: RegisterSchemaOptions
+    options?: RegisterSchemaOptions,
   ): Promise<SchemaProperties>;
-
   /**
    * Gets the ID of an existing schema with matching name, group, type, and
    * definition.
@@ -103,9 +102,8 @@ export interface SchemaRegistry {
    */
   getSchemaProperties(
     schema: SchemaDescription,
-    options?: GetSchemaPropertiesOptions
+    options?: GetSchemaPropertiesOptions,
   ): Promise<SchemaProperties>;
-
   /**
    * Gets an existing schema by ID.
    *
@@ -114,3 +112,21 @@ export interface SchemaRegistry {
    */
   getSchema(schemaId: string, options?: GetSchemaOptions): Promise<Schema>;
 }
+
+/**
+ * Schema formats supported at the time of this library release.
+ */
+export enum KnownSchemaFormats {
+  /** Avro */
+  Avro = "Avro",
+  /** JSON */
+  Json = "Json",
+  /** Schemas of the custom format will be treated as an opaque string */
+  Custom = "Custom",
+}
+
+/** Alias for SchemaContentTypeValues */
+export type SchemaContentTypeValues =
+  | "application/json; serialization=Avro"
+  | "application/json; serialization=Json"
+  | "text/plain; charset=utf-8";

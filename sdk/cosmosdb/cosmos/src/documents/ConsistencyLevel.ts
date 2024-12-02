@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /**
  * Represents the consistency levels supported for Azure Cosmos DB client operations.<br>
  * The requested ConsistencyLevel must match or be weaker than that provisioned for the database account.
@@ -34,5 +34,5 @@ export enum ConsistencyLevel {
    * ConsistentPrefix Consistency guarantees that reads will return some prefix of all writes with no gaps.
    * All writes will be eventually be available for reads.
    */
-  ConsistentPrefix = "ConsistentPrefix"
+  ConsistentPrefix = "ConsistentPrefix",
 }

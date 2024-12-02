@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   DatabaseSecurityAlertPolicy,
@@ -15,7 +14,7 @@ import {
   DatabaseSecurityAlertPoliciesGetOptionalParams,
   DatabaseSecurityAlertPoliciesGetResponse,
   DatabaseSecurityAlertPoliciesCreateOrUpdateOptionalParams,
-  DatabaseSecurityAlertPoliciesCreateOrUpdateResponse
+  DatabaseSecurityAlertPoliciesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,7 +32,7 @@ export interface DatabaseSecurityAlertPolicies {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams
+    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseSecurityAlertPolicy>;
   /**
    * Gets a database's security alert policy.
@@ -49,7 +48,7 @@ export interface DatabaseSecurityAlertPolicies {
     serverName: string,
     databaseName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
-    options?: DatabaseSecurityAlertPoliciesGetOptionalParams
+    options?: DatabaseSecurityAlertPoliciesGetOptionalParams,
   ): Promise<DatabaseSecurityAlertPoliciesGetResponse>;
   /**
    * Creates or updates a database's security alert policy.
@@ -67,6 +66,6 @@ export interface DatabaseSecurityAlertPolicies {
     databaseName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
     parameters: DatabaseSecurityAlertPolicy,
-    options?: DatabaseSecurityAlertPoliciesCreateOrUpdateOptionalParams
+    options?: DatabaseSecurityAlertPoliciesCreateOrUpdateOptionalParams,
   ): Promise<DatabaseSecurityAlertPoliciesCreateOrUpdateResponse>;
 }

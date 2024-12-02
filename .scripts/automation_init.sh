@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# rush install
-npm install -g @microsoft/rush
-rush install
-# install release tools
-npm install -g azure-track2-js-sdk-release-tools
+npm install -g @azure-tools/typespec-client-generator-cli
+npm install -g @microsoft/rush@5.92.0
+npm install -g @azure-tools/js-sdk-release-tools

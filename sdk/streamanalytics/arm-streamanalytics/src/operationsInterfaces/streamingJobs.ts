@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   StreamingJob,
   StreamingJobsListByResourceGroupOptionalParams,
@@ -20,7 +20,8 @@ import {
   StreamingJobsGetOptionalParams,
   StreamingJobsGetResponse,
   StreamingJobsStartOptionalParams,
-  StreamingJobsStopOptionalParams
+  StreamingJobsStopOptionalParams,
+  StreamingJobsScaleOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,14 +34,14 @@ export interface StreamingJobs {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: StreamingJobsListByResourceGroupOptionalParams
+    options?: StreamingJobsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<StreamingJob>;
   /**
    * Lists all of the streaming jobs in the given subscription.
    * @param options The options parameters.
    */
   list(
-    options?: StreamingJobsListOptionalParams
+    options?: StreamingJobsListOptionalParams,
   ): PagedAsyncIterableIterator<StreamingJob>;
   /**
    * Creates a streaming job or replaces an already existing streaming job.
@@ -54,10 +55,10 @@ export interface StreamingJobs {
     resourceGroupName: string,
     jobName: string,
     streamingJob: StreamingJob,
-    options?: StreamingJobsCreateOrReplaceOptionalParams
+    options?: StreamingJobsCreateOrReplaceOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<StreamingJobsCreateOrReplaceResponse>,
+    SimplePollerLike<
+      OperationState<StreamingJobsCreateOrReplaceResponse>,
       StreamingJobsCreateOrReplaceResponse
     >
   >;
@@ -73,7 +74,7 @@ export interface StreamingJobs {
     resourceGroupName: string,
     jobName: string,
     streamingJob: StreamingJob,
-    options?: StreamingJobsCreateOrReplaceOptionalParams
+    options?: StreamingJobsCreateOrReplaceOptionalParams,
   ): Promise<StreamingJobsCreateOrReplaceResponse>;
   /**
    * Updates an existing streaming job. This can be used to partially update (ie. update one or two
@@ -90,7 +91,7 @@ export interface StreamingJobs {
     resourceGroupName: string,
     jobName: string,
     streamingJob: StreamingJob,
-    options?: StreamingJobsUpdateOptionalParams
+    options?: StreamingJobsUpdateOptionalParams,
   ): Promise<StreamingJobsUpdateResponse>;
   /**
    * Deletes a streaming job.
@@ -101,8 +102,8 @@ export interface StreamingJobs {
   beginDelete(
     resourceGroupName: string,
     jobName: string,
-    options?: StreamingJobsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: StreamingJobsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a streaming job.
    * @param resourceGroupName The name of the resource group. The name is case insensitive.
@@ -112,7 +113,7 @@ export interface StreamingJobs {
   beginDeleteAndWait(
     resourceGroupName: string,
     jobName: string,
-    options?: StreamingJobsDeleteOptionalParams
+    options?: StreamingJobsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets details about the specified streaming job.
@@ -123,7 +124,7 @@ export interface StreamingJobs {
   get(
     resourceGroupName: string,
     jobName: string,
-    options?: StreamingJobsGetOptionalParams
+    options?: StreamingJobsGetOptionalParams,
   ): Promise<StreamingJobsGetResponse>;
   /**
    * Starts a streaming job. Once a job is started it will start processing input events and produce
@@ -135,8 +136,8 @@ export interface StreamingJobs {
   beginStart(
     resourceGroupName: string,
     jobName: string,
-    options?: StreamingJobsStartOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: StreamingJobsStartOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Starts a streaming job. Once a job is started it will start processing input events and produce
    * output.
@@ -147,7 +148,7 @@ export interface StreamingJobs {
   beginStartAndWait(
     resourceGroupName: string,
     jobName: string,
-    options?: StreamingJobsStartOptionalParams
+    options?: StreamingJobsStartOptionalParams,
   ): Promise<void>;
   /**
    * Stops a running streaming job. This will cause a running streaming job to stop processing input
@@ -159,8 +160,8 @@ export interface StreamingJobs {
   beginStop(
     resourceGroupName: string,
     jobName: string,
-    options?: StreamingJobsStopOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: StreamingJobsStopOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Stops a running streaming job. This will cause a running streaming job to stop processing input
    * events and producing output.
@@ -171,6 +172,28 @@ export interface StreamingJobs {
   beginStopAndWait(
     resourceGroupName: string,
     jobName: string,
-    options?: StreamingJobsStopOptionalParams
+    options?: StreamingJobsStopOptionalParams,
+  ): Promise<void>;
+  /**
+   * Scales a streaming job when the job is running.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
+   * @param jobName The name of the streaming job.
+   * @param options The options parameters.
+   */
+  beginScale(
+    resourceGroupName: string,
+    jobName: string,
+    options?: StreamingJobsScaleOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Scales a streaming job when the job is running.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
+   * @param jobName The name of the streaming job.
+   * @param options The options parameters.
+   */
+  beginScaleAndWait(
+    resourceGroupName: string,
+    jobName: string,
+    options?: StreamingJobsScaleOptionalParams,
   ): Promise<void>;
 }

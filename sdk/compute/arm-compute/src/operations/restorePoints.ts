@@ -10,27 +10,31 @@ import { RestorePoints } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ComputeManagementClient } from "../computeManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   RestorePoint,
   RestorePointsCreateOptionalParams,
   RestorePointsCreateResponse,
   RestorePointsDeleteOptionalParams,
   RestorePointsGetOptionalParams,
-  RestorePointsGetResponse
+  RestorePointsGetResponse,
 } from "../models";
 
 /** Class containing RestorePoints operations. */
 export class RestorePointsImpl implements RestorePoints {
-  private readonly client: ComputeManagementClientContext;
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class RestorePoints class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -48,30 +52,29 @@ export class RestorePointsImpl implements RestorePoints {
     restorePointCollectionName: string,
     restorePointName: string,
     parameters: RestorePoint,
-    options?: RestorePointsCreateOptionalParams
+    options?: RestorePointsCreateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<RestorePointsCreateResponse>,
+    SimplePollerLike<
+      OperationState<RestorePointsCreateResponse>,
       RestorePointsCreateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<RestorePointsCreateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -80,8 +83,8 @@ export class RestorePointsImpl implements RestorePoints {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -89,26 +92,31 @@ export class RestorePointsImpl implements RestorePoints {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         restorePointCollectionName,
         restorePointName,
         parameters,
-        options
+        options,
       },
-      createOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: createOperationSpec,
     });
+    const poller = await createHttpPoller<
+      RestorePointsCreateResponse,
+      OperationState<RestorePointsCreateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -125,14 +133,14 @@ export class RestorePointsImpl implements RestorePoints {
     restorePointCollectionName: string,
     restorePointName: string,
     parameters: RestorePoint,
-    options?: RestorePointsCreateOptionalParams
+    options?: RestorePointsCreateOptionalParams,
   ): Promise<RestorePointsCreateResponse> {
     const poller = await this.beginCreate(
       resourceGroupName,
       restorePointCollectionName,
       restorePointName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -148,25 +156,24 @@ export class RestorePointsImpl implements RestorePoints {
     resourceGroupName: string,
     restorePointCollectionName: string,
     restorePointName: string,
-    options?: RestorePointsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: RestorePointsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -175,8 +182,8 @@ export class RestorePointsImpl implements RestorePoints {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -184,25 +191,27 @@ export class RestorePointsImpl implements RestorePoints {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         restorePointCollectionName,
         restorePointName,
-        options
+        options,
       },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -216,13 +225,13 @@ export class RestorePointsImpl implements RestorePoints {
     resourceGroupName: string,
     restorePointCollectionName: string,
     restorePointName: string,
-    options?: RestorePointsDeleteOptionalParams
+    options?: RestorePointsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       restorePointCollectionName,
       restorePointName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -238,16 +247,16 @@ export class RestorePointsImpl implements RestorePoints {
     resourceGroupName: string,
     restorePointCollectionName: string,
     restorePointName: string,
-    options?: RestorePointsGetOptionalParams
+    options?: RestorePointsGetOptionalParams,
   ): Promise<RestorePointsGetResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         restorePointCollectionName,
         restorePointName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 }
@@ -255,42 +264,40 @@ export class RestorePointsImpl implements RestorePoints {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/restorePointCollections/{restorePointCollectionName}/restorePoints/{restorePointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/restorePointCollections/{restorePointCollectionName}/restorePoints/{restorePointName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     201: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     202: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     204: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters23,
+  requestBody: Parameters.parameters26,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.restorePointCollectionName,
-    Parameters.restorePointName
+    Parameters.restorePointName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/restorePointCollections/{restorePointCollectionName}/restorePoints/{restorePointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/restorePointCollections/{restorePointCollectionName}/restorePoints/{restorePointName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -298,40 +305,39 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.restorePointCollectionName,
-    Parameters.restorePointName
+    Parameters.restorePointName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/restorePointCollections/{restorePointCollectionName}/restorePoints/{restorePointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/restorePointCollections/{restorePointCollectionName}/restorePoints/{restorePointName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion, Parameters.expand6],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.restorePointCollectionName,
-    Parameters.restorePointName
+    Parameters.restorePointName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

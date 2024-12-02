@@ -6,9 +6,107 @@
 
 import * as coreAuth from '@azure/core-auth';
 import * as coreClient from '@azure/core-client';
+import { OperationState } from '@azure/core-lro';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PollerLike } from '@azure/core-lro';
-import { PollOperationState } from '@azure/core-lro';
+import { SimplePollerLike } from '@azure/core-lro';
+
+// @public
+export interface AccessConnector extends TrackedResource {
+    identity?: ManagedServiceIdentity;
+    properties?: AccessConnectorProperties;
+    readonly systemData?: SystemData;
+}
+
+// @public
+export interface AccessConnectorListResult {
+    nextLink?: string;
+    value?: AccessConnector[];
+}
+
+// @public (undocumented)
+export interface AccessConnectorProperties {
+    readonly provisioningState?: ProvisioningState;
+}
+
+// @public
+export interface AccessConnectors {
+    beginCreateOrUpdate(resourceGroupName: string, connectorName: string, parameters: AccessConnector, options?: AccessConnectorsCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<AccessConnectorsCreateOrUpdateResponse>, AccessConnectorsCreateOrUpdateResponse>>;
+    beginCreateOrUpdateAndWait(resourceGroupName: string, connectorName: string, parameters: AccessConnector, options?: AccessConnectorsCreateOrUpdateOptionalParams): Promise<AccessConnectorsCreateOrUpdateResponse>;
+    beginDelete(resourceGroupName: string, connectorName: string, options?: AccessConnectorsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginDeleteAndWait(resourceGroupName: string, connectorName: string, options?: AccessConnectorsDeleteOptionalParams): Promise<void>;
+    beginUpdate(resourceGroupName: string, connectorName: string, parameters: AccessConnectorUpdate, options?: AccessConnectorsUpdateOptionalParams): Promise<SimplePollerLike<OperationState<AccessConnectorsUpdateResponse>, AccessConnectorsUpdateResponse>>;
+    beginUpdateAndWait(resourceGroupName: string, connectorName: string, parameters: AccessConnectorUpdate, options?: AccessConnectorsUpdateOptionalParams): Promise<AccessConnectorsUpdateResponse>;
+    get(resourceGroupName: string, connectorName: string, options?: AccessConnectorsGetOptionalParams): Promise<AccessConnectorsGetResponse>;
+    listByResourceGroup(resourceGroupName: string, options?: AccessConnectorsListByResourceGroupOptionalParams): PagedAsyncIterableIterator<AccessConnector>;
+    listBySubscription(options?: AccessConnectorsListBySubscriptionOptionalParams): PagedAsyncIterableIterator<AccessConnector>;
+}
+
+// @public
+export interface AccessConnectorsCreateOrUpdateOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type AccessConnectorsCreateOrUpdateResponse = AccessConnector;
+
+// @public
+export interface AccessConnectorsDeleteOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export interface AccessConnectorsGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessConnectorsGetResponse = AccessConnector;
+
+// @public
+export interface AccessConnectorsListByResourceGroupNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessConnectorsListByResourceGroupNextResponse = AccessConnectorListResult;
+
+// @public
+export interface AccessConnectorsListByResourceGroupOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessConnectorsListByResourceGroupResponse = AccessConnectorListResult;
+
+// @public
+export interface AccessConnectorsListBySubscriptionNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessConnectorsListBySubscriptionNextResponse = AccessConnectorListResult;
+
+// @public
+export interface AccessConnectorsListBySubscriptionOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessConnectorsListBySubscriptionResponse = AccessConnectorListResult;
+
+// @public
+export interface AccessConnectorsUpdateOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type AccessConnectorsUpdateResponse = AccessConnector;
+
+// @public
+export interface AccessConnectorUpdate {
+    identity?: ManagedServiceIdentity;
+    tags?: {
+        [propertyName: string]: string;
+    };
+}
 
 // @public
 export interface AddressSpace {
@@ -16,8 +114,12 @@ export interface AddressSpace {
 }
 
 // @public (undocumented)
-export class AzureDatabricksManagementClient extends AzureDatabricksManagementClientContext {
+export class AzureDatabricksManagementClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: AzureDatabricksManagementClientOptionalParams);
+    // (undocumented)
+    accessConnectors: AccessConnectors;
     // (undocumented)
     operations: Operations;
     // (undocumented)
@@ -27,26 +129,16 @@ export class AzureDatabricksManagementClient extends AzureDatabricksManagementCl
     // (undocumented)
     privateLinkResources: PrivateLinkResources;
     // (undocumented)
+    subscriptionId: string;
+    // (undocumented)
     vNetPeering: VNetPeering;
     // (undocumented)
     workspaces: Workspaces;
 }
 
-// @public (undocumented)
-export class AzureDatabricksManagementClientContext extends coreClient.ServiceClient {
-    // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: AzureDatabricksManagementClientOptionalParams);
-    // (undocumented)
-    apiVersion: string;
-    // (undocumented)
-    subscriptionId: string;
-}
-
 // @public
 export interface AzureDatabricksManagementClientOptionalParams extends coreClient.ServiceClientOptions {
     $host?: string;
-    apiVersion?: string;
     endpoint?: string;
 }
 
@@ -73,6 +165,7 @@ export interface Encryption {
 
 // @public
 export interface EncryptionEntitiesDefinition {
+    managedDisk?: ManagedDiskEncryption;
     managedServices?: EncryptionV2;
 }
 
@@ -127,9 +220,12 @@ export interface ErrorResponse {
 }
 
 // @public
-export type GroupIdInformation = Resource & {
+export function getContinuationToken(page: unknown): string | undefined;
+
+// @public
+export interface GroupIdInformation extends Resource {
     properties: GroupIdInformationProperties;
-};
+}
 
 // @public
 export interface GroupIdInformationProperties {
@@ -143,130 +239,110 @@ export type KeySource = string;
 
 // @public
 export enum KnownCreatedByType {
-    // (undocumented)
     Application = "Application",
-    // (undocumented)
     Key = "Key",
-    // (undocumented)
     ManagedIdentity = "ManagedIdentity",
-    // (undocumented)
     User = "User"
 }
 
 // @public
 export enum KnownCustomParameterType {
-    // (undocumented)
     Bool = "Bool",
-    // (undocumented)
     Object = "Object",
-    // (undocumented)
     String = "String"
 }
 
 // @public
 export enum KnownEncryptionKeySource {
-    // (undocumented)
     MicrosoftKeyvault = "Microsoft.Keyvault"
 }
 
 // @public
 export enum KnownKeySource {
-    // (undocumented)
     Default = "Default",
-    // (undocumented)
     MicrosoftKeyvault = "Microsoft.Keyvault"
 }
 
 // @public
+export enum KnownManagedServiceIdentityType {
+    None = "None",
+    SystemAssigned = "SystemAssigned",
+    SystemAssignedUserAssigned = "SystemAssigned,UserAssigned",
+    UserAssigned = "UserAssigned"
+}
+
+// @public
 export enum KnownPeeringProvisioningState {
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Succeeded = "Succeeded",
-    // (undocumented)
     Updating = "Updating"
 }
 
 // @public
 export enum KnownPeeringState {
-    // (undocumented)
     Connected = "Connected",
-    // (undocumented)
     Disconnected = "Disconnected",
-    // (undocumented)
     Initiated = "Initiated"
 }
 
 // @public
 export enum KnownPrivateEndpointConnectionProvisioningState {
-    // (undocumented)
     Creating = "Creating",
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Succeeded = "Succeeded",
-    // (undocumented)
     Updating = "Updating"
 }
 
 // @public
 export enum KnownPrivateLinkServiceConnectionStatus {
-    // (undocumented)
     Approved = "Approved",
-    // (undocumented)
     Disconnected = "Disconnected",
-    // (undocumented)
     Pending = "Pending",
-    // (undocumented)
     Rejected = "Rejected"
 }
 
 // @public
 export enum KnownProvisioningState {
-    // (undocumented)
     Accepted = "Accepted",
-    // (undocumented)
     Canceled = "Canceled",
-    // (undocumented)
     Created = "Created",
-    // (undocumented)
     Creating = "Creating",
-    // (undocumented)
     Deleted = "Deleted",
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Ready = "Ready",
-    // (undocumented)
     Running = "Running",
-    // (undocumented)
     Succeeded = "Succeeded",
-    // (undocumented)
     Updating = "Updating"
 }
 
 // @public
 export enum KnownPublicNetworkAccess {
-    // (undocumented)
     Disabled = "Disabled",
-    // (undocumented)
     Enabled = "Enabled"
 }
 
 // @public
 export enum KnownRequiredNsgRules {
-    // (undocumented)
     AllRules = "AllRules",
-    // (undocumented)
     NoAzureDatabricksRules = "NoAzureDatabricksRules",
-    // (undocumented)
     NoAzureServiceRules = "NoAzureServiceRules"
+}
+
+// @public
+export interface ManagedDiskEncryption {
+    keySource: EncryptionKeySource;
+    keyVaultProperties: ManagedDiskEncryptionKeyVaultProperties;
+    rotationToLatestKeyVersionEnabled?: boolean;
+}
+
+// @public
+export interface ManagedDiskEncryptionKeyVaultProperties {
+    keyName: string;
+    keyVaultUri: string;
+    keyVersion: string;
 }
 
 // @public
@@ -277,6 +353,19 @@ export interface ManagedIdentityConfiguration {
 }
 
 // @public
+export interface ManagedServiceIdentity {
+    readonly principalId?: string;
+    readonly tenantId?: string;
+    type: ManagedServiceIdentityType;
+    userAssignedIdentities?: {
+        [propertyName: string]: UserAssignedIdentity;
+    };
+}
+
+// @public
+export type ManagedServiceIdentityType = string;
+
+// @public
 export interface Operation {
     display?: OperationDisplay;
     name?: string;
@@ -284,6 +373,7 @@ export interface Operation {
 
 // @public
 export interface OperationDisplay {
+    description?: string;
     operation?: string;
     provider?: string;
     resource?: string;
@@ -353,6 +443,7 @@ export interface PrivateEndpointConnection {
 
 // @public
 export interface PrivateEndpointConnectionProperties {
+    groupIds?: string[];
     privateEndpoint?: PrivateEndpoint;
     privateLinkServiceConnectionState: PrivateLinkServiceConnectionState;
     readonly provisioningState?: PrivateEndpointConnectionProvisioningState;
@@ -363,9 +454,9 @@ export type PrivateEndpointConnectionProvisioningState = string;
 
 // @public
 export interface PrivateEndpointConnections {
-    beginCreate(resourceGroupName: string, workspaceName: string, privateEndpointConnectionName: string, privateEndpointConnection: PrivateEndpointConnection, options?: PrivateEndpointConnectionsCreateOptionalParams): Promise<PollerLike<PollOperationState<PrivateEndpointConnectionsCreateResponse>, PrivateEndpointConnectionsCreateResponse>>;
+    beginCreate(resourceGroupName: string, workspaceName: string, privateEndpointConnectionName: string, privateEndpointConnection: PrivateEndpointConnection, options?: PrivateEndpointConnectionsCreateOptionalParams): Promise<SimplePollerLike<OperationState<PrivateEndpointConnectionsCreateResponse>, PrivateEndpointConnectionsCreateResponse>>;
     beginCreateAndWait(resourceGroupName: string, workspaceName: string, privateEndpointConnectionName: string, privateEndpointConnection: PrivateEndpointConnection, options?: PrivateEndpointConnectionsCreateOptionalParams): Promise<PrivateEndpointConnectionsCreateResponse>;
-    beginDelete(resourceGroupName: string, workspaceName: string, privateEndpointConnectionName: string, options?: PrivateEndpointConnectionsDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, workspaceName: string, privateEndpointConnectionName: string, options?: PrivateEndpointConnectionsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, workspaceName: string, privateEndpointConnectionName: string, options?: PrivateEndpointConnectionsDeleteOptionalParams): Promise<void>;
     get(resourceGroupName: string, workspaceName: string, privateEndpointConnectionName: string, options?: PrivateEndpointConnectionsGetOptionalParams): Promise<PrivateEndpointConnectionsGetResponse>;
     list(resourceGroupName: string, workspaceName: string, options?: PrivateEndpointConnectionsListOptionalParams): PagedAsyncIterableIterator<PrivateEndpointConnection>;
@@ -448,7 +539,7 @@ export type PrivateLinkResourcesListResponse = PrivateLinkResourcesList;
 
 // @public
 export interface PrivateLinkServiceConnectionState {
-    actionRequired?: string;
+    actionsRequired?: string;
     description?: string;
     status: PrivateLinkServiceConnectionStatus;
 }
@@ -489,12 +580,18 @@ export interface SystemData {
 }
 
 // @public
-export type TrackedResource = Resource & {
+export interface TrackedResource extends Resource {
+    location: string;
     tags?: {
         [propertyName: string]: string;
     };
-    location: string;
-};
+}
+
+// @public
+export interface UserAssignedIdentity {
+    readonly clientId?: string;
+    readonly principalId?: string;
+}
 
 // @public
 export interface VirtualNetworkPeering {
@@ -531,9 +628,9 @@ export interface VirtualNetworkPeeringPropertiesFormatRemoteVirtualNetwork {
 
 // @public
 export interface VNetPeering {
-    beginCreateOrUpdate(resourceGroupName: string, workspaceName: string, peeringName: string, virtualNetworkPeeringParameters: VirtualNetworkPeering, options?: VNetPeeringCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<VNetPeeringCreateOrUpdateResponse>, VNetPeeringCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, workspaceName: string, peeringName: string, virtualNetworkPeeringParameters: VirtualNetworkPeering, options?: VNetPeeringCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<VNetPeeringCreateOrUpdateResponse>, VNetPeeringCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, workspaceName: string, peeringName: string, virtualNetworkPeeringParameters: VirtualNetworkPeering, options?: VNetPeeringCreateOrUpdateOptionalParams): Promise<VNetPeeringCreateOrUpdateResponse>;
-    beginDelete(resourceGroupName: string, workspaceName: string, peeringName: string, options?: VNetPeeringDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, workspaceName: string, peeringName: string, options?: VNetPeeringDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, workspaceName: string, peeringName: string, options?: VNetPeeringDeleteOptionalParams): Promise<void>;
     get(resourceGroupName: string, workspaceName: string, peeringName: string, options?: VNetPeeringGetOptionalParams): Promise<VNetPeeringGetResponse>;
     listByWorkspace(resourceGroupName: string, workspaceName: string, options?: VNetPeeringListByWorkspaceOptionalParams): PagedAsyncIterableIterator<VirtualNetworkPeering>;
@@ -576,25 +673,27 @@ export interface VNetPeeringListByWorkspaceOptionalParams extends coreClient.Ope
 export type VNetPeeringListByWorkspaceResponse = VirtualNetworkPeeringList;
 
 // @public
-export type Workspace = TrackedResource & {
-    sku?: Sku;
-    readonly systemData?: SystemData;
-    managedResourceGroupId: string;
-    parameters?: WorkspaceCustomParameters;
-    readonly provisioningState?: ProvisioningState;
-    uiDefinitionUri?: string;
+export interface Workspace extends TrackedResource {
     authorizations?: WorkspaceProviderAuthorization[];
     createdBy?: CreatedBy;
-    updatedBy?: CreatedBy;
     readonly createdDateTime?: Date;
-    readonly workspaceId?: string;
-    readonly workspaceUrl?: string;
-    storageAccountIdentity?: ManagedIdentityConfiguration;
+    readonly diskEncryptionSetId?: string;
     encryption?: WorkspacePropertiesEncryption;
+    managedDiskIdentity?: ManagedIdentityConfiguration;
+    managedResourceGroupId: string;
+    parameters?: WorkspaceCustomParameters;
     readonly privateEndpointConnections?: PrivateEndpointConnection[];
+    readonly provisioningState?: ProvisioningState;
     publicNetworkAccess?: PublicNetworkAccess;
     requiredNsgRules?: RequiredNsgRules;
-};
+    sku?: Sku;
+    storageAccountIdentity?: ManagedIdentityConfiguration;
+    readonly systemData?: SystemData;
+    uiDefinitionUri?: string;
+    updatedBy?: CreatedBy;
+    readonly workspaceId?: string;
+    readonly workspaceUrl?: string;
+}
 
 // @public
 export interface WorkspaceCustomBooleanParameter {
@@ -659,11 +758,11 @@ export interface WorkspaceProviderAuthorization {
 
 // @public
 export interface Workspaces {
-    beginCreateOrUpdate(resourceGroupName: string, workspaceName: string, parameters: Workspace, options?: WorkspacesCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<WorkspacesCreateOrUpdateResponse>, WorkspacesCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, workspaceName: string, parameters: Workspace, options?: WorkspacesCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<WorkspacesCreateOrUpdateResponse>, WorkspacesCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, workspaceName: string, parameters: Workspace, options?: WorkspacesCreateOrUpdateOptionalParams): Promise<WorkspacesCreateOrUpdateResponse>;
-    beginDelete(resourceGroupName: string, workspaceName: string, options?: WorkspacesDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, workspaceName: string, options?: WorkspacesDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, workspaceName: string, options?: WorkspacesDeleteOptionalParams): Promise<void>;
-    beginUpdate(resourceGroupName: string, workspaceName: string, parameters: WorkspaceUpdate, options?: WorkspacesUpdateOptionalParams): Promise<PollerLike<PollOperationState<WorkspacesUpdateResponse>, WorkspacesUpdateResponse>>;
+    beginUpdate(resourceGroupName: string, workspaceName: string, parameters: WorkspaceUpdate, options?: WorkspacesUpdateOptionalParams): Promise<SimplePollerLike<OperationState<WorkspacesUpdateResponse>, WorkspacesUpdateResponse>>;
     beginUpdateAndWait(resourceGroupName: string, workspaceName: string, parameters: WorkspaceUpdate, options?: WorkspacesUpdateOptionalParams): Promise<WorkspacesUpdateResponse>;
     get(resourceGroupName: string, workspaceName: string, options?: WorkspacesGetOptionalParams): Promise<WorkspacesGetResponse>;
     listByResourceGroup(resourceGroupName: string, options?: WorkspacesListByResourceGroupOptionalParams): PagedAsyncIterableIterator<Workspace>;
@@ -735,7 +834,6 @@ export interface WorkspaceUpdate {
         [propertyName: string]: string;
     };
 }
-
 
 // (No @packageDocumentation comment for this package)
 

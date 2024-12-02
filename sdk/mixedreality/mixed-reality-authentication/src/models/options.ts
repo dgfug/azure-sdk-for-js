@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions, PipelineOptions } from "@azure/core-http";
+import type { CommonClientOptions, OperationOptions } from "@azure/core-client";
 
 /**
  * Options to create the MixedRealityStsClient.
  */
-export interface MixedRealityStsClientOptions extends PipelineOptions {
+export interface MixedRealityStsClientOptions extends CommonClientOptions {
   /**
    * Overrides the Mixed Reality STS service endpoint.
    */

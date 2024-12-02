@@ -7,13 +7,13 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   UpdateDomain,
   CloudServicesUpdateDomainListUpdateDomainsOptionalParams,
   CloudServicesUpdateDomainWalkUpdateDomainOptionalParams,
   CloudServicesUpdateDomainGetUpdateDomainOptionalParams,
-  CloudServicesUpdateDomainGetUpdateDomainResponse
+  CloudServicesUpdateDomainGetUpdateDomainResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -28,7 +28,7 @@ export interface CloudServicesUpdateDomain {
   listUpdateDomains(
     resourceGroupName: string,
     cloudServiceName: string,
-    options?: CloudServicesUpdateDomainListUpdateDomainsOptionalParams
+    options?: CloudServicesUpdateDomainListUpdateDomainsOptionalParams,
   ): PagedAsyncIterableIterator<UpdateDomain>;
   /**
    * Updates the role instances in the specified update domain.
@@ -43,8 +43,8 @@ export interface CloudServicesUpdateDomain {
     resourceGroupName: string,
     cloudServiceName: string,
     updateDomain: number,
-    options?: CloudServicesUpdateDomainWalkUpdateDomainOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: CloudServicesUpdateDomainWalkUpdateDomainOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Updates the role instances in the specified update domain.
    * @param resourceGroupName Name of the resource group.
@@ -58,7 +58,7 @@ export interface CloudServicesUpdateDomain {
     resourceGroupName: string,
     cloudServiceName: string,
     updateDomain: number,
-    options?: CloudServicesUpdateDomainWalkUpdateDomainOptionalParams
+    options?: CloudServicesUpdateDomainWalkUpdateDomainOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified update domain of a cloud service. Use nextLink property in the response to get
@@ -74,6 +74,6 @@ export interface CloudServicesUpdateDomain {
     resourceGroupName: string,
     cloudServiceName: string,
     updateDomain: number,
-    options?: CloudServicesUpdateDomainGetUpdateDomainOptionalParams
+    options?: CloudServicesUpdateDomainGetUpdateDomainOptionalParams,
   ): Promise<CloudServicesUpdateDomainGetUpdateDomainResponse>;
 }

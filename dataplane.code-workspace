@@ -9,16 +9,12 @@
       "path": "sdk/purview/purview-catalog-rest"
     },
     {
-      "name": "anomaly-detector",
-      "path": "sdk/anomalydetector/ai-anomaly-detector"
+      "name": "anomaly-detector-rest",
+      "path": "sdk/anomalydetector/ai-anomaly-detector-rest"
     },
     {
       "name": "app-configuration",
       "path": "sdk/appconfiguration/app-configuration"
-    },
-    {
-      "name": "communication-admin",
-      "path": "sdk/communication/communication-administration"
     },
     {
       "name": "communication-chat",
@@ -27,6 +23,9 @@
     {
       "name": "communication-common",
       "path": "sdk/communication/communication-common"
+    },
+    {
+      "path": "sdk/communication/communication-email"
     },
     {
       "name": "communication-identity",
@@ -45,10 +44,6 @@
       "path": "sdk/core/core-amqp"
     },
     {
-      "name": "core-asynciterator-polyfill",
-      "path": "sdk/core/core-asynciterator-polyfill"
-    },
-    {
       "name": "core-auth",
       "path": "sdk/core/core-auth"
     },
@@ -61,10 +56,6 @@
       "path": "sdk/core/core-client-rest"
     },
     {
-      "name": "core-client-lro-rest",
-      "path": "sdk/core/core-client-lro-rest"
-    },
-    {
       "name": "ai-document-translator",
       "path": "sdk/documenttranslator/ai-document-translator-rest"
     },
@@ -75,14 +66,6 @@
     {
       "name": "agrifood-farming",
       "path": "sdk/agrifood/agrifood-farming-rest"
-    },
-    {
-      "name": "core-crypto",
-      "path": "sdk/core/core-crypto"
-    },
-    {
-      "name": "core-http",
-      "path": "sdk/core/core-http"
     },
     {
       "name": "core-rest-pipeline",
@@ -125,10 +108,6 @@
       "path": "sdk/eventhub/eventhubs-checkpointstore-blob"
     },
     {
-      "name": "event-processor-host",
-      "path": "sdk/eventhub/event-processor-host"
-    },
-    {
       "name": "form-recognizer",
       "path": "sdk/formrecognizer/ai-form-recognizer"
     },
@@ -155,6 +134,14 @@
     {
       "name": "logger",
       "path": "sdk/core/logger"
+    },
+    {
+      "name": "maps-common",
+      "path": "sdk/maps/maps-common"
+    },
+    {
+      "name": "maps-route-rest",
+      "path": "sdk/maps/maps-route-rest"
     },
     {
       "name": "metrics-advisor",
@@ -273,10 +260,6 @@
       "path": "sdk/attestation/attestation"
     },
     {
-      "name": "iot-device-update",
-      "path": "sdk/deviceupdate/iot-device-update"
-    },
-    {
       "path": "sdk/web-pubsub/web-pubsub"
     },
     {
@@ -285,6 +268,21 @@
     {
       "name": "mixed-reality-remote-rendering",
       "path": "sdk/remoterendering/mixed-reality-remote-rendering"
+    },
+    {
+      "path": "sdk/test-utils/test-utils"
+    },
+    {
+      "path": "sdk/purview/purview-administration-rest"
+    },
+    {
+      "path": "sdk/instrumentation/opentelemetry-instrumentation-azure-sdk"
+    },
+    {
+      "path": "sdk/core/core-http-compat"
+    },
+    {
+      "path": "sdk/openai/openai"
     }
   ],
   "settings": {
@@ -315,12 +313,14 @@
     "typescript.tsdk": "core-http/node_modules/typescript/lib",
     "files.exclude": {
       "**/node_modules": true
-    }
+    },
+    "eslint.useFlatConfig": true
   },
   "extensions": {
     "recommendations": [
       "dbaeumer.vscode-eslint",
-      "esbenp.prettier-vscode"
+      "esbenp.prettier-vscode",
+      "streetsidesoftware.code-spell-checker"
     ]
   }
 }

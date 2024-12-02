@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { DeletedSecretBundle, SecretBundle } from "./generated/models";
-import { parseKeyVaultSecretIdentifier } from "./identifier";
-import { DeletedSecret, KeyVaultSecret } from "./secretsModels";
+import type { DeletedSecretBundle, SecretBundle } from "./generated/models/index.js";
+import { parseKeyVaultSecretIdentifier } from "./identifier.js";
+import type { DeletedSecret, KeyVaultSecret } from "./secretsModels.js";
 
 /**
  * @internal
  * Shapes the exposed {@link KeyVaultKey} based on either a received secret bundle or deleted secret bundle.
  */
 export function getSecretFromSecretBundle(
-  bundle: SecretBundle | DeletedSecretBundle
+  bundle: SecretBundle | DeletedSecretBundle,
 ): KeyVaultSecret {
   const secretBundle = bundle as SecretBundle;
   const deletedSecretBundle = bundle as DeletedSecretBundle;
@@ -39,8 +39,8 @@ export function getSecretFromSecretBundle(
       vaultUrl: parsedId.vaultUrl,
       version: parsedId.version,
       name: parsedId.name,
-      certificateKeyId: secretBundle.kid
-    }
+      certificateKeyId: secretBundle.kid,
+    },
   };
 
   if (deletedSecretBundle.recoveryId) {

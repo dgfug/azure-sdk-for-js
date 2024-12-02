@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /// <reference lib="es2015" />
 /// <reference lib="esnext.asynciterable" />
@@ -10,14 +10,16 @@ export {
   RetryOptions,
   RetryMode,
   TokenType,
-  WebSocketOptions
+  WebSocketOptions,
 } from "@azure/core-amqp";
 export { TokenCredential } from "@azure/core-auth";
-export { OperationOptions } from "@azure/core-http";
+export { OperationOptions } from "@azure/core-client";
 export { Delivery, WebSocketImpl } from "rhea-promise";
-export { ServiceBusClientOptions } from "./constructorHelpers";
-export { CorrelationRuleFilter } from "./core/managementClient";
+export { ServiceBusClientOptions } from "./constructorHelpers.js";
+export { CorrelationRuleFilter } from "./core/managementClient.js";
 export {
+  DeleteMessagesOptions,
+  PurgeMessagesOptions,
   CreateMessageBatchOptions,
   GetMessageIteratorOptions,
   MessageHandlers,
@@ -26,45 +28,59 @@ export {
   ReceiveMessagesOptions,
   ServiceBusReceiverOptions,
   ServiceBusSessionReceiverOptions,
-  SubscribeOptions
-} from "./models";
-export { OperationOptionsBase, TryAddOptions } from "./modelsToBeSharedWithEventHubs";
-export { ServiceBusReceiver } from "./receivers/receiver";
-export { ServiceBusSessionReceiver } from "./receivers/sessionReceiver";
-export { ServiceBusSender } from "./sender";
-export { NamespaceProperties } from "./serializers/namespaceResourceSerializer";
+  ServiceBusSenderOptions,
+  SubscribeOptions,
+} from "./models.js";
+export { OperationOptionsBase, TryAddOptions } from "./modelsToBeSharedWithEventHubs.js";
+export { ServiceBusReceiver } from "./receivers/receiver.js";
+export { ServiceBusSessionReceiver } from "./receivers/sessionReceiver.js";
+export { ServiceBusSender } from "./sender.js";
+export { ServiceBusRuleManager } from "./serviceBusRuleManager.js";
+export { NamespaceProperties } from "./serializers/namespaceResourceSerializer.js";
 export {
   CreateQueueOptions,
   QueueProperties,
-  QueueRuntimeProperties
-} from "./serializers/queueResourceSerializer";
-export { RuleProperties, SqlRuleAction, SqlRuleFilter } from "./serializers/ruleResourceSerializer";
+  QueueRuntimeProperties,
+} from "./serializers/queueResourceSerializer.js";
+export {
+  RuleProperties,
+  SqlRuleAction,
+  SqlRuleFilter,
+} from "./serializers/ruleResourceSerializer.js";
 export {
   CreateSubscriptionOptions,
   SubscriptionProperties,
-  SubscriptionRuntimeProperties
-} from "./serializers/subscriptionResourceSerializer";
+  SubscriptionRuntimeProperties,
+} from "./serializers/subscriptionResourceSerializer.js";
 export {
   CreateTopicOptions,
   TopicProperties,
-  TopicRuntimeProperties
-} from "./serializers/topicResourceSerializer";
+  TopicRuntimeProperties,
+} from "./serializers/topicResourceSerializer.js";
 export {
   EntitiesResponse,
   ServiceBusAdministrationClient,
   WithResponse,
-  ServiceBusAdministrationClientOptions
-} from "./serviceBusAtomManagementClient";
-export { ServiceBusClient } from "./serviceBusClient";
-export { isServiceBusError, ServiceBusError, ServiceBusErrorCode } from "./serviceBusError";
+  ServiceBusAdministrationClientOptions,
+} from "./serviceBusAtomManagementClient.js";
+export { ServiceBusClient } from "./serviceBusClient.js";
+export { isServiceBusError, ServiceBusError, ServiceBusErrorCode } from "./serviceBusError.js";
 export {
   DeadLetterOptions,
   ServiceBusMessage,
-  ServiceBusReceivedMessage
-} from "./serviceBusMessage";
-export { ServiceBusMessageBatch } from "./serviceBusMessageBatch";
+  ServiceBusReceivedMessage,
+} from "./serviceBusMessage.js";
+export { ServiceBusMessageBatch } from "./serviceBusMessageBatch.js";
 export {
   parseServiceBusConnectionString,
-  ServiceBusConnectionStringProperties
-} from "./util/connectionStringUtils";
-export { AuthorizationRule, EntityAvailabilityStatus, EntityStatus } from "./util/utils";
+  ServiceBusConnectionStringProperties,
+} from "./util/connectionStringUtils.js";
+export { AuthorizationRule, EntityAvailabilityStatus, EntityStatus } from "./util/utils.js";
+export {
+  HttpResponse,
+  HttpHeader,
+  RawHttpHeaders,
+  HttpHeadersLike,
+  TransferProgressEvent,
+  WebResourceLike,
+} from "./util/compat/index.js";

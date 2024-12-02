@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { UserDelegationKey } from "../models";
-import { ipRangeToString, SasIPRange } from "./SasIPRange";
+// Licensed under the MIT License.
+import type { UserDelegationKey } from "../models";
+import type { SasIPRange } from "./SasIPRange";
+import { ipRangeToString } from "./SasIPRange";
 import { truncatedISO8061Date } from "../utils/utils.common";
 
 /**
@@ -16,7 +17,7 @@ export enum SASProtocol {
   /**
    * Protocol that allows both HTTPS and HTTP
    */
-  HttpsAndHttp = "https,http"
+  HttpsAndHttp = "https,http",
 }
 
 /**
@@ -61,6 +62,10 @@ export interface SASQueryParametersOptions {
    * @see https://docs.microsoft.com/en-us/rest/api/storageservices/establishing-a-stored-access-policy
    */
   identifier?: string;
+  /**
+   * Optional. Encryption scope to use when sending requests authorized with this SAS URI.
+   */
+  encryptionScope?: string;
   /**
    * Optional. Specifies which resources are accessible via the SAS (only for {@link BlobSASSignatureValues}).
    * @see https://docs.microsoft.com/rest/api/storageservices/create-service-sas#specifying-the-signed-resource-blob-service-only
@@ -279,6 +284,11 @@ export class SASQueryParameters {
   public readonly correlationId?: string;
 
   /**
+   * Optional. Encryption scope to use when sending requests authorized with this SAS URI.
+   */
+  public readonly encryptionScope?: string;
+
+  /**
    * Optional. IP range allowed for this SAS.
    *
    * @readonly
@@ -287,7 +297,7 @@ export class SASQueryParameters {
     if (this.ipRangeInner) {
       return {
         end: this.ipRangeInner.end,
-        start: this.ipRangeInner.start
+        start: this.ipRangeInner.start,
       };
     }
     return undefined;
@@ -338,7 +348,8 @@ export class SASQueryParameters {
     directoryDepth?: number,
     preauthorizedAgentObjectId?: string,
     agentObjectId?: string,
-    correlationId?: string
+    correlationId?: string,
+    encryptionScope?: string,
   );
 
   /**
@@ -371,7 +382,8 @@ export class SASQueryParameters {
     directoryDepth?: number,
     preauthorizedAgentObjectId?: string,
     agentObjectId?: string,
-    correlationId?: string
+    correlationId?: string,
+    encryptionScope?: string,
   ) {
     this.version = version;
     this.signature = signature;
@@ -397,6 +409,7 @@ export class SASQueryParameters {
       this.preauthorizedAgentObjectId = options.preauthorizedAgentObjectId;
       this.agentObjectId = options.agentObjectId;
       this.correlationId = options.correlationId;
+      this.encryptionScope = options.encryptionScope;
 
       if (options.userDelegationKey) {
         this.signedOid = options.userDelegationKey.signedObjectId;
@@ -425,6 +438,7 @@ export class SASQueryParameters {
       this.preauthorizedAgentObjectId = preauthorizedAgentObjectId;
       this.agentObjectId = agentObjectId;
       this.correlationId = correlationId;
+      this.encryptionScope = encryptionScope;
 
       if (userDelegationKey) {
         this.signedOid = userDelegationKey.signedObjectId;
@@ -451,6 +465,7 @@ export class SASQueryParameters {
       "se",
       "sip",
       "si",
+      "ses",
       "skoid", // Signed object ID
       "sktid", // Signed tenant ID
       "skt", // Signed key start time
@@ -468,7 +483,7 @@ export class SASQueryParameters {
       "sdd",
       "saoid",
       "suoid",
-      "scid"
+      "scid",
     ];
     const queries: string[] = [];
 
@@ -490,25 +505,28 @@ export class SASQueryParameters {
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.startsOn ? truncatedISO8061Date(this.startsOn, false) : undefined
+            this.startsOn ? truncatedISO8061Date(this.startsOn, false) : undefined,
           );
           break;
         case "se":
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.expiresOn ? truncatedISO8061Date(this.expiresOn, false) : undefined
+            this.expiresOn ? truncatedISO8061Date(this.expiresOn, false) : undefined,
           );
           break;
         case "sip":
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.ipRange ? ipRangeToString(this.ipRange) : undefined
+            this.ipRange ? ipRangeToString(this.ipRange) : undefined,
           );
           break;
         case "si":
           this.tryAppendQueryParameter(queries, param, this.identifier);
+          break;
+        case "ses":
+          this.tryAppendQueryParameter(queries, param, this.encryptionScope);
           break;
         case "skoid": // Signed object ID
           this.tryAppendQueryParameter(queries, param, this.signedOid);
@@ -520,14 +538,14 @@ export class SASQueryParameters {
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.signedStartsOn ? truncatedISO8061Date(this.signedStartsOn, false) : undefined
+            this.signedStartsOn ? truncatedISO8061Date(this.signedStartsOn, false) : undefined,
           );
           break;
         case "ske": // Signed key expiry time
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.signedExpiresOn ? truncatedISO8061Date(this.signedExpiresOn, false) : undefined
+            this.signedExpiresOn ? truncatedISO8061Date(this.signedExpiresOn, false) : undefined,
           );
           break;
         case "sks": // Signed key service

@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   SensitivityLabel,
@@ -21,7 +20,7 @@ import {
   SensitivityLabelsGetResponse,
   SensitivityLabelsCreateOrUpdateOptionalParams,
   SensitivityLabelsCreateOrUpdateResponse,
-  SensitivityLabelsDeleteOptionalParams
+  SensitivityLabelsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -39,7 +38,7 @@ export interface SensitivityLabels {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: SensitivityLabelsListCurrentByDatabaseOptionalParams
+    options?: SensitivityLabelsListCurrentByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<SensitivityLabel>;
   /**
    * Gets the sensitivity labels of a given database
@@ -53,7 +52,7 @@ export interface SensitivityLabels {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: SensitivityLabelsListRecommendedByDatabaseOptionalParams
+    options?: SensitivityLabelsListRecommendedByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<SensitivityLabel>;
   /**
    * Update sensitivity labels of a given database using an operations batch.
@@ -69,7 +68,7 @@ export interface SensitivityLabels {
     serverName: string,
     databaseName: string,
     parameters: SensitivityLabelUpdateList,
-    options?: SensitivityLabelsUpdateOptionalParams
+    options?: SensitivityLabelsUpdateOptionalParams,
   ): Promise<void>;
   /**
    * Enables sensitivity recommendations on a given column (recommendations are enabled by default on all
@@ -90,7 +89,7 @@ export interface SensitivityLabels {
     schemaName: string,
     tableName: string,
     columnName: string,
-    options?: SensitivityLabelsEnableRecommendationOptionalParams
+    options?: SensitivityLabelsEnableRecommendationOptionalParams,
   ): Promise<void>;
   /**
    * Disables sensitivity recommendations on a given column
@@ -110,7 +109,7 @@ export interface SensitivityLabels {
     schemaName: string,
     tableName: string,
     columnName: string,
-    options?: SensitivityLabelsDisableRecommendationOptionalParams
+    options?: SensitivityLabelsDisableRecommendationOptionalParams,
   ): Promise<void>;
   /**
    * Gets the sensitivity label of a given column
@@ -132,7 +131,7 @@ export interface SensitivityLabels {
     tableName: string,
     columnName: string,
     sensitivityLabelSource: SensitivityLabelSource,
-    options?: SensitivityLabelsGetOptionalParams
+    options?: SensitivityLabelsGetOptionalParams,
   ): Promise<SensitivityLabelsGetResponse>;
   /**
    * Creates or updates the sensitivity label of a given column
@@ -154,7 +153,7 @@ export interface SensitivityLabels {
     tableName: string,
     columnName: string,
     parameters: SensitivityLabel,
-    options?: SensitivityLabelsCreateOrUpdateOptionalParams
+    options?: SensitivityLabelsCreateOrUpdateOptionalParams,
   ): Promise<SensitivityLabelsCreateOrUpdateResponse>;
   /**
    * Deletes the sensitivity label of a given column
@@ -174,6 +173,6 @@ export interface SensitivityLabels {
     schemaName: string,
     tableName: string,
     columnName: string,
-    options?: SensitivityLabelsDeleteOptionalParams
+    options?: SensitivityLabelsDeleteOptionalParams,
   ): Promise<void>;
 }

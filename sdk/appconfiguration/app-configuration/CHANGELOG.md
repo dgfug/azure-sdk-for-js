@@ -1,10 +1,142 @@
 # Release History
 
-## 1.3.1 (Unreleased)
+## 1.8.1 (Unreleased)
 
 ### Features Added
 
 ### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 1.8.0 (2024-11-05)
+
+### Features Added
+
+- Add `apiVersion` in `AppConfigurationClientOptions` so that customers can specify the API version instead of using the default.
+
+## 1.7.0 (2024-08-06)
+
+### Features Added
+
+- Support `listLabels` method to list all the labels in the configuration setting store. 
+
+Example:
+
+```typescript
+const allLabels = client.listLabels();
+```
+
+See [`listLabels.ts`](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/appconfiguration/app-configuration/samples/v1/typescript/src/listLabels.ts) for more information now how to use this feature
+
+- Add `tagsFilter` in the option bag for `listConfigurationSettings` method. This feature allows you to filter configuration settings by specifying tags.
+
+Example:
+
+```typescript
+const allProdTags = client.listConfigurationSettings({
+  tagsFilter: ["production=prod*"],
+});
+```
+See [`listConfigurationSettings.ts`](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/appconfiguration/app-configuration/samples/v1/typescript/src/listConfigurationSettings.ts) for more information now how to use this feature.
+- Add `tagsFilter` in `ConfigurationSettingsFilter` so that you can create snapshot by filtering configuration settings tags.
+
+
+## 1.6.1 (2024-07-11)
+
+### Bugs Fixed
+
+- Parse the correct `etag` for the corresponding page in the `listConfigurationSettings` method.
+
+## 1.6.0 (2024-04-09)
+
+### Features Added
+
+- The `etag` for each page of configuration settings feature is generally available
+
+## 1.6.0-beta.1 (2024-03-05)
+
+### Features Added
+
+- Support `etag` property for each page of configuration settings. You can give a list of etags through the `etagList` property in the options bag for the `listConfigurationSettings` method to see if the page has been changed. This enables more efficient caching and avoid mid-air collision.
+
+## 1.5.0 (2023-11-07)
+
+### Features Added
+
+- With the new API version `2023-10-01`, the configuration snapshot feature is generally available. 
+  
+  This feature allows you to create snapshots by specifying key and label filters. These filters help capture the necessary configuration settings from your App Configuration instance, creating an immutable, composed view of the configuration store. 
+  
+  The filtered configuration settings are stored as a snapshot with the name provided during its creation.
+`AppConfigurationClient` is enhanced to support new operations such as create, list archive, and recover operations with snapshots.
+  
+  See [`snapshot.ts`](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/appconfiguration/app-configuration/samples/v1/typescript/src/snapshot.ts) for more information now how to use snapshots.
+
+### Bugs Fixed
+
+- To match the input type, change the output representation of `label` and `contentType` from `null` to `undefined` when these properties are empty or not defined in the configuration setting object. [#27622](https://github.com/Azure/azure-sdk-for-js/pull/27622)
+
+## 1.5.0-beta.2 (2023-10-10)
+
+### Features Added
+
+- Allow setting `updateIntervalInMs` in `CreateSnapshotOptions`
+
+### Other Changes
+
+- Rename `Snapshot` -> `ConfigurationSnapshot`
+- Rename the properties `retentionPeriod` -> `retentionPeriodInSeconds`, `size` -> `sizeInBytes` for `ConfigurationSnapshot`
+- Rename the type `CompositionType` -> `SnapshotComposition`, `SnapshotStatus` -> `ConfigurationSnapshotStatus`
+- Update the method signature for `archiveSnapshot` and `updateSnapshot` to take in a snapshot name as a parameter
+
+## 1.5.0-beta.1 (2023-07-14)
+
+### Features Added
+
+- With the new preview API version `2022-11-01-preview`, added configuration settings snapshot feature that allows users to create a point-in-time snapshot of their configuration store.
+  [#24535](https://github.com/Azure/azure-sdk-for-js/pull/24535)
+
+## 1.4.1 (2023-04-24)
+
+### Features Added
+- Added dependency on `@azure/logger` to help with debugging. [#23860](https://github.com/Azure/azure-sdk-for-js/pull/23860)
+
+### Bugs Fixed
+
+- "\0" as the `labelFilter` in the listing methods `AppConfgurationClient#listConfigurationSettings` would return the settings without any labels. Docs were updated to reflect that.
+  [#21309](https://github.com/Azure/azure-sdk-for-js/pull/21039)
+- [#25463](https://github.com/Azure/azure-sdk-for-js/pull/25463) If the app configuration endpoint ends withs a slash(`/`), the requests made using the `AppConfigurationClient` hit 401 error owing to `Bearer error="invalid_token", error_description="Authorization token failed validation"`. The issue is fixed as part of [#20766](https://github.com/Azure/azure-sdk-for-js/pull/20766).
+
+### Other Changes
+
+- Update `@azure/core-paging` dependency to the latest version (1.4.0). Notable changes include using the `getPagedAsyncIterator` method. [#23479](https://github.com/Azure/azure-sdk-for-js/pull/23479)
+
+- Provide helpful debugging error message for `412` status code with `Setting was already present`. [#24207](https://github.com/Azure/azure-sdk-for-js/pull/24207)
+
+## 1.4.0-beta.1 (2022-05-10)
+
+### Features Added
+
+- Migrated from using `@azure/core-http` to depend on newer version of Core libraries `@azure/core-client` and `@azure/core-rest-pipeline` which bring better maintainability and performance. [#20766](https://github.com/Azure/azure-sdk-for-js/pull/20766). See [Azure Core v1 vs v2](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-rest-pipeline/documentation/core2.md) for more on the difference and benefits of the move.
+  - As part of the migration to `@azure/core-client` and `@azure/core-rest-pipeline`,
+    through the operation options, the methods such as `AppConfgurationClient#addConfigurationSetting` can take a callback (`onResponse`) to access the HTTP response. See [Change to the \_response property](https://github.com/Azure/autorest.typescript/wiki/%60core-http%60-dependency-migration-to-%60core-client%60-%60core-rest-pipeline%60#change-to-the-_response-property).
+
+### Bugs Fixed
+
+- Fix an issue where React-Native is loading the wrong file. Adding a `react-native` mapping to point to the ESM entrypoint file. [PR #21119](https://github.com/Azure/azure-sdk-for-js/pull/21119)
+
+### Other Changes
+
+- Updated our `@azure/core-tracing` dependency to the latest version (1.0.0).
+
+  - Notable changes include Removal of `@opentelemetry/api` as a transitive dependency and ensuring that the active context is properly propagated.
+  - Customers who would like to continue using OpenTelemetry driven tracing should visit our [OpenTelemetry Instrumentation](https://www.npmjs.com/package/@azure/opentelemetry-instrumentation-azure-sdk) package for instructions.
+
+- Move to depend on `@azure/core-util` for SHA256 Digest and HMAC computing.
+
+## 1.3.1 (2021-12-14)
 
 ### Bugs Fixed
 
@@ -93,8 +225,8 @@ This release marks the general availability of the `@azure/app-configuration` pa
   ```typescript
   new AppConfigurationClient(connectionString, {
     userAgentOptions: {
-      userAgentPrefix: "MyUserAgent"
-    }
+      userAgentPrefix: "MyUserAgent",
+    },
   });
   ```
 
@@ -150,11 +282,11 @@ In previous previews:
 await client.getConfigurationSetting("MyKey", { label: "MyLabel" });
 await client.addConfigurationSetting("MyKey", {
   label: "MyLabel",
-  value: "MyValue"
+  value: "MyValue",
 });
 await client.setConfigurationSetting("MyKey", {
   label: "MyLabel",
-  value: "MyValue"
+  value: "MyValue",
 });
 await client.deleteConfigurationSetting("MyKey", { label: "MyLabel" });
 ```
@@ -167,12 +299,12 @@ await client.getConfigurationSetting({ key: "MyKey", label: "MyLabel" });
 await client.addConfigurationSetting({
   key: "MyKey",
   label: "MyLabel",
-  value: "MyValue"
+  value: "MyValue",
 });
 await client.setConfigurationSetting({
   key: "MyKey",
   label: "MyLabel",
-  value: "MyValue"
+  value: "MyValue",
 });
 await client.deleteConfigurationSetting({ key: "MyKey", label: "MyLabel" });
 ```

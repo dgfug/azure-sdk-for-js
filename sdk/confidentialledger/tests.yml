@@ -1,0 +1,12 @@
+trigger: none
+
+extends:
+    template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
+    parameters:
+      PackageName: "@azure-rest/confidential-ledger"
+      ServiceDirectory: confidentialledger
+      EnvVars:
+        AZURE_CLIENT_OID: $(CONFIDENTIALLEDGER_CLIENT_OID)
+        LEDGER_URI: $(LEDGER_URI)
+        LEDGER_NAME: $(LEDGER_NAME)
+        IDENTITY_SERVICE_URL: $(IDENTITY_SERVICE_URL)

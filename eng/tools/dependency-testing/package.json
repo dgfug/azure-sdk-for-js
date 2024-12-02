@@ -1,9 +1,10 @@
 {
-  "name": "dependency-testing",
+  "name": "@azure-tools/dependency-testing",
   "version": "1.0.0",
   "description": "Utilities for min/max dependency testing",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore  \"./**/*.{js,json}\""
   },
   "repository": {
     "type": "git",
@@ -16,9 +17,10 @@
   },
   "homepage": "https://github.com/Azure/azure-sdk-for-js#readme",
   "dependencies": {
-    "cross-spawn": "^7.0.2",
-    "semver": "^7.3.2",
-    "yargs": "^14.2.0",
-    "eng-package-utils": "file:../eng-package-utils"
+    "cross-spawn": "^7.0.3",
+    "prettier": "^3.3.3",
+    "semver": "^7.5.4",
+    "yargs": "^17.7.2",
+    "@azure-tools/eng-package-utils": "file:../eng-package-utils"
   }
 }

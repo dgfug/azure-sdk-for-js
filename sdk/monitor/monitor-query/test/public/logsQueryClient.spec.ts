@@ -1,33 +1,34 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
-import { Context } from "mocha";
-import { env } from "process";
-import { createRecorderAndLogsClient, RecorderAndLogsClient } from "./shared/testShared";
+import type { RecorderAndLogsClient } from "./shared/testShared.js";
+import { createRecorderAndLogsClient, getLogsArmResourceId } from "./shared/testShared.js";
 import { Recorder } from "@azure-tools/test-recorder";
-import { Durations, LogsQueryClient, LogsQueryResultStatus, QueryBatch } from "../../src";
-// import { runWithTelemetry } from "../setupOpenTelemetry";
+import type { LogsQueryClient, QueryBatch } from "../../src/index.js";
+import { Durations, LogsQueryResultStatus } from "../../src/index.js";
+import { assertQueryTable, getMonitorWorkspaceId, loggerForTest } from "./shared/testShared.js";
+import type { ErrorInfo } from "../../src/generated/logquery/src/index.js";
+import type { RestError } from "@azure/core-rest-pipeline";
+import { setLogLevel } from "@azure/logger";
+import { describe, it, assert, beforeEach, afterEach, beforeAll } from "vitest";
 
-import { assertQueryTable, getMonitorWorkspaceId, loggerForTest } from "./shared/testShared";
-import { ErrorInfo } from "../../src/generated/logquery/src";
-import { RestError } from "@azure/core-rest-pipeline";
-
-describe("LogsQueryClient live tests", function() {
+describe("LogsQueryClient live tests", function () {
   let monitorWorkspaceId: string;
+  let logsResourceId: string;
   let logsClient: LogsQueryClient;
   let recorder: Recorder;
 
   let testRunId: string;
 
-  beforeEach(function(this: Context) {
+  beforeEach(async function (ctx) {
     loggerForTest.verbose(`Recorder: starting...`);
-    const recordedClient: RecorderAndLogsClient = createRecorderAndLogsClient(this);
-    monitorWorkspaceId = getMonitorWorkspaceId(this);
+    recorder = new Recorder(ctx);
+    const recordedClient: RecorderAndLogsClient = await createRecorderAndLogsClient(recorder);
+    logsResourceId = getLogsArmResourceId();
+    monitorWorkspaceId = getMonitorWorkspaceId();
     logsClient = recordedClient.client;
-    recorder = recordedClient.recorder;
   });
-  afterEach(async function() {
+  afterEach(async function () {
     if (recorder) {
       loggerForTest.verbose("Recorder: stopping");
       await recorder.stop();
@@ -43,10 +44,10 @@ describe("LogsQueryClient live tests", function() {
       // throws (and ErrorDetails are just present in the exception.)
 
       await logsClient.queryWorkspace(monitorWorkspaceId, kustoQuery, {
-        duration: Durations.oneDay
+        duration: Durations.oneDay,
       });
       assert.fail("Should have thrown an exception");
-    } catch (err) {
+    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars -- eslint doesn't recognize that the extracted variables are prefixed with '_' and are purposefully unused.
       const { request: _request, response: _response, ...stringizableError }: any = err;
       const innermostError = getInnermostErrorDetails(err);
@@ -61,21 +62,21 @@ describe("LogsQueryClient live tests", function() {
         err as RestError,
         {
           name: "RestError",
-          statusCode: 400
+          statusCode: 400,
         },
-        `Query should throw a RestError. Message: ${JSON.stringify(stringizableError)}`
+        `Query should throw a RestError. Message: ${JSON.stringify(stringizableError)}`,
       );
 
       assert.deepNestedInclude(
         innermostError,
         {
-          code: "SYN0002"
+          code: "SYN0002",
           // other fields that are not stable, but are interesting:
           //  message: "Query could not be parsed at 'invalid' on line [1,11]",
         },
         `Query should indicate a syntax error in innermost error. Innermost error: ${JSON.stringify(
-          innermostError
-        )}`
+          innermostError,
+        )}`,
       );
     }
   });
@@ -85,11 +86,11 @@ describe("LogsQueryClient live tests", function() {
       monitorWorkspaceId,
       "AppEvents | limit 1",
       {
-        duration: Durations.twentyFourHours
+        duration: Durations.twentyFourHours,
       },
       {
-        includeQueryStatistics: true
-      }
+        includeQueryStatistics: true,
+      },
     );
 
     // TODO: statistics are not currently modeled in the generated code but
@@ -103,11 +104,11 @@ describe("LogsQueryClient live tests", function() {
       monitorWorkspaceId,
       `datatable (s: string, i: long) [ "a", 1, "b", 2, "c", 3 ] | render columnchart with (title="the chart title", xtitle="the x axis title")`,
       {
-        duration: Durations.twentyFourHours
+        duration: Durations.twentyFourHours,
       },
       {
-        includeVisualization: true
-      }
+        includeVisualization: true,
+      },
     );
 
     // TODO: render/visualizations are not currently modeled in the generated
@@ -116,7 +117,7 @@ describe("LogsQueryClient live tests", function() {
       // an example of the data (not currently modeled)
       visualization: "columnchart",
       xTitle: "the x axis title",
-      title: "the chart title"
+      title: "the chart title",
     });
   });
 
@@ -133,7 +134,7 @@ describe("LogsQueryClient live tests", function() {
       `;
 
     const results = await logsClient.queryWorkspace(monitorWorkspaceId, constantsQuery, {
-      duration: Durations.fiveMinutes
+      duration: Durations.fiveMinutes,
     });
     if (results.status === LogsQueryResultStatus.Success) {
       const table = results.tables[0];
@@ -143,34 +144,34 @@ describe("LogsQueryClient live tests", function() {
         [
           {
             name: "stringcolumn",
-            type: "string"
+            type: "string",
           },
           {
             name: "boolcolumn",
-            type: "bool"
+            type: "bool",
           },
           {
             name: "datecolumn",
-            type: "datetime"
+            type: "datetime",
           },
           {
             name: "intcolumn",
-            type: "int"
+            type: "int",
           },
           {
             name: "longcolumn",
-            type: "long"
+            type: "long",
           },
           {
             name: "realcolumn",
-            type: "real"
+            type: "real",
           },
           {
             name: "dynamiccolumn",
-            type: "dynamic"
-          }
+            type: "dynamic",
+          },
         ],
-        table.columnDescriptors
+        table.columnDescriptors,
       );
 
       table.rows.map((rowValues) => {
@@ -195,7 +196,7 @@ describe("LogsQueryClient live tests", function() {
         assert.strictEqual(realColumn, 102.1);
 
         assert.deepEqual(dynamicColumn, {
-          hello: "world"
+          hello: "world",
         });
 
         assert.isEmpty(rest);
@@ -219,8 +220,8 @@ describe("LogsQueryClient live tests", function() {
       {
         workspaceId: monitorWorkspaceId,
         query: constantsQuery,
-        timespan: { duration: Durations.fiveMinutes }
-      }
+        timespan: { duration: Durations.fiveMinutes },
+      },
     ]);
 
     if ((result as any)["__fixApplied"]) {
@@ -228,41 +229,40 @@ describe("LogsQueryClient live tests", function() {
     }
     if (result[0].status === LogsQueryResultStatus.Success) {
       const table = result[0].tables[0];
-      console.log(JSON.stringify(result[0].tables));
 
       // check the column types all match what we expect.
       assert.deepEqual(
         [
           {
             name: "stringcolumn",
-            type: "string"
+            type: "string",
           },
           {
             name: "boolcolumn",
-            type: "bool"
+            type: "bool",
           },
           {
             name: "datecolumn",
-            type: "datetime"
+            type: "datetime",
           },
           {
             name: "intcolumn",
-            type: "int"
+            type: "int",
           },
           {
             name: "longcolumn",
-            type: "long"
+            type: "long",
           },
           {
             name: "realcolumn",
-            type: "real"
+            type: "real",
           },
           {
             name: "dynamiccolumn",
-            type: "dynamic"
-          }
+            type: "dynamic",
+          },
         ],
-        table.columnDescriptors
+        table.columnDescriptors,
       );
 
       table.rows.map((rowValues) => {
@@ -287,7 +287,7 @@ describe("LogsQueryClient live tests", function() {
         assert.strictEqual(realColumn, 102.1);
 
         assert.deepEqual(dynamicColumn, {
-          hello: "world"
+          hello: "world",
         });
 
         assert.isEmpty(rest);
@@ -301,11 +301,62 @@ describe("LogsQueryClient live tests", function() {
     }
   });
 
+  it("query resource centric logs", async () => {
+    const constantsQuery = `MyTable_CL | summarize count()`;
+
+    const results = await logsClient.queryResource(logsResourceId, constantsQuery, {
+      duration: Durations.sevenDays,
+    });
+    assert.equal(results.status, LogsQueryResultStatus.Success);
+  });
+
+  it("queryResource (bad query with invalid table)", async () => {
+    const kustoQuery = `resource | summarize count()`;
+
+    try {
+      await logsClient.queryResource(logsResourceId, kustoQuery, {
+        duration: Durations.oneDay,
+      });
+      assert.fail("Should have thrown an exception");
+    } catch (err: any) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- eslint doesn't recognize that the extracted variables are prefixed with '_' and are purposefully unused.
+      const { request: _request, response: _response, ...stringizableError }: any = err;
+      const innermostError = getInnermostErrorDetails(err);
+
+      if (innermostError == null) {
+        throw new Error("No innermost error - error reporting would break.");
+      }
+
+      loggerForTest.verbose(`(Diagnostics) Actual error thrown when we use a bad query: `, err);
+
+      assert.deepNestedInclude(
+        err as RestError,
+        {
+          name: "RestError",
+          statusCode: 400,
+        },
+        `Query should throw a RestError. Message: ${JSON.stringify(stringizableError)}`,
+      );
+
+      assert.deepNestedInclude(
+        innermostError,
+        {
+          code: "SEM0100",
+          message:
+            "'summarize' operator: Failed to resolve table or column expression named 'resource'",
+        },
+        `Query should indicate a syntax error in innermost error. Innermost error: ${JSON.stringify(
+          innermostError,
+        )}`,
+      );
+    }
+  });
+
   describe.skip("Ingested data tests (can be slow due to loading times)", () => {
-    before(async function(this: Context) {
-      if (env.TEST_RUN_ID) {
-        loggerForTest.warning(`Using cached test run ID ${env.TEST_RUN_ID}`);
-        testRunId = env.TEST_RUN_ID;
+    beforeAll(async function () {
+      if (globalThis?.process?.env?.TEST_RUN_ID) {
+        loggerForTest.warning(`Using cached test run ID ${globalThis.process.env.TEST_RUN_ID}`);
+        testRunId = process.env.TEST_RUN_ID!;
       } else {
         testRunId = `ingestedDataTest-${Date.now()}`;
         // send some events
@@ -328,7 +379,7 @@ describe("LogsQueryClient live tests", function() {
       // (we'll wait until the data is there before running all the tests)
       await checkLogsHaveBeenIngested({
         maxTries: 240,
-        secondsBetweenQueries: 5
+        secondsBetweenQueries: 5,
       });
     });
 
@@ -339,8 +390,8 @@ describe("LogsQueryClient live tests", function() {
         monitorWorkspaceId,
         kustoQuery,
         {
-          duration: Durations.oneDay
-        }
+          duration: Durations.oneDay,
+        },
       );
 
       // TODO: the actual types aren't being deserialized (everything is coming back as 'string')
@@ -351,9 +402,9 @@ describe("LogsQueryClient live tests", function() {
           {
             name: "PrimaryResult",
             columns: ["Kind", "Name", "Target", "TestRunId"],
-            rows: [["now", "testSpan", "testSpan", testRunId.toString()]]
+            rows: [["now", "testSpan", "testSpan", testRunId.toString()]],
           },
-          "Query for the last day"
+          "Query for the last day",
         );
       }
     });
@@ -363,15 +414,15 @@ describe("LogsQueryClient live tests", function() {
         {
           workspaceId: monitorWorkspaceId,
           query: `AppDependencies | where Properties['testRunId'] == '${testRunId}'| project Kind=Properties["kind"], Name, Target, TestRunId=Properties['testRunId']`,
-          timespan: { duration: Durations.twentyFourHours }
+          timespan: { duration: Durations.twentyFourHours },
         },
         {
           workspaceId: monitorWorkspaceId,
           query: `AppDependencies | where Properties['testRunId'] == '${testRunId}' | count`,
           timespan: { duration: Durations.twentyFourHours },
           includeQueryStatistics: true,
-          serverTimeoutInSeconds: 60 * 10
-        }
+          serverTimeoutInSeconds: 60 * 10,
+        },
       ];
 
       const result = await logsClient.queryBatch(batchRequest);
@@ -385,9 +436,9 @@ describe("LogsQueryClient live tests", function() {
           {
             name: "PrimaryResult",
             columns: ["Kind", "Name", "Target", "TestRunId"],
-            rows: [["now", "testSpan", "testSpan", testRunId.toString()]]
+            rows: [["now", "testSpan", "testSpan", testRunId.toString()]],
           },
-          "Standard results"
+          "Standard results",
         );
       }
       if (result[1].status === LogsQueryResultStatus.Success) {
@@ -396,9 +447,9 @@ describe("LogsQueryClient live tests", function() {
           {
             name: "PrimaryResult",
             columns: ["Count"],
-            rows: [["1"]]
+            rows: [["1"]],
           },
-          "count table"
+          "count table",
         );
       }
     });
@@ -412,12 +463,12 @@ describe("LogsQueryClient live tests", function() {
       const startTime = Date.now();
 
       loggerForTest.verbose(
-        `Polling for results to make sure our telemetry has been ingested....\n${query}`
+        `Polling for results to make sure our telemetry has been ingested....\n${query}`,
       );
 
       for (let i = 0; i < args.maxTries; ++i) {
         const result = await logsClient.queryWorkspace(monitorWorkspaceId, query, {
-          duration: Durations.twentyFourHours
+          duration: Durations.twentyFourHours,
         });
 
         if (result.status === LogsQueryResultStatus.Success) {
@@ -425,7 +476,7 @@ describe("LogsQueryClient live tests", function() {
 
           if (numRows != null && numRows > 0) {
             loggerForTest.verbose(
-              `[Attempt: ${i}/${args.maxTries}] Results came back, done waiting.`
+              `[Attempt: ${i}/${args.maxTries}] Results came back, done waiting.`,
             );
             return;
           }
@@ -434,15 +485,16 @@ describe("LogsQueryClient live tests", function() {
 
           if (numRows != null && numRows > 0) {
             loggerForTest.verbose(
-              `[Attempt: ${i}/${args.maxTries}] Partial Results came back, done waiting.`
+              `[Attempt: ${i}/${args.maxTries}] Partial Results came back, done waiting.`,
             );
             return;
           }
         }
 
         loggerForTest.verbose(
-          `[Attempt: ${i}/${args.maxTries}, elapsed: ${Date.now() -
-            startTime} ms] No rows, will poll again.`
+          `[Attempt: ${i}/${args.maxTries}, elapsed: ${
+            Date.now() - startTime
+          } ms] No rows, will poll again.`,
         );
 
         await new Promise((resolve) => setTimeout(resolve, args.secondsBetweenQueries * 1000));
@@ -453,46 +505,47 @@ describe("LogsQueryClient live tests", function() {
   });
 });
 
-describe("LogsQueryClient live tests - server timeout", function() {
+describe("LogsQueryClient live tests - server timeout", function () {
   let monitorWorkspaceId: string;
   let logsClient: LogsQueryClient;
   let recorder: Recorder;
 
-  beforeEach(function(this: Context) {
+  beforeEach(async function (ctx) {
+    setLogLevel("verbose");
     loggerForTest.verbose(`Recorder: starting...`);
-    const recordedClient: RecorderAndLogsClient = createRecorderAndLogsClient(this, {
+    recorder = new Recorder(ctx);
+    const recordedClient: RecorderAndLogsClient = await createRecorderAndLogsClient(recorder, {
       maxRetries: 0,
       retryDelayInMs: 0,
-      maxRetryDelayInMs: 0
+      maxRetryDelayInMs: 0,
     });
     logsClient = recordedClient.client;
     recorder = recordedClient.recorder;
-    monitorWorkspaceId = getMonitorWorkspaceId(this);
+    monitorWorkspaceId = getMonitorWorkspaceId();
   });
-  afterEach(async function() {
-    if (recorder) {
-      loggerForTest.verbose("Recorder: stopping");
-      await recorder.stop();
-    }
+  afterEach(async function () {
+    loggerForTest.verbose("Recorder: stopping");
+    await recorder.stop();
   });
   // disabling http retries otherwise we'll waste retries to realize that the
   // query has timed out on purpose.
-  it("serverTimeoutInSeconds", async function(this: Context) {
+  it("serverTimeoutInSeconds", async function () {
     try {
+      const randomLimit = Math.round((Math.random() + 1) * 10000000000000);
       await logsClient.queryWorkspace(
         monitorWorkspaceId,
         // slow query suggested by Pavel.
-        "range x from 1 to 10000000000 step 1 | count",
+        `range x from 1 to ${randomLimit} step 1 | count`,
         {
-          duration: Durations.twentyFourHours
+          duration: Durations.twentyFourHours,
         },
         {
           // the query above easily takes longer than 1 second.
-          serverTimeoutInSeconds: 1
-        }
+          serverTimeoutInSeconds: 1,
+        },
       );
       assert.fail("Should have thrown a RestError for a GatewayTimeout");
-    } catch (err) {
+    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars -- eslint doesn't recognize that the extracted variables are prefixed with '_' and are purposefully unused.
       const { request: _request, response: _response, ...stringizableError }: any = err;
       const innermostError = getInnermostErrorDetails(err);
@@ -501,21 +554,21 @@ describe("LogsQueryClient live tests - server timeout", function() {
         err as RestError,
         {
           name: "RestError",
-          statusCode: 504
+          statusCode: 504,
         },
-        `Query should throw a RestError. Message: ${JSON.stringify(stringizableError)}`
+        `Query should throw a RestError. Message: ${JSON.stringify(stringizableError)}`,
       );
 
       assert.deepNestedInclude(
         innermostError,
         {
-          code: "GatewayTimeout"
+          code: "GatewayTimeout",
           // other fields that are not stable, but are interesting:
           // "message":"Kusto query timed out"
         },
         `Should get a code indicating the query timed out. Innermost error: ${JSON.stringify(
-          innermostError
-        )}`
+          innermostError,
+        )}`,
       );
     }
   });

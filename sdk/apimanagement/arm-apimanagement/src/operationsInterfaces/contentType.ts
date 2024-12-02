@@ -23,7 +23,7 @@ export interface ContentType {
   /**
    * Lists the developer portal's content types. Content types describe content items' properties,
    * validation rules, and constraints.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -35,7 +35,7 @@ export interface ContentType {
   /**
    * Gets the details of the developer portal's content type. Content types describe content items'
    * properties, validation rules, and constraints.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param options The options parameters.
@@ -50,22 +50,24 @@ export interface ContentType {
    * Creates or updates the developer portal's content type. Content types describe content items'
    * properties, validation rules, and constraints. Custom content types' identifiers need to start with
    * the `c-` prefix. Built-in content types can't be modified.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
+   * @param parameters Create or update parameters.
    * @param options The options parameters.
    */
   createOrUpdate(
     resourceGroupName: string,
     serviceName: string,
     contentTypeId: string,
+    parameters: ContentTypeContract,
     options?: ContentTypeCreateOrUpdateOptionalParams
   ): Promise<ContentTypeCreateOrUpdateResponse>;
   /**
    * Removes the specified developer portal's content type. Content types describe content items'
    * properties, validation rules, and constraints. Built-in content types (with identifiers starting
    * with the `c-` prefix) can't be removed.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header

@@ -1,7 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export { DigitalTwinsClient, DigitalTwinsClientOptions } from "./digitalTwinsClient";
+export {
+  DigitalTwinsClient,
+  DigitalTwinsClientOptions,
+  GetModelOptions,
+  ListEventRoutesOptions,
+  ListModelsOptions,
+  QueryTwinsOptions,
+  ListIncomingRelationshipsOptions,
+  ListRelationshipsOptions,
+} from "./digitalTwinsClient";
 
 export {
   DigitalTwinsAddOptionalParams,
@@ -44,5 +53,5 @@ export {
   QueryQueryTwinsResponse,
   QueryResult,
   QuerySpecification,
-  PagedDigitalTwinsModelDataCollection
+  PagedDigitalTwinsModelDataCollection,
 } from "./generated/models";

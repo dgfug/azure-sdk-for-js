@@ -6,22 +6,30 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DiskEncryptionSets } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ComputeManagementClient } from "../computeManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   DiskEncryptionSet,
   DiskEncryptionSetsListByResourceGroupNextOptionalParams,
   DiskEncryptionSetsListByResourceGroupOptionalParams,
+  DiskEncryptionSetsListByResourceGroupResponse,
   DiskEncryptionSetsListNextOptionalParams,
   DiskEncryptionSetsListOptionalParams,
+  DiskEncryptionSetsListResponse,
   DiskEncryptionSetsListAssociatedResourcesNextOptionalParams,
   DiskEncryptionSetsListAssociatedResourcesOptionalParams,
+  DiskEncryptionSetsListAssociatedResourcesResponse,
   DiskEncryptionSetsCreateOrUpdateOptionalParams,
   DiskEncryptionSetsCreateOrUpdateResponse,
   DiskEncryptionSetUpdate,
@@ -30,24 +38,21 @@ import {
   DiskEncryptionSetsGetOptionalParams,
   DiskEncryptionSetsGetResponse,
   DiskEncryptionSetsDeleteOptionalParams,
-  DiskEncryptionSetsListByResourceGroupResponse,
-  DiskEncryptionSetsListResponse,
-  DiskEncryptionSetsListAssociatedResourcesResponse,
   DiskEncryptionSetsListByResourceGroupNextResponse,
   DiskEncryptionSetsListNextResponse,
-  DiskEncryptionSetsListAssociatedResourcesNextResponse
+  DiskEncryptionSetsListAssociatedResourcesNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DiskEncryptionSets operations. */
 export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
-  private readonly client: ComputeManagementClientContext;
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class DiskEncryptionSets class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -58,7 +63,7 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: DiskEncryptionSetsListByResourceGroupOptionalParams
+    options?: DiskEncryptionSetsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<DiskEncryptionSet> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -68,37 +73,53 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: DiskEncryptionSetsListByResourceGroupOptionalParams
+    options?: DiskEncryptionSetsListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DiskEncryptionSet[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DiskEncryptionSetsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: DiskEncryptionSetsListByResourceGroupOptionalParams
+    options?: DiskEncryptionSetsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<DiskEncryptionSet> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -109,7 +130,7 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
    * @param options The options parameters.
    */
   public list(
-    options?: DiskEncryptionSetsListOptionalParams
+    options?: DiskEncryptionSetsListOptionalParams,
   ): PagedAsyncIterableIterator<DiskEncryptionSet> {
     const iter = this.listPagingAll(options);
     return {
@@ -119,27 +140,39 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: DiskEncryptionSetsListOptionalParams
+    options?: DiskEncryptionSetsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DiskEncryptionSet[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DiskEncryptionSetsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: DiskEncryptionSetsListOptionalParams
+    options?: DiskEncryptionSetsListOptionalParams,
   ): AsyncIterableIterator<DiskEncryptionSet> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -157,12 +190,12 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
   public listAssociatedResources(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams
+    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams,
   ): PagedAsyncIterableIterator<string> {
     const iter = this.listAssociatedResourcesPagingAll(
       resourceGroupName,
       diskEncryptionSetName,
-      options
+      options,
     );
     return {
       next() {
@@ -171,49 +204,62 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listAssociatedResourcesPagingPage(
           resourceGroupName,
           diskEncryptionSetName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listAssociatedResourcesPagingPage(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams
+    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<string[]> {
-    let result = await this._listAssociatedResources(
-      resourceGroupName,
-      diskEncryptionSetName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DiskEncryptionSetsListAssociatedResourcesResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAssociatedResources(
+        resourceGroupName,
+        diskEncryptionSetName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAssociatedResourcesNext(
         resourceGroupName,
         diskEncryptionSetName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listAssociatedResourcesPagingAll(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams
+    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams,
   ): AsyncIterableIterator<string> {
     for await (const page of this.listAssociatedResourcesPagingPage(
       resourceGroupName,
       diskEncryptionSetName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -233,30 +279,29 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSet,
-    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams
+    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DiskEncryptionSetsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DiskEncryptionSetsCreateOrUpdateResponse>,
       DiskEncryptionSetsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DiskEncryptionSetsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -265,8 +310,8 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -274,20 +319,30 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, diskEncryptionSetName, diskEncryptionSet, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        diskEncryptionSetName,
+        diskEncryptionSet,
+        options,
+      },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DiskEncryptionSetsCreateOrUpdateResponse,
+      OperationState<DiskEncryptionSetsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -304,13 +359,13 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSet,
-    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams
+    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams,
   ): Promise<DiskEncryptionSetsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       diskEncryptionSetName,
       diskEncryptionSet,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -329,30 +384,29 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSetUpdate,
-    options?: DiskEncryptionSetsUpdateOptionalParams
+    options?: DiskEncryptionSetsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DiskEncryptionSetsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DiskEncryptionSetsUpdateResponse>,
       DiskEncryptionSetsUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DiskEncryptionSetsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -361,8 +415,8 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -370,20 +424,30 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, diskEncryptionSetName, diskEncryptionSet, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        diskEncryptionSetName,
+        diskEncryptionSet,
+        options,
+      },
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DiskEncryptionSetsUpdateResponse,
+      OperationState<DiskEncryptionSetsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -400,13 +464,13 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSetUpdate,
-    options?: DiskEncryptionSetsUpdateOptionalParams
+    options?: DiskEncryptionSetsUpdateOptionalParams,
   ): Promise<DiskEncryptionSetsUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       diskEncryptionSetName,
       diskEncryptionSet,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -422,11 +486,11 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
   get(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsGetOptionalParams
+    options?: DiskEncryptionSetsGetOptionalParams,
   ): Promise<DiskEncryptionSetsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, diskEncryptionSetName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -441,25 +505,24 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
   async beginDelete(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DiskEncryptionSetsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -468,8 +531,8 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -477,20 +540,22 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, diskEncryptionSetName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, diskEncryptionSetName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -504,12 +569,12 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
   async beginDeleteAndWait(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsDeleteOptionalParams
+    options?: DiskEncryptionSetsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       diskEncryptionSetName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -521,11 +586,11 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: DiskEncryptionSetsListByResourceGroupOptionalParams
+    options?: DiskEncryptionSetsListByResourceGroupOptionalParams,
   ): Promise<DiskEncryptionSetsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -534,7 +599,7 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
    * @param options The options parameters.
    */
   private _list(
-    options?: DiskEncryptionSetsListOptionalParams
+    options?: DiskEncryptionSetsListOptionalParams,
   ): Promise<DiskEncryptionSetsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -550,11 +615,11 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
   private _listAssociatedResources(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams
+    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams,
   ): Promise<DiskEncryptionSetsListAssociatedResourcesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, diskEncryptionSetName, options },
-      listAssociatedResourcesOperationSpec
+      listAssociatedResourcesOperationSpec,
     );
   }
 
@@ -567,11 +632,11 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: DiskEncryptionSetsListByResourceGroupNextOptionalParams
+    options?: DiskEncryptionSetsListByResourceGroupNextOptionalParams,
   ): Promise<DiskEncryptionSetsListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
@@ -582,11 +647,11 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
    */
   private _listNext(
     nextLink: string,
-    options?: DiskEncryptionSetsListNextOptionalParams
+    options?: DiskEncryptionSetsListNextOptionalParams,
   ): Promise<DiskEncryptionSetsListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -604,11 +669,11 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     nextLink: string,
-    options?: DiskEncryptionSetsListAssociatedResourcesNextOptionalParams
+    options?: DiskEncryptionSetsListAssociatedResourcesNextOptionalParams,
   ): Promise<DiskEncryptionSetsListAssociatedResourcesNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, diskEncryptionSetName, nextLink, options },
-      listAssociatedResourcesNextOperationSpec
+      listAssociatedResourcesNextOperationSpec,
     );
   }
 }
@@ -616,96 +681,92 @@ export class DiskEncryptionSetsImpl implements DiskEncryptionSets {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     201: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     202: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     204: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.diskEncryptionSet,
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskEncryptionSetName
+    Parameters.resourceGroupName,
+    Parameters.diskEncryptionSetName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     201: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     202: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     204: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.diskEncryptionSet1,
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskEncryptionSetName
+    Parameters.resourceGroupName,
+    Parameters.diskEncryptionSetName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskEncryptionSet
+      bodyMapper: Mappers.DiskEncryptionSet,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskEncryptionSetName
+    Parameters.resourceGroupName,
+    Parameters.diskEncryptionSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -713,139 +774,133 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskEncryptionSetName
+    Parameters.resourceGroupName,
+    Parameters.diskEncryptionSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskEncryptionSetList
+      bodyMapper: Mappers.DiskEncryptionSetList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
+    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/diskEncryptionSets",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/diskEncryptionSets",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskEncryptionSetList
+      bodyMapper: Mappers.DiskEncryptionSetList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAssociatedResourcesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}/associatedResources",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{diskEncryptionSetName}/associatedResources",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceUriList
+      bodyMapper: Mappers.ResourceUriList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskEncryptionSetName
+    Parameters.resourceGroupName,
+    Parameters.diskEncryptionSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskEncryptionSetList
+      bodyMapper: Mappers.DiskEncryptionSetList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskEncryptionSetList
+      bodyMapper: Mappers.DiskEncryptionSetList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAssociatedResourcesNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceUriList
+      bodyMapper: Mappers.ResourceUriList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.diskEncryptionSetName
+    Parameters.resourceGroupName,
+    Parameters.diskEncryptionSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

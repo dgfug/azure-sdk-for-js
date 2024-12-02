@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualNetworkGatewayConnection,
   VirtualNetworkGatewayConnectionsListOptionalParams,
@@ -34,7 +34,7 @@ import {
   VirtualNetworkGatewayConnectionsStopPacketCaptureResponse,
   VirtualNetworkGatewayConnectionsGetIkeSasOptionalParams,
   VirtualNetworkGatewayConnectionsGetIkeSasResponse,
-  VirtualNetworkGatewayConnectionsResetConnectionOptionalParams
+  VirtualNetworkGatewayConnectionsResetConnectionOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -48,7 +48,7 @@ export interface VirtualNetworkGatewayConnections {
    */
   list(
     resourceGroupName: string,
-    options?: VirtualNetworkGatewayConnectionsListOptionalParams
+    options?: VirtualNetworkGatewayConnectionsListOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkGatewayConnection>;
   /**
    * Creates or updates a virtual network gateway connection in the specified resource group.
@@ -62,12 +62,10 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: VirtualNetworkGatewayConnection,
-    options?: VirtualNetworkGatewayConnectionsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkGatewayConnectionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VirtualNetworkGatewayConnectionsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayConnectionsCreateOrUpdateResponse>,
       VirtualNetworkGatewayConnectionsCreateOrUpdateResponse
     >
   >;
@@ -83,7 +81,7 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: VirtualNetworkGatewayConnection,
-    options?: VirtualNetworkGatewayConnectionsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkGatewayConnectionsCreateOrUpdateOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsCreateOrUpdateResponse>;
   /**
    * Gets the specified virtual network gateway connection by resource group.
@@ -94,7 +92,7 @@ export interface VirtualNetworkGatewayConnections {
   get(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsGetOptionalParams
+    options?: VirtualNetworkGatewayConnectionsGetOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsGetResponse>;
   /**
    * Deletes the specified virtual network Gateway connection.
@@ -105,8 +103,8 @@ export interface VirtualNetworkGatewayConnections {
   beginDelete(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualNetworkGatewayConnectionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified virtual network Gateway connection.
    * @param resourceGroupName The name of the resource group.
@@ -116,7 +114,7 @@ export interface VirtualNetworkGatewayConnections {
   beginDeleteAndWait(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsDeleteOptionalParams
+    options?: VirtualNetworkGatewayConnectionsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Updates a virtual network gateway connection tags.
@@ -129,10 +127,10 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: TagsObject,
-    options?: VirtualNetworkGatewayConnectionsUpdateTagsOptionalParams
+    options?: VirtualNetworkGatewayConnectionsUpdateTagsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkGatewayConnectionsUpdateTagsResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayConnectionsUpdateTagsResponse>,
       VirtualNetworkGatewayConnectionsUpdateTagsResponse
     >
   >;
@@ -147,7 +145,7 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: TagsObject,
-    options?: VirtualNetworkGatewayConnectionsUpdateTagsOptionalParams
+    options?: VirtualNetworkGatewayConnectionsUpdateTagsOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsUpdateTagsResponse>;
   /**
    * The Put VirtualNetworkGatewayConnectionSharedKey operation sets the virtual network gateway
@@ -163,10 +161,10 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: ConnectionSharedKey,
-    options?: VirtualNetworkGatewayConnectionsSetSharedKeyOptionalParams
+    options?: VirtualNetworkGatewayConnectionsSetSharedKeyOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkGatewayConnectionsSetSharedKeyResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayConnectionsSetSharedKeyResponse>,
       VirtualNetworkGatewayConnectionsSetSharedKeyResponse
     >
   >;
@@ -184,7 +182,7 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: ConnectionSharedKey,
-    options?: VirtualNetworkGatewayConnectionsSetSharedKeyOptionalParams
+    options?: VirtualNetworkGatewayConnectionsSetSharedKeyOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsSetSharedKeyResponse>;
   /**
    * The Get VirtualNetworkGatewayConnectionSharedKey operation retrieves information about the specified
@@ -196,7 +194,7 @@ export interface VirtualNetworkGatewayConnections {
   getSharedKey(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsGetSharedKeyOptionalParams
+    options?: VirtualNetworkGatewayConnectionsGetSharedKeyOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsGetSharedKeyResponse>;
   /**
    * The VirtualNetworkGatewayConnectionResetSharedKey operation resets the virtual network gateway
@@ -213,12 +211,10 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: ConnectionResetSharedKey,
-    options?: VirtualNetworkGatewayConnectionsResetSharedKeyOptionalParams
+    options?: VirtualNetworkGatewayConnectionsResetSharedKeyOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VirtualNetworkGatewayConnectionsResetSharedKeyResponse
-      >,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayConnectionsResetSharedKeyResponse>,
       VirtualNetworkGatewayConnectionsResetSharedKeyResponse
     >
   >;
@@ -237,7 +233,7 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: ConnectionResetSharedKey,
-    options?: VirtualNetworkGatewayConnectionsResetSharedKeyOptionalParams
+    options?: VirtualNetworkGatewayConnectionsResetSharedKeyOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsResetSharedKeyResponse>;
   /**
    * Starts packet capture on virtual network gateway connection in the specified resource group.
@@ -248,12 +244,10 @@ export interface VirtualNetworkGatewayConnections {
   beginStartPacketCapture(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsStartPacketCaptureOptionalParams
+    options?: VirtualNetworkGatewayConnectionsStartPacketCaptureOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VirtualNetworkGatewayConnectionsStartPacketCaptureResponse
-      >,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayConnectionsStartPacketCaptureResponse>,
       VirtualNetworkGatewayConnectionsStartPacketCaptureResponse
     >
   >;
@@ -266,7 +260,7 @@ export interface VirtualNetworkGatewayConnections {
   beginStartPacketCaptureAndWait(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsStartPacketCaptureOptionalParams
+    options?: VirtualNetworkGatewayConnectionsStartPacketCaptureOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsStartPacketCaptureResponse>;
   /**
    * Stops packet capture on virtual network gateway connection in the specified resource group.
@@ -280,12 +274,10 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: VpnPacketCaptureStopParameters,
-    options?: VirtualNetworkGatewayConnectionsStopPacketCaptureOptionalParams
+    options?: VirtualNetworkGatewayConnectionsStopPacketCaptureOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VirtualNetworkGatewayConnectionsStopPacketCaptureResponse
-      >,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayConnectionsStopPacketCaptureResponse>,
       VirtualNetworkGatewayConnectionsStopPacketCaptureResponse
     >
   >;
@@ -301,7 +293,7 @@ export interface VirtualNetworkGatewayConnections {
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
     parameters: VpnPacketCaptureStopParameters,
-    options?: VirtualNetworkGatewayConnectionsStopPacketCaptureOptionalParams
+    options?: VirtualNetworkGatewayConnectionsStopPacketCaptureOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsStopPacketCaptureResponse>;
   /**
    * Lists IKE Security Associations for the virtual network gateway connection in the specified resource
@@ -313,10 +305,10 @@ export interface VirtualNetworkGatewayConnections {
   beginGetIkeSas(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsGetIkeSasOptionalParams
+    options?: VirtualNetworkGatewayConnectionsGetIkeSasOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkGatewayConnectionsGetIkeSasResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayConnectionsGetIkeSasResponse>,
       VirtualNetworkGatewayConnectionsGetIkeSasResponse
     >
   >;
@@ -330,7 +322,7 @@ export interface VirtualNetworkGatewayConnections {
   beginGetIkeSasAndWait(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsGetIkeSasOptionalParams
+    options?: VirtualNetworkGatewayConnectionsGetIkeSasOptionalParams,
   ): Promise<VirtualNetworkGatewayConnectionsGetIkeSasResponse>;
   /**
    * Resets the virtual network gateway connection specified.
@@ -341,8 +333,8 @@ export interface VirtualNetworkGatewayConnections {
   beginResetConnection(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsResetConnectionOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualNetworkGatewayConnectionsResetConnectionOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Resets the virtual network gateway connection specified.
    * @param resourceGroupName The name of the resource group.
@@ -352,6 +344,6 @@ export interface VirtualNetworkGatewayConnections {
   beginResetConnectionAndWait(
     resourceGroupName: string,
     virtualNetworkGatewayConnectionName: string,
-    options?: VirtualNetworkGatewayConnectionsResetConnectionOptionalParams
+    options?: VirtualNetworkGatewayConnectionsResetConnectionOptionalParams,
   ): Promise<void>;
 }

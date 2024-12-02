@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ManagedInstanceLongTermRetentionBackup,
   LongTermRetentionManagedInstanceBackupsListByDatabaseOptionalParams,
@@ -22,7 +21,7 @@ import {
   LongTermRetentionManagedInstanceBackupsDeleteOptionalParams,
   LongTermRetentionManagedInstanceBackupsGetByResourceGroupOptionalParams,
   LongTermRetentionManagedInstanceBackupsGetByResourceGroupResponse,
-  LongTermRetentionManagedInstanceBackupsDeleteByResourceGroupOptionalParams
+  LongTermRetentionManagedInstanceBackupsDeleteByResourceGroupOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -39,7 +38,7 @@ export interface LongTermRetentionManagedInstanceBackups {
     locationName: string,
     managedInstanceName: string,
     databaseName: string,
-    options?: LongTermRetentionManagedInstanceBackupsListByDatabaseOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceLongTermRetentionBackup>;
   /**
    * Lists the long term retention backups for a given managed instance.
@@ -50,7 +49,7 @@ export interface LongTermRetentionManagedInstanceBackups {
   listByInstance(
     locationName: string,
     managedInstanceName: string,
-    options?: LongTermRetentionManagedInstanceBackupsListByInstanceOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsListByInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceLongTermRetentionBackup>;
   /**
    * Lists the long term retention backups for managed databases in a given location.
@@ -59,7 +58,7 @@ export interface LongTermRetentionManagedInstanceBackups {
    */
   listByLocation(
     locationName: string,
-    options?: LongTermRetentionManagedInstanceBackupsListByLocationOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsListByLocationOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceLongTermRetentionBackup>;
   /**
    * Lists all long term retention backups for a managed database.
@@ -75,7 +74,7 @@ export interface LongTermRetentionManagedInstanceBackups {
     locationName: string,
     managedInstanceName: string,
     databaseName: string,
-    options?: LongTermRetentionManagedInstanceBackupsListByResourceGroupDatabaseOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsListByResourceGroupDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceLongTermRetentionBackup>;
   /**
    * Lists the long term retention backups for a given managed instance.
@@ -89,7 +88,7 @@ export interface LongTermRetentionManagedInstanceBackups {
     resourceGroupName: string,
     locationName: string,
     managedInstanceName: string,
-    options?: LongTermRetentionManagedInstanceBackupsListByResourceGroupInstanceOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsListByResourceGroupInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceLongTermRetentionBackup>;
   /**
    * Lists the long term retention backups for managed databases in a given location.
@@ -101,7 +100,7 @@ export interface LongTermRetentionManagedInstanceBackups {
   listByResourceGroupLocation(
     resourceGroupName: string,
     locationName: string,
-    options?: LongTermRetentionManagedInstanceBackupsListByResourceGroupLocationOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsListByResourceGroupLocationOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceLongTermRetentionBackup>;
   /**
    * Gets a long term retention backup for a managed database.
@@ -116,7 +115,7 @@ export interface LongTermRetentionManagedInstanceBackups {
     managedInstanceName: string,
     databaseName: string,
     backupName: string,
-    options?: LongTermRetentionManagedInstanceBackupsGetOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsGetOptionalParams,
   ): Promise<LongTermRetentionManagedInstanceBackupsGetResponse>;
   /**
    * Deletes a long term retention backup.
@@ -131,8 +130,8 @@ export interface LongTermRetentionManagedInstanceBackups {
     managedInstanceName: string,
     databaseName: string,
     backupName: string,
-    options?: LongTermRetentionManagedInstanceBackupsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: LongTermRetentionManagedInstanceBackupsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a long term retention backup.
    * @param locationName The location of the database.
@@ -146,7 +145,7 @@ export interface LongTermRetentionManagedInstanceBackups {
     managedInstanceName: string,
     databaseName: string,
     backupName: string,
-    options?: LongTermRetentionManagedInstanceBackupsDeleteOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets a long term retention backup for a managed database.
@@ -164,7 +163,7 @@ export interface LongTermRetentionManagedInstanceBackups {
     managedInstanceName: string,
     databaseName: string,
     backupName: string,
-    options?: LongTermRetentionManagedInstanceBackupsGetByResourceGroupOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsGetByResourceGroupOptionalParams,
   ): Promise<LongTermRetentionManagedInstanceBackupsGetByResourceGroupResponse>;
   /**
    * Deletes a long term retention backup.
@@ -182,8 +181,8 @@ export interface LongTermRetentionManagedInstanceBackups {
     managedInstanceName: string,
     databaseName: string,
     backupName: string,
-    options?: LongTermRetentionManagedInstanceBackupsDeleteByResourceGroupOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: LongTermRetentionManagedInstanceBackupsDeleteByResourceGroupOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a long term retention backup.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -200,6 +199,6 @@ export interface LongTermRetentionManagedInstanceBackups {
     managedInstanceName: string,
     databaseName: string,
     backupName: string,
-    options?: LongTermRetentionManagedInstanceBackupsDeleteByResourceGroupOptionalParams
+    options?: LongTermRetentionManagedInstanceBackupsDeleteByResourceGroupOptionalParams,
   ): Promise<void>;
 }

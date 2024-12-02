@@ -6,31 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ExpressRouteServiceProviders } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
   ExpressRouteServiceProvider,
   ExpressRouteServiceProvidersListNextOptionalParams,
   ExpressRouteServiceProvidersListOptionalParams,
   ExpressRouteServiceProvidersListResponse,
-  ExpressRouteServiceProvidersListNextResponse
+  ExpressRouteServiceProvidersListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ExpressRouteServiceProviders operations. */
 export class ExpressRouteServiceProvidersImpl
-  implements ExpressRouteServiceProviders {
-  private readonly client: NetworkManagementClientContext;
+  implements ExpressRouteServiceProviders
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class ExpressRouteServiceProviders class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -39,7 +41,7 @@ export class ExpressRouteServiceProvidersImpl
    * @param options The options parameters.
    */
   public list(
-    options?: ExpressRouteServiceProvidersListOptionalParams
+    options?: ExpressRouteServiceProvidersListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteServiceProvider> {
     const iter = this.listPagingAll(options);
     return {
@@ -49,27 +51,39 @@ export class ExpressRouteServiceProvidersImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: ExpressRouteServiceProvidersListOptionalParams
+    options?: ExpressRouteServiceProvidersListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ExpressRouteServiceProvider[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ExpressRouteServiceProvidersListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: ExpressRouteServiceProvidersListOptionalParams
+    options?: ExpressRouteServiceProvidersListOptionalParams,
   ): AsyncIterableIterator<ExpressRouteServiceProvider> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -81,7 +95,7 @@ export class ExpressRouteServiceProvidersImpl
    * @param options The options parameters.
    */
   private _list(
-    options?: ExpressRouteServiceProvidersListOptionalParams
+    options?: ExpressRouteServiceProvidersListOptionalParams,
   ): Promise<ExpressRouteServiceProvidersListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -93,11 +107,11 @@ export class ExpressRouteServiceProvidersImpl
    */
   private _listNext(
     nextLink: string,
-    options?: ExpressRouteServiceProvidersListNextOptionalParams
+    options?: ExpressRouteServiceProvidersListNextOptionalParams,
   ): Promise<ExpressRouteServiceProvidersListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -105,39 +119,37 @@ export class ExpressRouteServiceProvidersImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/expressRouteServiceProviders",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/expressRouteServiceProviders",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteServiceProviderListResult
+      bodyMapper: Mappers.ExpressRouteServiceProviderListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteServiceProviderListResult
+      bodyMapper: Mappers.ExpressRouteServiceProviderListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

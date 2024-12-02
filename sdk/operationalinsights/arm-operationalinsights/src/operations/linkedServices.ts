@@ -6,36 +6,36 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { LinkedServices } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { OperationalInsightsManagementClientContext } from "../operationalInsightsManagementClientContext";
+import { OperationalInsightsManagementClient } from "../operationalInsightsManagementClient";
 import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
 import { LroImpl } from "../lroImpl";
 import {
   LinkedService,
   LinkedServicesListByWorkspaceOptionalParams,
+  LinkedServicesListByWorkspaceResponse,
   LinkedServicesCreateOrUpdateOptionalParams,
   LinkedServicesCreateOrUpdateResponse,
   LinkedServicesDeleteOptionalParams,
   LinkedServicesDeleteResponse,
   LinkedServicesGetOptionalParams,
-  LinkedServicesGetResponse,
-  LinkedServicesListByWorkspaceResponse
+  LinkedServicesGetResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing LinkedServices operations. */
 export class LinkedServicesImpl implements LinkedServices {
-  private readonly client: OperationalInsightsManagementClientContext;
+  private readonly client: OperationalInsightsManagementClient;
 
   /**
    * Initialize a new instance of the class LinkedServices class.
    * @param client Reference to the service client
    */
-  constructor(client: OperationalInsightsManagementClientContext) {
+  constructor(client: OperationalInsightsManagementClient) {
     this.client = client;
   }
 
@@ -62,11 +62,15 @@ export class LinkedServicesImpl implements LinkedServices {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByWorkspacePagingPage(
           resourceGroupName,
           workspaceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -75,9 +79,11 @@ export class LinkedServicesImpl implements LinkedServices {
   private async *listByWorkspacePagingPage(
     resourceGroupName: string,
     workspaceName: string,
-    options?: LinkedServicesListByWorkspaceOptionalParams
+    options?: LinkedServicesListByWorkspaceOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<LinkedService[]> {
-    let result = await this._listByWorkspace(
+    let result: LinkedServicesListByWorkspaceResponse;
+    result = await this._listByWorkspace(
       resourceGroupName,
       workspaceName,
       options
@@ -169,10 +175,12 @@ export class LinkedServicesImpl implements LinkedServices {
       },
       createOrUpdateOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -262,10 +270,12 @@ export class LinkedServicesImpl implements LinkedServices {
       { resourceGroupName, workspaceName, linkedServiceName, options },
       deleteOperationSpec
     );
-    return new LroEngine(lro, {
+    const poller = new LroEngine(lro, {
       resumeFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -348,7 +358,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     }
   },
   requestBody: Parameters.parameters2,
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -378,7 +388,7 @@ const deleteOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.LinkedService
     }
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -398,7 +408,7 @@ const getOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.LinkedService
     }
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -418,7 +428,7 @@ const listByWorkspaceOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.LinkedServiceListResult
     }
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

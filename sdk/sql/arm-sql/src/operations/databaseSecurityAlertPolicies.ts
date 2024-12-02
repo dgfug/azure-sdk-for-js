@@ -6,37 +6,38 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DatabaseSecurityAlertPolicies } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   DatabaseSecurityAlertPolicy,
   DatabaseSecurityAlertPoliciesListByDatabaseNextOptionalParams,
   DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams,
+  DatabaseSecurityAlertPoliciesListByDatabaseResponse,
   SecurityAlertPolicyName,
   DatabaseSecurityAlertPoliciesGetOptionalParams,
   DatabaseSecurityAlertPoliciesGetResponse,
   DatabaseSecurityAlertPoliciesCreateOrUpdateOptionalParams,
   DatabaseSecurityAlertPoliciesCreateOrUpdateResponse,
-  DatabaseSecurityAlertPoliciesListByDatabaseResponse,
-  DatabaseSecurityAlertPoliciesListByDatabaseNextResponse
+  DatabaseSecurityAlertPoliciesListByDatabaseNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DatabaseSecurityAlertPolicies operations. */
 export class DatabaseSecurityAlertPoliciesImpl
-  implements DatabaseSecurityAlertPolicies {
-  private readonly client: SqlManagementClientContext;
+  implements DatabaseSecurityAlertPolicies
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class DatabaseSecurityAlertPolicies class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -52,13 +53,13 @@ export class DatabaseSecurityAlertPoliciesImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams
+    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseSecurityAlertPolicy> {
     const iter = this.listByDatabasePagingAll(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     );
     return {
       next() {
@@ -67,14 +68,18 @@ export class DatabaseSecurityAlertPoliciesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByDatabasePagingPage(
           resourceGroupName,
           serverName,
           databaseName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -82,26 +87,35 @@ export class DatabaseSecurityAlertPoliciesImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams
+    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DatabaseSecurityAlertPolicy[]> {
-    let result = await this._listByDatabase(
-      resourceGroupName,
-      serverName,
-      databaseName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DatabaseSecurityAlertPoliciesListByDatabaseResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByDatabase(
+        resourceGroupName,
+        serverName,
+        databaseName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByDatabaseNext(
         resourceGroupName,
         serverName,
         databaseName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -109,13 +123,13 @@ export class DatabaseSecurityAlertPoliciesImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams
+    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams,
   ): AsyncIterableIterator<DatabaseSecurityAlertPolicy> {
     for await (const page of this.listByDatabasePagingPage(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -135,7 +149,7 @@ export class DatabaseSecurityAlertPoliciesImpl
     serverName: string,
     databaseName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
-    options?: DatabaseSecurityAlertPoliciesGetOptionalParams
+    options?: DatabaseSecurityAlertPoliciesGetOptionalParams,
   ): Promise<DatabaseSecurityAlertPoliciesGetResponse> {
     return this.client.sendOperationRequest(
       {
@@ -143,9 +157,9 @@ export class DatabaseSecurityAlertPoliciesImpl
         serverName,
         databaseName,
         securityAlertPolicyName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -165,7 +179,7 @@ export class DatabaseSecurityAlertPoliciesImpl
     databaseName: string,
     securityAlertPolicyName: SecurityAlertPolicyName,
     parameters: DatabaseSecurityAlertPolicy,
-    options?: DatabaseSecurityAlertPoliciesCreateOrUpdateOptionalParams
+    options?: DatabaseSecurityAlertPoliciesCreateOrUpdateOptionalParams,
   ): Promise<DatabaseSecurityAlertPoliciesCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -174,9 +188,9 @@ export class DatabaseSecurityAlertPoliciesImpl
         databaseName,
         securityAlertPolicyName,
         parameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -192,11 +206,11 @@ export class DatabaseSecurityAlertPoliciesImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams
+    options?: DatabaseSecurityAlertPoliciesListByDatabaseOptionalParams,
   ): Promise<DatabaseSecurityAlertPoliciesListByDatabaseResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, options },
-      listByDatabaseOperationSpec
+      listByDatabaseOperationSpec,
     );
   }
 
@@ -214,11 +228,11 @@ export class DatabaseSecurityAlertPoliciesImpl
     serverName: string,
     databaseName: string,
     nextLink: string,
-    options?: DatabaseSecurityAlertPoliciesListByDatabaseNextOptionalParams
+    options?: DatabaseSecurityAlertPoliciesListByDatabaseNextOptionalParams,
   ): Promise<DatabaseSecurityAlertPoliciesListByDatabaseNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, nextLink, options },
-      listByDatabaseNextOperationSpec
+      listByDatabaseNextOperationSpec,
     );
   }
 }
@@ -226,93 +240,89 @@ export class DatabaseSecurityAlertPoliciesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/securityAlertPolicies/{securityAlertPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/securityAlertPolicies/{securityAlertPolicyName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseSecurityAlertPolicy
+      bodyMapper: Mappers.DatabaseSecurityAlertPolicy,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.securityAlertPolicyName
+    Parameters.securityAlertPolicyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/securityAlertPolicies/{securityAlertPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/securityAlertPolicies/{securityAlertPolicyName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseSecurityAlertPolicy
+      bodyMapper: Mappers.DatabaseSecurityAlertPolicy,
     },
     201: {
-      bodyMapper: Mappers.DatabaseSecurityAlertPolicy
+      bodyMapper: Mappers.DatabaseSecurityAlertPolicy,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters21,
-  queryParameters: [Parameters.apiVersion2],
+  requestBody: Parameters.parameters14,
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.securityAlertPolicyName
+    Parameters.securityAlertPolicyName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByDatabaseOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/securityAlertPolicies",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/securityAlertPolicies",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseSecurityAlertListResult
+      bodyMapper: Mappers.DatabaseSecurityAlertListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.databaseName
+    Parameters.databaseName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByDatabaseNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseSecurityAlertListResult
+      bodyMapper: Mappers.DatabaseSecurityAlertListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

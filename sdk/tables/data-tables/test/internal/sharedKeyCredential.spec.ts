@@ -1,23 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Context } from "mocha";
-import {
-  SendRequest,
-  PipelineRequest,
-  PipelineResponse,
-  createHttpHeaders,
-  createPipelineRequest
-} from "@azure/core-rest-pipeline";
-import { isNode } from "@azure/test-utils";
-import { assert } from "chai";
-
-import { tablesNamedKeyCredentialPolicy } from "../../src/tablesNamedCredentialPolicy";
+import type { PipelineRequest, PipelineResponse, SendRequest } from "@azure/core-rest-pipeline";
+import { createHttpHeaders, createPipelineRequest } from "@azure/core-rest-pipeline";
 import { AzureNamedKeyCredential } from "@azure/core-auth";
-import { expectedSharedKeyLiteHeader } from "./fakeTestSecrets";
+import { expectedSharedKeyLiteHeader } from "./fakeTestSecrets.js";
+import { isNodeLike } from "@azure/core-util";
+import { tablesNamedKeyCredentialPolicy } from "../../src/tablesNamedCredentialPolicy.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 describe("TablesSharedKeyCredential", () => {
   let originalToUTCString: () => string;
+
   beforeEach(() => {
     originalToUTCString = Date.prototype.toUTCString;
     Date.prototype.toUTCString = () => "Thu, 03 Sep 2020 18:50:45 GMT";
@@ -27,19 +21,16 @@ describe("TablesSharedKeyCredential", () => {
     Date.prototype.toUTCString = originalToUTCString;
   });
 
-  it("It should sign", async function(this: Context) {
-    if (!isNode) {
-      // AzureNamedKeyCredential auth is not supported in Browser
-      this.skip();
-    }
+  // AzureNamedKeyCredential auth is not supported in Browser
+  it("It should sign", { skip: !isNodeLike }, async () => {
     const url =
       "https://testaccount.table.core.windows.net/tablename(PartitionKey='p1',RowKey='r1')";
     const requestToSign = createPipelineRequest({ url });
-    const next: SendRequest = function(request: PipelineRequest): Promise<PipelineResponse> {
+    const next: SendRequest = function (request: PipelineRequest): Promise<PipelineResponse> {
       return Promise.resolve({
         status: 200,
         request,
-        headers: createHttpHeaders()
+        headers: createHttpHeaders(),
       });
     };
     const cred = new AzureNamedKeyCredential("accountName", "accountKey");

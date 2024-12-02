@@ -1,180 +1,109 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortController } from "@azure/abort-controller";
-import chai from "chai";
-const should = chai.should();
-import chaiAsPromised from "chai-as-promised";
-import { createConnectionContext } from "../../src/connectionContext";
-import { EventHubReceiver } from "../../src/eventHubReceiver";
-import { EventHubSender } from "../../src/eventHubSender";
-import { createMockServer } from "../public/utils/mockService";
-chai.use(chaiAsPromised);
+import type { PartitionReceiver } from "../../src/partitionReceiver.js";
+import { createReceiver } from "../../src/partitionReceiver.js";
+import { EventHubSender } from "../../src/eventHubSender.js";
+import type { ConnectionContext } from "../../src/connectionContext.js";
+import { createContext } from "../utils/clients.js";
+import { expect } from "../utils/chai.js";
+import { describe, it, beforeEach, afterEach } from "vitest";
 
-import { EnvVarKeys, getEnvVars } from "../public/utils/testUtils";
-import { testWithServiceTypes } from "../public/utils/testWithServiceTypes";
+const cancellationCases = [
+  {
+    type: "pre-aborted",
+    getSignal() {
+      const controller = new AbortController();
+      controller.abort();
+      return controller.signal;
+    },
+  },
+  {
+    type: "aborted after timeout",
+    getSignal() {
+      const controller = new AbortController();
+      setTimeout(() => {
+        controller.abort();
+      }, 0);
+      return controller.signal;
+    },
+  },
+];
 
-testWithServiceTypes((serviceVersion) => {
-  const env = getEnvVars();
-  if (serviceVersion === "mock") {
-    let service: ReturnType<typeof createMockServer>;
-    before("Starting mock service", () => {
-      service = createMockServer();
-      return service.start();
-    });
+function expectAbortError(promise: Promise<unknown>): Chai.PromisedAssertion {
+  return expect(promise).to.eventually.be.rejected.and.has.property("name", "AbortError");
+}
 
-    after("Stopping mock service", () => {
-      return service?.stop();
-    });
-  }
+describe("Cancellation via AbortSignal", function () {
+  let context: ConnectionContext;
+  beforeEach(async function () {
+    context = createContext().context;
+  });
 
-  describe("Cancellation via AbortSignal", () => {
-    const service = {
-      connectionString: env[EnvVarKeys.EVENTHUB_CONNECTION_STRING],
-      path: env[EnvVarKeys.EVENTHUB_NAME]
-    };
-    before("validate environment", () => {
-      should.exist(
-        env[EnvVarKeys.EVENTHUB_CONNECTION_STRING],
-        "define EVENTHUB_CONNECTION_STRING in your environment before running integration tests."
+  afterEach(async function () {
+    await context.close();
+  });
+
+  describe("EventHubReceiver", function () {
+    let client: PartitionReceiver;
+    const timeoutInMs = 60000;
+    beforeEach(async function () {
+      client = createReceiver(
+        context,
+        "$default", // consumer group
+        "ID",
+        "0", // partition id
+        {
+          enqueuedOn: Date.now(),
+        },
       );
-      should.exist(
-        env[EnvVarKeys.EVENTHUB_NAME],
-        "define EVENTHUB_NAME in your environment before running integration tests."
-      );
     });
 
-    let context: ReturnType<typeof createConnectionContext>;
-    beforeEach("create connection context", function() {
-      context = createConnectionContext(service.connectionString, service.path);
+    afterEach(async function () {
+      await client.close();
     });
 
-    afterEach("close connection context", function() {
-      return context.close();
+    for (const { type: caseType, getSignal } of cancellationCases) {
+      it(`initialize supports cancellation (${caseType})`, async function () {
+        await expectAbortError(client.connect({ abortSignal: getSignal(), timeoutInMs }));
+      });
+
+      it(`receiveBatch supports cancellation (${caseType})`, async function () {
+        await expectAbortError(client.receiveBatch(10, undefined, getSignal()));
+      });
+
+      it(`receiveBatch supports cancellation when connection already exists (${caseType})`, async function () {
+        // Open the connection.
+        await client.connect({ abortSignal: undefined, timeoutInMs });
+        await expectAbortError(client.receiveBatch(10, undefined, getSignal()));
+      });
+    }
+  });
+
+  describe("EventHubSender", function () {
+    let client: EventHubSender;
+    beforeEach(async function () {
+      client = new EventHubSender(context, "Sender1", { enableIdempotentProducer: false });
     });
 
-    const TEST_FAILURE = "Test failure";
+    afterEach(async function () {
+      await client.close();
+    });
 
-    const cancellationCases = [
-      {
-        type: "pre-aborted",
-        getSignal() {
-          const controller = new AbortController();
-          controller.abort();
-          return controller.signal;
-        }
-      },
-      {
-        type: "aborted after timeout",
-        getSignal() {
-          const controller = new AbortController();
-          setTimeout(() => {
-            controller.abort();
-          }, 0);
-          return controller.signal;
-        }
-      }
-    ];
+    for (const { type: caseType, getSignal } of cancellationCases) {
+      it(`_getLink supports cancellation (${caseType})`, async function () {
+        await expectAbortError(client["_getLink"]({ abortSignal: getSignal() }));
+      });
 
-    describe("EventHubReceiver", () => {
-      let client: EventHubReceiver;
-      beforeEach("instantiate EventHubReceiver", () => {
-        client = new EventHubReceiver(
-          context,
-          "$default", // consumer group
-          "0", // partition id
-          {
-            enqueuedOn: Date.now()
-          }
+      it(`getMaxMessageSize supports cancellation (${caseType})`, async function () {
+        await expectAbortError(client.getMaxMessageSize({ abortSignal: getSignal() }));
+      });
+
+      it(`send supports cancellation (${caseType})`, async function () {
+        await expectAbortError(
+          client.send([{ body: "unsung hero" }], { abortSignal: getSignal() }),
         );
       });
-
-      afterEach("close EventHubReceiver", () => {
-        return client.close();
-      });
-
-      for (const { type: caseType, getSignal } of cancellationCases) {
-        it(`initialize supports cancellation (${caseType})`, async () => {
-          const abortSignal = getSignal();
-          try {
-            await client.initialize({ abortSignal, timeoutInMs: 60000 });
-            throw new Error(TEST_FAILURE);
-          } catch (err) {
-            should.equal(err.name, "AbortError");
-            should.equal(err.message, "The operation was aborted.");
-          }
-        });
-
-        it(`receiveBatch supports cancellation (${caseType})`, async () => {
-          const abortSignal = getSignal();
-          try {
-            await client.receiveBatch(10, undefined, abortSignal);
-            throw new Error(TEST_FAILURE);
-          } catch (err) {
-            should.equal(err.name, "AbortError");
-            should.equal(err.message, "The operation was aborted.");
-          }
-        });
-
-        it(`receiveBatch supports cancellation when connection already exists (${caseType})`, async () => {
-          // Open the connection.
-          await client.initialize({ abortSignal: undefined, timeoutInMs: 60000 });
-          try {
-            const abortSignal = getSignal();
-            await client.receiveBatch(10, undefined, abortSignal);
-            throw new Error(TEST_FAILURE);
-          } catch (err) {
-            should.equal(err.name, "AbortError");
-            should.equal(err.message, "The operation was aborted.");
-          }
-        });
-      }
-    });
-
-    describe("EventHubSender", () => {
-      let client: EventHubSender;
-      beforeEach("instantiate EventHubSender", () => {
-        client = new EventHubSender(context);
-      });
-
-      afterEach("close EventHubSender", () => {
-        return client.close();
-      });
-
-      for (const { type: caseType, getSignal } of cancellationCases) {
-        it(`_getLink supports cancellation (${caseType})`, async () => {
-          const abortSignal = getSignal();
-          try {
-            await client["_getLink"]({ abortSignal });
-            throw new Error(TEST_FAILURE);
-          } catch (err) {
-            should.equal(err.name, "AbortError");
-            should.equal(err.message, "The operation was aborted.");
-          }
-        });
-
-        it(`getMaxMessageSize supports cancellation (${caseType})`, async () => {
-          const abortSignal = getSignal();
-          try {
-            await client.getMaxMessageSize({ abortSignal });
-            throw new Error(TEST_FAILURE);
-          } catch (err) {
-            should.equal(err.name, "AbortError");
-            should.equal(err.message, "The operation was aborted.");
-          }
-        });
-
-        it(`send supports cancellation (${caseType})`, async () => {
-          const abortSignal = getSignal();
-          try {
-            await client.send([{ body: "unsung hero" }], { abortSignal });
-            throw new Error(TEST_FAILURE);
-          } catch (err) {
-            should.equal(err.name, "AbortError");
-            should.equal(err.message, "The operation was aborted.");
-          }
-        });
-      }
-    });
+    }
   });
 });

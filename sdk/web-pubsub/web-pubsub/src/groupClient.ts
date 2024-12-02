@@ -1,12 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CommonClientOptions, FullOperationResponse, OperationOptions } from "@azure/core-client";
-import { RestError, RequestBodyType } from "@azure/core-rest-pipeline";
-import { GeneratedClient } from "./generated/generatedClient";
-import { createSpan } from "./tracing";
-import { getPayloadForMessage } from "./utils";
-import { JSONTypes } from "./hubClient";
+import type {
+  CommonClientOptions,
+  FullOperationResponse,
+  OperationOptions,
+} from "@azure/core-client";
+import type { RequestBodyType } from "@azure/core-rest-pipeline";
+import { RestError } from "@azure/core-rest-pipeline";
+import type { GeneratedClient } from "./generated/generatedClient.js";
+import { tracingClient } from "./tracing.js";
+import { getPayloadForMessage } from "./utils.js";
+import type { JSONTypes } from "./hubClient.js";
 
 /**
  * Options for constructing a GroupAdmin client.
@@ -46,16 +51,31 @@ export interface GroupSendToAllOptions extends OperationOptions {
    * Connection ids to exclude from receiving this message.
    */
   excludedConnections?: string[];
+  /**
+   * The filter syntax to filter out the connections to send the messages to following OData filter syntax.
+   * Examples:
+   *  * Exclude connections from `user1` and `user2`: `userId ne 'user1' and userId ne 'user2'`
+   *  * Exclude connections in `group1`: `not('group1' in groups)`
+   * Details about `filter` syntax please see [OData filter syntax for Azure Web PubSub](https://aka.ms/awps/filter-syntax).
+   */
+  filter?: string;
+  /**
+   * The time-to-live (TTL) value in seconds for messages sent to the service.
+   * 0 is the default value, which means the message never expires.
+   * 300 is the maximum value.
+   * If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service.
+   * This parameter can help when the client's bandwidth is limited.
+   */
+  messageTtlSeconds?: number;
 }
 
 /**
  * Options for sending text messages to a group..
  */
-export interface GroupSendTextToAllOptions extends OperationOptions {
+export interface GroupSendTextToAllOptions extends GroupSendToAllOptions {
   /**
-   * Connection ids to exclude from receiving this message.
+   * The content will be sent to the clients in plain text.
    */
-  excludedConnections?: string[];
   contentType: "text/plain";
 }
 
@@ -194,37 +214,39 @@ export class WebPubSubGroupImpl implements WebPubSubGroup {
    */
   public async addConnection(
     connectionId: string,
-    options: GroupAddConnectionOptions = {}
+    options: GroupAddConnectionOptions = {},
   ): Promise<void> {
-    const { span, updatedOptions } = createSpan(
-      "WebPubSubServiceClient-group-addConnection",
-      options
-    );
-
     let response: FullOperationResponse | undefined;
     function onResponse(rawResponse: FullOperationResponse, flatResponse: unknown): void {
       response = rawResponse;
-      if (updatedOptions.onResponse) {
-        updatedOptions.onResponse(rawResponse, flatResponse);
+      if (options.onResponse) {
+        options.onResponse(rawResponse, flatResponse);
       }
     }
 
-    try {
-      await this.client.webPubSub.addConnectionToGroup(this.hubName, this.groupName, connectionId, {
-        ...updatedOptions,
-        onResponse
-      });
+    return tracingClient.withSpan(
+      "WebPubSubGroupClient.addConnection",
+      options,
+      async (updatedOptions) => {
+        await this.client.webPubSub.addConnectionToGroup(
+          this.hubName,
+          this.groupName,
+          connectionId,
+          {
+            ...updatedOptions,
+            onResponse,
+          },
+        );
 
-      if (response!.status === 404) {
-        throw new RestError(`Connection id '${connectionId}' doesn't exist`, {
-          statusCode: response?.status,
-          request: response?.request,
-          response: response
-        });
-      }
-    } finally {
-      span.end();
-    }
+        if (response!.status === 404) {
+          throw new RestError(`Connection id '${connectionId}' doesn't exist`, {
+            statusCode: response?.status,
+            request: response?.request,
+            response: response,
+          });
+        }
+      },
+    );
   }
 
   /**
@@ -235,23 +257,20 @@ export class WebPubSubGroupImpl implements WebPubSubGroup {
    */
   public async removeConnection(
     connectionId: string,
-    options: GroupRemoveConnectionOptions = {}
+    options: GroupRemoveConnectionOptions = {},
   ): Promise<void> {
-    const { span, updatedOptions } = createSpan(
-      "WebPubSubServiceClient-group-removeConnection",
-      options
+    return tracingClient.withSpan(
+      "WebPubSubGroupClient.removeConnection",
+      options,
+      (updatedOptions) => {
+        return this.client.webPubSub.removeConnectionFromGroup(
+          this.hubName,
+          this.groupName,
+          connectionId,
+          updatedOptions,
+        );
+      },
     );
-
-    try {
-      await this.client.webPubSub.removeConnectionFromGroup(
-        this.hubName,
-        this.groupName,
-        connectionId,
-        updatedOptions
-      );
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -260,20 +279,17 @@ export class WebPubSubGroupImpl implements WebPubSubGroup {
    * @param options - Additional options
    */
   public async closeAllConnections(options: GroupCloseAllConnectionsOptions = {}): Promise<void> {
-    const { span, updatedOptions } = createSpan(
-      "WebPubSubServiceClient-group-closeAllConnections",
-      options
+    return tracingClient.withSpan(
+      "WebPubSubGroupClient.closeAllConnections",
+      options,
+      (updatedOptions) => {
+        return this.client.webPubSub.closeGroupConnections(
+          this.hubName,
+          this.groupName,
+          updatedOptions,
+        );
+      },
     );
-
-    try {
-      return await this.client.webPubSub.closeGroupConnections(
-        this.hubName,
-        this.groupName,
-        updatedOptions
-      );
-    } finally {
-      span.end();
-    }
   }
   /**
    * Add a user to this group
@@ -282,18 +298,14 @@ export class WebPubSubGroupImpl implements WebPubSubGroup {
    * @param options - Additional options
    */
   public async addUser(username: string, options: GroupAddUserOptions = {}): Promise<void> {
-    const { span, updatedOptions } = createSpan("WebPubSubServiceClient-group-addUser", options);
-
-    try {
-      await this.client.webPubSub.addUserToGroup(
+    return tracingClient.withSpan("WebPubSubGroupClient.addUser", options, (updatedOptions) => {
+      return this.client.webPubSub.addUserToGroup(
         this.hubName,
         this.groupName,
         username,
-        updatedOptions
+        updatedOptions,
       );
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -303,18 +315,14 @@ export class WebPubSubGroupImpl implements WebPubSubGroup {
    * @param options - Additional options
    */
   public async removeUser(username: string, options: GroupRemoveUserOptions = {}): Promise<void> {
-    const { span, updatedOptions } = createSpan("WebPubSubServiceClient-group-removeUser", options);
-
-    try {
-      await this.client.webPubSub.removeUserFromGroup(
+    return tracingClient.withSpan("WebPubSubGroupClient.removeUser", options, (updatedOptions) => {
+      return this.client.webPubSub.removeUserFromGroup(
         this.hubName,
         this.groupName,
         username,
-        updatedOptions
+        updatedOptions,
       );
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -341,22 +349,17 @@ export class WebPubSubGroupImpl implements WebPubSubGroup {
 
   public async sendToAll(
     message: JSONTypes | RequestBodyType,
-    options: GroupSendToAllOptions | GroupSendTextToAllOptions = {}
+    options: GroupSendToAllOptions | GroupSendTextToAllOptions = {},
   ): Promise<void> {
-    const { span, updatedOptions } = createSpan("WebPubSubServiceClient-group-sendToAll", options);
-
-    const { contentType, payload } = getPayloadForMessage(message, updatedOptions);
-
-    try {
-      await this.client.webPubSub.sendToGroup(
+    return tracingClient.withSpan("WebPubSubGroupClient.sendToAll", options, (updatedOptions) => {
+      const { contentType, payload } = getPayloadForMessage(message, updatedOptions);
+      return this.client.webPubSub.sendToGroup(
         this.hubName,
         this.groupName,
         contentType,
         payload as any,
-        updatedOptions
+        updatedOptions,
       );
-    } finally {
-      span.end();
-    }
+    });
   }
 }

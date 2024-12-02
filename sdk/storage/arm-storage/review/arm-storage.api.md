@@ -6,9 +6,9 @@
 
 import * as coreAuth from '@azure/core-auth';
 import * as coreClient from '@azure/core-client';
+import { OperationState } from '@azure/core-lro';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PollerLike } from '@azure/core-lro';
-import { PollOperationState } from '@azure/core-lro';
+import { SimplePollerLike } from '@azure/core-lro';
 
 // @public (undocumented)
 export interface AccessPolicy {
@@ -18,7 +18,17 @@ export interface AccessPolicy {
 }
 
 // @public
-export type AccessTier = "Hot" | "Cool";
+export type AccessTier = "Hot" | "Cool" | "Premium" | "Cold";
+
+// @public
+export interface AccountImmutabilityPolicyProperties {
+    allowProtectedAppendWrites?: boolean;
+    immutabilityPeriodSinceCreationInDays?: number;
+    state?: AccountImmutabilityPolicyState;
+}
+
+// @public
+export type AccountImmutabilityPolicyState = string;
 
 // @public
 export interface AccountSasParameters {
@@ -36,19 +46,30 @@ export interface AccountSasParameters {
 export type AccountStatus = "available" | "unavailable";
 
 // @public
+export type AccountType = string;
+
+// @public
 export interface ActiveDirectoryProperties {
-    azureStorageSid: string;
+    accountType?: AccountType;
+    azureStorageSid?: string;
     domainGuid: string;
     domainName: string;
-    domainSid: string;
-    forestName: string;
-    netBiosDomainName: string;
+    domainSid?: string;
+    forestName?: string;
+    netBiosDomainName?: string;
+    samAccountName?: string;
 }
 
 // @public
-export type AzureEntityResource = Resource & {
+export type AllowedCopyScope = string;
+
+// @public
+export type AllowedMethods = string;
+
+// @public
+export interface AzureEntityResource extends Resource {
     readonly etag?: string;
-};
+}
 
 // @public
 export interface AzureFilesIdentityBasedAuthentication {
@@ -58,31 +79,33 @@ export interface AzureFilesIdentityBasedAuthentication {
 }
 
 // @public
-export type BlobContainer = AzureEntityResource & {
-    readonly version?: string;
+export interface BlobContainer extends AzureEntityResource {
+    defaultEncryptionScope?: string;
     readonly deleted?: boolean;
     readonly deletedTime?: Date;
-    readonly remainingRetentionDays?: number;
-    defaultEncryptionScope?: string;
     denyEncryptionScopeOverride?: boolean;
-    publicAccess?: PublicAccess;
+    enableNfsV3AllSquash?: boolean;
+    enableNfsV3RootSquash?: boolean;
+    readonly hasImmutabilityPolicy?: boolean;
+    readonly hasLegalHold?: boolean;
+    readonly immutabilityPolicy?: ImmutabilityPolicyProperties;
+    immutableStorageWithVersioning?: ImmutableStorageWithVersioning;
     readonly lastModifiedTime?: Date;
-    readonly leaseStatus?: LeaseStatus;
-    readonly leaseState?: LeaseState;
     readonly leaseDuration?: LeaseDuration;
+    readonly leaseState?: LeaseState;
+    readonly leaseStatus?: LeaseStatus;
+    readonly legalHold?: LegalHoldProperties;
     metadata?: {
         [propertyName: string]: string;
     };
-    readonly immutabilityPolicy?: ImmutabilityPolicyProperties;
-    readonly legalHold?: LegalHoldProperties;
-    readonly hasLegalHold?: boolean;
-    readonly hasImmutabilityPolicy?: boolean;
-    immutableStorageWithVersioning?: ImmutableStorageWithVersioning;
-};
+    publicAccess?: PublicAccess;
+    readonly remainingRetentionDays?: number;
+    readonly version?: string;
+}
 
 // @public
 export interface BlobContainers {
-    beginObjectLevelWorm(resourceGroupName: string, accountName: string, containerName: string, options?: BlobContainersObjectLevelWormOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginObjectLevelWorm(resourceGroupName: string, accountName: string, containerName: string, options?: BlobContainersObjectLevelWormOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginObjectLevelWormAndWait(resourceGroupName: string, accountName: string, containerName: string, options?: BlobContainersObjectLevelWormOptionalParams): Promise<void>;
     clearLegalHold(resourceGroupName: string, accountName: string, containerName: string, legalHold: LegalHold, options?: BlobContainersClearLegalHoldOptionalParams): Promise<BlobContainersClearLegalHoldResponse>;
     create(resourceGroupName: string, accountName: string, containerName: string, blobContainer: BlobContainer, options?: BlobContainersCreateOptionalParams): Promise<BlobContainersCreateResponse>;
@@ -186,9 +209,6 @@ export type BlobContainersLeaseResponse = LeaseContainerResponse;
 
 // @public
 export interface BlobContainersListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    include?: ListContainersInclude;
-    maxpagesize?: string;
 }
 
 // @public
@@ -237,6 +257,11 @@ export interface BlobContainersUpdateOptionalParams extends coreClient.Operation
 export type BlobContainersUpdateResponse = BlobContainer;
 
 // @public
+export interface BlobInventoryCreationTime {
+    lastNDays?: number;
+}
+
+// @public
 export interface BlobInventoryPolicies {
     createOrUpdate(resourceGroupName: string, accountName: string, blobInventoryPolicyName: BlobInventoryPolicyName, properties: BlobInventoryPolicy, options?: BlobInventoryPoliciesCreateOrUpdateOptionalParams): Promise<BlobInventoryPoliciesCreateOrUpdateResponse>;
     delete(resourceGroupName: string, accountName: string, blobInventoryPolicyName: BlobInventoryPolicyName, options?: BlobInventoryPoliciesDeleteOptionalParams): Promise<void>;
@@ -270,11 +295,11 @@ export interface BlobInventoryPoliciesListOptionalParams extends coreClient.Oper
 export type BlobInventoryPoliciesListResponse = ListBlobInventoryPolicy;
 
 // @public
-export type BlobInventoryPolicy = Resource & {
-    readonly systemData?: SystemData;
+export interface BlobInventoryPolicy extends Resource {
     readonly lastModifiedTime?: Date;
     policy?: BlobInventoryPolicySchema;
-};
+    readonly systemData?: SystemData;
+}
 
 // @public
 export interface BlobInventoryPolicyDefinition {
@@ -288,7 +313,10 @@ export interface BlobInventoryPolicyDefinition {
 // @public
 export interface BlobInventoryPolicyFilter {
     blobTypes?: string[];
+    creationTime?: BlobInventoryCreationTime;
+    excludePrefix?: string[];
     includeBlobVersions?: boolean;
+    includeDeleted?: boolean;
     includeSnapshots?: boolean;
     prefixMatch?: string[];
 }
@@ -306,6 +334,7 @@ export interface BlobInventoryPolicyRule {
 
 // @public
 export interface BlobInventoryPolicySchema {
+    readonly destination?: string;
     enabled: boolean;
     rules: BlobInventoryPolicyRule[];
     type: InventoryRuleType;
@@ -340,18 +369,18 @@ export interface BlobServiceItems {
 }
 
 // @public
-export type BlobServiceProperties = Resource & {
-    readonly sku?: Sku;
+export interface BlobServiceProperties extends Resource {
+    automaticSnapshotPolicyEnabled?: boolean;
+    changeFeed?: ChangeFeed;
+    containerDeleteRetentionPolicy?: DeleteRetentionPolicy;
     cors?: CorsRules;
     defaultServiceVersion?: string;
     deleteRetentionPolicy?: DeleteRetentionPolicy;
     isVersioningEnabled?: boolean;
-    automaticSnapshotPolicyEnabled?: boolean;
-    changeFeed?: ChangeFeed;
-    restorePolicy?: RestorePolicyProperties;
-    containerDeleteRetentionPolicy?: DeleteRetentionPolicy;
     lastAccessTimeTrackingPolicy?: LastAccessTimeTrackingPolicy;
-};
+    restorePolicy?: RestorePolicyProperties;
+    readonly sku?: Sku;
+}
 
 // @public
 export interface BlobServices {
@@ -403,11 +432,6 @@ export interface CloudError {
 }
 
 // @public
-export interface CloudErrorAutoGenerated {
-    error?: CloudErrorBodyAutoGenerated;
-}
-
-// @public
 export interface CloudErrorBody {
     code?: string;
     details?: CloudErrorBody[];
@@ -416,24 +440,13 @@ export interface CloudErrorBody {
 }
 
 // @public
-export interface CloudErrorBodyAutoGenerated {
-    code?: string;
-    details?: CloudErrorBodyAutoGenerated[];
-    message?: string;
-    target?: string;
-}
-
-// @public
 export interface CorsRule {
     allowedHeaders: string[];
-    allowedMethods: CorsRuleAllowedMethodsItem[];
+    allowedMethods: AllowedMethods[];
     allowedOrigins: string[];
     exposedHeaders: string[];
     maxAgeInSeconds: number;
 }
-
-// @public
-export type CorsRuleAllowedMethodsItem = string;
 
 // @public
 export interface CorsRules {
@@ -452,11 +465,14 @@ export interface CustomDomain {
 // @public
 export interface DateAfterCreation {
     daysAfterCreationGreaterThan: number;
+    daysAfterLastTierChangeGreaterThan?: number;
 }
 
 // @public
 export interface DateAfterModification {
+    daysAfterCreationGreaterThan?: number;
     daysAfterLastAccessTimeGreaterThan?: number;
+    daysAfterLastTierChangeGreaterThan?: number;
     daysAfterModificationGreaterThan?: number;
 }
 
@@ -467,13 +483,13 @@ export type DefaultAction = "Allow" | "Deny";
 export type DefaultSharePermission = string;
 
 // @public
-export type DeletedAccount = ProxyResource & {
-    readonly storageAccountResourceId?: string;
-    readonly location?: string;
-    readonly restoreReference?: string;
+export interface DeletedAccount extends ProxyResource {
     readonly creationTime?: string;
     readonly deletionTime?: string;
-};
+    readonly location?: string;
+    readonly restoreReference?: string;
+    readonly storageAccountResourceId?: string;
+}
 
 // @public
 export interface DeletedAccountListResult {
@@ -516,6 +532,7 @@ export interface DeletedShare {
 
 // @public
 export interface DeleteRetentionPolicy {
+    allowPermanentDelete?: boolean;
     days?: number;
     enabled?: boolean;
 }
@@ -530,12 +547,15 @@ export interface Dimension {
 export type DirectoryServiceOptions = string;
 
 // @public
+export type DnsEndpointType = string;
+
+// @public
 export type EnabledProtocols = string;
 
 // @public
 export interface Encryption {
     encryptionIdentity?: EncryptionIdentity;
-    keySource: KeySource;
+    keySource?: KeySource;
     keyVaultProperties?: KeyVaultProperties;
     requireInfrastructureEncryption?: boolean;
     services?: EncryptionServices;
@@ -543,18 +563,19 @@ export interface Encryption {
 
 // @public
 export interface EncryptionIdentity {
+    encryptionFederatedIdentityClientId?: string;
     encryptionUserAssignedIdentity?: string;
 }
 
 // @public
-export type EncryptionScope = Resource & {
+export interface EncryptionScope extends Resource {
+    readonly creationTime?: Date;
+    keyVaultProperties?: EncryptionScopeKeyVaultProperties;
+    readonly lastModifiedTime?: Date;
+    requireInfrastructureEncryption?: boolean;
     source?: EncryptionScopeSource;
     state?: EncryptionScopeState;
-    readonly creationTime?: Date;
-    readonly lastModifiedTime?: Date;
-    keyVaultProperties?: EncryptionScopeKeyVaultProperties;
-    requireInfrastructureEncryption?: boolean;
-};
+}
 
 // @public
 export interface EncryptionScopeKeyVaultProperties {
@@ -593,6 +614,9 @@ export type EncryptionScopesListNextResponse = EncryptionScopeListResult;
 
 // @public
 export interface EncryptionScopesListOptionalParams extends coreClient.OperationOptions {
+    filter?: string;
+    include?: ListEncryptionScopesInclude;
+    maxpagesize?: number;
 }
 
 // @public
@@ -646,14 +670,52 @@ export interface Endpoints {
 }
 
 // @public
+export interface ErrorAdditionalInfo {
+    readonly info?: Record<string, unknown>;
+    readonly type?: string;
+}
+
+// @public
+export interface ErrorDetail {
+    readonly additionalInfo?: ErrorAdditionalInfo[];
+    readonly code?: string;
+    readonly details?: ErrorDetail[];
+    readonly message?: string;
+    readonly target?: string;
+}
+
+// @public
 export interface ErrorResponse {
     error?: ErrorResponseBody;
+}
+
+// @public
+export interface ErrorResponseAutoGenerated {
+    error?: ErrorDetail;
 }
 
 // @public
 export interface ErrorResponseBody {
     code?: string;
     message?: string;
+}
+
+// @public
+export interface ExecutionTarget {
+    excludePrefix?: string[];
+    prefix?: string[];
+}
+
+// @public
+export interface ExecutionTrigger {
+    parameters: TriggerParameters;
+    type: TriggerType;
+}
+
+// @public
+export interface ExecutionTriggerUpdate {
+    parameters?: TriggerParametersUpdate;
+    type?: TriggerType;
 }
 
 // @public
@@ -674,12 +736,12 @@ export interface FileServiceItems {
 }
 
 // @public
-export type FileServiceProperties = Resource & {
-    readonly sku?: Sku;
+export interface FileServiceProperties extends Resource {
     cors?: CorsRules;
-    shareDeleteRetentionPolicy?: DeleteRetentionPolicy;
     protocolSettings?: ProtocolSettings;
-};
+    shareDeleteRetentionPolicy?: DeleteRetentionPolicy;
+    readonly sku?: Sku;
+}
 
 // @public
 export interface FileServices {
@@ -710,52 +772,52 @@ export interface FileServicesSetServicePropertiesOptionalParams extends coreClie
 export type FileServicesSetServicePropertiesResponse = FileServiceProperties;
 
 // @public
-export type FileShare = AzureEntityResource & {
-    readonly lastModifiedTime?: Date;
-    metadata?: {
-        [propertyName: string]: string;
-    };
-    shareQuota?: number;
-    enabledProtocols?: EnabledProtocols;
-    rootSquash?: RootSquashType;
-    readonly version?: string;
-    readonly deleted?: boolean;
-    readonly deletedTime?: Date;
-    readonly remainingRetentionDays?: number;
+export interface FileShare extends AzureEntityResource {
     accessTier?: ShareAccessTier;
     readonly accessTierChangeTime?: Date;
     readonly accessTierStatus?: string;
-    readonly shareUsageBytes?: number;
-    readonly leaseStatus?: LeaseStatus;
-    readonly leaseState?: LeaseState;
+    readonly deleted?: boolean;
+    readonly deletedTime?: Date;
+    enabledProtocols?: EnabledProtocols;
+    readonly lastModifiedTime?: Date;
     readonly leaseDuration?: LeaseDuration;
+    readonly leaseState?: LeaseState;
+    readonly leaseStatus?: LeaseStatus;
+    metadata?: {
+        [propertyName: string]: string;
+    };
+    readonly remainingRetentionDays?: number;
+    rootSquash?: RootSquashType;
+    shareQuota?: number;
+    readonly shareUsageBytes?: number;
     signedIdentifiers?: SignedIdentifier[];
     readonly snapshotTime?: Date;
-};
+    readonly version?: string;
+}
 
 // @public
-export type FileShareItem = AzureEntityResource & {
-    readonly lastModifiedTime?: Date;
-    metadata?: {
-        [propertyName: string]: string;
-    };
-    shareQuota?: number;
-    enabledProtocols?: EnabledProtocols;
-    rootSquash?: RootSquashType;
-    readonly version?: string;
-    readonly deleted?: boolean;
-    readonly deletedTime?: Date;
-    readonly remainingRetentionDays?: number;
+export interface FileShareItem extends AzureEntityResource {
     accessTier?: ShareAccessTier;
     readonly accessTierChangeTime?: Date;
     readonly accessTierStatus?: string;
-    readonly shareUsageBytes?: number;
-    readonly leaseStatus?: LeaseStatus;
-    readonly leaseState?: LeaseState;
+    readonly deleted?: boolean;
+    readonly deletedTime?: Date;
+    enabledProtocols?: EnabledProtocols;
+    readonly lastModifiedTime?: Date;
     readonly leaseDuration?: LeaseDuration;
+    readonly leaseState?: LeaseState;
+    readonly leaseStatus?: LeaseStatus;
+    metadata?: {
+        [propertyName: string]: string;
+    };
+    readonly remainingRetentionDays?: number;
+    rootSquash?: RootSquashType;
+    shareQuota?: number;
+    readonly shareUsageBytes?: number;
     signedIdentifiers?: SignedIdentifier[];
     readonly snapshotTime?: Date;
-};
+    readonly version?: string;
+}
 
 // @public
 export interface FileShareItems {
@@ -813,9 +875,6 @@ export type FileSharesLeaseResponse = FileSharesLeaseHeaders & LeaseShareRespons
 
 // @public
 export interface FileSharesListNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    filter?: string;
-    maxpagesize?: string;
 }
 
 // @public
@@ -848,12 +907,18 @@ export type Format = string;
 // @public
 export interface GeoReplicationStats {
     readonly canFailover?: boolean;
+    readonly canPlannedFailover?: boolean;
     readonly lastSyncTime?: Date;
+    readonly postFailoverRedundancy?: PostFailoverRedundancy;
+    readonly postPlannedFailoverRedundancy?: PostPlannedFailoverRedundancy;
     readonly status?: GeoReplicationStatus;
 }
 
 // @public
 export type GeoReplicationStatus = string;
+
+// @public
+export function getContinuationToken(page: unknown): string | undefined;
 
 // @public
 export type HttpProtocol = "https,http" | "https";
@@ -872,15 +937,17 @@ export interface Identity {
 export type IdentityType = string;
 
 // @public
-export type ImmutabilityPolicy = AzureEntityResource & {
+export interface ImmutabilityPolicy extends AzureEntityResource {
+    allowProtectedAppendWrites?: boolean;
+    allowProtectedAppendWritesAll?: boolean;
     immutabilityPeriodSinceCreationInDays?: number;
     readonly state?: ImmutabilityPolicyState;
-    allowProtectedAppendWrites?: boolean;
-};
+}
 
 // @public
 export interface ImmutabilityPolicyProperties {
     allowProtectedAppendWrites?: boolean;
+    allowProtectedAppendWritesAll?: boolean;
     readonly etag?: string;
     immutabilityPeriodSinceCreationInDays?: number;
     readonly state?: ImmutabilityPolicyState;
@@ -892,6 +959,12 @@ export type ImmutabilityPolicyState = string;
 
 // @public
 export type ImmutabilityPolicyUpdateType = string;
+
+// @public
+export interface ImmutableStorageAccount {
+    enabled?: boolean;
+    immutabilityPolicy?: AccountImmutabilityPolicyProperties;
+}
 
 // @public
 export interface ImmutableStorageWithVersioning {
@@ -908,6 +981,9 @@ export interface IPRule {
     action?: "Allow";
     iPAddressOrRange: string;
 }
+
+// @public
+export type IssueType = string;
 
 // @public
 export interface KeyCreationTime {
@@ -934,6 +1010,7 @@ export { KeyType_2 as KeyType }
 
 // @public
 export interface KeyVaultProperties {
+    readonly currentVersionedKeyExpirationTimestamp?: Date;
     readonly currentVersionedKeyIdentifier?: string;
     keyName?: string;
     keyVaultUri?: string;
@@ -945,314 +1022,301 @@ export interface KeyVaultProperties {
 export type Kind = string;
 
 // @public
+export enum KnownAccountImmutabilityPolicyState {
+    Disabled = "Disabled",
+    Locked = "Locked",
+    Unlocked = "Unlocked"
+}
+
+// @public
+export enum KnownAccountType {
+    Computer = "Computer",
+    User = "User"
+}
+
+// @public
+export enum KnownAllowedCopyScope {
+    AAD = "AAD",
+    PrivateLink = "PrivateLink"
+}
+
+// @public
+export enum KnownAllowedMethods {
+    Connect = "CONNECT",
+    Delete = "DELETE",
+    GET = "GET",
+    Head = "HEAD",
+    Merge = "MERGE",
+    Options = "OPTIONS",
+    Patch = "PATCH",
+    Post = "POST",
+    PUT = "PUT",
+    Trace = "TRACE"
+}
+
+// @public
 export enum KnownBlobInventoryPolicyName {
-    // (undocumented)
     Default = "default"
 }
 
 // @public
 export enum KnownBlobRestoreProgressStatus {
-    // (undocumented)
     Complete = "Complete",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     InProgress = "InProgress"
 }
 
 // @public
 export enum KnownBypass {
-    // (undocumented)
     AzureServices = "AzureServices",
-    // (undocumented)
     Logging = "Logging",
-    // (undocumented)
     Metrics = "Metrics",
-    // (undocumented)
     None = "None"
 }
 
 // @public
-export enum KnownCorsRuleAllowedMethodsItem {
-    // (undocumented)
-    Delete = "DELETE",
-    // (undocumented)
-    GET = "GET",
-    // (undocumented)
-    Head = "HEAD",
-    // (undocumented)
-    Merge = "MERGE",
-    // (undocumented)
-    Options = "OPTIONS",
-    // (undocumented)
-    Post = "POST",
-    // (undocumented)
-    PUT = "PUT"
-}
-
-// @public
 export enum KnownCreatedByType {
-    // (undocumented)
     Application = "Application",
-    // (undocumented)
     Key = "Key",
-    // (undocumented)
     ManagedIdentity = "ManagedIdentity",
-    // (undocumented)
     User = "User"
 }
 
 // @public
 export enum KnownDefaultSharePermission {
-    // (undocumented)
     None = "None",
-    // (undocumented)
     StorageFileDataSmbShareContributor = "StorageFileDataSmbShareContributor",
-    // (undocumented)
     StorageFileDataSmbShareElevatedContributor = "StorageFileDataSmbShareElevatedContributor",
-    // (undocumented)
-    StorageFileDataSmbShareOwner = "StorageFileDataSmbShareOwner",
-    // (undocumented)
     StorageFileDataSmbShareReader = "StorageFileDataSmbShareReader"
 }
 
 // @public
 export enum KnownDirectoryServiceOptions {
-    // (undocumented)
     Aadds = "AADDS",
-    // (undocumented)
+    Aadkerb = "AADKERB",
     AD = "AD",
-    // (undocumented)
     None = "None"
 }
 
 // @public
+export enum KnownDnsEndpointType {
+    AzureDnsZone = "AzureDnsZone",
+    Standard = "Standard"
+}
+
+// @public
 export enum KnownEnabledProtocols {
-    // (undocumented)
     NFS = "NFS",
-    // (undocumented)
     SMB = "SMB"
 }
 
 // @public
 export enum KnownEncryptionScopeSource {
-    // (undocumented)
     MicrosoftKeyVault = "Microsoft.KeyVault",
-    // (undocumented)
     MicrosoftStorage = "Microsoft.Storage"
 }
 
 // @public
 export enum KnownEncryptionScopeState {
-    // (undocumented)
     Disabled = "Disabled",
-    // (undocumented)
     Enabled = "Enabled"
 }
 
 // @public
 export enum KnownExpirationAction {
-    // (undocumented)
+    Block = "Block",
     Log = "Log"
 }
 
 // @public
 export enum KnownExtendedLocationTypes {
-    // (undocumented)
     EdgeZone = "EdgeZone"
 }
 
 // @public
 export enum KnownFormat {
-    // (undocumented)
     Csv = "Csv",
-    // (undocumented)
     Parquet = "Parquet"
 }
 
 // @public
 export enum KnownGeoReplicationStatus {
-    // (undocumented)
     Bootstrap = "Bootstrap",
-    // (undocumented)
     Live = "Live",
-    // (undocumented)
     Unavailable = "Unavailable"
 }
 
 // @public
 export enum KnownIdentityType {
-    // (undocumented)
     None = "None",
-    // (undocumented)
     SystemAssigned = "SystemAssigned",
-    // (undocumented)
     SystemAssignedUserAssigned = "SystemAssigned,UserAssigned",
-    // (undocumented)
     UserAssigned = "UserAssigned"
 }
 
 // @public
 export enum KnownImmutabilityPolicyState {
-    // (undocumented)
     Locked = "Locked",
-    // (undocumented)
     Unlocked = "Unlocked"
 }
 
 // @public
 export enum KnownImmutabilityPolicyUpdateType {
-    // (undocumented)
     Extend = "extend",
-    // (undocumented)
     Lock = "lock",
-    // (undocumented)
     Put = "put"
 }
 
 // @public
 export enum KnownInventoryRuleType {
-    // (undocumented)
     Inventory = "Inventory"
 }
 
 // @public
+export enum KnownIssueType {
+    ConfigurationPropagationFailure = "ConfigurationPropagationFailure",
+    Unknown = "Unknown"
+}
+
+// @public
 export enum KnownKeySource {
-    // (undocumented)
     MicrosoftKeyvault = "Microsoft.Keyvault",
-    // (undocumented)
     MicrosoftStorage = "Microsoft.Storage"
 }
 
 // @public
 export enum KnownKeyType {
-    // (undocumented)
     Account = "Account",
-    // (undocumented)
     Service = "Service"
 }
 
 // @public
 export enum KnownKind {
-    // (undocumented)
     BlobStorage = "BlobStorage",
-    // (undocumented)
     BlockBlobStorage = "BlockBlobStorage",
-    // (undocumented)
     FileStorage = "FileStorage",
-    // (undocumented)
     Storage = "Storage",
-    // (undocumented)
     StorageV2 = "StorageV2"
 }
 
 // @public
 export enum KnownLargeFileSharesState {
-    // (undocumented)
     Disabled = "Disabled",
-    // (undocumented)
     Enabled = "Enabled"
 }
 
 // @public
 export enum KnownLeaseContainerRequestAction {
-    // (undocumented)
     Acquire = "Acquire",
-    // (undocumented)
     Break = "Break",
-    // (undocumented)
     Change = "Change",
-    // (undocumented)
     Release = "Release",
-    // (undocumented)
     Renew = "Renew"
 }
 
 // @public
 export enum KnownLeaseDuration {
-    // (undocumented)
     Fixed = "Fixed",
-    // (undocumented)
     Infinite = "Infinite"
 }
 
 // @public
 export enum KnownLeaseShareAction {
-    // (undocumented)
     Acquire = "Acquire",
-    // (undocumented)
     Break = "Break",
-    // (undocumented)
     Change = "Change",
-    // (undocumented)
     Release = "Release",
-    // (undocumented)
     Renew = "Renew"
 }
 
 // @public
 export enum KnownLeaseState {
-    // (undocumented)
     Available = "Available",
-    // (undocumented)
     Breaking = "Breaking",
-    // (undocumented)
     Broken = "Broken",
-    // (undocumented)
     Expired = "Expired",
-    // (undocumented)
     Leased = "Leased"
 }
 
 // @public
 export enum KnownLeaseStatus {
-    // (undocumented)
     Locked = "Locked",
-    // (undocumented)
     Unlocked = "Unlocked"
 }
 
 // @public
 export enum KnownListContainersInclude {
-    // (undocumented)
     Deleted = "deleted"
 }
 
 // @public
+export enum KnownListEncryptionScopesInclude {
+    All = "All",
+    Disabled = "Disabled",
+    Enabled = "Enabled"
+}
+
+// @public
+export enum KnownListLocalUserIncludeParam {
+    Nfsv3 = "nfsv3"
+}
+
+// @public
 export enum KnownManagementPolicyName {
-    // (undocumented)
+    Default = "default"
+}
+
+// @public
+export enum KnownMigrationName {
     Default = "default"
 }
 
 // @public
 export enum KnownMigrationState {
-    // (undocumented)
     Completed = "Completed",
-    // (undocumented)
     InProgress = "InProgress"
 }
 
 // @public
+export enum KnownMigrationStatus {
+    Complete = "Complete",
+    Failed = "Failed",
+    InProgress = "InProgress",
+    Invalid = "Invalid",
+    SubmittedForConversion = "SubmittedForConversion"
+}
+
+// @public
 export enum KnownMinimumTlsVersion {
-    // (undocumented)
     TLS10 = "TLS1_0",
-    // (undocumented)
     TLS11 = "TLS1_1",
-    // (undocumented)
-    TLS12 = "TLS1_2"
+    TLS12 = "TLS1_2",
+    TLS13 = "TLS1_3"
 }
 
 // @public
 export enum KnownName {
-    // (undocumented)
     AccessTimeTracking = "AccessTimeTracking"
 }
 
 // @public
+export enum KnownNetworkSecurityPerimeterConfigurationProvisioningState {
+    Accepted = "Accepted",
+    Canceled = "Canceled",
+    Deleting = "Deleting",
+    Failed = "Failed",
+    Succeeded = "Succeeded"
+}
+
+// @public
+export enum KnownNspAccessRuleDirection {
+    Inbound = "Inbound",
+    Outbound = "Outbound"
+}
+
+// @public
 export enum KnownObjectType {
-    // (undocumented)
     Blob = "Blob",
-    // (undocumented)
     Container = "Container"
 }
 
@@ -1277,64 +1341,87 @@ export enum KnownPermissions {
 }
 
 // @public
+export enum KnownPostFailoverRedundancy {
+    StandardLRS = "Standard_LRS",
+    StandardZRS = "Standard_ZRS"
+}
+
+// @public
+export enum KnownPostPlannedFailoverRedundancy {
+    StandardGRS = "Standard_GRS",
+    StandardGzrs = "Standard_GZRS",
+    StandardRagrs = "Standard_RAGRS",
+    StandardRagzrs = "Standard_RAGZRS"
+}
+
+// @public
 export enum KnownPrivateEndpointConnectionProvisioningState {
-    // (undocumented)
     Creating = "Creating",
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Succeeded = "Succeeded"
 }
 
 // @public
 export enum KnownPrivateEndpointServiceConnectionStatus {
-    // (undocumented)
     Approved = "Approved",
-    // (undocumented)
     Pending = "Pending",
-    // (undocumented)
     Rejected = "Rejected"
 }
 
 // @public
+export enum KnownPublicNetworkAccess {
+    Disabled = "Disabled",
+    Enabled = "Enabled",
+    SecuredByPerimeter = "SecuredByPerimeter"
+}
+
+// @public
 export enum KnownReasonCode {
-    // (undocumented)
     NotAvailableForSubscription = "NotAvailableForSubscription",
-    // (undocumented)
     QuotaId = "QuotaId"
 }
 
 // @public
+export enum KnownResourceAssociationAccessMode {
+    Audit = "Audit",
+    Enforced = "Enforced",
+    Learning = "Learning"
+}
+
+// @public
 export enum KnownRootSquashType {
-    // (undocumented)
     AllSquash = "AllSquash",
-    // (undocumented)
     NoRootSquash = "NoRootSquash",
-    // (undocumented)
     RootSquash = "RootSquash"
 }
 
 // @public
 export enum KnownRoutingChoice {
-    // (undocumented)
     InternetRouting = "InternetRouting",
-    // (undocumented)
     MicrosoftRouting = "MicrosoftRouting"
 }
 
 // @public
 export enum KnownRuleType {
-    // (undocumented)
     Lifecycle = "Lifecycle"
 }
 
 // @public
+export enum KnownRunResult {
+    Failed = "Failed",
+    Succeeded = "Succeeded"
+}
+
+// @public
+export enum KnownRunStatusEnum {
+    Finished = "Finished",
+    InProgress = "InProgress"
+}
+
+// @public
 export enum KnownSchedule {
-    // (undocumented)
     Daily = "Daily",
-    // (undocumented)
     Weekly = "Weekly"
 }
 
@@ -1351,14 +1438,16 @@ export enum KnownServices {
 }
 
 // @public
+export enum KnownSeverity {
+    Error = "Error",
+    Warning = "Warning"
+}
+
+// @public
 export enum KnownShareAccessTier {
-    // (undocumented)
     Cool = "Cool",
-    // (undocumented)
     Hot = "Hot",
-    // (undocumented)
     Premium = "Premium",
-    // (undocumented)
     TransactionOptimized = "TransactionOptimized"
 }
 
@@ -1385,36 +1474,30 @@ export enum KnownSignedResourceTypes {
 }
 
 // @public
+export enum KnownSkuConversionStatus {
+    Failed = "Failed",
+    InProgress = "InProgress",
+    Succeeded = "Succeeded"
+}
+
+// @public
 export enum KnownSkuName {
-    // (undocumented)
     PremiumLRS = "Premium_LRS",
-    // (undocumented)
     PremiumZRS = "Premium_ZRS",
-    // (undocumented)
     StandardGRS = "Standard_GRS",
-    // (undocumented)
     StandardGzrs = "Standard_GZRS",
-    // (undocumented)
     StandardLRS = "Standard_LRS",
-    // (undocumented)
     StandardRagrs = "Standard_RAGRS",
-    // (undocumented)
     StandardRagzrs = "Standard_RAGZRS",
-    // (undocumented)
     StandardZRS = "Standard_ZRS"
 }
 
 // @public
 export enum KnownState {
-    // (undocumented)
     Deprovisioning = "Deprovisioning",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     NetworkSourceDeleted = "NetworkSourceDeleted",
-    // (undocumented)
     Provisioning = "Provisioning",
-    // (undocumented)
     Succeeded = "Succeeded"
 }
 
@@ -1476,6 +1559,7 @@ export type LeaseStatus = string;
 
 // @public
 export interface LegalHold {
+    allowProtectedAppendWritesAll?: boolean;
     readonly hasLegalHold?: boolean;
     tags: string[];
 }
@@ -1483,6 +1567,7 @@ export interface LegalHold {
 // @public
 export interface LegalHoldProperties {
     readonly hasLegalHold?: boolean;
+    protectedAppendWritesHistory?: ProtectedAppendWritesHistory;
     tags?: TagProperty[];
 }
 
@@ -1497,27 +1582,29 @@ export interface ListBlobInventoryPolicy {
 }
 
 // @public
-export type ListContainerItem = AzureEntityResource & {
-    readonly version?: string;
+export interface ListContainerItem extends AzureEntityResource {
+    defaultEncryptionScope?: string;
     readonly deleted?: boolean;
     readonly deletedTime?: Date;
-    readonly remainingRetentionDays?: number;
-    defaultEncryptionScope?: string;
     denyEncryptionScopeOverride?: boolean;
-    publicAccess?: PublicAccess;
+    enableNfsV3AllSquash?: boolean;
+    enableNfsV3RootSquash?: boolean;
+    readonly hasImmutabilityPolicy?: boolean;
+    readonly hasLegalHold?: boolean;
+    readonly immutabilityPolicy?: ImmutabilityPolicyProperties;
+    immutableStorageWithVersioning?: ImmutableStorageWithVersioning;
     readonly lastModifiedTime?: Date;
-    readonly leaseStatus?: LeaseStatus;
-    readonly leaseState?: LeaseState;
     readonly leaseDuration?: LeaseDuration;
+    readonly leaseState?: LeaseState;
+    readonly leaseStatus?: LeaseStatus;
+    readonly legalHold?: LegalHoldProperties;
     metadata?: {
         [propertyName: string]: string;
     };
-    readonly immutabilityPolicy?: ImmutabilityPolicyProperties;
-    readonly legalHold?: LegalHoldProperties;
-    readonly hasLegalHold?: boolean;
-    readonly hasImmutabilityPolicy?: boolean;
-    immutableStorageWithVersioning?: ImmutableStorageWithVersioning;
-};
+    publicAccess?: PublicAccess;
+    readonly remainingRetentionDays?: number;
+    readonly version?: string;
+}
 
 // @public
 export interface ListContainerItems {
@@ -1528,12 +1615,18 @@ export interface ListContainerItems {
 // @public
 export type ListContainersInclude = string;
 
+// @public
+export type ListEncryptionScopesInclude = string;
+
+// @public
+export type ListLocalUserIncludeParam = string;
+
 // @public (undocumented)
-export type ListQueue = Resource & {
+export interface ListQueue extends Resource {
     metadata?: {
         [propertyName: string]: string;
     };
-};
+}
 
 // @public
 export interface ListQueueResource {
@@ -1563,6 +1656,92 @@ export interface ListTableServices {
 }
 
 // @public
+export interface LocalUser extends Resource {
+    allowAclAuthorization?: boolean;
+    extendedGroups?: number[];
+    groupId?: number;
+    hasSharedKey?: boolean;
+    hasSshKey?: boolean;
+    hasSshPassword?: boolean;
+    homeDirectory?: string;
+    isNFSv3Enabled?: boolean;
+    permissionScopes?: PermissionScope[];
+    readonly sid?: string;
+    sshAuthorizedKeys?: SshPublicKey[];
+    readonly systemData?: SystemData;
+    readonly userId?: number;
+}
+
+// @public
+export interface LocalUserKeys {
+    readonly sharedKey?: string;
+    sshAuthorizedKeys?: SshPublicKey[];
+}
+
+// @public
+export interface LocalUserRegeneratePasswordResult {
+    readonly sshPassword?: string;
+}
+
+// @public
+export interface LocalUsers {
+    readonly nextLink?: string;
+    value?: LocalUser[];
+}
+
+// @public
+export interface LocalUsersCreateOrUpdateOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type LocalUsersCreateOrUpdateResponse = LocalUser;
+
+// @public
+export interface LocalUsersDeleteOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface LocalUsersGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type LocalUsersGetResponse = LocalUser;
+
+// @public
+export interface LocalUsersListKeysOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type LocalUsersListKeysResponse = LocalUserKeys;
+
+// @public
+export interface LocalUsersListOptionalParams extends coreClient.OperationOptions {
+    filter?: string;
+    include?: ListLocalUserIncludeParam;
+    maxpagesize?: number;
+}
+
+// @public
+export type LocalUsersListResponse = LocalUsers;
+
+// @public
+export interface LocalUsersOperations {
+    createOrUpdate(resourceGroupName: string, accountName: string, username: string, properties: LocalUser, options?: LocalUsersCreateOrUpdateOptionalParams): Promise<LocalUsersCreateOrUpdateResponse>;
+    delete(resourceGroupName: string, accountName: string, username: string, options?: LocalUsersDeleteOptionalParams): Promise<void>;
+    get(resourceGroupName: string, accountName: string, username: string, options?: LocalUsersGetOptionalParams): Promise<LocalUsersGetResponse>;
+    list(resourceGroupName: string, accountName: string, options?: LocalUsersListOptionalParams): PagedAsyncIterableIterator<LocalUser>;
+    listKeys(resourceGroupName: string, accountName: string, username: string, options?: LocalUsersListKeysOptionalParams): Promise<LocalUsersListKeysResponse>;
+    regeneratePassword(resourceGroupName: string, accountName: string, username: string, options?: LocalUsersRegeneratePasswordOptionalParams): Promise<LocalUsersRegeneratePasswordResponse>;
+}
+
+// @public
+export interface LocalUsersRegeneratePasswordOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type LocalUsersRegeneratePasswordResponse = LocalUserRegeneratePasswordResult;
+
+// @public
 export interface ManagementPolicies {
     createOrUpdate(resourceGroupName: string, accountName: string, managementPolicyName: ManagementPolicyName, properties: ManagementPolicy, options?: ManagementPoliciesCreateOrUpdateOptionalParams): Promise<ManagementPoliciesCreateOrUpdateResponse>;
     delete(resourceGroupName: string, accountName: string, managementPolicyName: ManagementPolicyName, options?: ManagementPoliciesDeleteOptionalParams): Promise<void>;
@@ -1588,10 +1767,10 @@ export interface ManagementPoliciesGetOptionalParams extends coreClient.Operatio
 export type ManagementPoliciesGetResponse = ManagementPolicy;
 
 // @public
-export type ManagementPolicy = Resource & {
+export interface ManagementPolicy extends Resource {
     readonly lastModifiedTime?: Date;
     policy?: ManagementPolicySchema;
-};
+}
 
 // @public
 export interface ManagementPolicyAction {
@@ -1605,7 +1784,9 @@ export interface ManagementPolicyBaseBlob {
     delete?: DateAfterModification;
     enableAutoTierToHotFromCool?: boolean;
     tierToArchive?: DateAfterModification;
+    tierToCold?: DateAfterModification;
     tierToCool?: DateAfterModification;
+    tierToHot?: DateAfterModification;
 }
 
 // @public
@@ -1641,14 +1822,18 @@ export interface ManagementPolicySchema {
 export interface ManagementPolicySnapShot {
     delete?: DateAfterCreation;
     tierToArchive?: DateAfterCreation;
+    tierToCold?: DateAfterCreation;
     tierToCool?: DateAfterCreation;
+    tierToHot?: DateAfterCreation;
 }
 
 // @public
 export interface ManagementPolicyVersion {
     delete?: DateAfterCreation;
     tierToArchive?: DateAfterCreation;
+    tierToCold?: DateAfterCreation;
     tierToCool?: DateAfterCreation;
+    tierToHot?: DateAfterCreation;
 }
 
 // @public
@@ -1665,7 +1850,13 @@ export interface MetricSpecification {
 }
 
 // @public
+export type MigrationName = string;
+
+// @public
 export type MigrationState = string;
+
+// @public
+export type MigrationStatus = string;
 
 // @public
 export type MinimumTlsVersion = string;
@@ -1688,51 +1879,151 @@ export interface NetworkRuleSet {
 }
 
 // @public
+export interface NetworkSecurityPerimeter {
+    id?: string;
+    location?: string;
+    perimeterGuid?: string;
+}
+
+// @public
+export interface NetworkSecurityPerimeterConfiguration extends ProxyResourceAutoGenerated {
+    readonly networkSecurityPerimeter?: NetworkSecurityPerimeter;
+    readonly profile?: NetworkSecurityPerimeterConfigurationPropertiesProfile;
+    readonly provisioningIssues?: ProvisioningIssue[];
+    readonly provisioningState?: NetworkSecurityPerimeterConfigurationProvisioningState;
+    readonly resourceAssociation?: NetworkSecurityPerimeterConfigurationPropertiesResourceAssociation;
+}
+
+// @public
+export interface NetworkSecurityPerimeterConfigurationList {
+    nextLink?: string;
+    readonly value?: NetworkSecurityPerimeterConfiguration[];
+}
+
+// @public
+export interface NetworkSecurityPerimeterConfigurationPropertiesProfile {
+    accessRules?: NspAccessRule[];
+    accessRulesVersion?: number;
+    diagnosticSettingsVersion?: number;
+    enabledLogCategories?: string[];
+    name?: string;
+}
+
+// @public
+export interface NetworkSecurityPerimeterConfigurationPropertiesResourceAssociation {
+    accessMode?: ResourceAssociationAccessMode;
+    name?: string;
+}
+
+// @public
+export type NetworkSecurityPerimeterConfigurationProvisioningState = string;
+
+// @public
+export interface NetworkSecurityPerimeterConfigurations {
+    beginReconcile(resourceGroupName: string, accountName: string, networkSecurityPerimeterConfigurationName: string, options?: NetworkSecurityPerimeterConfigurationsReconcileOptionalParams): Promise<SimplePollerLike<OperationState<NetworkSecurityPerimeterConfigurationsReconcileResponse>, NetworkSecurityPerimeterConfigurationsReconcileResponse>>;
+    beginReconcileAndWait(resourceGroupName: string, accountName: string, networkSecurityPerimeterConfigurationName: string, options?: NetworkSecurityPerimeterConfigurationsReconcileOptionalParams): Promise<NetworkSecurityPerimeterConfigurationsReconcileResponse>;
+    get(resourceGroupName: string, accountName: string, networkSecurityPerimeterConfigurationName: string, options?: NetworkSecurityPerimeterConfigurationsGetOptionalParams): Promise<NetworkSecurityPerimeterConfigurationsGetResponse>;
+    list(resourceGroupName: string, accountName: string, options?: NetworkSecurityPerimeterConfigurationsListOptionalParams): PagedAsyncIterableIterator<NetworkSecurityPerimeterConfiguration>;
+}
+
+// @public
+export interface NetworkSecurityPerimeterConfigurationsGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type NetworkSecurityPerimeterConfigurationsGetResponse = NetworkSecurityPerimeterConfiguration;
+
+// @public
+export interface NetworkSecurityPerimeterConfigurationsListOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type NetworkSecurityPerimeterConfigurationsListResponse = NetworkSecurityPerimeterConfigurationList;
+
+// @public
+export interface NetworkSecurityPerimeterConfigurationsReconcileHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
+export interface NetworkSecurityPerimeterConfigurationsReconcileOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type NetworkSecurityPerimeterConfigurationsReconcileResponse = NetworkSecurityPerimeterConfigurationsReconcileHeaders;
+
+// @public
+export interface NspAccessRule {
+    name?: string;
+    readonly properties?: NspAccessRuleProperties;
+}
+
+// @public
+export type NspAccessRuleDirection = string;
+
+// @public
+export interface NspAccessRuleProperties {
+    addressPrefixes?: string[];
+    direction?: NspAccessRuleDirection;
+    readonly fullyQualifiedDomainNames?: string[];
+    readonly networkSecurityPerimeters?: NetworkSecurityPerimeter[];
+    subscriptions?: NspAccessRulePropertiesSubscriptionsItem[];
+}
+
+// @public
+export interface NspAccessRulePropertiesSubscriptionsItem {
+    id?: string;
+}
+
+// @public
 export interface ObjectReplicationPolicies {
     value?: ObjectReplicationPolicy[];
 }
 
 // @public
+export interface ObjectReplicationPoliciesCreateOrUpdateOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ObjectReplicationPoliciesCreateOrUpdateResponse = ObjectReplicationPolicy;
+
+// @public
+export interface ObjectReplicationPoliciesDeleteOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface ObjectReplicationPoliciesGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ObjectReplicationPoliciesGetResponse = ObjectReplicationPolicy;
+
+// @public
+export interface ObjectReplicationPoliciesListOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type ObjectReplicationPoliciesListResponse = ObjectReplicationPolicies;
+
+// @public
 export interface ObjectReplicationPoliciesOperations {
-    createOrUpdate(resourceGroupName: string, accountName: string, objectReplicationPolicyId: string, properties: ObjectReplicationPolicy, options?: ObjectReplicationPoliciesOperationsCreateOrUpdateOptionalParams): Promise<ObjectReplicationPoliciesOperationsCreateOrUpdateResponse>;
-    delete(resourceGroupName: string, accountName: string, objectReplicationPolicyId: string, options?: ObjectReplicationPoliciesOperationsDeleteOptionalParams): Promise<void>;
-    get(resourceGroupName: string, accountName: string, objectReplicationPolicyId: string, options?: ObjectReplicationPoliciesOperationsGetOptionalParams): Promise<ObjectReplicationPoliciesOperationsGetResponse>;
-    list(resourceGroupName: string, accountName: string, options?: ObjectReplicationPoliciesOperationsListOptionalParams): PagedAsyncIterableIterator<ObjectReplicationPolicy>;
+    createOrUpdate(resourceGroupName: string, accountName: string, objectReplicationPolicyId: string, properties: ObjectReplicationPolicy, options?: ObjectReplicationPoliciesCreateOrUpdateOptionalParams): Promise<ObjectReplicationPoliciesCreateOrUpdateResponse>;
+    delete(resourceGroupName: string, accountName: string, objectReplicationPolicyId: string, options?: ObjectReplicationPoliciesDeleteOptionalParams): Promise<void>;
+    get(resourceGroupName: string, accountName: string, objectReplicationPolicyId: string, options?: ObjectReplicationPoliciesGetOptionalParams): Promise<ObjectReplicationPoliciesGetResponse>;
+    list(resourceGroupName: string, accountName: string, options?: ObjectReplicationPoliciesListOptionalParams): PagedAsyncIterableIterator<ObjectReplicationPolicy>;
 }
 
 // @public
-export interface ObjectReplicationPoliciesOperationsCreateOrUpdateOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type ObjectReplicationPoliciesOperationsCreateOrUpdateResponse = ObjectReplicationPolicy;
-
-// @public
-export interface ObjectReplicationPoliciesOperationsDeleteOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export interface ObjectReplicationPoliciesOperationsGetOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type ObjectReplicationPoliciesOperationsGetResponse = ObjectReplicationPolicy;
-
-// @public
-export interface ObjectReplicationPoliciesOperationsListOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type ObjectReplicationPoliciesOperationsListResponse = ObjectReplicationPolicies;
-
-// @public
-export type ObjectReplicationPolicy = Resource & {
-    readonly policyId?: string;
-    readonly enabledTime?: Date;
-    sourceAccount?: string;
+export interface ObjectReplicationPolicy extends Resource {
     destinationAccount?: string;
+    readonly enabledTime?: Date;
+    readonly policyId?: string;
     rules?: ObjectReplicationPolicyRule[];
-};
+    sourceAccount?: string;
+}
 
 // @public
 export interface ObjectReplicationPolicyFilter {
@@ -1788,17 +2079,30 @@ export type OperationsListResponse = OperationListResult;
 type Permissions_2 = string;
 export { Permissions_2 as Permissions }
 
+// @public (undocumented)
+export interface PermissionScope {
+    permissions: string;
+    resourceName: string;
+    service: string;
+}
+
+// @public
+export type PostFailoverRedundancy = string;
+
+// @public
+export type PostPlannedFailoverRedundancy = string;
+
 // @public
 export interface PrivateEndpoint {
     readonly id?: string;
 }
 
 // @public
-export type PrivateEndpointConnection = Resource & {
+export interface PrivateEndpointConnection extends Resource {
     privateEndpoint?: PrivateEndpoint;
     privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;
     readonly provisioningState?: PrivateEndpointConnectionProvisioningState;
-};
+}
 
 // @public
 export interface PrivateEndpointConnectionListResult {
@@ -1845,11 +2149,11 @@ export type PrivateEndpointConnectionsPutResponse = PrivateEndpointConnection;
 export type PrivateEndpointServiceConnectionStatus = string;
 
 // @public
-export type PrivateLinkResource = Resource & {
+export interface PrivateLinkResource extends Resource {
     readonly groupId?: string;
     readonly requiredMembers?: string[];
     requiredZoneNames?: string[];
-};
+}
 
 // @public
 export interface PrivateLinkResourceListResult {
@@ -1876,18 +2180,45 @@ export interface PrivateLinkServiceConnectionState {
 }
 
 // @public
+export interface ProtectedAppendWritesHistory {
+    allowProtectedAppendWritesAll?: boolean;
+    readonly timestamp?: Date;
+}
+
+// @public
 export interface ProtocolSettings {
     smb?: SmbSetting;
 }
 
 // @public
-export type ProvisioningState = "Creating" | "ResolvingDNS" | "Succeeded";
+export interface ProvisioningIssue {
+    name?: string;
+    readonly properties?: ProvisioningIssueProperties;
+}
 
 // @public
-export type ProxyResource = Resource & {};
+export interface ProvisioningIssueProperties {
+    description?: string;
+    issueType?: IssueType;
+    severity?: Severity;
+}
+
+// @public
+export type ProvisioningState = "Creating" | "ResolvingDNS" | "Succeeded" | "ValidateSubscriptionQuotaBegin" | "ValidateSubscriptionQuotaEnd" | "Deleting" | "Canceled" | "Failed";
+
+// @public
+export interface ProxyResource extends Resource {
+}
+
+// @public
+export interface ProxyResourceAutoGenerated extends ResourceAutoGenerated {
+}
 
 // @public
 export type PublicAccess = "Container" | "Blob" | "None";
+
+// @public
+export type PublicNetworkAccess = string;
 
 // @public
 export interface Queue {
@@ -1918,8 +2249,6 @@ export type QueueGetResponse = StorageQueue;
 
 // @public
 export interface QueueListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    maxpagesize?: string;
 }
 
 // @public
@@ -1935,9 +2264,9 @@ export interface QueueListOptionalParams extends coreClient.OperationOptions {
 export type QueueListResponse = ListQueueResource;
 
 // @public
-export type QueueServiceProperties = Resource & {
+export interface QueueServiceProperties extends Resource {
     cors?: CorsRules;
-};
+}
 
 // @public
 export interface QueueServices {
@@ -1994,6 +2323,17 @@ export interface ResourceAccessRule {
 }
 
 // @public
+export type ResourceAssociationAccessMode = string;
+
+// @public
+export interface ResourceAutoGenerated {
+    readonly id?: string;
+    readonly name?: string;
+    readonly systemData?: SystemData;
+    readonly type?: string;
+}
+
+// @public
 export interface RestorePolicyProperties {
     days?: number;
     enabled: boolean;
@@ -2023,6 +2363,12 @@ export interface RoutingPreference {
 
 // @public
 export type RuleType = string;
+
+// @public
+export type RunResult = string;
+
+// @public
+export type RunStatusEnum = string;
 
 // @public
 export interface SasPolicy {
@@ -2064,6 +2410,9 @@ export interface ServiceSpecification {
 }
 
 // @public
+export type Severity = string;
+
+// @public
 export type ShareAccessTier = string;
 
 // @public (undocumented)
@@ -2089,6 +2438,9 @@ export interface SKUCapability {
     readonly name?: string;
     readonly value?: string;
 }
+
+// @public
+export type SkuConversionStatus = string;
 
 // @public
 export interface SkuInformation {
@@ -2128,46 +2480,63 @@ export interface SmbSetting {
     versions?: string;
 }
 
+// @public (undocumented)
+export interface SshPublicKey {
+    description?: string;
+    key?: string;
+}
+
 // @public
 export type State = string;
 
 // @public
-export type StorageAccount = TrackedResource & {
-    readonly sku?: Sku;
-    readonly kind?: Kind;
-    identity?: Identity;
-    extendedLocation?: ExtendedLocation;
-    readonly provisioningState?: ProvisioningState;
-    readonly primaryEndpoints?: Endpoints;
-    readonly primaryLocation?: string;
-    readonly statusOfPrimary?: AccountStatus;
-    readonly lastGeoFailoverTime?: Date;
-    readonly secondaryLocation?: string;
-    readonly statusOfSecondary?: AccountStatus;
+export interface StorageAccount extends TrackedResource {
+    readonly accessTier?: AccessTier;
+    readonly accountMigrationInProgress?: boolean;
+    allowBlobPublicAccess?: boolean;
+    allowCrossTenantReplication?: boolean;
+    allowedCopyScope?: AllowedCopyScope;
+    allowSharedKeyAccess?: boolean;
+    azureFilesIdentityBasedAuthentication?: AzureFilesIdentityBasedAuthentication;
+    readonly blobRestoreStatus?: BlobRestoreStatus;
     readonly creationTime?: Date;
     readonly customDomain?: CustomDomain;
-    readonly sasPolicy?: SasPolicy;
-    readonly keyPolicy?: KeyPolicy;
-    readonly keyCreationTime?: KeyCreationTime;
-    readonly secondaryEndpoints?: Endpoints;
-    readonly encryption?: Encryption;
-    readonly accessTier?: AccessTier;
-    azureFilesIdentityBasedAuthentication?: AzureFilesIdentityBasedAuthentication;
+    defaultToOAuthAuthentication?: boolean;
+    dnsEndpointType?: DnsEndpointType;
+    enableExtendedGroups?: boolean;
     enableHttpsTrafficOnly?: boolean;
-    readonly networkRuleSet?: NetworkRuleSet;
-    isHnsEnabled?: boolean;
-    readonly geoReplicationStats?: GeoReplicationStats;
-    readonly failoverInProgress?: boolean;
-    largeFileSharesState?: LargeFileSharesState;
-    readonly privateEndpointConnections?: PrivateEndpointConnection[];
-    routingPreference?: RoutingPreference;
-    readonly blobRestoreStatus?: BlobRestoreStatus;
-    allowBlobPublicAccess?: boolean;
-    minimumTlsVersion?: MinimumTlsVersion;
-    allowSharedKeyAccess?: boolean;
     enableNfsV3?: boolean;
-    allowCrossTenantReplication?: boolean;
-};
+    readonly encryption?: Encryption;
+    extendedLocation?: ExtendedLocation;
+    readonly failoverInProgress?: boolean;
+    readonly geoReplicationStats?: GeoReplicationStats;
+    identity?: Identity;
+    immutableStorageWithVersioning?: ImmutableStorageAccount;
+    isHnsEnabled?: boolean;
+    isLocalUserEnabled?: boolean;
+    isSftpEnabled?: boolean;
+    readonly isSkuConversionBlocked?: boolean;
+    readonly keyCreationTime?: KeyCreationTime;
+    readonly keyPolicy?: KeyPolicy;
+    readonly kind?: Kind;
+    largeFileSharesState?: LargeFileSharesState;
+    readonly lastGeoFailoverTime?: Date;
+    minimumTlsVersion?: MinimumTlsVersion;
+    readonly networkRuleSet?: NetworkRuleSet;
+    readonly primaryEndpoints?: Endpoints;
+    readonly primaryLocation?: string;
+    readonly privateEndpointConnections?: PrivateEndpointConnection[];
+    readonly provisioningState?: ProvisioningState;
+    publicNetworkAccess?: PublicNetworkAccess;
+    routingPreference?: RoutingPreference;
+    readonly sasPolicy?: SasPolicy;
+    readonly secondaryEndpoints?: Endpoints;
+    readonly secondaryLocation?: string;
+    readonly sku?: Sku;
+    readonly statusOfPrimary?: AccountStatus;
+    readonly statusOfSecondary?: AccountStatus;
+    storageAccountSkuConversionStatus?: StorageAccountSkuConversionStatus;
+}
 
 // @public
 export interface StorageAccountCheckNameAvailabilityParameters {
@@ -2180,21 +2549,29 @@ export interface StorageAccountCreateParameters {
     accessTier?: AccessTier;
     allowBlobPublicAccess?: boolean;
     allowCrossTenantReplication?: boolean;
+    allowedCopyScope?: AllowedCopyScope;
     allowSharedKeyAccess?: boolean;
     azureFilesIdentityBasedAuthentication?: AzureFilesIdentityBasedAuthentication;
     customDomain?: CustomDomain;
+    defaultToOAuthAuthentication?: boolean;
+    dnsEndpointType?: DnsEndpointType;
+    enableExtendedGroups?: boolean;
     enableHttpsTrafficOnly?: boolean;
     enableNfsV3?: boolean;
     encryption?: Encryption;
     extendedLocation?: ExtendedLocation;
     identity?: Identity;
+    immutableStorageWithVersioning?: ImmutableStorageAccount;
     isHnsEnabled?: boolean;
+    isLocalUserEnabled?: boolean;
+    isSftpEnabled?: boolean;
     keyPolicy?: KeyPolicy;
     kind: Kind;
     largeFileSharesState?: LargeFileSharesState;
     location: string;
     minimumTlsVersion?: MinimumTlsVersion;
     networkRuleSet?: NetworkRuleSet;
+    publicNetworkAccess?: PublicNetworkAccess;
     routingPreference?: RoutingPreference;
     sasPolicy?: SasPolicy;
     sku: Sku;
@@ -2244,20 +2621,38 @@ export interface StorageAccountMicrosoftEndpoints {
 }
 
 // @public
+export interface StorageAccountMigration {
+    readonly id?: string;
+    readonly migrationFailedDetailedReason?: string;
+    readonly migrationFailedReason?: string;
+    readonly migrationStatus?: MigrationStatus;
+    name?: string;
+    targetSkuName: SkuName;
+    type?: string;
+}
+
+// @public
 export interface StorageAccountRegenerateKeyParameters {
     keyName: string;
 }
 
 // @public
 export interface StorageAccounts {
-    beginCreate(resourceGroupName: string, accountName: string, parameters: StorageAccountCreateParameters, options?: StorageAccountsCreateOptionalParams): Promise<PollerLike<PollOperationState<StorageAccountsCreateResponse>, StorageAccountsCreateResponse>>;
+    beginAbortHierarchicalNamespaceMigration(resourceGroupName: string, accountName: string, options?: StorageAccountsAbortHierarchicalNamespaceMigrationOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginAbortHierarchicalNamespaceMigrationAndWait(resourceGroupName: string, accountName: string, options?: StorageAccountsAbortHierarchicalNamespaceMigrationOptionalParams): Promise<void>;
+    beginCreate(resourceGroupName: string, accountName: string, parameters: StorageAccountCreateParameters, options?: StorageAccountsCreateOptionalParams): Promise<SimplePollerLike<OperationState<StorageAccountsCreateResponse>, StorageAccountsCreateResponse>>;
     beginCreateAndWait(resourceGroupName: string, accountName: string, parameters: StorageAccountCreateParameters, options?: StorageAccountsCreateOptionalParams): Promise<StorageAccountsCreateResponse>;
-    beginFailover(resourceGroupName: string, accountName: string, options?: StorageAccountsFailoverOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginCustomerInitiatedMigration(resourceGroupName: string, accountName: string, parameters: StorageAccountMigration, options?: StorageAccountsCustomerInitiatedMigrationOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginCustomerInitiatedMigrationAndWait(resourceGroupName: string, accountName: string, parameters: StorageAccountMigration, options?: StorageAccountsCustomerInitiatedMigrationOptionalParams): Promise<void>;
+    beginFailover(resourceGroupName: string, accountName: string, options?: StorageAccountsFailoverOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginFailoverAndWait(resourceGroupName: string, accountName: string, options?: StorageAccountsFailoverOptionalParams): Promise<void>;
-    beginRestoreBlobRanges(resourceGroupName: string, accountName: string, parameters: BlobRestoreParameters, options?: StorageAccountsRestoreBlobRangesOptionalParams): Promise<PollerLike<PollOperationState<StorageAccountsRestoreBlobRangesResponse>, StorageAccountsRestoreBlobRangesResponse>>;
+    beginHierarchicalNamespaceMigration(resourceGroupName: string, accountName: string, requestType: string, options?: StorageAccountsHierarchicalNamespaceMigrationOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginHierarchicalNamespaceMigrationAndWait(resourceGroupName: string, accountName: string, requestType: string, options?: StorageAccountsHierarchicalNamespaceMigrationOptionalParams): Promise<void>;
+    beginRestoreBlobRanges(resourceGroupName: string, accountName: string, parameters: BlobRestoreParameters, options?: StorageAccountsRestoreBlobRangesOptionalParams): Promise<SimplePollerLike<OperationState<StorageAccountsRestoreBlobRangesResponse>, StorageAccountsRestoreBlobRangesResponse>>;
     beginRestoreBlobRangesAndWait(resourceGroupName: string, accountName: string, parameters: BlobRestoreParameters, options?: StorageAccountsRestoreBlobRangesOptionalParams): Promise<StorageAccountsRestoreBlobRangesResponse>;
     checkNameAvailability(accountName: StorageAccountCheckNameAvailabilityParameters, options?: StorageAccountsCheckNameAvailabilityOptionalParams): Promise<StorageAccountsCheckNameAvailabilityResponse>;
     delete(resourceGroupName: string, accountName: string, options?: StorageAccountsDeleteOptionalParams): Promise<void>;
+    getCustomerInitiatedMigration(resourceGroupName: string, accountName: string, migrationName: MigrationName, options?: StorageAccountsGetCustomerInitiatedMigrationOptionalParams): Promise<StorageAccountsGetCustomerInitiatedMigrationResponse>;
     getProperties(resourceGroupName: string, accountName: string, options?: StorageAccountsGetPropertiesOptionalParams): Promise<StorageAccountsGetPropertiesResponse>;
     list(options?: StorageAccountsListOptionalParams): PagedAsyncIterableIterator<StorageAccount>;
     listAccountSAS(resourceGroupName: string, accountName: string, parameters: AccountSasParameters, options?: StorageAccountsListAccountSASOptionalParams): Promise<StorageAccountsListAccountSASResponse>;
@@ -2267,6 +2662,12 @@ export interface StorageAccounts {
     regenerateKey(resourceGroupName: string, accountName: string, regenerateKey: StorageAccountRegenerateKeyParameters, options?: StorageAccountsRegenerateKeyOptionalParams): Promise<StorageAccountsRegenerateKeyResponse>;
     revokeUserDelegationKeys(resourceGroupName: string, accountName: string, options?: StorageAccountsRevokeUserDelegationKeysOptionalParams): Promise<void>;
     update(resourceGroupName: string, accountName: string, parameters: StorageAccountUpdateParameters, options?: StorageAccountsUpdateOptionalParams): Promise<StorageAccountsUpdateResponse>;
+}
+
+// @public
+export interface StorageAccountsAbortHierarchicalNamespaceMigrationOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
 }
 
 // @public
@@ -2286,6 +2687,18 @@ export interface StorageAccountsCreateOptionalParams extends coreClient.Operatio
 export type StorageAccountsCreateResponse = StorageAccount;
 
 // @public
+export interface StorageAccountsCustomerInitiatedMigrationHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
+export interface StorageAccountsCustomerInitiatedMigrationOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
 export interface StorageAccountsDeleteOptionalParams extends coreClient.OperationOptions {
 }
 
@@ -2296,12 +2709,33 @@ export interface StorageAccountsFailoverOptionalParams extends coreClient.Operat
 }
 
 // @public
+export interface StorageAccountsGetCustomerInitiatedMigrationOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type StorageAccountsGetCustomerInitiatedMigrationResponse = StorageAccountMigration;
+
+// @public
 export interface StorageAccountsGetPropertiesOptionalParams extends coreClient.OperationOptions {
     expand?: StorageAccountExpand;
 }
 
 // @public
 export type StorageAccountsGetPropertiesResponse = StorageAccount;
+
+// @public
+export interface StorageAccountsHierarchicalNamespaceMigrationOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export interface StorageAccountSkuConversionStatus {
+    readonly endTime?: string;
+    readonly skuConversionStatus?: SkuConversionStatus;
+    readonly startTime?: string;
+    targetSkuName?: SkuName;
+}
 
 // @public
 export interface StorageAccountsListAccountSASOptionalParams extends coreClient.OperationOptions {
@@ -2384,17 +2818,25 @@ export interface StorageAccountUpdateParameters {
     accessTier?: AccessTier;
     allowBlobPublicAccess?: boolean;
     allowCrossTenantReplication?: boolean;
+    allowedCopyScope?: AllowedCopyScope;
     allowSharedKeyAccess?: boolean;
     azureFilesIdentityBasedAuthentication?: AzureFilesIdentityBasedAuthentication;
     customDomain?: CustomDomain;
+    defaultToOAuthAuthentication?: boolean;
+    dnsEndpointType?: DnsEndpointType;
+    enableExtendedGroups?: boolean;
     enableHttpsTrafficOnly?: boolean;
     encryption?: Encryption;
     identity?: Identity;
+    immutableStorageWithVersioning?: ImmutableStorageAccount;
+    isLocalUserEnabled?: boolean;
+    isSftpEnabled?: boolean;
     keyPolicy?: KeyPolicy;
     kind?: Kind;
     largeFileSharesState?: LargeFileSharesState;
     minimumTlsVersion?: MinimumTlsVersion;
     networkRuleSet?: NetworkRuleSet;
+    publicNetworkAccess?: PublicNetworkAccess;
     routingPreference?: RoutingPreference;
     sasPolicy?: SasPolicy;
     sku?: Sku;
@@ -2404,8 +2846,12 @@ export interface StorageAccountUpdateParameters {
 }
 
 // @public (undocumented)
-export class StorageManagementClient extends StorageManagementClientContext {
+export class StorageManagementClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: StorageManagementClientOptionalParams);
+    // (undocumented)
+    apiVersion: string;
     // (undocumented)
     blobContainers: BlobContainers;
     // (undocumented)
@@ -2421,7 +2867,11 @@ export class StorageManagementClient extends StorageManagementClientContext {
     // (undocumented)
     fileShares: FileShares;
     // (undocumented)
+    localUsersOperations: LocalUsersOperations;
+    // (undocumented)
     managementPolicies: ManagementPolicies;
+    // (undocumented)
+    networkSecurityPerimeterConfigurations: NetworkSecurityPerimeterConfigurations;
     // (undocumented)
     objectReplicationPoliciesOperations: ObjectReplicationPoliciesOperations;
     // (undocumented)
@@ -2439,22 +2889,19 @@ export class StorageManagementClient extends StorageManagementClientContext {
     // (undocumented)
     storageAccounts: StorageAccounts;
     // (undocumented)
+    storageTaskAssignmentInstancesReport: StorageTaskAssignmentInstancesReport;
+    // (undocumented)
+    storageTaskAssignments: StorageTaskAssignments;
+    // (undocumented)
+    storageTaskAssignmentsInstancesReport: StorageTaskAssignmentsInstancesReport;
+    // (undocumented)
+    subscriptionId: string;
+    // (undocumented)
     tableOperations: TableOperations;
     // (undocumented)
     tableServices: TableServices;
     // (undocumented)
     usages: Usages;
-}
-
-// @public (undocumented)
-export class StorageManagementClientContext extends coreClient.ServiceClient {
-    // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: StorageManagementClientOptionalParams);
-    // (undocumented)
-    apiVersion: string;
-    // (undocumented)
-    subscriptionId: string;
 }
 
 // @public
@@ -2465,16 +2912,226 @@ export interface StorageManagementClientOptionalParams extends coreClient.Servic
 }
 
 // @public (undocumented)
-export type StorageQueue = Resource & {
+export interface StorageQueue extends Resource {
+    readonly approximateMessageCount?: number;
     metadata?: {
         [propertyName: string]: string;
     };
-    readonly approximateMessageCount?: number;
-};
+}
 
 // @public
 export interface StorageSkuListResult {
     readonly value?: SkuInformation[];
+}
+
+// @public
+export interface StorageTaskAssignment extends Resource {
+    properties: StorageTaskAssignmentProperties;
+}
+
+// @public
+export interface StorageTaskAssignmentExecutionContext {
+    target?: ExecutionTarget;
+    trigger: ExecutionTrigger;
+}
+
+// @public
+export interface StorageTaskAssignmentInstancesReport {
+    list(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, options?: StorageTaskAssignmentInstancesReportListOptionalParams): PagedAsyncIterableIterator<StorageTaskReportInstance>;
+}
+
+// @public
+export interface StorageTaskAssignmentInstancesReportListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type StorageTaskAssignmentInstancesReportListNextResponse = StorageTaskReportSummary;
+
+// @public
+export interface StorageTaskAssignmentInstancesReportListOptionalParams extends coreClient.OperationOptions {
+    filter?: string;
+    maxpagesize?: number;
+}
+
+// @public
+export type StorageTaskAssignmentInstancesReportListResponse = StorageTaskReportSummary;
+
+// @public
+export interface StorageTaskAssignmentProperties {
+    description: string;
+    enabled: boolean;
+    executionContext: StorageTaskAssignmentExecutionContext;
+    readonly provisioningState?: ProvisioningState;
+    report: StorageTaskAssignmentReport;
+    runStatus?: StorageTaskReportProperties;
+    taskId: string;
+}
+
+// @public
+export interface StorageTaskAssignmentReport {
+    prefix: string;
+}
+
+// @public
+export interface StorageTaskAssignments {
+    beginCreate(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, parameters: StorageTaskAssignment, options?: StorageTaskAssignmentsCreateOptionalParams): Promise<SimplePollerLike<OperationState<StorageTaskAssignmentsCreateResponse>, StorageTaskAssignmentsCreateResponse>>;
+    beginCreateAndWait(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, parameters: StorageTaskAssignment, options?: StorageTaskAssignmentsCreateOptionalParams): Promise<StorageTaskAssignmentsCreateResponse>;
+    beginDelete(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, options?: StorageTaskAssignmentsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<StorageTaskAssignmentsDeleteResponse>, StorageTaskAssignmentsDeleteResponse>>;
+    beginDeleteAndWait(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, options?: StorageTaskAssignmentsDeleteOptionalParams): Promise<StorageTaskAssignmentsDeleteResponse>;
+    beginUpdate(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, parameters: StorageTaskAssignmentUpdateParameters, options?: StorageTaskAssignmentsUpdateOptionalParams): Promise<SimplePollerLike<OperationState<StorageTaskAssignmentsUpdateResponse>, StorageTaskAssignmentsUpdateResponse>>;
+    beginUpdateAndWait(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, parameters: StorageTaskAssignmentUpdateParameters, options?: StorageTaskAssignmentsUpdateOptionalParams): Promise<StorageTaskAssignmentsUpdateResponse>;
+    get(resourceGroupName: string, accountName: string, storageTaskAssignmentName: string, options?: StorageTaskAssignmentsGetOptionalParams): Promise<StorageTaskAssignmentsGetResponse>;
+    list(resourceGroupName: string, accountName: string, options?: StorageTaskAssignmentsListOptionalParams): PagedAsyncIterableIterator<StorageTaskAssignment>;
+}
+
+// @public
+export interface StorageTaskAssignmentsCreateHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
+export interface StorageTaskAssignmentsCreateOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type StorageTaskAssignmentsCreateResponse = StorageTaskAssignment;
+
+// @public
+export interface StorageTaskAssignmentsDeleteHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
+export interface StorageTaskAssignmentsDeleteOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type StorageTaskAssignmentsDeleteResponse = StorageTaskAssignmentsDeleteHeaders;
+
+// @public
+export interface StorageTaskAssignmentsGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type StorageTaskAssignmentsGetResponse = StorageTaskAssignment;
+
+// @public
+export interface StorageTaskAssignmentsInstancesReport {
+    list(resourceGroupName: string, accountName: string, options?: StorageTaskAssignmentsInstancesReportListOptionalParams): PagedAsyncIterableIterator<StorageTaskReportInstance>;
+}
+
+// @public
+export interface StorageTaskAssignmentsInstancesReportListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type StorageTaskAssignmentsInstancesReportListNextResponse = StorageTaskReportSummary;
+
+// @public
+export interface StorageTaskAssignmentsInstancesReportListOptionalParams extends coreClient.OperationOptions {
+    filter?: string;
+    maxpagesize?: number;
+}
+
+// @public
+export type StorageTaskAssignmentsInstancesReportListResponse = StorageTaskReportSummary;
+
+// @public
+export interface StorageTaskAssignmentsList {
+    readonly nextLink?: string;
+    readonly value?: StorageTaskAssignment[];
+}
+
+// @public
+export interface StorageTaskAssignmentsListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type StorageTaskAssignmentsListNextResponse = StorageTaskAssignmentsList;
+
+// @public
+export interface StorageTaskAssignmentsListOptionalParams extends coreClient.OperationOptions {
+    maxpagesize?: number;
+}
+
+// @public
+export type StorageTaskAssignmentsListResponse = StorageTaskAssignmentsList;
+
+// @public
+export interface StorageTaskAssignmentsUpdateHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
+export interface StorageTaskAssignmentsUpdateOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type StorageTaskAssignmentsUpdateResponse = StorageTaskAssignment;
+
+// @public
+export interface StorageTaskAssignmentUpdateExecutionContext {
+    target?: ExecutionTarget;
+    trigger?: ExecutionTriggerUpdate;
+}
+
+// @public
+export interface StorageTaskAssignmentUpdateParameters {
+    properties?: StorageTaskAssignmentUpdateProperties;
+}
+
+// @public
+export interface StorageTaskAssignmentUpdateProperties {
+    description?: string;
+    enabled?: boolean;
+    executionContext?: StorageTaskAssignmentUpdateExecutionContext;
+    readonly provisioningState?: ProvisioningState;
+    report?: StorageTaskAssignmentUpdateReport;
+    runStatus?: StorageTaskReportProperties;
+    readonly taskId?: string;
+}
+
+// @public
+export interface StorageTaskAssignmentUpdateReport {
+    prefix?: string;
+}
+
+// @public
+export interface StorageTaskReportInstance extends ProxyResource {
+    properties?: StorageTaskReportProperties;
+}
+
+// @public
+export interface StorageTaskReportProperties {
+    readonly finishTime?: string;
+    readonly objectFailedCount?: string;
+    readonly objectsOperatedOnCount?: string;
+    readonly objectsSucceededCount?: string;
+    readonly objectsTargetedCount?: string;
+    readonly runResult?: RunResult;
+    readonly runStatusEnum?: RunStatusEnum;
+    readonly runStatusError?: string;
+    readonly startTime?: string;
+    readonly storageAccountId?: string;
+    readonly summaryReportPath?: string;
+    readonly taskAssignmentId?: string;
+    readonly taskId?: string;
+    readonly taskVersion?: string;
+}
+
+// @public
+export interface StorageTaskReportSummary {
+    readonly nextLink?: string;
+    readonly value?: StorageTaskReportInstance[];
 }
 
 // @public
@@ -2488,62 +3145,64 @@ export interface SystemData {
 }
 
 // @public
-export type Table = Resource & {
+export interface Table extends Resource {
+    signedIdentifiers?: TableSignedIdentifier[];
     readonly tableName?: string;
-};
+}
+
+// @public
+export interface TableAccessPolicy {
+    expiryTime?: Date;
+    permission: string;
+    startTime?: Date;
+}
+
+// @public
+export interface TableCreateOptionalParams extends coreClient.OperationOptions {
+    parameters?: Table;
+}
+
+// @public
+export type TableCreateResponse = Table;
+
+// @public
+export interface TableDeleteOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface TableGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TableGetResponse = Table;
+
+// @public
+export interface TableListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TableListNextResponse = ListTableResource;
+
+// @public
+export interface TableListOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TableListResponse = ListTableResource;
 
 // @public
 export interface TableOperations {
-    create(resourceGroupName: string, accountName: string, tableName: string, options?: TableOperationsCreateOptionalParams): Promise<TableOperationsCreateResponse>;
-    delete(resourceGroupName: string, accountName: string, tableName: string, options?: TableOperationsDeleteOptionalParams): Promise<void>;
-    get(resourceGroupName: string, accountName: string, tableName: string, options?: TableOperationsGetOptionalParams): Promise<TableOperationsGetResponse>;
-    list(resourceGroupName: string, accountName: string, options?: TableOperationsListOptionalParams): PagedAsyncIterableIterator<Table>;
-    update(resourceGroupName: string, accountName: string, tableName: string, options?: TableOperationsUpdateOptionalParams): Promise<TableOperationsUpdateResponse>;
+    create(resourceGroupName: string, accountName: string, tableName: string, options?: TableCreateOptionalParams): Promise<TableCreateResponse>;
+    delete(resourceGroupName: string, accountName: string, tableName: string, options?: TableDeleteOptionalParams): Promise<void>;
+    get(resourceGroupName: string, accountName: string, tableName: string, options?: TableGetOptionalParams): Promise<TableGetResponse>;
+    list(resourceGroupName: string, accountName: string, options?: TableListOptionalParams): PagedAsyncIterableIterator<Table>;
+    update(resourceGroupName: string, accountName: string, tableName: string, options?: TableUpdateOptionalParams): Promise<TableUpdateResponse>;
 }
 
 // @public
-export interface TableOperationsCreateOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TableOperationsCreateResponse = Table;
-
-// @public
-export interface TableOperationsDeleteOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export interface TableOperationsGetOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TableOperationsGetResponse = Table;
-
-// @public
-export interface TableOperationsListNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TableOperationsListNextResponse = ListTableResource;
-
-// @public
-export interface TableOperationsListOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TableOperationsListResponse = ListTableResource;
-
-// @public
-export interface TableOperationsUpdateOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TableOperationsUpdateResponse = Table;
-
-// @public
-export type TableServiceProperties = Resource & {
+export interface TableServiceProperties extends Resource {
     cors?: CorsRules;
-};
+}
 
 // @public
 export interface TableServices {
@@ -2574,6 +3233,20 @@ export interface TableServicesSetServicePropertiesOptionalParams extends coreCli
 export type TableServicesSetServicePropertiesResponse = TableServiceProperties;
 
 // @public
+export interface TableSignedIdentifier {
+    accessPolicy?: TableAccessPolicy;
+    id: string;
+}
+
+// @public
+export interface TableUpdateOptionalParams extends coreClient.OperationOptions {
+    parameters?: Table;
+}
+
+// @public
+export type TableUpdateResponse = Table;
+
+// @public
 export interface TagFilter {
     name: string;
     op: string;
@@ -2590,15 +3263,38 @@ export interface TagProperty {
 }
 
 // @public
-export type TrackedResource = Resource & {
+export interface TrackedResource extends Resource {
+    location: string;
     tags?: {
         [propertyName: string]: string;
     };
-    location: string;
-};
+}
+
+// @public
+export interface TriggerParameters {
+    endBy?: Date;
+    interval?: number;
+    intervalUnit?: "Days";
+    startFrom?: Date;
+    startOn?: Date;
+}
+
+// @public
+export interface TriggerParametersUpdate {
+    endBy?: Date;
+    interval?: number;
+    intervalUnit?: "Days";
+    startFrom?: Date;
+    startOn?: Date;
+}
+
+// @public
+export type TriggerType = "RunOnce" | "OnSchedule";
 
 // @public
 export interface UpdateHistoryProperty {
+    allowProtectedAppendWrites?: boolean;
+    allowProtectedAppendWritesAll?: boolean;
     readonly immutabilityPeriodSinceCreationInDays?: number;
     readonly objectIdentifier?: string;
     readonly tenantId?: string;

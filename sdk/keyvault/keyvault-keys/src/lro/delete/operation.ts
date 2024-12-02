@@ -1,18 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortSignalLike } from "@azure/abort-controller";
-import { OperationOptions } from "@azure/core-http";
-import { KeyVaultClient } from "../../generated/keyVaultClient";
-import { DeletedKey, DeleteKeyOptions, GetDeletedKeyOptions } from "../../keysModels";
-import { getKeyFromKeyBundle } from "../../transformations";
-import { KeyVaultKeyPollOperation, KeyVaultKeyPollOperationState } from "../keyVaultKeyPoller";
-import { createTraceFunction } from "../../../../keyvault-common/src";
-
-/**
- * @internal
- */
-const withTrace = createTraceFunction("Azure.KeyVault.Keys.DeleteKeyPoller");
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { OperationOptions } from "@azure/core-client";
+import type { KeyVaultClient } from "../../generated/keyVaultClient.js";
+import type { DeleteKeyOptions, DeletedKey, GetDeletedKeyOptions } from "../../keysModels.js";
+import { tracingClient } from "../../tracing.js";
+import { getKeyFromKeyBundle } from "../../transformations.js";
+import type { KeyVaultKeyPollOperationState } from "../keyVaultKeyPoller.js";
+import { KeyVaultKeyPollOperation } from "../keyVaultKeyPoller.js";
 
 /**
  * An interface representing the state of a delete key's poll operation
@@ -27,7 +23,7 @@ export class DeleteKeyPollOperation extends KeyVaultKeyPollOperation<
     public state: DeleteKeyPollOperationState,
     private vaultUrl: string,
     private client: KeyVaultClient,
-    private operationOptions: OperationOptions = {}
+    private operationOptions: OperationOptions = {},
   ) {
     super(state, { cancelMessage: "Canceling the deletion of a key is not supported." });
   }
@@ -37,7 +33,7 @@ export class DeleteKeyPollOperation extends KeyVaultKeyPollOperation<
    * Since the Key Vault Key won't be immediately deleted, we have {@link beginDeleteKey}.
    */
   private deleteKey(name: string, options: DeleteKeyOptions = {}): Promise<DeletedKey> {
-    return withTrace("deleteKey", options, async (updatedOptions) => {
+    return tracingClient.withSpan("DeleteKeyPoller.deleteKey", options, async (updatedOptions) => {
       const response = await this.client.deleteKey(this.vaultUrl, name, updatedOptions);
       return getKeyFromKeyBundle(response);
     });
@@ -48,10 +44,14 @@ export class DeleteKeyPollOperation extends KeyVaultKeyPollOperation<
    * This operation requires the keys/get permission.
    */
   private getDeletedKey(name: string, options: GetDeletedKeyOptions = {}): Promise<DeletedKey> {
-    return withTrace("getDeletedKey", options, async (updatedOptions) => {
-      const response = await this.client.getDeletedKey(this.vaultUrl, name, updatedOptions);
-      return getKeyFromKeyBundle(response);
-    });
+    return tracingClient.withSpan(
+      "DeleteKeyPoller.getDeletedKey",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.getDeletedKey(this.vaultUrl, name, updatedOptions);
+        return getKeyFromKeyBundle(response);
+      },
+    );
   }
 
   /**
@@ -61,7 +61,7 @@ export class DeleteKeyPollOperation extends KeyVaultKeyPollOperation<
     options: {
       abortSignal?: AbortSignalLike;
       fireProgress?: (state: DeleteKeyPollOperationState) => void;
-    } = {}
+    } = {},
   ): Promise<DeleteKeyPollOperation> {
     const state = this.state;
     const { name } = state;
@@ -83,7 +83,7 @@ export class DeleteKeyPollOperation extends KeyVaultKeyPollOperation<
       try {
         state.result = await this.getDeletedKey(name, this.operationOptions);
         state.isCompleted = true;
-      } catch (error) {
+      } catch (error: any) {
         if (error.statusCode === 403) {
           // At this point, the resource exists but the user doesn't have access to it.
           state.isCompleted = true;

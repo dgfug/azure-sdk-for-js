@@ -1,21 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PerfProgram, selectPerfTest } from "@azure/test-utils-perf";
+import { createPerfProgram } from "@azure-tools/test-perf";
 import { StorageFileShareDownloadTest } from "./download.spec";
 import { StorageFileShareDownloadToFileTest } from "./downloadToFile.spec";
 import { StorageFileShareUploadTest } from "./upload.spec";
 import { StorageFileShareUploadFromFileTest } from "./uploadFromFile.spec";
 
-console.log("=== Starting the perf test ===");
-
-const perfProgram = new PerfProgram(
-  selectPerfTest([
-    StorageFileShareDownloadTest,
-    StorageFileShareDownloadToFileTest,
-    StorageFileShareUploadTest,
-    StorageFileShareUploadFromFileTest
-  ])
+const perfProgram = createPerfProgram(
+  StorageFileShareDownloadTest,
+  StorageFileShareDownloadToFileTest,
+  StorageFileShareUploadTest,
+  StorageFileShareUploadFromFileTest,
 );
 
 perfProgram.run();

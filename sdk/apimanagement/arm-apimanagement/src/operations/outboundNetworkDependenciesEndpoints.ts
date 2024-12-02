@@ -10,7 +10,7 @@ import { OutboundNetworkDependenciesEndpoints } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   OutboundNetworkDependenciesEndpointsListByServiceOptionalParams,
   OutboundNetworkDependenciesEndpointsListByServiceResponse
@@ -19,19 +19,19 @@ import {
 /** Class containing OutboundNetworkDependenciesEndpoints operations. */
 export class OutboundNetworkDependenciesEndpointsImpl
   implements OutboundNetworkDependenciesEndpoints {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class OutboundNetworkDependenciesEndpoints class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Gets the network endpoints of all outbound dependencies of a ApiManagement service.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */

@@ -61,7 +61,7 @@ export type CreatedByType = string;
 
 // @public
 export interface DataEffect {
-    detailsSchema?: Record<string, unknown>;
+    detailsSchema?: any;
     name?: string;
 }
 
@@ -109,7 +109,6 @@ export type DataPolicyManifestsGetByPolicyModeResponse = DataPolicyManifest;
 
 // @public
 export interface DataPolicyManifestsListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
 }
 
 // @public
@@ -128,7 +127,7 @@ export type EnforcementMode = string;
 
 // @public
 export interface ErrorAdditionalInfo {
-    readonly info?: Record<string, unknown>;
+    readonly info?: any;
     readonly type?: string;
 }
 
@@ -143,6 +142,9 @@ export interface ErrorResponse {
 
 // @public
 export type ExemptionCategory = string;
+
+// @public
+export function getContinuationToken(page: unknown): string | undefined;
 
 // @public
 export interface Identity {
@@ -174,13 +176,9 @@ export enum KnownAliasPathTokenType {
 
 // @public
 export enum KnownCreatedByType {
-    // (undocumented)
     Application = "Application",
-    // (undocumented)
     Key = "Key",
-    // (undocumented)
     ManagedIdentity = "ManagedIdentity",
-    // (undocumented)
     User = "User"
 }
 
@@ -198,31 +196,20 @@ export enum KnownExemptionCategory {
 
 // @public
 export enum KnownParameterType {
-    // (undocumented)
     Array = "Array",
-    // (undocumented)
     Boolean = "Boolean",
-    // (undocumented)
     DateTime = "DateTime",
-    // (undocumented)
     Float = "Float",
-    // (undocumented)
     Integer = "Integer",
-    // (undocumented)
     Object = "Object",
-    // (undocumented)
     String = "String"
 }
 
 // @public
 export enum KnownPolicyType {
-    // (undocumented)
     BuiltIn = "BuiltIn",
-    // (undocumented)
     Custom = "Custom",
-    // (undocumented)
     NotSpecified = "NotSpecified",
-    // (undocumented)
     Static = "Static"
 }
 
@@ -234,8 +221,8 @@ export interface NonComplianceMessage {
 
 // @public
 export interface ParameterDefinitionsValue {
-    allowedValues?: Record<string, unknown>[];
-    defaultValue?: Record<string, unknown>;
+    allowedValues?: any[];
+    defaultValue?: any;
     metadata?: ParameterDefinitionsValueMetadata;
     type?: ParameterType;
 }
@@ -254,7 +241,7 @@ export type ParameterType = string;
 
 // @public
 export interface ParameterValuesValue {
-    value?: Record<string, unknown>;
+    value?: any;
 }
 
 // @public
@@ -265,7 +252,7 @@ export interface PolicyAssignment {
     readonly id?: string;
     identity?: Identity;
     location?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: any;
     readonly name?: string;
     nonComplianceMessages?: NonComplianceMessage[];
     notScopes?: string[];
@@ -344,8 +331,6 @@ export type PolicyAssignmentsGetResponse = PolicyAssignment;
 
 // @public
 export interface PolicyAssignmentsListForManagementGroupNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -362,8 +347,6 @@ export type PolicyAssignmentsListForManagementGroupResponse = PolicyAssignmentLi
 
 // @public
 export interface PolicyAssignmentsListForResourceGroupNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -380,8 +363,6 @@ export type PolicyAssignmentsListForResourceGroupResponse = PolicyAssignmentList
 
 // @public
 export interface PolicyAssignmentsListForResourceNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -398,8 +379,6 @@ export type PolicyAssignmentsListForResourceResponse = PolicyAssignmentListResul
 
 // @public
 export interface PolicyAssignmentsListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -435,8 +414,11 @@ export interface PolicyAssignmentUpdate {
 }
 
 // @public (undocumented)
-export class PolicyClient extends PolicyClientContext {
+export class PolicyClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: PolicyClientOptionalParams);
+    constructor(credentials: coreAuth.TokenCredential, options?: PolicyClientOptionalParams);
     // (undocumented)
     dataPolicyManifests: DataPolicyManifests;
     // (undocumented)
@@ -447,15 +429,8 @@ export class PolicyClient extends PolicyClientContext {
     policyExemptions: PolicyExemptions;
     // (undocumented)
     policySetDefinitions: PolicySetDefinitions;
-}
-
-// @public (undocumented)
-export class PolicyClientContext extends coreClient.ServiceClient {
     // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: PolicyClientOptionalParams);
-    // (undocumented)
-    subscriptionId: string;
+    subscriptionId?: string;
 }
 
 // @public
@@ -469,13 +444,13 @@ export interface PolicyDefinition {
     description?: string;
     displayName?: string;
     readonly id?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: any;
     mode?: string;
     readonly name?: string;
     parameters?: {
         [propertyName: string]: ParameterDefinitionsValue;
     };
-    policyRule?: Record<string, unknown>;
+    policyRule?: any;
     policyType?: PolicyType;
     readonly systemData?: SystemData;
     readonly type?: string;
@@ -565,8 +540,6 @@ export type PolicyDefinitionsGetResponse = PolicyDefinition;
 
 // @public
 export interface PolicyDefinitionsListBuiltInNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -583,8 +556,6 @@ export type PolicyDefinitionsListBuiltInResponse = PolicyDefinitionListResult;
 
 // @public
 export interface PolicyDefinitionsListByManagementGroupNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -601,8 +572,6 @@ export type PolicyDefinitionsListByManagementGroupResponse = PolicyDefinitionLis
 
 // @public
 export interface PolicyDefinitionsListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -624,7 +593,7 @@ export interface PolicyExemption {
     exemptionCategory: ExemptionCategory;
     expiresOn?: Date;
     readonly id?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: any;
     readonly name?: string;
     policyAssignmentId: string;
     policyDefinitionReferenceIds?: string[];
@@ -669,7 +638,6 @@ export type PolicyExemptionsGetResponse = PolicyExemption;
 
 // @public
 export interface PolicyExemptionsListForManagementGroupNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
 }
 
 // @public
@@ -685,7 +653,6 @@ export type PolicyExemptionsListForManagementGroupResponse = PolicyExemptionList
 
 // @public
 export interface PolicyExemptionsListForResourceGroupNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
 }
 
 // @public
@@ -701,7 +668,6 @@ export type PolicyExemptionsListForResourceGroupResponse = PolicyExemptionListRe
 
 // @public
 export interface PolicyExemptionsListForResourceNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
 }
 
 // @public
@@ -717,7 +683,6 @@ export type PolicyExemptionsListForResourceResponse = PolicyExemptionListResult;
 
 // @public
 export interface PolicyExemptionsListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
 }
 
 // @public
@@ -736,7 +701,7 @@ export interface PolicySetDefinition {
     description?: string;
     displayName?: string;
     readonly id?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: any;
     readonly name?: string;
     parameters?: {
         [propertyName: string]: ParameterDefinitionsValue;
@@ -813,8 +778,6 @@ export type PolicySetDefinitionsGetResponse = PolicySetDefinition;
 
 // @public
 export interface PolicySetDefinitionsListBuiltInNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -831,8 +794,6 @@ export type PolicySetDefinitionsListBuiltInResponse = PolicySetDefinitionListRes
 
 // @public
 export interface PolicySetDefinitionsListByManagementGroupNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -849,8 +810,6 @@ export type PolicySetDefinitionsListByManagementGroupResponse = PolicySetDefinit
 
 // @public
 export interface PolicySetDefinitionsListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -892,7 +851,6 @@ export interface UserAssignedIdentitiesValue {
     readonly clientId?: string;
     readonly principalId?: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

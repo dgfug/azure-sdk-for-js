@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredentialOptions } from "../tokenCredentialOptions";
-import { CredentialPersistenceOptions } from "./credentialPersistenceOptions";
+import type { AuthorityValidationOptions } from "./authorityValidationOptions.js";
+import type { CredentialPersistenceOptions } from "./credentialPersistenceOptions.js";
+import type { MultiTenantTokenCredentialOptions } from "./multiTenantTokenCredentialOptions.js";
 
 /**
  * Optional parameters for the {@link ClientSecretCredential} class.
  */
 export interface ClientSecretCredentialOptions
-  extends TokenCredentialOptions,
-    CredentialPersistenceOptions {
+  extends MultiTenantTokenCredentialOptions,
+    CredentialPersistenceOptions,
+    AuthorityValidationOptions {
   // TODO: Export again once we're ready to release this feature.
   // /**
   //  * Specifies a regional authority. Please refer to the {@link RegionalAuthority} type for the accepted values.

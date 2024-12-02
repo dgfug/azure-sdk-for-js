@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -7,13 +7,16 @@
  * TableSASSignatureValues is used to help generating SAS tokens for tables.
  */
 
-import { NamedKeyCredential } from "@azure/core-auth";
-import { computeHMACSHA256 } from "../utils/computeHMACSHA256";
-import { SERVICE_VERSION } from "../utils/constants";
-import { truncatedISO8061Date } from "../utils/truncateISO8061Date";
-import { ipRangeToString, SasIPRange } from "./sasIPRange";
-import { SasProtocol, SasQueryParameters } from "./sasQueryParameters";
-import { TableSasPermissions, tableSasPermissionsToString } from "./tableSasPermisions";
+import type { SasIPRange } from "./sasIPRange.js";
+import { ipRangeToString } from "./sasIPRange.js";
+import type { SasProtocol } from "./sasQueryParameters.js";
+import { SasQueryParameters } from "./sasQueryParameters.js";
+import type { TableSasPermissions } from "./tableSasPermisions.js";
+import { tableSasPermissionsToString } from "./tableSasPermisions.js";
+import type { NamedKeyCredential } from "@azure/core-auth";
+import { SERVICE_VERSION } from "../utils/constants.js";
+import { computeHMACSHA256 } from "../utils/computeHMACSHA256.js";
+import { truncatedISO8061Date } from "../utils/truncateISO8061Date.js";
 
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -38,12 +41,13 @@ export interface TableSasSignatureValues {
   startsOn?: Date;
 
   /**
-   * Optional only when identifier is provided. The time after which the SAS will no longer work.
+   * Optional. If identifier is not provided has a default value of one hour from the time the token is generated.
+   * The time after which the SAS will no longer work.
    */
   expiresOn?: Date;
 
   /**
-   * Optional only when identifier is provided.
+   * Optional. If identifier is not provided has a default value of "read"
    * Please refer to {@link TableSasPermissions} depending on the resource
    * being accessed for help constructing the permissions string.
    */
@@ -95,17 +99,12 @@ export interface TableSasSignatureValues {
  *
  * Creates an instance of SASQueryParameters.
  *
- * Only accepts required settings needed to create a SAS. For optional settings please
- * set corresponding properties directly, such as permissions, startsOn and identifier.
- *
- * WARNING: When identifier is not provided, permissions and expiresOn are required.
- * You MUST assign value to identifier or expiresOn & permissions manually if you initial with
- * this constructor.
+ * **Note**: When identifier is not provided, permissions has a default value of "read" and expiresOn of one hour from the time the token is generated.
  */
 export function generateTableSasQueryParameters(
   tableName: string,
   credential: NamedKeyCredential,
-  tableSasSignatureValues: TableSasSignatureValues
+  tableSasSignatureValues: TableSasSignatureValues,
 ): SasQueryParameters {
   const version = tableSasSignatureValues.version ?? SERVICE_VERSION;
 
@@ -145,7 +144,7 @@ export function generateTableSasQueryParameters(
     startingPartitionKey,
     startingRowKey,
     endingPartitionKey,
-    endingRowKey
+    endingRowKey,
   ].join("\n");
 
   const signature = computeHMACSHA256(stringToSign, credential.key);
@@ -157,7 +156,11 @@ export function generateTableSasQueryParameters(
     expiresOn: tableSasSignatureValues.expiresOn,
     ipRange: tableSasSignatureValues.ipRange,
     identifier: tableSasSignatureValues.identifier,
-    tableName
+    tableName,
+    startPartitionKey: tableSasSignatureValues.startPartitionKey,
+    startRowKey: tableSasSignatureValues.startRowKey,
+    endPartitionKey: tableSasSignatureValues.endPartitionKey,
+    endRowKey: tableSasSignatureValues.endRowKey,
   });
 }
 

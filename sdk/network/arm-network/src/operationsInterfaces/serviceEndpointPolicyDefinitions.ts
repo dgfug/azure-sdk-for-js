@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServiceEndpointPolicyDefinition,
   ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams,
@@ -15,7 +15,7 @@ import {
   ServiceEndpointPolicyDefinitionsGetOptionalParams,
   ServiceEndpointPolicyDefinitionsGetResponse,
   ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams,
-  ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse
+  ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface ServiceEndpointPolicyDefinitions {
   listByResourceGroup(
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
-    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<ServiceEndpointPolicyDefinition>;
   /**
    * Deletes the specified ServiceEndpoint policy definitions.
@@ -43,8 +43,8 @@ export interface ServiceEndpointPolicyDefinitions {
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
-    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified ServiceEndpoint policy definitions.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface ServiceEndpointPolicyDefinitions {
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
-    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Get the specified service endpoint policy definitions from service endpoint policy.
@@ -69,7 +69,7 @@ export interface ServiceEndpointPolicyDefinitions {
     resourceGroupName: string,
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
-    options?: ServiceEndpointPolicyDefinitionsGetOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsGetOptionalParams,
   ): Promise<ServiceEndpointPolicyDefinitionsGetResponse>;
   /**
    * Creates or updates a service endpoint policy definition in the specified service endpoint policy.
@@ -85,12 +85,10 @@ export interface ServiceEndpointPolicyDefinitions {
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
     serviceEndpointPolicyDefinitions: ServiceEndpointPolicyDefinition,
-    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse>,
       ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse
     >
   >;
@@ -108,6 +106,6 @@ export interface ServiceEndpointPolicyDefinitions {
     serviceEndpointPolicyName: string,
     serviceEndpointPolicyDefinitionName: string,
     serviceEndpointPolicyDefinitions: ServiceEndpointPolicyDefinition,
-    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams
+    options?: ServiceEndpointPolicyDefinitionsCreateOrUpdateOptionalParams,
   ): Promise<ServiceEndpointPolicyDefinitionsCreateOrUpdateResponse>;
 }

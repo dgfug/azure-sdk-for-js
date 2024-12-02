@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
-import { formatPreferHeader } from "../../../src/internal/util";
+import { formatPreferHeader } from "../../../src/internal/util.js";
+import { describe, it, assert } from "vitest";
 
 describe("Utils unit tests", () => {
   type PreferHeadersArg = Parameters<typeof formatPreferHeader>[0];
@@ -13,8 +13,8 @@ describe("Utils unit tests", () => {
     [{ serverTimeoutInSeconds: 7 }, { Prefer: "wait=7" }],
     [
       { serverTimeoutInSeconds: 7, includeQueryStatistics: true },
-      { Prefer: "wait=7,include-statistics=true" }
-    ]
+      { Prefer: "wait=7,include-statistics=true" },
+    ],
   ];
 
   headers.forEach(([options, expectedResult]) => {

@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /**
  * This sample demonstrates how to send a transactional request
  * with multiple operations in a single request
@@ -8,15 +8,13 @@
  * @azsdk-weight 50
  */
 
-import { TableClient, TransactionAction } from "@azure/data-tables";
-
-// Load the .env file if it exists
-import * as dotenv from "dotenv";
-dotenv.config();
+import type { TransactionAction } from "@azure/data-tables";
+import { TableClient } from "@azure/data-tables";
+import "dotenv/config";
 
 const connectionString = process.env["ACCOUNT_CONNECTION_STRING"] || "";
 
-async function batchOperations() {
+async function batchOperations(): Promise<void> {
   console.log("== Batch Operations Sample ==");
   const tableName = `transactionsSample`;
 
@@ -36,8 +34,8 @@ async function batchOperations() {
         rowKey: "A1",
         name: "Marker Set",
         price: 5.0,
-        quantity: 21
-      }
+        quantity: 21,
+      },
     ],
     [
       "create",
@@ -46,8 +44,8 @@ async function batchOperations() {
         rowKey: "A2",
         name: "Pen Set",
         price: 2.0,
-        quantity: 6
-      }
+        quantity: 6,
+      },
     ],
     [
       "create",
@@ -56,9 +54,9 @@ async function batchOperations() {
         rowKey: "A3",
         name: "Pencil",
         price: 1.5,
-        quantity: 100
-      }
-    ]
+        quantity: 100,
+      },
+    ],
   ];
 
   // Submit the transaction with the list of actions.
@@ -95,8 +93,8 @@ async function batchOperations() {
     [
       "update",
       { partitionKey, rowKey: "A2", name: "[Updated - Replace] Pen Set", price: 99, quantity: 33 },
-      "Replace"
-    ]
+      "Replace",
+    ],
   ];
 
   const updateResult = await client.submitTransaction(updateTransaction);

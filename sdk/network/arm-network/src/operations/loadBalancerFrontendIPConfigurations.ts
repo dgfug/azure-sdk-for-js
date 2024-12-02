@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { LoadBalancerFrontendIPConfigurations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
   FrontendIPConfiguration,
   LoadBalancerFrontendIPConfigurationsListNextOptionalParams,
@@ -19,20 +20,21 @@ import {
   LoadBalancerFrontendIPConfigurationsListResponse,
   LoadBalancerFrontendIPConfigurationsGetOptionalParams,
   LoadBalancerFrontendIPConfigurationsGetResponse,
-  LoadBalancerFrontendIPConfigurationsListNextResponse
+  LoadBalancerFrontendIPConfigurationsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing LoadBalancerFrontendIPConfigurations operations. */
 export class LoadBalancerFrontendIPConfigurationsImpl
-  implements LoadBalancerFrontendIPConfigurations {
-  private readonly client: NetworkManagementClientContext;
+  implements LoadBalancerFrontendIPConfigurations
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class LoadBalancerFrontendIPConfigurations class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -45,12 +47,12 @@ export class LoadBalancerFrontendIPConfigurationsImpl
   public list(
     resourceGroupName: string,
     loadBalancerName: string,
-    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams
+    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams,
   ): PagedAsyncIterableIterator<FrontendIPConfiguration> {
     const iter = this.listPagingAll(
       resourceGroupName,
       loadBalancerName,
-      options
+      options,
     );
     return {
       next() {
@@ -59,45 +61,58 @@ export class LoadBalancerFrontendIPConfigurationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           loadBalancerName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     loadBalancerName: string,
-    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams
+    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<FrontendIPConfiguration[]> {
-    let result = await this._list(resourceGroupName, loadBalancerName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: LoadBalancerFrontendIPConfigurationsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, loadBalancerName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         loadBalancerName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     loadBalancerName: string,
-    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams
+    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams,
   ): AsyncIterableIterator<FrontendIPConfiguration> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       loadBalancerName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -112,11 +127,11 @@ export class LoadBalancerFrontendIPConfigurationsImpl
   private _list(
     resourceGroupName: string,
     loadBalancerName: string,
-    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams
+    options?: LoadBalancerFrontendIPConfigurationsListOptionalParams,
   ): Promise<LoadBalancerFrontendIPConfigurationsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, loadBalancerName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -131,16 +146,16 @@ export class LoadBalancerFrontendIPConfigurationsImpl
     resourceGroupName: string,
     loadBalancerName: string,
     frontendIPConfigurationName: string,
-    options?: LoadBalancerFrontendIPConfigurationsGetOptionalParams
+    options?: LoadBalancerFrontendIPConfigurationsGetOptionalParams,
   ): Promise<LoadBalancerFrontendIPConfigurationsGetResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         loadBalancerName,
         frontendIPConfigurationName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -155,11 +170,11 @@ export class LoadBalancerFrontendIPConfigurationsImpl
     resourceGroupName: string,
     loadBalancerName: string,
     nextLink: string,
-    options?: LoadBalancerFrontendIPConfigurationsListNextOptionalParams
+    options?: LoadBalancerFrontendIPConfigurationsListNextOptionalParams,
   ): Promise<LoadBalancerFrontendIPConfigurationsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, loadBalancerName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -167,38 +182,15 @@ export class LoadBalancerFrontendIPConfigurationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/loadBalancers/{loadBalancerName}/frontendIPConfigurations",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/loadBalancers/{loadBalancerName}/frontendIPConfigurations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LoadBalancerFrontendIPConfigurationListResult
+      bodyMapper: Mappers.LoadBalancerFrontendIPConfigurationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId,
-    Parameters.loadBalancerName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/loadBalancers/{loadBalancerName}/frontendIPConfigurations/{frontendIPConfigurationName}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.FrontendIPConfiguration
+      bodyMapper: Mappers.CloudError,
     },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -206,30 +198,50 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.loadBalancerName,
-    Parameters.frontendIPConfigurationName
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const listNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/loadBalancers/{loadBalancerName}/frontendIPConfigurations/{frontendIPConfigurationName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LoadBalancerFrontendIPConfigurationListResult
+      bodyMapper: Mappers.FrontendIPConfiguration,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink,
-    Parameters.loadBalancerName
+    Parameters.loadBalancerName,
+    Parameters.frontendIPConfigurationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const listNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.LoadBalancerFrontendIPConfigurationListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.nextLink,
+    Parameters.loadBalancerName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };

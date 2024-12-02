@@ -1,21 +1,18 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortSignalLike } from "@azure/abort-controller";
-import { DeletedSecret, DeleteSecretOptions, GetDeletedSecretOptions } from "../../secretsModels";
-import {
-  KeyVaultSecretPollOperation,
-  KeyVaultSecretPollOperationState
-} from "../keyVaultSecretPoller";
-import { KeyVaultClient } from "../../generated/keyVaultClient";
-import { getSecretFromSecretBundle } from "../../transformations";
-import { OperationOptions } from "@azure/core-http";
-import { createTraceFunction } from "../../../../keyvault-common/src";
-
-/**
- * @internal
- */
-const withTrace = createTraceFunction("Azure.KeyVault.Secrets.DeleteSecretPoller");
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type {
+  DeleteSecretOptions,
+  DeletedSecret,
+  GetDeletedSecretOptions,
+} from "../../secretsModels.js";
+import type { KeyVaultSecretPollOperationState } from "../keyVaultSecretPoller.js";
+import { KeyVaultSecretPollOperation } from "../keyVaultSecretPoller.js";
+import type { KeyVaultClient } from "../../generated/keyVaultClient.js";
+import { getSecretFromSecretBundle } from "../../transformations.js";
+import type { OperationOptions } from "@azure/core-client";
+import { tracingClient } from "../../tracing.js";
 
 /**
  * An interface representing the state of a delete secret's poll operation
@@ -34,7 +31,7 @@ export class DeleteSecretPollOperation extends KeyVaultSecretPollOperation<
     public state: DeleteSecretPollOperationState,
     private vaultUrl: string,
     private client: KeyVaultClient,
-    private operationOptions: OperationOptions = {}
+    private operationOptions: OperationOptions = {},
   ) {
     super(state, { cancelMessage: "Canceling the deletion of a secret is not supported." });
   }
@@ -44,10 +41,14 @@ export class DeleteSecretPollOperation extends KeyVaultSecretPollOperation<
    * Since the Key Vault Key won't be immediately deleted, we have {@link beginDeleteKey}.
    */
   private deleteSecret(name: string, options: DeleteSecretOptions = {}): Promise<DeletedSecret> {
-    return withTrace("deleteSecret", options, async (updatedOptions) => {
-      const response = await this.client.deleteSecret(this.vaultUrl, name, updatedOptions);
-      return getSecretFromSecretBundle(response);
-    });
+    return tracingClient.withSpan(
+      "DeleteSecretPoller.deleteSecret",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.deleteSecret(this.vaultUrl, name, updatedOptions);
+        return getSecretFromSecretBundle(response);
+      },
+    );
   }
 
   /**
@@ -56,12 +57,16 @@ export class DeleteSecretPollOperation extends KeyVaultSecretPollOperation<
    */
   private getDeletedSecret(
     name: string,
-    options: GetDeletedSecretOptions = {}
+    options: GetDeletedSecretOptions = {},
   ): Promise<DeletedSecret> {
-    return withTrace("getDeletedSecret", options, async (updatedOptions) => {
-      const response = await this.client.getDeletedSecret(this.vaultUrl, name, updatedOptions);
-      return getSecretFromSecretBundle(response);
-    });
+    return tracingClient.withSpan(
+      "DeleteSecretPoller.getDeletedSecret",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.getDeletedSecret(this.vaultUrl, name, updatedOptions);
+        return getSecretFromSecretBundle(response);
+      },
+    );
   }
 
   /**
@@ -71,7 +76,7 @@ export class DeleteSecretPollOperation extends KeyVaultSecretPollOperation<
     options: {
       abortSignal?: AbortSignalLike;
       fireProgress?: (state: DeleteSecretPollOperationState) => void;
-    } = {}
+    } = {},
   ): Promise<DeleteSecretPollOperation> {
     const state = this.state;
     const { name } = state;
@@ -93,7 +98,7 @@ export class DeleteSecretPollOperation extends KeyVaultSecretPollOperation<
       try {
         state.result = await this.getDeletedSecret(name, this.operationOptions);
         state.isCompleted = true;
-      } catch (error) {
+      } catch (error: any) {
         if (error.statusCode === 403) {
           // At this point, the resource exists but the user doesn't have access to it.
           state.isCompleted = true;

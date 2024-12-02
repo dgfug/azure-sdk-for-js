@@ -1,53 +1,45 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Rule to encourage usage of interfaces over classes as function parameters.
- * @author Arpan Laha
+ *
  */
 
-import { ParserServices, TSESTree } from "@typescript-eslint/experimental-utils";
-import {
-  ParserWeakMapESTreeToTSNode,
-  ParserWeakMap
-} from "@typescript-eslint/typescript-estree/dist/parser-options";
-import { Rule } from "eslint";
-import {
-  FunctionDeclaration,
-  FunctionExpression,
-  Identifier,
-  MethodDefinition,
-  Pattern
-} from "estree";
 import {
   Declaration,
-  isArrayTypeNode,
-  Node as TSNode,
+  Modifier,
+  ModifierLike,
   PropertySignature,
-  Symbol as TSSymbol,
   SymbolFlags,
+  SyntaxKind,
+  Node as TSNode,
+  Symbol as TSSymbol,
   Type,
   TypeChecker,
-  TypeReferenceNode,
   TypeReference,
-  Modifier,
-  SyntaxKind
+  TypeReferenceNode,
+  isArrayTypeNode,
+  canHaveModifiers,
 } from "typescript";
-import { getRuleMetaData } from "../utils";
+import { ESLintUtils, ParserServicesWithTypeInformation, TSESTree } from "@typescript-eslint/utils";
+import { createRule } from "../utils";
+import { RuleContext } from "@typescript-eslint/utils/ts-eslint";
 
 //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
-type FunctionType = FunctionExpression | FunctionDeclaration;
+type FunctionType = TSESTree.FunctionExpression | TSESTree.FunctionDeclaration;
+type ParserWeakMapESTreeToTSNode = ParserServicesWithTypeInformation["esTreeNodeToTSNodeMap"];
 
 /**
  * Gets a ESTree parameter node's identifier node
  * @param param the parameter node
  * @return the identifier node associated with the parameter
  */
-const getParamAsIdentifier = (param: Pattern): Identifier =>
-  (param.type === "AssignmentPattern" ? param.left! : param) as Identifier;
+const getParamAsIdentifier = (param: TSESTree.Parameter): TSESTree.Identifier =>
+  (param.type === "AssignmentPattern" ? param.left! : param) as TSESTree.Identifier;
 
 /**
  * Gets the type of a paramter
@@ -57,12 +49,12 @@ const getParamAsIdentifier = (param: Pattern): Identifier =>
  * @return the Type of the parameter, or the element Type if the parameter type is an array
  */
 const getTypeOfParam = (
-  param: Pattern,
+  param: TSESTree.Parameter,
   converter: ParserWeakMapESTreeToTSNode,
-  typeChecker: TypeChecker
+  typeChecker: TypeChecker,
 ): Type => {
   const type = typeChecker.getTypeAtLocation(
-    converter.get(getParamAsIdentifier(param) as TSESTree.Node)
+    converter.get(getParamAsIdentifier(param) as TSESTree.Node),
   ) as TypeReference;
 
   // if array, extract type from array
@@ -104,7 +96,10 @@ const addSeenSymbols = (symbol: TSSymbol, symbols: TSSymbol[], typeChecker: Type
   typeChecker
     .getPropertiesOfType(typeChecker.getDeclaredTypeOfSymbol(symbol))
     .forEach((element: TSSymbol): void => {
-      const memberType = typeChecker.getTypeAtLocation(element.valueDeclaration);
+      if (!element.valueDeclaration) {
+        return;
+      }
+      const memberType = typeChecker.getTypeAtLocation(element.valueDeclaration!);
       const memberTypeNode = typeChecker.typeToTypeNode(memberType, undefined, undefined);
 
       // extract type of member
@@ -136,9 +131,9 @@ const addSeenSymbols = (symbol: TSSymbol, symbols: TSSymbol[], typeChecker: Type
  * @return a list of Symbols seen
  */
 const getSymbolsUsedInParam = (
-  param: Pattern,
+  param: TSESTree.Parameter,
   converter: ParserWeakMapESTreeToTSNode,
-  typeChecker: TypeChecker
+  typeChecker: TypeChecker,
 ): TSSymbol[] => {
   const symbols: TSSymbol[] = [];
   const symbol = getTypeOfParam(param, converter, typeChecker).getSymbol();
@@ -156,16 +151,16 @@ const getSymbolsUsedInParam = (
  * @return if the parameter is optional or if every type is not a class
  */
 const isValidParam = (
-  param: Pattern,
+  param: TSESTree.Parameter,
   converter: ParserWeakMapESTreeToTSNode,
-  typeChecker: TypeChecker
+  typeChecker: TypeChecker,
 ): boolean => {
   const tsIdentifier = param as TSESTree.Identifier;
   if (tsIdentifier.optional) {
     return true;
   }
   return getSymbolsUsedInParam(param, converter, typeChecker).every(
-    (symbol: TSSymbol): boolean => symbol === undefined || symbol.getFlags() !== SymbolFlags.Class
+    (symbol: TSSymbol): boolean => symbol === undefined || symbol.getFlags() !== SymbolFlags.Class,
   );
 };
 
@@ -179,12 +174,12 @@ const isValidParam = (
 const isValidOverload = (
   overloads: FunctionType[],
   converter: ParserWeakMapESTreeToTSNode,
-  typeChecker: TypeChecker
+  typeChecker: TypeChecker,
 ): boolean =>
   overloads.some((overload: FunctionType): boolean =>
-    overload.params.every((overloadParam: Pattern): boolean =>
-      isValidParam(overloadParam, converter, typeChecker)
-    )
+    overload.params.every((overloadParam): boolean =>
+      isValidParam(overloadParam, converter, typeChecker),
+    ),
   );
 
 /**
@@ -204,8 +199,8 @@ const evaluateOverloads = (
   typeChecker: TypeChecker,
   verified: string[],
   name: string | null,
-  param: Pattern,
-  context: Rule.RuleContext
+  param: TSESTree.Parameter,
+  context: RuleContext<"FunctionParameterIsClass", unknown[]>,
 ): void => {
   if (
     // Ignore anonymous functions
@@ -218,12 +213,17 @@ const evaluateOverloads = (
   }
 
   const identifier = getParamAsIdentifier(param);
+  const typeName = typeChecker.typeToString(getTypeOfParam(param, converter, typeChecker));
+  const parameterName = identifier.name;
+  const functionName = name ?? "<anonymous>";
   context.report({
     node: identifier,
-    message: `type ${typeChecker.typeToString(
-      getTypeOfParam(param, converter, typeChecker)
-    )} of parameter ${identifier.name} of function ${name ||
-      "<anonymous>"} is a class or contains a class as a member`
+    messageId: "FunctionParameterIsClass",
+    data: {
+      typeName,
+      parameterName,
+      functionName,
+    },
   });
 };
 
@@ -231,119 +231,123 @@ const evaluateOverloads = (
 // Rule Definition
 //------------------------------------------------------------------------------
 
-export = {
-  meta: getRuleMetaData(
-    "ts-use-interface-parameters",
-    "encourage usage of interfaces over classes as function parameters"
-  ),
-
-  create: (context: Rule.RuleContext): Rule.RuleListener => {
-    const parserServices = context.parserServices as ParserServices;
-    if (
-      parserServices.program === undefined ||
-      parserServices.esTreeNodeToTSNodeMap === undefined ||
-      parserServices.tsNodeToESTreeNodeMap === undefined
-    ) {
-      return {};
-    }
+export default createRule({
+  name: "ts-use-interface-parameters",
+  meta: {
+    type: "suggestion",
+    docs: {
+      description: "encourage usage of interfaces over classes as function parameters",
+    },
+    messages: {
+      FunctionParameterIsClass:
+        "type {{typeName}} of parameter {{parameterName}} of function {{functionName}} is a class or contains a class as a member",
+    },
+    schema: [],
+    fixable: "code",
+  },
+  defaultOptions: [],
+  create(context) {
+    const parserServices = ESLintUtils.getParserServices(context);
     const typeChecker = parserServices.program.getTypeChecker();
     const converter = parserServices.esTreeNodeToTSNodeMap;
-    const reverter: ParserWeakMap<TSNode, TSESTree.Node> = parserServices.tsNodeToESTreeNodeMap;
+    const reverter = parserServices.tsNodeToESTreeNodeMap;
 
     const verifiedMethods: string[] = [];
     const verifiedDeclarations: string[] = [];
 
-    return /src/.test(context.getFilename())
-      ? ({
-          "MethodDefinition > FunctionExpression": (node: FunctionExpression): void => {
-            const parent = context.getAncestors().reverse()[0] as MethodDefinition;
-            const key = parent.key as Identifier;
-            const name = key.name;
+    if (/src/.test(context.filename) === false) {
+      return {};
+    }
+    return {
+      "MethodDefinition > FunctionExpression": (node: TSESTree.FunctionExpression): void => {
+        const parent = context.sourceCode
+          .getAncestors?.(node)
+          .reverse()[0] as TSESTree.MethodDefinition;
+        const key = parent.key as TSESTree.Identifier;
+        const name = key.name;
 
-            // ignore if name seen already
-            if (name !== undefined && name !== "" && verifiedMethods.includes(name)) {
-              return;
-            }
+        // ignore if name seen already
+        if (name !== undefined && name !== "" && verifiedMethods.includes(name)) {
+          return;
+        }
 
-            // ignore if private methoc
-            const modifiers = converter.get(node as TSESTree.Node).modifiers;
-            if (
-              modifiers !== undefined &&
-              modifiers.some(
-                (modifier: Modifier): boolean => modifier.kind === SyntaxKind.PrivateKeyword
-              )
-            ) {
-              return;
-            }
+        const tsNode = converter.get(node as TSESTree.Node);
+        if (!canHaveModifiers(tsNode)) {
+          return;
+        }
+        // ignore if private method
+        const modifiers = tsNode.modifiers;
+        if (
+          modifiers !== undefined &&
+          modifiers.some(
+            (modifier: Modifier | ModifierLike): boolean =>
+              modifier.kind === SyntaxKind.PrivateKeyword,
+          )
+        ) {
+          return;
+        }
 
-            // iterate over parameters
-            node.params.forEach((param: Pattern): void => {
-              if (!isValidParam(param, converter, typeChecker)) {
-                const symbol = typeChecker
-                  .getTypeAtLocation(converter.get(node as TSESTree.Node))
-                  .getSymbol();
-                const overloads =
-                  symbol !== undefined
-                    ? symbol.declarations
-                        .filter(
-                          (declaration: Declaration): boolean =>
-                            reverter.get(declaration as TSNode) !== undefined
-                        )
-                        .map(
-                          (declaration: Declaration): FunctionExpression => {
-                            const method = reverter.get(declaration as TSNode) as MethodDefinition;
-                            return method.value;
-                          }
-                        )
-                    : [];
-                evaluateOverloads(
-                  overloads,
-                  converter,
-                  typeChecker,
-                  verifiedMethods,
-                  name,
-                  param,
-                  context
-                );
-              }
-            });
-          },
-
-          FunctionDeclaration: (node: FunctionDeclaration): void => {
-            const id = node.id;
-            const name = id && id.name;
-
-            // ignore if name seen already
-            if (name !== null && name !== "" && verifiedDeclarations.includes(name)) {
-              return;
-            }
-
-            // iterate over parameters
-            node.params.forEach((param: Pattern): void => {
-              if (!isValidParam(param, converter, typeChecker)) {
-                const symbol = typeChecker
-                  .getTypeAtLocation(converter.get(node as TSESTree.Node))
-                  .getSymbol();
-                const overloads =
-                  symbol !== undefined
-                    ? symbol.declarations.map(
-                        (declaration: Declaration): FunctionDeclaration =>
-                          reverter.get(declaration as TSNode) as FunctionDeclaration
-                      )
-                    : [];
-                evaluateOverloads(
-                  overloads,
-                  converter,
-                  typeChecker,
-                  verifiedDeclarations,
-                  name,
-                  param,
-                  context
-                );
-              }
-            });
+        // iterate over parameters
+        for (const param of node.params) {
+          if (!isValidParam(param, converter, typeChecker)) {
+            const symbol = typeChecker
+              .getTypeAtLocation(converter.get(node as TSESTree.Node))
+              .getSymbol();
+            const overloads =
+              symbol?.declarations
+                ?.filter(
+                  (declaration: Declaration): boolean =>
+                    reverter.get(declaration as TSNode) !== undefined,
+                )
+                .map((declaration: Declaration): TSESTree.FunctionExpression => {
+                  const method = reverter.get(declaration as TSNode) as TSESTree.MethodDefinition;
+                  return method.value as TSESTree.FunctionExpression;
+                }) ?? [];
+            evaluateOverloads(
+              overloads,
+              converter,
+              typeChecker,
+              verifiedMethods,
+              name,
+              param,
+              context,
+            );
           }
-        } as Rule.RuleListener)
-      : {};
-  }
-};
+        }
+      },
+
+      FunctionDeclaration: (node: TSESTree.FunctionDeclaration): void => {
+        const id = node.id;
+        const name = id && id.name;
+
+        // ignore if name seen already
+        if (name !== null && name !== "" && verifiedDeclarations.includes(name)) {
+          return;
+        }
+
+        // iterate over parameters
+        for (const param of node.params) {
+          if (!isValidParam(param, converter, typeChecker)) {
+            const symbol = typeChecker
+              .getTypeAtLocation(converter.get(node as TSESTree.Node))
+              .getSymbol();
+            const overloads =
+              symbol?.declarations?.map(
+                (declaration: Declaration): TSESTree.FunctionDeclaration =>
+                  reverter.get(declaration as TSNode) as TSESTree.FunctionDeclaration,
+              ) ?? [];
+            evaluateOverloads(
+              overloads,
+              converter,
+              typeChecker,
+              verifiedDeclarations,
+              name,
+              param,
+              context,
+            );
+          }
+        }
+      },
+    };
+  },
+});

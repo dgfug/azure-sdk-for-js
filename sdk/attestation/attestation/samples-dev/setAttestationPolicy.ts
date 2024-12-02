@@ -33,14 +33,14 @@
 import {
   AttestationAdministrationClient,
   createAttestationPolicyToken,
-  KnownAttestationType
+  KnownAttestationType,
 } from "@azure/attestation";
 import { DefaultAzureCredential } from "@azure/identity";
 
 // Load environment from a .env file if it exists.
 import * as dotenv from "dotenv";
-import { writeBanner } from "./utils/helpers";
-import { createRSAKey, createX509Certificate, generateSha256Hash } from "./utils/cryptoUtils";
+import { writeBanner } from "./utils/helpers.js";
+import { createRSAKey, createX509Certificate, generateSha256Hash } from "./utils/cryptoUtils.js";
 
 import { X509 } from "jsrsasign";
 
@@ -137,7 +137,7 @@ async function setOpenEnclaveAttestationPolicyAadSecured() {
 
   const setPolicyResult = await client.setPolicy(KnownAttestationType.OpenEnclave, newPolicy, {
     privateKey: privateKey,
-    certificate: certificate
+    certificate: certificate,
   });
 
   // Verify that the attestation service received the new policy.
@@ -207,7 +207,7 @@ async function setSgxEnclaveAttestationPolicyIsolatedSecured() {
 
   const setPolicyResult = await client.setPolicy(KnownAttestationType.SgxEnclave, newPolicy, {
     privateKey: privateKey,
-    certificate: certificate
+    certificate: certificate,
   });
 
   // Verify that the attestation service received the new policy.
@@ -230,7 +230,7 @@ async function setSgxEnclaveAttestationPolicyIsolatedSecured() {
   // Now reset the policy to the default policy.
   const resetPolicyResult = await client.resetPolicy(KnownAttestationType.SgxEnclave, {
     privateKey: privateKey,
-    certificate: certificate
+    certificate: certificate,
   });
 
   console.log("Reset attestation policy. Policy status: ", resetPolicyResult.body.policyResolution);

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualNetworkGatewayNatRule,
   VirtualNetworkGatewayNatRulesListByVirtualNetworkGatewayOptionalParams,
@@ -15,7 +15,7 @@ import {
   VirtualNetworkGatewayNatRulesGetResponse,
   VirtualNetworkGatewayNatRulesCreateOrUpdateOptionalParams,
   VirtualNetworkGatewayNatRulesCreateOrUpdateResponse,
-  VirtualNetworkGatewayNatRulesDeleteOptionalParams
+  VirtualNetworkGatewayNatRulesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface VirtualNetworkGatewayNatRules {
   listByVirtualNetworkGateway(
     resourceGroupName: string,
     virtualNetworkGatewayName: string,
-    options?: VirtualNetworkGatewayNatRulesListByVirtualNetworkGatewayOptionalParams
+    options?: VirtualNetworkGatewayNatRulesListByVirtualNetworkGatewayOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkGatewayNatRule>;
   /**
    * Retrieves the details of a nat rule.
@@ -43,7 +43,7 @@ export interface VirtualNetworkGatewayNatRules {
     resourceGroupName: string,
     virtualNetworkGatewayName: string,
     natRuleName: string,
-    options?: VirtualNetworkGatewayNatRulesGetOptionalParams
+    options?: VirtualNetworkGatewayNatRulesGetOptionalParams,
   ): Promise<VirtualNetworkGatewayNatRulesGetResponse>;
   /**
    * Creates a nat rule to a scalable virtual network gateway if it doesn't exist else updates the
@@ -59,10 +59,10 @@ export interface VirtualNetworkGatewayNatRules {
     virtualNetworkGatewayName: string,
     natRuleName: string,
     natRuleParameters: VirtualNetworkGatewayNatRule,
-    options?: VirtualNetworkGatewayNatRulesCreateOrUpdateOptionalParams
+    options?: VirtualNetworkGatewayNatRulesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkGatewayNatRulesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkGatewayNatRulesCreateOrUpdateResponse>,
       VirtualNetworkGatewayNatRulesCreateOrUpdateResponse
     >
   >;
@@ -80,7 +80,7 @@ export interface VirtualNetworkGatewayNatRules {
     virtualNetworkGatewayName: string,
     natRuleName: string,
     natRuleParameters: VirtualNetworkGatewayNatRule,
-    options?: VirtualNetworkGatewayNatRulesCreateOrUpdateOptionalParams
+    options?: VirtualNetworkGatewayNatRulesCreateOrUpdateOptionalParams,
   ): Promise<VirtualNetworkGatewayNatRulesCreateOrUpdateResponse>;
   /**
    * Deletes a nat rule.
@@ -93,8 +93,8 @@ export interface VirtualNetworkGatewayNatRules {
     resourceGroupName: string,
     virtualNetworkGatewayName: string,
     natRuleName: string,
-    options?: VirtualNetworkGatewayNatRulesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualNetworkGatewayNatRulesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a nat rule.
    * @param resourceGroupName The resource group name of the Virtual Network Gateway.
@@ -106,6 +106,6 @@ export interface VirtualNetworkGatewayNatRules {
     resourceGroupName: string,
     virtualNetworkGatewayName: string,
     natRuleName: string,
-    options?: VirtualNetworkGatewayNatRulesDeleteOptionalParams
+    options?: VirtualNetworkGatewayNatRulesDeleteOptionalParams,
   ): Promise<void>;
 }

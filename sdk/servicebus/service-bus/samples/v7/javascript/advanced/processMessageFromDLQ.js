@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates retrieving a message from a dead letter queue, editing it and
@@ -13,16 +13,17 @@
  */
 
 const { ServiceBusClient } = require("@azure/service-bus");
+const { DefaultAzureCredential } = require("@azure/identity");
 
 // Load the .env file if it exists
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
 
-const sbClient = new ServiceBusClient(connectionString);
+const credential = new DefaultAzureCredential();
+const sbClient = new ServiceBusClient(fqdn, credential);
 
 async function main() {
   try {
@@ -71,3 +72,5 @@ main().catch((err) => {
   console.log("Moving from DLQ Sample - Error occurred: ", err);
   process.exit(1);
 });
+
+module.exports = { main };

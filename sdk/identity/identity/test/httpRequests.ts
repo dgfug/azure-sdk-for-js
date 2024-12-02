@@ -1,23 +1,40 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as sinon from "sinon";
-import * as https from "https";
-import * as http from "http";
-import { ClientRequest, IncomingHttpHeaders, IncomingMessage } from "http";
-import { PassThrough } from "stream";
-import { RestError } from "@azure/core-rest-pipeline";
-import { setLogLevel, AzureLogger, getLogLevel, AzureLogLevel } from "@azure/logger";
-import { getError } from "./authTestUtils";
-import {
-  createResponse,
-  IdentityTestContext,
+import * as https from "node:https";
+import * as http from "node:http";
+import type { AccessToken, GetTokenOptions, TokenCredential } from "../src/index.js";
+import type { AzureLogLevel } from "@azure/logger";
+import { AzureLogger, getLogLevel, setLogLevel } from "@azure/logger";
+import type { ClientRequest, IncomingHttpHeaders, IncomingMessage } from "node:http";
+import type {
+  IdentityTestContextInterface,
   RawTestResponse,
-  SendCredentialRequests,
-  TestResponse
-} from "./httpRequestsCommon";
-import { AccessToken } from "../src";
-import { openIdConfigurationResponse } from "./msalTestUtils";
+  TestResponse,
+} from "./httpRequestsCommon.js";
+import { createResponse } from "./httpRequestsCommon.js";
+import { PassThrough } from "node:stream";
+import type { RestError } from "@azure/core-rest-pipeline";
+import { getError } from "./authTestUtils.js";
+import { openIdConfigurationResponse } from "./msalTestUtils.js";
+
+import type { MockInstance } from "vitest";
+import { vi } from "vitest";
+
+vi.mock("node:https", async () => {
+  const actual = await vi.importActual("node:https");
+  return {
+    ...actual,
+    request: vi.fn(),
+  };
+});
+vi.mock("node:http", async () => {
+  const actual = await vi.importActual("node:http");
+  return {
+    ...actual,
+    request: vi.fn(),
+  };
+});
 
 /**
  * Helps write responses that extend the PassThrough class.
@@ -49,7 +66,7 @@ export class FakeRequest extends PassThrough {
 export function createRequest(): ClientRequest {
   const request = new FakeRequest();
   request.finished = false;
-  return (request as unknown) as ClientRequest;
+  return request as unknown as ClientRequest;
 }
 
 /**
@@ -66,7 +83,7 @@ function responseToIncomingMessage(response: TestResponse): IncomingMessage {
   }
   passThroughResponse.write(response.body);
   passThroughResponse.end();
-  return (passThroughResponse as unknown) as IncomingMessage;
+  return passThroughResponse as unknown as IncomingMessage;
 }
 
 /**
@@ -96,106 +113,167 @@ export function prepareMSALResponses(): RawTestResponse[] {
  * that may expect more than one response (or error) from more than one endpoint.
  * @internal
  */
-export async function prepareIdentityTests({
-  replaceLogger,
-  logLevel
-}: {
-  replaceLogger?: boolean;
-  logLevel?: AzureLogLevel;
-}): Promise<IdentityTestContext> {
-  const sandbox = sinon.createSandbox();
-  const clock = sandbox.useFakeTimers();
-  const oldLogLevel = getLogLevel();
-  const oldLogger = AzureLogger.log;
-  const logMessages: string[] = [];
+export class IdentityTestContext implements IdentityTestContextInterface {
+  public oldLogLevel: AzureLogLevel | undefined;
+  public oldLogger: any;
+  public logMessages: string[];
 
-  if (logLevel) {
-    setLogLevel(logLevel);
+  constructor({ replaceLogger, logLevel }: { replaceLogger?: boolean; logLevel?: AzureLogLevel }) {
+    vi.useFakeTimers();
+    this.oldLogLevel = getLogLevel();
+    this.oldLogger = AzureLogger.log;
+    this.logMessages = [];
+
+    if (logLevel) {
+      setLogLevel(logLevel);
+    }
+
+    if (replaceLogger) {
+      AzureLogger.log = (...args) => {
+        this.logMessages.push(args.join(" "));
+      };
+    }
   }
 
-  if (replaceLogger) {
-    AzureLogger.log = (...args) => {
-      logMessages.push(args.join(" "));
-    };
+  async restore(): Promise<void> {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    AzureLogger.log = this.oldLogger;
+    setLogLevel(this.oldLogLevel);
   }
 
   /**
    * Wraps the outgoing request in a mocked environment, then returns the result of the request.
    */
-  async function sendIndividualRequest<T>(
+  async sendIndividualRequest<T>(
     sendPromise: () => Promise<T | null>,
-    { response }: { response: TestResponse }
+    { response }: { response: TestResponse },
   ): Promise<T | null> {
     const request = createRequest();
-    sandbox.replace(
-      https,
-      "request",
+    vi.mocked(https.request).mockImplementation(
       (_options: string | URL | http.RequestOptions, resolve: any) => {
         resolve(responseToIncomingMessage(response));
         return request;
-      }
+      },
     );
-    clock.runAllAsync();
+    await vi.runAllTimersAsync();
     return sendPromise();
   }
 
   /**
    * Wraps the outgoing request in a mocked environment, then returns the error that results from the request.
    */
-  async function sendIndividualRequestAndGetError<T>(
+  async sendIndividualRequestAndGetError<T>(
     sendPromise: () => Promise<T | null>,
-    response: { response: TestResponse }
+    response: { response: TestResponse },
   ): Promise<Error> {
-    return getError(sendIndividualRequest(sendPromise, response));
+    return getError(this.sendIndividualRequest(sendPromise, response));
+  }
+
+  /**
+   * Helps replace the <provider>.request() method with one we can control.
+   */
+  public registerResponses(
+    provider: "http" | "https",
+    responses: { response?: TestResponse; error?: RestError }[],
+    spies: MockInstance[],
+  ): http.RequestOptions[] {
+    const providerObject = provider === "http" ? http : https;
+    const totalOptions: http.RequestOptions[] = [];
+
+    try {
+      const fakeRequest = (
+        options: string | URL | http.RequestOptions,
+        resolve: any,
+      ): http.ClientRequest => {
+        totalOptions.push(options as http.RequestOptions);
+
+        if (!responses.length) {
+          throw new Error("No responses left.");
+        }
+
+        const { response, error } = responses.shift()!;
+        if (error) {
+          throw error;
+        } else {
+          resolve(responseToIncomingMessage(response!));
+        }
+        const request = createRequest();
+        spies.push(vi.spyOn(request, "end"));
+        return request;
+      };
+
+      vi.mocked(providerObject.request).mockImplementation(fakeRequest);
+    } catch (e: any) {
+      console.debug(
+        "Failed to replace the request. This might be expected if you're running multiple sendCredentialRequests() calls.",
+        e.message,
+      );
+    }
+
+    return totalOptions;
+  }
+
+  /**
+   * Working with the http/https modules is a bit weird.
+   * We use this function to extract information from the outgoing requests into a format easy to work with.
+   * We have to use both the stub for the http/https <module>.request() method,
+   * and the request spies we've been accumulating throughout the getToken() execution.
+   */
+  extractRequests(
+    options: http.RequestOptions[],
+    spies: MockInstance[],
+    protocol: "http" | "https",
+  ): {
+    url: string;
+    body: string;
+    method: string;
+    headers: Record<string, string>;
+  }[] {
+    return spies.reduce((accumulator: any, spy: MockInstance, index: number) => {
+      if (!options[index]) {
+        return accumulator;
+      }
+      const requestOptions = options[index];
+      return [
+        ...accumulator,
+        {
+          url: `${protocol}://${requestOptions.hostname}${requestOptions.path}`,
+          body: (spy.mock.calls[0] && spy.mock.calls[0][0]) || "",
+          method: requestOptions.method,
+          headers: requestOptions.headers,
+        },
+      ];
+    }, []);
   }
 
   /**
    * Wraps a credential's getToken in a mocked environment, then returns the results from the request,
    * including potentially an AccessToken, an error and the list of outgoing requests in a simplified format.
    */
-  const sendCredentialRequests: SendCredentialRequests = async ({
+  async sendCredentialRequests({
     scopes,
     getTokenOptions,
     credential,
     insecureResponses = [],
-    secureResponses = []
-  }) => {
-    /**
-     * Helps replace the <provider>.request() method with one we can control.
-     */
-    const registerResponses = (
-      provider: "http" | "https",
-      responses: { response?: TestResponse; error?: RestError }[],
-      spies: sinon.SinonSpy[]
-    ): http.RequestOptions[] => {
-      const providerObject = provider === "http" ? http : https;
-      const totalOptions: http.RequestOptions[] = [];
-
-      try {
-        const fakeRequest = (options: string | URL | http.RequestOptions, resolve: any) => {
-          totalOptions.push(options as http.RequestOptions);
-
-          const { response, error } = responses.shift()!;
-          if (error) {
-            throw error;
-          } else {
-            resolve(responseToIncomingMessage(response!));
-          }
-          const request = createRequest();
-          spies.push(sandbox.spy(request, "end"));
-          return request;
-        };
-        sandbox.replace(providerObject, "request", fakeRequest);
-        sandbox.replace(providerObject.Agent.prototype as any, "request", fakeRequest);
-      } catch (e) {
-        console.debug(
-          "Failed to replace the request. This might be expected if you're running multiple sendCredentialRequests() calls."
-        );
-      }
-
-      return totalOptions;
-    };
-
+    secureResponses = [],
+  }: {
+    scopes: string | string[];
+    getTokenOptions?: GetTokenOptions;
+    credential: TokenCredential;
+    insecureResponses?: RawTestResponse[];
+    secureResponses?: RawTestResponse[];
+  }): Promise<{
+    result: AccessToken | null;
+    error?: RestError;
+    requests: {
+      url: string;
+      body: string;
+      method: string;
+      headers: Record<string, string>;
+    }[];
+  }> {
     // We optimistically order the incoming responses as:
     // The first set of responses will be those that are expected to come from insecure endpoints,
     // Then all of the remaining responses will be expected to come from secure endpoints.
@@ -203,11 +281,11 @@ export async function prepareIdentityTests({
     // Generally, there should be no insecure requests, but in practice, some authentication methods require
     // requests to go out to insecure endpoints, specially at the beginning of the authentication flow.
     // An example would be the IMDS endpoint.
-    const insecureSpies: sinon.SinonSpy[] = [];
-    const insecureOptions = registerResponses("http", insecureResponses, insecureSpies);
+    const insecureSpies: MockInstance[] = [];
+    const insecureOptions = this.registerResponses("http", insecureResponses, insecureSpies);
 
-    const secureSpies: sinon.SinonSpy[] = [];
-    const secureOptions = registerResponses("https", secureResponses, secureSpies);
+    const secureSpies: MockInstance[] = [];
+    const secureOptions = this.registerResponses("https", secureResponses, secureSpies);
 
     let result: AccessToken | null = null;
     let error: RestError | undefined;
@@ -217,67 +295,19 @@ export async function prepareIdentityTests({
       // So loosely tell Sinon's clock to advance the time,
       // and then we trigger our main getToken request, and wait for it.
       // All the errors will be safely be caught by the try surrounding the getToken request.
-      clock.runAllAsync();
+      await vi.runAllTimersAsync();
       result = await credential.getToken(scopes, getTokenOptions);
-    } catch (e) {
+    } catch (e: any) {
       error = e;
     }
-
-    /**
-     * Working with the http/https modules is a bit weird.
-     * We use this function to extract information from the outgoing requests into a format easy to work with.
-     * We have to use both the stub for the http/https <module>.request() method,
-     * and the request spies we've been accumulating throughout the getToken() execution.
-     */
-    const extractRequests = (
-      options: http.RequestOptions[],
-      spies: sinon.SinonSpy[],
-      protocol: "http" | "https"
-    ): {
-      url: string;
-      body: string;
-      method: string;
-      headers: Record<string, string>;
-    }[] =>
-      spies.reduce((accumulator: any, spy: sinon.SinonSpy, index: number) => {
-        if (!options[index]) {
-          return accumulator;
-        }
-        const requestOptions = options[index];
-        return [
-          ...accumulator,
-          {
-            url: `${protocol}://${requestOptions.hostname}${requestOptions.path}`,
-            body: (spy.args[0] && spy.args[0][0]) || "",
-            method: requestOptions.method,
-            headers: requestOptions.headers
-          }
-        ];
-      }, []);
 
     return {
       result,
       error,
       requests: [
-        ...extractRequests(insecureOptions, insecureSpies, "http"),
-        ...extractRequests(secureOptions, secureSpies, "https")
-      ]
+        ...this.extractRequests(insecureOptions, insecureSpies, "http"),
+        ...this.extractRequests(secureOptions, secureSpies, "https"),
+      ],
     };
-  };
-
-  return {
-    clock,
-    logMessages,
-    oldLogLevel,
-    sandbox,
-    oldLogger,
-    async restore() {
-      sandbox.restore();
-      AzureLogger.log = oldLogger;
-      setLogLevel(oldLogLevel);
-    },
-    sendIndividualRequest,
-    sendIndividualRequestAndGetError,
-    sendCredentialRequests
-  };
+  }
 }

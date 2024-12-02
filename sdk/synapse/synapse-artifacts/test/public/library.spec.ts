@@ -1,15 +1,18 @@
-import { ArtifactsClient } from "../../src/artifactsClient";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import type { ArtifactsClient } from "../../src/artifactsClient.js";
 import { Recorder } from "@azure-tools/test-recorder";
-import { assert } from "chai";
-import { createClient, createRecorder } from "./utils/recordedClient";
+import { createClient } from "./utils/recordedClient.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 describe("Library", () => {
   let recorder: Recorder;
   let client: ArtifactsClient;
 
-  beforeEach(function() {
-    recorder = createRecorder(this);
-    client = createClient();
+  beforeEach(async (ctx) => {
+    recorder = new Recorder(ctx);
+    client = await createClient(recorder);
   });
 
   afterEach(async () => {
@@ -17,11 +20,11 @@ describe("Library", () => {
   });
 
   const testLibraryName = "testLibraryName.jar";
-  it("should create library", async () => {
+  it("should create library", { timeout: 30000 }, async () => {
     const poller = await client.library.beginCreate(testLibraryName);
     await poller.pollUntilDone();
     assert.isTrue(poller.isDone());
-  }).timeout(30000);
+  });
 
   it("should list library", async () => {
     const libraries = client.library.list();
@@ -39,9 +42,9 @@ describe("Library", () => {
     assert.equal(result.name, testLibraryName);
   });
 
-  it("should delete library", async () => {
+  it("should delete library", { timeout: 30000 }, async () => {
     const poller = await client.library.beginDelete(testLibraryName);
     await poller.pollUntilDone();
     assert.isTrue(poller.isDone());
-  }).timeout(30000);
+  });
 });

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   EHNamespace,
   NamespacesListOptionalParams,
@@ -26,6 +26,8 @@ import {
   NamespacesCreateOrUpdateNetworkRuleSetResponse,
   NamespacesGetNetworkRuleSetOptionalParams,
   NamespacesGetNetworkRuleSetResponse,
+  NamespacesListNetworkRuleSetOptionalParams,
+  NamespacesListNetworkRuleSetResponse,
   NamespacesCreateOrUpdateAuthorizationRuleOptionalParams,
   NamespacesCreateOrUpdateAuthorizationRuleResponse,
   NamespacesDeleteAuthorizationRuleOptionalParams,
@@ -38,7 +40,7 @@ import {
   NamespacesRegenerateKeysResponse,
   CheckNameAvailabilityParameter,
   NamespacesCheckNameAvailabilityOptionalParams,
-  NamespacesCheckNameAvailabilityResponse
+  NamespacesCheckNameAvailabilityResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -49,7 +51,7 @@ export interface Namespaces {
    * @param options The options parameters.
    */
   list(
-    options?: NamespacesListOptionalParams
+    options?: NamespacesListOptionalParams,
   ): PagedAsyncIterableIterator<EHNamespace>;
   /**
    * Lists the available Namespaces within a resource group.
@@ -58,7 +60,7 @@ export interface Namespaces {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: NamespacesListByResourceGroupOptionalParams
+    options?: NamespacesListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<EHNamespace>;
   /**
    * Gets a list of authorization rules for a Namespace.
@@ -69,7 +71,7 @@ export interface Namespaces {
   listAuthorizationRules(
     resourceGroupName: string,
     namespaceName: string,
-    options?: NamespacesListAuthorizationRulesOptionalParams
+    options?: NamespacesListAuthorizationRulesOptionalParams,
   ): PagedAsyncIterableIterator<AuthorizationRule>;
   /**
    * Creates or updates a namespace. Once created, this namespace's resource manifest is immutable. This
@@ -83,10 +85,10 @@ export interface Namespaces {
     resourceGroupName: string,
     namespaceName: string,
     parameters: EHNamespace,
-    options?: NamespacesCreateOrUpdateOptionalParams
+    options?: NamespacesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NamespacesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<NamespacesCreateOrUpdateResponse>,
       NamespacesCreateOrUpdateResponse
     >
   >;
@@ -102,7 +104,7 @@ export interface Namespaces {
     resourceGroupName: string,
     namespaceName: string,
     parameters: EHNamespace,
-    options?: NamespacesCreateOrUpdateOptionalParams
+    options?: NamespacesCreateOrUpdateOptionalParams,
   ): Promise<NamespacesCreateOrUpdateResponse>;
   /**
    * Deletes an existing namespace. This operation also removes all associated resources under the
@@ -114,8 +116,8 @@ export interface Namespaces {
   beginDelete(
     resourceGroupName: string,
     namespaceName: string,
-    options?: NamespacesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: NamespacesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes an existing namespace. This operation also removes all associated resources under the
    * namespace.
@@ -126,7 +128,7 @@ export interface Namespaces {
   beginDeleteAndWait(
     resourceGroupName: string,
     namespaceName: string,
-    options?: NamespacesDeleteOptionalParams
+    options?: NamespacesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the description of the specified namespace.
@@ -137,7 +139,7 @@ export interface Namespaces {
   get(
     resourceGroupName: string,
     namespaceName: string,
-    options?: NamespacesGetOptionalParams
+    options?: NamespacesGetOptionalParams,
   ): Promise<NamespacesGetResponse>;
   /**
    * Creates or updates a namespace. Once created, this namespace's resource manifest is immutable. This
@@ -151,7 +153,7 @@ export interface Namespaces {
     resourceGroupName: string,
     namespaceName: string,
     parameters: EHNamespace,
-    options?: NamespacesUpdateOptionalParams
+    options?: NamespacesUpdateOptionalParams,
   ): Promise<NamespacesUpdateResponse>;
   /**
    * Create or update NetworkRuleSet for a Namespace.
@@ -164,7 +166,7 @@ export interface Namespaces {
     resourceGroupName: string,
     namespaceName: string,
     parameters: NetworkRuleSet,
-    options?: NamespacesCreateOrUpdateNetworkRuleSetOptionalParams
+    options?: NamespacesCreateOrUpdateNetworkRuleSetOptionalParams,
   ): Promise<NamespacesCreateOrUpdateNetworkRuleSetResponse>;
   /**
    * Gets NetworkRuleSet for a Namespace.
@@ -175,8 +177,19 @@ export interface Namespaces {
   getNetworkRuleSet(
     resourceGroupName: string,
     namespaceName: string,
-    options?: NamespacesGetNetworkRuleSetOptionalParams
+    options?: NamespacesGetNetworkRuleSetOptionalParams,
   ): Promise<NamespacesGetNetworkRuleSetResponse>;
+  /**
+   * Gets NetworkRuleSet for a Namespace.
+   * @param resourceGroupName Name of the resource group within the azure subscription.
+   * @param namespaceName The Namespace name
+   * @param options The options parameters.
+   */
+  listNetworkRuleSet(
+    resourceGroupName: string,
+    namespaceName: string,
+    options?: NamespacesListNetworkRuleSetOptionalParams,
+  ): Promise<NamespacesListNetworkRuleSetResponse>;
   /**
    * Creates or updates an AuthorizationRule for a Namespace.
    * @param resourceGroupName Name of the resource group within the azure subscription.
@@ -190,7 +203,7 @@ export interface Namespaces {
     namespaceName: string,
     authorizationRuleName: string,
     parameters: AuthorizationRule,
-    options?: NamespacesCreateOrUpdateAuthorizationRuleOptionalParams
+    options?: NamespacesCreateOrUpdateAuthorizationRuleOptionalParams,
   ): Promise<NamespacesCreateOrUpdateAuthorizationRuleResponse>;
   /**
    * Deletes an AuthorizationRule for a Namespace.
@@ -203,7 +216,7 @@ export interface Namespaces {
     resourceGroupName: string,
     namespaceName: string,
     authorizationRuleName: string,
-    options?: NamespacesDeleteAuthorizationRuleOptionalParams
+    options?: NamespacesDeleteAuthorizationRuleOptionalParams,
   ): Promise<void>;
   /**
    * Gets an AuthorizationRule for a Namespace by rule name.
@@ -216,7 +229,7 @@ export interface Namespaces {
     resourceGroupName: string,
     namespaceName: string,
     authorizationRuleName: string,
-    options?: NamespacesGetAuthorizationRuleOptionalParams
+    options?: NamespacesGetAuthorizationRuleOptionalParams,
   ): Promise<NamespacesGetAuthorizationRuleResponse>;
   /**
    * Gets the primary and secondary connection strings for the Namespace.
@@ -229,7 +242,7 @@ export interface Namespaces {
     resourceGroupName: string,
     namespaceName: string,
     authorizationRuleName: string,
-    options?: NamespacesListKeysOptionalParams
+    options?: NamespacesListKeysOptionalParams,
   ): Promise<NamespacesListKeysResponse>;
   /**
    * Regenerates the primary or secondary connection strings for the specified Namespace.
@@ -244,7 +257,7 @@ export interface Namespaces {
     namespaceName: string,
     authorizationRuleName: string,
     parameters: RegenerateAccessKeyParameters,
-    options?: NamespacesRegenerateKeysOptionalParams
+    options?: NamespacesRegenerateKeysOptionalParams,
   ): Promise<NamespacesRegenerateKeysResponse>;
   /**
    * Check the give Namespace name availability.
@@ -253,6 +266,6 @@ export interface Namespaces {
    */
   checkNameAvailability(
     parameters: CheckNameAvailabilityParameter,
-    options?: NamespacesCheckNameAvailabilityOptionalParams
+    options?: NamespacesCheckNameAvailabilityOptionalParams,
   ): Promise<NamespacesCheckNameAvailabilityResponse>;
 }

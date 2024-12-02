@@ -10,9 +10,13 @@ import { ExpressRouteGateways } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   ExpressRouteGatewaysListBySubscriptionOptionalParams,
   ExpressRouteGatewaysListBySubscriptionResponse,
@@ -26,18 +30,18 @@ import {
   ExpressRouteGatewaysUpdateTagsResponse,
   ExpressRouteGatewaysGetOptionalParams,
   ExpressRouteGatewaysGetResponse,
-  ExpressRouteGatewaysDeleteOptionalParams
+  ExpressRouteGatewaysDeleteOptionalParams,
 } from "../models";
 
 /** Class containing ExpressRouteGateways operations. */
 export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class ExpressRouteGateways class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -46,11 +50,11 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
    * @param options The options parameters.
    */
   listBySubscription(
-    options?: ExpressRouteGatewaysListBySubscriptionOptionalParams
+    options?: ExpressRouteGatewaysListBySubscriptionOptionalParams,
   ): Promise<ExpressRouteGatewaysListBySubscriptionResponse> {
     return this.client.sendOperationRequest(
       { options },
-      listBySubscriptionOperationSpec
+      listBySubscriptionOperationSpec,
     );
   }
 
@@ -61,11 +65,11 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: ExpressRouteGatewaysListByResourceGroupOptionalParams
+    options?: ExpressRouteGatewaysListByResourceGroupOptionalParams,
   ): Promise<ExpressRouteGatewaysListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -81,30 +85,29 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
     resourceGroupName: string,
     expressRouteGatewayName: string,
     putExpressRouteGatewayParameters: ExpressRouteGateway,
-    options?: ExpressRouteGatewaysCreateOrUpdateOptionalParams
+    options?: ExpressRouteGatewaysCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteGatewaysCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteGatewaysCreateOrUpdateResponse>,
       ExpressRouteGatewaysCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ExpressRouteGatewaysCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -113,8 +116,8 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -122,26 +125,31 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         expressRouteGatewayName,
         putExpressRouteGatewayParameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ExpressRouteGatewaysCreateOrUpdateResponse,
+      OperationState<ExpressRouteGatewaysCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -156,13 +164,13 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
     resourceGroupName: string,
     expressRouteGatewayName: string,
     putExpressRouteGatewayParameters: ExpressRouteGateway,
-    options?: ExpressRouteGatewaysCreateOrUpdateOptionalParams
+    options?: ExpressRouteGatewaysCreateOrUpdateOptionalParams,
   ): Promise<ExpressRouteGatewaysCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       expressRouteGatewayName,
       putExpressRouteGatewayParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -179,30 +187,29 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
     resourceGroupName: string,
     expressRouteGatewayName: string,
     expressRouteGatewayParameters: TagsObject,
-    options?: ExpressRouteGatewaysUpdateTagsOptionalParams
+    options?: ExpressRouteGatewaysUpdateTagsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteGatewaysUpdateTagsResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteGatewaysUpdateTagsResponse>,
       ExpressRouteGatewaysUpdateTagsResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ExpressRouteGatewaysUpdateTagsResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -211,8 +218,8 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -220,26 +227,31 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         expressRouteGatewayName,
         expressRouteGatewayParameters,
-        options
+        options,
       },
-      updateTagsOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: updateTagsOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ExpressRouteGatewaysUpdateTagsResponse,
+      OperationState<ExpressRouteGatewaysUpdateTagsResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -254,13 +266,13 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
     resourceGroupName: string,
     expressRouteGatewayName: string,
     expressRouteGatewayParameters: TagsObject,
-    options?: ExpressRouteGatewaysUpdateTagsOptionalParams
+    options?: ExpressRouteGatewaysUpdateTagsOptionalParams,
   ): Promise<ExpressRouteGatewaysUpdateTagsResponse> {
     const poller = await this.beginUpdateTags(
       resourceGroupName,
       expressRouteGatewayName,
       expressRouteGatewayParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -274,11 +286,11 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
   get(
     resourceGroupName: string,
     expressRouteGatewayName: string,
-    options?: ExpressRouteGatewaysGetOptionalParams
+    options?: ExpressRouteGatewaysGetOptionalParams,
   ): Promise<ExpressRouteGatewaysGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, expressRouteGatewayName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -292,25 +304,24 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
   async beginDelete(
     resourceGroupName: string,
     expressRouteGatewayName: string,
-    options?: ExpressRouteGatewaysDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ExpressRouteGatewaysDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -319,8 +330,8 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -328,21 +339,23 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, expressRouteGatewayName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, expressRouteGatewayName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -355,12 +368,12 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
   async beginDeleteAndWait(
     resourceGroupName: string,
     expressRouteGatewayName: string,
-    options?: ExpressRouteGatewaysDeleteOptionalParams
+    options?: ExpressRouteGatewaysDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       expressRouteGatewayName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -369,63 +382,60 @@ export class ExpressRouteGatewaysImpl implements ExpressRouteGateways {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listBySubscriptionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/expressRouteGateways",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/expressRouteGateways",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteGatewayList
+      bodyMapper: Mappers.ExpressRouteGatewayList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteGatewayList
+      bodyMapper: Mappers.ExpressRouteGatewayList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     201: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     202: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     204: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.putExpressRouteGatewayParameters,
   queryParameters: [Parameters.apiVersion],
@@ -433,32 +443,31 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRouteGatewayName
+    Parameters.expressRouteGatewayName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateTagsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     201: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     202: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     204: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.expressRouteGatewayParameters,
   queryParameters: [Parameters.apiVersion],
@@ -466,37 +475,35 @@ const updateTagsOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRouteGatewayName
+    Parameters.expressRouteGatewayName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRouteGateway
+      bodyMapper: Mappers.ExpressRouteGateway,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRouteGatewayName
+    Parameters.expressRouteGatewayName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRouteGateways/{expressRouteGatewayName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -504,16 +511,16 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRouteGatewayName
+    Parameters.expressRouteGatewayName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

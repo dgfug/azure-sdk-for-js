@@ -1,15 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
 import {
   AzureKeyCredential,
   AzureNamedKeyCredential,
   AzureSASCredential,
+  isKeyCredential,
   isNamedKeyCredential,
   isSASCredential,
-  isTokenCredential
-} from "../src/index";
+  isTokenCredential,
+} from "../src/index.js";
+import { describe, it, assert } from "vitest";
 
 describe("AzureKeyCredential", () => {
   it("credential constructor throws on invalid key", () => {
@@ -17,10 +18,10 @@ describe("AzureKeyCredential", () => {
       void new AzureKeyCredential("");
     }, /key must be a non-empty string/);
     assert.throws(() => {
-      void new AzureKeyCredential((null as unknown) as string);
+      void new AzureKeyCredential(null as unknown as string);
     }, /key must be a non-empty string/);
     assert.throws(() => {
-      void new AzureKeyCredential((undefined as unknown) as string);
+      void new AzureKeyCredential(undefined as unknown as string);
     }, /key must be a non-empty string/);
   });
 
@@ -38,30 +39,30 @@ describe("AzureNamedKeyCredential", () => {
       void new AzureNamedKeyCredential("name", "");
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
-      void new AzureNamedKeyCredential("name", (null as unknown) as string);
+      void new AzureNamedKeyCredential("name", null as unknown as string);
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
-      void new AzureNamedKeyCredential("name", (undefined as unknown) as string);
+      void new AzureNamedKeyCredential("name", undefined as unknown as string);
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
       void new AzureNamedKeyCredential("", "key");
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
-      void new AzureNamedKeyCredential((null as unknown) as string, "key");
+      void new AzureNamedKeyCredential(null as unknown as string, "key");
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
-      void new AzureNamedKeyCredential((undefined as unknown) as string, "key");
+      void new AzureNamedKeyCredential(undefined as unknown as string, "key");
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
       void new AzureNamedKeyCredential("", "");
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
-      void new AzureNamedKeyCredential((null as unknown) as string, (null as unknown) as string);
+      void new AzureNamedKeyCredential(null as unknown as string, null as unknown as string);
     }, /name and key must be non-empty strings/);
     assert.throws(() => {
       void new AzureNamedKeyCredential(
-        (undefined as unknown) as string,
-        (undefined as unknown) as string
+        undefined as unknown as string,
+        undefined as unknown as string,
       );
     }, /name and key must be non-empty strings/);
   });
@@ -112,10 +113,10 @@ describe("AzureSASCredential", () => {
       void new AzureSASCredential("");
     }, /shared access signature must be a non-empty string/);
     assert.throws(() => {
-      void new AzureSASCredential((null as unknown) as string);
+      void new AzureSASCredential(null as unknown as string);
     }, /shared access signature must be a non-empty string/);
     assert.throws(() => {
-      void new AzureSASCredential((undefined as unknown) as string);
+      void new AzureSASCredential(undefined as unknown as string);
     }, /shared access signature must be a non-empty string/);
   });
 
@@ -133,25 +134,25 @@ describe("AzureSASCredential", () => {
       credential.update("");
     }, /shared access signature must be a non-empty string/);
     assert.throws(() => {
-      credential.update((null as unknown) as string);
+      credential.update(null as unknown as string);
     }, /shared access signature must be a non-empty string/);
     assert.throws(() => {
-      credential.update((undefined as unknown) as string);
+      credential.update(undefined as unknown as string);
     }, /shared access signature must be a non-empty string/);
   });
 });
 
-describe("isTokenCredential", function() {
+describe("isTokenCredential", function () {
   it("should return true for an object that resembles a TokenCredential", () => {
     assert.ok(
       isTokenCredential({
         getToken() {
           return Promise.resolve({
             token: "secret",
-            expiresOnTimestamp: 12345
+            expiresOnTimestamp: 12345,
           });
-        }
-      })
+        },
+      }),
     );
   });
 
@@ -160,51 +161,51 @@ describe("isTokenCredential", function() {
       isTokenCredential({
         doStuff() {
           return false;
-        }
+        },
       }),
-      false
+      false,
     );
   });
 
   it("should return false for an object that has a non-function field named 'getToken'", () => {
     assert.strictEqual(
       isTokenCredential({
-        getToken: true
+        getToken: true,
       }),
-      false
+      false,
     );
   });
 
   it("should return false for an object that has a 'signRequest' field and getToken that takes no parameters", () => {
     assert.strictEqual(
       isTokenCredential({
-        getToken: function(): number {
+        getToken: function (): number {
           return 1;
         },
-        signRequest: function(): number {
+        signRequest: function (): number {
           return 1;
-        }
+        },
       }),
-      false
+      false,
     );
   });
 
   it("should return true for an object that has a 'signRequest' field and getToken that takes parameters", () => {
     assert.strictEqual(
       isTokenCredential({
-        getToken: function(scope: string): string {
+        getToken: function (scope: string): string {
           return scope;
         },
-        signRequest: function(): number {
+        signRequest: function (): number {
           return 1;
-        }
+        },
       }),
-      true
+      true,
     );
   });
 });
 
-describe("isNamedKeyCredential", function() {
+describe("isNamedKeyCredential", function () {
   it("should return true for an object that resembles a NamedKeyCredential", () => {
     assert.ok(isNamedKeyCredential({ name: "foo", key: "bar" }));
   });
@@ -214,12 +215,22 @@ describe("isNamedKeyCredential", function() {
   });
 });
 
-describe("isSASCredential", function() {
+describe("isSASCredential", function () {
   it("should return true for an object that resembles a isSASCredential", () => {
     assert.ok(isSASCredential({ signature: "sig" }));
   });
 
   it("should return false for an object that does not resemble a isSASCredential", () => {
     assert.strictEqual(isSASCredential({}), false);
+  });
+});
+
+describe("isKeyCredential", function () {
+  it("should return true for an object that resembles a KeyCredential", () => {
+    assert.ok(isKeyCredential({ key: "bar" }));
+  });
+
+  it("should return false for an object that does not resemble a KeyCredential", () => {
+    assert.strictEqual(isKeyCredential({}), false);
   });
 });

@@ -1,17 +1,18 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  KeyVaultBackupPollOperation,
+import type { KeyVaultAdminPollerOptions } from "../keyVaultAdminPoller.js";
+import { KeyVaultAdminPoller } from "../keyVaultAdminPoller.js";
+import type {
   KeyVaultBackupOperationState,
-  KeyVaultBackupPollOperationState
-} from "./operation";
-import { KeyVaultAdminPollerOptions, KeyVaultAdminPoller } from "../keyVaultAdminPoller";
-import { KeyVaultBackupResult } from "../../backupClientModels";
+  KeyVaultBackupPollOperationState,
+} from "./operation.js";
+import { KeyVaultBackupPollOperation } from "./operation.js";
+import type { KeyVaultBackupResult } from "../../backupClientModels.js";
 
 export interface KeyVaultBackupPollerOptions extends KeyVaultAdminPollerOptions {
   blobStorageUri: string;
-  sasToken: string;
+  sasToken?: string;
 }
 
 /**
@@ -29,7 +30,7 @@ export class KeyVaultBackupPoller extends KeyVaultAdminPoller<
       sasToken,
       requestOptions,
       intervalInMs = 2000,
-      resumeFrom
+      resumeFrom,
     } = options;
 
     let state: KeyVaultBackupPollOperationState | undefined;
@@ -42,11 +43,11 @@ export class KeyVaultBackupPoller extends KeyVaultAdminPoller<
       {
         ...state,
         blobStorageUri,
-        sasToken
+        sasToken,
       },
       vaultUrl,
       client,
-      requestOptions
+      requestOptions,
     );
 
     super(operation);

@@ -6,14 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   DeletedSite,
   DeletedWebAppsListOptionalParams,
   DeletedWebAppsListByLocationOptionalParams,
   DeletedWebAppsGetDeletedWebAppByLocationOptionalParams,
-  DeletedWebAppsGetDeletedWebAppByLocationResponse
+  DeletedWebAppsGetDeletedWebAppByLocationResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -24,7 +23,7 @@ export interface DeletedWebApps {
    * @param options The options parameters.
    */
   list(
-    options?: DeletedWebAppsListOptionalParams
+    options?: DeletedWebAppsListOptionalParams,
   ): PagedAsyncIterableIterator<DeletedSite>;
   /**
    * Description for Get all deleted apps for a subscription at location
@@ -33,7 +32,7 @@ export interface DeletedWebApps {
    */
   listByLocation(
     location: string,
-    options?: DeletedWebAppsListByLocationOptionalParams
+    options?: DeletedWebAppsListByLocationOptionalParams,
   ): PagedAsyncIterableIterator<DeletedSite>;
   /**
    * Description for Get deleted app for a subscription at location.
@@ -44,6 +43,6 @@ export interface DeletedWebApps {
   getDeletedWebAppByLocation(
     location: string,
     deletedSiteId: string,
-    options?: DeletedWebAppsGetDeletedWebAppByLocationOptionalParams
+    options?: DeletedWebAppsGetDeletedWebAppByLocationOptionalParams,
   ): Promise<DeletedWebAppsGetDeletedWebAppByLocationResponse>;
 }

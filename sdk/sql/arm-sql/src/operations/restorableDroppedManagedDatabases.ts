@@ -6,13 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { RestorableDroppedManagedDatabases } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   RestorableDroppedManagedDatabase,
   RestorableDroppedManagedDatabasesListByInstanceNextOptionalParams,
@@ -20,20 +20,21 @@ import {
   RestorableDroppedManagedDatabasesListByInstanceResponse,
   RestorableDroppedManagedDatabasesGetOptionalParams,
   RestorableDroppedManagedDatabasesGetResponse,
-  RestorableDroppedManagedDatabasesListByInstanceNextResponse
+  RestorableDroppedManagedDatabasesListByInstanceNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RestorableDroppedManagedDatabases operations. */
 export class RestorableDroppedManagedDatabasesImpl
-  implements RestorableDroppedManagedDatabases {
-  private readonly client: SqlManagementClientContext;
+  implements RestorableDroppedManagedDatabases
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class RestorableDroppedManagedDatabases class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -47,12 +48,12 @@ export class RestorableDroppedManagedDatabasesImpl
   public listByInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams
+    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams,
   ): PagedAsyncIterableIterator<RestorableDroppedManagedDatabase> {
     const iter = this.listByInstancePagingAll(
       resourceGroupName,
       managedInstanceName,
-      options
+      options,
     );
     return {
       next() {
@@ -61,49 +62,62 @@ export class RestorableDroppedManagedDatabasesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByInstancePagingPage(
           resourceGroupName,
           managedInstanceName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByInstancePagingPage(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams
+    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<RestorableDroppedManagedDatabase[]> {
-    let result = await this._listByInstance(
-      resourceGroupName,
-      managedInstanceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RestorableDroppedManagedDatabasesListByInstanceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByInstance(
+        resourceGroupName,
+        managedInstanceName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByInstanceNext(
         resourceGroupName,
         managedInstanceName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByInstancePagingAll(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams
+    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams,
   ): AsyncIterableIterator<RestorableDroppedManagedDatabase> {
     for await (const page of this.listByInstancePagingPage(
       resourceGroupName,
       managedInstanceName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -119,11 +133,11 @@ export class RestorableDroppedManagedDatabasesImpl
   private _listByInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams
+    options?: RestorableDroppedManagedDatabasesListByInstanceOptionalParams,
   ): Promise<RestorableDroppedManagedDatabasesListByInstanceResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, options },
-      listByInstanceOperationSpec
+      listByInstanceOperationSpec,
     );
   }
 
@@ -139,16 +153,16 @@ export class RestorableDroppedManagedDatabasesImpl
     resourceGroupName: string,
     managedInstanceName: string,
     restorableDroppedDatabaseId: string,
-    options?: RestorableDroppedManagedDatabasesGetOptionalParams
+    options?: RestorableDroppedManagedDatabasesGetOptionalParams,
   ): Promise<RestorableDroppedManagedDatabasesGetResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         managedInstanceName,
         restorableDroppedDatabaseId,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -164,11 +178,11 @@ export class RestorableDroppedManagedDatabasesImpl
     resourceGroupName: string,
     managedInstanceName: string,
     nextLink: string,
-    options?: RestorableDroppedManagedDatabasesListByInstanceNextOptionalParams
+    options?: RestorableDroppedManagedDatabasesListByInstanceNextOptionalParams,
   ): Promise<RestorableDroppedManagedDatabasesListByInstanceNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, nextLink, options },
-      listByInstanceNextOperationSpec
+      listByInstanceNextOperationSpec,
     );
   }
 }
@@ -176,63 +190,60 @@ export class RestorableDroppedManagedDatabasesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByInstanceOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/restorableDroppedDatabases",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/restorableDroppedDatabases",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorableDroppedManagedDatabaseListResult
+      bodyMapper: Mappers.RestorableDroppedManagedDatabaseListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion1],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.managedInstanceName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/restorableDroppedDatabases/{restorableDroppedDatabaseId}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.RestorableDroppedManagedDatabase
-    },
-    default: {}
-  },
-  queryParameters: [Parameters.apiVersion1],
+  queryParameters: [Parameters.apiVersion7],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.managedInstanceName,
-    Parameters.restorableDroppedDatabaseId
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/restorableDroppedDatabases/{restorableDroppedDatabaseId}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.RestorableDroppedManagedDatabase,
+    },
+    default: {},
+  },
+  queryParameters: [Parameters.apiVersion7],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.managedInstanceName,
+    Parameters.restorableDroppedDatabaseId,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const listByInstanceNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorableDroppedManagedDatabaseListResult
+      bodyMapper: Mappers.RestorableDroppedManagedDatabaseListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.nextLink,
-    Parameters.managedInstanceName
+    Parameters.managedInstanceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

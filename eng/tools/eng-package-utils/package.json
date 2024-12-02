@@ -1,5 +1,5 @@
 {
-  "name": "eng-package-utils",
+  "name": "@azure-tools/eng-package-utils",
   "version": "1.0.0",
   "description": "Utility functions for eng system tools",
   "main": "index.js",
@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/Azure/azure-sdk-for-js#readme",
   "dependencies": {
-    "yargs": "^14.2.0"
+    "yargs": "^17.7.2"
   }
 }

@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { default as minimist, ParsedArgs as MinimistParsedArgs } from "minimist";
-import { isDefined } from "./utils";
+import { isDefined } from "@azure/core-util";
+import { getFormattedDate } from "./utils/utils";
 
 /**
  * The structure of a Perf option. They represent command line parameters.
@@ -49,8 +50,16 @@ export interface OptionDetails<TType> {
  * `keyof TOptions` provides the names of the options. This is necessary to allow TypeScript to suggest the appropriate names
  * for the options and parsedOptions.
  */
-export type PerfOptionDictionary<TOptions = {}> = {
+export type PerfOptionDictionary<TOptions = Record<string, unknown>> = {
   [longName in keyof TOptions]: OptionDetails<TOptions[longName]>;
+};
+
+/**
+ * This is exactly same as {@link PerfOptionDictionary}, but the `value` is required.
+ * If it's absent and is required, we throw during validation.
+ */
+export type ParsedPerfOptions<TOptions = Record<string, unknown>> = {
+  [longName in keyof TOptions]: OptionDetails<TOptions[longName]> & { value: TOptions[longName] };
 };
 
 /**
@@ -69,6 +78,10 @@ export interface DefaultPerfOptions {
   "test-proxies": string;
   insecure: boolean;
   "list-transitive-dependencies": boolean;
+  cpus: number;
+  "use-worker-threads": boolean;
+  profile: boolean;
+  "profile-path": string;
 }
 
 /**
@@ -77,52 +90,101 @@ export interface DefaultPerfOptions {
 export const defaultPerfOptions: PerfOptionDictionary<DefaultPerfOptions> = {
   help: {
     description: "Shows all of the available options",
-    shortName: "h"
+    shortName: "h",
   },
   parallel: {
     description: "How many of the same test to call at the same time",
     shortName: "p",
-    defaultValue: 1
+    defaultValue: 1,
   },
   duration: {
     description: "When to stop calling tests at all",
     shortName: "d",
-    defaultValue: 10
+    defaultValue: 10,
   },
   warmup: {
     description: "Duration of warmup in seconds",
     shortName: "w",
-    defaultValue: 5
+    defaultValue: 5,
   },
   iterations: {
     description: "Times to repeat the whole process, after warmup",
     shortName: "i",
-    defaultValue: 1
+    defaultValue: 1,
   },
   "no-cleanup": {
-    description: "Disables test cleanup"
+    description: "Disables test cleanup",
   },
   "test-proxies": {
     description: "URIs of TestProxy servers (separated by ';')",
-    defaultValue: undefined
+    defaultValue: undefined,
   },
   insecure: {
     description:
       "Applied when test-proxies option is defined, connects with https(insecurely by disabling SSL validation)",
     shortName: "ins",
-    defaultValue: false
+    defaultValue: false,
   },
   "milliseconds-to-log": {
     description: "Log frequency in milliseconds",
     shortName: "mtl",
-    defaultValue: 1000
+    defaultValue: 1000,
   },
   "list-transitive-dependencies": {
     description: "List all dependencies, instead of only direct ones, before test run",
     shortName: "ltd",
-    defaultValue: false
-  }
+    defaultValue: false,
+  },
+  cpus: {
+    description:
+      "Number of CPUs to use. Parallel tests will be split evenly across CPUs. Specify 0 to use the number of logical CPUs available on the machine.",
+    shortName: "c",
+    defaultValue: 0,
+  },
+  "use-worker-threads": {
+    description:
+      "Set to true to use the Node worker_thread API when running tests across multiple CPUs. Set to false to use child_process (default).",
+    defaultValue: false,
+  },
+  profile: {
+    description:
+      "Set to true to profile the perf test. When set to true, `cpus` will be overriden to 1.",
+    defaultValue: false,
+  },
+  "profile-path": {
+    description: "Used as the artifact path",
+    defaultValue: `./profile/${getFormattedDate()}-perfProgram.cpuprofile`,
+    // If none provided, profiles get generated at the "/sdk/<service>/perf-tests/<package>/profile/"
+  },
 };
+
+/**
+ * Overrides the "cpus" option to 1, when "profile" is set to true by the user.
+ *
+ * Warns the user when profile is true, and cpus is set to something other than 1.
+ */
+function maybeOverrideCPUsOption<TOptions>(
+  minimistResult: MinimistParsedArgs,
+  result: Partial<PerfOptionDictionary<TOptions>>,
+) {
+  if (!isDefined(minimistResult["profile"]) || !minimistResult["profile"]) {
+    return;
+  }
+
+  if (isDefined(minimistResult["cpus"]) && minimistResult["cpus"] !== 1) {
+    throw new Error(
+      `Unexpected value for "cpus" provided, you can only set "cpus = 1" when "profile" is set to true. 
+      Please re-run the test command without the "cpus" option.`,
+    );
+  }
+
+  result["cpus" as keyof TOptions] = {
+    ...result["cpus" as keyof TOptions],
+    value: 1,
+    // Overriding to 1 core
+    // since there is no point in observing profiling artifacts of all the cores that do the same thing
+  };
+}
 
 /**
  * Parses the given options by extracting their values through `minimist`, or setting the default value defined in each option.
@@ -132,17 +194,22 @@ export const defaultPerfOptions: PerfOptionDictionary<DefaultPerfOptions> = {
  * @returns A new options dictionary.
  */
 export function parsePerfOption<TOptions>(
-  options: PerfOptionDictionary<TOptions>
-): Required<PerfOptionDictionary<TOptions>> {
+  options: PerfOptionDictionary<TOptions>,
+): ParsedPerfOptions<TOptions> {
   const minimistResult: MinimistParsedArgs = minimist(
     process.argv,
-    getBooleanOptionDetails(options)
+    getBooleanOptionDetails(options),
   );
   const result: Partial<PerfOptionDictionary<TOptions>> = {};
 
-  for (const longName of Object.keys(options)) {
+  for (const optionName of Object.keys(options)) {
     // This cast is needed since we're picking up options from process.argv
-    const option = options[longName as keyof TOptions];
+    const option = options[optionName as keyof TOptions];
+
+    // Options don't need to define longName, it can be derived from the properties PerfOptionDictionary.
+    // That said if longName is defined, it should should override object's key.
+    const longName = option.longName ?? optionName;
+
     const { shortName, defaultValue, required } = option;
     let value: unknown;
     if (isDefined(minimistResult[longName])) {
@@ -156,28 +223,70 @@ export function parsePerfOption<TOptions>(
     if (required && !isDefined(value)) {
       throw new Error(`Option ${longName} is required`);
     }
-    // Options don't need to define longName, it can be derived from the properties PerfOptionDictionary.
-    result[longName as keyof TOptions] = {
-      ...option,
-      longName,
-      value
-    };
+
+    if (
+      ["profile", "cpus"].includes(optionName) &&
+      !isDefined(result["profile" as keyof TOptions]) &&
+      !isDefined(result["cpus" as keyof TOptions])
+    ) {
+      result[optionName as keyof TOptions] = {
+        ...option,
+        longName,
+        value,
+      };
+      maybeOverrideCPUsOption(minimistResult, result);
+    } else {
+      result[optionName as keyof TOptions] = {
+        ...option,
+        longName,
+        value,
+      };
+    }
   }
 
-  return result as Required<PerfOptionDictionary<TOptions>>;
+  return result as ParsedPerfOptions<TOptions>;
+}
+
+/**
+ * Validate that the provided command-line options are all recognized, throwing an error if an unrecognized
+ * option is provided.
+ *
+ * @param options A dictionary of options which should be passed.
+ */
+export function validateOptions<TOptions>(options: PerfOptionDictionary<TOptions>): void {
+  const minimistResult: MinimistParsedArgs = minimist(
+    process.argv,
+    getBooleanOptionDetails(options),
+  );
+
+  const longNames = Object.entries<OptionDetails<unknown>>(options).map(
+    ([optionName, { longName }]) => longName ?? optionName,
+  );
+  const shortNames = Object.values<OptionDetails<unknown>>(options)
+    .map(({ shortName }) => shortName)
+    .filter(Boolean);
+
+  // include _ and -- as these may be present in the MinimistParsedArgs object
+  const acceptedOptions = ["_", "--", ...longNames, ...shortNames];
+  const unknownOptions = Object.keys(minimistResult).filter((x) => !acceptedOptions.includes(x));
+
+  if (unknownOptions.length !== 0) {
+    throw new Error(`Encountered invalid options: ${unknownOptions.join(", ")}`);
+  }
 }
 
 function getBooleanOptionDetails<TOptions>(options: PerfOptionDictionary<TOptions>) {
-  let booleanProps: { boolean: string[]; default: { [key: string]: boolean } } = {
+  const booleanProps: { boolean: string[]; default: { [key: string]: boolean } } = {
     boolean: [],
-    default: {}
+    default: {},
   };
 
   for (const key in options) {
     const defaultValue = options[key].defaultValue;
     if (typeof defaultValue === "boolean") {
-      booleanProps.boolean.push(key);
-      booleanProps.default[key] = defaultValue;
+      const optionName = options[key].longName ?? options[key].shortName ?? key;
+      booleanProps.boolean.push(optionName);
+      booleanProps.default[optionName] = defaultValue;
     }
   }
   return booleanProps;

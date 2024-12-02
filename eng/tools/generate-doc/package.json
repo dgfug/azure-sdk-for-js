@@ -2,18 +2,21 @@
   "name": "generate-doc",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "generate-doc": "node index.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "fs-extra": "^8.1.0",
-    "js-yaml": "^3.13.1",
-    "nunjucks": "^3.2.0",
-    "typedoc": "0.18.0",
-    "yargs": "^11.1.0",
-    "p-limit": "^2.2.1"
+    "typedoc": "^0.26.3",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/yargs": "^17.0.32",
+    "typescript": "~5.6.2"
   }
 }

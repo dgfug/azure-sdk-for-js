@@ -1,31 +1,37 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-/* eslint-disable no-invalid-this */
-import { env, Recorder, record, isLiveMode } from "@azure-tools/test-recorder";
-import { WebPubSubServiceClient, AzureKeyCredential } from "../src";
-import { assert } from "chai";
-import environmentSetup from "./testEnv";
-import { FullOperationResponse } from "@azure/core-client";
-import { DefaultAzureCredential } from "@azure/identity";
-/* eslint-disable @typescript-eslint/no-invalid-this */
+// Licensed under the MIT License.
 
-describe("HubClient", function() {
-  let recorder: Recorder;
-  beforeEach(function() {
-    recorder = record(this, environmentSetup);
-  });
+import {
+  Recorder,
+  isLiveMode,
+  assertEnvironmentVariable,
+  isPlaybackMode,
+  env,
+} from "@azure-tools/test-recorder";
+import { WebPubSubServiceClient, AzureKeyCredential } from "../src/index.js";
+import recorderOptions from "./testEnv.js";
+import type { FullOperationResponse, OperationOptions } from "@azure/core-client";
+import { createTestCredential } from "@azure-tools/test-credential";
+import { describe, it, assert, expect, beforeEach, afterEach, beforeAll } from "vitest";
+import { toSupportTracing } from "@azure-tools/test-utils-vitest";
+import { parseJwt } from "./testUtils.js";
 
-  afterEach(async function() {
-    if (recorder) {
-      await recorder.stop();
-    }
-  });
+expect.extend({ toSupportTracing });
 
+describe("HubClient", () => {
   describe("Constructing a HubClient", () => {
+    beforeAll(() => {
+      if (isPlaybackMode()) {
+        env.WPS_CONNECTION_STRING = recorderOptions.envSetupForPlayback.WPS_CONNECTION_STRING;
+        env.WPS_ENDPOINT = recorderOptions.envSetupForPlayback.WPS_ENDPOINT;
+        env.WPS_API_KEY = recorderOptions.envSetupForPlayback.WPS_API_KEY;
+      }
+    });
+    const credential = createTestCredential();
     it("takes a connection string, hub name, and options", () => {
       assert.doesNotThrow(() => {
-        new WebPubSubServiceClient(env.WPS_CONNECTION_STRING, "test-hub", {
-          retryOptions: { maxRetries: 2 }
+        new WebPubSubServiceClient(assertEnvironmentVariable("WPS_CONNECTION_STRING"), "test-hub", {
+          retryOptions: { maxRetries: 2 },
         });
       });
     });
@@ -33,33 +39,51 @@ describe("HubClient", function() {
     it("takes an endpoint, an API key, a hub name, and options", () => {
       assert.doesNotThrow(() => {
         new WebPubSubServiceClient(
-          env.ENDPOINT,
-          new AzureKeyCredential(env.WPS_API_KEY),
+          assertEnvironmentVariable("WPS_ENDPOINT"),
+          new AzureKeyCredential(assertEnvironmentVariable("WPS_API_KEY")),
           "test-hub",
           {
-            retryOptions: { maxRetries: 2 }
-          }
+            retryOptions: { maxRetries: 2 },
+          },
         );
       });
     });
 
     it("takes an endpoint, DefaultAzureCredential, a hub name, and options", () => {
       assert.doesNotThrow(() => {
-        new WebPubSubServiceClient(env.ENDPOINT, new DefaultAzureCredential(), "test-hub", {
-          retryOptions: { maxRetries: 2 }
-        });
+        new WebPubSubServiceClient(
+          assertEnvironmentVariable("WPS_ENDPOINT"),
+          credential,
+          "test-hub",
+          {
+            retryOptions: { maxRetries: 2 },
+          },
+        );
       });
     });
   });
 
-  describe("Working with a hub", function() {
+  describe("Working with a hub", () => {
+    let recorder: Recorder;
     let client: WebPubSubServiceClient;
     let lastResponse: FullOperationResponse | undefined;
-    function onResponse(response: FullOperationResponse) {
+    const credential = createTestCredential();
+    function onResponse(response: FullOperationResponse): void {
       lastResponse = response;
     }
-    beforeEach(function() {
-      client = new WebPubSubServiceClient(env.WPS_CONNECTION_STRING, "simplechat");
+    beforeEach(async (ctx) => {
+      recorder = new Recorder(ctx);
+      await recorder.start(recorderOptions);
+
+      client = new WebPubSubServiceClient(
+        assertEnvironmentVariable("WPS_CONNECTION_STRING"),
+        "simplechat",
+        recorder.configureClientOptions({}),
+      );
+    });
+
+    afterEach(async () => {
+      await recorder.stop();
     });
 
     it("can broadcast", async () => {
@@ -74,11 +98,41 @@ describe("HubClient", function() {
       assert.equal(lastResponse?.status, 202);
     });
 
+    it("can broadcast with filter", async () => {
+      await client.sendToAll("hello", {
+        contentType: "text/plain",
+        filter: "userId ne 'user1'",
+        messageTtlSeconds: 60,
+        onResponse,
+      });
+      assert.equal(lastResponse?.status, 202);
+
+      let error;
+      try {
+        await client.sendToAll("hello", {
+          contentType: "text/plain",
+          filter: "invalid filter",
+        });
+      } catch (e: any) {
+        if (e.name !== "RestError") {
+          throw e;
+        }
+
+        error = e;
+      }
+      assert.equal(error.statusCode, 400);
+      assert.equal(
+        JSON.parse(error.message).message,
+        "Invalid syntax for 'invalid filter': Syntax error at position 14 in 'invalid filter'. (Parameter 'filter')",
+      );
+    });
+
     it("can broadcast using the DAC", async () => {
       const dacClient = new WebPubSubServiceClient(
-        env.ENDPOINT,
-        new DefaultAzureCredential(),
-        "simplechat"
+        assertEnvironmentVariable("WPS_ENDPOINT"),
+        credential,
+        "simplechat",
+        recorder.configureClientOptions({}),
       );
 
       await dacClient.sendToAll("hello", { contentType: "text/plain", onResponse });
@@ -93,9 +147,13 @@ describe("HubClient", function() {
     });
 
     it("can broadcast using APIM", async () => {
-      const apimClient = new WebPubSubServiceClient(env.WPS_CONNECTION_STRING, "simplechat", {
-        reverseProxyEndpoint: env.REVERSE_PROXY_ENDPOINT
-      });
+      const apimClient = new WebPubSubServiceClient(
+        assertEnvironmentVariable("WPS_CONNECTION_STRING"),
+        "simplechat",
+        recorder.configureClientOptions({
+          reverseProxyEndpoint: assertEnvironmentVariable("WPS_REVERSE_PROXY_ENDPOINT"),
+        }),
+      );
 
       await apimClient.sendToAll("hello", { contentType: "text/plain", onResponse });
       assert.equal(lastResponse?.status, 202);
@@ -111,7 +169,7 @@ describe("HubClient", function() {
     it("can send messages to a user", async () => {
       await client.sendToUser("brian", "hello", {
         contentType: "text/plain",
-        onResponse
+        onResponse,
       });
       assert.equal(lastResponse?.status, 202);
 
@@ -121,6 +179,34 @@ describe("HubClient", function() {
       const binaryMessage = new Uint8Array(10);
       await client.sendToUser("brian", binaryMessage.buffer, { onResponse });
       assert.equal(lastResponse?.status, 202);
+    });
+
+    it("can send to a user with filter", async () => {
+      await client.sendToUser("vic", "hello", {
+        contentType: "text/plain",
+        filter: "userId ne 'user1'",
+        onResponse,
+      });
+      assert.equal(lastResponse?.status, 202);
+
+      let error;
+      try {
+        await client.sendToUser("brian", "hello", {
+          contentType: "text/plain",
+          filter: "invalid filter",
+        });
+      } catch (e: any) {
+        if (e.name !== "RestError") {
+          throw e;
+        }
+
+        error = e;
+      }
+      assert.equal(error.statusCode, 400);
+      assert.equal(
+        JSON.parse(error.message).message,
+        "Invalid syntax for 'invalid filter': Syntax error at position 14 in 'invalid filter'. (Parameter 'filter')",
+      );
     });
 
     it("can send messages to a connection", async () => {
@@ -135,18 +221,20 @@ describe("HubClient", function() {
       assert.equal(lastResponse?.status, 202);
     });
 
-    // `removeUserFromAllGroups` always times out.
-    it.skip("can manage users", async () => {
-      this.timeout(Infinity);
+    it("can manage users", async () => {
       const res = await client.userExists("foo");
       assert.ok(!res);
       await client.removeUserFromAllGroups("brian", { onResponse });
-      assert.equal(lastResponse?.status, 200);
+      assert.equal(lastResponse?.status, 204);
     });
 
-    it("can check if a connection exists", async function() {
-      // likely bug in recorder for this test - recording not generating properly
-      if (!isLiveMode()) this.skip();
+    it("can manage connections", async () => {
+      await client.removeConnectionFromAllGroups("xxx", { onResponse });
+      assert.equal(lastResponse?.status, 204);
+    });
+
+    // likely bug in recorder for this test - recording not generating properly
+    it("can check if a connection exists", { skip: !isLiveMode() }, async () => {
       const res = await client.connectionExists("xxx");
       assert.ok(!res);
     });
@@ -155,31 +243,169 @@ describe("HubClient", function() {
       let error;
       try {
         await client.grantPermission("xxx", "joinLeaveGroup", { targetName: "x" });
-      } catch (e) {
+      } catch (e: any) {
+        if (e.name !== "RestError") {
+          throw e;
+        }
+
         error = e;
       }
       // grantPermission validates connection ids, so we expect an error here.
       assert.equal(error.statusCode, 404);
     });
 
-    it("can revoke permissions from connections", async function() {
-      // likely bug in recorder for this test - recording not generating properly
-      if (!isLiveMode()) this.skip();
-      let error;
-      try {
-        await client.revokePermission("xxx", "joinLeaveGroup", { targetName: "x" });
-      } catch (e) {
-        error = e;
-      }
-      // grantPermission validates connection ids, so we expect an error here.
-      assert.equal(error.statusCode, 404);
+    // likely bug in recorder for this test - recording not generating properly
+    it("can revoke permissions from connections", { skip: !isLiveMode() }, async () => {
+      await client.revokePermission("invalid-id", "joinLeaveGroup", { targetName: "x" });
+      // Service doesn't throw error for invalid connection-ids
     });
 
-    // service API doesn't work yet.
-    it.skip("can generate client tokens", async () => {
-      await client.getClientAccessToken({
-        userId: "brian"
+    it("can trace through the various options", async () => {
+      await expect(async (options: OperationOptions) => {
+        const promises: Promise<any>[] = [
+          client.sendToAll("hello", { contentType: "text/plain", onResponse, ...options }),
+          client.sendToUser("brian", "hello", {
+            contentType: "text/plain",
+            onResponse,
+            ...options,
+          }),
+          client.sendToConnection("xxxx", "hello", {
+            contentType: "text/plain",
+            onResponse,
+            ...options,
+          }),
+          client.connectionExists("xxxx", options),
+          client.closeConnection("xxxx", options),
+          client.closeAllConnections(options),
+          client.closeUserConnections("xxxx", options),
+          client.removeUserFromAllGroups("foo", options),
+          client.groupExists("foo", options),
+          client.userExists("foo", options),
+          client.grantPermission("xxxx", "joinLeaveGroup", { targetName: "x", ...options }),
+          client.hasPermission("xxxx", "joinLeaveGroup", { targetName: "x", ...options }),
+          client.revokePermission("xxxx", "joinLeaveGroup", options),
+          client.getClientAccessToken(options),
+        ];
+        // We don't care about errors, only that we created (and closed) the appropriate spans.
+        await Promise.all(promises.map((p) => p.catch(() => undefined)));
+      }).toSupportTracing([
+        "WebPubSubServiceClient.sendToAll",
+        "WebPubSubServiceClient.sendToUser",
+        "WebPubSubServiceClient.sendToConnection",
+        "WebPubSubServiceClient.connectionExists",
+        "WebPubSubServiceClient.closeConnection",
+        "WebPubSubServiceClient.closeAllConnections",
+        "WebPubSubServiceClient.closeUserConnections",
+        "WebPubSubServiceClient.removeUserFromAllGroups",
+        "WebPubSubServiceClient.groupExists",
+        "WebPubSubServiceClient.userExists",
+        "WebPubSubServiceClient.grantPermission",
+        "WebPubSubServiceClient.hasPermission",
+        "WebPubSubServiceClient.revokePermission",
+        "WebPubSubServiceClient.getClientAccessToken",
+      ]);
+    });
+
+    it("can generate client tokens", async () => {
+      const res = await client.getClientAccessToken({
+        userId: "brian",
+        groups: ["group1"],
       });
+      const url = new URL(res.url);
+      const tokenPayload = parseJwt(res.token!);
+      assert.ok(url.searchParams.has("access_token"));
+      assert.equal(url.host, new URL(client.endpoint).host);
+      assert.equal(url.pathname, `/client/hubs/${client.hubName}`);
+      assert.equal(tokenPayload.aud, client.endpoint + `client/hubs/${client.hubName}`);
+    });
+
+    it("can generate default client tokens", async () => {
+      const res = await client.getClientAccessToken({
+        userId: "brian",
+        groups: ["group1"],
+        clientProtocol: "default",
+      });
+      const url = new URL(res.url);
+      const tokenPayload = parseJwt(res.token!);
+      assert.ok(url.searchParams.has("access_token"));
+      assert.equal(url.host, new URL(client.endpoint).host);
+      assert.equal(url.pathname, `/client/hubs/${client.hubName}`);
+      assert.equal(tokenPayload.aud, client.endpoint + `client/hubs/${client.hubName}`);
+    });
+
+    it("can generate client MQTT tokens", async () => {
+      const res = await client.getClientAccessToken({
+        userId: "brian",
+        groups: ["group1"],
+        clientProtocol: "mqtt",
+      });
+      const url = new URL(res.url);
+      const tokenPayload = parseJwt(res.token!);
+      assert.ok(url.searchParams.has("access_token"));
+      assert.equal(url.host, new URL(client.endpoint).host);
+      assert.equal(url.pathname, `/clients/mqtt/hubs/${client.hubName}`);
+      assert.equal(tokenPayload.aud, client.endpoint + `clients/mqtt/hubs/${client.hubName}`);
+    });
+
+    // Recording not generated properly, so only run in live mode
+    it("can generate default client tokens with DAC", { skip: !isLiveMode() }, async () => {
+      const dacClient = new WebPubSubServiceClient(
+        assertEnvironmentVariable("WPS_ENDPOINT"),
+        credential,
+        "simplechat",
+        recorder.configureClientOptions({}),
+      );
+      const res = await dacClient.getClientAccessToken({
+        userId: "brian",
+        groups: ["group1"],
+        clientProtocol: "default",
+      });
+      const url = new URL(res.url);
+      const tokenPayload = parseJwt(res.token!);
+      assert.ok(url.searchParams.has("access_token"));
+      assert.equal(url.host, new URL(client.endpoint).host);
+      assert.equal(url.pathname, `/client/hubs/${client.hubName}`);
+      assert.equal(tokenPayload.aud, client.endpoint + `client/hubs/${client.hubName}`);
+    });
+
+    it("can generate client MQTT tokens with DAC", { skip: !isLiveMode() }, async () => {
+      const dacClient = new WebPubSubServiceClient(
+        assertEnvironmentVariable("WPS_ENDPOINT"),
+        credential,
+        "simplechat",
+        recorder.configureClientOptions({}),
+      );
+      const res = await dacClient.getClientAccessToken({
+        userId: "brian",
+        groups: ["group1"],
+        clientProtocol: "mqtt",
+      });
+      const url = new URL(res.url);
+      const tokenPayload = parseJwt(res.token!);
+      assert.ok(url.searchParams.has("access_token"));
+      assert.equal(url.host, new URL(client.endpoint).host);
+      assert.equal(url.pathname, `/clients/mqtt/hubs/${client.hubName}`);
+      assert.equal(tokenPayload.aud, client.endpoint + `clients/mqtt/hubs/${client.hubName}`);
+    });
+
+    it("can generate client socketIO tokens with DAC", { skip: !isLiveMode() }, async () => {
+      const dacClient = new WebPubSubServiceClient(
+        assertEnvironmentVariable("WPS_SOCKETIO_ENDPOINT"),
+        credential,
+        "simplechat",
+        recorder.configureClientOptions({}),
+      );
+      const res = await dacClient.getClientAccessToken({
+        userId: "brian",
+        groups: ["group1"],
+        clientProtocol: "socketio",
+      });
+      const url = new URL(res.url);
+      const tokenPayload = parseJwt(res.token!);
+      assert.ok(url.searchParams.has("access_token"));
+      assert.equal(url.host, new URL(client.endpoint).host);
+      assert.equal(url.pathname, `/clients/socketio/hubs/${client.hubName}`);
+      assert.equal(tokenPayload.aud, client.endpoint + `clients/socketio/hubs/${client.hubName}`);
     });
   });
 });

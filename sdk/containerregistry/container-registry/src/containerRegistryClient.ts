@@ -1,32 +1,25 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /// <reference lib="esnext.asynciterable" />
 
-import { isTokenCredential, TokenCredential } from "@azure/core-auth";
-import {
-  InternalPipelineOptions,
-  bearerTokenAuthenticationPolicy,
-  PipelineOptions
-} from "@azure/core-rest-pipeline";
-import { OperationOptions } from "@azure/core-client";
+import type { TokenCredential } from "@azure/core-auth";
+import { isTokenCredential } from "@azure/core-auth";
+import type { InternalPipelineOptions } from "@azure/core-rest-pipeline";
+import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
+import type { CommonClientOptions, OperationOptions } from "@azure/core-client";
 
-import { SpanStatusCode } from "@azure/core-tracing";
-import "@azure/core-paging";
-import { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
 
 import { logger } from "./logger";
 import { GeneratedClient } from "./generated";
-import { createSpan } from "./tracing";
-import { RepositoryPageResponse } from "./models";
+import { tracingClient } from "./tracing";
+import type { RepositoryPageResponse } from "./models";
 import { extractNextLink } from "./utils/helpers";
 import { ChallengeHandler } from "./containerRegistryChallengeHandler";
-import {
-  ContainerRepository,
-  ContainerRepositoryImpl,
-  DeleteRepositoryOptions
-} from "./containerRepository";
-import { RegistryArtifact } from "./registryArtifact";
+import type { ContainerRepository, DeleteRepositoryOptions } from "./containerRepository";
+import { ContainerRepositoryImpl } from "./containerRepository";
+import type { RegistryArtifact } from "./registryArtifact";
 import { ContainerRegistryRefreshTokenCredential } from "./containerRegistryTokenCredential";
 
 const LATEST_API_VERSION = "2021-07-01";
@@ -34,7 +27,7 @@ const LATEST_API_VERSION = "2021-07-01";
 /**
  * Client options used to configure Container Registry Repository API requests.
  */
-export interface ContainerRegistryClientOptions extends PipelineOptions {
+export interface ContainerRegistryClientOptions extends CommonClientOptions {
   /**
    * Gets or sets the audience to use for authentication with Azure Active Directory.
    * The authentication scope will be set from this audience.
@@ -83,7 +76,7 @@ export class ContainerRegistryClient {
   constructor(
     endpoint: string,
     credential: TokenCredential,
-    options?: ContainerRegistryClientOptions
+    options?: ContainerRegistryClientOptions,
   );
 
   /**
@@ -108,7 +101,7 @@ export class ContainerRegistryClient {
   constructor(
     endpoint: string,
     credentialOrOptions?: TokenCredential | ContainerRegistryClientOptions,
-    clientOptions: ContainerRegistryClientOptions = {}
+    clientOptions: ContainerRegistryClientOptions = {},
   ) {
     if (!endpoint) {
       throw new Error("invalid endpoint");
@@ -131,17 +124,11 @@ export class ContainerRegistryClient {
         logger: logger.info,
         // This array contains header names we want to log that are not already
         // included as safe. Unknown/unsafe headers are logged as "<REDACTED>".
-        additionalAllowedQueryParameters: ["last", "n", "orderby", "digest"]
-      }
+        additionalAllowedQueryParameters: ["last", "n", "orderby", "digest"],
+      },
     };
-    // Require audience now until we have a default ACR audience from the service.
-    if (!options.audience) {
-      throw new Error(
-        "ContainerRegistryClientOptions.audience must be set to initialize ContainerRegistryClient."
-      );
-    }
 
-    const defaultScope = `${options.audience}/.default`;
+    const defaultScope = `${options.audience ?? "https://containerregistry.azure.net"}/.default`;
     const serviceVersion = options.serviceVersion ?? LATEST_API_VERSION;
     const authClient = new GeneratedClient(endpoint, serviceVersion, internalPipelineOptions);
     this.client = new GeneratedClient(endpoint, serviceVersion, internalPipelineOptions);
@@ -150,9 +137,9 @@ export class ContainerRegistryClient {
         credential,
         scopes: [defaultScope],
         challengeCallbacks: new ChallengeHandler(
-          new ContainerRegistryRefreshTokenCredential(authClient, defaultScope, credential)
-        )
-      })
+          new ContainerRegistryRefreshTokenCredential(authClient, defaultScope, credential),
+        ),
+      }),
     );
   }
 
@@ -164,25 +151,19 @@ export class ContainerRegistryClient {
    */
   public async deleteRepository(
     repositoryName: string,
-    options: DeleteRepositoryOptions = {}
+    options: DeleteRepositoryOptions = {},
   ): Promise<void> {
     if (!repositoryName) {
       throw new Error("invalid repositoryName");
     }
 
-    const { span, updatedOptions } = createSpan(
-      "ContainerRegistryClient-deleteRepository",
-      options
+    return tracingClient.withSpan(
+      "ContainerRegistryClient.deleteRepository",
+      options,
+      async (updatedOptions) => {
+        await this.client.containerRegistry.deleteRepository(repositoryName, updatedOptions);
+      },
     );
-
-    try {
-      await this.client.containerRegistry.deleteRepository(repositoryName, updatedOptions);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -200,7 +181,7 @@ export class ContainerRegistryClient {
     }
 
     return new ContainerRepositoryImpl(this.endpoint, repositoryName, this.client).getArtifact(
-      tagOrDigest
+      tagOrDigest,
     );
   }
 
@@ -258,7 +239,8 @@ export class ContainerRegistryClient {
    * @param options -
    */
   public listRepositoryNames(
-    options: ListRepositoriesOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: ListRepositoriesOptions = {},
   ): PagedAsyncIterableIterator<string, RepositoryPageResponse> {
     const iter = this.listRepositoryItems(options);
 
@@ -269,12 +251,12 @@ export class ContainerRegistryClient {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: (settings: PageSettings = {}) => this.listRepositoriesPage(settings, options)
+      byPage: (settings: PageSettings = {}) => this.listRepositoriesPage(settings, options),
     };
   }
 
   private async *listRepositoryItems(
-    options: ListRepositoriesOptions = {}
+    options: ListRepositoriesOptions = {},
   ): AsyncIterableIterator<string> {
     for await (const page of this.listRepositoriesPage({}, options)) {
       yield* page;
@@ -283,12 +265,12 @@ export class ContainerRegistryClient {
 
   private async *listRepositoriesPage(
     continuationState: PageSettings,
-    options: ListRepositoriesOptions = {}
+    options: ListRepositoriesOptions = {},
   ): AsyncIterableIterator<RepositoryPageResponse> {
     if (!continuationState.continuationToken) {
       const optionsComplete = {
         ...options,
-        n: continuationState.maxPageSize
+        n: continuationState.maxPageSize,
       };
       const currentPage = await this.client.containerRegistry.getRepositories(optionsComplete);
       continuationState.continuationToken = extractNextLink(currentPage.link);
@@ -296,21 +278,21 @@ export class ContainerRegistryClient {
         const array = currentPage.repositories;
         yield Object.defineProperty(array, "continuationToken", {
           value: continuationState.continuationToken,
-          enumerable: true
+          enumerable: true,
         });
       }
     }
     while (continuationState.continuationToken) {
       const currentPage = await this.client.containerRegistry.getRepositoriesNext(
         continuationState.continuationToken,
-        options
+        options,
       );
       continuationState.continuationToken = extractNextLink(currentPage.link);
       if (currentPage.repositories) {
         const array = currentPage.repositories;
         yield Object.defineProperty(array, "continuationToken", {
           value: continuationState.continuationToken,
-          enumerable: true
+          enumerable: true,
         });
       }
     }

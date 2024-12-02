@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { QueueSASPermissions } from "./QueueSASPermissions";
-import { StorageSharedKeyCredential } from "./credentials/StorageSharedKeyCredential";
-import { SasIPRange, ipRangeToString } from "./SasIPRange";
-import { SASProtocol } from "./SASQueryParameters";
+import type { StorageSharedKeyCredential } from "../../storage-blob/src/credentials/StorageSharedKeyCredential";
+import type { SasIPRange } from "./SasIPRange";
+import { ipRangeToString } from "./SasIPRange";
+import type { SASProtocol } from "./SASQueryParameters";
 import { SASQueryParameters } from "./SASQueryParameters";
 import { SERVICE_VERSION } from "./utils/constants";
 import { truncatedISO8061Date } from "./utils/utils.common";
@@ -78,14 +79,22 @@ export interface QueueSASSignatureValues {
  */
 export function generateQueueSASQueryParameters(
   queueSASSignatureValues: QueueSASSignatureValues,
-  sharedKeyCredential: StorageSharedKeyCredential
+  sharedKeyCredential: StorageSharedKeyCredential,
 ): SASQueryParameters {
+  return generateQueueSASQueryParametersInternal(queueSASSignatureValues, sharedKeyCredential)
+    .sasQueryParameters;
+}
+
+export function generateQueueSASQueryParametersInternal(
+  queueSASSignatureValues: QueueSASSignatureValues,
+  sharedKeyCredential: StorageSharedKeyCredential,
+): { sasQueryParameters: SASQueryParameters; stringToSign: string } {
   if (
     !queueSASSignatureValues.identifier &&
     !(queueSASSignatureValues.permissions && queueSASSignatureValues.expiresOn)
   ) {
     throw new RangeError(
-      "Must provide 'permissions' and 'expiresOn' for Queue SAS generation when 'identifier' is not provided."
+      "Must provide 'permissions' and 'expiresOn' for Queue SAS generation when 'identifier' is not provided.",
     );
   }
 
@@ -97,7 +106,7 @@ export function generateQueueSASQueryParameters(
   // Calling parse and toString guarantees the proper ordering and throws on invalid characters.
   if (queueSASSignatureValues.permissions) {
     verifiedPermissions = QueueSASPermissions.parse(
-      queueSASSignatureValues.permissions.toString()
+      queueSASSignatureValues.permissions.toString(),
     ).toString();
   }
 
@@ -114,23 +123,26 @@ export function generateQueueSASQueryParameters(
     queueSASSignatureValues.identifier,
     queueSASSignatureValues.ipRange ? ipRangeToString(queueSASSignatureValues.ipRange) : "",
     queueSASSignatureValues.protocol ? queueSASSignatureValues.protocol : "",
-    version
+    version,
   ].join("\n");
 
   const signature = sharedKeyCredential.computeHMACSHA256(stringToSign);
 
-  return new SASQueryParameters(
-    version,
-    signature,
-    verifiedPermissions,
-    undefined,
-    undefined,
-    queueSASSignatureValues.protocol,
-    queueSASSignatureValues.startsOn,
-    queueSASSignatureValues.expiresOn,
-    queueSASSignatureValues.ipRange,
-    queueSASSignatureValues.identifier
-  );
+  return {
+    sasQueryParameters: new SASQueryParameters(
+      version,
+      signature,
+      verifiedPermissions,
+      undefined,
+      undefined,
+      queueSASSignatureValues.protocol,
+      queueSASSignatureValues.startsOn,
+      queueSASSignatureValues.expiresOn,
+      queueSASSignatureValues.ipRange,
+      queueSASSignatureValues.identifier,
+    ),
+    stringToSign: stringToSign,
+  };
 }
 
 function getCanonicalName(accountName: string, queueName: string): string {

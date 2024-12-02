@@ -6,197 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { createSpan } from "../tracing";
-import { RoleAssignments } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import type { PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { RoleAssignments } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as coreTracing from "@azure/core-tracing";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { AccessControlClientContext } from "../accessControlClientContext";
-import {
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import type { AccessControlClient } from "../accessControlClient.js";
+import type {
+  RoleAssignmentDetails,
+  RoleAssignmentsListRoleAssignmentsOptionalParams,
   SubjectInfo,
   RequiredAction,
   RoleAssignmentsCheckPrincipalAccessOptionalParams,
   RoleAssignmentsCheckPrincipalAccessResponse,
-  RoleAssignmentsListRoleAssignmentsOptionalParams,
   RoleAssignmentsListRoleAssignmentsResponse,
   RoleAssignmentsCreateRoleAssignmentOptionalParams,
   RoleAssignmentsCreateRoleAssignmentResponse,
   RoleAssignmentsGetRoleAssignmentByIdOptionalParams,
   RoleAssignmentsGetRoleAssignmentByIdResponse,
-  RoleAssignmentsDeleteRoleAssignmentByIdOptionalParams
-} from "../models";
+  RoleAssignmentsDeleteRoleAssignmentByIdOptionalParams,
+} from "../models/index.js";
 
-/** Class representing a RoleAssignments. */
-export class RoleAssignmentsImpl implements RoleAssignments {
-  private readonly client: AccessControlClientContext;
-
-  /**
-   * Initialize a new instance of the class RoleAssignments class.
-   * @param client Reference to the service client
-   */
-  constructor(client: AccessControlClientContext) {
-    this.client = client;
-  }
-
-  /**
-   * Check if the given principalId has access to perform list of actions at a given scope.
-   * @param subject Subject details
-   * @param actions List of actions.
-   * @param scope Scope at which the check access is done.
-   * @param options The options parameters.
-   */
-  async checkPrincipalAccess(
-    subject: SubjectInfo,
-    actions: RequiredAction[],
-    scope: string,
-    options?: RoleAssignmentsCheckPrincipalAccessOptionalParams
-  ): Promise<RoleAssignmentsCheckPrincipalAccessResponse> {
-    const { span } = createSpan(
-      "AccessControlClient-checkPrincipalAccess",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { subject, actions, scope, options },
-        checkPrincipalAccessOperationSpec
-      );
-      return result as RoleAssignmentsCheckPrincipalAccessResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * List role assignments.
-   * @param options The options parameters.
-   */
-  async listRoleAssignments(
-    options?: RoleAssignmentsListRoleAssignmentsOptionalParams
-  ): Promise<RoleAssignmentsListRoleAssignmentsResponse> {
-    const { span } = createSpan(
-      "AccessControlClient-listRoleAssignments",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { options },
-        listRoleAssignmentsOperationSpec
-      );
-      return result as RoleAssignmentsListRoleAssignmentsResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Create role assignment.
-   * @param roleAssignmentId The ID of the role assignment.
-   * @param roleId Role ID of the Synapse Built-In Role
-   * @param principalId Object ID of the AAD principal or security-group
-   * @param scope Scope at which the role assignment is created
-   * @param options The options parameters.
-   */
-  async createRoleAssignment(
-    roleAssignmentId: string,
-    roleId: string,
-    principalId: string,
-    scope: string,
-    options?: RoleAssignmentsCreateRoleAssignmentOptionalParams
-  ): Promise<RoleAssignmentsCreateRoleAssignmentResponse> {
-    const { span } = createSpan(
-      "AccessControlClient-createRoleAssignment",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { roleAssignmentId, roleId, principalId, scope, options },
-        createRoleAssignmentOperationSpec
-      );
-      return result as RoleAssignmentsCreateRoleAssignmentResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Get role assignment by role assignment Id.
-   * @param roleAssignmentId The ID of the role assignment.
-   * @param options The options parameters.
-   */
-  async getRoleAssignmentById(
-    roleAssignmentId: string,
-    options?: RoleAssignmentsGetRoleAssignmentByIdOptionalParams
-  ): Promise<RoleAssignmentsGetRoleAssignmentByIdResponse> {
-    const { span } = createSpan(
-      "AccessControlClient-getRoleAssignmentById",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { roleAssignmentId, options },
-        getRoleAssignmentByIdOperationSpec
-      );
-      return result as RoleAssignmentsGetRoleAssignmentByIdResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Delete role assignment by role assignment Id.
-   * @param roleAssignmentId The ID of the role assignment.
-   * @param options The options parameters.
-   */
-  async deleteRoleAssignmentById(
-    roleAssignmentId: string,
-    options?: RoleAssignmentsDeleteRoleAssignmentByIdOptionalParams
-  ): Promise<void> {
-    const { span } = createSpan(
-      "AccessControlClient-deleteRoleAssignmentById",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { roleAssignmentId, options },
-        deleteRoleAssignmentByIdOperationSpec
-      );
-      return result as void;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-}
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
@@ -205,25 +36,25 @@ const checkPrincipalAccessOperationSpec: coreClient.OperationSpec = {
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.CheckPrincipalAccessResponse
+      bodyMapper: Mappers.CheckPrincipalAccessResponse,
     },
     default: {
-      bodyMapper: Mappers.ErrorContract
-    }
+      bodyMapper: Mappers.ErrorContract,
+    },
   },
   requestBody: {
     parameterPath: {
       subject: ["subject"],
       actions: ["actions"],
-      scope: ["scope"]
+      scope: ["scope"],
     },
-    mapper: { ...Mappers.CheckPrincipalAccessRequest, required: true }
+    mapper: { ...Mappers.CheckPrincipalAccessRequest, required: true },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listRoleAssignmentsOperationSpec: coreClient.OperationSpec = {
   path: "/roleAssignments",
@@ -231,63 +62,63 @@ const listRoleAssignmentsOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.RoleAssignmentDetailsList,
-      headersMapper: Mappers.RoleAssignmentsListRoleAssignmentsHeaders
+      headersMapper: Mappers.RoleAssignmentsListRoleAssignmentsHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorContract
-    }
+      bodyMapper: Mappers.ErrorContract,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.roleId,
     Parameters.principalId,
-    Parameters.scope1
+    Parameters.scope1,
   ],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.accept, Parameters.continuationToken],
-  serializer
+  serializer,
 };
 const createRoleAssignmentOperationSpec: coreClient.OperationSpec = {
   path: "/roleAssignments/{roleAssignmentId}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.RoleAssignmentDetails
+      bodyMapper: Mappers.RoleAssignmentDetails,
     },
     default: {
-      bodyMapper: Mappers.ErrorContract
-    }
+      bodyMapper: Mappers.ErrorContract,
+    },
   },
   requestBody: {
     parameterPath: {
       roleId: ["roleId"],
       principalId: ["principalId"],
       scope: ["scope"],
-      principalType: ["options", "principalType"]
+      principalType: ["options", "principalType"],
     },
-    mapper: { ...Mappers.RoleAssignmentRequest, required: true }
+    mapper: { ...Mappers.RoleAssignmentRequest, required: true },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.roleAssignmentId],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getRoleAssignmentByIdOperationSpec: coreClient.OperationSpec = {
   path: "/roleAssignments/{roleAssignmentId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RoleAssignmentDetails
+      bodyMapper: Mappers.RoleAssignmentDetails,
     },
     default: {
-      bodyMapper: Mappers.ErrorContract
-    }
+      bodyMapper: Mappers.ErrorContract,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.roleAssignmentId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteRoleAssignmentByIdOperationSpec: coreClient.OperationSpec = {
   path: "/roleAssignments/{roleAssignmentId}",
@@ -296,11 +127,173 @@ const deleteRoleAssignmentByIdOperationSpec: coreClient.OperationSpec = {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorContract
-    }
+      bodyMapper: Mappers.ErrorContract,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.scope1],
   urlParameters: [Parameters.endpoint, Parameters.roleAssignmentId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
+
+/** Class containing RoleAssignments operations. */
+export class RoleAssignmentsImpl implements RoleAssignments {
+  private readonly client: AccessControlClient;
+
+  /**
+   * Initialize a new instance of the class RoleAssignments class.
+   * @param client - Reference to the service client
+   */
+  constructor(client: AccessControlClient) {
+    this.client = client;
+  }
+
+  /**
+   * List role assignments.
+   * @param options - The options parameters.
+   */
+  public listRoleAssignments(
+    options?: RoleAssignmentsListRoleAssignmentsOptionalParams,
+  ): PagedAsyncIterableIterator<RoleAssignmentDetails> {
+    const iter = this.listRoleAssignmentsPagingAll(options);
+    return {
+      next() {
+        return iter.next();
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+      byPage: () => {
+        return this.listRoleAssignmentsPagingPage(options);
+      },
+    };
+  }
+
+  private async *listRoleAssignmentsPagingPage(
+    options?: RoleAssignmentsListRoleAssignmentsOptionalParams,
+  ): AsyncIterableIterator<RoleAssignmentDetails[]> {
+    const result = await this._listRoleAssignments(options);
+    yield result.value || [];
+  }
+
+  private async *listRoleAssignmentsPagingAll(
+    options?: RoleAssignmentsListRoleAssignmentsOptionalParams,
+  ): AsyncIterableIterator<RoleAssignmentDetails> {
+    for await (const page of this.listRoleAssignmentsPagingPage(options)) {
+      yield* page;
+    }
+  }
+
+  /**
+   * Check if the given principalId has access to perform list of actions at a given scope.
+   * @param subject - Subject details
+   * @param actions - List of actions.
+   * @param scope - - Scope at which the check access is done.
+   * @param options - The options parameters.
+   */
+  async checkPrincipalAccess(
+    subject: SubjectInfo,
+    actions: RequiredAction[],
+    scope: string,
+    options?: RoleAssignmentsCheckPrincipalAccessOptionalParams,
+  ): Promise<RoleAssignmentsCheckPrincipalAccessResponse> {
+    return tracingClient.withSpan(
+      "AccessControlClient.checkPrincipalAccess",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { subject, actions, scope, updatedOptions },
+          checkPrincipalAccessOperationSpec,
+        ) as Promise<RoleAssignmentsCheckPrincipalAccessResponse>;
+      },
+    );
+  }
+
+  /**
+   * List role assignments.
+   * @param options - The options parameters.
+   */
+  private async _listRoleAssignments(
+    options?: RoleAssignmentsListRoleAssignmentsOptionalParams,
+  ): Promise<RoleAssignmentsListRoleAssignmentsResponse> {
+    return tracingClient.withSpan(
+      "AccessControlClient._listRoleAssignments",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { updatedOptions },
+          listRoleAssignmentsOperationSpec,
+        ) as Promise<RoleAssignmentsListRoleAssignmentsResponse>;
+      },
+    );
+  }
+
+  /**
+   * Create role assignment.
+   * @param roleAssignmentId - The ID of the role assignment.
+   * @param roleId - Role ID of the Synapse Built-In Role
+   * @param principalId - Object ID of the AAD principal or security-group
+   * @param scope - Scope at which the role assignment is created
+   * @param options - The options parameters.
+   */
+  async createRoleAssignment(
+    roleAssignmentId: string,
+    roleId: string,
+    principalId: string,
+    scope: string,
+    options?: RoleAssignmentsCreateRoleAssignmentOptionalParams,
+  ): Promise<RoleAssignmentsCreateRoleAssignmentResponse> {
+    return tracingClient.withSpan(
+      "AccessControlClient.createRoleAssignment",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { roleAssignmentId, roleId, principalId, scope, updatedOptions },
+          createRoleAssignmentOperationSpec,
+        ) as Promise<RoleAssignmentsCreateRoleAssignmentResponse>;
+      },
+    );
+  }
+
+  /**
+   * Get role assignment by role assignment Id.
+   * @param roleAssignmentId - The ID of the role assignment.
+   * @param options - The options parameters.
+   */
+  async getRoleAssignmentById(
+    roleAssignmentId: string,
+    options?: RoleAssignmentsGetRoleAssignmentByIdOptionalParams,
+  ): Promise<RoleAssignmentsGetRoleAssignmentByIdResponse> {
+    return tracingClient.withSpan(
+      "AccessControlClient.getRoleAssignmentById",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { roleAssignmentId, updatedOptions },
+          getRoleAssignmentByIdOperationSpec,
+        ) as Promise<RoleAssignmentsGetRoleAssignmentByIdResponse>;
+      },
+    );
+  }
+
+  /**
+   * Delete role assignment by role assignment Id.
+   * @param roleAssignmentId - The ID of the role assignment.
+   * @param options - The options parameters.
+   */
+  async deleteRoleAssignmentById(
+    roleAssignmentId: string,
+    options?: RoleAssignmentsDeleteRoleAssignmentByIdOptionalParams,
+  ): Promise<void> {
+    return tracingClient.withSpan(
+      "AccessControlClient.deleteRoleAssignmentById",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { roleAssignmentId, updatedOptions },
+          deleteRoleAssignmentByIdOperationSpec,
+        ) as Promise<void>;
+      },
+    );
+  }
+}

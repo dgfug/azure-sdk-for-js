@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
 import { getIdFromLink, getPathFromLink, ResourceType } from "../../common";
-import { SqlQuerySpec } from "../../queryExecutionContext";
+import type { SqlQuerySpec } from "../../queryExecutionContext";
 import { QueryIterator } from "../../queryIterator";
-import { FeedOptions } from "../../request";
-import { Container } from "../Container";
-import { Resource } from "../Resource";
-import { ConflictDefinition } from "./ConflictDefinition";
+import type { FeedOptions } from "../../request";
+import type { Container } from "../Container";
+import type { Resource } from "../Resource";
+import type { ConflictDefinition } from "./ConflictDefinition";
 
 /**
  * Use to query or read all conflicts.
@@ -17,7 +18,7 @@ import { ConflictDefinition } from "./ConflictDefinition";
 export class Conflicts {
   constructor(
     public readonly container: Container,
-    private readonly clientContext: ClientContext
+    private readonly clientContext: ClientContext,
   ) {}
 
   /**
@@ -38,16 +39,22 @@ export class Conflicts {
     const path = getPathFromLink(this.container.url, ResourceType.conflicts);
     const id = getIdFromLink(this.container.url);
 
-    return new QueryIterator(this.clientContext, query, options, (innerOptions) => {
-      return this.clientContext.queryFeed({
-        path,
-        resourceType: ResourceType.conflicts,
-        resourceId: id,
-        resultFn: (result) => result.Conflicts,
-        query,
-        options: innerOptions
-      });
-    });
+    return new QueryIterator(
+      this.clientContext,
+      query,
+      options,
+      (diagNode: DiagnosticNodeInternal, innerOptions) => {
+        return this.clientContext.queryFeed({
+          path,
+          resourceType: ResourceType.conflicts,
+          resourceId: id,
+          resultFn: (result) => result.Conflicts,
+          query,
+          options: innerOptions,
+          diagnosticNode: diagNode,
+        });
+      },
+    );
   }
 
   /**

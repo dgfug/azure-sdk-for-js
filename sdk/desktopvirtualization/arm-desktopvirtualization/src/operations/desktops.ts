@@ -6,34 +6,35 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Desktops } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DesktopVirtualizationAPIClientContext } from "../desktopVirtualizationAPIClientContext";
+import { DesktopVirtualizationAPIClient } from "../desktopVirtualizationAPIClient";
 import {
   Desktop,
   DesktopsListNextOptionalParams,
   DesktopsListOptionalParams,
+  DesktopsListResponse,
   DesktopsGetOptionalParams,
   DesktopsGetResponse,
   DesktopsUpdateOptionalParams,
   DesktopsUpdateResponse,
-  DesktopsListResponse,
-  DesktopsListNextResponse
+  DesktopsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Desktops operations. */
 export class DesktopsImpl implements Desktops {
-  private readonly client: DesktopVirtualizationAPIClientContext;
+  private readonly client: DesktopVirtualizationAPIClient;
 
   /**
    * Initialize a new instance of the class Desktops class.
    * @param client Reference to the service client
    */
-  constructor(client: DesktopVirtualizationAPIClientContext) {
+  constructor(client: DesktopVirtualizationAPIClient) {
     this.client = client;
   }
 
@@ -46,12 +47,12 @@ export class DesktopsImpl implements Desktops {
   public list(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: DesktopsListOptionalParams
+    options?: DesktopsListOptionalParams,
   ): PagedAsyncIterableIterator<Desktop> {
     const iter = this.listPagingAll(
       resourceGroupName,
       applicationGroupName,
-      options
+      options,
     );
     return {
       next() {
@@ -60,49 +61,62 @@ export class DesktopsImpl implements Desktops {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           applicationGroupName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: DesktopsListOptionalParams
+    options?: DesktopsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Desktop[]> {
-    let result = await this._list(
-      resourceGroupName,
-      applicationGroupName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DesktopsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        applicationGroupName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         applicationGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: DesktopsListOptionalParams
+    options?: DesktopsListOptionalParams,
   ): AsyncIterableIterator<Desktop> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       applicationGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -119,11 +133,11 @@ export class DesktopsImpl implements Desktops {
     resourceGroupName: string,
     applicationGroupName: string,
     desktopName: string,
-    options?: DesktopsGetOptionalParams
+    options?: DesktopsGetOptionalParams,
   ): Promise<DesktopsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, desktopName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -138,11 +152,11 @@ export class DesktopsImpl implements Desktops {
     resourceGroupName: string,
     applicationGroupName: string,
     desktopName: string,
-    options?: DesktopsUpdateOptionalParams
+    options?: DesktopsUpdateOptionalParams,
   ): Promise<DesktopsUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, desktopName, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -155,11 +169,11 @@ export class DesktopsImpl implements Desktops {
   private _list(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: DesktopsListOptionalParams
+    options?: DesktopsListOptionalParams,
   ): Promise<DesktopsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -174,11 +188,11 @@ export class DesktopsImpl implements Desktops {
     resourceGroupName: string,
     applicationGroupName: string,
     nextLink: string,
-    options?: DesktopsListNextOptionalParams
+    options?: DesktopsListNextOptionalParams,
   ): Promise<DesktopsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -186,16 +200,15 @@ export class DesktopsImpl implements Desktops {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/desktops/{desktopName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/desktops/{desktopName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.Desktop
+      bodyMapper: Mappers.Desktop,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -203,22 +216,21 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.applicationGroupName,
-    Parameters.desktopName
+    Parameters.desktopName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/desktops/{desktopName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/desktops/{desktopName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.Desktop
+      bodyMapper: Mappers.Desktop,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.desktop,
   queryParameters: [Parameters.apiVersion],
@@ -227,53 +239,56 @@ const updateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.applicationGroupName,
-    Parameters.desktopName
+    Parameters.desktopName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/desktops",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/desktops",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DesktopList
+      bodyMapper: Mappers.DesktopList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.pageSize,
+    Parameters.isDescending,
+    Parameters.initialSkip,
+  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DesktopList
+      bodyMapper: Mappers.DesktopList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

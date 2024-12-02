@@ -6,19 +6,20 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { SshPublicKeys } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
+import { ComputeManagementClient } from "../computeManagementClient";
 import {
   SshPublicKeyResource,
   SshPublicKeysListBySubscriptionNextOptionalParams,
   SshPublicKeysListBySubscriptionOptionalParams,
+  SshPublicKeysListBySubscriptionResponse,
   SshPublicKeysListByResourceGroupNextOptionalParams,
   SshPublicKeysListByResourceGroupOptionalParams,
-  SshPublicKeysListBySubscriptionResponse,
   SshPublicKeysListByResourceGroupResponse,
   SshPublicKeysCreateOptionalParams,
   SshPublicKeysCreateResponse,
@@ -31,19 +32,19 @@ import {
   SshPublicKeysGenerateKeyPairOptionalParams,
   SshPublicKeysGenerateKeyPairResponse,
   SshPublicKeysListBySubscriptionNextResponse,
-  SshPublicKeysListByResourceGroupNextResponse
+  SshPublicKeysListByResourceGroupNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing SshPublicKeys operations. */
 export class SshPublicKeysImpl implements SshPublicKeys {
-  private readonly client: ComputeManagementClientContext;
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class SshPublicKeys class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -53,7 +54,7 @@ export class SshPublicKeysImpl implements SshPublicKeys {
    * @param options The options parameters.
    */
   public listBySubscription(
-    options?: SshPublicKeysListBySubscriptionOptionalParams
+    options?: SshPublicKeysListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<SshPublicKeyResource> {
     const iter = this.listBySubscriptionPagingAll(options);
     return {
@@ -63,27 +64,39 @@ export class SshPublicKeysImpl implements SshPublicKeys {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySubscriptionPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySubscriptionPagingPage(options, settings);
+      },
     };
   }
 
   private async *listBySubscriptionPagingPage(
-    options?: SshPublicKeysListBySubscriptionOptionalParams
+    options?: SshPublicKeysListBySubscriptionOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<SshPublicKeyResource[]> {
-    let result = await this._listBySubscription(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SshPublicKeysListBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySubscription(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySubscriptionNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listBySubscriptionPagingAll(
-    options?: SshPublicKeysListBySubscriptionOptionalParams
+    options?: SshPublicKeysListBySubscriptionOptionalParams,
   ): AsyncIterableIterator<SshPublicKeyResource> {
     for await (const page of this.listBySubscriptionPagingPage(options)) {
       yield* page;
@@ -98,7 +111,7 @@ export class SshPublicKeysImpl implements SshPublicKeys {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: SshPublicKeysListByResourceGroupOptionalParams
+    options?: SshPublicKeysListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<SshPublicKeyResource> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -108,37 +121,53 @@ export class SshPublicKeysImpl implements SshPublicKeys {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: SshPublicKeysListByResourceGroupOptionalParams
+    options?: SshPublicKeysListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<SshPublicKeyResource[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SshPublicKeysListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: SshPublicKeysListByResourceGroupOptionalParams
+    options?: SshPublicKeysListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<SshPublicKeyResource> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -150,11 +179,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
    * @param options The options parameters.
    */
   private _listBySubscription(
-    options?: SshPublicKeysListBySubscriptionOptionalParams
+    options?: SshPublicKeysListBySubscriptionOptionalParams,
   ): Promise<SshPublicKeysListBySubscriptionResponse> {
     return this.client.sendOperationRequest(
       { options },
-      listBySubscriptionOperationSpec
+      listBySubscriptionOperationSpec,
     );
   }
 
@@ -166,11 +195,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: SshPublicKeysListByResourceGroupOptionalParams
+    options?: SshPublicKeysListByResourceGroupOptionalParams,
   ): Promise<SshPublicKeysListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -185,11 +214,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
     resourceGroupName: string,
     sshPublicKeyName: string,
     parameters: SshPublicKeyResource,
-    options?: SshPublicKeysCreateOptionalParams
+    options?: SshPublicKeysCreateOptionalParams,
   ): Promise<SshPublicKeysCreateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, sshPublicKeyName, parameters, options },
-      createOperationSpec
+      createOperationSpec,
     );
   }
 
@@ -204,11 +233,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
     resourceGroupName: string,
     sshPublicKeyName: string,
     parameters: SshPublicKeyUpdateResource,
-    options?: SshPublicKeysUpdateOptionalParams
+    options?: SshPublicKeysUpdateOptionalParams,
   ): Promise<SshPublicKeysUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, sshPublicKeyName, parameters, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -221,11 +250,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
   delete(
     resourceGroupName: string,
     sshPublicKeyName: string,
-    options?: SshPublicKeysDeleteOptionalParams
+    options?: SshPublicKeysDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, sshPublicKeyName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -238,11 +267,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
   get(
     resourceGroupName: string,
     sshPublicKeyName: string,
-    options?: SshPublicKeysGetOptionalParams
+    options?: SshPublicKeysGetOptionalParams,
   ): Promise<SshPublicKeysGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, sshPublicKeyName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -257,11 +286,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
   generateKeyPair(
     resourceGroupName: string,
     sshPublicKeyName: string,
-    options?: SshPublicKeysGenerateKeyPairOptionalParams
+    options?: SshPublicKeysGenerateKeyPairOptionalParams,
   ): Promise<SshPublicKeysGenerateKeyPairResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, sshPublicKeyName, options },
-      generateKeyPairOperationSpec
+      generateKeyPairOperationSpec,
     );
   }
 
@@ -272,11 +301,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
    */
   private _listBySubscriptionNext(
     nextLink: string,
-    options?: SshPublicKeysListBySubscriptionNextOptionalParams
+    options?: SshPublicKeysListBySubscriptionNextOptionalParams,
   ): Promise<SshPublicKeysListBySubscriptionNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listBySubscriptionNextOperationSpec
+      listBySubscriptionNextOperationSpec,
     );
   }
 
@@ -289,11 +318,11 @@ export class SshPublicKeysImpl implements SshPublicKeys {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: SshPublicKeysListByResourceGroupNextOptionalParams
+    options?: SshPublicKeysListByResourceGroupNextOptionalParams,
   ): Promise<SshPublicKeysListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 }
@@ -301,166 +330,190 @@ export class SshPublicKeysImpl implements SshPublicKeys {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listBySubscriptionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/sshPublicKeys",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/sshPublicKeys",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeysGroupListResult
-    }
+      bodyMapper: Mappers.SshPublicKeysGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeysGroupListResult
-    }
+      bodyMapper: Mappers.SshPublicKeysGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeyResource
+      bodyMapper: Mappers.SshPublicKeyResource,
     },
     201: {
-      bodyMapper: Mappers.SshPublicKeyResource
-    }
+      bodyMapper: Mappers.SshPublicKeyResource,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters8,
+  requestBody: Parameters.parameters19,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.sshPublicKeyName
+    Parameters.resourceGroupName,
+    Parameters.sshPublicKeyName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeyResource
-    }
+      bodyMapper: Mappers.SshPublicKeyResource,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters9,
+  requestBody: Parameters.parameters20,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.sshPublicKeyName
+    Parameters.resourceGroupName,
+    Parameters.sshPublicKeyName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
   httpMethod: "DELETE",
-  responses: { 200: {}, 204: {} },
+  responses: {
+    200: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.sshPublicKeyName
+    Parameters.resourceGroupName,
+    Parameters.sshPublicKeyName,
   ],
-  serializer
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeyResource
-    }
+      bodyMapper: Mappers.SshPublicKeyResource,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.sshPublicKeyName
+    Parameters.resourceGroupName,
+    Parameters.sshPublicKeyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const generateKeyPairOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}/generateKeyPair",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys/{sshPublicKeyName}/generateKeyPair",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeyGenerateKeyPairResult
-    }
+      bodyMapper: Mappers.SshPublicKeyGenerateKeyPairResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
+  requestBody: Parameters.parameters21,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.sshPublicKeyName
+    Parameters.resourceGroupName,
+    Parameters.sshPublicKeyName,
   ],
-  headerParameters: [Parameters.accept],
-  serializer
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
 };
 const listBySubscriptionNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeysGroupListResult
-    }
+      bodyMapper: Mappers.SshPublicKeysGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SshPublicKeysGroupListResult
-    }
+      bodyMapper: Mappers.SshPublicKeysGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

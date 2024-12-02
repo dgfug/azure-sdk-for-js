@@ -1,28 +1,33 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export const SDK_VERSION: string = "12.9.0-beta.2";
-export const SERVICE_VERSION: string = "2020-12-06";
+export const SDK_VERSION: string = "12.26.0";
+export const SERVICE_VERSION: string = "2025-01-05";
 
 export const FILE_MAX_SIZE_BYTES: number = 4 * 1024 * 1024 * 1024 * 1024; // 4TB
 export const FILE_RANGE_MAX_SIZE_BYTES: number = 4 * 1024 * 1024; // 4MB
 export const DEFAULT_MAX_DOWNLOAD_RETRY_REQUESTS: number = 5;
 export const DEFAULT_HIGH_LEVEL_CONCURRENCY: number = 5;
+export const REQUEST_TIMEOUT: number = 100 * 1000; // In ms
+/**
+ * The OAuth scope to use with Azure Storage.
+ */
+export const StorageOAuthScopes: string | string[] = "https://storage.azure.com/.default";
 
 export const URLConstants = {
   Parameters: {
     FORCE_BROWSER_NO_CACHE: "_",
     SHARE_SNAPSHOT: "sharesnapshot",
     SIGNATURE: "sig",
-    TIMEOUT: "timeout"
-  }
+    TIMEOUT: "timeout",
+  },
 };
 
 export const HttpUrlConnection = {
   HTTP_CONFLICT: 409,
   HTTP_NOT_FOUND: 404,
   HTTP_PRECON_FAILED: 412,
-  HTTP_RANGE_NOT_SATISFIABLE: 416
+  HTTP_RANGE_NOT_SATISFIABLE: 416,
 };
 
 export const HeaderConstants = {
@@ -44,11 +49,14 @@ export const HeaderConstants = {
   USER_AGENT: "User-Agent",
   X_MS_CLIENT_REQUEST_ID: "x-ms-client-request-id",
   X_MS_COPY_SOURCE: "x-ms-copy-source",
-  X_MS_DATE: "x-ms-date"
+  X_MS_CopySourceErrorCode: "x-ms-copy-source-error-code",
+  X_MS_DATE: "x-ms-date",
 };
 
 export const ETagNone = "";
 export const ETagAny = "*";
+export const FileAttributesPreserve = "Preserve";
+export const FileAttributesNone = "None";
 
 export const StorageFileLoggingAllowedHeaderNames = [
   "Access-Control-Allow-Origin",
@@ -98,6 +106,8 @@ export const StorageFileLoggingAllowedHeaderNames = [
   "x-ms-content-length",
   "x-ms-content-md5",
   "x-ms-content-type",
+  "x-ms-copy-source-error-code",
+  "x-ms-copy-source-status-code",
   "x-ms-file-attributes",
   "x-ms-file-change-time",
   "x-ms-file-creation-time",
@@ -109,7 +119,7 @@ export const StorageFileLoggingAllowedHeaderNames = [
   "x-ms-recursive",
   "x-ms-share-quota",
   "x-ms-type",
-  "x-ms-write"
+  "x-ms-write",
 ];
 
 export const StorageFileLoggingAllowedQueryParameters = [
@@ -131,5 +141,30 @@ export const StorageFileLoggingAllowedQueryParameters = [
   "st",
   "sv",
   "copyid",
-  "restype"
+  "restype",
+];
+
+/// List of ports used for path style addressing.
+/// Path style addressing means that storage account is put in URI's Path segment in instead of in host.
+export const PathStylePorts = [
+  "10000",
+  "10001",
+  "10002",
+  "10003",
+  "10004",
+  "10100",
+  "10101",
+  "10102",
+  "10103",
+  "10104",
+  "11000",
+  "11001",
+  "11002",
+  "11003",
+  "11004",
+  "11100",
+  "11101",
+  "11102",
+  "11103",
+  "11104",
 ];

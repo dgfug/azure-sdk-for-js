@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CloseReason } from "./models/public";
-import { ReceivedEventData } from "./eventData";
-import { LastEnqueuedEventProperties } from "./eventHubReceiver";
-import { EventPosition } from "./eventPosition";
-import { OperationTracingOptions } from "@azure/core-tracing";
-import { MessagingError } from "@azure/core-amqp";
+import type { CloseReason } from "./models/public.js";
+import type { EventPosition } from "./eventPosition.js";
+import type { LastEnqueuedEventProperties } from "./partitionReceiver.js";
+import type { MessagingError } from "@azure/core-amqp";
+import type { OperationTracingOptions } from "@azure/core-tracing";
+import type { ReceivedEventData } from "./eventData.js";
 
 /**
  * @internal
@@ -78,7 +78,7 @@ export interface PartitionContext {
  */
 export type ProcessEventsHandler = (
   events: ReceivedEventData[],
-  context: PartitionContext
+  context: PartitionContext,
 ) => Promise<void>;
 
 /**
@@ -87,7 +87,7 @@ export type ProcessEventsHandler = (
  */
 export type ProcessErrorHandler = (
   error: Error | MessagingError,
-  context: PartitionContext
+  context: PartitionContext,
 ) => Promise<void>;
 
 /**
@@ -184,7 +184,7 @@ export interface SubscribeOptions {
    * Indicates whether or not the consumer should request information on the last enqueued event on its
    * associated partition, and track that information as events are received.
 
-   * When information about the partition's last enqueued event is being tracked, each event received 
+   * When information about the partition's last enqueued event is being tracked, each event received
    * from the Event Hubs service will carry metadata about the partition that it otherwise would not. This results in a small amount of
    * additional network bandwidth consumption that is generally a favorable trade-off when considered
    * against periodically making requests for partition properties using the Event Hub client.
@@ -204,6 +204,10 @@ export interface SubscribeOptions {
    * prefer to work directly with the bytes present in the message body than have the client attempt to parse it.
    */
   skipParsingBodyAsJson?: boolean;
+  /**
+   * The count of events requested eagerly and queued without regard to whether a read was requested.
+   */
+  prefetchCount?: number;
 }
 
 /**

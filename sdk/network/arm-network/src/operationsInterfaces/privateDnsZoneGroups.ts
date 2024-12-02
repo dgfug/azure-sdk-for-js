@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   PrivateDnsZoneGroup,
   PrivateDnsZoneGroupsListOptionalParams,
@@ -15,7 +15,7 @@ import {
   PrivateDnsZoneGroupsGetOptionalParams,
   PrivateDnsZoneGroupsGetResponse,
   PrivateDnsZoneGroupsCreateOrUpdateOptionalParams,
-  PrivateDnsZoneGroupsCreateOrUpdateResponse
+  PrivateDnsZoneGroupsCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface PrivateDnsZoneGroups {
   list(
     privateEndpointName: string,
     resourceGroupName: string,
-    options?: PrivateDnsZoneGroupsListOptionalParams
+    options?: PrivateDnsZoneGroupsListOptionalParams,
   ): PagedAsyncIterableIterator<PrivateDnsZoneGroup>;
   /**
    * Deletes the specified private dns zone group.
@@ -43,8 +43,8 @@ export interface PrivateDnsZoneGroups {
     resourceGroupName: string,
     privateEndpointName: string,
     privateDnsZoneGroupName: string,
-    options?: PrivateDnsZoneGroupsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: PrivateDnsZoneGroupsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified private dns zone group.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface PrivateDnsZoneGroups {
     resourceGroupName: string,
     privateEndpointName: string,
     privateDnsZoneGroupName: string,
-    options?: PrivateDnsZoneGroupsDeleteOptionalParams
+    options?: PrivateDnsZoneGroupsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the private dns zone group resource by specified private dns zone group name.
@@ -69,7 +69,7 @@ export interface PrivateDnsZoneGroups {
     resourceGroupName: string,
     privateEndpointName: string,
     privateDnsZoneGroupName: string,
-    options?: PrivateDnsZoneGroupsGetOptionalParams
+    options?: PrivateDnsZoneGroupsGetOptionalParams,
   ): Promise<PrivateDnsZoneGroupsGetResponse>;
   /**
    * Creates or updates a private dns zone group in the specified private endpoint.
@@ -84,10 +84,10 @@ export interface PrivateDnsZoneGroups {
     privateEndpointName: string,
     privateDnsZoneGroupName: string,
     parameters: PrivateDnsZoneGroup,
-    options?: PrivateDnsZoneGroupsCreateOrUpdateOptionalParams
+    options?: PrivateDnsZoneGroupsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<PrivateDnsZoneGroupsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<PrivateDnsZoneGroupsCreateOrUpdateResponse>,
       PrivateDnsZoneGroupsCreateOrUpdateResponse
     >
   >;
@@ -104,6 +104,6 @@ export interface PrivateDnsZoneGroups {
     privateEndpointName: string,
     privateDnsZoneGroupName: string,
     parameters: PrivateDnsZoneGroup,
-    options?: PrivateDnsZoneGroupsCreateOrUpdateOptionalParams
+    options?: PrivateDnsZoneGroupsCreateOrUpdateOptionalParams,
   ): Promise<PrivateDnsZoneGroupsCreateOrUpdateResponse>;
 }

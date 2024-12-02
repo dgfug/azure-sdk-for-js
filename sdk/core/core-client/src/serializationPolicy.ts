@@ -1,24 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PipelineResponse, SendRequest, PipelinePolicy } from "@azure/core-rest-pipeline";
-import {
+import type {
+  DictionaryMapper,
+  OperationArguments,
   OperationRequest,
+  OperationSpec,
+  RequiredSerializerOptions,
   SerializerOptions,
   XmlOptions,
-  XML_CHARKEY,
-  RequiredSerializerOptions,
-  OperationArguments,
-  XML_ATTRKEY,
-  OperationSpec,
-  DictionaryMapper
-} from "./interfaces";
-import { MapperTypeNames } from "./serializer";
-import { getPathStringFromParameter } from "./interfaceHelpers";
+} from "./interfaces.js";
+import { XML_ATTRKEY, XML_CHARKEY } from "./interfaces.js";
+import type { PipelinePolicy, PipelineResponse, SendRequest } from "@azure/core-rest-pipeline";
 import {
   getOperationArgumentValueFromParameter,
-  getOperationRequestInfo
-} from "./operationHelpers";
+  getOperationRequestInfo,
+} from "./operationHelpers.js";
+import { MapperTypeNames } from "./serializer.js";
+import { getPathStringFromParameter } from "./interfaceHelpers.js";
 
 /**
  * The programmatic identifier of the serializationPolicy.
@@ -58,7 +57,7 @@ export function serializationPolicy(options: SerializationPolicyOptions = {}): P
         serializeRequestBody(request, operationArguments, operationSpec, stringifyXML);
       }
       return next(request);
-    }
+    },
   };
 }
 
@@ -68,7 +67,7 @@ export function serializationPolicy(options: SerializationPolicyOptions = {}): P
 export function serializeHeaders(
   request: OperationRequest,
   operationArguments: OperationArguments,
-  operationSpec: OperationSpec
+  operationSpec: OperationSpec,
 ): void {
   if (operationSpec.headerParameters) {
     for (const headerParameter of operationSpec.headerParameters) {
@@ -77,7 +76,7 @@ export function serializeHeaders(
         headerValue = operationSpec.serializer.serialize(
           headerParameter.mapper,
           headerValue,
-          getPathStringFromParameter(headerParameter)
+          getPathStringFromParameter(headerParameter),
         );
         const headerCollectionPrefix = (headerParameter.mapper as DictionaryMapper)
           .headerCollectionPrefix;
@@ -88,7 +87,7 @@ export function serializeHeaders(
         } else {
           request.headers.set(
             headerParameter.mapper.serializedName || getPathStringFromParameter(headerParameter),
-            headerValue
+            headerValue,
           );
         }
       }
@@ -109,24 +108,24 @@ export function serializeRequestBody(
   request: OperationRequest,
   operationArguments: OperationArguments,
   operationSpec: OperationSpec,
-  stringifyXML: (obj: any, opts?: XmlOptions) => string = function() {
+  stringifyXML: (obj: any, opts?: XmlOptions) => string = function () {
     throw new Error("XML serialization unsupported!");
-  }
+  },
 ): void {
   const serializerOptions = operationArguments.options?.serializerOptions;
   const updatedOptions: RequiredSerializerOptions = {
     xml: {
       rootName: serializerOptions?.xml.rootName ?? "",
       includeRoot: serializerOptions?.xml.includeRoot ?? false,
-      xmlCharKey: serializerOptions?.xml.xmlCharKey ?? XML_CHARKEY
-    }
+      xmlCharKey: serializerOptions?.xml.xmlCharKey ?? XML_CHARKEY,
+    },
   };
 
   const xmlCharKey = updatedOptions.xml.xmlCharKey;
   if (operationSpec.requestBody && operationSpec.requestBody.mapper) {
     request.body = getOperationArgumentValueFromParameter(
       operationArguments,
-      operationSpec.requestBody
+      operationSpec.requestBody,
     );
 
     const bodyMapper = operationSpec.requestBody.mapper;
@@ -137,7 +136,7 @@ export function serializeRequestBody(
       xmlElementName,
       xmlNamespace,
       xmlNamespacePrefix,
-      nullable
+      nullable,
     } = bodyMapper;
     const typeName = bodyMapper.type.name;
 
@@ -148,13 +147,13 @@ export function serializeRequestBody(
         required
       ) {
         const requestBodyParameterPathString: string = getPathStringFromParameter(
-          operationSpec.requestBody
+          operationSpec.requestBody,
         );
         request.body = operationSpec.serializer.serialize(
           bodyMapper,
           request.body,
           requestBodyParameterPathString,
-          updatedOptions
+          updatedOptions,
         );
 
         const isStream = typeName === MapperTypeNames.Stream;
@@ -166,7 +165,7 @@ export function serializeRequestBody(
             xmlnsKey,
             typeName,
             request.body,
-            updatedOptions
+            updatedOptions,
           );
 
           if (typeName === MapperTypeNames.Sequence) {
@@ -175,14 +174,14 @@ export function serializeRequestBody(
                 value,
                 xmlElementName || xmlName || serializedName!,
                 xmlnsKey,
-                xmlNamespace
+                xmlNamespace,
               ),
-              { rootName: xmlName || serializedName, xmlCharKey }
+              { rootName: xmlName || serializedName, xmlCharKey },
             );
           } else if (!isStream) {
             request.body = stringifyXML(value, {
               rootName: xmlName || serializedName,
-              xmlCharKey
+              xmlCharKey,
             });
           }
         } else if (
@@ -196,13 +195,13 @@ export function serializeRequestBody(
           request.body = JSON.stringify(request.body);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(
         `Error "${error.message}" occurred in serializing the payload - ${JSON.stringify(
           serializedName,
           undefined,
-          "  "
-        )}.`
+          "  ",
+        )}.`,
       );
     }
   } else if (operationSpec.formDataParameters && operationSpec.formDataParameters.length > 0) {
@@ -210,7 +209,7 @@ export function serializeRequestBody(
     for (const formDataParameter of operationSpec.formDataParameters) {
       const formDataParameterValue = getOperationArgumentValueFromParameter(
         operationArguments,
-        formDataParameter
+        formDataParameter,
       );
       if (formDataParameterValue !== undefined && formDataParameterValue !== null) {
         const formDataParameterPropertyName: string =
@@ -219,7 +218,7 @@ export function serializeRequestBody(
           formDataParameter.mapper,
           formDataParameterValue,
           getPathStringFromParameter(formDataParameter),
-          updatedOptions
+          updatedOptions,
         );
       }
     }
@@ -234,7 +233,7 @@ function getXmlValueWithNamespace(
   xmlnsKey: string,
   typeName: string,
   serializedValue: any,
-  options: RequiredSerializerOptions
+  options: RequiredSerializerOptions,
 ): any {
   // Composite and Sequence schemas already got their root namespace set during serialization
   // We just need to add xmlns to the other schema types
@@ -252,7 +251,7 @@ function prepareXMLRootList(
   obj: any,
   elementName: string,
   xmlNamespaceKey?: string,
-  xmlNamespace?: string
+  xmlNamespace?: string,
 ): { [key: string]: any[] } {
   if (!Array.isArray(obj)) {
     obj = [obj];

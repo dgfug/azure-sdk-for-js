@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how to use the different methods of authentication
@@ -11,14 +11,10 @@
 import {
   TableServiceClient,
   AzureNamedKeyCredential,
-  AzureSASCredential
+  AzureSASCredential,
 } from "@azure/data-tables";
-
 import { DefaultAzureCredential } from "@azure/identity";
-
-// Load the .env file if it exists
-import * as dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config";
 
 // URL of the tables endpoint
 const tablesUrl = process.env["TABLES_URL"] || "";
@@ -36,17 +32,17 @@ const sasConnectionString = process.env["SAS_CONNECTION_STRING"] || "";
 const sasToken = process.env["SAS_TOKEN"] || "";
 
 /**
- * Create a TableServiceCLient using a SAS connection String
+ * Create a TableServiceClient using a SAS connection String
  */
-async function tableServiceClientWithSasConnectionString() {
+async function tableServiceClientWithSasConnectionString(): Promise<void> {
   const client = TableServiceClient.fromConnectionString(sasConnectionString);
   countTablesWithClient(client);
 }
 
 /**
- * Create a TableServiceCLient using a SAS connection String
+ * Create a TableServiceClient using a SAS connection String
  */
-async function tableServiceClientWithAAD() {
+async function tableServiceClientWithAAD(): Promise<void> {
   // DefaultAzureCredential expects the following three environment variables:
   // - AZURE_TENANT_ID: The tenant ID in Azure Active Directory
   // - AZURE_CLIENT_ID: The application (client) ID registered in the AAD tenant
@@ -57,35 +53,35 @@ async function tableServiceClientWithAAD() {
 }
 
 /**
- * Create a TableServiceCLient using a SAS token
+ * Create a TableServiceClient using a SAS token
  */
-async function tableServiceClientWithSasToken() {
+async function tableServiceClientWithSasToken(): Promise<void> {
   const client = new TableServiceClient(tablesUrl, new AzureSASCredential(sasToken));
   countTablesWithClient(client);
 }
 
 /**
- * Create a TableServiceCLient using an Account connection String.
+ * Create a TableServiceClient using an Account connection String.
  * Note that this authentication method is only supported in Node,
  * and it is not available for browsers
  */
-async function tableServiceClientWithAccountConnectionString() {
+async function tableServiceClientWithAccountConnectionString(): Promise<void> {
   const client = TableServiceClient.fromConnectionString(accountConnectionString);
   countTablesWithClient(client);
 }
 
 /**
- * Create a TableServiceCLient using account name and account key
+ * Create a TableServiceClient using account name and account key
  * Note that this authentication method is only supported in Node,
  * and it is not available for browsers
  */
-async function tableServiceClientWithAccountKey() {
+async function tableServiceClientWithAccountKey(): Promise<void> {
   const creds = new AzureNamedKeyCredential(accountName, accountKey);
   const client = new TableServiceClient(tablesUrl, creds);
   countTablesWithClient(client);
 }
 
-async function countTablesWithClient(client: TableServiceClient) {
+async function countTablesWithClient(client: TableServiceClient): Promise<void> {
   const tablesIterator = client.listTables();
   let count = 0;
   for await (const _table of tablesIterator) {
@@ -95,7 +91,7 @@ async function countTablesWithClient(client: TableServiceClient) {
   console.log(`Listed ${count} tables`);
 }
 
-export async function main() {
+export async function main(): Promise<void> {
   console.log("== Client Authentication Methods Sample ==");
 
   await tableServiceClientWithSasConnectionString();

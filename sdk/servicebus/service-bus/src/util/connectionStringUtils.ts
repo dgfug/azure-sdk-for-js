@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { parseConnectionString } from "@azure/core-amqp";
 
@@ -51,7 +51,7 @@ export interface ServiceBusConnectionStringProperties {
  * for the Service Bus namespace, queue or topic.
  */
 export function parseServiceBusConnectionString(
-  connectionString: string
+  connectionString: string,
 ): ServiceBusConnectionStringProperties {
   const parsedResult = parseConnectionString<{
     Endpoint: string;
@@ -67,20 +67,20 @@ export function parseServiceBusConnectionString(
   if (parsedResult.SharedAccessSignature) {
     if (parsedResult.SharedAccessKey || parsedResult.SharedAccessKeyName) {
       throw new Error(
-        "Connection string cannot have both SharedAccessSignature and SharedAccessKey keys."
+        "Connection string cannot have both SharedAccessSignature and SharedAccessKey keys.",
       );
     }
   } else if (parsedResult.SharedAccessKey && !parsedResult.SharedAccessKeyName) {
     throw new Error("Connection string with SharedAccessKey should have SharedAccessKeyName.");
   } else if (!parsedResult.SharedAccessKey && parsedResult.SharedAccessKeyName) {
     throw new Error(
-      "Connection string with SharedAccessKeyName should have SharedAccessKey as well."
+      "Connection string with SharedAccessKeyName should have SharedAccessKey as well.",
     );
   }
 
   const output: ServiceBusConnectionStringProperties = {
     fullyQualifiedNamespace: (parsedResult.Endpoint.match(".*://([^/]*)") || [])[1],
-    endpoint: parsedResult.Endpoint
+    endpoint: parsedResult.Endpoint,
   };
   if (parsedResult.EntityPath) {
     output.entityPath = parsedResult.EntityPath;

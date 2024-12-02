@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import { Constants } from "../common";
-import { CosmosHeaders } from "../queryExecutionContext";
+import type { CosmosHeaders } from "../queryExecutionContext";
 import { ConsistencyLevel } from "./ConsistencyLevel";
 
 /**
@@ -74,8 +74,8 @@ export class DatabaseAccount {
     this.mediaLink = "/media/";
     this.maxMediaStorageUsageInMB = headers[Constants.HttpHeaders.MaxMediaStorageUsageInMB];
     this.currentMediaStorageUsageInMB = headers[Constants.HttpHeaders.CurrentMediaStorageUsageInMB];
-    this.consistencyPolicy = body.UserConsistencyPolicy
-      ? (body.UserConsistencyPolicy.defaultConsistencyLevel as ConsistencyLevel)
+    this.consistencyPolicy = body.userConsistencyPolicy
+      ? (body.userConsistencyPolicy.defaultConsistencyLevel as ConsistencyLevel)
       : ConsistencyLevel.Session;
     if (body[Constants.WritableLocations] && body.id !== "localhost") {
       this.writableLocations = body[Constants.WritableLocations] as Location[];
@@ -98,4 +98,5 @@ export interface Location {
   name: string;
   databaseAccountEndpoint: string;
   unavailable?: boolean;
+  lastUnavailabilityTimestampInMs?: number;
 }

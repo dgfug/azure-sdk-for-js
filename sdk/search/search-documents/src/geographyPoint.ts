@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 const WorldGeodeticSystem1984 = "EPSG:4326"; // See https://epsg.io/4326
 
@@ -33,7 +33,7 @@ export default class GeographyPoint {
     return {
       type: "Point",
       coordinates: [this.longitude, this.latitude],
-      crs: { type: "name", properties: { name: WorldGeodeticSystem1984 } }
+      crs: { type: "name", properties: { name: WorldGeodeticSystem1984 } },
     };
   }
 }

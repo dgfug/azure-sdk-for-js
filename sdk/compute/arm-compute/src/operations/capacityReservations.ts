@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { CapacityReservations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ComputeManagementClient } from "../computeManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   CapacityReservation,
   CapacityReservationsListByCapacityReservationGroupNextOptionalParams,
   CapacityReservationsListByCapacityReservationGroupOptionalParams,
+  CapacityReservationsListByCapacityReservationGroupResponse,
   CapacityReservationsCreateOrUpdateOptionalParams,
   CapacityReservationsCreateOrUpdateResponse,
   CapacityReservationUpdate,
@@ -26,20 +32,19 @@ import {
   CapacityReservationsDeleteOptionalParams,
   CapacityReservationsGetOptionalParams,
   CapacityReservationsGetResponse,
-  CapacityReservationsListByCapacityReservationGroupResponse,
-  CapacityReservationsListByCapacityReservationGroupNextResponse
+  CapacityReservationsListByCapacityReservationGroupNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing CapacityReservations operations. */
 export class CapacityReservationsImpl implements CapacityReservations {
-  private readonly client: ComputeManagementClientContext;
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class CapacityReservations class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -53,12 +58,12 @@ export class CapacityReservationsImpl implements CapacityReservations {
   public listByCapacityReservationGroup(
     resourceGroupName: string,
     capacityReservationGroupName: string,
-    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams
+    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams,
   ): PagedAsyncIterableIterator<CapacityReservation> {
     const iter = this.listByCapacityReservationGroupPagingAll(
       resourceGroupName,
       capacityReservationGroupName,
-      options
+      options,
     );
     return {
       next() {
@@ -67,49 +72,62 @@ export class CapacityReservationsImpl implements CapacityReservations {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByCapacityReservationGroupPagingPage(
           resourceGroupName,
           capacityReservationGroupName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByCapacityReservationGroupPagingPage(
     resourceGroupName: string,
     capacityReservationGroupName: string,
-    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams
+    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<CapacityReservation[]> {
-    let result = await this._listByCapacityReservationGroup(
-      resourceGroupName,
-      capacityReservationGroupName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: CapacityReservationsListByCapacityReservationGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByCapacityReservationGroup(
+        resourceGroupName,
+        capacityReservationGroupName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByCapacityReservationGroupNext(
         resourceGroupName,
         capacityReservationGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByCapacityReservationGroupPagingAll(
     resourceGroupName: string,
     capacityReservationGroupName: string,
-    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams
+    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams,
   ): AsyncIterableIterator<CapacityReservation> {
     for await (const page of this.listByCapacityReservationGroupPagingPage(
       resourceGroupName,
       capacityReservationGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -130,30 +148,29 @@ export class CapacityReservationsImpl implements CapacityReservations {
     capacityReservationGroupName: string,
     capacityReservationName: string,
     parameters: CapacityReservation,
-    options?: CapacityReservationsCreateOrUpdateOptionalParams
+    options?: CapacityReservationsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<CapacityReservationsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<CapacityReservationsCreateOrUpdateResponse>,
       CapacityReservationsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<CapacityReservationsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -162,8 +179,8 @@ export class CapacityReservationsImpl implements CapacityReservations {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -171,26 +188,31 @@ export class CapacityReservationsImpl implements CapacityReservations {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         capacityReservationGroupName,
         capacityReservationName,
         parameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      CapacityReservationsCreateOrUpdateResponse,
+      OperationState<CapacityReservationsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -208,14 +230,14 @@ export class CapacityReservationsImpl implements CapacityReservations {
     capacityReservationGroupName: string,
     capacityReservationName: string,
     parameters: CapacityReservation,
-    options?: CapacityReservationsCreateOrUpdateOptionalParams
+    options?: CapacityReservationsCreateOrUpdateOptionalParams,
   ): Promise<CapacityReservationsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       capacityReservationGroupName,
       capacityReservationName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -233,30 +255,29 @@ export class CapacityReservationsImpl implements CapacityReservations {
     capacityReservationGroupName: string,
     capacityReservationName: string,
     parameters: CapacityReservationUpdate,
-    options?: CapacityReservationsUpdateOptionalParams
+    options?: CapacityReservationsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<CapacityReservationsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<CapacityReservationsUpdateResponse>,
       CapacityReservationsUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<CapacityReservationsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -265,8 +286,8 @@ export class CapacityReservationsImpl implements CapacityReservations {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -274,26 +295,31 @@ export class CapacityReservationsImpl implements CapacityReservations {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         capacityReservationGroupName,
         capacityReservationName,
         parameters,
-        options
+        options,
       },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      CapacityReservationsUpdateResponse,
+      OperationState<CapacityReservationsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -309,14 +335,14 @@ export class CapacityReservationsImpl implements CapacityReservations {
     capacityReservationGroupName: string,
     capacityReservationName: string,
     parameters: CapacityReservationUpdate,
-    options?: CapacityReservationsUpdateOptionalParams
+    options?: CapacityReservationsUpdateOptionalParams,
   ): Promise<CapacityReservationsUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       capacityReservationGroupName,
       capacityReservationName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -334,25 +360,24 @@ export class CapacityReservationsImpl implements CapacityReservations {
     resourceGroupName: string,
     capacityReservationGroupName: string,
     capacityReservationName: string,
-    options?: CapacityReservationsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: CapacityReservationsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -361,8 +386,8 @@ export class CapacityReservationsImpl implements CapacityReservations {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -370,25 +395,27 @@ export class CapacityReservationsImpl implements CapacityReservations {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         capacityReservationGroupName,
         capacityReservationName,
-        options
+        options,
       },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -404,13 +431,13 @@ export class CapacityReservationsImpl implements CapacityReservations {
     resourceGroupName: string,
     capacityReservationGroupName: string,
     capacityReservationName: string,
-    options?: CapacityReservationsDeleteOptionalParams
+    options?: CapacityReservationsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       capacityReservationGroupName,
       capacityReservationName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -426,16 +453,16 @@ export class CapacityReservationsImpl implements CapacityReservations {
     resourceGroupName: string,
     capacityReservationGroupName: string,
     capacityReservationName: string,
-    options?: CapacityReservationsGetOptionalParams
+    options?: CapacityReservationsGetOptionalParams,
   ): Promise<CapacityReservationsGetResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         capacityReservationGroupName,
         capacityReservationName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -449,11 +476,11 @@ export class CapacityReservationsImpl implements CapacityReservations {
   private _listByCapacityReservationGroup(
     resourceGroupName: string,
     capacityReservationGroupName: string,
-    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams
+    options?: CapacityReservationsListByCapacityReservationGroupOptionalParams,
   ): Promise<CapacityReservationsListByCapacityReservationGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, capacityReservationGroupName, options },
-      listByCapacityReservationGroupOperationSpec
+      listByCapacityReservationGroupOperationSpec,
     );
   }
 
@@ -469,11 +496,11 @@ export class CapacityReservationsImpl implements CapacityReservations {
     resourceGroupName: string,
     capacityReservationGroupName: string,
     nextLink: string,
-    options?: CapacityReservationsListByCapacityReservationGroupNextOptionalParams
+    options?: CapacityReservationsListByCapacityReservationGroupNextOptionalParams,
   ): Promise<CapacityReservationsListByCapacityReservationGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, capacityReservationGroupName, nextLink, options },
-      listByCapacityReservationGroupNextOperationSpec
+      listByCapacityReservationGroupNextOperationSpec,
     );
   }
 }
@@ -481,76 +508,73 @@ export class CapacityReservationsImpl implements CapacityReservations {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     201: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     202: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     204: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters26,
+  requestBody: Parameters.parameters29,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.capacityReservationGroupName,
-    Parameters.capacityReservationName
+    Parameters.capacityReservationName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     201: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     202: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     204: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters27,
+  requestBody: Parameters.parameters30,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.capacityReservationGroupName,
-    Parameters.capacityReservationName
+    Parameters.capacityReservationName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -558,84 +582,82 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.capacityReservationGroupName,
-    Parameters.capacityReservationName
+    Parameters.capacityReservationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations/{capacityReservationName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.CapacityReservation
+      bodyMapper: Mappers.CapacityReservation,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.expand6],
+  queryParameters: [Parameters.apiVersion, Parameters.expand9],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.capacityReservationGroupName,
-    Parameters.capacityReservationName
+    Parameters.capacityReservationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByCapacityReservationGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups/{capacityReservationGroupName}/capacityReservations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.CapacityReservationListResult
+      bodyMapper: Mappers.CapacityReservationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.capacityReservationGroupName
+    Parameters.resourceGroupName,
+    Parameters.capacityReservationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const listByCapacityReservationGroupNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.CapacityReservationListResult
+const listByCapacityReservationGroupNextOperationSpec: coreClient.OperationSpec =
+  {
+    path: "{nextLink}",
+    httpMethod: "GET",
+    responses: {
+      200: {
+        bodyMapper: Mappers.CapacityReservationListResult,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
     },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId,
-    Parameters.nextLink,
-    Parameters.capacityReservationGroupName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
+    urlParameters: [
+      Parameters.$host,
+      Parameters.subscriptionId,
+      Parameters.nextLink,
+      Parameters.resourceGroupName,
+      Parameters.capacityReservationGroupName,
+    ],
+    headerParameters: [Parameters.accept],
+    serializer,
+  };

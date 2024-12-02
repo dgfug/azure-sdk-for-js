@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import * as sinon from "sinon";
-import { AzureLogger, AzureLogLevel } from "@azure/logger";
-import { RawHttpHeaders, RestError } from "@azure/core-rest-pipeline";
-import { AccessToken, GetTokenOptions, TokenCredential } from "../src";
+// Licensed under the MIT License.
+import type { AccessToken, GetTokenOptions, TokenCredential } from "../src/index.js";
+import type { AzureLogLevel, AzureLogger } from "@azure/logger";
+import type { RawHttpHeaders, RestError } from "@azure/core-rest-pipeline";
 
 /**
  * A simple structure representing a response.
@@ -32,7 +30,7 @@ export type RawTestResponse = { response?: TestResponse; error?: RestError };
  */
 export type SendIndividualRequest = <T>(
   sendPromise: () => Promise<T | null>,
-  response: { response: TestResponse }
+  response: { response: TestResponse },
 ) => Promise<T | null>;
 
 /**
@@ -42,7 +40,7 @@ export type SendIndividualRequest = <T>(
  */
 export type SendIndividualRequestAndGetError = <T>(
   sendPromise: () => Promise<T | null>,
-  response: { response: TestResponse }
+  response: { response: TestResponse },
 ) => Promise<Error>;
 
 /**
@@ -72,9 +70,7 @@ export type SendCredentialRequests = (options: {
  * This is the returned value of the `prepareIdentityTests` function that is both available in Node.js and in the browser.
  * @internal
  */
-export interface IdentityTestContext {
-  sandbox: sinon.SinonSandbox;
-  clock: sinon.SinonFakeTimers;
+export interface IdentityTestContextInterface {
   logMessages: string[];
   oldLogger: typeof AzureLogger.log;
   oldLogLevel: AzureLogLevel | undefined;
@@ -91,13 +87,13 @@ export interface IdentityTestContext {
 export function createResponse(
   statusCode: number,
   body: Record<string, string | string[] | boolean | number> = {},
-  headers: RawHttpHeaders = {}
+  headers: RawHttpHeaders = {},
 ): { response: TestResponse } {
   return {
     response: {
       statusCode,
       body: JSON.stringify(body),
-      headers
-    }
+      headers,
+    },
   };
 }

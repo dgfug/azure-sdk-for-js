@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export const SDK_VERSION: string = "12.9.0-beta.2";
-export const SERVICE_VERSION: string = "2020-12-06";
+export const SDK_VERSION: string = "12.26.0";
+export const SERVICE_VERSION: string = "2025-01-05";
 
 export const BLOCK_BLOB_MAX_UPLOAD_BLOB_BYTES: number = 256 * 1024 * 1024; // 256MB
 export const BLOCK_BLOB_MAX_STAGE_BLOCK_BYTES: number = 4000 * 1024 * 1024; // 4000MB
@@ -10,6 +10,8 @@ export const BLOCK_BLOB_MAX_BLOCKS: number = 50000;
 export const DEFAULT_BLOCK_BUFFER_SIZE_BYTES: number = 8 * 1024 * 1024; // 8MB
 export const DEFAULT_BLOB_DOWNLOAD_BLOCK_BYTES: number = 4 * 1024 * 1024; // 4MB
 export const DEFAULT_MAX_DOWNLOAD_RETRY_REQUESTS: number = 5;
+
+export const REQUEST_TIMEOUT: number = 100 * 1000; // In ms
 /**
  * The OAuth scope to use with Azure Storage.
  */
@@ -21,8 +23,8 @@ export const URLConstants = {
     SIGNATURE: "sig",
     SNAPSHOT: "snapshot",
     VERSIONID: "versionid",
-    TIMEOUT: "timeout"
-  }
+    TIMEOUT: "timeout",
+  },
 };
 
 export const HTTPURLConnection = {
@@ -30,7 +32,7 @@ export const HTTPURLConnection = {
   HTTP_CONFLICT: 409,
   HTTP_NOT_FOUND: 404,
   HTTP_PRECON_FAILED: 412,
-  HTTP_RANGE_NOT_SATISFIABLE: 416
+  HTTP_RANGE_NOT_SATISFIABLE: 416,
 };
 
 export const HeaderConstants = {
@@ -56,7 +58,8 @@ export const HeaderConstants = {
   X_MS_COPY_SOURCE: "x-ms-copy-source",
   X_MS_DATE: "x-ms-date",
   X_MS_ERROR_CODE: "x-ms-error-code",
-  X_MS_VERSION: "x-ms-version"
+  X_MS_VERSION: "x-ms-version",
+  X_MS_CopySourceErrorCode: "x-ms-copy-source-error-code",
 };
 
 export const ETagNone = "";
@@ -165,8 +168,10 @@ export const StorageBlobLoggingAllowedHeaderNames = [
   "x-ms-source-if-unmodified-since",
   "x-ms-tag-count",
   "x-ms-encryption-key-sha256",
+  "x-ms-copy-source-error-code",
+  "x-ms-copy-source-status-code",
   "x-ms-if-tags",
-  "x-ms-source-if-tags"
+  "x-ms-source-if-tags",
 ];
 
 export const StorageBlobLoggingAllowedQueryParameters = [
@@ -202,5 +207,34 @@ export const StorageBlobLoggingAllowedQueryParameters = [
   "skt",
   "sktid",
   "skv",
-  "snapshot"
+  "snapshot",
+];
+
+export const BlobUsesCustomerSpecifiedEncryptionMsg = "BlobUsesCustomerSpecifiedEncryption";
+export const BlobDoesNotUseCustomerSpecifiedEncryption =
+  "BlobDoesNotUseCustomerSpecifiedEncryption";
+
+/// List of ports used for path style addressing.
+/// Path style addressing means that storage account is put in URI's Path segment in instead of in host.
+export const PathStylePorts = [
+  "10000",
+  "10001",
+  "10002",
+  "10003",
+  "10004",
+  "10100",
+  "10101",
+  "10102",
+  "10103",
+  "10104",
+  "11000",
+  "11001",
+  "11002",
+  "11003",
+  "11004",
+  "11100",
+  "11101",
+  "11102",
+  "11103",
+  "11104",
 ];

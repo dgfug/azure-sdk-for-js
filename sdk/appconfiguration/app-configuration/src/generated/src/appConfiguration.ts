@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright (c) Microsoft Corporation.
  * Licensed under the MIT License.
  *
@@ -6,99 +6,175 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
-import * as Parameters from "./models/parameters";
-import * as Mappers from "./models/mappers";
-import { AppConfigurationContext } from "./appConfigurationContext";
+import * as coreClient from "@azure/core-client";
+import * as coreHttpCompat from "@azure/core-http-compat";
 import {
+  PipelineRequest,
+  PipelineResponse,
+  SendRequest,
+} from "@azure/core-rest-pipeline";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "./lroImpl.js";
+import * as Parameters from "./models/parameters.js";
+import * as Mappers from "./models/mappers.js";
+import {
+  ApiVersion20231101,
   AppConfigurationOptionalParams,
-  ApiVersion10,
-  AppConfigurationGetKeysOptionalParams,
-  AppConfigurationGetKeysResponse,
-  AppConfigurationCheckKeysOptionalParams,
-  AppConfigurationCheckKeysResponse,
-  AppConfigurationGetKeyValuesOptionalParams,
-  AppConfigurationGetKeyValuesResponse,
-  AppConfigurationCheckKeyValuesOptionalParams,
-  AppConfigurationCheckKeyValuesResponse,
-  AppConfigurationGetKeyValueOptionalParams,
-  AppConfigurationGetKeyValueResponse,
-  AppConfigurationPutKeyValueOptionalParams,
-  AppConfigurationPutKeyValueResponse,
-  AppConfigurationDeleteKeyValueOptionalParams,
-  AppConfigurationDeleteKeyValueResponse,
-  AppConfigurationCheckKeyValueOptionalParams,
-  AppConfigurationCheckKeyValueResponse,
-  AppConfigurationGetLabelsOptionalParams,
-  AppConfigurationGetLabelsResponse,
-  AppConfigurationCheckLabelsOptionalParams,
-  AppConfigurationCheckLabelsResponse,
-  AppConfigurationPutLockOptionalParams,
-  AppConfigurationPutLockResponse,
-  AppConfigurationDeleteLockOptionalParams,
-  AppConfigurationDeleteLockResponse,
-  AppConfigurationGetRevisionsOptionalParams,
-  AppConfigurationGetRevisionsResponse,
-  AppConfigurationCheckRevisionsOptionalParams,
-  AppConfigurationCheckRevisionsResponse,
-  AppConfigurationGetKeysNextOptionalParams,
-  AppConfigurationGetKeysNextResponse,
-  AppConfigurationGetKeyValuesNextOptionalParams,
-  AppConfigurationGetKeyValuesNextResponse,
-  AppConfigurationGetLabelsNextOptionalParams,
-  AppConfigurationGetLabelsNextResponse,
-  AppConfigurationGetRevisionsNextOptionalParams,
-  AppConfigurationGetRevisionsNextResponse
-} from "./models";
+  GetKeysOptionalParams,
+  GetKeysResponse,
+  CheckKeysOptionalParams,
+  CheckKeysResponse,
+  GetKeyValuesOptionalParams,
+  GetKeyValuesResponse,
+  CheckKeyValuesOptionalParams,
+  CheckKeyValuesResponse,
+  GetKeyValueOptionalParams,
+  GetKeyValueResponse,
+  PutKeyValueOptionalParams,
+  PutKeyValueResponse,
+  DeleteKeyValueOptionalParams,
+  DeleteKeyValueResponse,
+  CheckKeyValueOptionalParams,
+  CheckKeyValueResponse,
+  GetSnapshotsOptionalParams,
+  GetSnapshotsResponse,
+  CheckSnapshotsOptionalParams,
+  CheckSnapshotsResponse,
+  GetSnapshotOptionalParams,
+  GetSnapshotResponse,
+  ConfigurationSnapshot,
+  CreateSnapshotOptionalParams,
+  CreateSnapshotResponse,
+  SnapshotUpdateParameters,
+  UpdateSnapshotOptionalParams,
+  UpdateSnapshotResponse,
+  CheckSnapshotOptionalParams,
+  CheckSnapshotResponse,
+  GetLabelsOptionalParams,
+  GetLabelsResponse,
+  CheckLabelsOptionalParams,
+  CheckLabelsResponse,
+  PutLockOptionalParams,
+  PutLockResponse,
+  DeleteLockOptionalParams,
+  DeleteLockResponse,
+  GetRevisionsOptionalParams,
+  GetRevisionsResponse,
+  CheckRevisionsOptionalParams,
+  CheckRevisionsResponse,
+  GetOperationDetailsOptionalParams,
+  GetOperationDetailsResponse,
+  GetKeysNextOptionalParams,
+  GetKeysNextResponse,
+  GetKeyValuesNextOptionalParams,
+  GetKeyValuesNextResponse,
+  GetSnapshotsNextOptionalParams,
+  GetSnapshotsNextResponse,
+  GetLabelsNextOptionalParams,
+  GetLabelsNextResponse,
+  GetRevisionsNextOptionalParams,
+  GetRevisionsNextResponse,
+} from "./models/index.js";
 
 /** @internal */
-export class AppConfiguration extends AppConfigurationContext {
+export class AppConfiguration extends coreHttpCompat.ExtendedServiceClient {
+  endpoint: string;
+  syncToken?: string;
+  apiVersion: ApiVersion20231101;
+
   /**
    * Initializes a new instance of the AppConfiguration class.
-   * @param credentials Subscription credentials which uniquely identify client subscription.
    * @param endpoint The endpoint of the App Configuration instance to send requests to.
    * @param apiVersion Api Version
    * @param options The parameter options
    */
   constructor(
-    credentials: coreHttp.TokenCredential | coreHttp.ServiceClientCredentials,
     endpoint: string,
-    apiVersion: ApiVersion10,
-    options?: AppConfigurationOptionalParams
+    apiVersion: ApiVersion20231101,
+    options?: AppConfigurationOptionalParams,
   ) {
-    super(credentials, endpoint, apiVersion, options);
+    if (endpoint === undefined) {
+      throw new Error("'endpoint' cannot be null");
+    }
+    if (apiVersion === undefined) {
+      throw new Error("'apiVersion' cannot be null");
+    }
+
+    // Initializing default values for options
+    if (!options) {
+      options = {};
+    }
+    const defaults: AppConfigurationOptionalParams = {
+      requestContentType: "application/json; charset=utf-8",
+    };
+
+    const packageDetails = `azsdk-js-app-configuration/1.8.1`;
+    const userAgentPrefix =
+      options.userAgentOptions && options.userAgentOptions.userAgentPrefix
+        ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
+        : `${packageDetails}`;
+
+    const optionsWithDefaults = {
+      ...defaults,
+      ...options,
+      userAgentOptions: {
+        userAgentPrefix,
+      },
+      endpoint: options.endpoint ?? options.baseUri ?? "{endpoint}",
+    };
+    super(optionsWithDefaults);
+    // Parameter assignments
+    this.endpoint = endpoint;
+    this.apiVersion = apiVersion;
+    this.addCustomApiVersionPolicy(apiVersion);
+  }
+
+  /** A function that adds a policy that sets the api-version (or equivalent) to reflect the library version. */
+  private addCustomApiVersionPolicy(apiVersion?: string) {
+    if (!apiVersion) {
+      return;
+    }
+    const apiVersionPolicy = {
+      name: "CustomApiVersionPolicy",
+      async sendRequest(
+        request: PipelineRequest,
+        next: SendRequest,
+      ): Promise<PipelineResponse> {
+        const param = request.url.split("?");
+        if (param.length > 1) {
+          const newParams = param[1].split("&").map((item) => {
+            if (item.indexOf("api-version") > -1) {
+              return "api-version=" + apiVersion;
+            } else {
+              return item;
+            }
+          });
+          request.url = param[0] + "?" + newParams.join("&");
+        }
+        return next(request);
+      },
+    };
+    this.pipeline.addPolicy(apiVersionPolicy);
   }
 
   /**
    * Gets a list of keys.
    * @param options The options parameters.
    */
-  getKeys(
-    options?: AppConfigurationGetKeysOptionalParams
-  ): Promise<AppConfigurationGetKeysResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      getKeysOperationSpec
-    ) as Promise<AppConfigurationGetKeysResponse>;
+  getKeys(options?: GetKeysOptionalParams): Promise<GetKeysResponse> {
+    return this.sendOperationRequest({ options }, getKeysOperationSpec);
   }
 
   /**
    * Requests the headers and status of the given resource.
    * @param options The options parameters.
    */
-  checkKeys(
-    options?: AppConfigurationCheckKeysOptionalParams
-  ): Promise<AppConfigurationCheckKeysResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      checkKeysOperationSpec
-    ) as Promise<AppConfigurationCheckKeysResponse>;
+  checkKeys(options?: CheckKeysOptionalParams): Promise<CheckKeysResponse> {
+    return this.sendOperationRequest({ options }, checkKeysOperationSpec);
   }
 
   /**
@@ -106,15 +182,9 @@ export class AppConfiguration extends AppConfigurationContext {
    * @param options The options parameters.
    */
   getKeyValues(
-    options?: AppConfigurationGetKeyValuesOptionalParams
-  ): Promise<AppConfigurationGetKeyValuesResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      getKeyValuesOperationSpec
-    ) as Promise<AppConfigurationGetKeyValuesResponse>;
+    options?: GetKeyValuesOptionalParams,
+  ): Promise<GetKeyValuesResponse> {
+    return this.sendOperationRequest({ options }, getKeyValuesOperationSpec);
   }
 
   /**
@@ -122,15 +192,9 @@ export class AppConfiguration extends AppConfigurationContext {
    * @param options The options parameters.
    */
   checkKeyValues(
-    options?: AppConfigurationCheckKeyValuesOptionalParams
-  ): Promise<AppConfigurationCheckKeyValuesResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      checkKeyValuesOperationSpec
-    ) as Promise<AppConfigurationCheckKeyValuesResponse>;
+    options?: CheckKeyValuesOptionalParams,
+  ): Promise<CheckKeyValuesResponse> {
+    return this.sendOperationRequest({ options }, checkKeyValuesOperationSpec);
   }
 
   /**
@@ -140,16 +204,12 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   getKeyValue(
     key: string,
-    options?: AppConfigurationGetKeyValueOptionalParams
-  ): Promise<AppConfigurationGetKeyValueResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      key,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: GetKeyValueOptionalParams,
+  ): Promise<GetKeyValueResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      getKeyValueOperationSpec
-    ) as Promise<AppConfigurationGetKeyValueResponse>;
+      { key, options },
+      getKeyValueOperationSpec,
+    );
   }
 
   /**
@@ -159,16 +219,12 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   putKeyValue(
     key: string,
-    options?: AppConfigurationPutKeyValueOptionalParams
-  ): Promise<AppConfigurationPutKeyValueResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      key,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: PutKeyValueOptionalParams,
+  ): Promise<PutKeyValueResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      putKeyValueOperationSpec
-    ) as Promise<AppConfigurationPutKeyValueResponse>;
+      { key, options },
+      putKeyValueOperationSpec,
+    );
   }
 
   /**
@@ -178,16 +234,12 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   deleteKeyValue(
     key: string,
-    options?: AppConfigurationDeleteKeyValueOptionalParams
-  ): Promise<AppConfigurationDeleteKeyValueResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      key,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: DeleteKeyValueOptionalParams,
+  ): Promise<DeleteKeyValueResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      deleteKeyValueOperationSpec
-    ) as Promise<AppConfigurationDeleteKeyValueResponse>;
+      { key, options },
+      deleteKeyValueOperationSpec,
+    );
   }
 
   /**
@@ -197,32 +249,172 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   checkKeyValue(
     key: string,
-    options?: AppConfigurationCheckKeyValueOptionalParams
-  ): Promise<AppConfigurationCheckKeyValueResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      key,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: CheckKeyValueOptionalParams,
+  ): Promise<CheckKeyValueResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      checkKeyValueOperationSpec
-    ) as Promise<AppConfigurationCheckKeyValueResponse>;
+      { key, options },
+      checkKeyValueOperationSpec,
+    );
+  }
+
+  /**
+   * Gets a list of key-value snapshots.
+   * @param options The options parameters.
+   */
+  getSnapshots(
+    options?: GetSnapshotsOptionalParams,
+  ): Promise<GetSnapshotsResponse> {
+    return this.sendOperationRequest({ options }, getSnapshotsOperationSpec);
+  }
+
+  /**
+   * Requests the headers and status of the given resource.
+   * @param options The options parameters.
+   */
+  checkSnapshots(
+    options?: CheckSnapshotsOptionalParams,
+  ): Promise<CheckSnapshotsResponse> {
+    return this.sendOperationRequest({ options }, checkSnapshotsOperationSpec);
+  }
+
+  /**
+   * Gets a single key-value snapshot.
+   * @param name The name of the key-value snapshot to retrieve.
+   * @param options The options parameters.
+   */
+  getSnapshot(
+    name: string,
+    options?: GetSnapshotOptionalParams,
+  ): Promise<GetSnapshotResponse> {
+    return this.sendOperationRequest(
+      { name, options },
+      getSnapshotOperationSpec,
+    );
+  }
+
+  /**
+   * Creates a key-value snapshot.
+   * @param name The name of the key-value snapshot to create.
+   * @param entity The key-value snapshot to create.
+   * @param options The options parameters.
+   */
+  async beginCreateSnapshot(
+    name: string,
+    entity: ConfigurationSnapshot,
+    options?: CreateSnapshotOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<CreateSnapshotResponse>,
+      CreateSnapshotResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<CreateSnapshotResponse> => {
+      return this.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { name, entity, options },
+      spec: createSnapshotOperationSpec,
+    });
+    const poller = await createHttpPoller<
+      CreateSnapshotResponse,
+      OperationState<CreateSnapshotResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Creates a key-value snapshot.
+   * @param name The name of the key-value snapshot to create.
+   * @param entity The key-value snapshot to create.
+   * @param options The options parameters.
+   */
+  async beginCreateSnapshotAndWait(
+    name: string,
+    entity: ConfigurationSnapshot,
+    options?: CreateSnapshotOptionalParams,
+  ): Promise<CreateSnapshotResponse> {
+    const poller = await this.beginCreateSnapshot(name, entity, options);
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Updates the state of a key-value snapshot.
+   * @param name The name of the key-value snapshot to update.
+   * @param entity The parameters used to update the snapshot.
+   * @param options The options parameters.
+   */
+  updateSnapshot(
+    name: string,
+    entity: SnapshotUpdateParameters,
+    options?: UpdateSnapshotOptionalParams,
+  ): Promise<UpdateSnapshotResponse> {
+    return this.sendOperationRequest(
+      { name, entity, options },
+      updateSnapshotOperationSpec,
+    );
+  }
+
+  /**
+   * Requests the headers and status of the given resource.
+   * @param name The name of the key-value snapshot to check.
+   * @param options The options parameters.
+   */
+  checkSnapshot(
+    name: string,
+    options?: CheckSnapshotOptionalParams,
+  ): Promise<CheckSnapshotResponse> {
+    return this.sendOperationRequest(
+      { name, options },
+      checkSnapshotOperationSpec,
+    );
   }
 
   /**
    * Gets a list of labels.
    * @param options The options parameters.
    */
-  getLabels(
-    options?: AppConfigurationGetLabelsOptionalParams
-  ): Promise<AppConfigurationGetLabelsResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      getLabelsOperationSpec
-    ) as Promise<AppConfigurationGetLabelsResponse>;
+  getLabels(options?: GetLabelsOptionalParams): Promise<GetLabelsResponse> {
+    return this.sendOperationRequest({ options }, getLabelsOperationSpec);
   }
 
   /**
@@ -230,15 +422,9 @@ export class AppConfiguration extends AppConfigurationContext {
    * @param options The options parameters.
    */
   checkLabels(
-    options?: AppConfigurationCheckLabelsOptionalParams
-  ): Promise<AppConfigurationCheckLabelsResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      checkLabelsOperationSpec
-    ) as Promise<AppConfigurationCheckLabelsResponse>;
+    options?: CheckLabelsOptionalParams,
+  ): Promise<CheckLabelsResponse> {
+    return this.sendOperationRequest({ options }, checkLabelsOperationSpec);
   }
 
   /**
@@ -248,16 +434,9 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   putLock(
     key: string,
-    options?: AppConfigurationPutLockOptionalParams
-  ): Promise<AppConfigurationPutLockResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      key,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      putLockOperationSpec
-    ) as Promise<AppConfigurationPutLockResponse>;
+    options?: PutLockOptionalParams,
+  ): Promise<PutLockResponse> {
+    return this.sendOperationRequest({ key, options }, putLockOperationSpec);
   }
 
   /**
@@ -267,16 +446,9 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   deleteLock(
     key: string,
-    options?: AppConfigurationDeleteLockOptionalParams
-  ): Promise<AppConfigurationDeleteLockResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      key,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      deleteLockOperationSpec
-    ) as Promise<AppConfigurationDeleteLockResponse>;
+    options?: DeleteLockOptionalParams,
+  ): Promise<DeleteLockResponse> {
+    return this.sendOperationRequest({ key, options }, deleteLockOperationSpec);
   }
 
   /**
@@ -284,15 +456,9 @@ export class AppConfiguration extends AppConfigurationContext {
    * @param options The options parameters.
    */
   getRevisions(
-    options?: AppConfigurationGetRevisionsOptionalParams
-  ): Promise<AppConfigurationGetRevisionsResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.sendOperationRequest(
-      operationArguments,
-      getRevisionsOperationSpec
-    ) as Promise<AppConfigurationGetRevisionsResponse>;
+    options?: GetRevisionsOptionalParams,
+  ): Promise<GetRevisionsResponse> {
+    return this.sendOperationRequest({ options }, getRevisionsOperationSpec);
   }
 
   /**
@@ -300,15 +466,24 @@ export class AppConfiguration extends AppConfigurationContext {
    * @param options The options parameters.
    */
   checkRevisions(
-    options?: AppConfigurationCheckRevisionsOptionalParams
-  ): Promise<AppConfigurationCheckRevisionsResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: CheckRevisionsOptionalParams,
+  ): Promise<CheckRevisionsResponse> {
+    return this.sendOperationRequest({ options }, checkRevisionsOperationSpec);
+  }
+
+  /**
+   * Gets the state of a long running operation.
+   * @param snapshot Snapshot identifier for the long running operation.
+   * @param options The options parameters.
+   */
+  getOperationDetails(
+    snapshot: string,
+    options?: GetOperationDetailsOptionalParams,
+  ): Promise<GetOperationDetailsResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      checkRevisionsOperationSpec
-    ) as Promise<AppConfigurationCheckRevisionsResponse>;
+      { snapshot, options },
+      getOperationDetailsOperationSpec,
+    );
   }
 
   /**
@@ -318,16 +493,12 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   getKeysNext(
     nextLink: string,
-    options?: AppConfigurationGetKeysNextOptionalParams
-  ): Promise<AppConfigurationGetKeysNextResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      nextLink,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: GetKeysNextOptionalParams,
+  ): Promise<GetKeysNextResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      getKeysNextOperationSpec
-    ) as Promise<AppConfigurationGetKeysNextResponse>;
+      { nextLink, options },
+      getKeysNextOperationSpec,
+    );
   }
 
   /**
@@ -337,16 +508,27 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   getKeyValuesNext(
     nextLink: string,
-    options?: AppConfigurationGetKeyValuesNextOptionalParams
-  ): Promise<AppConfigurationGetKeyValuesNextResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      nextLink,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: GetKeyValuesNextOptionalParams,
+  ): Promise<GetKeyValuesNextResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      getKeyValuesNextOperationSpec
-    ) as Promise<AppConfigurationGetKeyValuesNextResponse>;
+      { nextLink, options },
+      getKeyValuesNextOperationSpec,
+    );
+  }
+
+  /**
+   * GetSnapshotsNext
+   * @param nextLink The nextLink from the previous successful call to the GetSnapshots method.
+   * @param options The options parameters.
+   */
+  getSnapshotsNext(
+    nextLink: string,
+    options?: GetSnapshotsNextOptionalParams,
+  ): Promise<GetSnapshotsNextResponse> {
+    return this.sendOperationRequest(
+      { nextLink, options },
+      getSnapshotsNextOperationSpec,
+    );
   }
 
   /**
@@ -356,16 +538,12 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   getLabelsNext(
     nextLink: string,
-    options?: AppConfigurationGetLabelsNextOptionalParams
-  ): Promise<AppConfigurationGetLabelsNextResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      nextLink,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: GetLabelsNextOptionalParams,
+  ): Promise<GetLabelsNextResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      getLabelsNextOperationSpec
-    ) as Promise<AppConfigurationGetLabelsNextResponse>;
+      { nextLink, options },
+      getLabelsNextOperationSpec,
+    );
   }
 
   /**
@@ -375,442 +553,593 @@ export class AppConfiguration extends AppConfigurationContext {
    */
   getRevisionsNext(
     nextLink: string,
-    options?: AppConfigurationGetRevisionsNextOptionalParams
-  ): Promise<AppConfigurationGetRevisionsNextResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      nextLink,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
+    options?: GetRevisionsNextOptionalParams,
+  ): Promise<GetRevisionsNextResponse> {
     return this.sendOperationRequest(
-      operationArguments,
-      getRevisionsNextOperationSpec
-    ) as Promise<AppConfigurationGetRevisionsNextResponse>;
+      { nextLink, options },
+      getRevisionsNextOperationSpec,
+    );
   }
 }
 // Operation Specifications
-const serializer = new coreHttp.Serializer(Mappers, /* isXml */ false);
+const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
-const getKeysOperationSpec: coreHttp.OperationSpec = {
+const getKeysOperationSpec: coreClient.OperationSpec = {
   path: "/keys",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.KeyListResult,
-      headersMapper: Mappers.AppConfigurationGetKeysHeaders
+      headersMapper: Mappers.AppConfigurationGetKeysHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.name, Parameters.apiVersion, Parameters.after],
   urlParameters: [Parameters.endpoint],
   headerParameters: [
     Parameters.accept,
     Parameters.syncToken,
-    Parameters.acceptDatetime
+    Parameters.acceptDatetime,
   ],
-  serializer
+  serializer,
 };
-const checkKeysOperationSpec: coreHttp.OperationSpec = {
+const checkKeysOperationSpec: coreClient.OperationSpec = {
   path: "/keys",
   httpMethod: "HEAD",
   responses: {
     200: {
-      headersMapper: Mappers.AppConfigurationCheckKeysHeaders
+      headersMapper: Mappers.AppConfigurationCheckKeysHeaders,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.name, Parameters.apiVersion, Parameters.after],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.syncToken, Parameters.acceptDatetime],
-  serializer
+  serializer,
 };
-const getKeyValuesOperationSpec: coreHttp.OperationSpec = {
+const getKeyValuesOperationSpec: coreClient.OperationSpec = {
   path: "/kv",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValueListResult,
-      headersMapper: Mappers.AppConfigurationGetKeyValuesHeaders
+      headersMapper: Mappers.AppConfigurationGetKeyValuesHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.after,
     Parameters.key,
     Parameters.label,
-    Parameters.select
+    Parameters.select,
+    Parameters.snapshot,
+    Parameters.tags,
   ],
   urlParameters: [Parameters.endpoint],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
-    Parameters.accept1
+    Parameters.accept1,
+    Parameters.ifMatch,
+    Parameters.ifNoneMatch,
   ],
-  serializer
+  serializer,
 };
-const checkKeyValuesOperationSpec: coreHttp.OperationSpec = {
+const checkKeyValuesOperationSpec: coreClient.OperationSpec = {
   path: "/kv",
   httpMethod: "HEAD",
   responses: {
     200: {
-      headersMapper: Mappers.AppConfigurationCheckKeyValuesHeaders
+      headersMapper: Mappers.AppConfigurationCheckKeyValuesHeaders,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.after,
     Parameters.key,
     Parameters.label,
-    Parameters.select1
+    Parameters.select,
+    Parameters.snapshot,
+    Parameters.tags,
   ],
   urlParameters: [Parameters.endpoint],
-  headerParameters: [Parameters.syncToken, Parameters.acceptDatetime],
-  serializer
+  headerParameters: [
+    Parameters.syncToken,
+    Parameters.acceptDatetime,
+    Parameters.ifMatch,
+    Parameters.ifNoneMatch,
+  ],
+  serializer,
 };
-const getKeyValueOperationSpec: coreHttp.OperationSpec = {
+const getKeyValueOperationSpec: coreClient.OperationSpec = {
   path: "/kv/{key}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValue,
-      headersMapper: Mappers.AppConfigurationGetKeyValueHeaders
+      headersMapper: Mappers.AppConfigurationGetKeyValueHeaders,
     },
     304: {
-      headersMapper: Mappers.AppConfigurationGetKeyValueHeaders
+      headersMapper: Mappers.AppConfigurationGetKeyValueHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
-  queryParameters: [
-    Parameters.apiVersion,
-    Parameters.label,
-    Parameters.select2
-  ],
+  queryParameters: [Parameters.apiVersion, Parameters.label, Parameters.select],
   urlParameters: [Parameters.endpoint, Parameters.key1],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
-    Parameters.accept2,
     Parameters.ifMatch,
-    Parameters.ifNoneMatch
+    Parameters.ifNoneMatch,
+    Parameters.accept2,
   ],
-  serializer
+  serializer,
 };
-const putKeyValueOperationSpec: coreHttp.OperationSpec = {
+const putKeyValueOperationSpec: coreClient.OperationSpec = {
   path: "/kv/{key}",
   httpMethod: "PUT",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValue,
-      headersMapper: Mappers.AppConfigurationPutKeyValueHeaders
+      headersMapper: Mappers.AppConfigurationPutKeyValueHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.entity,
   queryParameters: [Parameters.apiVersion, Parameters.label],
   urlParameters: [Parameters.endpoint, Parameters.key1],
   headerParameters: [
     Parameters.syncToken,
-    Parameters.accept2,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.contentType
+    Parameters.accept2,
+    Parameters.contentType,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
-const deleteKeyValueOperationSpec: coreHttp.OperationSpec = {
+const deleteKeyValueOperationSpec: coreClient.OperationSpec = {
   path: "/kv/{key}",
   httpMethod: "DELETE",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValue,
-      headersMapper: Mappers.AppConfigurationDeleteKeyValueHeaders
+      headersMapper: Mappers.AppConfigurationDeleteKeyValueHeaders,
     },
     204: {
-      headersMapper: Mappers.AppConfigurationDeleteKeyValueHeaders
+      headersMapper: Mappers.AppConfigurationDeleteKeyValueHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.label],
   urlParameters: [Parameters.endpoint, Parameters.key1],
   headerParameters: [
     Parameters.syncToken,
+    Parameters.ifMatch,
     Parameters.accept2,
-    Parameters.ifMatch
   ],
-  serializer
+  serializer,
 };
-const checkKeyValueOperationSpec: coreHttp.OperationSpec = {
+const checkKeyValueOperationSpec: coreClient.OperationSpec = {
   path: "/kv/{key}",
   httpMethod: "HEAD",
   responses: {
     200: {
-      headersMapper: Mappers.AppConfigurationCheckKeyValueHeaders
+      headersMapper: Mappers.AppConfigurationCheckKeyValueHeaders,
     },
     304: {
-      headersMapper: Mappers.AppConfigurationCheckKeyValueHeaders
+      headersMapper: Mappers.AppConfigurationCheckKeyValueHeaders,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [
-    Parameters.apiVersion,
-    Parameters.label,
-    Parameters.select3
-  ],
+  queryParameters: [Parameters.apiVersion, Parameters.label, Parameters.select],
   urlParameters: [Parameters.endpoint, Parameters.key1],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
     Parameters.ifMatch,
-    Parameters.ifNoneMatch
+    Parameters.ifNoneMatch,
   ],
-  serializer
+  serializer,
 };
-const getLabelsOperationSpec: coreHttp.OperationSpec = {
+const getSnapshotsOperationSpec: coreClient.OperationSpec = {
+  path: "/snapshots",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.SnapshotListResult,
+      headersMapper: Mappers.AppConfigurationGetSnapshotsHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorModel,
+    },
+  },
+  queryParameters: [
+    Parameters.name,
+    Parameters.apiVersion,
+    Parameters.after,
+    Parameters.select1,
+    Parameters.status,
+  ],
+  urlParameters: [Parameters.endpoint],
+  headerParameters: [Parameters.syncToken, Parameters.accept3],
+  serializer,
+};
+const checkSnapshotsOperationSpec: coreClient.OperationSpec = {
+  path: "/snapshots",
+  httpMethod: "HEAD",
+  responses: {
+    200: {
+      headersMapper: Mappers.AppConfigurationCheckSnapshotsHeaders,
+    },
+    default: {},
+  },
+  queryParameters: [Parameters.apiVersion, Parameters.after],
+  urlParameters: [Parameters.endpoint],
+  headerParameters: [Parameters.syncToken],
+  serializer,
+};
+const getSnapshotOperationSpec: coreClient.OperationSpec = {
+  path: "/snapshots/{name}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ConfigurationSnapshot,
+      headersMapper: Mappers.AppConfigurationGetSnapshotHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorModel,
+    },
+  },
+  queryParameters: [Parameters.apiVersion, Parameters.select1],
+  urlParameters: [Parameters.endpoint, Parameters.name1],
+  headerParameters: [
+    Parameters.syncToken,
+    Parameters.ifMatch,
+    Parameters.ifNoneMatch,
+    Parameters.accept4,
+  ],
+  serializer,
+};
+const createSnapshotOperationSpec: coreClient.OperationSpec = {
+  path: "/snapshots/{name}",
+  httpMethod: "PUT",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ConfigurationSnapshot,
+      headersMapper: Mappers.AppConfigurationCreateSnapshotHeaders,
+    },
+    201: {
+      bodyMapper: Mappers.ConfigurationSnapshot,
+      headersMapper: Mappers.AppConfigurationCreateSnapshotHeaders,
+    },
+    202: {
+      bodyMapper: Mappers.ConfigurationSnapshot,
+      headersMapper: Mappers.AppConfigurationCreateSnapshotHeaders,
+    },
+    204: {
+      bodyMapper: Mappers.ConfigurationSnapshot,
+      headersMapper: Mappers.AppConfigurationCreateSnapshotHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorModel,
+    },
+  },
+  requestBody: Parameters.entity1,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.endpoint, Parameters.name2],
+  headerParameters: [
+    Parameters.syncToken,
+    Parameters.accept4,
+    Parameters.contentType1,
+  ],
+  mediaType: "json",
+  serializer,
+};
+const updateSnapshotOperationSpec: coreClient.OperationSpec = {
+  path: "/snapshots/{name}",
+  httpMethod: "PATCH",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ConfigurationSnapshot,
+      headersMapper: Mappers.AppConfigurationUpdateSnapshotHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorModel,
+    },
+  },
+  requestBody: Parameters.entity2,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.endpoint, Parameters.name1],
+  headerParameters: [
+    Parameters.syncToken,
+    Parameters.ifMatch,
+    Parameters.ifNoneMatch,
+    Parameters.accept4,
+    Parameters.contentType2,
+  ],
+  mediaType: "json",
+  serializer,
+};
+const checkSnapshotOperationSpec: coreClient.OperationSpec = {
+  path: "/snapshots/{name}",
+  httpMethod: "HEAD",
+  responses: {
+    200: {
+      headersMapper: Mappers.AppConfigurationCheckSnapshotHeaders,
+    },
+    default: {},
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.endpoint, Parameters.name1],
+  headerParameters: [
+    Parameters.syncToken,
+    Parameters.ifMatch,
+    Parameters.ifNoneMatch,
+  ],
+  serializer,
+};
+const getLabelsOperationSpec: coreClient.OperationSpec = {
   path: "/labels",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.LabelListResult,
-      headersMapper: Mappers.AppConfigurationGetLabelsHeaders
+      headersMapper: Mappers.AppConfigurationGetLabelsHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [
     Parameters.name,
     Parameters.apiVersion,
     Parameters.after,
-    Parameters.select4
+    Parameters.select2,
   ],
   urlParameters: [Parameters.endpoint],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
-    Parameters.accept3
+    Parameters.accept5,
   ],
-  serializer
+  serializer,
 };
-const checkLabelsOperationSpec: coreHttp.OperationSpec = {
+const checkLabelsOperationSpec: coreClient.OperationSpec = {
   path: "/labels",
   httpMethod: "HEAD",
   responses: {
     200: {
-      headersMapper: Mappers.AppConfigurationCheckLabelsHeaders
+      headersMapper: Mappers.AppConfigurationCheckLabelsHeaders,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [
     Parameters.name,
     Parameters.apiVersion,
     Parameters.after,
-    Parameters.select4
+    Parameters.select2,
   ],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.syncToken, Parameters.acceptDatetime],
-  serializer
+  serializer,
 };
-const putLockOperationSpec: coreHttp.OperationSpec = {
+const putLockOperationSpec: coreClient.OperationSpec = {
   path: "/locks/{key}",
   httpMethod: "PUT",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValue,
-      headersMapper: Mappers.AppConfigurationPutLockHeaders
+      headersMapper: Mappers.AppConfigurationPutLockHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.label],
   urlParameters: [Parameters.endpoint, Parameters.key1],
   headerParameters: [
     Parameters.syncToken,
-    Parameters.accept2,
     Parameters.ifMatch,
-    Parameters.ifNoneMatch
+    Parameters.ifNoneMatch,
+    Parameters.accept2,
   ],
-  serializer
+  serializer,
 };
-const deleteLockOperationSpec: coreHttp.OperationSpec = {
+const deleteLockOperationSpec: coreClient.OperationSpec = {
   path: "/locks/{key}",
   httpMethod: "DELETE",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValue,
-      headersMapper: Mappers.AppConfigurationDeleteLockHeaders
+      headersMapper: Mappers.AppConfigurationDeleteLockHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.label],
   urlParameters: [Parameters.endpoint, Parameters.key1],
   headerParameters: [
     Parameters.syncToken,
-    Parameters.accept2,
     Parameters.ifMatch,
-    Parameters.ifNoneMatch
+    Parameters.ifNoneMatch,
+    Parameters.accept2,
   ],
-  serializer
+  serializer,
 };
-const getRevisionsOperationSpec: coreHttp.OperationSpec = {
+const getRevisionsOperationSpec: coreClient.OperationSpec = {
   path: "/revisions",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValueListResult,
-      headersMapper: Mappers.AppConfigurationGetRevisionsHeaders
+      headersMapper: Mappers.AppConfigurationGetRevisionsHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.after,
     Parameters.key,
     Parameters.label,
-    Parameters.select5
+    Parameters.select,
+    Parameters.tags,
   ],
   urlParameters: [Parameters.endpoint],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
-    Parameters.accept1
+    Parameters.accept1,
   ],
-  serializer
+  serializer,
 };
-const checkRevisionsOperationSpec: coreHttp.OperationSpec = {
+const checkRevisionsOperationSpec: coreClient.OperationSpec = {
   path: "/revisions",
   httpMethod: "HEAD",
   responses: {
     200: {
-      headersMapper: Mappers.AppConfigurationCheckRevisionsHeaders
+      headersMapper: Mappers.AppConfigurationCheckRevisionsHeaders,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.after,
     Parameters.key,
     Parameters.label,
-    Parameters.select6
+    Parameters.select,
+    Parameters.tags,
   ],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.syncToken, Parameters.acceptDatetime],
-  serializer
+  serializer,
 };
-const getKeysNextOperationSpec: coreHttp.OperationSpec = {
+const getOperationDetailsOperationSpec: coreClient.OperationSpec = {
+  path: "/operations",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.OperationDetails,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorModel,
+    },
+  },
+  queryParameters: [Parameters.apiVersion, Parameters.snapshot1],
+  urlParameters: [Parameters.endpoint],
+  headerParameters: [Parameters.accept6],
+  serializer,
+};
+const getKeysNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.KeyListResult,
-      headersMapper: Mappers.AppConfigurationGetKeysNextHeaders
+      headersMapper: Mappers.AppConfigurationGetKeysNextHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
-  queryParameters: [Parameters.name, Parameters.apiVersion, Parameters.after],
   urlParameters: [Parameters.endpoint, Parameters.nextLink],
   headerParameters: [
     Parameters.accept,
     Parameters.syncToken,
-    Parameters.acceptDatetime
+    Parameters.acceptDatetime,
   ],
-  serializer
+  serializer,
 };
-const getKeyValuesNextOperationSpec: coreHttp.OperationSpec = {
+const getKeyValuesNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValueListResult,
-      headersMapper: Mappers.AppConfigurationGetKeyValuesNextHeaders
+      headersMapper: Mappers.AppConfigurationGetKeyValuesNextHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
-  queryParameters: [
-    Parameters.apiVersion,
-    Parameters.after,
-    Parameters.key,
-    Parameters.label,
-    Parameters.select
-  ],
   urlParameters: [Parameters.endpoint, Parameters.nextLink],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
-    Parameters.accept1
+    Parameters.accept1,
+    Parameters.ifMatch,
+    Parameters.ifNoneMatch,
   ],
-  serializer
+  serializer,
 };
-const getLabelsNextOperationSpec: coreHttp.OperationSpec = {
+const getSnapshotsNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.SnapshotListResult,
+      headersMapper: Mappers.AppConfigurationGetSnapshotsNextHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorModel,
+    },
+  },
+  urlParameters: [Parameters.endpoint, Parameters.nextLink],
+  headerParameters: [Parameters.syncToken, Parameters.accept3],
+  serializer,
+};
+const getLabelsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.LabelListResult,
-      headersMapper: Mappers.AppConfigurationGetLabelsNextHeaders
+      headersMapper: Mappers.AppConfigurationGetLabelsNextHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
-  queryParameters: [
-    Parameters.name,
-    Parameters.apiVersion,
-    Parameters.after,
-    Parameters.select4
-  ],
   urlParameters: [Parameters.endpoint, Parameters.nextLink],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
-    Parameters.accept3
+    Parameters.accept5,
   ],
-  serializer
+  serializer,
 };
-const getRevisionsNextOperationSpec: coreHttp.OperationSpec = {
+const getRevisionsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.KeyValueListResult,
-      headersMapper: Mappers.AppConfigurationGetRevisionsNextHeaders
+      headersMapper: Mappers.AppConfigurationGetRevisionsNextHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
-  queryParameters: [
-    Parameters.apiVersion,
-    Parameters.after,
-    Parameters.key,
-    Parameters.label,
-    Parameters.select5
-  ],
   urlParameters: [Parameters.endpoint, Parameters.nextLink],
   headerParameters: [
     Parameters.syncToken,
     Parameters.acceptDatetime,
-    Parameters.accept1
+    Parameters.accept1,
   ],
-  serializer
+  serializer,
 };

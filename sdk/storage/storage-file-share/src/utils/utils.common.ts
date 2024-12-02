@@ -1,10 +1,26 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortSignalLike } from "@azure/abort-controller";
-import { HttpHeaders, isNode, URLBuilder } from "@azure/core-http";
-import { HttpAuthorization } from "../models";
-import { HeaderConstants, URLConstants } from "./constants";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { HttpHeaders } from "@azure/core-rest-pipeline";
+import { createHttpHeaders } from "@azure/core-rest-pipeline";
+import type {
+  ListFilesAndDirectoriesSegmentResponse as ListFilesAndDirectoriesSegmentResponseInternal,
+  ListHandlesResponse as ListHandlesResponseInternal,
+  SharePermission,
+  StringEncoded,
+} from "../generated/src/models";
+import type {
+  DirectoryItem,
+  FileItem,
+  HandleItem,
+  ListFilesAndDirectoriesSegmentResponse,
+  ListHandlesResponse,
+} from "../generatedModels";
+import type { HttpAuthorization } from "../models";
+import { HeaderConstants, PathStylePorts, URLConstants } from "./constants";
+import { isNode } from "@azure/core-util";
+import type { HttpHeadersLike, WebResourceLike } from "@azure/core-http-compat";
 
 /**
  * Reserved URL characters must be properly escaped for Storage services like Blob or File.
@@ -59,13 +75,13 @@ import { HeaderConstants, URLConstants } from "./constants";
  * @param url -
  */
 export function escapeURLPath(url: string): string {
-  const urlParsed = URLBuilder.parse(url);
+  const urlParsed = new URL(url);
 
-  let path = urlParsed.getPath();
+  let path = urlParsed.pathname;
   path = path || "/";
 
   path = escape(path);
-  urlParsed.setPath(path);
+  urlParsed.pathname = path;
 
   return urlParsed.toString();
 }
@@ -86,7 +102,7 @@ function getValueInConnString(
     | "AccountKey"
     | "DefaultEndpointsProtocol"
     | "EndpointSuffix"
-    | "SharedAccessSignature"
+    | "SharedAccessSignature",
 ) {
   const elements = connectionString.split(";");
   for (const element of elements) {
@@ -133,7 +149,7 @@ export function extractConnectionStringParts(connectionString: string): Connecti
       const protocol = defaultEndpointsProtocol!.toLowerCase();
       if (protocol !== "https" && protocol !== "http") {
         throw new Error(
-          "Invalid DefaultEndpointsProtocol in the provided Connection String. Expecting 'https' or 'http'"
+          "Invalid DefaultEndpointsProtocol in the provided Connection String. Expecting 'https' or 'http'",
         );
       }
 
@@ -154,12 +170,16 @@ export function extractConnectionStringParts(connectionString: string): Connecti
       kind: "AccountConnString",
       url: fileEndpoint,
       accountName,
-      accountKey
+      accountKey,
     };
   } else {
     // SAS connection string
     const accountSas = getValueInConnString(connectionString, "SharedAccessSignature");
-    const accountName = getAccountNameFromUrl(fileEndpoint);
+    let accountName = getValueInConnString(connectionString, "AccountName");
+    // if accountName is empty, try to read it from BlobEndpoint
+    if (!accountName) {
+      accountName = getAccountNameFromUrl(fileEndpoint);
+    }
     if (!fileEndpoint) {
       throw new Error("Invalid FileEndpoint in the provided SAS Connection String");
     } else if (!accountSas) {
@@ -192,11 +212,11 @@ function escape(text: string): string {
  * @returns An updated URL string
  */
 export function appendToURLPath(url: string, name: string): string {
-  const urlParsed = URLBuilder.parse(url);
+  const urlParsed = new URL(url);
 
-  let path = urlParsed.getPath();
+  let path = urlParsed.pathname;
   path = path ? (path.endsWith("/") ? `${path}${name}` : `${path}/${name}`) : name;
-  urlParsed.setPath(path);
+  urlParsed.pathname = path;
 
   return urlParsed.toString();
 }
@@ -209,16 +229,16 @@ export function appendToURLPath(url: string, name: string): string {
  * @returns An updated URL string.
  */
 export function appendToURLQuery(url: string, queryParts: string): string {
-  const urlParsed = URLBuilder.parse(url);
+  const urlParsed = new URL(url);
 
-  let query = urlParsed.getQuery();
+  let query = urlParsed.search;
   if (query) {
     query += "&" + queryParts;
   } else {
     query = queryParts;
   }
 
-  urlParsed.setQuery(query);
+  urlParsed.search = query;
   return urlParsed.toString();
 }
 
@@ -232,8 +252,28 @@ export function appendToURLQuery(url: string, queryParts: string): string {
  * @returns An updated URL string
  */
 export function setURLParameter(url: string, name: string, value?: string): string {
-  const urlParsed = URLBuilder.parse(url);
-  urlParsed.setQueryParameter(name, value);
+  const urlParsed = new URL(url);
+  const encodedName = encodeURIComponent(name);
+  const encodedValue = value ? encodeURIComponent(value) : undefined;
+  // mutating searchParams will change the encoding, so we have to do this ourselves
+  const searchString = urlParsed.search === "" ? "?" : urlParsed.search;
+
+  const searchPieces: string[] = [];
+
+  for (const pair of searchString.slice(1).split("&")) {
+    if (pair) {
+      const [key] = pair.split("=", 2);
+      if (key !== encodedName) {
+        searchPieces.push(pair);
+      }
+    }
+  }
+  if (encodedValue) {
+    searchPieces.push(`${encodedName}=${encodedValue}`);
+  }
+
+  urlParsed.search = searchPieces.length ? `?${searchPieces.join("&")}` : "";
+
   return urlParsed.toString();
 }
 
@@ -244,8 +284,8 @@ export function setURLParameter(url: string, name: string, value?: string): stri
  * @param name -
  */
 export function getURLParameter(url: string, name: string): string | string[] | undefined {
-  const urlParsed = URLBuilder.parse(url);
-  return urlParsed.getQueryParameterValue(name);
+  const urlParsed = new URL(url);
+  return urlParsed.searchParams.get(name) ?? undefined;
 }
 
 /**
@@ -256,8 +296,8 @@ export function getURLParameter(url: string, name: string): string | string[] | 
  * @returns An updated URL string
  */
 export function setURLHost(url: string, host: string): string {
-  const urlParsed = URLBuilder.parse(url);
-  urlParsed.setHost(host);
+  const urlParsed = new URL(url);
+  urlParsed.hostname = host;
   return urlParsed.toString();
 }
 
@@ -267,8 +307,12 @@ export function setURLHost(url: string, host: string): string {
  * @param url - Source URL string
  */
 export function getURLPath(url: string): string | undefined {
-  const urlParsed = URLBuilder.parse(url);
-  return urlParsed.getPath();
+  try {
+    const urlParsed = new URL(url);
+    return urlParsed.pathname;
+  } catch (e) {
+    return undefined;
+  }
 }
 
 /**
@@ -277,19 +321,21 @@ export function getURLPath(url: string): string | undefined {
  * @param url -
  */
 export function getURLQueries(url: string): { [key: string]: string } {
-  let queryString = URLBuilder.parse(url).getQuery();
+  let queryString = new URL(url).search;
   if (!queryString) {
     return {};
   }
 
   queryString = queryString.trim();
-  queryString = queryString.startsWith("?") ? queryString.substr(1) : queryString;
+  queryString = queryString.startsWith("?") ? queryString.substring(1) : queryString;
 
   let querySubStrings: string[] = queryString.split("&");
   querySubStrings = querySubStrings.filter((value: string) => {
     const indexOfEqual = value.indexOf("=");
     const lastIndexOfEqual = value.lastIndexOf("=");
-    return indexOfEqual > 0 && indexOfEqual === lastIndexOfEqual;
+    return (
+      indexOfEqual > 0 && indexOfEqual === lastIndexOfEqual && lastIndexOfEqual < value.length - 1
+    );
   });
 
   const queries: { [key: string]: string } = {};
@@ -348,7 +394,7 @@ export function base64decode(encodedString: string): string {
 export async function delay(
   timeInMs: number,
   aborter?: AbortSignalLike,
-  abortError?: Error
+  abortError?: Error,
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     /* eslint-disable-next-line prefer-const */
@@ -368,7 +414,6 @@ export async function delay(
       resolve();
     };
 
-    /* eslint-disable-next-line prefer-const */
     timeout = setTimeout(resolveHandler, timeInMs);
     if (aborter !== undefined) {
       aborter.addEventListener("abort", abortHandler);
@@ -386,14 +431,14 @@ export function sanitizeURL(url: string): string {
 }
 
 export function sanitizeHeaders(originalHeader: HttpHeaders): HttpHeaders {
-  const headers: HttpHeaders = new HttpHeaders();
-  for (const header of originalHeader.headersArray()) {
-    if (header.name.toLowerCase() === HeaderConstants.AUTHORIZATION) {
-      headers.set(header.name, "*****");
-    } else if (header.name.toLowerCase() === HeaderConstants.X_MS_COPY_SOURCE) {
-      headers.set(header.name, sanitizeURL(header.value));
+  const headers: HttpHeaders = createHttpHeaders();
+  for (const [name, value] of originalHeader) {
+    if (name.toLowerCase() === HeaderConstants.AUTHORIZATION.toLowerCase()) {
+      headers.set(name, "*****");
+    } else if (name.toLowerCase() === HeaderConstants.X_MS_COPY_SOURCE) {
+      headers.set(name, sanitizeURL(value));
     } else {
-      headers.set(header.name, header.value);
+      headers.set(name, value);
     }
   }
 
@@ -406,50 +451,50 @@ export function sanitizeHeaders(originalHeader: HttpHeaders): HttpHeaders {
  * @returns with the account name
  */
 export function getAccountNameFromUrl(url: string): string {
-  const parsedUrl: URLBuilder = URLBuilder.parse(url);
+  const parsedUrl = new URL(url);
   let accountName;
   try {
-    if (parsedUrl.getHost()!.split(".")[1] === "file") {
+    if (parsedUrl.hostname.split(".")[1] === "file") {
       // `${defaultEndpointsProtocol}://${accountName}.file.${endpointSuffix}`;
       // Slicing off '/' at the end if exists
       url = url.endsWith("/") ? url.slice(0, -1) : url;
 
-      accountName = parsedUrl.getHost()!.split(".")[0];
+      accountName = parsedUrl.hostname.split(".")[0];
     } else if (isIpEndpointStyle(parsedUrl)) {
       // IPv4/IPv6 address hosts... Example - http://192.0.0.10:10001/devstoreaccount1/
       // Single word domain without a [dot] in the endpoint... Example - http://localhost:10001/devstoreaccount1/
       // .getPath() -> /devstoreaccount1/
-      accountName = parsedUrl.getPath()!.split("/")[1];
+      accountName = parsedUrl.pathname.split("/")[1];
     } else {
       // Custom domain case: "https://customdomain.com/containername/blob".
       accountName = "";
     }
     return accountName;
-  } catch (error) {
+  } catch (error: any) {
     throw new Error("Unable to extract accountName with provided information.");
   }
 }
 
-export function isIpEndpointStyle(parsedUrl: URLBuilder): boolean {
-  if (parsedUrl.getHost() === undefined) {
-    return false;
-  }
-
-  const host =
-    parsedUrl.getHost()! + (parsedUrl.getPort() === undefined ? "" : ":" + parsedUrl.getPort());
+export function isIpEndpointStyle(parsedUrl: URL): boolean {
+  const host = parsedUrl.host;
 
   // Case 1: Ipv6, use a broad regex to find out candidates whose host contains two ':'.
-  // Case 2: localhost(:port), use broad regex to match port part.
+  // Case 2: localhost(:port) or host.docker.internal, use broad regex to match port part.
   // Case 3: Ipv4, use broad regex which just check if host contains Ipv4.
   // For valid host please refer to https://man7.org/linux/man-pages/man7/hostname.7.html.
-  return /^.*:.*:.*$|^localhost(:[0-9]+)?$|^(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])(\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])){3}(:[0-9]+)?$/.test(
-    host
+  return (
+    /^.*:.*:.*$|^(localhost|host.docker.internal)(:[0-9]+)?$|^(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])(\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])){3}(:[0-9]+)?$/.test(
+      host,
+    ) ||
+    (Boolean(parsedUrl.port) && PathStylePorts.includes(parsedUrl.port))
   );
 }
 
-export function getShareNameAndPathFromUrl(
-  url: string
-): { baseName: string; shareName: string; path: string } {
+export function getShareNameAndPathFromUrl(url: string): {
+  baseName: string;
+  shareName: string;
+  path: string;
+} {
   //  URL may look like the following
   // "https://myaccount.file.core.windows.net/myshare/mydirectory/file?sasString";
   // "https://myaccount.file.core.windows.net/myshare/mydirectory/file";
@@ -466,24 +511,24 @@ export function getShareNameAndPathFromUrl(
   let baseName;
 
   try {
-    const parsedUrl = URLBuilder.parse(url);
-    if (parsedUrl.getHost()!.split(".")[1] === "file") {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.hostname.split(".")[1] === "file") {
       // "https://myaccount.file.core.windows.net/myshare/mydirectory/file";
       // .getPath() -> /myshare/mydirectory/file
-      const pathComponents = parsedUrl.getPath()!.match("/([^/]*)(/(.*))?");
+      const pathComponents = parsedUrl.pathname.match("/([^/]*)(/(.*))?");
       shareName = pathComponents![1];
       path = pathComponents![3];
     } else if (isIpEndpointStyle(parsedUrl)) {
       // IPv4/IPv6 address hosts... Example - http://187.24.0.1:1000/devstoreaccount1/mydirectory/file
       // Single word domain without a [dot] in the endpoint... Example - http://localhost:1000/devstoreaccount1/mydirectory/file
       // .getPath() -> /devstoreaccount1/mydirectory/file
-      const pathComponents = parsedUrl.getPath()!.match("/([^/]*)/([^/]*)(/(.*))?");
+      const pathComponents = parsedUrl.pathname.match("/([^/]*)/([^/]*)(/(.*))?");
       shareName = pathComponents![2];
       path = pathComponents![4];
     } else {
       // "https://customdomain.com/myshare/mydirectory/file";
       // .getPath() -> /myshare/mydirectory/file
-      const pathComponents = parsedUrl.getPath()!.match("/([^/]*)(/(.*))?");
+      const pathComponents = parsedUrl.pathname.match("/([^/]*)(/(.*))?");
       shareName = pathComponents![1];
       path = pathComponents![3];
     }
@@ -501,15 +546,237 @@ export function getShareNameAndPathFromUrl(
     } else {
       return { baseName, shareName, path };
     }
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(
-      "Unable to extract shareName and filePath/directoryPath with provided information."
+      "Unable to extract shareName and filePath/directoryPath with provided information.",
     );
   }
 }
 
 export function httpAuthorizationToString(
-  httpAuthorization?: HttpAuthorization
+  httpAuthorization?: HttpAuthorization,
 ): string | undefined {
   return httpAuthorization ? httpAuthorization.scheme + " " + httpAuthorization.value : undefined;
+}
+
+/**
+ * Set URL path.
+ *
+ * @param url - URL to change path to.
+ * @param path - Path to set into the URL.
+ */
+export function setURLPath(url: string, path: string): string {
+  const urlParsed = new URL(url);
+  urlParsed.pathname = path;
+  return urlParsed.toString();
+}
+
+/**
+ * Set URL query string.
+ *
+ * @param url - URL to set query string to.
+ * @param queryString - Query string to set to the URL.
+ */
+export function setURLQueries(url: string, queryString: string): string {
+  const urlParsed = new URL(url);
+  urlParsed.search = queryString;
+  return urlParsed.toString();
+}
+
+/**
+ * Escape the file or directory name but keep path separator ('/').
+ */
+export function EscapePath(pathName: string): string {
+  const split = pathName.split("/");
+  for (let i = 0; i < split.length; i++) {
+    split[i] = encodeURIComponent(split[i]);
+  }
+  return split.join("/");
+}
+
+/**
+ * A representation of an HTTP response that
+ * includes a reference to the request that
+ * originated it.
+ */
+export interface HttpResponse {
+  /**
+   * The headers from the response.
+   */
+  headers: HttpHeadersLike;
+  /**
+   * The original request that resulted in this response.
+   */
+  request: WebResourceLike;
+  /**
+   * The HTTP status code returned from the service.
+   */
+  status: number;
+}
+
+/**
+ * An object with a _response property that has
+ * headers already parsed into a typed object.
+ */
+export interface ResponseWithHeaders<Headers> {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: HttpResponse & {
+    /**
+     * The parsed HTTP response headers.
+     */
+    parsedHeaders: Headers;
+  };
+}
+
+/**
+ * An object with a _response property that has body
+ * and headers already parsed into known types.
+ */
+export interface ResponseWithBody<Headers, Body> {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: HttpResponse & {
+    /**
+     * The parsed HTTP response headers.
+     */
+    parsedHeaders: Headers;
+    /**
+     * The response body as text (string format)
+     */
+    bodyAsText: string;
+    /**
+     * The response body as parsed JSON or XML
+     */
+    parsedBody: Body;
+  };
+}
+
+/**
+ * An object with a simple _response property.
+ */
+export interface ResponseLike {
+  /**
+   * The underlying HTTP response.
+   */
+  _response: HttpResponse;
+}
+
+/**
+ * A type that represents an operation result with a known _response property.
+ */
+export type WithResponse<T, Headers = undefined, Body = undefined> = T &
+  (Body extends object
+    ? ResponseWithBody<Headers, Body>
+    : Headers extends object
+      ? ResponseWithHeaders<Headers>
+      : ResponseLike);
+
+/**
+ * A typesafe helper for ensuring that a given response object has
+ * the original _response attached.
+ * @param response - A response object from calling a client operation
+ * @returns The same object, but with known _response property
+ */
+export function assertResponse<T extends object, Headers = undefined, Body = undefined>(
+  response: T,
+): WithResponse<T, Headers, Body> {
+  if (`_response` in response) {
+    return response as WithResponse<T, Headers, Body>;
+  }
+
+  throw new TypeError(`Unexpected response object ${response}`);
+}
+
+export function StringEncodedToString(name: StringEncoded): string {
+  if (name.encoded) {
+    return decodeURIComponent(name.content!);
+  } else {
+    return name.content!;
+  }
+}
+
+export function ConvertInternalResponseOfListFiles(
+  internalResponse: ListFilesAndDirectoriesSegmentResponseInternal,
+): ListFilesAndDirectoriesSegmentResponse {
+  const wrappedResponse = {
+    ...internalResponse,
+    prefix: undefined,
+    directoryPath: StringEncodedToString({
+      encoded: internalResponse.encoded,
+      content: internalResponse.directoryPath,
+    }),
+    segment: {
+      fileItems: internalResponse.segment.fileItems.map((fileItemInternal) => {
+        const fileItem: FileItem = {
+          ...fileItemInternal,
+          name: StringEncodedToString(fileItemInternal.name),
+        };
+        return fileItem;
+      }),
+      directoryItems: internalResponse.segment.directoryItems.map((directoryItemInternal) => {
+        const directoryItem: DirectoryItem = {
+          ...directoryItemInternal,
+          name: StringEncodedToString(directoryItemInternal.name),
+        };
+        return directoryItem;
+      }),
+    },
+  };
+
+  delete wrappedResponse.encoded;
+
+  const listResponse: ListFilesAndDirectoriesSegmentResponse = wrappedResponse as any;
+
+  if (internalResponse.prefix) {
+    listResponse.prefix = StringEncodedToString(internalResponse.prefix);
+  }
+
+  return listResponse;
+}
+
+export function ConvertInternalResponseOfListHandles(
+  internalResponse: ListHandlesResponseInternal,
+): ListHandlesResponse {
+  const wrappedResponse: ListHandlesResponse = {
+    ...internalResponse,
+    handleList: internalResponse.handleList
+      ? internalResponse.handleList.map((handleItemInternal) => {
+          const handleItem: HandleItem = {
+            ...handleItemInternal,
+            path: StringEncodedToString(handleItemInternal.path),
+          };
+          return handleItem;
+        })
+      : undefined,
+  };
+
+  return wrappedResponse;
+}
+
+/**
+ * A small helper to handle converting an empty string "" into undefined
+ * This is used in the case of query parameters (like continuation token) where
+ * we don't want to send an empty query parameter to the service since the signing
+ * policy for shared key will fail.
+ * @internal
+ */
+export function removeEmptyString(value: string | undefined): string | undefined {
+  return value ? value : undefined;
+}
+
+export function asSharePermission(value: string | SharePermission): SharePermission {
+  const castSharePermission = value as SharePermission;
+  if (castSharePermission["permission"] !== undefined) {
+    return {
+      permission: castSharePermission.permission,
+      format: castSharePermission.format,
+    };
+  }
+
+  return {
+    permission: value as string,
+  };
 }

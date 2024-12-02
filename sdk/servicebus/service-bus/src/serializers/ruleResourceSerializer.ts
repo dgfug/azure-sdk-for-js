@@ -1,16 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HttpOperationResponse } from "@azure/core-http";
-import { CorrelationRuleFilter } from "../core/managementClient";
-import {
-  AtomXmlSerializer,
-  deserializeAtomXmlResponse,
-  serializeToAtomXmlRequest
-} from "../util/atomXmlHelper";
-import * as Constants from "../util/constants";
-import { isDefined, isObjectWithProperties } from "../util/typeGuards";
-import { getString, getStringOrUndefined } from "../util/utils";
+import type { FullOperationResponse } from "@azure/core-client";
+import type { CorrelationRuleFilter } from "../core/managementClient.js";
+import type { AtomXmlSerializer } from "../util/atomXmlHelper.js";
+import { deserializeAtomXmlResponse, serializeToAtomXmlRequest } from "../util/atomXmlHelper.js";
+import * as Constants from "../util/constants.js";
+import { isDefined, isObjectWithProperties } from "@azure/core-util";
+import { getString, getStringOrUndefined } from "../util/utils.js";
 
 /**
  * @internal
@@ -21,7 +18,7 @@ export function buildRule(rawRule: Record<string, any>): RuleProperties {
   return {
     name: getString(rawRule["RuleName"], "ruleName"),
     filter: getTopicFilter(rawRule["Filter"]),
-    action: getRuleAction(rawRule["Action"])
+    action: getRuleAction(rawRule["Action"]),
   };
 }
 
@@ -36,7 +33,7 @@ function getTopicFilter(value: any): SqlRuleFilter | CorrelationRuleFilter {
   if (isDefined(value["SqlExpression"])) {
     result = {
       sqlExpression: value["SqlExpression"],
-      sqlParameters: getKeyValuePairsOrUndefined(value["Parameters"], "SQLParameters")
+      sqlParameters: getKeyValuePairsOrUndefined(value["Parameters"], "SQLParameters"),
     };
   } else {
     result = {
@@ -50,8 +47,8 @@ function getTopicFilter(value: any): SqlRuleFilter | CorrelationRuleFilter {
       contentType: getStringOrUndefined(value["ContentType"]),
       applicationProperties: getKeyValuePairsOrUndefined(
         value["Properties"],
-        "ApplicationProperties"
-      )
+        "ApplicationProperties",
+      ),
     };
   }
   return result;
@@ -64,7 +61,7 @@ function getTopicFilter(value: any): SqlRuleFilter | CorrelationRuleFilter {
 function getRuleAction(value: any): SqlRuleAction {
   return {
     sqlExpression: value["SqlExpression"],
-    sqlParameters: getKeyValuePairsOrUndefined(value["Parameters"], "SQLParameters")
+    sqlParameters: getKeyValuePairsOrUndefined(value["Parameters"], "SQLParameters"),
   };
 }
 
@@ -137,7 +134,9 @@ export type SqlRuleAction = {
  */
 export interface SqlRuleFilter {
   /**
-   * SQL expression to use in the rule filter.
+   * SQL expression to use in the rule filter. It is evaluated against the messages'
+   * user-defined properties and system properties. All system properties will be prefixed with
+   * `sys.` in the condition expression.
    * Defaults to creating a true filter if none specified
    */
   sqlExpression: string;
@@ -166,28 +165,28 @@ export function buildInternalRuleResource(rule: CreateRuleOptions): InternalRule
   const resource: InternalRuleOptions = {
     Filter: {},
     Action: {},
-    Name: rule.name
+    Name: rule.name,
   };
 
   if (!isDefined(rule.filter)) {
     // Defaults to creating a true filter if none specified
     resource.Filter = {
-      SqlExpression: "1=1"
+      SqlExpression: "1=1",
     };
     resource.Filter[Constants.XML_METADATA_MARKER] = {
       "p4:type": "SqlFilter",
-      "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance"
+      "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance",
     };
   } else {
     if (isObjectWithProperties(rule.filter, ["sqlExpression"])) {
       const sqlFilter: SqlRuleFilter = rule.filter as SqlRuleFilter;
       resource.Filter = {
         SqlExpression: sqlFilter.sqlExpression,
-        Parameters: buildInternalRawKeyValuePairs(sqlFilter.sqlParameters, "sqlParameters")
+        Parameters: buildInternalRawKeyValuePairs(sqlFilter.sqlParameters, "sqlParameters"),
       };
       resource.Filter[Constants.XML_METADATA_MARKER] = {
         "p4:type": "SqlFilter",
-        "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance"
+        "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance",
       };
     } else {
       const correlationFilter: CorrelationRuleFilter = rule.filter as CorrelationRuleFilter;
@@ -203,12 +202,12 @@ export function buildInternalRuleResource(rule: CreateRuleOptions): InternalRule
         MessageId: correlationFilter.messageId,
         Properties: buildInternalRawKeyValuePairs(
           correlationFilter.applicationProperties,
-          "applicationProperties"
-        )
+          "applicationProperties",
+        ),
       };
       resource.Filter[Constants.XML_METADATA_MARKER] = {
         "p4:type": "CorrelationFilter",
-        "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance"
+        "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance",
       };
     }
   }
@@ -218,16 +217,16 @@ export function buildInternalRuleResource(rule: CreateRuleOptions): InternalRule
     resource.Action = {};
     resource.Action[Constants.XML_METADATA_MARKER] = {
       "p4:type": "EmptyRuleAction",
-      "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance"
+      "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance",
     };
   } else {
     resource.Action = {
       SqlExpression: rule.action.sqlExpression,
-      Parameters: buildInternalRawKeyValuePairs(rule.action.sqlParameters, "sqlParameters")
+      Parameters: buildInternalRawKeyValuePairs(rule.action.sqlParameters, "sqlParameters"),
     };
     resource.Action[Constants.XML_METADATA_MARKER] = {
       "p4:type": "SqlRuleAction",
-      "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance"
+      "xmlns:p4": "http://www.w3.org/2001/XMLSchema-instance",
     };
   }
 
@@ -239,11 +238,11 @@ export function buildInternalRuleResource(rule: CreateRuleOptions): InternalRule
  * RuleResourceSerializer for serializing / deserializing Rule entities
  */
 export class RuleResourceSerializer implements AtomXmlSerializer {
-  serialize(rule: RuleProperties): object {
+  serialize(rule: RuleProperties): Record<string, unknown> {
     return serializeToAtomXmlRequest("RuleDescription", buildInternalRuleResource(rule));
   }
 
-  async deserialize(response: HttpOperationResponse): Promise<HttpOperationResponse> {
+  async deserialize(response: FullOperationResponse): Promise<FullOperationResponse> {
     return deserializeAtomXmlResponse(["TopicName", "SubscriptionName", "RuleName"], response);
   }
 }
@@ -266,7 +265,7 @@ enum TypeMapForRequestSerialization {
   string = "l28:string",
   long = "l28:long",
   date = "l28:dateTime",
-  boolean = "l28:boolean"
+  boolean = "l28:boolean",
 }
 
 /**
@@ -277,7 +276,7 @@ enum TypeMapForResponseDeserialization {
   double = "double",
   string = "string",
   boolean = "boolean",
-  date = "dateTime"
+  date = "dateTime",
 }
 
 /**
@@ -310,7 +309,7 @@ const keyValuePairXMLTag = "KeyValueOfstringanyType";
  */
 function getKeyValuePairsOrUndefined(
   value: any,
-  attribute: "ApplicationProperties" | "SQLParameters"
+  attribute: "ApplicationProperties" | "SQLParameters",
 ): { [key: string]: any } | undefined {
   if (!value) {
     return undefined;
@@ -345,15 +344,15 @@ function getKeyValuePairsOrUndefined(
         properties[key] = new Date(_value);
       } else {
         throw new TypeError(
-          `Unable to parse the key-value pairs in the response - ${JSON.stringify(rawProperty)}`
+          `Unable to parse the key-value pairs in the response - ${JSON.stringify(rawProperty)}`,
         );
       }
     }
   } else {
     throw new TypeError(
       `${attribute} in the response is not an array, unable to parse the response - ${JSON.stringify(
-        value
-      )}`
+        value,
+      )}`,
     );
   }
   return properties;
@@ -366,7 +365,7 @@ function getKeyValuePairsOrUndefined(
  */
 export function buildInternalRawKeyValuePairs(
   parameters: { [key: string]: any } | undefined,
-  attribute: "applicationProperties" | "sqlParameters"
+  attribute: "applicationProperties" | "sqlParameters",
 ): InternalRawKeyValuePairs | undefined {
   if (!isDefined(parameters)) {
     return undefined;
@@ -379,13 +378,14 @@ export function buildInternalRawKeyValuePairs(
   ) {
     throw new TypeError(
       `Unsupported value for the ${attribute} ${JSON.stringify(
-        parameters
-      )}, expected a JSON object with key-value pairs.`
+        parameters,
+      )}, expected a JSON object with key-value pairs.`,
     );
   }
   const rawParameters: RawKeyValuePair[] = [];
-  for (let [key, value] of Object.entries(parameters)) {
+  for (const key of Object.keys(parameters)) {
     let type: string | number | boolean;
+    let value = parameters[key];
     if (typeof value === "number") {
       type = TypeMapForRequestSerialization.double;
     } else if (typeof value === "string") {
@@ -397,7 +397,7 @@ export function buildInternalRawKeyValuePairs(
       value = value.toJSON();
     } else {
       throw new TypeError(
-        `Unsupported type for the value in the ${attribute} for the key '${key}'`
+        `Unsupported type for the value in the ${attribute} for the key '${key}'`,
       );
     }
 
@@ -406,14 +406,14 @@ export function buildInternalRawKeyValuePairs(
       Value: {
         [Constants.XML_METADATA_MARKER]: {
           "p4:type": type,
-          "xmlns:l28": "http://www.w3.org/2001/XMLSchema"
+          "xmlns:l28": "http://www.w3.org/2001/XMLSchema",
         },
-        [Constants.XML_VALUE_MARKER]: value
-      }
+        [Constants.XML_VALUE_MARKER]: value,
+      },
     };
     rawParameters.push(rawParameter);
   }
   return {
-    [keyValuePairXMLTag]: rawParameters
+    [keyValuePairXMLTag]: rawParameters,
   };
 }

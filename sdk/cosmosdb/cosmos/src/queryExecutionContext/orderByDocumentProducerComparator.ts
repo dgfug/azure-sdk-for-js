@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { DocumentProducer } from "./documentProducer";
+// Licensed under the MIT License.
+import type { DocumentProducer } from "./documentProducer";
 
 // TODO: this smells funny
 /** @hidden */
@@ -8,29 +8,29 @@ const TYPEORDCOMPARATOR: {
   [type: string]: { ord: number; compFunc?: (a: any, b: any) => number };
 } = Object.freeze({
   NoValue: {
-    ord: 0
+    ord: 0,
   },
   undefined: {
-    ord: 1
+    ord: 1,
   },
   boolean: {
     ord: 2,
     compFunc: (a: boolean, b: boolean) => {
       return a === b ? 0 : a > b ? 1 : -1;
-    }
+    },
   },
   number: {
     ord: 4,
     compFunc: (a: number, b: number) => {
       return a === b ? 0 : a > b ? 1 : -1;
-    }
+    },
   },
   string: {
     ord: 5,
     compFunc: (a: string, b: string) => {
       return a === b ? 0 : a > b ? 1 : -1;
-    }
-  }
+    },
+  },
 });
 
 /** @hidden */
@@ -39,7 +39,7 @@ export class OrderByDocumentProducerComparator {
 
   private targetPartitionKeyRangeDocProdComparator(
     docProd1: DocumentProducer,
-    docProd2: DocumentProducer
+    docProd2: DocumentProducer,
   ): 0 | 1 | -1 {
     const a = docProd1.getTargetParitionKeyRange()["minInclusive"];
     const b = docProd2.getTargetParitionKeyRange()["minInclusive"];
@@ -128,14 +128,14 @@ export class OrderByDocumentProducerComparator {
       const type2 = this.getType(res2[i]);
       if (type1 !== type2) {
         throw new Error(
-          `Expected ${type1}, but got ${type2}. Cannot execute cross partition order-by queries on mixed types. Consider filtering your query using IS_STRING or IS_NUMBER to get around this exception.`
+          `Expected ${type1}, but got ${type2}. Cannot execute cross partition order-by queries on mixed types. Consider filtering your query using IS_STRING or IS_NUMBER to get around this exception.`,
         );
       }
     }
   }
 
   private getType(
-    orderByItem: any
+    orderByItem: any,
   ):
     | "string"
     | "number"

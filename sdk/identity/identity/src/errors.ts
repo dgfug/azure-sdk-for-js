@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { GetTokenOptions } from "@azure/core-auth";
+import type { GetTokenOptions } from "@azure/core-auth";
 
 /**
  * See the official documentation for more details:
  *
- * https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-protocols-oauth-code#error-response-1
+ * https://learn.microsoft.com/en-us/azure/active-directory/develop/v1-protocols-oauth-code#error-response-1
  *
  * NOTE: This documentation is for v1 OAuth support but the same error
  * response details still apply to v2.
@@ -75,8 +75,9 @@ export const CredentialUnavailableErrorName = "CredentialUnavailableError";
  * an error that should halt the chain, it's caught and the chain continues
  */
 export class CredentialUnavailableError extends Error {
-  constructor(message?: string) {
-    super(message);
+  constructor(message?: string, options?: { cause?: unknown }) {
+    // @ts-expect-error - TypeScript does not recognize this until we use ES2022 as the target; however, all our major runtimes do support the `cause` property
+    super(message, options);
     this.name = CredentialUnavailableErrorName;
   }
 }
@@ -102,11 +103,14 @@ export class AuthenticationError extends Error {
    */
   public readonly errorResponse: ErrorResponse;
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  constructor(statusCode: number, errorBody: object | string | undefined | null) {
+  constructor(
+    statusCode: number,
+    errorBody: object | string | undefined | null,
+    options?: { cause?: unknown },
+  ) {
     let errorResponse: ErrorResponse = {
       error: "unknown",
-      errorDescription: "An unknown error occurred and no additional details are available."
+      errorDescription: "An unknown error occurred and no additional details are available.",
     };
 
     if (isErrorResponse(errorBody)) {
@@ -117,28 +121,30 @@ export class AuthenticationError extends Error {
         // in the response body
         const oauthErrorResponse: OAuthErrorResponse = JSON.parse(errorBody);
         errorResponse = convertOAuthErrorResponseToErrorResponse(oauthErrorResponse);
-      } catch (e) {
+      } catch (e: any) {
         if (statusCode === 400) {
           errorResponse = {
-            error: "authority_not_found",
-            errorDescription: "The specified authority URL was not found."
+            error: "invalid_request",
+            errorDescription: `The service indicated that the request was invalid.\n\n${errorBody}`,
           };
         } else {
           errorResponse = {
             error: "unknown_error",
-            errorDescription: `An unknown error has occurred. Response body:\n\n${errorBody}`
+            errorDescription: `An unknown error has occurred. Response body:\n\n${errorBody}`,
           };
         }
       }
     } else {
       errorResponse = {
         error: "unknown_error",
-        errorDescription: "An unknown error occurred and no additional details are available."
+        errorDescription: "An unknown error occurred and no additional details are available.",
       };
     }
 
     super(
-      `${errorResponse.error}(status code ${statusCode}).\nMore details:\n${errorResponse.errorDescription}`
+      `${errorResponse.error} Status code: ${statusCode}\nMore details:\n${errorResponse.errorDescription},`,
+      // @ts-expect-error - TypeScript does not recognize this until we use ES2022 as the target; however, all our major runtimes do support the `cause` property
+      options,
     );
     this.statusCode = statusCode;
     this.errorResponse = errorResponse;
@@ -181,7 +187,7 @@ function convertOAuthErrorResponseToErrorResponse(errorBody: OAuthErrorResponse)
     correlationId: errorBody.correlation_id,
     errorCodes: errorBody.error_codes,
     timestamp: errorBody.timestamp,
-    traceId: errorBody.trace_id
+    traceId: errorBody.trace_id,
   };
 }
 
@@ -201,6 +207,10 @@ export interface AuthenticationRequiredErrorOptions {
    * The message of the error.
    */
   message?: string;
+  /**
+   * The underlying cause, if any, that caused the authentication to fail.
+   */
+  cause?: unknown;
 }
 
 /**
@@ -220,9 +230,13 @@ export class AuthenticationRequiredError extends Error {
     /**
      * Optional parameters. A message can be specified. The {@link GetTokenOptions} of the request can also be specified to more easily associate the error with the received parameters.
      */
-    options: AuthenticationRequiredErrorOptions
+    options: AuthenticationRequiredErrorOptions,
   ) {
-    super(options.message);
+    super(
+      options.message,
+      // @ts-expect-error - TypeScript does not recognize this until we use ES2022 as the target; however, all our major runtimes do support the `cause` property
+      options.cause ? { cause: options.cause } : undefined,
+    );
     this.scopes = options.scopes;
     this.getTokenOptions = options.getTokenOptions;
     this.name = "AuthenticationRequiredError";

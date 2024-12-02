@@ -1,14 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { BlobImmutabilityPolicyMode } from "./generatedModels";
-import {
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { CancelOnProgress, PollOperationState } from "@azure/core-lro";
+import type { BlobImmutabilityPolicyMode } from "./generatedModels";
+import type {
   LeaseAccessConditions,
   SequenceNumberAccessConditions,
   AppendPositionAccessConditions,
   AccessTier,
   CpkInfo,
-  BlobDownloadResponseModel
+  BlobDownloadResponseModel,
 } from "./generatedModels";
 import { EncryptionAlgorithmAES25 } from "./utils/constants";
 
@@ -113,10 +115,14 @@ export enum BlockBlobTier {
    */
   Cool = "Cool",
   /**
+   * Optimized for storing data that is rarely accessed.
+   */
+  Cold = "Cold",
+  /**
    * Optimized for storing data that is rarely accessed and stored for at least 180 days
    * with flexible latency requirements (on the order of hours).
    */
-  Archive = "Archive"
+  Archive = "Archive",
 }
 
 /**
@@ -168,11 +174,11 @@ export enum PremiumPageBlobTier {
   /**
    * P80 Tier.
    */
-  P80 = "P80"
+  P80 = "P80",
 }
 
 export function toAccessTier(
-  tier: BlockBlobTier | PremiumPageBlobTier | string | undefined
+  tier: BlockBlobTier | PremiumPageBlobTier | string | undefined,
 ): AccessTier | undefined {
   if (tier === undefined) {
     return undefined;
@@ -310,4 +316,82 @@ export interface HttpAuthorization {
    * the credentials containing the authentication information of the user agent for the resource being requested.
    */
   value: string;
+}
+
+/**
+ * Defines the known cloud audiences for Storage.
+ */
+export enum StorageBlobAudience {
+  /**
+   * The OAuth scope to use to retrieve an AAD token for Azure Storage.
+   */
+  StorageOAuthScopes = "https://storage.azure.com/.default",
+  /**
+   * The OAuth scope to use to retrieve an AAD token for Azure Disk.
+   */
+  DiskComputeOAuthScopes = "https://disk.compute.azure.com/.default",
+}
+
+/**
+ *
+ * To get OAuth audience for a storage account for blob service.
+ */
+export function getBlobServiceAccountAudience(storageAccountName: string): string {
+  return `https://${storageAccountName}.blob.core.windows.net/.default`;
+}
+
+/**
+ * Abstract representation of a poller, intended to expose just the minimal API that the user needs to work with.
+ */
+export interface PollerLikeWithCancellation<TState extends PollOperationState<TResult>, TResult> {
+  /**
+   * Returns a promise that will resolve once a single polling request finishes.
+   * It does this by calling the update method of the Poller's operation.
+   */
+  poll(options?: { abortSignal?: AbortSignalLike }): Promise<void>;
+  /**
+   * Returns a promise that will resolve once the underlying operation is completed.
+   */
+  pollUntilDone(): Promise<TResult>;
+  /**
+   * Invokes the provided callback after each polling is completed,
+   * sending the current state of the poller's operation.
+   *
+   * It returns a method that can be used to stop receiving updates on the given callback function.
+   */
+  onProgress(callback: (state: TState) => void): CancelOnProgress;
+  /**
+   * Returns true if the poller has finished polling.
+   */
+  isDone(): boolean;
+  /**
+   * Stops the poller. After this, no manual or automated requests can be sent.
+   */
+  stopPolling(): void;
+  /**
+   * Returns true if the poller is stopped.
+   */
+  isStopped(): boolean;
+  /**
+   * Attempts to cancel the underlying operation.
+   */
+  cancelOperation(options?: { abortSignal?: AbortSignalLike }): Promise<void>;
+  /**
+   * Returns the state of the operation.
+   * The TState defined in PollerLike can be a subset of the TState defined in
+   * the Poller implementation.
+   */
+  getOperationState(): TState;
+  /**
+   * Returns the result value of the operation,
+   * regardless of the state of the poller.
+   * It can return undefined or an incomplete form of the final TResult value
+   * depending on the implementation.
+   */
+  getResult(): TResult | undefined;
+  /**
+   * Returns a serialized version of the poller's operation
+   * by invoking the operation's toString method.
+   */
+  toString(): string;
 }

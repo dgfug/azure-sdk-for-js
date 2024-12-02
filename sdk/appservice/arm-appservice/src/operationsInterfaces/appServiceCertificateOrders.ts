@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   AppServiceCertificateOrder,
   AppServiceCertificateOrdersListOptionalParams,
@@ -46,7 +45,7 @@ import {
   AppServiceCertificateOrdersRetrieveCertificateActionsOptionalParams,
   AppServiceCertificateOrdersRetrieveCertificateActionsResponse,
   AppServiceCertificateOrdersRetrieveCertificateEmailHistoryOptionalParams,
-  AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse
+  AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -57,7 +56,7 @@ export interface AppServiceCertificateOrders {
    * @param options The options parameters.
    */
   list(
-    options?: AppServiceCertificateOrdersListOptionalParams
+    options?: AppServiceCertificateOrdersListOptionalParams,
   ): PagedAsyncIterableIterator<AppServiceCertificateOrder>;
   /**
    * Description for Get certificate orders in a resource group.
@@ -66,7 +65,7 @@ export interface AppServiceCertificateOrders {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams
+    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<AppServiceCertificateOrder>;
   /**
    * Description for List all certificates associated with a certificate order.
@@ -77,7 +76,7 @@ export interface AppServiceCertificateOrders {
   listCertificates(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersListCertificatesOptionalParams
+    options?: AppServiceCertificateOrdersListCertificatesOptionalParams,
   ): PagedAsyncIterableIterator<AppServiceCertificateResource>;
   /**
    * Description for Validate information for a certificate order.
@@ -86,7 +85,7 @@ export interface AppServiceCertificateOrders {
    */
   validatePurchaseInformation(
     appServiceCertificateOrder: AppServiceCertificateOrder,
-    options?: AppServiceCertificateOrdersValidatePurchaseInformationOptionalParams
+    options?: AppServiceCertificateOrdersValidatePurchaseInformationOptionalParams,
   ): Promise<void>;
   /**
    * Description for Get a certificate order.
@@ -97,7 +96,7 @@ export interface AppServiceCertificateOrders {
   get(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersGetOptionalParams
+    options?: AppServiceCertificateOrdersGetOptionalParams,
   ): Promise<AppServiceCertificateOrdersGetResponse>;
   /**
    * Description for Create or update a certificate purchase order.
@@ -110,10 +109,10 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     certificateDistinguishedName: AppServiceCertificateOrder,
-    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<AppServiceCertificateOrdersCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<AppServiceCertificateOrdersCreateOrUpdateResponse>,
       AppServiceCertificateOrdersCreateOrUpdateResponse
     >
   >;
@@ -128,7 +127,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     certificateDistinguishedName: AppServiceCertificateOrder,
-    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams,
   ): Promise<AppServiceCertificateOrdersCreateOrUpdateResponse>;
   /**
    * Description for Delete an existing certificate order.
@@ -139,7 +138,7 @@ export interface AppServiceCertificateOrders {
   delete(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersDeleteOptionalParams
+    options?: AppServiceCertificateOrdersDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Description for Create or update a certificate purchase order.
@@ -152,7 +151,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     certificateDistinguishedName: AppServiceCertificateOrderPatchResource,
-    options?: AppServiceCertificateOrdersUpdateOptionalParams
+    options?: AppServiceCertificateOrdersUpdateOptionalParams,
   ): Promise<AppServiceCertificateOrdersUpdateResponse>;
   /**
    * Description for Get the certificate associated with a certificate order.
@@ -165,7 +164,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     name: string,
-    options?: AppServiceCertificateOrdersGetCertificateOptionalParams
+    options?: AppServiceCertificateOrdersGetCertificateOptionalParams,
   ): Promise<AppServiceCertificateOrdersGetCertificateResponse>;
   /**
    * Description for Creates or updates a certificate and associates with key vault secret.
@@ -180,12 +179,10 @@ export interface AppServiceCertificateOrders {
     certificateOrderName: string,
     name: string,
     keyVaultCertificate: AppServiceCertificateResource,
-    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        AppServiceCertificateOrdersCreateOrUpdateCertificateResponse
-      >,
+    SimplePollerLike<
+      OperationState<AppServiceCertificateOrdersCreateOrUpdateCertificateResponse>,
       AppServiceCertificateOrdersCreateOrUpdateCertificateResponse
     >
   >;
@@ -202,7 +199,7 @@ export interface AppServiceCertificateOrders {
     certificateOrderName: string,
     name: string,
     keyVaultCertificate: AppServiceCertificateResource,
-    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams,
   ): Promise<AppServiceCertificateOrdersCreateOrUpdateCertificateResponse>;
   /**
    * Description for Delete the certificate associated with a certificate order.
@@ -215,7 +212,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     name: string,
-    options?: AppServiceCertificateOrdersDeleteCertificateOptionalParams
+    options?: AppServiceCertificateOrdersDeleteCertificateOptionalParams,
   ): Promise<void>;
   /**
    * Description for Creates or updates a certificate and associates with key vault secret.
@@ -230,7 +227,7 @@ export interface AppServiceCertificateOrders {
     certificateOrderName: string,
     name: string,
     keyVaultCertificate: AppServiceCertificatePatchResource,
-    options?: AppServiceCertificateOrdersUpdateCertificateOptionalParams
+    options?: AppServiceCertificateOrdersUpdateCertificateOptionalParams,
   ): Promise<AppServiceCertificateOrdersUpdateCertificateResponse>;
   /**
    * Description for Reissue an existing certificate order.
@@ -243,7 +240,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     reissueCertificateOrderRequest: ReissueCertificateOrderRequest,
-    options?: AppServiceCertificateOrdersReissueOptionalParams
+    options?: AppServiceCertificateOrdersReissueOptionalParams,
   ): Promise<void>;
   /**
    * Description for Renew an existing certificate order.
@@ -256,7 +253,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     renewCertificateOrderRequest: RenewCertificateOrderRequest,
-    options?: AppServiceCertificateOrdersRenewOptionalParams
+    options?: AppServiceCertificateOrdersRenewOptionalParams,
   ): Promise<void>;
   /**
    * Description for Resend certificate email.
@@ -267,7 +264,7 @@ export interface AppServiceCertificateOrders {
   resendEmail(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersResendEmailOptionalParams
+    options?: AppServiceCertificateOrdersResendEmailOptionalParams,
   ): Promise<void>;
   /**
    * Resend domain verification ownership email containing steps on how to verify a domain for a given
@@ -281,7 +278,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     nameIdentifier: NameIdentifier,
-    options?: AppServiceCertificateOrdersResendRequestEmailsOptionalParams
+    options?: AppServiceCertificateOrdersResendRequestEmailsOptionalParams,
   ): Promise<void>;
   /**
    * This method is used to obtain the site seal information for an issued certificate. A site seal is a
@@ -300,7 +297,7 @@ export interface AppServiceCertificateOrders {
     resourceGroupName: string,
     certificateOrderName: string,
     siteSealRequest: SiteSealRequest,
-    options?: AppServiceCertificateOrdersRetrieveSiteSealOptionalParams
+    options?: AppServiceCertificateOrdersRetrieveSiteSealOptionalParams,
   ): Promise<AppServiceCertificateOrdersRetrieveSiteSealResponse>;
   /**
    * Description for Verify domain ownership for this certificate order.
@@ -311,7 +308,7 @@ export interface AppServiceCertificateOrders {
   verifyDomainOwnership(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersVerifyDomainOwnershipOptionalParams
+    options?: AppServiceCertificateOrdersVerifyDomainOwnershipOptionalParams,
   ): Promise<void>;
   /**
    * Description for Retrieve the list of certificate actions.
@@ -322,7 +319,7 @@ export interface AppServiceCertificateOrders {
   retrieveCertificateActions(
     resourceGroupName: string,
     name: string,
-    options?: AppServiceCertificateOrdersRetrieveCertificateActionsOptionalParams
+    options?: AppServiceCertificateOrdersRetrieveCertificateActionsOptionalParams,
   ): Promise<AppServiceCertificateOrdersRetrieveCertificateActionsResponse>;
   /**
    * Description for Retrieve email history.
@@ -333,8 +330,6 @@ export interface AppServiceCertificateOrders {
   retrieveCertificateEmailHistory(
     resourceGroupName: string,
     name: string,
-    options?: AppServiceCertificateOrdersRetrieveCertificateEmailHistoryOptionalParams
-  ): Promise<
-    AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse
-  >;
+    options?: AppServiceCertificateOrdersRetrieveCertificateEmailHistoryOptionalParams,
+  ): Promise<AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse>;
 }

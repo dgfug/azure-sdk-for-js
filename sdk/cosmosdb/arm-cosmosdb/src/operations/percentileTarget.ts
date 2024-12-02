@@ -6,28 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { PercentileTarget } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   PercentileMetric,
   PercentileTargetListMetricsOptionalParams,
-  PercentileTargetListMetricsResponse
+  PercentileTargetListMetricsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing PercentileTarget operations. */
 export class PercentileTargetImpl implements PercentileTarget {
-  private readonly client: CosmosDBManagementClientContext;
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class PercentileTarget class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -48,14 +48,14 @@ export class PercentileTargetImpl implements PercentileTarget {
     accountName: string,
     targetRegion: string,
     filter: string,
-    options?: PercentileTargetListMetricsOptionalParams
+    options?: PercentileTargetListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<PercentileMetric> {
     const iter = this.listMetricsPagingAll(
       resourceGroupName,
       accountName,
       targetRegion,
       filter,
-      options
+      options,
     );
     return {
       next() {
@@ -64,15 +64,19 @@ export class PercentileTargetImpl implements PercentileTarget {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricsPagingPage(
           resourceGroupName,
           accountName,
           targetRegion,
           filter,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -81,14 +85,16 @@ export class PercentileTargetImpl implements PercentileTarget {
     accountName: string,
     targetRegion: string,
     filter: string,
-    options?: PercentileTargetListMetricsOptionalParams
+    options?: PercentileTargetListMetricsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<PercentileMetric[]> {
-    let result = await this._listMetrics(
+    let result: PercentileTargetListMetricsResponse;
+    result = await this._listMetrics(
       resourceGroupName,
       accountName,
       targetRegion,
       filter,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -98,14 +104,14 @@ export class PercentileTargetImpl implements PercentileTarget {
     accountName: string,
     targetRegion: string,
     filter: string,
-    options?: PercentileTargetListMetricsOptionalParams
+    options?: PercentileTargetListMetricsOptionalParams,
   ): AsyncIterableIterator<PercentileMetric> {
     for await (const page of this.listMetricsPagingPage(
       resourceGroupName,
       accountName,
       targetRegion,
       filter,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -128,11 +134,11 @@ export class PercentileTargetImpl implements PercentileTarget {
     accountName: string,
     targetRegion: string,
     filter: string,
-    options?: PercentileTargetListMetricsOptionalParams
+    options?: PercentileTargetListMetricsOptionalParams,
   ): Promise<PercentileTargetListMetricsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, targetRegion, filter, options },
-      listMetricsOperationSpec
+      listMetricsOperationSpec,
     );
   }
 }
@@ -140,13 +146,12 @@ export class PercentileTargetImpl implements PercentileTarget {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/targetRegion/{targetRegion}/percentile/metrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/targetRegion/{targetRegion}/percentile/metrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PercentileMetricListResult
-    }
+      bodyMapper: Mappers.PercentileMetricListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
@@ -154,8 +159,8 @@ const listMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.targetRegion
+    Parameters.targetRegion,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

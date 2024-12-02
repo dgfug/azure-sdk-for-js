@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { CosmosHeaders } from "../../queryExecutionContext";
+// Licensed under the MIT License.
+import type { CosmosDiagnostics } from "../../CosmosDiagnostics";
+import type { CosmosHeaders } from "../../queryExecutionContext";
 import { ResourceResponse } from "../../request/ResourceResponse";
-import { Resource } from "../Resource";
-import { Item } from "./Item";
-import { ItemDefinition } from "./ItemDefinition";
+import type { Resource } from "../Resource";
+import type { Item } from "./Item";
+import type { ItemDefinition } from "./ItemDefinition";
 
 export class ItemResponse<T extends ItemDefinition> extends ResourceResponse<T & Resource> {
   constructor(
@@ -12,9 +13,10 @@ export class ItemResponse<T extends ItemDefinition> extends ResourceResponse<T &
     headers: CosmosHeaders,
     statusCode: number,
     subsstatusCode: number,
-    item: Item
+    item: Item,
+    diagnostics: CosmosDiagnostics,
   ) {
-    super(resource, headers, statusCode, subsstatusCode);
+    super(resource, headers, statusCode, diagnostics, subsstatusCode);
     this.item = item;
   }
   /** Reference to the {@link Item} the response corresponds to. */

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   HubRouteTable,
   HubRouteTablesListOptionalParams,
@@ -15,7 +15,7 @@ import {
   HubRouteTablesCreateOrUpdateResponse,
   HubRouteTablesGetOptionalParams,
   HubRouteTablesGetResponse,
-  HubRouteTablesDeleteOptionalParams
+  HubRouteTablesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface HubRouteTables {
   list(
     resourceGroupName: string,
     virtualHubName: string,
-    options?: HubRouteTablesListOptionalParams
+    options?: HubRouteTablesListOptionalParams,
   ): PagedAsyncIterableIterator<HubRouteTable>;
   /**
    * Creates a RouteTable resource if it doesn't exist else updates the existing RouteTable.
@@ -45,10 +45,10 @@ export interface HubRouteTables {
     virtualHubName: string,
     routeTableName: string,
     routeTableParameters: HubRouteTable,
-    options?: HubRouteTablesCreateOrUpdateOptionalParams
+    options?: HubRouteTablesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<HubRouteTablesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<HubRouteTablesCreateOrUpdateResponse>,
       HubRouteTablesCreateOrUpdateResponse
     >
   >;
@@ -65,7 +65,7 @@ export interface HubRouteTables {
     virtualHubName: string,
     routeTableName: string,
     routeTableParameters: HubRouteTable,
-    options?: HubRouteTablesCreateOrUpdateOptionalParams
+    options?: HubRouteTablesCreateOrUpdateOptionalParams,
   ): Promise<HubRouteTablesCreateOrUpdateResponse>;
   /**
    * Retrieves the details of a RouteTable.
@@ -78,7 +78,7 @@ export interface HubRouteTables {
     resourceGroupName: string,
     virtualHubName: string,
     routeTableName: string,
-    options?: HubRouteTablesGetOptionalParams
+    options?: HubRouteTablesGetOptionalParams,
   ): Promise<HubRouteTablesGetResponse>;
   /**
    * Deletes a RouteTable.
@@ -91,8 +91,8 @@ export interface HubRouteTables {
     resourceGroupName: string,
     virtualHubName: string,
     routeTableName: string,
-    options?: HubRouteTablesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: HubRouteTablesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a RouteTable.
    * @param resourceGroupName The resource group name of the RouteTable.
@@ -104,6 +104,6 @@ export interface HubRouteTables {
     resourceGroupName: string,
     virtualHubName: string,
     routeTableName: string,
-    options?: HubRouteTablesDeleteOptionalParams
+    options?: HubRouteTablesDeleteOptionalParams,
   ): Promise<void>;
 }

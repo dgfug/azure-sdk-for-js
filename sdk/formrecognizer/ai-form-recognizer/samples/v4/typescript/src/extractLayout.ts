@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * This sample shows how to extract only the basic layout information from a document using the `beginExtractLayout`
@@ -11,34 +11,39 @@
 
 import { AzureKeyCredential, DocumentAnalysisClient } from "@azure/ai-form-recognizer";
 
+import { PrebuiltLayoutModel } from "./prebuilt/prebuilt-layout";
+
 import * as dotenv from "dotenv";
 dotenv.config();
 
 async function main() {
-  const endpoint = process.env.FORM_RECOGNIZER_ENDPOINT ?? "<endpoint>";
-  const credential = new AzureKeyCredential(process.env.FORM_RECOGNIZER_API_KEY ?? "<api key>");
+  const endpoint = process.env.FORM_RECOGNIZER_ENDPOINT || "<endpoint>";
+  const credential = new AzureKeyCredential(process.env.FORM_RECOGNIZER_API_KEY || "<api key>");
 
   const client = new DocumentAnalysisClient(endpoint, credential);
 
-  const poller = await client.beginExtractLayout(
+  const poller = await client.beginAnalyzeDocumentFromUrl(
+    PrebuiltLayoutModel,
     // The form recognizer service will access the following URL to a receipt image and extract data from it
     "https://raw.githubusercontent.com/Azure/azure-sdk-for-js/main/sdk/formrecognizer/ai-form-recognizer/assets/forms/Invoice_1.pdf"
   );
 
-  // Generic Document extraction produces all data from the Layout operation as well as the additional key-value pairs
-  // (associations between elements, such as labeled elements), and document entities.
+  // Layout extraction only produces basic elements such as pages, words, lines, etc. as well as information about the
+  // appearance (styles) of textual elements.
   const { pages, tables } = await poller.pollUntilDone();
 
-  if (pages.length <= 0) {
+  if (!pages || pages.length <= 0) {
     console.log("No pages were extracted from the document.");
   } else {
     console.log("Pages:");
     for (const page of pages) {
       console.log("- Page", page.pageNumber, `(unit: ${page.unit})`);
       console.log(`  ${page.width}x${page.height}, angle: ${page.angle}`);
-      console.log(`  ${page.lines.length} lines, ${page.words.length} words`);
+      console.log(
+        `  ${page.lines && page.lines.length} lines, ${page.words && page.words.length} words`
+      );
 
-      if (page.lines.length > 0) {
+      if (page.lines && page.lines.length > 0) {
         console.log("  Lines:");
 
         for (const line of page.lines) {
@@ -54,7 +59,7 @@ async function main() {
     }
   }
 
-  if (tables.length <= 0) {
+  if (!tables || tables.length <= 0) {
     console.log("No tables were extracted from the document.");
   } else {
     console.log("Tables:");

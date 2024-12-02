@@ -1,5 +1,95 @@
 # Release History
 
+## 4.9.1 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 4.9.0 (2024-10-16)
+
+### Features Added
+
+- Add support for Continuous Access Evaluation (CAE). [#31140](https://github.com/Azure/azure-sdk-for-js/pull/31140)
+
+### Other Changes
+
+- Native ESM support has been added, and this package will now emit both CommonJS and ESM. [#31254](https://github.com/Azure/azure-sdk-for-js/pull/31254)
+
+## 4.8.0 (2024-02-14)
+
+### Other Changes
+
+- The default service version is now `7.5`.
+
+## 4.8.0-beta.1 (2023-11-08)
+
+### Other Changes
+
+- The default service version is now `7.5-preview.1`.
+
+## 4.7.0 (2023-03-09)
+
+### Other Changes
+
+- Updated `SecretClient` to support service version 7.4 by default.
+
+## 4.6.0 (2022-09-20)
+
+### Breaking Changes
+
+- Verify the challenge resource matches the vault domain.
+  This should affect few customers who can set `disableChallengeResourceVerification` in the options bag to `true` to disable.
+  See https://aka.ms/azsdk/blog/vault-uri for more information.
+
+## 4.5.1 (2022-08-15)
+
+### Bugs Fixed
+
+- Fixed an issue where `listPropertiesOfSecretVersions` would fail on the second page when using pagination.
+
+## 4.5.0 (2022-08-09)
+
+### Breaking Changes
+
+- Migrated to the Core v2 HTTP pipeline. As a result of this migration:
+  - The response types no longer contain the raw response `_response`. To access the raw response, an `onResponse` callback has to be passed in the request options bag, for example:
+    ```ts
+    let rawResponse: FullOperationResponse | undefined;
+    await client.operationName(/* ...parameters... */, {
+      onResponse: (response) => (rawResponse = response),
+    });
+    ```
+  - The re-export of the `PipelineOptions` type from `@azure/core-http` has been removed. If you previously relied on this export, consider either using the more specific `SecretClientOptions` type or importing `PipelineOptions` from `@azure/core-http` directly.
+
+## 4.5.0-beta.1 (2022-07-07)
+
+### Breaking Changes
+
+- As a result of the migration to Core v2:
+  - The response types no longer contain the raw response `_response`. To access the raw response, an `onResponse` callback has to be passed in the request options bag, for example:
+    ```ts
+    let rawResponse: FullOperationResponse | undefined;
+    await client.operationName(/* ...parameters... */, {
+      onResponse: (response) => (rawResponse = response),
+    });
+    ```
+  - The re-export of the `PipelineOptions` type from `@azure/core-http` has been removed. If you previously relied on this export, consider either using the more specific `SecretClientOptions` type or importing `PipelineOptions` from `@azure/core-http` directly.
+
+### Other Changes
+
+- Migrated the generated client to `@azure/core-rest-pipeline` ("Core v2"). See [Azure Core v1 vs v2](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-rest-pipeline/documentation/core2.md) for more on the difference and benefits of the move.
+
+## 4.4.0 (2022-03-24)
+
+### Other Changes
+
+- This release updates `SecretClient` to support service version 7.3 by default.
+
 ## 4.4.0-beta.2 (2021-11-09)
 
 ### Features Added

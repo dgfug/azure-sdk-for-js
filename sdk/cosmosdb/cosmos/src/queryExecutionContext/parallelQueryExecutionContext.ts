@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { DocumentProducer } from "./documentProducer";
-import { ExecutionContext } from "./ExecutionContext";
+import type { DocumentProducer } from "./documentProducer";
+import type { ExecutionContext } from "./ExecutionContext";
 import { ParallelQueryExecutionContextBase } from "./parallelQueryExecutionContextBase";
 
 /**
@@ -10,8 +10,10 @@ import { ParallelQueryExecutionContextBase } from "./parallelQueryExecutionConte
  * This class is capable of handling parallelized queries and derives from ParallelQueryExecutionContextBase.
  * @hidden
  */
-export class ParallelQueryExecutionContext extends ParallelQueryExecutionContextBase
-  implements ExecutionContext {
+export class ParallelQueryExecutionContext
+  extends ParallelQueryExecutionContextBase
+  implements ExecutionContext
+{
   // Instance members are inherited
 
   // Overriding documentProducerComparator for ParallelQueryExecutionContexts
@@ -22,7 +24,7 @@ export class ParallelQueryExecutionContext extends ParallelQueryExecutionContext
    */
   public documentProducerComparator(
     docProd1: DocumentProducer,
-    docProd2: DocumentProducer
+    docProd2: DocumentProducer,
   ): number {
     return docProd1.generation - docProd2.generation;
   }

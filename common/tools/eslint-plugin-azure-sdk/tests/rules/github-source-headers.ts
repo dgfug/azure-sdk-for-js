@@ -1,28 +1,22 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/github-source-headers";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 const goodHeader = `// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 `;
 
 const valid = `// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 console.log("hello")`;
 
@@ -31,7 +25,7 @@ console.log("hello")`;
 
 const invalid2 = `/*
  * Module description
- * @author Someone
+ * 
  */
 
 console.log("hello")`;
@@ -43,46 +37,46 @@ ruleTester.run("github-source-headers", rule, {
     {
       // only the fields we care about
       code: valid,
-      filename: "test.ts"
+      filename: "file.ts",
     },
     {
       // incorrect format but in a file we don't care about
       code: 'console.log("hello")',
-      filename: "test.js"
-    }
+      filename: "test.js",
+    },
   ],
   invalid: [
     {
       // no comments
       code: 'console.log("hello")',
-      filename: "test.ts",
+      filename: "file.ts",
       errors: [
         {
-          message: configError
-        }
+          message: configError,
+        },
       ],
-      output: valid
+      output: valid,
     },
     // wrong headers
     {
       code: invalid1,
-      filename: "test.ts",
+      filename: "file.ts",
       errors: [
         {
-          message: configError
-        }
+          message: configError,
+        },
       ],
-      output: goodHeader + invalid1
+      output: goodHeader + invalid1,
     },
     {
       code: invalid2,
-      filename: "test.ts",
+      filename: "file.ts",
       errors: [
         {
-          message: configError
-        }
+          message: configError,
+        },
       ],
-      output: goodHeader + invalid2
-    }
-  ]
+      output: goodHeader + invalid2,
+    },
+  ],
 });

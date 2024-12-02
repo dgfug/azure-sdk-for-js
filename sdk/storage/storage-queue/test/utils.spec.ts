@@ -1,20 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
-import * as dotenv from "dotenv";
-import { HttpHeaders } from "../src";
+import { assert } from "chai";
 import {
   sanitizeHeaders,
   sanitizeURL,
   extractConnectionStringParts,
-  isIpEndpointStyle
+  isIpEndpointStyle,
 } from "../src/utils/utils.common";
-import { record, Recorder } from "@azure-tools/test-recorder";
+import { Recorder } from "@azure-tools/test-recorder";
 import { recorderEnvSetup } from "./utils/testutils.common";
-import { URLBuilder } from "@azure/core-http";
-import { Context } from "mocha";
-dotenv.config();
+import { createHttpHeaders } from "@azure/core-rest-pipeline";
+import type { Context } from "mocha";
 
 describe("Utility Helpers", () => {
   let recorder: Recorder;
@@ -30,25 +27,26 @@ describe("Utility Helpers", () => {
     assert.equal(
       "SASConnString",
       connectionStringParts.kind,
-      "extractConnectionStringParts().kind is different than expected."
+      "extractConnectionStringParts().kind is different than expected.",
     );
     assert.equal(
       queueEndpoint,
       connectionStringParts.url,
-      "extractConnectionStringParts().url is different than expected."
+      "extractConnectionStringParts().url is different than expected.",
     );
     assert.equal(
       accountName,
       connectionStringParts.accountName,
-      "extractConnectionStringParts().accountName is different than expected."
+      "extractConnectionStringParts().accountName is different than expected.",
     );
   }
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
@@ -61,7 +59,7 @@ describe("Utility Helpers", () => {
 
   it("sanitizeHeaders redacts SAS token", () => {
     const url = "https://some.url.com/container/blob?sig=sasstring";
-    const headers = new HttpHeaders();
+    const headers = createHttpHeaders();
     headers.set("authorization", "Bearer abcdefg");
     headers.set("x-ms-copy-source", url);
     headers.set("otherheader", url);
@@ -69,20 +67,20 @@ describe("Utility Helpers", () => {
     const sanitized = sanitizeHeaders(headers);
     assert.ok(
       sanitized.get("x-ms-copy-source")!.indexOf("sasstring") === -1,
-      "Expecting SAS string to be redacted."
+      "Expecting SAS string to be redacted.",
     );
     assert.ok(
       sanitized.get("x-ms-copy-source")!.indexOf("*****") !== -1,
-      "Expecting SAS string to be redacted."
+      "Expecting SAS string to be redacted.",
     );
     assert.ok(
       sanitized.get("authorization")! === "*****",
-      "Expecting authorization header value to be redacted."
+      "Expecting authorization header value to be redacted.",
     );
 
     assert.ok(
       sanitized.get("otherheader")!.indexOf("sasstring") !== -1,
-      "Other header should not be changed."
+      "Other header should not be changed.",
     );
   });
 
@@ -90,7 +88,7 @@ describe("Utility Helpers", () => {
     verifySASConnectionString(
       `QueueEndpoint=${queueEndpoint};
         FileEndpoint=https://storagesample.file.core.windows.net;
-        SharedAccessSignature=${sharedAccessSignature}`
+        SharedAccessSignature=${sharedAccessSignature}`,
     );
   });
 
@@ -98,7 +96,7 @@ describe("Utility Helpers", () => {
     verifySASConnectionString(
       `QueueEndpoint=${queueEndpoint};
         FileEndpoint=https://storagesample.file.core.windows.net;
-        SharedAccessSignature=${sharedAccessSignature}`
+        SharedAccessSignature=${sharedAccessSignature}`,
     );
   });
 
@@ -109,60 +107,46 @@ describe("Utility Helpers", () => {
     assert.equal(
       "SASConnString",
       connectionStringParts.kind,
-      "extractConnectionStringParts().kind is different than expected."
+      "extractConnectionStringParts().kind is different than expected.",
     );
     assert.equal(
       customDomainQueueEndpoint,
       connectionStringParts.url,
-      "extractConnectionStringParts().url is different than expected."
+      "extractConnectionStringParts().url is different than expected.",
     );
     assert.equal(
       "",
       connectionStringParts.accountName,
-      "extractConnectionStringParts().accountName is different than expected."
+      "extractConnectionStringParts().accountName is different than expected.",
     );
   });
 
   it("isIpEndpointStyle", async () => {
     assert.equal(
-      isIpEndpointStyle(
-        URLBuilder.parse("https://192.0.0.10:1900/accountName/containerName/blobName")
-      ),
-      true
+      isIpEndpointStyle(new URL("https://192.0.0.10:1900/accountName/containerName/blobName")),
+      true,
     );
     assert.equal(
       isIpEndpointStyle(
-        URLBuilder.parse(
-          "https://[2001:db8:85a3:8d3:1319:8a2e:370:7348]:443/accountName/containerName/blobName"
-        )
+        new URL(
+          "https://[2001:db8:85a3:8d3:1319:8a2e:370:7348]:443/accountName/containerName/blobName",
+        ),
       ),
-      true
+      true,
     );
     assert.equal(
-      isIpEndpointStyle(
-        URLBuilder.parse("https://localhost:80/accountName/containerName/blobName")
-      ),
-      true
+      isIpEndpointStyle(new URL("https://localhost:80/accountName/containerName/blobName")),
+      true,
     );
 
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://192.0.0.10:1900/")), true);
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://192.0.0.10")), true);
+    assert.equal(isIpEndpointStyle(new URL("https://192.0.0.10:1900/")), true);
+    assert.equal(isIpEndpointStyle(new URL("https://192.0.0.10")), true);
 
     assert.equal(
       isIpEndpointStyle(
-        URLBuilder.parse("https://2001:db8:85a3:8d3:1319:8a2e:370:7348/accountName/containerName")
+        new URL("https://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/accountName/containerName"),
       ),
-      true
+      true,
     );
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://2001::1")), true);
-    // assert.equal(isIpEndpointStyle(URLBuilder.parse('https://::1')), true); currently not working due to http url.ts's issue. uncomment after core lib fixed.
-
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://255")), false);
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://255.255")), false);
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://a.b.c.d")), false);
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://256.1.1.1")), false);
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://255.256.1.1")), false);
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://255.255.256.1")), false);
-    assert.equal(isIpEndpointStyle(URLBuilder.parse("https://255.255.255.256")), false);
   });
 });

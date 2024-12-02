@@ -1,14 +1,76 @@
-## 2.0.0-beta.1 (2021-11-03)
+# Release History
 
-This is the first preview for the new version of the `@azure/arm-servicefabric` package that follows the new [guidelines for TypeScript SDKs](https://azure.github.io/azure-sdk/typescript_introduction.html) for Azure services.
+## 3.0.1 (Unreleased)
 
-While this package remains auto generated, the SDK generator itself has undergone changes to comply with the above guidelines in order to generate packages that are idiomatic to the JavaScript/TypeScript ecosystem and consistent with other packages for Azure services. For more on this, please see [State of the Azure SDK 2021](https://devblogs.microsoft.com/azure-sdk/state-of-the-azure-sdk-2021/).
+### Features Added
 
-Please note that this version has breaking changes, all of which were made after careful consideration during the authoring of the guidelines and user studies.
+### Breaking Changes
 
-**Noteworthy changes and features**
-- Authentication: The packages `@azure/ms-rest-nodeauth` or `@azure/ms-rest-browserauth` are no longer supported. Use package [@azure/identity](https://www.npmjs.com/package/@azure/identity) instead. Select a credential from Azure Identity examples based on the authentication method of your choice.
-- Callbacks: Method overloads that used callbacks have been removed and the use of promises is encouraged instead.
-- List operations now return an iterable result that follows the `PagedAsyncIterableIterator` interface as opposed to the previous model where you had to make a new request using the link to the next page.
-- Long running operations i.e. the Lro related object returned by methods whose names started with `begin`, now uses `pollUntilDone` to check whether the request is finished, instead of `pollUntilFinished`. To get the final result, use the corresponding method that will have the suffix `AndWait`.
-- The SDK only supports ECMAScript 2015 (ES6) and beyond, all projects that referenced this SDK should be upgraded to use ES6.
+### Bugs Fixed
+
+### Other Changes
+
+## 3.0.0 (2023-12-05)
+    
+### Features Added
+
+  - Added Interface ApplicationsListNextOptionalParams
+  - Added Interface ApplicationTypesListNextOptionalParams
+  - Added Interface ApplicationTypeVersionsListNextOptionalParams
+  - Added Interface ClustersListByResourceGroupNextOptionalParams
+  - Added Interface ClustersListNextOptionalParams
+  - Added Interface ServicesListNextOptionalParams
+  - Added Type Alias ApplicationsListNextResponse
+  - Added Type Alias ApplicationTypesListNextResponse
+  - Added Type Alias ApplicationTypeVersionsListNextResponse
+  - Added Type Alias ClustersListByResourceGroupNextResponse
+  - Added Type Alias ClustersListNextResponse
+  - Added Type Alias ClusterVersionsEnvironment
+  - Added Type Alias ServicesListNextResponse
+  - Added Enum KnownClusterVersionsEnvironment
+
+### Breaking Changes
+
+  - Operation ClusterVersions.getByEnvironment has a new signature
+  - Operation ClusterVersions.listByEnvironment has a new signature
+  - Removed Enum KnownEnum14
+    
+    
+## 2.1.0 (2022-12-12)
+    
+### Features Added
+
+  - Added Interface ApplicationResource
+  - Added Interface ApplicationResourceProperties
+  - Added Interface ApplicationResourceUpdate
+  - Added Interface ApplicationTypeResource
+  - Added Interface ApplicationTypeVersionResource
+  - Added Interface Cluster
+  - Added Interface NamedPartitionSchemeDescription
+  - Added Interface ServiceResource
+  - Added Interface ServiceResourceProperties
+  - Added Interface ServiceResourceUpdate
+  - Added Interface ServiceResourceUpdateProperties
+  - Added Interface SingletonPartitionSchemeDescription
+  - Added Interface StatefulServiceProperties
+  - Added Interface StatefulServiceUpdateProperties
+  - Added Interface StatelessServiceProperties
+  - Added Interface StatelessServiceUpdateProperties
+  - Added Interface UniformInt64RangePartitionSchemeDescription
+    
+## 2.0.1 (2022-05-01)
+
+### Features Added
+
+  - Bug fix
+
+
+## 2.0.0 (2021-12-13)
+
+The package of @azure/arm-servicefabric is using our next generation design principles since version 2.0.0, which contains breaking changes.
+
+To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
+
+To migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).
+
+To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).

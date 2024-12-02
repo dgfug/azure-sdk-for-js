@@ -1,19 +1,18 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { env, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-
-import { ClientSecretCredential } from "@azure/identity";
-import { TableClient, TableServiceClient } from "../../../src";
 import { AzureNamedKeyCredential, AzureSASCredential } from "@azure/core-auth";
+import type { Recorder, RecorderStartOptions, SanitizerOptions } from "@azure-tools/test-recorder";
+import { env } from "@azure-tools/test-recorder";
+import type { TableServiceClientOptions } from "../../../src/index.js";
+import { TableClient, TableServiceClient } from "../../../src/index.js";
 
-import "./env";
+import { createTestCredential } from "@azure-tools/test-credential";
 
-const mockAccountName = "fakeaccount";
+const mockAccountName = "fakeaccountname";
 const mockAccountKey = "fakeKey";
-const fakeSas =
-  "sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacuptfx&se=2021-01-31T05:16:52Z&st=2021-01-26T21:16:52Z&spr=https&sig=fakeSignature";
-const mockSasConnectionString = `TableEndpoint=https://${mockAccountName}.table.core.windows.net/;SharedAccessSignature=${fakeSas}`;
+const fakeConnString =
+  "TableEndpoint=https://fakeaccountname.table.core.windows.net/;SharedAccessSignature=st=2021-08-03T08:52:15Z&spr=https&sig=fakesigval";
 const replaceableVariables: { [k: string]: string } = {
   // Used in record and playback modes
   // 1. The key-value pairs will be used as the environment variables in playback mode
@@ -21,39 +20,26 @@ const replaceableVariables: { [k: string]: string } = {
   ACCOUNT_NAME: `${mockAccountName}`,
   ACCOUNT_KEY: `${mockAccountKey}`,
   ACCOUNT_SAS: `${mockAccountKey}`,
-  TABLES_URL: `https://${mockAccountName}.table.core.windows.net`,
-  SAS_CONNECTION_STRING: `${mockSasConnectionString}`,
-  AZURE_CLIENT_ID: "azure_client_id",
-  AZURE_CLIENT_SECRET: "azure_client_secret",
-  AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888"
+  TABLES_URL: `https://fakeaccountname.table.core.windows.net`,
+  SAS_CONNECTION_STRING: fakeConnString,
 };
 
-export const recordedEnvironmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    // Used in record mode
-    // Array of callback functions can be provided to customize the generated recordings in record mode
-    // `sig` param of SAS Token is being filtered here
-    (recording: string): string =>
-      env.ACCOUNT_SAS
-        ? recording.replace(
-            new RegExp(env.ACCOUNT_SAS.match("(.*)&sig=(.*)")[2], "g"),
-            `${mockAccountKey}`
-          )
-        : recording
+const sanitizerOptions: SanitizerOptions = {
+  removeHeaderSanitizer: { headersForRemoval: ["Connection", "Accept-Charset"] },
+  connectionStringSanitizers: [
+    {
+      actualConnString: env.SAS_CONNECTION_STRING,
+      fakeConnString: fakeConnString,
+    },
   ],
-  // SAS token may contain sensitive information
-  queryParametersToSkip: [
-    // Used in record and playback modes
-    "se",
-    "sig",
-    "sp",
-    "spr",
-    "srt",
-    "ss",
-    "st",
-    "sv"
-  ]
+};
+
+const recorderOptions: RecorderStartOptions = {
+  envSetupForPlayback: replaceableVariables,
+  sanitizerOptions,
+  removeCentralSanitizers: [
+    "AZSDK3493", // .name in the body is not a secret
+  ],
 };
 
 export type CreateClientMode =
@@ -63,136 +49,154 @@ export type CreateClientMode =
   | "AccountConnectionString"
   | "TokenCredential";
 
-export function createTableClient(
+export async function createTableClient(
   tableName: string,
-  mode: CreateClientMode = "SASConnectionString"
-): TableClient {
+  mode: CreateClientMode = "SASConnectionString",
+  recorder?: Recorder,
+): Promise<TableClient> {
+  let options: TableServiceClientOptions = {};
+
+  if (recorder) {
+    await recorder.start(recorderOptions);
+    await recorder.setMatcher("HeaderlessMatcher");
+    options = { ...options, ...recorder.configureClientOptions({ allowInsecureConnection: true }) };
+  }
+
+  let client: TableClient;
   switch (mode) {
     case "SASConnectionString":
       if (!env.SAS_CONNECTION_STRING) {
         throw new Error(
-          "SASConnectionString is not defined, make sure that SAS_CONNECTION_STRING is defined in the environment"
+          "SASConnectionString is not defined, make sure that SAS_CONNECTION_STRING is defined in the environment",
         );
       }
 
-      return TableClient.fromConnectionString(env.SAS_CONNECTION_STRING, tableName);
+      client = TableClient.fromConnectionString(env.SAS_CONNECTION_STRING, tableName, options);
+      break;
 
     case "SASToken":
       if (!env.SAS_TOKEN || !env.TABLES_URL) {
         throw new Error(
-          "SAS Token and AccountURL must be defined, make sure that SAS_TOKEN and  TABLES_URL are defined in the environment"
+          "SAS Token and AccountURL must be defined, make sure that SAS_TOKEN and  TABLES_URL are defined in the environment",
         );
       }
 
-      return new TableClient(
+      client = new TableClient(
         env.TABLES_URL,
         tableName,
-        new AzureSASCredential(env.SAS_TOKEN ?? "")
+        new AzureSASCredential(env.SAS_TOKEN ?? ""),
+        options,
       );
+      break;
 
     case "AccountKey":
       if (!env.ACCOUNT_NAME || !env.ACCOUNT_KEY || !env.TABLES_URL) {
         throw new Error(
-          "AccountName, AccountURL and AccountKey must be defined, make sure that ACCOUNT_NAME, ACCOUNT_KEY and TABLES_URL are defined in the environment"
+          "AccountName, AccountURL and AccountKey must be defined, make sure that ACCOUNT_NAME, ACCOUNT_KEY and TABLES_URL are defined in the environment",
         );
       }
 
-      return new TableClient(
+      client = new TableClient(
         env.TABLES_URL,
         tableName,
-        new AzureNamedKeyCredential(env.ACCOUNT_NAME, env.ACCOUNT_KEY)
+        new AzureNamedKeyCredential(env.ACCOUNT_NAME, env.ACCOUNT_KEY),
+        options,
       );
+      break;
 
     case "TokenCredential": {
-      if (!env.AZURE_TENANT_ID || !env.AZURE_CLIENT_ID || !env.AZURE_CLIENT_SECRET) {
-        throw new Error(
-          "AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET must be defined, make sure that they are in the environment"
-        );
-      }
-
-      const credential = new ClientSecretCredential(
-        env.AZURE_TENANT_ID,
-        env.AZURE_CLIENT_ID,
-        env.AZURE_CLIENT_SECRET
-      );
-
-      return new TableClient(env.TABLES_URL, tableName, credential);
+      const credential = createTestCredential();
+      client = new TableClient(env.TABLES_URL ?? "", tableName, credential, options);
+      break;
     }
 
     case "AccountConnectionString":
       if (!env.ACCOUNT_CONNECTION_STRING) {
         throw new Error(
-          "AccountConnectionString is not defined, make sure that ACCOUNT_CONNECTION_STRING is defined in the environment"
+          "AccountConnectionString is not defined, make sure that ACCOUNT_CONNECTION_STRING is defined in the environment",
         );
       }
-
-      return TableClient.fromConnectionString(env.ACCOUNT_CONNECTION_STRING, tableName);
+      client = TableClient.fromConnectionString(env.ACCOUNT_CONNECTION_STRING, tableName, options);
+      break;
 
     default:
       throw new Error(`Unknown authentication mode ${mode}`);
   }
+
+  return client;
 }
 
-export function createTableServiceClient(
-  mode: CreateClientMode = "SASConnectionString"
-): TableServiceClient {
+export async function createTableServiceClient(
+  mode: CreateClientMode = "SASConnectionString",
+  recorder?: Recorder,
+): Promise<TableServiceClient> {
+  let options: TableServiceClientOptions = {};
+
+  if (recorder) {
+    await recorder.start(recorderOptions);
+    await recorder.setMatcher("HeaderlessMatcher");
+    options = { ...options, ...recorder.configureClientOptions({ allowInsecureConnection: true }) };
+  }
+
+  let client: TableServiceClient;
+
   switch (mode) {
     case "SASConnectionString":
       if (!env.SAS_CONNECTION_STRING) {
         throw new Error(
-          "SASConnectionString is not defined, make sure that SAS_CONNECTION_STRING is defined in the environment"
+          "SASConnectionString is not defined, make sure that SAS_CONNECTION_STRING is defined in the environment",
         );
       }
 
-      return TableServiceClient.fromConnectionString(env.SAS_CONNECTION_STRING);
+      client = TableServiceClient.fromConnectionString(env.SAS_CONNECTION_STRING, options);
+      break;
 
     case "SASToken":
       if (!env.SAS_TOKEN || !env.TABLES_URL) {
         throw new Error(
-          "SAS Token and AccountURL must be defined, make sure that SAS_TOKEN and  TABLES_URL are defined in the environment"
+          "SAS Token and AccountURL must be defined, make sure that SAS_TOKEN and  TABLES_URL are defined in the environment",
         );
       }
 
-      return new TableServiceClient(`${env.TABLES_URL}${env.SAS_TOKEN}`);
+      client = new TableServiceClient(`${env.TABLES_URL}${env.SAS_TOKEN}`, options);
+      break;
 
     case "AccountKey":
       if (!env.ACCOUNT_NAME || !env.ACCOUNT_KEY || !env.TABLES_URL) {
         throw new Error(
-          "AccountName, AccountURL and AccountKey must be defined, make sure that ACCOUNT_NAME, ACCOUNT_KEY and TABLES_URL are defined in the environment"
+          "AccountName, AccountURL and AccountKey must be defined, make sure that ACCOUNT_NAME, ACCOUNT_KEY and TABLES_URL are defined in the environment",
         );
       }
 
-      return new TableServiceClient(
+      client = new TableServiceClient(
         env.TABLES_URL,
-        new AzureNamedKeyCredential(env.ACCOUNT_NAME, env.ACCOUNT_KEY)
+        new AzureNamedKeyCredential(env.ACCOUNT_NAME, env.ACCOUNT_KEY),
+        options,
       );
+      break;
 
     case "TokenCredential": {
-      if (!env.AZURE_TENANT_ID || !env.AZURE_CLIENT_ID || !env.AZURE_CLIENT_SECRET) {
-        throw new Error(
-          "AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET must be defined, make sure that they are in the environment"
-        );
-      }
-
-      const credential = new ClientSecretCredential(
-        env.AZURE_TENANT_ID,
-        env.AZURE_CLIENT_ID,
-        env.AZURE_CLIENT_SECRET
-      );
-
-      return new TableServiceClient(env.TABLES_URL, credential);
+      const credential = createTestCredential();
+      client = new TableServiceClient(env.TABLES_URL ?? "", credential, {
+        ...options,
+        version: "2020-12-06",
+      });
+      break;
     }
 
     case "AccountConnectionString":
       if (!env.ACCOUNT_CONNECTION_STRING) {
         throw new Error(
-          "AccountConnectionString is not defined, make sure that ACCOUNT_CONNECTION_STRING is defined in the environment"
+          "AccountConnectionString is not defined, make sure that ACCOUNT_CONNECTION_STRING is defined in the environment",
         );
       }
 
-      return TableServiceClient.fromConnectionString(env.ACCOUNT_CONNECTION_STRING);
+      client = TableServiceClient.fromConnectionString(env.ACCOUNT_CONNECTION_STRING, options);
+      break;
 
     default:
       throw new Error(`Unknown authentication mode ${mode}`);
   }
+
+  return client;
 }

@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how the deferMessage() function can be used to defer a message for later processing.
@@ -19,16 +19,18 @@ import {
   delay,
   ProcessErrorArgs,
   ServiceBusReceivedMessage,
-  ServiceBusMessage
+  ServiceBusMessage,
 } from "@azure/service-bus";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
+const credential = new DefaultAzureCredential();
 
 export async function main() {
   await sendMessages();
@@ -37,7 +39,7 @@ export async function main() {
 
 // Shuffle and send messages
 async function sendMessages() {
-  const sbClient = new ServiceBusClient(connectionString);
+  const sbClient = new ServiceBusClient(fqdn, credential);
   // createSender() can also be used to create a sender for a topic.
   const sender = sbClient.createSender(queueName);
 
@@ -46,14 +48,14 @@ async function sendMessages() {
     { step: 2, title: "Unpack" },
     { step: 3, title: "Prepare" },
     { step: 4, title: "Cook" },
-    { step: 5, title: "Eat" }
+    { step: 5, title: "Eat" },
   ];
   const promises = new Array();
   for (let index = 0; index < data.length; index++) {
     const message: ServiceBusMessage = {
       body: data[index],
       subject: "RecipeStep",
-      contentType: "application/json"
+      contentType: "application/json",
     };
     // the way we shuffle the message order is to introduce a tiny random delay before each of the messages is sent
     promises.push(
@@ -61,10 +63,10 @@ async function sendMessages() {
         try {
           await sender.sendMessages(message);
           console.log("Sent message step:", data[index].step);
-        } catch (err) {
+        } catch (err: any) {
           console.log("Error while sending message", err);
         }
-      })
+      }),
     );
   }
   // wait until all the send tasks are complete
@@ -74,7 +76,7 @@ async function sendMessages() {
 }
 
 async function receiveMessage() {
-  const sbClient = new ServiceBusClient(connectionString);
+  const sbClient = new ServiceBusClient(fqdn, credential);
 
   // If receiving from a subscription, you can use the createReceiver(topicName, subscriptionName) overload
   let receiver = sbClient.createReceiver(queueName);
@@ -105,7 +107,7 @@ async function receiveMessage() {
         // we dead-letter the message if we don't know what to do with it.
         console.log(
           "Unknown message received, moving it to dead-letter queue ",
-          brokeredMessage.body
+          brokeredMessage.body,
         );
         await receiver.deadLetterMessage(brokeredMessage);
       }
@@ -117,8 +119,8 @@ async function receiveMessage() {
     receiver.subscribe(
       { processMessage, processError },
       {
-        autoCompleteMessages: false
-      }
+        autoCompleteMessages: false,
+      },
     ); // Disabling autoCompleteMessages so we can control when message can be completed, deferred or deadlettered
     await delay(10000);
     await receiver.close();

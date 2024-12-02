@@ -10,22 +10,23 @@ import { RecommendedSensitivityLabels } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   RecommendedSensitivityLabelUpdateList,
-  RecommendedSensitivityLabelsUpdateOptionalParams
+  RecommendedSensitivityLabelsUpdateOptionalParams,
 } from "../models";
 
 /** Class containing RecommendedSensitivityLabels operations. */
 export class RecommendedSensitivityLabelsImpl
-  implements RecommendedSensitivityLabels {
-  private readonly client: SqlManagementClientContext;
+  implements RecommendedSensitivityLabels
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class RecommendedSensitivityLabels class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -43,11 +44,11 @@ export class RecommendedSensitivityLabelsImpl
     serverName: string,
     databaseName: string,
     parameters: RecommendedSensitivityLabelUpdateList,
-    options?: RecommendedSensitivityLabelsUpdateOptionalParams
+    options?: RecommendedSensitivityLabelsUpdateOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, parameters, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 }
@@ -55,20 +56,19 @@ export class RecommendedSensitivityLabelsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/recommendedSensitivityLabels",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/recommendedSensitivityLabels",
   httpMethod: "PATCH",
   responses: { 200: {}, default: {} },
-  requestBody: Parameters.parameters49,
-  queryParameters: [Parameters.apiVersion2],
+  requestBody: Parameters.parameters67,
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.databaseName
+    Parameters.databaseName,
   ],
   headerParameters: [Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ExpressRoutePort,
   ExpressRoutePortsListByResourceGroupOptionalParams,
@@ -22,7 +22,7 @@ import {
   ExpressRoutePortsUpdateTagsResponse,
   GenerateExpressRoutePortsLOARequest,
   ExpressRoutePortsGenerateLOAOptionalParams,
-  ExpressRoutePortsGenerateLOAResponse
+  ExpressRoutePortsGenerateLOAResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -35,14 +35,14 @@ export interface ExpressRoutePorts {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: ExpressRoutePortsListByResourceGroupOptionalParams
+    options?: ExpressRoutePortsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRoutePort>;
   /**
    * List all the ExpressRoutePort resources in the specified subscription.
    * @param options The options parameters.
    */
   list(
-    options?: ExpressRoutePortsListOptionalParams
+    options?: ExpressRoutePortsListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRoutePort>;
   /**
    * Deletes the specified ExpressRoutePort resource.
@@ -53,8 +53,8 @@ export interface ExpressRoutePorts {
   beginDelete(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRoutePortsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ExpressRoutePortsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified ExpressRoutePort resource.
    * @param resourceGroupName The name of the resource group.
@@ -64,7 +64,7 @@ export interface ExpressRoutePorts {
   beginDeleteAndWait(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRoutePortsDeleteOptionalParams
+    options?: ExpressRoutePortsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Retrieves the requested ExpressRoutePort resource.
@@ -75,7 +75,7 @@ export interface ExpressRoutePorts {
   get(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRoutePortsGetOptionalParams
+    options?: ExpressRoutePortsGetOptionalParams,
   ): Promise<ExpressRoutePortsGetResponse>;
   /**
    * Creates or updates the specified ExpressRoutePort resource.
@@ -88,10 +88,10 @@ export interface ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     parameters: ExpressRoutePort,
-    options?: ExpressRoutePortsCreateOrUpdateOptionalParams
+    options?: ExpressRoutePortsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRoutePortsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRoutePortsCreateOrUpdateResponse>,
       ExpressRoutePortsCreateOrUpdateResponse
     >
   >;
@@ -106,7 +106,7 @@ export interface ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     parameters: ExpressRoutePort,
-    options?: ExpressRoutePortsCreateOrUpdateOptionalParams
+    options?: ExpressRoutePortsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRoutePortsCreateOrUpdateResponse>;
   /**
    * Update ExpressRoutePort tags.
@@ -119,7 +119,7 @@ export interface ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     parameters: TagsObject,
-    options?: ExpressRoutePortsUpdateTagsOptionalParams
+    options?: ExpressRoutePortsUpdateTagsOptionalParams,
   ): Promise<ExpressRoutePortsUpdateTagsResponse>;
   /**
    * Generate a letter of authorization for the requested ExpressRoutePort resource.
@@ -132,6 +132,6 @@ export interface ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     request: GenerateExpressRoutePortsLOARequest,
-    options?: ExpressRoutePortsGenerateLOAOptionalParams
+    options?: ExpressRoutePortsGenerateLOAOptionalParams,
   ): Promise<ExpressRoutePortsGenerateLOAResponse>;
 }

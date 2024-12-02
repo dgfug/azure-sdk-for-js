@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Consume events delivered by Event Grid to a Service Bus Queue
@@ -7,11 +7,9 @@
  */
 
 import { EventGridDeserializer, isSystemEvent } from "@azure/eventgrid";
-import { ServiceBusClient, ServiceBusReceivedMessage } from "@azure/service-bus";
-import * as dotenv from "dotenv";
-
-// Load the .env file if it exists
-dotenv.config();
+import type { ServiceBusReceivedMessage } from "@azure/service-bus";
+import { ServiceBusClient } from "@azure/service-bus";
+import "dotenv/config";
 
 // Create a Event Grid Consumer which will decode the payload of service bus message into an array of EventGridEvent objects.
 const consumer = new EventGridDeserializer();
@@ -28,7 +26,7 @@ const serviceBusQueueName = process.env["SERVICE_BUS_QUEUE_NAME"] || "";
 
 // Create a receiver to read messages from the Service Bus Queue.
 const receiver = new ServiceBusClient(serviceBusClientConnectionString).createReceiver(
-  serviceBusQueueName
+  serviceBusQueueName,
 );
 
 // The handler function which will be run on each message we remove from the Service Bus Queue.
@@ -46,13 +44,13 @@ async function processMessage(message: ServiceBusReceivedMessage): Promise<void>
   }
 }
 
-async function main() {
+async function main(): Promise<void> {
   // Start processing events.
   const closer = receiver.subscribe({
     processMessage,
     processError: async (err) => {
       console.error("Error while processing events:", err);
-    }
+    },
   });
 
   // Run for 10 seconds, allowing events to be processed.
@@ -63,9 +61,9 @@ async function main() {
   // Stop processing events and exit.
   await closer.close();
   await receiver.close();
-  process.exit();
 }
 
 main().catch((err) => {
   console.error("The sample encountered an error:", err);
+  process.exit(1);
 });

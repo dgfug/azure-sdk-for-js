@@ -1,22 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import chai from "chai";
-const should = chai.should();
-import chaiAsPromised from "chai-as-promised";
-chai.use(chaiAsPromised);
-import { delay, ServiceBusMessage } from "../../src";
-import { TestClientType, TestMessage } from "./utils/testUtils";
+import type { ServiceBusMessage } from "../../src/index.js";
+import { delay } from "../../src/index.js";
+import type { TestClientType } from "./utils/testUtils.js";
+import { TestMessage } from "./utils/testUtils.js";
+import type { EntityName } from "./utils/testutils2.js";
 import {
   createServiceBusClientForTests,
   testPeekMsgsLength,
-  EntityName,
   getRandomTestClientTypeWithSessions,
-  getRandomTestClientTypeWithNoSessions
-} from "./utils/testutils2";
-import { ServiceBusReceiver } from "../../src";
-import { ServiceBusSender } from "../../src";
-import { ServiceBusReceivedMessage } from "../../src";
+  getRandomTestClientTypeWithNoSessions,
+} from "./utils/testutils2.js";
+import type { ServiceBusReceiver } from "../../src/index.js";
+import type { ServiceBusSender } from "../../src/index.js";
+import type { ServiceBusReceivedMessage } from "../../src/index.js";
+import type Long from "long";
+import { afterAll, afterEach, beforeAll, describe, it } from "vitest";
+import { should } from "./utils/chai.js";
 
 describe("Deferred Messages", () => {
   let serviceBusClient: ReturnType<typeof createServiceBusClientForTests>;
@@ -28,11 +29,11 @@ describe("Deferred Messages", () => {
   const noSessionTestClientType = getRandomTestClientTypeWithNoSessions();
   const withSessionTestClientType = getRandomTestClientTypeWithSessions();
 
-  before(() => {
+  beforeAll(() => {
     serviceBusClient = createServiceBusClientForTests();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await serviceBusClient.test.after();
   });
 
@@ -42,7 +43,7 @@ describe("Deferred Messages", () => {
     receiver = await serviceBusClient.test.createPeekLockReceiver(entityNames);
 
     sender = serviceBusClient.test.addToCleanup(
-      serviceBusClient.createSender(entityNames.queue ?? entityNames.topic!)
+      serviceBusClient.createSender(entityNames.queue ?? entityNames.topic!),
     );
 
     deadLetterReceiver = serviceBusClient.test.createDeadLetterReceiver(entityNames);
@@ -52,21 +53,22 @@ describe("Deferred Messages", () => {
     await serviceBusClient.test.afterEach();
   });
 
-  it(noSessionTestClientType + ": Empty array as input throws no error", async function(): Promise<
-    void
-  > {
-    await beforeEachTest(noSessionTestClientType);
-    const msgs = await receiver.receiveDeferredMessages([]);
-    should.equal(msgs.length, 0);
-  });
+  it(
+    noSessionTestClientType + ": Empty array as input throws no error",
+    async function (): Promise<void> {
+      await beforeEachTest(noSessionTestClientType);
+      const msgs = await receiver.receiveDeferredMessages([]);
+      should.equal(msgs.length, 0);
+    },
+  );
 
   it(
     withSessionTestClientType + ": Empty array as input throws no error",
-    async function(): Promise<void> {
+    async function (): Promise<void> {
       await beforeEachTest(withSessionTestClientType);
       const msgs = await receiver.receiveDeferredMessages([]);
       should.equal(msgs.length, 0);
-    }
+    },
   );
 
   /**
@@ -77,7 +79,7 @@ describe("Deferred Messages", () => {
    */
   async function deferMessage(
     testMessage: ServiceBusMessage,
-    passSequenceNumberInArray: boolean
+    passSequenceNumberInArray: boolean,
   ): Promise<ServiceBusReceivedMessage> {
     await sender.sendMessages(testMessage);
     const receivedMsgs = await receiver.receiveMessages(1);
@@ -88,7 +90,7 @@ describe("Deferred Messages", () => {
     should.equal(
       receivedMsgs[0].messageId,
       testMessage.messageId,
-      "MessageId is different than expected"
+      "MessageId is different than expected",
     );
 
     if (!receivedMsgs[0].sequenceNumber) {
@@ -98,21 +100,22 @@ describe("Deferred Messages", () => {
     await receiver.deferMessage(receivedMsgs[0]);
 
     const [deferredMsg] = await receiver.receiveDeferredMessages(
-      passSequenceNumberInArray ? [sequenceNumber] : sequenceNumber
+      passSequenceNumberInArray ? [sequenceNumber] : sequenceNumber,
     );
     if (!deferredMsg) {
       throw "No message received for sequence number";
     }
+    should.equal(deferredMsg.state, "deferred");
     should.equal(
       !!(deferredMsg as any)["delivery"],
       true,
-      "Deferred msg should have delivery! We use this assumption to differentiate between deferred msg and other messages when settling."
+      "Deferred msg should have delivery! We use this assumption to differentiate between deferred msg and other messages when settling.",
     );
     should.equal(deferredMsg.body, testMessage.body, "MessageBody is different than expected");
     should.equal(
       deferredMsg.messageId,
       testMessage.messageId,
-      "MessageId is different than expected"
+      "MessageId is different than expected",
     );
     should.equal(deferredMsg.deliveryCount, 1, "DeliveryCount is different than expected");
 
@@ -122,7 +125,7 @@ describe("Deferred Messages", () => {
   async function completeDeferredMessage(
     sequenceNumber: Long,
     expectedDeliverCount: number,
-    testMessages: ServiceBusMessage
+    testMessages: ServiceBusMessage,
   ): Promise<void> {
     await testPeekMsgsLength(receiver, 1);
 
@@ -135,12 +138,12 @@ describe("Deferred Messages", () => {
     should.equal(
       deferredMsg.deliveryCount,
       expectedDeliverCount,
-      "DeliveryCount is different than expected"
+      "DeliveryCount is different than expected",
     );
     should.equal(
       deferredMsg.messageId,
       testMessages.messageId,
-      "MessageId is different than expected"
+      "MessageId is different than expected",
     );
 
     await receiver.completeMessage(deferredMsg);
@@ -163,19 +166,19 @@ describe("Deferred Messages", () => {
 
   it(
     noSessionTestClientType + ": Abandoning a deferred message puts it back to the deferred queue.",
-    async function(): Promise<void> {
+    async function (): Promise<void> {
       await beforeEachTest(noSessionTestClientType);
       await testAbandon();
-    }
+    },
   );
 
   it(
     withSessionTestClientType +
       ": Abandoning a deferred message puts it back to the deferred queue.",
-    async function(): Promise<void> {
+    async function (): Promise<void> {
       await beforeEachTest(withSessionTestClientType);
       await testAbandon();
-    }
+    },
   );
 
   async function testDefer(): Promise<void> {
@@ -192,19 +195,19 @@ describe("Deferred Messages", () => {
   }
   it(
     noSessionTestClientType + ": Deferring a deferred message puts it back to the deferred queue.",
-    async function(): Promise<void> {
+    async function (): Promise<void> {
       await beforeEachTest(noSessionTestClientType);
       await testDefer();
-    }
+    },
   );
 
   it(
     withSessionTestClientType +
       ": Deferring a deferred message puts it back to the deferred queue.",
-    async function(): Promise<void> {
+    async function (): Promise<void> {
       await beforeEachTest(withSessionTestClientType);
       await testDefer();
-    }
+    },
   );
 
   async function testDeadletter(): Promise<void> {
@@ -223,13 +226,13 @@ describe("Deferred Messages", () => {
     should.equal(
       deadLetterMsgs[0].body,
       testMessages.body,
-      "MessageBody is different than expected"
+      "MessageBody is different than expected",
     );
     should.equal(deadLetterMsgs[0].deliveryCount, 1, "DeliveryCount is different than expected");
     should.equal(
       deadLetterMsgs[0].messageId,
       testMessages.messageId,
-      "MessageId is different than expected"
+      "MessageId is different than expected",
     );
 
     await receiver.completeMessage(deadLetterMsgs[0]);
@@ -239,23 +242,21 @@ describe("Deferred Messages", () => {
 
   it(
     noSessionTestClientType + ": Deadlettering a deferred message moves it to dead letter queue.",
-    async function(): Promise<void> {
+    async function (): Promise<void> {
       await beforeEachTest(noSessionTestClientType);
       await testDeadletter();
-    }
+    },
   );
 
   it(
     withSessionTestClientType + ": Deadlettering a deferred message moves it to dead letter queue.",
-    async function(): Promise<void> {
+    async function (): Promise<void> {
       await beforeEachTest(withSessionTestClientType);
       await testDeadletter();
-    }
+    },
   );
 
-  it(`${noSessionTestClientType}: renewLock on a deferred message`, async function(): Promise<
-    void
-  > {
+  it(`${noSessionTestClientType}: renewLock on a deferred message`, async function (): Promise<void> {
     await beforeEachTest(noSessionTestClientType);
     const testMessages = TestMessage.getSample();
     const deferredMsg = await deferMessage(testMessages, false);
@@ -269,7 +270,7 @@ describe("Deferred Messages", () => {
     should.equal(
       lockedUntilAfterRenewlock > lockedUntilBeforeRenewlock!,
       true,
-      "MessageLock did not get renewed!"
+      "MessageLock did not get renewed!",
     );
     await receiver.deferMessage(deferredMsg);
     await completeDeferredMessage(sequenceNumber, 2, testMessages);

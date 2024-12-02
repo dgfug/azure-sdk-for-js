@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Demonstrates container create, read, delete and reading all containers belonging to a database.
  */
 
-const path = require("path");
 require("dotenv").config();
 
 const { finish, handleError, logStep, logSampleHeader } = require("./Shared/handleError");

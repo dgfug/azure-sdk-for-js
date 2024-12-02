@@ -1,8 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RequestPolicy, RequestPolicyFactory, RequestPolicyOptions } from "@azure/core-http";
-import { CredentialPolicy } from "../policies/CredentialPolicy";
+import type {
+  RequestPolicy,
+  RequestPolicyFactory,
+  RequestPolicyOptionsLike as RequestPolicyOptions,
+} from "@azure/core-http-compat";
+import type { CredentialPolicy } from "../policies/CredentialPolicy";
 
 /**
  * Credential is an abstract class for Azure Storage HTTP requests signing. This
@@ -25,5 +29,5 @@ export abstract class Credential implements RequestPolicyFactory {
  */
 export type CredentialPolicyCreator = (
   nextPolicy: RequestPolicy,
-  options: RequestPolicyOptions
+  options: RequestPolicyOptions,
 ) => CredentialPolicy;

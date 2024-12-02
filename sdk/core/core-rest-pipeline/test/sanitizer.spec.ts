@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
-import { Sanitizer } from "../src/util/sanitizer";
+import { assert, describe, it } from "vitest";
+import { Sanitizer } from "../src/util/sanitizer.js";
 
-describe("Sanitizer", function() {
-  it("Redacts query parameters in url properties", function() {
+describe("Sanitizer", function () {
+  it("Redacts query parameters in url properties", function () {
     const expected = `{
   "url": "http://example.com/foo?api-version=123&secret=REDACTED"
 }`;
@@ -14,10 +14,19 @@ describe("Sanitizer", function() {
     assert.strictEqual(result, expected);
   });
 
-  it("Handles recursive data structures", function() {
+  it("Ignores url of empty string", function () {
+    const expected = `{
+  "url": ""
+}`;
+    const sanitizer = new Sanitizer();
+    const result = sanitizer.sanitize({ url: "" });
+    assert.strictEqual(result, expected);
+  });
+
+  it("Handles recursive data structures", function () {
     const recursive: { a: number; b: unknown } = {
       a: 42,
-      b: undefined
+      b: undefined,
     };
     const expected = `{
   "a": 42,

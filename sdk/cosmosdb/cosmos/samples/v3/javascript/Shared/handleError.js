@@ -1,8 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-const path = require("path");
-require("dotenv").config();
+// Licensed under the MIT License.
 
 const { CosmosClient } = require("@azure/cosmos");
 const key = process.env.COSMOS_KEY || "<cosmos key>";

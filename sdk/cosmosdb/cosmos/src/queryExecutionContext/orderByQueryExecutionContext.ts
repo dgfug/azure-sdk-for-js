@@ -1,17 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../ClientContext";
-import { PartitionedQueryExecutionInfo } from "../request/ErrorResponse";
-import { FeedOptions } from "../request/FeedOptions";
-import { DocumentProducer } from "./documentProducer";
-import { ExecutionContext } from "./ExecutionContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../ClientContext";
+import type { PartitionedQueryExecutionInfo } from "../request/ErrorResponse";
+import type { FeedOptions } from "../request/FeedOptions";
+import type { DocumentProducer } from "./documentProducer";
+import type { ExecutionContext } from "./ExecutionContext";
 import { OrderByDocumentProducerComparator } from "./orderByDocumentProducerComparator";
 import { ParallelQueryExecutionContextBase } from "./parallelQueryExecutionContextBase";
-import { SqlQuerySpec } from "./SqlQuerySpec";
+import type { SqlQuerySpec } from "./SqlQuerySpec";
 
 /** @hidden */
-export class OrderByQueryExecutionContext extends ParallelQueryExecutionContextBase
-  implements ExecutionContext {
+export class OrderByQueryExecutionContext
+  extends ParallelQueryExecutionContextBase
+  implements ExecutionContext
+{
   private orderByComparator: any;
   /**
    * Provides the OrderByQueryExecutionContext.
@@ -31,10 +33,18 @@ export class OrderByQueryExecutionContext extends ParallelQueryExecutionContextB
     collectionLink: string,
     query: string | SqlQuerySpec,
     options: FeedOptions,
-    partitionedQueryExecutionInfo: PartitionedQueryExecutionInfo
+    partitionedQueryExecutionInfo: PartitionedQueryExecutionInfo,
+    correlatedActivityId: string,
   ) {
     // Calling on base class constructor
-    super(clientContext, collectionLink, query, options, partitionedQueryExecutionInfo);
+    super(
+      clientContext,
+      collectionLink,
+      query,
+      options,
+      partitionedQueryExecutionInfo,
+      correlatedActivityId,
+    );
     this.orderByComparator = new OrderByDocumentProducerComparator(this.sortOrders);
   }
   // Instance members are inherited

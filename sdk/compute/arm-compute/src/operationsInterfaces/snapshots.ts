@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Snapshot,
   SnapshotsListByResourceGroupOptionalParams,
@@ -23,7 +23,7 @@ import {
   GrantAccessData,
   SnapshotsGrantAccessOptionalParams,
   SnapshotsGrantAccessResponse,
-  SnapshotsRevokeAccessOptionalParams
+  SnapshotsRevokeAccessOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -36,14 +36,14 @@ export interface Snapshots {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: SnapshotsListByResourceGroupOptionalParams
+    options?: SnapshotsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Snapshot>;
   /**
    * Lists snapshots under a subscription.
    * @param options The options parameters.
    */
   list(
-    options?: SnapshotsListOptionalParams
+    options?: SnapshotsListOptionalParams,
   ): PagedAsyncIterableIterator<Snapshot>;
   /**
    * Creates or updates a snapshot.
@@ -58,10 +58,10 @@ export interface Snapshots {
     resourceGroupName: string,
     snapshotName: string,
     snapshot: Snapshot,
-    options?: SnapshotsCreateOrUpdateOptionalParams
+    options?: SnapshotsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SnapshotsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SnapshotsCreateOrUpdateResponse>,
       SnapshotsCreateOrUpdateResponse
     >
   >;
@@ -78,7 +78,7 @@ export interface Snapshots {
     resourceGroupName: string,
     snapshotName: string,
     snapshot: Snapshot,
-    options?: SnapshotsCreateOrUpdateOptionalParams
+    options?: SnapshotsCreateOrUpdateOptionalParams,
   ): Promise<SnapshotsCreateOrUpdateResponse>;
   /**
    * Updates (patches) a snapshot.
@@ -93,10 +93,10 @@ export interface Snapshots {
     resourceGroupName: string,
     snapshotName: string,
     snapshot: SnapshotUpdate,
-    options?: SnapshotsUpdateOptionalParams
+    options?: SnapshotsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SnapshotsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SnapshotsUpdateResponse>,
       SnapshotsUpdateResponse
     >
   >;
@@ -113,7 +113,7 @@ export interface Snapshots {
     resourceGroupName: string,
     snapshotName: string,
     snapshot: SnapshotUpdate,
-    options?: SnapshotsUpdateOptionalParams
+    options?: SnapshotsUpdateOptionalParams,
   ): Promise<SnapshotsUpdateResponse>;
   /**
    * Gets information about a snapshot.
@@ -126,7 +126,7 @@ export interface Snapshots {
   get(
     resourceGroupName: string,
     snapshotName: string,
-    options?: SnapshotsGetOptionalParams
+    options?: SnapshotsGetOptionalParams,
   ): Promise<SnapshotsGetResponse>;
   /**
    * Deletes a snapshot.
@@ -139,8 +139,8 @@ export interface Snapshots {
   beginDelete(
     resourceGroupName: string,
     snapshotName: string,
-    options?: SnapshotsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SnapshotsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a snapshot.
    * @param resourceGroupName The name of the resource group.
@@ -152,7 +152,7 @@ export interface Snapshots {
   beginDeleteAndWait(
     resourceGroupName: string,
     snapshotName: string,
-    options?: SnapshotsDeleteOptionalParams
+    options?: SnapshotsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Grants access to a snapshot.
@@ -167,10 +167,10 @@ export interface Snapshots {
     resourceGroupName: string,
     snapshotName: string,
     grantAccessData: GrantAccessData,
-    options?: SnapshotsGrantAccessOptionalParams
+    options?: SnapshotsGrantAccessOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SnapshotsGrantAccessResponse>,
+    SimplePollerLike<
+      OperationState<SnapshotsGrantAccessResponse>,
       SnapshotsGrantAccessResponse
     >
   >;
@@ -187,7 +187,7 @@ export interface Snapshots {
     resourceGroupName: string,
     snapshotName: string,
     grantAccessData: GrantAccessData,
-    options?: SnapshotsGrantAccessOptionalParams
+    options?: SnapshotsGrantAccessOptionalParams,
   ): Promise<SnapshotsGrantAccessResponse>;
   /**
    * Revokes access to a snapshot.
@@ -200,8 +200,8 @@ export interface Snapshots {
   beginRevokeAccess(
     resourceGroupName: string,
     snapshotName: string,
-    options?: SnapshotsRevokeAccessOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SnapshotsRevokeAccessOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Revokes access to a snapshot.
    * @param resourceGroupName The name of the resource group.
@@ -213,6 +213,6 @@ export interface Snapshots {
   beginRevokeAccessAndWait(
     resourceGroupName: string,
     snapshotName: string,
-    options?: SnapshotsRevokeAccessOptionalParams
+    options?: SnapshotsRevokeAccessOptionalParams,
   ): Promise<void>;
 }

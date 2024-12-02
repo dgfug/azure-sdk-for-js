@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type {
   PipelineResponse,
   PipelineRequest,
   SendRequest,
-  PipelinePolicy
+  PipelinePolicy,
 } from "@azure/core-rest-pipeline";
 
 export const webPubSubReverseProxyPolicyName = "webPubSubReverseProxyPolicy";
@@ -24,6 +24,6 @@ export function webPubSubReverseProxyPolicy(endpoint: string): PipelinePolicy {
       parsedUrl.host = rpEndpointUrl.host;
       request.url = parsedUrl.toString();
       return next(request);
-    }
+    },
   };
 }

@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   MhsmPrivateEndpointConnection,
   MhsmPrivateEndpointConnectionsListByResourceOptionalParams,
@@ -79,8 +78,8 @@ export interface MhsmPrivateEndpointConnections {
     privateEndpointConnectionName: string,
     options?: MhsmPrivateEndpointConnectionsDeleteOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<MhsmPrivateEndpointConnectionsDeleteResponse>,
+    SimplePollerLike<
+      OperationState<MhsmPrivateEndpointConnectionsDeleteResponse>,
       MhsmPrivateEndpointConnectionsDeleteResponse
     >
   >;

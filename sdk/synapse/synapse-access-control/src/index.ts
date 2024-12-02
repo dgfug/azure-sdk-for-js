@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-export * from "./models";
-export { AccessControlClient } from "./accessControlClient";
-export { AccessControlClientContext } from "./accessControlClientContext";
-export * from "./operationsInterfaces";
+export * from "./models/index.js";
+export { AccessControlClient } from "./accessControlClient.js";
+export * from "./operationsInterfaces/index.js";

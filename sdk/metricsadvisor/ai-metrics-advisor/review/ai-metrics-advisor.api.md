@@ -4,13 +4,11 @@
 
 ```ts
 
-/// <reference lib="esnext.asynciterable" />
-
-import { OperationOptions } from '@azure/core-http';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PipelineOptions } from '@azure/core-http';
-import { RestResponse } from '@azure/core-http';
-import { TokenCredential } from '@azure/core-auth';
+import type { ExtendedCommonClientOptions } from '@azure/core-http-compat';
+import type { FullOperationResponse } from '@azure/core-client';
+import type { OperationOptions } from '@azure/core-client';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export interface AlertConfigurationsPageResponse extends Array<AnomalyAlertConfiguration> {
@@ -885,7 +883,7 @@ export class MetricsAdvisorAdministrationClient {
 }
 
 // @public
-export interface MetricsAdvisorAdministrationClientOptions extends PipelineOptions {
+export interface MetricsAdvisorAdministrationClientOptions extends ExtendedCommonClientOptions {
 }
 
 // @public
@@ -910,7 +908,7 @@ export class MetricsAdvisorClient {
 }
 
 // @public
-export interface MetricsAdvisorClientOptions extends PipelineOptions {
+export interface MetricsAdvisorClientOptions extends ExtendedCommonClientOptions {
 }
 
 // @public
@@ -1021,6 +1019,13 @@ export type PostgreSqlDataFeedSource = {
     query: string;
     authenticationType: "Basic";
 };
+
+// @public
+export interface RestResponse {
+    // (undocumented)
+    [key: string]: any;
+    _response: FullOperationResponse;
+}
 
 // @public
 export type Severity = "Low" | "Medium" | "High";

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Gallery,
   GalleriesListByResourceGroupOptionalParams,
@@ -19,7 +19,7 @@ import {
   GalleriesUpdateResponse,
   GalleriesGetOptionalParams,
   GalleriesGetResponse,
-  GalleriesDeleteOptionalParams
+  GalleriesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,14 +32,14 @@ export interface Galleries {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: GalleriesListByResourceGroupOptionalParams
+    options?: GalleriesListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Gallery>;
   /**
    * List galleries under a subscription.
    * @param options The options parameters.
    */
   list(
-    options?: GalleriesListOptionalParams
+    options?: GalleriesListOptionalParams,
   ): PagedAsyncIterableIterator<Gallery>;
   /**
    * Create or update a Shared Image Gallery.
@@ -53,10 +53,10 @@ export interface Galleries {
     resourceGroupName: string,
     galleryName: string,
     gallery: Gallery,
-    options?: GalleriesCreateOrUpdateOptionalParams
+    options?: GalleriesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<GalleriesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<GalleriesCreateOrUpdateResponse>,
       GalleriesCreateOrUpdateResponse
     >
   >;
@@ -72,7 +72,7 @@ export interface Galleries {
     resourceGroupName: string,
     galleryName: string,
     gallery: Gallery,
-    options?: GalleriesCreateOrUpdateOptionalParams
+    options?: GalleriesCreateOrUpdateOptionalParams,
   ): Promise<GalleriesCreateOrUpdateResponse>;
   /**
    * Update a Shared Image Gallery.
@@ -86,10 +86,10 @@ export interface Galleries {
     resourceGroupName: string,
     galleryName: string,
     gallery: GalleryUpdate,
-    options?: GalleriesUpdateOptionalParams
+    options?: GalleriesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<GalleriesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<GalleriesUpdateResponse>,
       GalleriesUpdateResponse
     >
   >;
@@ -105,7 +105,7 @@ export interface Galleries {
     resourceGroupName: string,
     galleryName: string,
     gallery: GalleryUpdate,
-    options?: GalleriesUpdateOptionalParams
+    options?: GalleriesUpdateOptionalParams,
   ): Promise<GalleriesUpdateResponse>;
   /**
    * Retrieves information about a Shared Image Gallery.
@@ -116,7 +116,7 @@ export interface Galleries {
   get(
     resourceGroupName: string,
     galleryName: string,
-    options?: GalleriesGetOptionalParams
+    options?: GalleriesGetOptionalParams,
   ): Promise<GalleriesGetResponse>;
   /**
    * Delete a Shared Image Gallery.
@@ -127,8 +127,8 @@ export interface Galleries {
   beginDelete(
     resourceGroupName: string,
     galleryName: string,
-    options?: GalleriesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: GalleriesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete a Shared Image Gallery.
    * @param resourceGroupName The name of the resource group.
@@ -138,6 +138,6 @@ export interface Galleries {
   beginDeleteAndWait(
     resourceGroupName: string,
     galleryName: string,
-    options?: GalleriesDeleteOptionalParams
+    options?: GalleriesDeleteOptionalParams,
   ): Promise<void>;
 }

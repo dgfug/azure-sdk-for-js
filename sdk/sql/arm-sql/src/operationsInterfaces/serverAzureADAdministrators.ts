@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServerAzureADAdministrator,
   ServerAzureADAdministratorsListByServerOptionalParams,
@@ -17,7 +16,7 @@ import {
   ServerAzureADAdministratorsGetResponse,
   ServerAzureADAdministratorsCreateOrUpdateOptionalParams,
   ServerAzureADAdministratorsCreateOrUpdateResponse,
-  ServerAzureADAdministratorsDeleteOptionalParams
+  ServerAzureADAdministratorsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,7 +32,7 @@ export interface ServerAzureADAdministrators {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerAzureADAdministratorsListByServerOptionalParams
+    options?: ServerAzureADAdministratorsListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerAzureADAdministrator>;
   /**
    * Gets a Azure Active Directory administrator.
@@ -47,7 +46,7 @@ export interface ServerAzureADAdministrators {
     resourceGroupName: string,
     serverName: string,
     administratorName: AdministratorName,
-    options?: ServerAzureADAdministratorsGetOptionalParams
+    options?: ServerAzureADAdministratorsGetOptionalParams,
   ): Promise<ServerAzureADAdministratorsGetResponse>;
   /**
    * Creates or updates an existing Azure Active Directory administrator.
@@ -63,10 +62,10 @@ export interface ServerAzureADAdministrators {
     serverName: string,
     administratorName: AdministratorName,
     parameters: ServerAzureADAdministrator,
-    options?: ServerAzureADAdministratorsCreateOrUpdateOptionalParams
+    options?: ServerAzureADAdministratorsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ServerAzureADAdministratorsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ServerAzureADAdministratorsCreateOrUpdateResponse>,
       ServerAzureADAdministratorsCreateOrUpdateResponse
     >
   >;
@@ -84,7 +83,7 @@ export interface ServerAzureADAdministrators {
     serverName: string,
     administratorName: AdministratorName,
     parameters: ServerAzureADAdministrator,
-    options?: ServerAzureADAdministratorsCreateOrUpdateOptionalParams
+    options?: ServerAzureADAdministratorsCreateOrUpdateOptionalParams,
   ): Promise<ServerAzureADAdministratorsCreateOrUpdateResponse>;
   /**
    * Deletes the Azure Active Directory administrator with the given name.
@@ -98,8 +97,8 @@ export interface ServerAzureADAdministrators {
     resourceGroupName: string,
     serverName: string,
     administratorName: AdministratorName,
-    options?: ServerAzureADAdministratorsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ServerAzureADAdministratorsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the Azure Active Directory administrator with the given name.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -112,6 +111,6 @@ export interface ServerAzureADAdministrators {
     resourceGroupName: string,
     serverName: string,
     administratorName: AdministratorName,
-    options?: ServerAzureADAdministratorsDeleteOptionalParams
+    options?: ServerAzureADAdministratorsDeleteOptionalParams,
   ): Promise<void>;
 }

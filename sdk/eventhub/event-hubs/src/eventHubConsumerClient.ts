@@ -1,43 +1,43 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { ConnectionContext, createConnectionContext } from "./connectionContext";
-import {
+import type { CheckpointStore, FullEventProcessorOptions } from "./eventProcessor.js";
+import { EventProcessor } from "./eventProcessor.js";
+import type { ConnectionContext } from "./connectionContext.js";
+import { createConnectionContext } from "./connectionContext.js";
+import type {
   EventHubConsumerClientOptions,
   GetEventHubPropertiesOptions,
   GetPartitionIdsOptions,
   GetPartitionPropertiesOptions,
-  LoadBalancingOptions
-} from "./models/public";
-import { InMemoryCheckpointStore } from "./inMemoryCheckpointStore";
-import { CheckpointStore, EventProcessor, FullEventProcessorOptions } from "./eventProcessor";
-import { Constants } from "@azure/core-amqp";
-import { logger } from "./log";
-
-import {
+  LoadBalancingOptions,
+} from "./models/public.js";
+import type { EventHubProperties, PartitionProperties } from "./managementClient.js";
+import type { NamedKeyCredential, SASCredential, TokenCredential } from "@azure/core-auth";
+import type {
   SubscribeOptions,
   Subscription,
-  SubscriptionEventHandlers
-} from "./eventHubConsumerClientModels";
-import { TokenCredential, NamedKeyCredential, SASCredential } from "@azure/core-auth";
-import { EventHubProperties, PartitionProperties } from "./managementClient";
-import { PartitionGate } from "./impl/partitionGate";
-import { v4 as uuid } from "uuid";
-import { validateEventPositions } from "./eventPosition";
-import { LoadBalancingStrategy } from "./loadBalancerStrategies/loadBalancingStrategy";
-import { UnbalancedLoadBalancingStrategy } from "./loadBalancerStrategies/unbalancedStrategy";
-import { GreedyLoadBalancingStrategy } from "./loadBalancerStrategies/greedyStrategy";
-import { BalancedLoadBalancingStrategy } from "./loadBalancerStrategies/balancedStrategy";
-import { isCredential } from "./util/typeGuards";
+  SubscriptionEventHandlers,
+} from "./eventHubConsumerClientModels.js";
+import { BalancedLoadBalancingStrategy } from "./loadBalancerStrategies/balancedStrategy.js";
+import { Constants } from "@azure/core-amqp";
+import { GreedyLoadBalancingStrategy } from "./loadBalancerStrategies/greedyStrategy.js";
+import { InMemoryCheckpointStore } from "./inMemoryCheckpointStore.js";
+import type { LoadBalancingStrategy } from "./loadBalancerStrategies/loadBalancingStrategy.js";
+import { PartitionGate } from "./impl/partitionGate.js";
+import { UnbalancedLoadBalancingStrategy } from "./loadBalancerStrategies/unbalancedStrategy.js";
+import { isCredential } from "./util/typeGuards.js";
+import { logger } from "./logger.js";
+import { validateEventPositions } from "./eventPosition.js";
+import { getRandomName } from "./util/utils.js";
 
-const defaultConsumerClientOptions: Required<Pick<
-  FullEventProcessorOptions,
-  "maxWaitTimeInSeconds" | "maxBatchSize"
->> = {
+const defaultConsumerClientOptions: Required<
+  Pick<FullEventProcessorOptions, "maxWaitTimeInSeconds" | "maxBatchSize">
+> = {
   // to support our current "process single event only" workflow we'll also purposefully
   // only request a single event at a time.
   maxBatchSize: 1,
-  maxWaitTimeInSeconds: 60
+  maxWaitTimeInSeconds: 60,
 };
 
 /**
@@ -65,7 +65,6 @@ export class EventHubConsumerClient {
    */
   private _clientOptions: EventHubConsumerClientOptions;
   private _partitionGate = new PartitionGate();
-  private _id = uuid();
 
   /**
    * The Subscriptions that were spawned by calling `subscribe()`.
@@ -105,6 +104,12 @@ export class EventHubConsumerClient {
   }
 
   /**
+   * The name used to identify this EventHubConsumerClient.
+   * If not specified or empty, a random unique one will be generated.
+   */
+  public readonly identifier: string;
+
+  /**
    * The `EventHubConsumerClient` class is used to consume events from an Event Hub.
    * Use the `options` parmeter to configure retry policy or proxy settings.
    * @param consumerGroup - The name of the consumer group from which you want to process events.
@@ -120,7 +125,7 @@ export class EventHubConsumerClient {
   constructor(
     consumerGroup: string,
     connectionString: string,
-    options?: EventHubConsumerClientOptions
+    options?: EventHubConsumerClientOptions,
   ); // #1
   /**
    * The `EventHubConsumerClient` class is used to consume events from an Event Hub.
@@ -142,7 +147,7 @@ export class EventHubConsumerClient {
     consumerGroup: string,
     connectionString: string,
     checkpointStore: CheckpointStore,
-    options?: EventHubConsumerClientOptions
+    options?: EventHubConsumerClientOptions,
   ); // #1.1
   /**
    * The `EventHubConsumerClient` class is used to consume events from an Event Hub.
@@ -162,7 +167,7 @@ export class EventHubConsumerClient {
     consumerGroup: string,
     connectionString: string,
     eventHubName: string,
-    options?: EventHubConsumerClientOptions
+    options?: EventHubConsumerClientOptions,
   ); // #2
   /**
    * The `EventHubConsumerClient` class is used to consume events from an Event Hub.
@@ -186,7 +191,7 @@ export class EventHubConsumerClient {
     connectionString: string,
     eventHubName: string,
     checkpointStore: CheckpointStore,
-    options?: EventHubConsumerClientOptions
+    options?: EventHubConsumerClientOptions,
   ); // #2.1
   /**
    * The `EventHubConsumerClient` class is used to consume events from an Event Hub.
@@ -214,7 +219,7 @@ export class EventHubConsumerClient {
     fullyQualifiedNamespace: string,
     eventHubName: string,
     credential: TokenCredential | NamedKeyCredential | SASCredential,
-    options?: EventHubConsumerClientOptions
+    options?: EventHubConsumerClientOptions,
   ); // #3
   /**
    * The `EventHubConsumerClient` class is used to consume events from an Event Hub.
@@ -246,7 +251,7 @@ export class EventHubConsumerClient {
     eventHubName: string,
     credential: TokenCredential | NamedKeyCredential | SASCredential,
     checkpointStore: CheckpointStore,
-    options?: EventHubConsumerClientOptions
+    options?: EventHubConsumerClientOptions,
   ); // #3.1
   constructor(
     private _consumerGroup: string,
@@ -262,7 +267,7 @@ export class EventHubConsumerClient {
       | NamedKeyCredential
       | SASCredential,
     checkpointStoreOrOptions5?: CheckpointStore | EventHubConsumerClientOptions,
-    options6?: EventHubConsumerClientOptions
+    options6?: EventHubConsumerClientOptions,
   ) {
     if (isCredential(checkpointStoreOrCredentialOrOptions4)) {
       // #3 or 3.1
@@ -283,7 +288,7 @@ export class EventHubConsumerClient {
         connectionStringOrFullyQualifiedNamespace2,
         checkpointStoreOrEventHubNameOrOptions3 as string,
         checkpointStoreOrCredentialOrOptions4,
-        this._clientOptions
+        this._clientOptions,
       );
     } else if (typeof checkpointStoreOrEventHubNameOrOptions3 === "string") {
       // #2 or 2.1
@@ -304,7 +309,7 @@ export class EventHubConsumerClient {
       this._context = createConnectionContext(
         connectionStringOrFullyQualifiedNamespace2,
         checkpointStoreOrEventHubNameOrOptions3,
-        this._clientOptions
+        this._clientOptions,
       );
     } else {
       // #1 or 1.1
@@ -326,16 +331,17 @@ export class EventHubConsumerClient {
 
       this._context = createConnectionContext(
         connectionStringOrFullyQualifiedNamespace2,
-        this._clientOptions
+        this._clientOptions,
       );
     }
+    this.identifier = this._clientOptions.identifier ?? getRandomName();
     this._loadBalancingOptions = {
       // default options
       strategy: "balanced",
       updateIntervalInMs: 10000,
       partitionOwnershipExpirationIntervalInMs: 60000,
       // options supplied by user
-      ...this._clientOptions?.loadBalancingOptions
+      ...this._clientOptions?.loadBalancingOptions,
     };
   }
 
@@ -351,7 +357,7 @@ export class EventHubConsumerClient {
     await Promise.all(
       activeSubscriptions.map((subscription) => {
         return subscription.close();
-      })
+      }),
     );
     // Close the connection via the connection context.
     return this._context.close();
@@ -369,7 +375,7 @@ export class EventHubConsumerClient {
     return this._context
       .managementSession!.getEventHubProperties({
         ...options,
-        retryOptions: this._clientOptions.retryOptions
+        retryOptions: this._clientOptions.retryOptions,
       })
       .then((eventHubProperties) => {
         return eventHubProperties.partitionIds;
@@ -386,11 +392,11 @@ export class EventHubConsumerClient {
    */
   getPartitionProperties(
     partitionId: string,
-    options: GetPartitionPropertiesOptions = {}
+    options: GetPartitionPropertiesOptions = {},
   ): Promise<PartitionProperties> {
     return this._context.managementSession!.getPartitionProperties(partitionId, {
       ...options,
-      retryOptions: this._clientOptions.retryOptions
+      retryOptions: this._clientOptions.retryOptions,
     });
   }
 
@@ -404,7 +410,7 @@ export class EventHubConsumerClient {
   getEventHubProperties(options: GetEventHubPropertiesOptions = {}): Promise<EventHubProperties> {
     return this._context.managementSession!.getEventHubProperties({
       ...options,
-      retryOptions: this._clientOptions.retryOptions
+      retryOptions: this._clientOptions.retryOptions,
     });
   }
 
@@ -468,12 +474,12 @@ export class EventHubConsumerClient {
   subscribe(
     partitionId: string,
     handlers: SubscriptionEventHandlers,
-    options?: SubscribeOptions
+    options?: SubscribeOptions,
   ): Subscription; // #2
   subscribe(
     handlersOrPartitionId1?: SubscriptionEventHandlers | string,
     optionsOrHandlers2?: SubscribeOptions | SubscriptionEventHandlers,
-    possibleOptions3?: SubscribeOptions
+    possibleOptions3?: SubscribeOptions,
   ): Subscription {
     let eventProcessor: EventProcessor;
     let targetedPartitionId: string;
@@ -486,7 +492,7 @@ export class EventHubConsumerClient {
       }
       ({ targetedPartitionId, eventProcessor } = this.createEventProcessorForAllPartitions(
         handlersOrPartitionId1,
-        options
+        options,
       ));
     } else if (isSubscriptionEventHandlers(optionsOrHandlers2)) {
       // #2: subscribe overload (read from specific partition IDs), don't coordinate
@@ -499,7 +505,7 @@ export class EventHubConsumerClient {
         // we don't validate the user input and instead rely on service throwing errors if any
         String(handlersOrPartitionId1),
         optionsOrHandlers2,
-        possibleOptions3
+        possibleOptions3,
       ));
     } else {
       throw new TypeError("Unhandled subscribe() overload");
@@ -515,7 +521,7 @@ export class EventHubConsumerClient {
         this._partitionGate.remove(targetedPartitionId);
         this._subscriptions.delete(subscription);
         return eventProcessor.stop();
-      }
+      },
     };
     this._subscriptions.add(subscription);
     return subscription;
@@ -531,8 +537,8 @@ export class EventHubConsumerClient {
       return new UnbalancedLoadBalancingStrategy();
     }
 
-    const partitionOwnershipExpirationIntervalInMs = this._loadBalancingOptions
-      .partitionOwnershipExpirationIntervalInMs;
+    const partitionOwnershipExpirationIntervalInMs =
+      this._loadBalancingOptions.partitionOwnershipExpirationIntervalInMs;
     if (this._loadBalancingOptions?.strategy === "greedy") {
       return new GreedyLoadBalancingStrategy(partitionOwnershipExpirationIntervalInMs);
     }
@@ -544,13 +550,13 @@ export class EventHubConsumerClient {
 
   private createEventProcessorForAllPartitions(
     subscriptionEventHandlers: SubscriptionEventHandlers,
-    options?: SubscribeOptions
+    options?: SubscribeOptions,
   ): { targetedPartitionId: string; eventProcessor: EventProcessor } {
     this._partitionGate.add("all");
 
     if (this._userChoseCheckpointStore) {
       logger.verbose(
-        "EventHubConsumerClient subscribing to all partitions, using a checkpoint store."
+        "EventHubConsumerClient subscribing to all partitions, using a checkpoint store.",
       );
     } else {
       logger.verbose("EventHubConsumerClient subscribing to all partitions, no checkpoint store.");
@@ -567,11 +573,11 @@ export class EventHubConsumerClient {
         ownerLevel: getOwnerLevel(options, this._userChoseCheckpointStore),
         // make it so all the event processors process work with the same overarching owner ID
         // this allows the EventHubConsumer to unify all the work for any processors that it spawns
-        ownerId: this._id,
+        ownerId: this.identifier,
         retryOptions: this._clientOptions.retryOptions,
         loadBalancingStrategy,
-        loopIntervalInMs: this._loadBalancingOptions.updateIntervalInMs
-      }
+        loopIntervalInMs: this._loadBalancingOptions.updateIntervalInMs,
+      },
     );
 
     return { targetedPartitionId: "all", eventProcessor };
@@ -580,7 +586,7 @@ export class EventHubConsumerClient {
   private createEventProcessorForSinglePartition(
     partitionId: string,
     eventHandlers: SubscriptionEventHandlers,
-    options?: SubscribeOptions
+    options?: SubscribeOptions,
   ): { targetedPartitionId: string; eventProcessor: EventProcessor } {
     this._partitionGate.add(partitionId);
 
@@ -588,11 +594,11 @@ export class EventHubConsumerClient {
 
     if (this._userChoseCheckpointStore) {
       logger.verbose(
-        `EventHubConsumerClient subscribing to specific partition (${partitionId}), using a checkpoint store.`
+        `EventHubConsumerClient subscribing to specific partition (${partitionId}), using a checkpoint store.`,
       );
     } else {
       logger.verbose(
-        `EventHubConsumerClient subscribing to specific partition (${partitionId}), no checkpoint store.`
+        `EventHubConsumerClient subscribing to specific partition (${partitionId}), no checkpoint store.`,
       );
     }
 
@@ -607,8 +613,8 @@ export class EventHubConsumerClient {
         ownerLevel: getOwnerLevel(subscribeOptions, this._userChoseCheckpointStore),
         retryOptions: this._clientOptions.retryOptions,
         loadBalancingStrategy: new UnbalancedLoadBalancingStrategy(),
-        loopIntervalInMs: this._loadBalancingOptions.updateIntervalInMs ?? 10000
-      }
+        loopIntervalInMs: this._loadBalancingOptions.updateIntervalInMs ?? 10000,
+      },
     );
 
     return { targetedPartitionId: partitionId, eventProcessor };
@@ -618,14 +624,14 @@ export class EventHubConsumerClient {
     connectionContext: ConnectionContext,
     subscriptionEventHandlers: SubscriptionEventHandlers,
     checkpointStore: CheckpointStore,
-    options: FullEventProcessorOptions
+    options: FullEventProcessorOptions,
   ): EventProcessor {
     return new EventProcessor(
       this._consumerGroup,
       connectionContext,
       subscriptionEventHandlers,
       checkpointStore,
-      options
+      options,
     );
   }
 }
@@ -652,14 +658,14 @@ export function isCheckpointStore(possible: CheckpointStore | any): possible is 
  * @internal
  */
 function isSubscriptionEventHandlers(
-  possible: any | SubscriptionEventHandlers
+  possible: any | SubscriptionEventHandlers,
 ): possible is SubscriptionEventHandlers {
   return typeof (possible as SubscriptionEventHandlers).processEvents === "function";
 }
 
 function getOwnerLevel(
   options: SubscribeOptions | undefined,
-  userChoseCheckpointStore: boolean
+  userChoseCheckpointStore: boolean,
 ): number | undefined {
   if (options && options.ownerLevel) {
     return options.ownerLevel;

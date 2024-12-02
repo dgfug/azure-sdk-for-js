@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptionsBase } from "./modelsToBeSharedWithEventHubs";
-import Long from "long";
-import { ServiceBusReceivedMessage } from "./serviceBusMessage";
-import { ServiceBusError } from "./serviceBusError";
+import type { OperationOptionsBase } from "./modelsToBeSharedWithEventHubs.js";
+import type Long from "long";
+import type { ServiceBusReceivedMessage } from "./serviceBusMessage.js";
+import type { ServiceBusError } from "./serviceBusError.js";
 
 /**
  * Arguments to the `processError` callback.
@@ -32,6 +32,10 @@ export interface ProcessErrorArgs {
    * The fully qualified namespace for the Service Bus.
    */
   fullyQualifiedNamespace: string;
+  /**
+   * The identifier of the client that raised this event.
+   */
+  identifier: string;
 }
 
 /**
@@ -62,6 +66,18 @@ export interface MessageHandlers {
   processMessage(message: ServiceBusReceivedMessage): Promise<void>;
   /**
    * Handler that processes errors that occur during receiving.
+   *
+   * This handler will be called for any error that occurs in the receiver when
+   *   - receiving the message, or
+   *   - executing your `processMessage` callback, or
+   *   - receiver is completing the message on your behalf after successfully running your `processMessage` callback and `autoCompleteMessages` is enabled
+   *   - receiver is abandoning the message on your behalf if running your `processMessage` callback fails and `autoCompleteMessages` is enabled
+   *   - receiver is renewing the lock on your behalf due to auto lock renewal feature being enabled
+   *
+   * Note that when receiving messages in a stream using `subscribe()`, the receiver will automatically retry receiving messages on all errors unless
+   * `close()` is called on the subscription. It is completely up to users to decide what errors are considered non-recoverable and to handle them
+   * accordingly in this callback.
+   * For a list of errors occurs within Service Bus, please refer to https://docs.microsoft.com/javascript/api/\@azure/service-bus/servicebuserror?view=azure-node-latest
    * @param args - The error and additional context to indicate where
    * the error originated.
    */
@@ -129,13 +145,49 @@ export interface ServiceBusReceiverOptions {
   subQueueType?: "deadLetter" | "transferDeadLetter";
 
   /**
-   * The maximum duration in milliseconds until which the lock on the message will be renewed
-   * by the sdk automatically. This auto renewal stops once the message is settled.
+   * The maximum duration, in milliseconds, that the lock on the message will be renewed automatically by the client.
+   * This auto renewal stops once the message is settled.
    *
    * - **Default**: `300 * 1000` milliseconds (5 minutes).
    * - **To disable autolock renewal**, set this to `0`.
+   *
+   * **Example:**
+   *
+   *    If the message lock expires in 2 minutes and your message processing time is 8 minutes...
+   *
+   *    Set maxAutoLockRenewalDurationInMs to 10 minutes, and the message lock will be automatically renewed for 4 times
+   *    (equivalent to having the message locked for 4 times its lock duration by leveraging the lock renewals).
    */
   maxAutoLockRenewalDurationInMs?: number;
+  /**
+   * Option to disable the client from running JSON.parse() on the message body when receiving the message.
+   * Not applicable if the message was sent with AMQP body type value or sequence. Use this option when you
+   * prefer to work directly with the bytes present in the message body than have the client attempt to parse it.
+   */
+  skipParsingBodyAsJson?: boolean;
+  /**
+   * Whether to skip converting Date type on properties of message annotations
+   * or application properties into numbers when receiving the message. By
+   * default, properties of Date type is converted into UNIX epoch number for
+   * compatibility.
+   */
+  skipConvertingDate?: boolean;
+  /**
+   * Sets the name to identify the receiver. This can be used to correlate logs and exceptions.
+   * If not specified or empty, a random unique one will be used.
+   */
+  identifier?: string;
+}
+
+/**
+ * Options to use when creating a sender.
+ */
+export interface ServiceBusSenderOptions {
+  /**
+   * Sets the name to identify the sender. This can be used to correlate logs and exceptions.
+   * If not specified or empty, a random unique one will be used.
+   */
+  identifier?: string;
 }
 
 /**
@@ -195,7 +247,7 @@ export interface SubscribeOptions extends OperationOptionsBase {
   /**
    * The maximum number of concurrent calls that the library
    * can make to the user's message handler. Once this limit has been reached, more messages will
-   * not be received until atleast one of the calls to the user's message handler has completed.
+   * not be received until at least one of the calls to the user's message handler has completed.
    * - **Default**: `1`.
    */
   maxConcurrentCalls?: number;
@@ -227,12 +279,37 @@ export interface ServiceBusSessionReceiverOptions extends OperationOptionsBase {
    */
   receiveMode?: "peekLock" | "receiveAndDelete";
   /**
-   * The maximum duration in milliseconds
-   * until which, the lock on the session will be renewed automatically by the sdk.
+   * The maximum duration, in milliseconds, that the lock on the session will be renewed automatically by the client.
+   *
    * - **Default**: `300000` milliseconds (5 minutes).
    * - **To disable autolock renewal**, set this to `0`.
+   *
+   * **Example:**
+   *
+   *    If the lock expires in 2 minutes and your processing time is 8 minutes...
+   *
+   *    Set maxAutoLockRenewalDurationInMs to 10 minutes, and the lock will be automatically renewed about 4 times
+   *    (equivalent to having the session locked for 4 times its lock duration by leveraging the lock renewals).
    */
   maxAutoLockRenewalDurationInMs?: number;
+  /**
+   * Option to disable the client from running JSON.parse() on the message body when receiving the message.
+   * Not applicable if the message was sent with AMQP body type value or sequence. Use this option when you
+   * prefer to work directly with the bytes present in the message body than have the client attempt to parse it.
+   */
+  skipParsingBodyAsJson?: boolean;
+  /**
+   * Whether to skip converting Date type on properties of message annotations
+   * or application properties into numbers when receiving the message. By
+   * default, properties of Date type is converted into UNIX epoch number for
+   * compatibility.
+   */
+  skipConvertingDate?: boolean;
+  /**
+   * Sets the name to identify the session receiver. This can be used to correlate logs and exceptions.
+   * If not specified or empty, a random unique one will be used.
+   */
+  identifier?: string;
 }
 
 /**
@@ -243,4 +320,28 @@ export interface PeekMessagesOptions extends OperationOptionsBase {
    * The sequence number to start peeking messages from (inclusive).
    */
   fromSequenceNumber?: Long;
+}
+
+/**
+ * Options to configure messages deletion.
+ */
+export interface DeleteMessagesOptions extends OperationOptionsBase {
+  /**
+   * If specified, only messages enqueued before this time are deleted.
+   */
+  beforeEnqueueTime?: Date;
+  /**
+   * Up to `maxMessageCount` messages will be deleted.
+   */
+  maxMessageCount: number;
+}
+
+/**
+ * Options to configure deletion of all messages in an entity.
+ */
+export interface PurgeMessagesOptions extends OperationOptionsBase {
+  /**
+   * If specified, only messages enqueued before this time are deleted.
+   */
+  beforeEnqueueTime?: Date;
 }

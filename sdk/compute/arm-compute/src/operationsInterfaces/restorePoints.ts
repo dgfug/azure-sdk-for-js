@@ -6,14 +6,14 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   RestorePoint,
   RestorePointsCreateOptionalParams,
   RestorePointsCreateResponse,
   RestorePointsDeleteOptionalParams,
   RestorePointsGetOptionalParams,
-  RestorePointsGetResponse
+  RestorePointsGetResponse,
 } from "../models";
 
 /** Interface representing a RestorePoints. */
@@ -32,10 +32,10 @@ export interface RestorePoints {
     restorePointCollectionName: string,
     restorePointName: string,
     parameters: RestorePoint,
-    options?: RestorePointsCreateOptionalParams
+    options?: RestorePointsCreateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<RestorePointsCreateResponse>,
+    SimplePollerLike<
+      OperationState<RestorePointsCreateResponse>,
       RestorePointsCreateResponse
     >
   >;
@@ -53,7 +53,7 @@ export interface RestorePoints {
     restorePointCollectionName: string,
     restorePointName: string,
     parameters: RestorePoint,
-    options?: RestorePointsCreateOptionalParams
+    options?: RestorePointsCreateOptionalParams,
   ): Promise<RestorePointsCreateResponse>;
   /**
    * The operation to delete the restore point.
@@ -66,8 +66,8 @@ export interface RestorePoints {
     resourceGroupName: string,
     restorePointCollectionName: string,
     restorePointName: string,
-    options?: RestorePointsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: RestorePointsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to delete the restore point.
    * @param resourceGroupName The name of the resource group.
@@ -79,7 +79,7 @@ export interface RestorePoints {
     resourceGroupName: string,
     restorePointCollectionName: string,
     restorePointName: string,
-    options?: RestorePointsDeleteOptionalParams
+    options?: RestorePointsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * The operation to get the restore point.
@@ -92,6 +92,6 @@ export interface RestorePoints {
     resourceGroupName: string,
     restorePointCollectionName: string,
     restorePointName: string,
-    options?: RestorePointsGetOptionalParams
+    options?: RestorePointsGetOptionalParams,
   ): Promise<RestorePointsGetResponse>;
 }

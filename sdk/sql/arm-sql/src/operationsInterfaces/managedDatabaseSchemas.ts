@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   DatabaseSchema,
   ManagedDatabaseSchemasListByDatabaseOptionalParams,
   ManagedDatabaseSchemasGetOptionalParams,
-  ManagedDatabaseSchemasGetResponse
+  ManagedDatabaseSchemasGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +29,7 @@ export interface ManagedDatabaseSchemas {
     resourceGroupName: string,
     managedInstanceName: string,
     databaseName: string,
-    options?: ManagedDatabaseSchemasListByDatabaseOptionalParams
+    options?: ManagedDatabaseSchemasListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseSchema>;
   /**
    * Get managed database schema
@@ -46,6 +45,6 @@ export interface ManagedDatabaseSchemas {
     managedInstanceName: string,
     databaseName: string,
     schemaName: string,
-    options?: ManagedDatabaseSchemasGetOptionalParams
+    options?: ManagedDatabaseSchemasGetOptionalParams,
   ): Promise<ManagedDatabaseSchemasGetResponse>;
 }

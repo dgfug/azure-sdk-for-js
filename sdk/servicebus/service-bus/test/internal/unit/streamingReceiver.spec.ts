@@ -1,19 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import { addTestStreamingReceiver } from "./unittestUtils";
-import { ProcessErrorArgs, ServiceBusReceivedMessage } from "../../../src";
-import { StreamingReceiver } from "../../../src/core/streamingReceiver";
-import sinon from "sinon";
-import { EventContext } from "rhea-promise";
+// Licensed under the MIT License.
+import { addTestStreamingReceiver } from "./unittestUtils.js";
+import type { ProcessErrorArgs, ServiceBusReceivedMessage } from "../../../src/index.js";
+import type { EventContext } from "rhea-promise";
 import { Constants } from "@azure/core-amqp";
 import { AbortError } from "@azure/abort-controller";
-import { assertThrows } from "../../public/utils/testUtils";
-
-chai.use(chaiAsPromised);
-const assert = chai.assert;
+import { assertThrows } from "../../public/utils/testUtils.js";
+import { describe, it, vi } from "vitest";
+import { assert, expect } from "../../public/utils/chai.js";
 
 describe("StreamingReceiver unit tests", () => {
   const createTestStreamingReceiver = addTestStreamingReceiver();
@@ -51,7 +45,7 @@ describe("StreamingReceiver unit tests", () => {
     it("if subscribe() fails we are no longer say we're receiving messages", async () => {
       const streamingReceiver = createTestStreamingReceiver("fakeEntityPath");
 
-      let isReceivingMessages: (boolean | undefined)[] = [];
+      const isReceivingMessages: (boolean | undefined)[] = [];
 
       streamingReceiver["_retryForeverFn"] = async () => {
         isReceivingMessages.push(streamingReceiver.isSubscribeActive);
@@ -60,7 +54,7 @@ describe("StreamingReceiver unit tests", () => {
 
       await assertThrows(() => streamingReceiver.subscribe({} as any, {}), {
         name: "AbortError",
-        message: "Purposefully aborting function"
+        message: "Purposefully aborting function",
       });
 
       // we are no longer receiving messages if an exception escaped from subscribe()
@@ -73,7 +67,9 @@ describe("StreamingReceiver unit tests", () => {
     it("errors thrown from the user's callback are marked as 'processMessageCallback' errors", async () => {
       const streamingReceiver = createTestStreamingReceiver("entity path", {
         lockRenewer: undefined,
-        receiveMode: "receiveAndDelete"
+        receiveMode: "receiveAndDelete",
+        skipParsingBodyAsJson: false,
+        skipConvertingDate: false,
       });
 
       try {
@@ -83,9 +79,9 @@ describe("StreamingReceiver unit tests", () => {
           delivery: {},
           message: {
             message_annotations: {
-              [Constants.enqueuedTime]: new Date()
-            }
-          }
+              [Constants.enqueuedTime]: new Date(),
+            },
+          },
         };
 
         await streamingReceiver.subscribe(
@@ -95,26 +91,26 @@ describe("StreamingReceiver unit tests", () => {
             },
             processError: async (_args) => {
               args = _args;
-            }
+            },
           },
-          undefined
+          undefined,
         );
 
-        await streamingReceiver["_onAmqpMessage"]((eventContext as any) as EventContext);
+        await streamingReceiver["_onAmqpMessage"](eventContext as any as EventContext);
 
         assert.deepEqual(
           {
             message: args?.error.message,
             errorSource: args?.errorSource,
             entityPath: args?.entityPath,
-            fullyQualifiedNamespace: args?.fullyQualifiedNamespace
+            fullyQualifiedNamespace: args?.fullyQualifiedNamespace,
           },
           {
             message: "Error thrown from the user's processMessage callback",
             errorSource: "processMessageCallback",
             entityPath: "entity path",
-            fullyQualifiedNamespace: "fakeHost"
-          }
+            fullyQualifiedNamespace: "fakeHost",
+          },
         );
       } finally {
         await streamingReceiver.close();
@@ -122,31 +118,23 @@ describe("StreamingReceiver unit tests", () => {
     });
   });
 
-  describe("forever loop", () => {
-    let streamingReceiver: StreamingReceiver | undefined;
-
-    afterEach(() => {
-      return streamingReceiver?.close();
-    });
-  });
-
   it("onDetach calls through to init", async () => {
     const streamingReceiver = createTestStreamingReceiver("fakeEntityPath");
 
-    const subscribeImplMock = sinon.mock();
+    const subscribeImplMock = vi.fn();
 
     streamingReceiver["_subscribeImpl"] = subscribeImplMock;
     await streamingReceiver.onDetached(new Error("let's detach"));
-    assert.isTrue(subscribeImplMock.calledOnce);
+    expect(subscribeImplMock).toHaveBeenCalledOnce();
 
     // simulate simultaneous detaches
     streamingReceiver["_isDetaching"] = true;
-    subscribeImplMock.resetHistory();
+    subscribeImplMock.mockReset();
 
     await streamingReceiver.onDetached(
-      new Error("let's detach but it won't because there's already a onDetached running.")
+      new Error("let's detach but it won't because there's already a onDetached running."),
     );
-    assert.isFalse(subscribeImplMock.called); // we don't do parallel detaches - subsequent ones are just stopped
+    expect(subscribeImplMock).not.toHaveBeenCalled(); // we don't do parallel detaches - subsequent ones are just stopped
     streamingReceiver["_isDetaching"] = false;
   });
 
@@ -167,25 +155,28 @@ describe("StreamingReceiver unit tests", () => {
           processError: async (pae) => {
             errors.push({ message: pae.error.message, errorSource: pae.errorSource });
           },
-          processMessage: async () => {},
-          forwardInternalErrors: true
+          processMessage: async () => {
+            /* empty body */
+          },
+          forwardInternalErrors: true,
         },
-        {}
+        {},
       );
 
-      const closeLinkSpy = sinon.spy(
-        (streamingReceiver as any) as { closeLink(): Promise<void> },
-        "closeLink"
+      const closeLinkSpy = vi.spyOn(
+        streamingReceiver as any as { closeLink(): Promise<void> },
+        "closeLink",
       );
 
       await assertThrows(() => subscribePromise, {
         name: "AbortError",
-        message: "Cannot request messages on the receiver since it is suspended."
+        message:
+          "Error 0: AbortError: Cannot request messages on the receiver since it is suspended.",
       });
 
       // closeLink is called on cleanup when we fail to add credits (which we would because our receiver
       // was suspended, which will cause us to fail to add credits)
-      assert.isTrue(closeLinkSpy.called);
+      expect(closeLinkSpy).toHaveBeenCalled();
     });
 
     it("subscription.stop() happens after pre-init() should trigger an AbortError since the receiver is suspended", async () => {
@@ -204,29 +195,32 @@ describe("StreamingReceiver unit tests", () => {
           processError: async (pae) => {
             errors.push({ message: pae.error.message, errorSource: pae.errorSource });
           },
-          processMessage: async () => {},
-          forwardInternalErrors: true
+          processMessage: async () => {
+            /* empty body */
+          },
+          forwardInternalErrors: true,
         },
-        {}
+        {},
       );
 
-      const closeLinkSpy = sinon.spy(
-        (streamingReceiver as any) as { closeLink(): Promise<void> },
-        "closeLink"
+      const closeLinkSpy = vi.spyOn(
+        streamingReceiver as any as { closeLink(): Promise<void> },
+        "closeLink",
       );
 
       await assertThrows(() => subscribePromise, {
         name: "AbortError",
-        message: "Receiver was suspended during initialization."
+        message: "Error 0: AbortError: Receiver was suspended during initialization.",
       });
 
-      assert.isTrue(!closeLinkSpy.called, "closeLink should not be called if no link was created");
+      // closeLink should not be called if no link was created
+      expect(closeLinkSpy).not.toHaveBeenCalled();
 
       assert.deepEqual(errors, [
         {
-          message: "Receiver was suspended during initialization.",
-          errorSource: "receive"
-        }
+          message: "Error 0: AbortError: Receiver was suspended during initialization.",
+          errorSource: "receive",
+        },
       ]);
     });
   });
@@ -239,7 +233,9 @@ describe("StreamingReceiver unit tests", () => {
   it("_setMessageHandlers", async () => {
     const streamingReceiver = createTestStreamingReceiver("entitypath", {
       lockRenewer: undefined,
-      receiveMode: "peekLock"
+      receiveMode: "peekLock",
+      skipParsingBodyAsJson: false,
+      skipConvertingDate: false,
     });
 
     let processErrorMessages: string[] = [];
@@ -250,7 +246,7 @@ describe("StreamingReceiver unit tests", () => {
         processError: async (args) => {
           processErrorMessages.push(args.error.message);
           // these errors are logged and there's no programatic way to detect them.
-          // this reduces the possiblity of a user ending up in an infinite set of `processError` calls.
+          // this reduces the possibility of a user ending up in an infinite set of `processError` calls.
           throw new Error("processError");
         },
         processMessage: async (msg) => {
@@ -259,9 +255,9 @@ describe("StreamingReceiver unit tests", () => {
         },
         postInitialize: async () => {
           throw new Error("processInitialize");
-        }
+        },
       },
-      {}
+      {},
     );
 
     const wrappedMessageHandlers = streamingReceiver["_messageHandlers"]();
@@ -278,8 +274,8 @@ describe("StreamingReceiver unit tests", () => {
     await assertThrows(
       () => wrappedMessageHandlers.processMessage({} as ServiceBusReceivedMessage),
       {
-        message: "processMessage"
-      }
+        message: "processMessage",
+      },
     );
 
     assert.deepEqual(processErrorMessages, ["processMessage"]);
@@ -289,7 +285,8 @@ describe("StreamingReceiver unit tests", () => {
       entityPath: "hello",
       error: new Error("hello"),
       errorSource: "receive",
-      fullyQualifiedNamespace: "fqns"
+      fullyQualifiedNamespace: "fqns",
+      identifier: "receiverId",
     });
 
     assert.deepEqual(processErrorMessages, ["hello"]);

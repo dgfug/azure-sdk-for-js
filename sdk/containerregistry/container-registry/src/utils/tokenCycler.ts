@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
+import type { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
 
 function delay<T>(t: number, value?: T): Promise<T | void> {
   return new Promise((resolve) => setTimeout(() => resolve(value), t));
@@ -14,7 +14,7 @@ function delay<T>(t: number, value?: T): Promise<T | void> {
  */
 export type AccessTokenGetter<T extends GetTokenOptions> = (
   scopes: string | string[],
-  options: T
+  options: T,
 ) => Promise<AccessToken>;
 
 /**
@@ -50,7 +50,7 @@ export interface TokenCyclerOptions {
 export const DEFAULT_CYCLER_OPTIONS: TokenCyclerOptions = {
   forcedRefreshWindowInMs: 1000, // Force waiting for a refresh 1s before the token expires
   retryIntervalInMs: 3000, // Allow refresh attempts every 3s
-  refreshWindowInMs: 1000 * 60 * 2 // Start refreshing 2m before expiry
+  refreshWindowInMs: 1000 * 60 * 2, // Start refreshing 2m before expiry
 };
 
 /**
@@ -66,7 +66,7 @@ export const DEFAULT_CYCLER_OPTIONS: TokenCyclerOptions = {
 async function beginRefresh(
   getAccessToken: () => Promise<AccessToken | null>,
   retryIntervalInMs: number,
-  refreshTimeout: number
+  refreshTimeout: number,
 ): Promise<AccessToken> {
   // This wrapper handles exceptions gracefully as long as we haven't exceeded
   // the timeout.
@@ -116,14 +116,14 @@ async function beginRefresh(
  */
 export function createTokenCycler<T extends GetTokenOptions>(
   credential: TokenCredential,
-  tokenCyclerOptions?: Partial<TokenCyclerOptions>
+  tokenCyclerOptions?: Partial<TokenCyclerOptions>,
 ): AccessTokenRefresher<T> {
   let refreshWorker: Promise<AccessToken> | null = null;
   let token: AccessToken | null = null;
 
   const options = {
     ...DEFAULT_CYCLER_OPTIONS,
-    ...tokenCyclerOptions
+    ...tokenCyclerOptions,
   };
 
   /**
@@ -155,7 +155,7 @@ export function createTokenCycler<T extends GetTokenOptions>(
       return (
         token === null || token.expiresOnTimestamp - options.forcedRefreshWindowInMs < Date.now()
       );
-    }
+    },
   };
 
   /**
@@ -174,7 +174,7 @@ export function createTokenCycler<T extends GetTokenOptions>(
         tryGetAccessToken,
         options.retryIntervalInMs,
         // If we don't have a token, then we should timeout immediately
-        token?.expiresOnTimestamp ?? Date.now()
+        token?.expiresOnTimestamp ?? Date.now(),
       )
         .then((_token) => {
           refreshWorker = null;
@@ -215,6 +215,6 @@ export function createTokenCycler<T extends GetTokenOptions>(
       }
 
       return token as AccessToken;
-    }
+    },
   };
 }

@@ -1,15 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
+import { assert } from "chai";
 
-import { AbortController, AbortSignal } from "@azure/abort-controller";
-import { ContainerClient } from "../src";
-import { getBSU, recorderEnvSetup } from "./utils";
-import { record, Recorder } from "@azure-tools/test-recorder";
-import * as dotenv from "dotenv";
-import { Context } from "mocha";
-dotenv.config();
+import type { ContainerClient } from "../src";
+import { getBSU, getUniqueName, recorderEnvSetup, uriSanitizers } from "./utils";
+import { Recorder } from "@azure-tools/test-recorder";
+import type { Context } from "mocha";
 
 describe("Aborter", () => {
   let containerName: string;
@@ -17,29 +14,30 @@ describe("Aborter", () => {
 
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    const blobServiceClient = getBSU();
-    containerName = recorder.getUniqueName("container");
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
+    await recorder.addSanitizers({ uriSanitizers }, ["playback", "record"]);
+    const blobServiceClient = getBSU(recorder);
+    containerName = recorder.variable("container", getUniqueName("container"));
     containerClient = blobServiceClient.getContainerClient(containerName);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
-  it("Should abort after aborter timeout", async () => {
+  it("Should abort after aborter timeout", async function () {
     try {
-      await containerClient.create({ abortSignal: AbortController.timeout(1) });
+      await containerClient.create({ abortSignal: AbortSignal.timeout(1) });
       assert.fail();
-    } catch (err) {
+    } catch (err: any) {
       assert.equal(err.name, "AbortError");
-      assert.equal(err.message, "The operation was aborted.", "Unexpected error caught: " + err);
     }
   });
 
   it("Should not abort after calling abort()", async () => {
-    await containerClient.create({ abortSignal: AbortSignal.none });
+    await containerClient.create({ abortSignal: new AbortController().signal });
   });
 
   it("Should abort when calling abort() before request finishes", async () => {
@@ -49,9 +47,8 @@ describe("Aborter", () => {
     try {
       await response;
       assert.fail();
-    } catch (err) {
+    } catch (err: any) {
       assert.equal(err.name, "AbortError");
-      assert.equal(err.message, "The operation was aborted.", "Unexpected error caught: " + err);
     }
   });
 
@@ -59,24 +56,5 @@ describe("Aborter", () => {
     const aborter = new AbortController();
     await containerClient.create({ abortSignal: aborter.signal });
     aborter.abort();
-  });
-
-  it("Should abort after father aborter calls abort()", async () => {
-    try {
-      const aborter = new AbortController();
-      const childAborter = new AbortController(
-        aborter.signal,
-        AbortController.timeout(10 * 60 * 1000)
-      );
-      const response = containerClient.create({
-        abortSignal: childAborter.signal
-      });
-      aborter.abort();
-      await response;
-      assert.fail();
-    } catch (err) {
-      assert.equal(err.name, "AbortError");
-      assert.equal(err.message, "The operation was aborted.", "Unexpected error caught: " + err);
-    }
   });
 });

@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { AccountSASPermissions } from "./AccountSASPermissions";
 import { AccountSASResourceTypes } from "./AccountSASResourceTypes";
 import { AccountSASServices } from "./AccountSASServices";
-import { StorageSharedKeyCredential } from "../credentials/StorageSharedKeyCredential";
-import { SasIPRange, ipRangeToString } from "./SasIPRange";
-import { SASProtocol, SASQueryParameters } from "./SASQueryParameters";
+import type { StorageSharedKeyCredential } from "../credentials/StorageSharedKeyCredential";
+import type { SasIPRange } from "./SasIPRange";
+import { ipRangeToString } from "./SasIPRange";
+import type { SASProtocol } from "./SASQueryParameters";
+import { SASQueryParameters } from "./SASQueryParameters";
 import { SERVICE_VERSION } from "../utils/constants";
 import { truncatedISO8061Date } from "../utils/utils.common";
 
@@ -88,8 +90,16 @@ export interface AccountSASSignatureValues {
  */
 export function generateAccountSASQueryParameters(
   accountSASSignatureValues: AccountSASSignatureValues,
-  sharedKeyCredential: StorageSharedKeyCredential
+  sharedKeyCredential: StorageSharedKeyCredential,
 ): SASQueryParameters {
+  return generateAccountSASQueryParametersInternal(accountSASSignatureValues, sharedKeyCredential)
+    .sasQueryParameters;
+}
+
+export function generateAccountSASQueryParametersInternal(
+  accountSASSignatureValues: AccountSASSignatureValues,
+  sharedKeyCredential: StorageSharedKeyCredential,
+): { sasQueryParameters: SASQueryParameters; stringToSign: string } {
   const version = accountSASSignatureValues.version
     ? accountSASSignatureValues.version
     : SERVICE_VERSION;
@@ -139,11 +149,11 @@ export function generateAccountSASQueryParameters(
   }
 
   const parsedPermissions = AccountSASPermissions.parse(
-    accountSASSignatureValues.permissions.toString()
+    accountSASSignatureValues.permissions.toString(),
   );
   const parsedServices = AccountSASServices.parse(accountSASSignatureValues.services).toString();
   const parsedResourceTypes = AccountSASResourceTypes.parse(
-    accountSASSignatureValues.resourceTypes
+    accountSASSignatureValues.resourceTypes,
   ).toString();
 
   let stringToSign: string;
@@ -162,7 +172,7 @@ export function generateAccountSASQueryParameters(
       accountSASSignatureValues.protocol ? accountSASSignatureValues.protocol : "",
       version,
       accountSASSignatureValues.encryptionScope ? accountSASSignatureValues.encryptionScope : "",
-      "" // Account SAS requires an additional newline character
+      "", // Account SAS requires an additional newline character
     ].join("\n");
   } else {
     stringToSign = [
@@ -177,32 +187,35 @@ export function generateAccountSASQueryParameters(
       accountSASSignatureValues.ipRange ? ipRangeToString(accountSASSignatureValues.ipRange) : "",
       accountSASSignatureValues.protocol ? accountSASSignatureValues.protocol : "",
       version,
-      "" // Account SAS requires an additional newline character
+      "", // Account SAS requires an additional newline character
     ].join("\n");
   }
 
   const signature: string = sharedKeyCredential.computeHMACSHA256(stringToSign);
 
-  return new SASQueryParameters(
-    version,
-    signature,
-    parsedPermissions.toString(),
-    parsedServices,
-    parsedResourceTypes,
-    accountSASSignatureValues.protocol,
-    accountSASSignatureValues.startsOn,
-    accountSASSignatureValues.expiresOn,
-    accountSASSignatureValues.ipRange,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    accountSASSignatureValues.encryptionScope
-  );
+  return {
+    sasQueryParameters: new SASQueryParameters(
+      version,
+      signature,
+      parsedPermissions.toString(),
+      parsedServices,
+      parsedResourceTypes,
+      accountSASSignatureValues.protocol,
+      accountSASSignatureValues.startsOn,
+      accountSASSignatureValues.expiresOn,
+      accountSASSignatureValues.ipRange,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      accountSASSignatureValues.encryptionScope,
+    ),
+    stringToSign: stringToSign,
+  };
 }

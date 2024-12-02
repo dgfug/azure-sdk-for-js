@@ -1,21 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HttpResponse, isNode } from "@azure/core-http";
-import {
+import { isNode } from "@azure/core-util";
+import type {
   CopyStatusType,
   FileDownloadHeaders,
   FileDownloadResponseModel,
   LeaseDurationType,
   LeaseStateType,
-  LeaseStatusType
+  LeaseStatusType,
 } from "./generatedModels";
-import { Metadata } from "./models";
-import {
+import type { Metadata } from "./models";
+import type {
   ReadableStreamGetter,
-  RetriableReadableStream,
-  RetriableReadableStreamOptions
+  RetriableReadableStreamOptions,
 } from "./utils/RetriableReadableStream";
+import { RetriableReadableStream } from "./utils/RetriableReadableStream";
+import type { HttpResponse, WithResponse } from "./utils/utils.common";
+import { assertResponse } from "./utils/utils.common";
 
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -397,7 +399,7 @@ export class FileDownloadResponse implements FileDownloadResponseModel {
     return this.originalResponse._response;
   }
 
-  private originalResponse: FileDownloadResponseModel;
+  private originalResponse: WithResponse<FileDownloadResponseModel, FileDownloadHeaders>;
   private fileDownloadStream?: RetriableReadableStream;
 
   /**
@@ -414,15 +416,17 @@ export class FileDownloadResponse implements FileDownloadResponseModel {
     getter: ReadableStreamGetter,
     offset: number,
     count: number,
-    options: RetriableReadableStreamOptions = {}
+    options: RetriableReadableStreamOptions = {},
   ) {
-    this.originalResponse = originalResponse;
+    this.originalResponse = assertResponse<FileDownloadResponseModel, FileDownloadHeaders>(
+      originalResponse,
+    );
     this.fileDownloadStream = new RetriableReadableStream(
       this.originalResponse.readableStreamBody!,
       getter,
       offset,
       count,
-      options
+      options,
     );
   }
 }

@@ -1,30 +1,28 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredential } from "@azure/core-http";
+import type { TokenCredential } from "@azure/core-auth";
+import { createTestCredential } from "@azure-tools/test-credential";
+import type { Recorder } from "@azure-tools/test-recorder";
 import { env } from "@azure-tools/test-recorder";
 import { randomBytes } from "crypto";
-import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { DefaultAzureCredential } from "@azure/identity";
 
-import { StorageSharedKeyCredential } from "../../src/credentials/StorageSharedKeyCredential";
 import { DataLakeServiceClient } from "../../src/DataLakeServiceClient";
-import { newPipeline, StoragePipelineOptions } from "../../src/Pipeline";
-import { getUniqueName, SimpleTokenCredential } from "./testutils.common";
+import type { StoragePipelineOptions } from "../../src";
+import { newPipeline, StorageSharedKeyCredential } from "../../src";
+import { getUniqueName, SimpleTokenCredential, configureStorageClient } from "./testutils.common";
+import type { DataLakeSASSignatureValues } from "../../src";
 import {
   AccountSASPermissions,
   AccountSASResourceTypes,
   AccountSASServices,
   DataLakeFileSystemClient,
-  DataLakeSASSignatureValues,
   generateAccountSASQueryParameters,
-  generateDataLakeSASQueryParameters
+  generateDataLakeSASQueryParameters,
 } from "../../src";
 import { extractConnectionStringParts } from "../../src/utils/utils.common";
-
-dotenv.config();
 
 export * from "./testutils.common";
 
@@ -32,12 +30,12 @@ export function getGenericCredential(accountType: string): StorageSharedKeyCrede
   const accountNameEnvVar = `${accountType}ACCOUNT_NAME`;
   const accountKeyEnvVar = `${accountType}ACCOUNT_KEY`;
 
-  const accountName = process.env[accountNameEnvVar];
-  const accountKey = process.env[accountKeyEnvVar];
+  const accountName = env[accountNameEnvVar];
+  const accountKey = env[accountKeyEnvVar];
 
   if (!accountName || !accountKey || accountName === "" || accountKey === "") {
     throw new Error(
-      `${accountNameEnvVar} and/or ${accountKeyEnvVar} environment variables not specified.`
+      `${accountNameEnvVar} and/or ${accountKeyEnvVar} environment variables not specified.`,
     );
   }
 
@@ -46,7 +44,7 @@ export function getGenericCredential(accountType: string): StorageSharedKeyCrede
 
 export function getTokenCredential(): TokenCredential {
   const accountTokenEnvVar = `DFS_ACCOUNT_TOKEN`;
-  const accountToken = process.env[accountTokenEnvVar];
+  const accountToken = env[accountTokenEnvVar];
 
   if (!accountToken || accountToken === "") {
     throw new Error(`${accountTokenEnvVar} environment variables not specified.`);
@@ -61,116 +59,135 @@ export function getTokenCredential(): TokenCredential {
 export function getSASToken(accountType: string, sasValues: DataLakeSASSignatureValues): string {
   const accountNameEnvVar = `${accountType}ACCOUNT_NAME`;
   const accountKeyEnvVar = `${accountType}ACCOUNT_KEY`;
-  const accountName = process.env[accountNameEnvVar];
-  const accountKey = process.env[accountKeyEnvVar];
+  const accountName = env[accountNameEnvVar];
+  const accountKey = env[accountKeyEnvVar];
 
   if (!accountName || !accountKey || accountName === "" || accountKey === "") {
     throw new Error(
-      `${accountNameEnvVar} and/or ${accountKeyEnvVar} environment variables not specified.`
+      `${accountNameEnvVar} and/or ${accountKeyEnvVar} environment variables not specified.`,
     );
   }
 
   const sasParameters = generateDataLakeSASQueryParameters(
     sasValues,
-    new StorageSharedKeyCredential(accountName, accountKey)
+    new StorageSharedKeyCredential(accountName, accountKey),
   );
   return sasParameters.toString();
 }
 
 export function getSASFileSystemClient(
+  recorder: Recorder,
   accountType: string,
   sasValues: DataLakeSASSignatureValues,
   accountNameSuffix: string = "",
-  pipelineOptions: StoragePipelineOptions = {}
+  pipelineOptions: StoragePipelineOptions = {},
 ): DataLakeFileSystemClient {
   const credential = getGenericCredential(accountType) as StorageSharedKeyCredential;
   const sasToken = getSASToken(accountType, sasValues);
   const pipeline = newPipeline(undefined, { ...pipelineOptions });
   const dfsPrimaryURL = `https://${credential.accountName}${accountNameSuffix}.dfs.core.windows.net/${sasValues.fileSystemName}/?${sasToken}`;
-  return new DataLakeFileSystemClient(dfsPrimaryURL, pipeline);
+  const client = new DataLakeFileSystemClient(dfsPrimaryURL, pipeline);
+  configureStorageClient(recorder, client);
+  return client;
 }
 
 export function getGenericDataLakeServiceClient(
+  recorder: Recorder,
   accountType: string,
   accountNameSuffix: string = "",
-  pipelineOptions: StoragePipelineOptions = {}
+  pipelineOptions: StoragePipelineOptions = {},
 ): DataLakeServiceClient {
   if (
     env.STORAGE_CONNECTION_STRING &&
     env.STORAGE_CONNECTION_STRING.startsWith("UseDevelopmentStorage=true")
   ) {
-    throw Error(
-      `getGenericDataLakeServiceClient() doesn't support creating DataLakeServiceClient from connection string.`
+    throw new Error(
+      `getGenericDataLakeServiceClient() doesn't support creating DataLakeServiceClient from connection string.`,
     );
   } else {
-    const credential = getGenericCredential(accountType) as StorageSharedKeyCredential;
-    const pipeline = newPipeline(credential, {
-      ...pipelineOptions
-      // Enable logger when debugging
-      // logger: new ConsoleHttpPipelineLogger(HttpPipelineLogLevel.INFO)
-      // proxyOptions: {
-      //   host: "127.0.0.1",
-      //   port: 8888
-      // }
-    });
+    const credential = getGenericCredential(accountType);
+    const pipeline = newPipeline(credential, pipelineOptions);
     const dfsPrimaryURL = `https://${credential.accountName}${accountNameSuffix}.dfs.core.windows.net/`;
-    return new DataLakeServiceClient(dfsPrimaryURL, pipeline);
+    const client = new DataLakeServiceClient(dfsPrimaryURL, pipeline);
+    configureStorageClient(recorder, client);
+    return client;
   }
 }
 
-export function getTokenDataLakeServiceClient(): DataLakeServiceClient {
+export function getTokenDataLakeServiceClient(recorder: Recorder): DataLakeServiceClient {
   const accountNameEnvVar = `DFS_ACCOUNT_NAME`;
 
-  const accountName = process.env[accountNameEnvVar];
+  const accountName = env[accountNameEnvVar];
   if (!accountName || accountName === "") {
     throw new Error(`${accountNameEnvVar} environment variables not specified.`);
   }
 
   const credential = getTokenCredential();
-  const pipeline = newPipeline(credential, {
-    // Enable logger when debugging
-    // logger: new ConsoleHttpPipelineLogger(HttpPipelineLogLevel.INFO)
-  });
+  const pipeline = newPipeline(credential);
   const dfsPrimaryURL = `https://${accountName}.dfs.core.windows.net/`;
-  return new DataLakeServiceClient(dfsPrimaryURL, pipeline);
+  const client = new DataLakeServiceClient(dfsPrimaryURL, pipeline);
+  configureStorageClient(recorder, client);
+  return client;
 }
 
 export function getDataLakeServiceClient(
-  pipelineOptions: StoragePipelineOptions = {}
+  recorder: Recorder,
+  pipelineOptions: StoragePipelineOptions = {},
 ): DataLakeServiceClient {
-  return getGenericDataLakeServiceClient("DFS_", undefined, pipelineOptions);
+  return getGenericDataLakeServiceClient(recorder, "DFS_", undefined, pipelineOptions);
 }
 
 export function getDataLakeServiceClientWithDefaultCredential(
+  recorder: Recorder,
   accountType: string = "DFS_",
   pipelineOptions: StoragePipelineOptions = {},
-  accountNameSuffix: string = ""
+  accountNameSuffix: string = "",
 ): DataLakeServiceClient {
   const accountNameEnvVar = `${accountType}ACCOUNT_NAME`;
-  const accountName = process.env[accountNameEnvVar];
+  const accountName = env[accountNameEnvVar];
   if (!accountName || accountName === "") {
     throw new Error(`${accountNameEnvVar} environment variables not specified.`);
   }
 
-  const credential = new DefaultAzureCredential();
+  const credential = createTestCredential();
   const pipeline = newPipeline(credential, {
-    ...pipelineOptions
+    ...pipelineOptions,
   });
   const dfsPrimaryURL = `https://${accountName}${accountNameSuffix}.dfs.core.windows.net/`;
-  return new DataLakeServiceClient(dfsPrimaryURL, pipeline);
+  const client = new DataLakeServiceClient(dfsPrimaryURL, pipeline);
+  configureStorageClient(recorder, client);
+  return client;
 }
 
 export function getDataLakeFileSystemClientWithSASCredential(
+  recorder: Recorder,
   sasValues: DataLakeSASSignatureValues,
   accountType: string = "DFS_",
   accountNameSuffix: string = "",
-  pipelineOptions: StoragePipelineOptions = {}
+  pipelineOptions: StoragePipelineOptions = {},
 ): DataLakeFileSystemClient {
-  return getSASFileSystemClient(accountType, sasValues, accountNameSuffix, pipelineOptions);
+  return getSASFileSystemClient(
+    recorder,
+    accountType,
+    sasValues,
+    accountNameSuffix,
+    pipelineOptions,
+  );
 }
 
-export function getAlternateDataLakeServiceClient(): DataLakeServiceClient {
-  return getGenericDataLakeServiceClient("SECONDARY_", "-secondary");
+export function getAlternateDataLakeServiceClient(recorder: Recorder): DataLakeServiceClient {
+  return getGenericDataLakeServiceClient(recorder, "SECONDARY_", "-secondary");
+}
+
+export function getEncryptionScope(): string {
+  const encryptionScopeEnvVar = "ENCRYPTION_SCOPE";
+  const encryptionScope = env[encryptionScopeEnvVar];
+
+  if (!encryptionScope) {
+    throw new Error(`${encryptionScopeEnvVar}  environment variables not specified.`);
+  }
+
+  return encryptionScope;
 }
 
 /**
@@ -185,7 +202,7 @@ export async function bodyToString(
     readableStreamBody?: NodeJS.ReadableStream;
     contentAsBlob?: Promise<Blob>;
   },
-  length?: number
+  length?: number,
 ): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     response.readableStreamBody!.on("readable", () => {
@@ -205,7 +222,7 @@ export async function bodyToString(
 export async function createRandomLocalFile(
   folder: string,
   blockNumber: number,
-  blockSize: number
+  blockSize: number,
 ): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const destFile = path.join(folder, getUniqueName("tempfile."));
@@ -242,7 +259,7 @@ export async function createRandomLocalFile(
 
 export function getConnectionStringFromEnvironment(accountType: string = "DFS_"): string {
   const connectionStringEnvVar = `${accountType}STORAGE_CONNECTION_STRING`;
-  const connectionString = process.env[connectionStringEnvVar];
+  const connectionString = env[connectionStringEnvVar];
 
   if (!connectionString) {
     throw new Error(`${connectionStringEnvVar} environment variables not specified.`);
@@ -265,17 +282,23 @@ export function getSASConnectionStringFromEnvironment(): string {
       expiresOn: tmr,
       permissions: AccountSASPermissions.parse("rwdlacup"),
       resourceTypes: AccountSASResourceTypes.parse("sco").toString(),
-      services: AccountSASServices.parse("btqf").toString()
+      services: AccountSASServices.parse("btqf").toString(),
     },
-    sharedKeyCredential as StorageSharedKeyCredential
+    sharedKeyCredential as StorageSharedKeyCredential,
   ).toString();
 
   const blobEndpoint = extractConnectionStringParts(getConnectionStringFromEnvironment()).url;
   return `BlobEndpoint=${blobEndpoint}/;QueueEndpoint=${blobEndpoint.replace(
     ".blob.",
-    ".queue."
+    ".queue.",
   )}/;FileEndpoint=${blobEndpoint.replace(
     ".queue.",
-    ".file."
+    ".file.",
   )}/;TableEndpoint=${blobEndpoint.replace(".queue.", ".table.")}/;SharedAccessSignature=${sas}`;
+}
+
+export function getSignatureFromSasUrl(sasUrl: string): string {
+  const url = new URL(sasUrl);
+  const signature = url.searchParams.get("sig");
+  return signature!;
 }

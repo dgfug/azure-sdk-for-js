@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualNetworkRule,
   VirtualNetworkRulesListByServerOptionalParams,
@@ -16,7 +15,7 @@ import {
   VirtualNetworkRulesGetResponse,
   VirtualNetworkRulesCreateOrUpdateOptionalParams,
   VirtualNetworkRulesCreateOrUpdateResponse,
-  VirtualNetworkRulesDeleteOptionalParams
+  VirtualNetworkRulesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface VirtualNetworkRules {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: VirtualNetworkRulesListByServerOptionalParams
+    options?: VirtualNetworkRulesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkRule>;
   /**
    * Gets a virtual network rule.
@@ -46,7 +45,7 @@ export interface VirtualNetworkRules {
     resourceGroupName: string,
     serverName: string,
     virtualNetworkRuleName: string,
-    options?: VirtualNetworkRulesGetOptionalParams
+    options?: VirtualNetworkRulesGetOptionalParams,
   ): Promise<VirtualNetworkRulesGetResponse>;
   /**
    * Creates or updates an existing virtual network rule.
@@ -62,10 +61,10 @@ export interface VirtualNetworkRules {
     serverName: string,
     virtualNetworkRuleName: string,
     parameters: VirtualNetworkRule,
-    options?: VirtualNetworkRulesCreateOrUpdateOptionalParams
+    options?: VirtualNetworkRulesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkRulesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkRulesCreateOrUpdateResponse>,
       VirtualNetworkRulesCreateOrUpdateResponse
     >
   >;
@@ -83,7 +82,7 @@ export interface VirtualNetworkRules {
     serverName: string,
     virtualNetworkRuleName: string,
     parameters: VirtualNetworkRule,
-    options?: VirtualNetworkRulesCreateOrUpdateOptionalParams
+    options?: VirtualNetworkRulesCreateOrUpdateOptionalParams,
   ): Promise<VirtualNetworkRulesCreateOrUpdateResponse>;
   /**
    * Deletes the virtual network rule with the given name.
@@ -97,8 +96,8 @@ export interface VirtualNetworkRules {
     resourceGroupName: string,
     serverName: string,
     virtualNetworkRuleName: string,
-    options?: VirtualNetworkRulesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualNetworkRulesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the virtual network rule with the given name.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -111,6 +110,6 @@ export interface VirtualNetworkRules {
     resourceGroupName: string,
     serverName: string,
     virtualNetworkRuleName: string,
-    options?: VirtualNetworkRulesDeleteOptionalParams
+    options?: VirtualNetworkRulesDeleteOptionalParams,
   ): Promise<void>;
 }

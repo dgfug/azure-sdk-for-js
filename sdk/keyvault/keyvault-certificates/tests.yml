@@ -1,12 +1,14 @@
 trigger: none
 
-stages:
-  - template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
+extends:
+    template: /eng/pipelines/templates/stages/archetype-sdk-tests.yml
     parameters:
       PackageName: "@azure/keyvault-certificates"
       ServiceDirectory: keyvault
       TimeoutInMinutes: 90
-      EnvVars:
-        AZURE_CLIENT_ID: $(aad-azure-sdk-test-client-id)
-        AZURE_TENANT_ID: $(aad-azure-sdk-test-tenant-id)
-        AZURE_CLIENT_SECRET: $(aad-azure-sdk-test-client-secret)
+      SupportedClouds: 'Public,UsGov,China'
+      AdditionalMatrixConfigs:
+         - Name: Keyvault_live_test_base
+           Path: sdk/keyvault/keyvault-certificates/platform-matrix.json
+           Selection: sparse
+           GenerateVMJobs: true

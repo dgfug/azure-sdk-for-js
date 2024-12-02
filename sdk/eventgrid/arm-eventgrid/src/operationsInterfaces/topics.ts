@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Topic,
   TopicsListBySubscriptionOptionalParams,
@@ -19,13 +19,14 @@ import {
   TopicsCreateOrUpdateOptionalParams,
   TopicsCreateOrUpdateResponse,
   TopicsDeleteOptionalParams,
+  TopicsDeleteResponse,
   TopicUpdateParameters,
   TopicsUpdateOptionalParams,
   TopicsListSharedAccessKeysOptionalParams,
   TopicsListSharedAccessKeysResponse,
   TopicRegenerateKeyRequest,
   TopicsRegenerateKeyOptionalParams,
-  TopicsRegenerateKeyResponse
+  TopicsRegenerateKeyResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -36,7 +37,7 @@ export interface Topics {
    * @param options The options parameters.
    */
   listBySubscription(
-    options?: TopicsListBySubscriptionOptionalParams
+    options?: TopicsListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<Topic>;
   /**
    * List all the topics under a resource group.
@@ -45,7 +46,7 @@ export interface Topics {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: TopicsListByResourceGroupOptionalParams
+    options?: TopicsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Topic>;
   /**
    * List event types for a topic.
@@ -60,7 +61,7 @@ export interface Topics {
     providerNamespace: string,
     resourceTypeName: string,
     resourceName: string,
-    options?: TopicsListEventTypesOptionalParams
+    options?: TopicsListEventTypesOptionalParams,
   ): PagedAsyncIterableIterator<EventType>;
   /**
    * Get properties of a topic.
@@ -71,7 +72,7 @@ export interface Topics {
   get(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsGetOptionalParams
+    options?: TopicsGetOptionalParams,
   ): Promise<TopicsGetResponse>;
   /**
    * Asynchronously creates a new topic with the specified parameters.
@@ -84,10 +85,10 @@ export interface Topics {
     resourceGroupName: string,
     topicName: string,
     topicInfo: Topic,
-    options?: TopicsCreateOrUpdateOptionalParams
+    options?: TopicsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<TopicsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<TopicsCreateOrUpdateResponse>,
       TopicsCreateOrUpdateResponse
     >
   >;
@@ -102,7 +103,7 @@ export interface Topics {
     resourceGroupName: string,
     topicName: string,
     topicInfo: Topic,
-    options?: TopicsCreateOrUpdateOptionalParams
+    options?: TopicsCreateOrUpdateOptionalParams,
   ): Promise<TopicsCreateOrUpdateResponse>;
   /**
    * Delete existing topic.
@@ -113,8 +114,10 @@ export interface Topics {
   beginDelete(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: TopicsDeleteOptionalParams,
+  ): Promise<
+    SimplePollerLike<OperationState<TopicsDeleteResponse>, TopicsDeleteResponse>
+  >;
   /**
    * Delete existing topic.
    * @param resourceGroupName The name of the resource group within the user's subscription.
@@ -124,8 +127,8 @@ export interface Topics {
   beginDeleteAndWait(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsDeleteOptionalParams
-  ): Promise<void>;
+    options?: TopicsDeleteOptionalParams,
+  ): Promise<TopicsDeleteResponse>;
   /**
    * Asynchronously updates a topic with the specified parameters.
    * @param resourceGroupName The name of the resource group within the user's subscription.
@@ -137,8 +140,8 @@ export interface Topics {
     resourceGroupName: string,
     topicName: string,
     topicUpdateParameters: TopicUpdateParameters,
-    options?: TopicsUpdateOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: TopicsUpdateOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Asynchronously updates a topic with the specified parameters.
    * @param resourceGroupName The name of the resource group within the user's subscription.
@@ -150,7 +153,7 @@ export interface Topics {
     resourceGroupName: string,
     topicName: string,
     topicUpdateParameters: TopicUpdateParameters,
-    options?: TopicsUpdateOptionalParams
+    options?: TopicsUpdateOptionalParams,
   ): Promise<void>;
   /**
    * List the two keys used to publish to a topic.
@@ -161,7 +164,7 @@ export interface Topics {
   listSharedAccessKeys(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsListSharedAccessKeysOptionalParams
+    options?: TopicsListSharedAccessKeysOptionalParams,
   ): Promise<TopicsListSharedAccessKeysResponse>;
   /**
    * Regenerate a shared access key for a topic.
@@ -174,10 +177,10 @@ export interface Topics {
     resourceGroupName: string,
     topicName: string,
     regenerateKeyRequest: TopicRegenerateKeyRequest,
-    options?: TopicsRegenerateKeyOptionalParams
+    options?: TopicsRegenerateKeyOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<TopicsRegenerateKeyResponse>,
+    SimplePollerLike<
+      OperationState<TopicsRegenerateKeyResponse>,
       TopicsRegenerateKeyResponse
     >
   >;
@@ -192,6 +195,6 @@ export interface Topics {
     resourceGroupName: string,
     topicName: string,
     regenerateKeyRequest: TopicRegenerateKeyRequest,
-    options?: TopicsRegenerateKeyOptionalParams
+    options?: TopicsRegenerateKeyOptionalParams,
   ): Promise<TopicsRegenerateKeyResponse>;
 }

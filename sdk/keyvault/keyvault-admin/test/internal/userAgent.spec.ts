@@ -1,37 +1,32 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
-import { SDK_VERSION } from "../../src/constants";
-import { packageVersion } from "../../src/generated/keyVaultClientContext";
-import { isNode } from "@azure/core-util";
-import path from "path";
-import fs from "fs";
+import { KeyVaultAccessControlClient, SDK_VERSION } from "../../src/index.js";
+import { TokenCredential } from "@azure/core-auth";
+import { describe, it, expect } from "vitest";
 
-describe("Key Vault Admin's user agent (only in Node, because of fs)", function() {
-  beforeEach(function() {
-    if (!isNode) {
-      this.skip();
-    }
-  });
+describe("Key Vault Admin's user agent", function () {
+  it("SDK_VERSION and user-agent should match", async function () {
+    let userAgent: string | undefined;
+    const client = new KeyVaultAccessControlClient(
+      "https://myvault.vault.azure.net",
+      {} as TokenCredential,
+      {
+        httpClient: {
+          sendRequest: async (request) => {
+            userAgent = request.headers.get("user-agent");
+            throw new Error("only a test");
+          },
+        },
+      },
+    );
 
-  it("SDK_VERSION and packageVersion should match", async function() {
-    assert.equal(SDK_VERSION, packageVersion);
-  });
-
-  it("the version should also match with the one available in the package.json  (only in Node, because of fs)", async function() {
-    let version: string;
     try {
-      const fileContents = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "../package.json"), { encoding: "utf-8" })
-      );
-      version = fileContents.version;
+      await client.getRoleAssignment("/", "");
     } catch {
-      const fileContents = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "../../../../package.json"), { encoding: "utf-8" })
-      );
-      version = fileContents.version;
+      // no-op, we don't care about the response, only the user-agent header
     }
-    assert.equal(version, packageVersion);
+    expect(userAgent).toBeDefined();
+    expect(userAgent).toContain(`azsdk-js-keyvault-admin/${SDK_VERSION}`);
   });
 });

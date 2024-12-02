@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   SecurityPolicy,
   SecurityPoliciesListByProfileOptionalParams,
@@ -15,10 +15,10 @@ import {
   SecurityPoliciesGetResponse,
   SecurityPoliciesCreateOptionalParams,
   SecurityPoliciesCreateResponse,
-  SecurityPolicyProperties,
+  SecurityPolicyUpdateParameters,
   SecurityPoliciesPatchOptionalParams,
   SecurityPoliciesPatchResponse,
-  SecurityPoliciesDeleteOptionalParams
+  SecurityPoliciesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -27,18 +27,20 @@ export interface SecurityPolicies {
   /**
    * Lists security policies associated with the profile
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param options The options parameters.
    */
   listByProfile(
     resourceGroupName: string,
     profileName: string,
-    options?: SecurityPoliciesListByProfileOptionalParams
+    options?: SecurityPoliciesListByProfileOptionalParams,
   ): PagedAsyncIterableIterator<SecurityPolicy>;
   /**
    * Gets an existing security policy within a profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param securityPolicyName Name of the security policy under the profile.
    * @param options The options parameters.
    */
@@ -46,12 +48,13 @@ export interface SecurityPolicies {
     resourceGroupName: string,
     profileName: string,
     securityPolicyName: string,
-    options?: SecurityPoliciesGetOptionalParams
+    options?: SecurityPoliciesGetOptionalParams,
   ): Promise<SecurityPoliciesGetResponse>;
   /**
    * Creates a new security policy within the specified profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param securityPolicyName Name of the security policy under the profile.
    * @param securityPolicy The security policy properties.
    * @param options The options parameters.
@@ -61,17 +64,18 @@ export interface SecurityPolicies {
     profileName: string,
     securityPolicyName: string,
     securityPolicy: SecurityPolicy,
-    options?: SecurityPoliciesCreateOptionalParams
+    options?: SecurityPoliciesCreateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SecurityPoliciesCreateResponse>,
+    SimplePollerLike<
+      OperationState<SecurityPoliciesCreateResponse>,
       SecurityPoliciesCreateResponse
     >
   >;
   /**
    * Creates a new security policy within the specified profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param securityPolicyName Name of the security policy under the profile.
    * @param securityPolicy The security policy properties.
    * @param options The options parameters.
@@ -81,67 +85,71 @@ export interface SecurityPolicies {
     profileName: string,
     securityPolicyName: string,
     securityPolicy: SecurityPolicy,
-    options?: SecurityPoliciesCreateOptionalParams
+    options?: SecurityPoliciesCreateOptionalParams,
   ): Promise<SecurityPoliciesCreateResponse>;
   /**
-   * Updates an existing Secret within a profile.
+   * Updates an existing security policy within a profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param securityPolicyName Name of the security policy under the profile.
-   * @param securityPolicyProperties Security policy update properties
+   * @param securityPolicyUpdateProperties Security policy update properties
    * @param options The options parameters.
    */
   beginPatch(
     resourceGroupName: string,
     profileName: string,
     securityPolicyName: string,
-    securityPolicyProperties: SecurityPolicyProperties,
-    options?: SecurityPoliciesPatchOptionalParams
+    securityPolicyUpdateProperties: SecurityPolicyUpdateParameters,
+    options?: SecurityPoliciesPatchOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SecurityPoliciesPatchResponse>,
+    SimplePollerLike<
+      OperationState<SecurityPoliciesPatchResponse>,
       SecurityPoliciesPatchResponse
     >
   >;
   /**
-   * Updates an existing Secret within a profile.
+   * Updates an existing security policy within a profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param securityPolicyName Name of the security policy under the profile.
-   * @param securityPolicyProperties Security policy update properties
+   * @param securityPolicyUpdateProperties Security policy update properties
    * @param options The options parameters.
    */
   beginPatchAndWait(
     resourceGroupName: string,
     profileName: string,
     securityPolicyName: string,
-    securityPolicyProperties: SecurityPolicyProperties,
-    options?: SecurityPoliciesPatchOptionalParams
+    securityPolicyUpdateProperties: SecurityPolicyUpdateParameters,
+    options?: SecurityPoliciesPatchOptionalParams,
   ): Promise<SecurityPoliciesPatchResponse>;
   /**
    * Deletes an existing security policy within profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
-   * @param securityPolicyName Name of the Secret under the profile.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
+   * @param securityPolicyName Name of the security policy under the profile.
    * @param options The options parameters.
    */
   beginDelete(
     resourceGroupName: string,
     profileName: string,
     securityPolicyName: string,
-    options?: SecurityPoliciesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SecurityPoliciesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes an existing security policy within profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
-   * @param securityPolicyName Name of the Secret under the profile.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
+   * @param securityPolicyName Name of the security policy under the profile.
    * @param options The options parameters.
    */
   beginDeleteAndWait(
     resourceGroupName: string,
     profileName: string,
     securityPolicyName: string,
-    options?: SecurityPoliciesDeleteOptionalParams
+    options?: SecurityPoliciesDeleteOptionalParams,
   ): Promise<void>;
 }

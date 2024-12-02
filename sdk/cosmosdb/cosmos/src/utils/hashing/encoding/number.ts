@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import JSBI from "jsbi";
 import { BytePrefix } from "./prefix";
@@ -50,10 +50,9 @@ export function writeNumberForBinaryEncodingJSBI(hash: number): Buffer {
 function encodeNumberAsUInt64JSBI(value: number): JSBI {
   const rawValueBits = getRawBitsJSBI(value);
   const mask = JSBI.BigInt(0x8000000000000000);
-  const returned =
-    rawValueBits < mask
-      ? JSBI.bitwiseXor(rawValueBits, mask)
-      : JSBI.add(JSBI.bitwiseNot(rawValueBits), JSBI.BigInt(1));
+  const returned = JSBI.greaterThan(mask, rawValueBits)
+    ? JSBI.bitwiseXor(rawValueBits, mask)
+    : JSBI.add(JSBI.bitwiseNot(rawValueBits), JSBI.BigInt(1));
   return returned;
 }
 
@@ -64,8 +63,8 @@ export function doubleToByteArrayJSBI(double: number): Buffer {
     output[i] = JSBI.toNumber(
       JSBI.bitwiseAnd(
         JSBI.signedRightShift(lng, JSBI.multiply(JSBI.BigInt(i), JSBI.BigInt(8))),
-        JSBI.BigInt(0xff)
-      )
+        JSBI.BigInt(0xff),
+      ),
     );
   }
   return output;

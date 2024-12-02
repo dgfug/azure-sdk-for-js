@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { PerfTest } from "../src";
 
@@ -9,5 +9,7 @@ import { PerfTest } from "../src";
 export class NoOp extends PerfTest {
   public options = {};
 
-  async run(): Promise<void> {}
+  async run(): Promise<void> {
+    // do nothing
+  }
 }

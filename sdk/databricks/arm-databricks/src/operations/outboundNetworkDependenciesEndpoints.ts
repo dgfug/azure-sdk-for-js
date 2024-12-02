@@ -10,7 +10,7 @@ import { OutboundNetworkDependenciesEndpoints } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { AzureDatabricksManagementClientContext } from "../azureDatabricksManagementClientContext";
+import { AzureDatabricksManagementClient } from "../azureDatabricksManagementClient";
 import {
   OutboundNetworkDependenciesEndpointsListOptionalParams,
   OutboundNetworkDependenciesEndpointsListResponse
@@ -19,20 +19,20 @@ import {
 /** Class containing OutboundNetworkDependenciesEndpoints operations. */
 export class OutboundNetworkDependenciesEndpointsImpl
   implements OutboundNetworkDependenciesEndpoints {
-  private readonly client: AzureDatabricksManagementClientContext;
+  private readonly client: AzureDatabricksManagementClient;
 
   /**
    * Initialize a new instance of the class OutboundNetworkDependenciesEndpoints class.
    * @param client Reference to the service client
    */
-  constructor(client: AzureDatabricksManagementClientContext) {
+  constructor(client: AzureDatabricksManagementClient) {
     this.client = client;
   }
 
   /**
    * Gets the list of endpoints that VNET Injected Workspace calls Azure Databricks Control Plane. You
    * must configure outbound access with these endpoints. For more information, see
-   * https://docs.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/udr
+   * https://docs.microsoft.com/azure/databricks/administration-guide/cloud-configurations/azure/udr
    * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param workspaceName The name of the workspace.
    * @param options The options parameters.

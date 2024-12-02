@@ -1,48 +1,49 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { assert } from "chai";
-import * as sinon from "sinon";
+import { describe, it, assert, expect, vi, afterEach } from "vitest";
 import {
-  createPipelineRequest,
-  SendRequest,
-  PipelineResponse,
+  type PipelineResponse,
+  RestError,
+  type SendRequest,
   createHttpHeaders,
+  createPipelineRequest,
   systemErrorRetryPolicy,
-  RestError
-} from "../src";
+} from "../src/index.js";
+import { DEFAULT_RETRY_POLICY_COUNT } from "../src/constants.js";
 
-describe("systemErrorRetryPolicy", function() {
-  afterEach(function() {
-    sinon.restore();
+describe("systemErrorRetryPolicy", function () {
+  afterEach(function () {
+    vi.useRealTimers();
   });
 
   it("It should retry after a system error", async () => {
     const request = createPipelineRequest({
-      url: "https://bing.com"
+      url: "https://bing.com",
     });
     const systemError = new RestError("Test Error!", { code: "ENOENT" });
     const successResponse: PipelineResponse = {
       headers: createHttpHeaders(),
       request,
-      status: 200
+      status: 200,
     };
 
     const policy = systemErrorRetryPolicy();
-    const next = sinon.stub<Parameters<SendRequest>, ReturnType<SendRequest>>();
-    next.onFirstCall().rejects(systemError);
-    next.onSecondCall().resolves(successResponse);
+    const next = vi.fn<SendRequest>();
+    next.mockRejectedValueOnce(systemError);
+    next.mockResolvedValueOnce(successResponse);
 
-    const clock = sinon.useFakeTimers();
+    vi.useFakeTimers();
 
     const promise = policy.sendRequest(request, next);
-    assert.isTrue(next.calledOnce);
+    expect(next).toHaveBeenCalledOnce();
 
     // allow the delay to occur
-    const time = await clock.nextAsync();
+    const before = Date.now();
+    await vi.advanceTimersToNextTimerAsync();
     // should be at least the standard delay
-    assert.isAtLeast(time, 1000);
-    assert.isTrue(next.calledTwice);
+    assert.isAtLeast(Date.now() - before, 500);
+    expect(next).toHaveBeenCalledTimes(2);
 
     const result = await promise;
 
@@ -51,15 +52,15 @@ describe("systemErrorRetryPolicy", function() {
 
   it("It should give up after the limit is reached", async () => {
     const request = createPipelineRequest({
-      url: "https://bing.com"
+      url: "https://bing.com",
     });
     const systemError = new RestError("Test Error!", { code: "ENOENT" });
 
     const policy = systemErrorRetryPolicy();
-    const next = sinon.stub<Parameters<SendRequest>, ReturnType<SendRequest>>();
-    next.rejects(systemError);
+    const next = vi.fn<SendRequest>();
+    next.mockRejectedValue(systemError);
 
-    const clock = sinon.useFakeTimers();
+    vi.useFakeTimers();
 
     let catchCalled = false;
     const promise = policy.sendRequest(request, next);
@@ -67,9 +68,9 @@ describe("systemErrorRetryPolicy", function() {
       catchCalled = true;
       assert.strictEqual(e, systemError);
     });
-    await clock.runAllAsync();
+    await vi.runAllTimersAsync();
     // should be one more than the default retry count
-    assert.strictEqual(next.callCount, 11);
+    expect(next).toHaveBeenCalledTimes(DEFAULT_RETRY_POLICY_COUNT + 1);
     assert.isTrue(catchCalled);
   });
 });

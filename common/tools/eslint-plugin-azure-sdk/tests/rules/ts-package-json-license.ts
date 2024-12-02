@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-package-json-license rule.
- * @author Arpan Laha
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-package-json-license";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -80,15 +80,13 @@ const examplePackageGood = `{
     "eslint-detailed-reporter": "^0.8.0",
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-only-tests": "^2.3.0",
-    "eslint-plugin-promise": "^4.1.1",    
+    "eslint-plugin-promise": "^4.1.1",
     "https-proxy-agent": "^2.2.1",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^1.2.0",
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.5",
@@ -193,15 +191,13 @@ const examplePackageBad = `{
     "eslint-detailed-reporter": "^0.8.0",
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-only-tests": "^2.3.0",
-    "eslint-plugin-promise": "^4.1.1",    
+    "eslint-plugin-promise": "^4.1.1",
     "https-proxy-agent": "^2.2.1",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^1.2.0",
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.5",
@@ -243,31 +239,25 @@ const examplePackageBad = `{
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-package-json-license", rule, {
   valid: [
     {
       // only the fields we care about
       code: '{"license": "MIT"}',
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: examplePackageGood,
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"license": "Apache"}',
-      filename: "not_package.json"
-    }
+      filename: "not_package.json",
+    },
   ],
   invalid: [
     {
@@ -275,9 +265,9 @@ ruleTester.run("ts-package-json-license", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "license does not exist at the outermost level"
-        }
-      ]
+          message: "license does not exist at the outermost level",
+        },
+      ],
     },
     {
       // license is in a nested object
@@ -285,9 +275,9 @@ ruleTester.run("ts-package-json-license", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "license does not exist at the outermost level"
-        }
-      ]
+          message: "license does not exist at the outermost level",
+        },
+      ],
     },
     {
       // only the fields we care about
@@ -295,10 +285,10 @@ ruleTester.run("ts-package-json-license", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "license is set to Apache when it should be set to MIT"
-        }
+          message: "license is set to Apache when it should be set to MIT",
+        },
       ],
-      output: '{"license": "MIT"}'
+      output: '{"license": "MIT"}',
     },
     {
       // example file with license set to Apache
@@ -306,10 +296,10 @@ ruleTester.run("ts-package-json-license", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "license is set to Apache when it should be set to MIT"
-        }
+          message: "license is set to Apache when it should be set to MIT",
+        },
       ],
-      output: examplePackageGood
-    }
-  ]
+      output: examplePackageGood,
+    },
+  ],
 });

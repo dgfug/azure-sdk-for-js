@@ -1,22 +1,29 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions } from "@azure/core-http";
+import type { OperationOptions } from "@azure/core-client";
 
 export const extractOperationOptions = <T extends OperationOptions>(
-  obj: T
+  obj: T,
 ): {
   operationOptions: OperationOptions;
   restOptions: Pick<T, Exclude<keyof T, keyof OperationOptions>>;
 } => {
-  const { abortSignal, requestOptions, tracingOptions, ...restOptions } = obj;
+  const {
+    abortSignal,
+    onResponse,
+    requestOptions,
+    serializerOptions,
+    tracingOptions,
+    ...restOptions
+  } = obj;
 
   return {
     operationOptions: {
       abortSignal,
       requestOptions,
-      tracingOptions
+      tracingOptions,
     },
-    restOptions
+    restOptions,
   };
 };

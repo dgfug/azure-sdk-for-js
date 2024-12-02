@@ -6,12 +6,10 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ResourceGroup,
-  ResourceGroupsListNextOptionalParams,
   ResourceGroupsListOptionalParams,
   ResourceGroupsCheckExistenceOptionalParams,
   ResourceGroupsCheckExistenceResponse,
@@ -37,15 +35,6 @@ export interface ResourceGroups {
    */
   list(
     options?: ResourceGroupsListOptionalParams
-  ): PagedAsyncIterableIterator<ResourceGroup>;
-  /**
-   * ListNext
-   * @param nextLink The nextLink from the previous successful call to the List method.
-   * @param options The options parameters.
-   */
-  listNext(
-    nextLink: string,
-    options?: ResourceGroupsListNextOptionalParams
   ): PagedAsyncIterableIterator<ResourceGroup>;
   /**
    * Checks whether a resource group exists.
@@ -78,7 +67,7 @@ export interface ResourceGroups {
   beginDelete(
     resourceGroupName: string,
     options?: ResourceGroupsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * When you delete a resource group, all of its resources are also deleted. Deleting a resource group
    * deletes all of its template deployments and currently stored operations.
@@ -122,8 +111,8 @@ export interface ResourceGroups {
     parameters: ExportTemplateRequest,
     options?: ResourceGroupsExportTemplateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<ResourceGroupsExportTemplateResponse>,
+    SimplePollerLike<
+      OperationState<ResourceGroupsExportTemplateResponse>,
       ResourceGroupsExportTemplateResponse
     >
   >;

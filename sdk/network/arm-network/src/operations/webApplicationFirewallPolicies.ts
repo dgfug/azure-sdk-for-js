@@ -6,21 +6,26 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { WebApplicationFirewallPolicies } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   WebApplicationFirewallPolicy,
   WebApplicationFirewallPoliciesListNextOptionalParams,
   WebApplicationFirewallPoliciesListOptionalParams,
+  WebApplicationFirewallPoliciesListResponse,
   WebApplicationFirewallPoliciesListAllNextOptionalParams,
   WebApplicationFirewallPoliciesListAllOptionalParams,
-  WebApplicationFirewallPoliciesListResponse,
   WebApplicationFirewallPoliciesListAllResponse,
   WebApplicationFirewallPoliciesGetOptionalParams,
   WebApplicationFirewallPoliciesGetResponse,
@@ -28,20 +33,21 @@ import {
   WebApplicationFirewallPoliciesCreateOrUpdateResponse,
   WebApplicationFirewallPoliciesDeleteOptionalParams,
   WebApplicationFirewallPoliciesListNextResponse,
-  WebApplicationFirewallPoliciesListAllNextResponse
+  WebApplicationFirewallPoliciesListAllNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing WebApplicationFirewallPolicies operations. */
 export class WebApplicationFirewallPoliciesImpl
-  implements WebApplicationFirewallPolicies {
-  private readonly client: NetworkManagementClientContext;
+  implements WebApplicationFirewallPolicies
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class WebApplicationFirewallPolicies class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -52,7 +58,7 @@ export class WebApplicationFirewallPoliciesImpl
    */
   public list(
     resourceGroupName: string,
-    options?: WebApplicationFirewallPoliciesListOptionalParams
+    options?: WebApplicationFirewallPoliciesListOptionalParams,
   ): PagedAsyncIterableIterator<WebApplicationFirewallPolicy> {
     const iter = this.listPagingAll(resourceGroupName, options);
     return {
@@ -62,33 +68,45 @@ export class WebApplicationFirewallPoliciesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(resourceGroupName, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
-    options?: WebApplicationFirewallPoliciesListOptionalParams
+    options?: WebApplicationFirewallPoliciesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<WebApplicationFirewallPolicy[]> {
-    let result = await this._list(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: WebApplicationFirewallPoliciesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
-    options?: WebApplicationFirewallPoliciesListOptionalParams
+    options?: WebApplicationFirewallPoliciesListOptionalParams,
   ): AsyncIterableIterator<WebApplicationFirewallPolicy> {
     for await (const page of this.listPagingPage(resourceGroupName, options)) {
       yield* page;
@@ -100,7 +118,7 @@ export class WebApplicationFirewallPoliciesImpl
    * @param options The options parameters.
    */
   public listAll(
-    options?: WebApplicationFirewallPoliciesListAllOptionalParams
+    options?: WebApplicationFirewallPoliciesListAllOptionalParams,
   ): PagedAsyncIterableIterator<WebApplicationFirewallPolicy> {
     const iter = this.listAllPagingAll(options);
     return {
@@ -110,27 +128,39 @@ export class WebApplicationFirewallPoliciesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
+      },
     };
   }
 
   private async *listAllPagingPage(
-    options?: WebApplicationFirewallPoliciesListAllOptionalParams
+    options?: WebApplicationFirewallPoliciesListAllOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<WebApplicationFirewallPolicy[]> {
-    let result = await this._listAll(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: WebApplicationFirewallPoliciesListAllResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAll(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listAllPagingAll(
-    options?: WebApplicationFirewallPoliciesListAllOptionalParams
+    options?: WebApplicationFirewallPoliciesListAllOptionalParams,
   ): AsyncIterableIterator<WebApplicationFirewallPolicy> {
     for await (const page of this.listAllPagingPage(options)) {
       yield* page;
@@ -144,11 +174,11 @@ export class WebApplicationFirewallPoliciesImpl
    */
   private _list(
     resourceGroupName: string,
-    options?: WebApplicationFirewallPoliciesListOptionalParams
+    options?: WebApplicationFirewallPoliciesListOptionalParams,
   ): Promise<WebApplicationFirewallPoliciesListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -157,7 +187,7 @@ export class WebApplicationFirewallPoliciesImpl
    * @param options The options parameters.
    */
   private _listAll(
-    options?: WebApplicationFirewallPoliciesListAllOptionalParams
+    options?: WebApplicationFirewallPoliciesListAllOptionalParams,
   ): Promise<WebApplicationFirewallPoliciesListAllResponse> {
     return this.client.sendOperationRequest({ options }, listAllOperationSpec);
   }
@@ -171,11 +201,11 @@ export class WebApplicationFirewallPoliciesImpl
   get(
     resourceGroupName: string,
     policyName: string,
-    options?: WebApplicationFirewallPoliciesGetOptionalParams
+    options?: WebApplicationFirewallPoliciesGetOptionalParams,
   ): Promise<WebApplicationFirewallPoliciesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, policyName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -190,11 +220,11 @@ export class WebApplicationFirewallPoliciesImpl
     resourceGroupName: string,
     policyName: string,
     parameters: WebApplicationFirewallPolicy,
-    options?: WebApplicationFirewallPoliciesCreateOrUpdateOptionalParams
+    options?: WebApplicationFirewallPoliciesCreateOrUpdateOptionalParams,
   ): Promise<WebApplicationFirewallPoliciesCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, policyName, parameters, options },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -207,25 +237,24 @@ export class WebApplicationFirewallPoliciesImpl
   async beginDelete(
     resourceGroupName: string,
     policyName: string,
-    options?: WebApplicationFirewallPoliciesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: WebApplicationFirewallPoliciesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -234,8 +263,8 @@ export class WebApplicationFirewallPoliciesImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -243,21 +272,23 @@ export class WebApplicationFirewallPoliciesImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, policyName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, policyName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -269,12 +300,12 @@ export class WebApplicationFirewallPoliciesImpl
   async beginDeleteAndWait(
     resourceGroupName: string,
     policyName: string,
-    options?: WebApplicationFirewallPoliciesDeleteOptionalParams
+    options?: WebApplicationFirewallPoliciesDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       policyName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -288,11 +319,11 @@ export class WebApplicationFirewallPoliciesImpl
   private _listNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: WebApplicationFirewallPoliciesListNextOptionalParams
+    options?: WebApplicationFirewallPoliciesListNextOptionalParams,
   ): Promise<WebApplicationFirewallPoliciesListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -303,11 +334,11 @@ export class WebApplicationFirewallPoliciesImpl
    */
   private _listAllNext(
     nextLink: string,
-    options?: WebApplicationFirewallPoliciesListAllNextOptionalParams
+    options?: WebApplicationFirewallPoliciesListAllNextOptionalParams,
   ): Promise<WebApplicationFirewallPoliciesListAllNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listAllNextOperationSpec
+      listAllNextOperationSpec,
     );
   }
 }
@@ -315,95 +346,90 @@ export class WebApplicationFirewallPoliciesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult
+      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult
+      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/{policyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/{policyName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.WebApplicationFirewallPolicy
+      bodyMapper: Mappers.WebApplicationFirewallPolicy,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.policyName
+    Parameters.policyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/{policyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/{policyName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.WebApplicationFirewallPolicy
+      bodyMapper: Mappers.WebApplicationFirewallPolicy,
     },
     201: {
-      bodyMapper: Mappers.WebApplicationFirewallPolicy
+      bodyMapper: Mappers.WebApplicationFirewallPolicy,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters77,
+  requestBody: Parameters.parameters92,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.policyName
+    Parameters.policyName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/{policyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/{policyName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -411,57 +437,55 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.policyName
+    Parameters.policyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult
+      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult
+      bodyMapper: Mappers.WebApplicationFirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

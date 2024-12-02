@@ -6,299 +6,103 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { CloudErrorMapper, BaseResourceMapper } from "@azure/ms-rest-azure-js";
-import * as msRest from "@azure/ms-rest-js";
+import * as coreClient from "@azure/core-client";
 
-export const CloudError = CloudErrorMapper;
-export const BaseResource = BaseResourceMapper;
-
-export const BackupResourceEncryptionConfig: msRest.CompositeMapper = {
-  serializedName: "BackupResourceEncryptionConfig",
+export const BackupResourceConfig: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "BackupResourceEncryptionConfig",
+    className: "BackupResourceConfig",
     modelProperties: {
-      encryptionAtRestType: {
-        serializedName: "encryptionAtRestType",
+      storageModelType: {
+        serializedName: "storageModelType",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      keyUri: {
-        serializedName: "keyUri",
+      storageType: {
+        serializedName: "storageType",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      subscriptionId: {
-        serializedName: "subscriptionId",
+      storageTypeState: {
+        serializedName: "storageTypeState",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      lastUpdateStatus: {
-        serializedName: "lastUpdateStatus",
+      crossRegionRestoreFlag: {
+        serializedName: "crossRegionRestoreFlag",
         type: {
-          name: "String"
-        }
+          name: "Boolean",
+        },
       },
-      infrastructureEncryptionState: {
-        serializedName: "infrastructureEncryptionState",
+      dedupState: {
+        serializedName: "dedupState",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+      xcoolState: {
+        serializedName: "xcoolState",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const Resource: msRest.CompositeMapper = {
-  serializedName: "Resource",
+export const Resource: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "Resource",
     modelProperties: {
       id: {
-        readOnly: true,
         serializedName: "id",
+        readOnly: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       name: {
-        readOnly: true,
         serializedName: "name",
+        readOnly: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       type: {
-        readOnly: true,
         serializedName: "type",
+        readOnly: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       location: {
         serializedName: "location",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       tags: {
         serializedName: "tags",
         type: {
           name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
+          value: { type: { name: "String" } },
+        },
       },
       eTag: {
         serializedName: "eTag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const BackupResourceEncryptionConfigResource: msRest.CompositeMapper = {
-  serializedName: "BackupResourceEncryptionConfigResource",
-  type: {
-    name: "Composite",
-    className: "BackupResourceEncryptionConfigResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "BackupResourceEncryptionConfig"
-        }
-      }
-    }
-  }
-};
-
-export const PrivateEndpoint: msRest.CompositeMapper = {
-  serializedName: "PrivateEndpoint",
-  type: {
-    name: "Composite",
-    className: "PrivateEndpoint",
-    modelProperties: {
-      id: {
-        serializedName: "id",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const PrivateLinkServiceConnectionState: msRest.CompositeMapper = {
-  serializedName: "PrivateLinkServiceConnectionState",
-  type: {
-    name: "Composite",
-    className: "PrivateLinkServiceConnectionState",
-    modelProperties: {
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      description: {
-        serializedName: "description",
-        type: {
-          name: "String"
-        }
-      },
-      actionRequired: {
-        serializedName: "actionRequired",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const PrivateEndpointConnection: msRest.CompositeMapper = {
-  serializedName: "PrivateEndpointConnection",
-  type: {
-    name: "Composite",
-    className: "PrivateEndpointConnection",
-    modelProperties: {
-      provisioningState: {
-        serializedName: "provisioningState",
-        type: {
-          name: "String"
-        }
-      },
-      privateEndpoint: {
-        serializedName: "privateEndpoint",
-        type: {
-          name: "Composite",
-          className: "PrivateEndpoint"
-        }
-      },
-      privateLinkServiceConnectionState: {
-        serializedName: "privateLinkServiceConnectionState",
-        type: {
-          name: "Composite",
-          className: "PrivateLinkServiceConnectionState"
-        }
-      }
-    }
-  }
-};
-
-export const PrivateEndpointConnectionResource: msRest.CompositeMapper = {
-  serializedName: "PrivateEndpointConnectionResource",
-  type: {
-    name: "Composite",
-    className: "PrivateEndpointConnectionResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "PrivateEndpointConnection"
-        }
-      }
-    }
-  }
-};
-
-export const ErrorAdditionalInfo: msRest.CompositeMapper = {
-  serializedName: "ErrorAdditionalInfo",
-  type: {
-    name: "Composite",
-    className: "ErrorAdditionalInfo",
-    modelProperties: {
-      type: {
-        readOnly: true,
-        serializedName: "type",
-        type: {
-          name: "String"
-        }
-      },
-      info: {
-        readOnly: true,
-        serializedName: "info",
-        type: {
-          name: "Object"
-        }
-      }
-    }
-  }
-};
-
-export const NewErrorResponseError: msRest.CompositeMapper = {
-  serializedName: "NewErrorResponse_error",
-  type: {
-    name: "Composite",
-    className: "NewErrorResponseError",
-    modelProperties: {
-      code: {
-        readOnly: true,
-        serializedName: "code",
-        type: {
-          name: "String"
-        }
-      },
-      message: {
-        readOnly: true,
-        serializedName: "message",
-        type: {
-          name: "String"
-        }
-      },
-      target: {
-        readOnly: true,
-        serializedName: "target",
-        type: {
-          name: "String"
-        }
-      },
-      details: {
-        readOnly: true,
-        serializedName: "details",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "NewErrorResponse"
-            }
-          }
-        }
-      },
-      additionalInfo: {
-        readOnly: true,
-        serializedName: "additionalInfo",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ErrorAdditionalInfo"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const NewErrorResponse: msRest.CompositeMapper = {
-  serializedName: "NewErrorResponse",
+export const NewErrorResponse: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "NewErrorResponse",
@@ -307,4164 +111,999 @@ export const NewErrorResponse: msRest.CompositeMapper = {
         serializedName: "error",
         type: {
           name: "Composite",
-          className: "NewErrorResponseError"
-        }
-      }
-    }
-  }
+          className: "NewErrorResponseError",
+        },
+      },
+    },
+  },
 };
 
-export const ResourceHealthDetails: msRest.CompositeMapper = {
-  serializedName: "ResourceHealthDetails",
+export const NewErrorResponseError: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "ResourceHealthDetails",
+    className: "NewErrorResponseError",
     modelProperties: {
       code: {
-        readOnly: true,
         serializedName: "code",
-        type: {
-          name: "Number"
-        }
-      },
-      title: {
         readOnly: true,
-        serializedName: "title",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       message: {
-        readOnly: true,
         serializedName: "message",
-        type: {
-          name: "String"
-        }
-      },
-      recommendations: {
         readOnly: true,
-        serializedName: "recommendations",
         type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const KPIResourceHealthDetails: msRest.CompositeMapper = {
-  serializedName: "KPIResourceHealthDetails",
-  type: {
-    name: "Composite",
-    className: "KPIResourceHealthDetails",
-    modelProperties: {
-      resourceHealthStatus: {
-        serializedName: "resourceHealthStatus",
-        type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      resourceHealthDetails: {
-        serializedName: "resourceHealthDetails",
+      target: {
+        serializedName: "target",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      details: {
+        serializedName: "details",
+        readOnly: true,
         type: {
           name: "Sequence",
           element: {
             type: {
               name: "Composite",
-              className: "ResourceHealthDetails"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureFileshareProtectedItemExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureFileshareProtectedItemExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureFileshareProtectedItemExtendedInfo",
-    modelProperties: {
-      oldestRecoveryPoint: {
-        serializedName: "oldestRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
+              className: "NewErrorResponse",
+            },
+          },
+        },
       },
-      recoveryPointCount: {
-        serializedName: "recoveryPointCount",
-        type: {
-          name: "Number"
-        }
-      },
-      policyState: {
-        serializedName: "policyState",
-        type: {
-          name: "String"
-        }
-      },
-      resourceState: {
+      additionalInfo: {
+        serializedName: "additionalInfo",
         readOnly: true,
-        serializedName: "resourceState",
         type: {
-          name: "String"
-        }
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ErrorAdditionalInfo",
+            },
+          },
+        },
       },
-      resourceStateSyncTime: {
-        readOnly: true,
-        serializedName: "resourceStateSyncTime",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectedItem: msRest.CompositeMapper = {
-  serializedName: "ProtectedItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "protectedItemType",
-      clientName: "protectedItemType"
     },
-    uberParent: "ProtectedItem",
-    className: "ProtectedItem",
+  },
+};
+
+export const ErrorAdditionalInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ErrorAdditionalInfo",
     modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
+      type: {
+        serializedName: "type",
+        readOnly: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      workloadType: {
-        serializedName: "workloadType",
+      info: {
+        serializedName: "info",
+        readOnly: true,
         type: {
-          name: "String"
-        }
+          name: "Dictionary",
+          value: { type: { name: "any" } },
+        },
+      },
+    },
+  },
+};
+
+export const PreValidateEnableBackupRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PreValidateEnableBackupRequest",
+    modelProperties: {
+      resourceType: {
+        serializedName: "resourceType",
+        type: {
+          name: "String",
+        },
+      },
+      resourceId: {
+        serializedName: "resourceId",
+        type: {
+          name: "String",
+        },
+      },
+      vaultId: {
+        serializedName: "vaultId",
+        type: {
+          name: "String",
+        },
+      },
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PreValidateEnableBackupResponse: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PreValidateEnableBackupResponse",
+    modelProperties: {
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      errorCode: {
+        serializedName: "errorCode",
+        type: {
+          name: "String",
+        },
+      },
+      errorMessage: {
+        serializedName: "errorMessage",
+        type: {
+          name: "String",
+        },
+      },
+      recommendation: {
+        serializedName: "recommendation",
+        type: {
+          name: "String",
+        },
       },
       containerName: {
         serializedName: "containerName",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
+      },
+      protectedItemName: {
+        serializedName: "protectedItemName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BackupStatusRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupStatusRequest",
+    modelProperties: {
+      resourceType: {
+        serializedName: "resourceType",
+        type: {
+          name: "String",
+        },
+      },
+      resourceId: {
+        serializedName: "resourceId",
+        type: {
+          name: "String",
+        },
+      },
+      poLogicalName: {
+        serializedName: "poLogicalName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BackupStatusResponse: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupStatusResponse",
+    modelProperties: {
+      protectionStatus: {
+        serializedName: "protectionStatus",
+        type: {
+          name: "String",
+        },
+      },
+      vaultId: {
+        serializedName: "vaultId",
+        type: {
+          name: "String",
+        },
+      },
+      fabricName: {
+        serializedName: "fabricName",
+        type: {
+          name: "String",
+        },
+      },
+      containerName: {
+        serializedName: "containerName",
+        type: {
+          name: "String",
+        },
+      },
+      protectedItemName: {
+        serializedName: "protectedItemName",
+        type: {
+          name: "String",
+        },
+      },
+      errorCode: {
+        serializedName: "errorCode",
+        type: {
+          name: "String",
+        },
+      },
+      errorMessage: {
+        serializedName: "errorMessage",
+        type: {
+          name: "String",
+        },
+      },
+      policyName: {
+        serializedName: "policyName",
+        type: {
+          name: "String",
+        },
+      },
+      registrationStatus: {
+        serializedName: "registrationStatus",
+        type: {
+          name: "String",
+        },
+      },
+      protectedItemsCount: {
+        serializedName: "protectedItemsCount",
+        type: {
+          name: "Number",
+        },
+      },
+      acquireStorageAccountLock: {
+        serializedName: "acquireStorageAccountLock",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const FeatureSupportRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "FeatureSupportRequest",
+    uberParent: "FeatureSupportRequest",
+    polymorphicDiscriminator: {
+      serializedName: "featureType",
+      clientName: "featureType",
+    },
+    modelProperties: {
+      featureType: {
+        serializedName: "featureType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureVMResourceFeatureSupportResponse: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AzureVMResourceFeatureSupportResponse",
+      modelProperties: {
+        supportStatus: {
+          serializedName: "supportStatus",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const ProtectionIntent: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionIntent",
+    uberParent: "ProtectionIntent",
+    polymorphicDiscriminator: {
+      serializedName: "protectionIntentItemType",
+      clientName: "protectionIntentItemType",
+    },
+    modelProperties: {
+      protectionIntentItemType: {
+        serializedName: "protectionIntentItemType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
       },
       sourceResourceId: {
         serializedName: "sourceResourceId",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
+      },
+      itemId: {
+        serializedName: "itemId",
+        type: {
+          name: "String",
+        },
       },
       policyId: {
         serializedName: "policyId",
         type: {
-          name: "String"
-        }
-      },
-      lastRecoveryPoint: {
-        serializedName: "lastRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
-      },
-      backupSetName: {
-        serializedName: "backupSetName",
-        type: {
-          name: "String"
-        }
-      },
-      createMode: {
-        serializedName: "createMode",
-        type: {
-          name: "String"
-        }
-      },
-      deferredDeleteTimeInUTC: {
-        serializedName: "deferredDeleteTimeInUTC",
-        type: {
-          name: "DateTime"
-        }
-      },
-      isScheduledForDeferredDelete: {
-        serializedName: "isScheduledForDeferredDelete",
-        type: {
-          name: "Boolean"
-        }
-      },
-      deferredDeleteTimeRemaining: {
-        serializedName: "deferredDeleteTimeRemaining",
-        type: {
-          name: "String"
-        }
-      },
-      isDeferredDeleteScheduleUpcoming: {
-        serializedName: "isDeferredDeleteScheduleUpcoming",
-        type: {
-          name: "Boolean"
-        }
-      },
-      isRehydrate: {
-        serializedName: "isRehydrate",
-        type: {
-          name: "Boolean"
-        }
-      },
-      protectedItemType: {
-        required: true,
-        serializedName: "protectedItemType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureFileshareProtectedItem: msRest.CompositeMapper = {
-  serializedName: "AzureFileShareProtectedItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureFileshareProtectedItem",
-    modelProperties: {
-      ...ProtectedItem.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      protectionStatus: {
-        serializedName: "protectionStatus",
-        type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       protectionState: {
         serializedName: "protectionState",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      lastBackupStatus: {
-        serializedName: "lastBackupStatus",
-        type: {
-          name: "String"
-        }
-      },
-      lastBackupTime: {
-        serializedName: "lastBackupTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      kpisHealths: {
-        serializedName: "kpisHealths",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "Composite",
-              className: "KPIResourceHealthDetails"
-            }
-          }
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureFileshareProtectedItemExtendedInfo"
-        }
-      },
-      healthStatus: {
-        serializedName: "healthStatus",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const RecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "RecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
     },
-    uberParent: "RecoveryPoint",
-    className: "RecoveryPoint",
-    modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const AzureFileShareRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "AzureFileShareRecoveryPoint",
+export const ResourceList: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "AzureFileShareRecoveryPoint",
+    className: "ResourceList",
     modelProperties: {
-      ...RecoveryPoint.type.modelProperties,
-      recoveryPointType: {
-        readOnly: true,
-        serializedName: "recoveryPointType",
+      nextLink: {
+        serializedName: "nextLink",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      recoveryPointTime: {
-        readOnly: true,
-        serializedName: "recoveryPointTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      fileShareSnapshotUri: {
-        readOnly: true,
-        serializedName: "fileShareSnapshotUri",
-        type: {
-          name: "String"
-        }
-      },
-      recoveryPointSizeInGB: {
-        readOnly: true,
-        serializedName: "recoveryPointSizeInGB",
-        type: {
-          name: "Number"
-        }
-      }
-    }
-  }
-};
-
-export const RestoreFileSpecs: msRest.CompositeMapper = {
-  serializedName: "RestoreFileSpecs",
-  type: {
-    name: "Composite",
-    className: "RestoreFileSpecs",
-    modelProperties: {
-      path: {
-        serializedName: "path",
-        type: {
-          name: "String"
-        }
-      },
-      fileSpecType: {
-        serializedName: "fileSpecType",
-        type: {
-          name: "String"
-        }
-      },
-      targetFolderPath: {
-        serializedName: "targetFolderPath",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const TargetAFSRestoreInfo: msRest.CompositeMapper = {
-  serializedName: "TargetAFSRestoreInfo",
-  type: {
-    name: "Composite",
-    className: "TargetAFSRestoreInfo",
-    modelProperties: {
-      name: {
-        serializedName: "name",
-        type: {
-          name: "String"
-        }
-      },
-      targetResourceId: {
-        serializedName: "targetResourceId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const RestoreRequest: msRest.CompositeMapper = {
-  serializedName: "RestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
     },
-    uberParent: "RestoreRequest",
-    className: "RestoreRequest",
-    modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const AzureFileShareRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "AzureFileShareRestoreRequest",
+export const BackupManagementUsageList: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureFileShareRestoreRequest",
+    className: "BackupManagementUsageList",
     modelProperties: {
-      ...RestoreRequest.type.modelProperties,
-      recoveryType: {
-        serializedName: "recoveryType",
-        type: {
-          name: "String"
-        }
-      },
-      sourceResourceId: {
-        serializedName: "sourceResourceId",
-        type: {
-          name: "String"
-        }
-      },
-      copyOptions: {
-        serializedName: "copyOptions",
-        type: {
-          name: "String"
-        }
-      },
-      restoreRequestType: {
-        serializedName: "restoreRequestType",
-        type: {
-          name: "String"
-        }
-      },
-      restoreFileSpecs: {
-        serializedName: "restoreFileSpecs",
+      value: {
+        serializedName: "value",
         type: {
           name: "Sequence",
           element: {
             type: {
               name: "Composite",
-              className: "RestoreFileSpecs"
-            }
-          }
-        }
+              className: "BackupManagementUsage",
+            },
+          },
+        },
       },
-      targetDetails: {
-        serializedName: "targetDetails",
-        type: {
-          name: "Composite",
-          className: "TargetAFSRestoreInfo"
-        }
-      }
-    }
-  }
-};
-
-export const Settings: msRest.CompositeMapper = {
-  serializedName: "Settings",
-  type: {
-    name: "Composite",
-    className: "Settings",
-    modelProperties: {
-      timeZone: {
-        serializedName: "timeZone",
-        type: {
-          name: "String"
-        }
-      },
-      issqlcompression: {
-        serializedName: "issqlcompression",
-        type: {
-          name: "Boolean"
-        }
-      },
-      isCompression: {
-        serializedName: "isCompression",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const SchedulePolicy: msRest.CompositeMapper = {
-  serializedName: "SchedulePolicy",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "schedulePolicyType",
-      clientName: "schedulePolicyType"
     },
-    uberParent: "SchedulePolicy",
-    className: "SchedulePolicy",
-    modelProperties: {
-      schedulePolicyType: {
-        required: true,
-        serializedName: "schedulePolicyType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const RetentionPolicy: msRest.CompositeMapper = {
-  serializedName: "RetentionPolicy",
+export const BackupManagementUsage: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "retentionPolicyType",
-      clientName: "retentionPolicyType"
-    },
-    uberParent: "RetentionPolicy",
-    className: "RetentionPolicy",
+    className: "BackupManagementUsage",
     modelProperties: {
-      retentionPolicyType: {
-        required: true,
-        serializedName: "retentionPolicyType",
+      unit: {
+        serializedName: "unit",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const SubProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "SubProtectionPolicy",
-  type: {
-    name: "Composite",
-    className: "SubProtectionPolicy",
-    modelProperties: {
-      policyType: {
-        serializedName: "policyType",
-        type: {
-          name: "String"
-        }
-      },
-      schedulePolicy: {
-        serializedName: "schedulePolicy",
-        type: {
-          name: "Composite",
-          className: "SchedulePolicy"
-        }
-      },
-      retentionPolicy: {
-        serializedName: "retentionPolicy",
-        type: {
-          name: "Composite",
-          className: "RetentionPolicy"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "ProtectionPolicy",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "backupManagementType",
-      clientName: "backupManagementType"
-    },
-    uberParent: "ProtectionPolicy",
-    className: "ProtectionPolicy",
-    modelProperties: {
-      protectedItemsCount: {
-        serializedName: "protectedItemsCount",
-        type: {
-          name: "Number"
-        }
-      },
-      backupManagementType: {
-        required: true,
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureVmWorkloadProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "AzureWorkload",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
-    uberParent: "ProtectionPolicy",
-    className: "AzureVmWorkloadProtectionPolicy",
-    modelProperties: {
-      ...ProtectionPolicy.type.modelProperties,
-      workLoadType: {
-        serializedName: "workLoadType",
-        type: {
-          name: "String"
-        }
-      },
-      settings: {
-        serializedName: "settings",
-        type: {
-          name: "Composite",
-          className: "Settings"
-        }
-      },
-      subProtectionPolicy: {
-        serializedName: "subProtectionPolicy",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "SubProtectionPolicy"
-            }
-          }
-        }
-      },
-      makePolicyConsistent: {
-        serializedName: "makePolicyConsistent",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const AzureFileShareProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "AzureStorage",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
-    uberParent: "ProtectionPolicy",
-    className: "AzureFileShareProtectionPolicy",
-    modelProperties: {
-      ...ProtectionPolicy.type.modelProperties,
-      workLoadType: {
-        serializedName: "workLoadType",
-        type: {
-          name: "String"
-        }
-      },
-      schedulePolicy: {
-        serializedName: "schedulePolicy",
-        type: {
-          name: "Composite",
-          className: "SchedulePolicy"
-        }
-      },
-      retentionPolicy: {
-        serializedName: "retentionPolicy",
-        type: {
-          name: "Composite",
-          className: "RetentionPolicy"
-        }
-      },
-      timeZone: {
-        serializedName: "timeZone",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSVMProtectedItem: msRest.CompositeMapper = {
-  serializedName: "AzureIaaSVMProtectedItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureIaaSVMProtectedItem",
-    modelProperties: {
-      ...ProtectedItem.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      virtualMachineId: {
-        serializedName: "virtualMachineId",
-        type: {
-          name: "String"
-        }
-      },
-      protectionStatus: {
-        serializedName: "protectionStatus",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      healthStatus: {
-        serializedName: "healthStatus",
-        type: {
-          name: "String"
-        }
-      },
-      healthDetails: {
-        serializedName: "healthDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "AzureIaaSVMHealthDetails"
-            }
-          }
-        }
-      },
-      kpisHealths: {
-        serializedName: "kpisHealths",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "Composite",
-              className: "KPIResourceHealthDetails"
-            }
-          }
-        }
-      },
-      lastBackupStatus: {
-        serializedName: "lastBackupStatus",
-        type: {
-          name: "String"
-        }
-      },
-      lastBackupTime: {
-        serializedName: "lastBackupTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      protectedItemDataId: {
-        serializedName: "protectedItemDataId",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureIaaSVMProtectedItemExtendedInfo"
-        }
-      },
-      extendedProperties: {
-        serializedName: "extendedProperties",
-        type: {
-          name: "Composite",
-          className: "ExtendedProperties"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSClassicComputeVMProtectedItem: msRest.CompositeMapper = {
-  serializedName: "Microsoft.ClassicCompute/virtualMachines",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureIaaSClassicComputeVMProtectedItem",
-    modelProperties: {
-      ...AzureIaaSVMProtectedItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureIaaSComputeVMProtectedItem: msRest.CompositeMapper = {
-  serializedName: "Microsoft.Compute/virtualMachines",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureIaaSComputeVMProtectedItem",
-    modelProperties: {
-      ...AzureIaaSVMProtectedItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureIaaSVMErrorInfo: msRest.CompositeMapper = {
-  serializedName: "AzureIaaSVMErrorInfo",
-  type: {
-    name: "Composite",
-    className: "AzureIaaSVMErrorInfo",
-    modelProperties: {
-      errorCode: {
-        readOnly: true,
-        serializedName: "errorCode",
-        type: {
-          name: "Number"
-        }
-      },
-      errorTitle: {
-        readOnly: true,
-        serializedName: "errorTitle",
-        type: {
-          name: "String"
-        }
-      },
-      errorString: {
-        readOnly: true,
-        serializedName: "errorString",
-        type: {
-          name: "String"
-        }
-      },
-      recommendations: {
-        readOnly: true,
-        serializedName: "recommendations",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSVMHealthDetails: msRest.CompositeMapper = {
-  serializedName: "AzureIaaSVMHealthDetails",
-  type: {
-    name: "Composite",
-    className: "AzureIaaSVMHealthDetails",
-    modelProperties: {
-      ...ResourceHealthDetails.type.modelProperties
-    }
-  }
-};
-
-export const AzureIaaSVMJobTaskDetails: msRest.CompositeMapper = {
-  serializedName: "AzureIaaSVMJobTaskDetails",
-  type: {
-    name: "Composite",
-    className: "AzureIaaSVMJobTaskDetails",
-    modelProperties: {
-      taskId: {
-        serializedName: "taskId",
-        type: {
-          name: "String"
-        }
-      },
-      startTime: {
-        serializedName: "startTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      endTime: {
-        serializedName: "endTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      instanceId: {
-        serializedName: "instanceId",
-        type: {
-          name: "String"
-        }
-      },
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      progressPercentage: {
-        serializedName: "progressPercentage",
-        type: {
-          name: "Number"
-        }
-      },
-      taskExecutionDetails: {
-        serializedName: "taskExecutionDetails",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSVMJobExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureIaaSVMJobExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureIaaSVMJobExtendedInfo",
-    modelProperties: {
-      tasksList: {
-        serializedName: "tasksList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "AzureIaaSVMJobTaskDetails"
-            }
-          }
-        }
-      },
-      propertyBag: {
-        serializedName: "propertyBag",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      internalPropertyBag: {
-        serializedName: "internalPropertyBag",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      progressPercentage: {
-        serializedName: "progressPercentage",
-        type: {
-          name: "Number"
-        }
-      },
-      estimatedRemainingDuration: {
-        serializedName: "estimatedRemainingDuration",
-        type: {
-          name: "String"
-        }
-      },
-      dynamicErrorMessage: {
-        serializedName: "dynamicErrorMessage",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const Job: msRest.CompositeMapper = {
-  serializedName: "Job",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "jobType",
-      clientName: "jobType"
-    },
-    uberParent: "Job",
-    className: "Job",
-    modelProperties: {
-      entityFriendlyName: {
-        serializedName: "entityFriendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      operation: {
-        serializedName: "operation",
-        type: {
-          name: "String"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      startTime: {
-        serializedName: "startTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      endTime: {
-        serializedName: "endTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      activityId: {
-        serializedName: "activityId",
-        type: {
-          name: "String"
-        }
-      },
-      jobType: {
-        required: true,
-        serializedName: "jobType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSVMJob: msRest.CompositeMapper = {
-  serializedName: "AzureIaaSVMJob",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
-    uberParent: "Job",
-    className: "AzureIaaSVMJob",
-    modelProperties: {
-      ...Job.type.modelProperties,
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
-      },
-      actionsInfo: {
-        serializedName: "actionsInfo",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["Invalid", "Cancellable", "Retriable"]
-            }
-          }
-        }
-      },
-      errorDetails: {
-        serializedName: "errorDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "AzureIaaSVMErrorInfo"
-            }
-          }
-        }
-      },
-      virtualMachineVersion: {
-        serializedName: "virtualMachineVersion",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureIaaSVMJobExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSVMProtectedItemExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureIaaSVMProtectedItemExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureIaaSVMProtectedItemExtendedInfo",
-    modelProperties: {
-      oldestRecoveryPoint: {
-        serializedName: "oldestRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
-      },
-      recoveryPointCount: {
-        serializedName: "recoveryPointCount",
-        type: {
-          name: "Number"
-        }
-      },
-      policyInconsistent: {
-        serializedName: "policyInconsistent",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const DiskExclusionProperties: msRest.CompositeMapper = {
-  serializedName: "DiskExclusionProperties",
-  type: {
-    name: "Composite",
-    className: "DiskExclusionProperties",
-    modelProperties: {
-      diskLunList: {
-        serializedName: "diskLunList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Number"
-            }
-          }
-        }
-      },
-      isInclusionList: {
-        serializedName: "isInclusionList",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const ExtendedProperties: msRest.CompositeMapper = {
-  serializedName: "ExtendedProperties",
-  type: {
-    name: "Composite",
-    className: "ExtendedProperties",
-    modelProperties: {
-      diskExclusionProperties: {
-        serializedName: "diskExclusionProperties",
-        type: {
-          name: "Composite",
-          className: "DiskExclusionProperties"
-        }
-      }
-    }
-  }
-};
-
-export const InstantRPAdditionalDetails: msRest.CompositeMapper = {
-  serializedName: "InstantRPAdditionalDetails",
-  type: {
-    name: "Composite",
-    className: "InstantRPAdditionalDetails",
-    modelProperties: {
-      azureBackupRGNamePrefix: {
-        serializedName: "azureBackupRGNamePrefix",
-        type: {
-          name: "String"
-        }
-      },
-      azureBackupRGNameSuffix: {
-        serializedName: "azureBackupRGNameSuffix",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSVMProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "AzureIaasVM",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
-    uberParent: "ProtectionPolicy",
-    className: "AzureIaaSVMProtectionPolicy",
-    modelProperties: {
-      ...ProtectionPolicy.type.modelProperties,
-      instantRPDetails: {
-        serializedName: "instantRPDetails",
-        type: {
-          name: "Composite",
-          className: "InstantRPAdditionalDetails"
-        }
-      },
-      schedulePolicy: {
-        serializedName: "schedulePolicy",
-        type: {
-          name: "Composite",
-          className: "SchedulePolicy"
-        }
-      },
-      retentionPolicy: {
-        serializedName: "retentionPolicy",
-        type: {
-          name: "Composite",
-          className: "RetentionPolicy"
-        }
-      },
-      instantRpRetentionRangeInDays: {
-        serializedName: "instantRpRetentionRangeInDays",
-        type: {
-          name: "Number"
-        }
-      },
-      timeZone: {
-        serializedName: "timeZone",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureSqlProtectedItemExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureSqlProtectedItemExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureSqlProtectedItemExtendedInfo",
-    modelProperties: {
-      oldestRecoveryPoint: {
-        serializedName: "oldestRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
-      },
-      recoveryPointCount: {
-        serializedName: "recoveryPointCount",
-        type: {
-          name: "Number"
-        }
-      },
-      policyState: {
-        serializedName: "policyState",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureSqlProtectedItem: msRest.CompositeMapper = {
-  serializedName: "Microsoft.Sql/servers/databases",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureSqlProtectedItem",
-    modelProperties: {
-      ...ProtectedItem.type.modelProperties,
-      protectedItemDataId: {
-        serializedName: "protectedItemDataId",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureSqlProtectedItemExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const AzureStorageErrorInfo: msRest.CompositeMapper = {
-  serializedName: "AzureStorageErrorInfo",
-  type: {
-    name: "Composite",
-    className: "AzureStorageErrorInfo",
-    modelProperties: {
-      errorCode: {
-        serializedName: "errorCode",
-        type: {
-          name: "Number"
-        }
-      },
-      errorString: {
-        serializedName: "errorString",
-        type: {
-          name: "String"
-        }
-      },
-      recommendations: {
-        serializedName: "recommendations",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureSqlProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "AzureSql",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
-    uberParent: "ProtectionPolicy",
-    className: "AzureSqlProtectionPolicy",
-    modelProperties: {
-      ...ProtectionPolicy.type.modelProperties,
-      retentionPolicy: {
-        serializedName: "retentionPolicy",
-        type: {
-          name: "Composite",
-          className: "RetentionPolicy"
-        }
-      }
-    }
-  }
-};
-
-export const AzureStorageJobTaskDetails: msRest.CompositeMapper = {
-  serializedName: "AzureStorageJobTaskDetails",
-  type: {
-    name: "Composite",
-    className: "AzureStorageJobTaskDetails",
-    modelProperties: {
-      taskId: {
-        serializedName: "taskId",
-        type: {
-          name: "String"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureStorageJobExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureStorageJobExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureStorageJobExtendedInfo",
-    modelProperties: {
-      tasksList: {
-        serializedName: "tasksList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "AzureStorageJobTaskDetails"
-            }
-          }
-        }
-      },
-      propertyBag: {
-        serializedName: "propertyBag",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      dynamicErrorMessage: {
-        serializedName: "dynamicErrorMessage",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureStorageJob: msRest.CompositeMapper = {
-  serializedName: "AzureStorageJob",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
-    uberParent: "Job",
-    className: "AzureStorageJob",
-    modelProperties: {
-      ...Job.type.modelProperties,
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
-      },
-      actionsInfo: {
-        serializedName: "actionsInfo",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["Invalid", "Cancellable", "Retriable"]
-            }
-          }
-        }
-      },
-      errorDetails: {
-        serializedName: "errorDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "AzureStorageErrorInfo"
-            }
-          }
-        }
-      },
-      storageAccountName: {
-        serializedName: "storageAccountName",
-        type: {
-          name: "String"
-        }
-      },
-      storageAccountVersion: {
-        serializedName: "storageAccountVersion",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureStorageJobExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const ErrorDetail: msRest.CompositeMapper = {
-  serializedName: "ErrorDetail",
-  type: {
-    name: "Composite",
-    className: "ErrorDetail",
-    modelProperties: {
-      code: {
-        readOnly: true,
-        serializedName: "code",
-        type: {
-          name: "String"
-        }
-      },
-      message: {
-        readOnly: true,
-        serializedName: "message",
-        type: {
-          name: "String"
-        }
-      },
-      recommendations: {
-        readOnly: true,
-        serializedName: "recommendations",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureVmWorkloadProtectedItemExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureVmWorkloadProtectedItemExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureVmWorkloadProtectedItemExtendedInfo",
-    modelProperties: {
-      oldestRecoveryPoint: {
-        serializedName: "oldestRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
-      },
-      recoveryPointCount: {
-        serializedName: "recoveryPointCount",
-        type: {
-          name: "Number"
-        }
-      },
-      policyState: {
-        serializedName: "policyState",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureVmWorkloadProtectedItem: msRest.CompositeMapper = {
-  serializedName: "AzureVmWorkloadProtectedItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureVmWorkloadProtectedItem",
-    modelProperties: {
-      ...ProtectedItem.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      serverName: {
-        serializedName: "serverName",
-        type: {
-          name: "String"
-        }
-      },
-      parentName: {
-        serializedName: "parentName",
-        type: {
-          name: "String"
-        }
-      },
-      parentType: {
-        serializedName: "parentType",
-        type: {
-          name: "String"
-        }
-      },
-      protectionStatus: {
-        serializedName: "protectionStatus",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      lastBackupStatus: {
-        serializedName: "lastBackupStatus",
-        type: {
-          name: "String"
-        }
-      },
-      lastBackupTime: {
-        serializedName: "lastBackupTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      lastBackupErrorDetail: {
-        serializedName: "lastBackupErrorDetail",
-        type: {
-          name: "Composite",
-          className: "ErrorDetail"
-        }
-      },
-      protectedItemDataSourceId: {
-        serializedName: "protectedItemDataSourceId",
-        type: {
-          name: "String"
-        }
-      },
-      protectedItemHealthStatus: {
-        serializedName: "protectedItemHealthStatus",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureVmWorkloadProtectedItemExtendedInfo"
-        }
-      },
-      kpisHealths: {
-        serializedName: "kpisHealths",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "Composite",
-              className: "KPIResourceHealthDetails"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPAseDatabaseProtectedItem: msRest.CompositeMapper = {
-  serializedName: "AzureVmWorkloadSAPAseDatabase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureVmWorkloadSAPAseDatabaseProtectedItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectedItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPHanaDatabaseProtectedItem: msRest.CompositeMapper = {
-  serializedName: "AzureVmWorkloadSAPHanaDatabase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureVmWorkloadSAPHanaDatabaseProtectedItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectedItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSQLDatabaseProtectedItem: msRest.CompositeMapper = {
-  serializedName: "AzureVmWorkloadSQLDatabase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "AzureVmWorkloadSQLDatabaseProtectedItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectedItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureWorkloadErrorInfo: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadErrorInfo",
-  type: {
-    name: "Composite",
-    className: "AzureWorkloadErrorInfo",
-    modelProperties: {
-      errorCode: {
-        serializedName: "errorCode",
-        type: {
-          name: "Number"
-        }
-      },
-      errorString: {
-        serializedName: "errorString",
-        type: {
-          name: "String"
-        }
-      },
-      errorTitle: {
-        serializedName: "errorTitle",
-        type: {
-          name: "String"
-        }
-      },
-      recommendations: {
-        serializedName: "recommendations",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      additionalDetails: {
-        serializedName: "additionalDetails",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadJobTaskDetails: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadJobTaskDetails",
-  type: {
-    name: "Composite",
-    className: "AzureWorkloadJobTaskDetails",
-    modelProperties: {
-      taskId: {
-        serializedName: "taskId",
-        type: {
-          name: "String"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadJobExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadJobExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureWorkloadJobExtendedInfo",
-    modelProperties: {
-      tasksList: {
-        serializedName: "tasksList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "AzureWorkloadJobTaskDetails"
-            }
-          }
-        }
-      },
-      propertyBag: {
-        serializedName: "propertyBag",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      dynamicErrorMessage: {
-        serializedName: "dynamicErrorMessage",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadJob: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadJob",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
-    uberParent: "Job",
-    className: "AzureWorkloadJob",
-    modelProperties: {
-      ...Job.type.modelProperties,
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
-      },
-      actionsInfo: {
-        serializedName: "actionsInfo",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["Invalid", "Cancellable", "Retriable"]
-            }
-          }
-        }
-      },
-      errorDetails: {
-        serializedName: "errorDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "AzureWorkloadErrorInfo"
-            }
-          }
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureWorkloadJobExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const PointInTimeRange: msRest.CompositeMapper = {
-  serializedName: "PointInTimeRange",
-  type: {
-    name: "Composite",
-    className: "PointInTimeRange",
-    modelProperties: {
-      startTime: {
-        serializedName: "startTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      endTime: {
-        serializedName: "endTime",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "AzureWorkloadRecoveryPoint",
-    modelProperties: {
-      ...RecoveryPoint.type.modelProperties,
-      recoveryPointTimeInUTC: {
-        readOnly: true,
-        serializedName: "recoveryPointTimeInUTC",
-        type: {
-          name: "DateTime"
-        }
-      },
-      type: {
-        readOnly: true,
-        serializedName: "type",
-        type: {
-          name: "String"
-        }
-      },
-      recoveryPointTierDetails: {
-        serializedName: "recoveryPointTierDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "RecoveryPointTierInformation"
-            }
-          }
-        }
-      },
-      recoveryPointMoveReadinessInfo: {
-        serializedName: "recoveryPointMoveReadinessInfo",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "Composite",
-              className: "RecoveryPointMoveReadinessInfo"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadPointInTimeRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadPointInTimeRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "AzureWorkloadPointInTimeRecoveryPoint",
-    modelProperties: {
-      ...AzureWorkloadRecoveryPoint.type.modelProperties,
-      timeRanges: {
-        serializedName: "timeRanges",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "PointInTimeRange"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadRestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadRestoreRequest",
-    modelProperties: {
-      ...RestoreRequest.type.modelProperties,
-      recoveryType: {
-        serializedName: "recoveryType",
-        type: {
-          name: "String"
-        }
-      },
-      sourceResourceId: {
-        serializedName: "sourceResourceId",
-        type: {
-          name: "String"
-        }
-      },
-      propertyBag: {
-        serializedName: "propertyBag",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      targetInfo: {
-        serializedName: "targetInfo",
-        type: {
-          name: "Composite",
-          className: "TargetRestoreInfo"
-        }
-      },
-      recoveryMode: {
-        serializedName: "recoveryMode",
-        type: {
-          name: "String"
-        }
-      },
-      targetVirtualMachineId: {
-        serializedName: "targetVirtualMachineId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadPointInTimeRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadPointInTimeRestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadPointInTimeRestoreRequest",
-    modelProperties: {
-      ...AzureWorkloadRestoreRequest.type.modelProperties,
-      pointInTime: {
-        serializedName: "pointInTime",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const RecoveryPointTierInformation: msRest.CompositeMapper = {
-  serializedName: "RecoveryPointTierInformation",
-  type: {
-    name: "Composite",
-    className: "RecoveryPointTierInformation",
-    modelProperties: {
-      type: {
-        serializedName: "type",
-        type: {
-          name: "Enum",
-          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"]
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "Enum",
-          allowedValues: ["Invalid", "Valid", "Disabled", "Deleted", "Rehydrated"]
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const RecoveryPointMoveReadinessInfo: msRest.CompositeMapper = {
-  serializedName: "RecoveryPointMoveReadinessInfo",
-  type: {
-    name: "Composite",
-    className: "RecoveryPointMoveReadinessInfo",
-    modelProperties: {
-      isReadyForMove: {
-        serializedName: "isReadyForMove",
-        type: {
-          name: "Boolean"
-        }
-      },
-      additionalInfo: {
-        serializedName: "additionalInfo",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const TargetRestoreInfo: msRest.CompositeMapper = {
-  serializedName: "TargetRestoreInfo",
-  type: {
-    name: "Composite",
-    className: "TargetRestoreInfo",
-    modelProperties: {
-      overwriteOption: {
-        serializedName: "overwriteOption",
-        type: {
-          name: "String"
-        }
-      },
-      containerId: {
-        serializedName: "containerId",
-        type: {
-          name: "String"
-        }
-      },
-      databaseName: {
-        serializedName: "databaseName",
-        type: {
-          name: "String"
-        }
-      },
-      targetDirectoryForFileRestore: {
-        serializedName: "targetDirectoryForFileRestore",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSAPHanaPointInTimeRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSAPHanaPointInTimeRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "AzureWorkloadSAPHanaPointInTimeRecoveryPoint",
-    modelProperties: {
-      ...AzureWorkloadPointInTimeRecoveryPoint.type.modelProperties
-    }
-  }
-};
-
-export const AzureWorkloadSAPHanaRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSAPHanaRestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSAPHanaRestoreRequest",
-    modelProperties: {
-      ...AzureWorkloadRestoreRequest.type.modelProperties
-    }
-  }
-};
-
-export const AzureWorkloadSAPHanaPointInTimeRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSAPHanaPointInTimeRestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSAPHanaPointInTimeRestoreRequest",
-    modelProperties: {
-      ...AzureWorkloadSAPHanaRestoreRequest.type.modelProperties,
-      pointInTime: {
-        serializedName: "pointInTime",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSAPHanaRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSAPHanaRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "AzureWorkloadSAPHanaRecoveryPoint",
-    modelProperties: {
-      ...AzureWorkloadRecoveryPoint.type.modelProperties
-    }
-  }
-};
-
-export const AzureWorkloadSQLRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "AzureWorkloadSQLRecoveryPoint",
-    modelProperties: {
-      ...AzureWorkloadRecoveryPoint.type.modelProperties,
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureWorkloadSQLRecoveryPointExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSQLPointInTimeRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLPointInTimeRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "AzureWorkloadSQLPointInTimeRecoveryPoint",
-    modelProperties: {
-      ...AzureWorkloadSQLRecoveryPoint.type.modelProperties,
-      timeRanges: {
-        serializedName: "timeRanges",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "PointInTimeRange"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSQLRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLRestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSQLRestoreRequest",
-    modelProperties: {
-      ...AzureWorkloadRestoreRequest.type.modelProperties,
-      shouldUseAlternateTargetLocation: {
-        serializedName: "shouldUseAlternateTargetLocation",
-        type: {
-          name: "Boolean"
-        }
-      },
-      isNonRecoverable: {
-        serializedName: "isNonRecoverable",
-        type: {
-          name: "Boolean"
-        }
-      },
-      alternateDirectoryPaths: {
-        serializedName: "alternateDirectoryPaths",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "SQLDataDirectoryMapping"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSQLPointInTimeRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLPointInTimeRestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSQLPointInTimeRestoreRequest",
-    modelProperties: {
-      ...AzureWorkloadSQLRestoreRequest.type.modelProperties,
-      pointInTime: {
-        serializedName: "pointInTime",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const SQLDataDirectory: msRest.CompositeMapper = {
-  serializedName: "SQLDataDirectory",
-  type: {
-    name: "Composite",
-    className: "SQLDataDirectory",
-    modelProperties: {
-      type: {
-        serializedName: "type",
-        type: {
-          name: "String"
-        }
-      },
-      path: {
-        serializedName: "path",
-        type: {
-          name: "String"
-        }
-      },
-      logicalName: {
-        serializedName: "logicalName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSQLRecoveryPointExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLRecoveryPointExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureWorkloadSQLRecoveryPointExtendedInfo",
-    modelProperties: {
-      dataDirectoryTimeInUTC: {
-        readOnly: true,
-        serializedName: "dataDirectoryTimeInUTC",
-        type: {
-          name: "DateTime"
-        }
-      },
-      dataDirectoryPaths: {
-        readOnly: true,
-        serializedName: "dataDirectoryPaths",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "SQLDataDirectory"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const SQLDataDirectoryMapping: msRest.CompositeMapper = {
-  serializedName: "SQLDataDirectoryMapping",
-  type: {
-    name: "Composite",
-    className: "SQLDataDirectoryMapping",
-    modelProperties: {
-      mappingType: {
-        serializedName: "mappingType",
-        type: {
-          name: "String"
-        }
-      },
-      sourceLogicalName: {
-        serializedName: "sourceLogicalName",
-        type: {
-          name: "String"
-        }
-      },
-      sourcePath: {
-        serializedName: "sourcePath",
-        type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      targetPath: {
-        serializedName: "targetPath",
+      quotaPeriod: {
+        serializedName: "quotaPeriod",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BEKDetails: msRest.CompositeMapper = {
-  serializedName: "BEKDetails",
-  type: {
-    name: "Composite",
-    className: "BEKDetails",
-    modelProperties: {
-      secretUrl: {
-        serializedName: "secretUrl",
-        type: {
-          name: "String"
-        }
-      },
-      secretVaultId: {
-        serializedName: "secretVaultId",
-        type: {
-          name: "String"
-        }
-      },
-      secretData: {
-        serializedName: "secretData",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BMSRPQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSRPQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSRPQueryObject",
-    modelProperties: {
-      startDate: {
-        serializedName: "startDate",
-        type: {
-          name: "DateTime"
-        }
+          name: "String",
+        },
       },
-      endDate: {
-        serializedName: "endDate",
+      nextResetTime: {
+        serializedName: "nextResetTime",
         type: {
-          name: "DateTime"
-        }
+          name: "DateTime",
+        },
       },
-      restorePointQueryType: {
-        serializedName: "restorePointQueryType",
+      currentValue: {
+        serializedName: "currentValue",
         type: {
-          name: "String"
-        }
+          name: "Number",
+        },
       },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Boolean"
-        }
-      },
-      moveReadyRPOnly: {
-        serializedName: "moveReadyRPOnly",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const DiskInformation: msRest.CompositeMapper = {
-  serializedName: "DiskInformation",
-  type: {
-    name: "Composite",
-    className: "DiskInformation",
-    modelProperties: {
-      lun: {
-        serializedName: "lun",
+      limit: {
+        serializedName: "limit",
         type: {
-          name: "Number"
-        }
+          name: "Number",
+        },
       },
       name: {
         serializedName: "name",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const Day: msRest.CompositeMapper = {
-  serializedName: "Day",
-  type: {
-    name: "Composite",
-    className: "Day",
-    modelProperties: {
-      date: {
-        serializedName: "date",
-        type: {
-          name: "Number"
-        }
-      },
-      isLast: {
-        serializedName: "isLast",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const DailyRetentionFormat: msRest.CompositeMapper = {
-  serializedName: "DailyRetentionFormat",
-  type: {
-    name: "Composite",
-    className: "DailyRetentionFormat",
-    modelProperties: {
-      daysOfTheMonth: {
-        serializedName: "daysOfTheMonth",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "Day"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const RetentionDuration: msRest.CompositeMapper = {
-  serializedName: "RetentionDuration",
-  type: {
-    name: "Composite",
-    className: "RetentionDuration",
-    modelProperties: {
-      count: {
-        serializedName: "count",
-        type: {
-          name: "Number"
-        }
-      },
-      durationType: {
-        serializedName: "durationType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const DailyRetentionSchedule: msRest.CompositeMapper = {
-  serializedName: "DailyRetentionSchedule",
-  type: {
-    name: "Composite",
-    className: "DailyRetentionSchedule",
-    modelProperties: {
-      retentionTimes: {
-        serializedName: "retentionTimes",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "DateTime"
-            }
-          }
-        }
-      },
-      retentionDuration: {
-        serializedName: "retentionDuration",
-        type: {
           name: "Composite",
-          className: "RetentionDuration"
-        }
-      }
-    }
-  }
-};
-
-export const DpmErrorInfo: msRest.CompositeMapper = {
-  serializedName: "DpmErrorInfo",
-  type: {
-    name: "Composite",
-    className: "DpmErrorInfo",
-    modelProperties: {
-      errorString: {
-        serializedName: "errorString",
-        type: {
-          name: "String"
-        }
+          className: "NameInfo",
+        },
       },
-      recommendations: {
-        serializedName: "recommendations",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const DpmJobTaskDetails: msRest.CompositeMapper = {
-  serializedName: "DpmJobTaskDetails",
-  type: {
-    name: "Composite",
-    className: "DpmJobTaskDetails",
-    modelProperties: {
-      taskId: {
-        serializedName: "taskId",
-        type: {
-          name: "String"
-        }
-      },
-      startTime: {
-        serializedName: "startTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      endTime: {
-        serializedName: "endTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const DpmJobExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "DpmJobExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "DpmJobExtendedInfo",
-    modelProperties: {
-      tasksList: {
-        serializedName: "tasksList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "DpmJobTaskDetails"
-            }
-          }
-        }
-      },
-      propertyBag: {
-        serializedName: "propertyBag",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      dynamicErrorMessage: {
-        serializedName: "dynamicErrorMessage",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const DpmJob: msRest.CompositeMapper = {
-  serializedName: "DpmJob",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
-    uberParent: "Job",
-    className: "DpmJob",
-    modelProperties: {
-      ...Job.type.modelProperties,
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
-      },
-      dpmServerName: {
-        serializedName: "dpmServerName",
-        type: {
-          name: "String"
-        }
-      },
-      containerName: {
-        serializedName: "containerName",
-        type: {
-          name: "String"
-        }
-      },
-      containerType: {
-        serializedName: "containerType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      actionsInfo: {
-        serializedName: "actionsInfo",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["Invalid", "Cancellable", "Retriable"]
-            }
-          }
-        }
-      },
-      errorDetails: {
-        serializedName: "errorDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "DpmErrorInfo"
-            }
-          }
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "DpmJobExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const DPMProtectedItemExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "DPMProtectedItemExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "DPMProtectedItemExtendedInfo",
-    modelProperties: {
-      protectableObjectLoadPath: {
-        serializedName: "protectableObjectLoadPath",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      protectedProperty: {
-        serializedName: "protected",
-        type: {
-          name: "Boolean"
-        }
-      },
-      isPresentOnCloud: {
-        serializedName: "isPresentOnCloud",
-        type: {
-          name: "Boolean"
-        }
-      },
-      lastBackupStatus: {
-        serializedName: "lastBackupStatus",
-        type: {
-          name: "String"
-        }
-      },
-      lastRefreshedAt: {
-        serializedName: "lastRefreshedAt",
-        type: {
-          name: "DateTime"
-        }
-      },
-      oldestRecoveryPoint: {
-        serializedName: "oldestRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
-      },
-      recoveryPointCount: {
-        serializedName: "recoveryPointCount",
-        type: {
-          name: "Number"
-        }
-      },
-      onPremiseOldestRecoveryPoint: {
-        serializedName: "onPremiseOldestRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
-      },
-      onPremiseLatestRecoveryPoint: {
-        serializedName: "onPremiseLatestRecoveryPoint",
-        type: {
-          name: "DateTime"
-        }
-      },
-      onPremiseRecoveryPointCount: {
-        serializedName: "onPremiseRecoveryPointCount",
-        type: {
-          name: "Number"
-        }
-      },
-      isCollocated: {
-        serializedName: "isCollocated",
-        type: {
-          name: "Boolean"
-        }
-      },
-      protectionGroupName: {
-        serializedName: "protectionGroupName",
-        type: {
-          name: "String"
-        }
-      },
-      diskStorageUsedInBytes: {
-        serializedName: "diskStorageUsedInBytes",
-        type: {
-          name: "String"
-        }
-      },
-      totalDiskStorageSizeInBytes: {
-        serializedName: "totalDiskStorageSizeInBytes",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const DPMProtectedItem: msRest.CompositeMapper = {
-  serializedName: "DPMProtectedItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "DPMProtectedItem",
-    modelProperties: {
-      ...ProtectedItem.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      backupEngineName: {
-        serializedName: "backupEngineName",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "DPMProtectedItemExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const EncryptionDetails: msRest.CompositeMapper = {
-  serializedName: "EncryptionDetails",
-  type: {
-    name: "Composite",
-    className: "EncryptionDetails",
-    modelProperties: {
-      encryptionEnabled: {
-        serializedName: "encryptionEnabled",
-        type: {
-          name: "Boolean"
-        }
-      },
-      kekUrl: {
-        serializedName: "kekUrl",
-        type: {
-          name: "String"
-        }
-      },
-      secretKeyUrl: {
-        serializedName: "secretKeyUrl",
-        type: {
-          name: "String"
-        }
-      },
-      kekVaultId: {
-        serializedName: "kekVaultId",
-        type: {
-          name: "String"
-        }
-      },
-      secretKeyVaultId: {
-        serializedName: "secretKeyVaultId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const OperationResultInfoBase: msRest.CompositeMapper = {
-  serializedName: "OperationResultInfoBase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
     },
-    uberParent: "OperationResultInfoBase",
-    className: "OperationResultInfoBase",
-    modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const ExportJobsOperationResultInfo: msRest.CompositeMapper = {
-  serializedName: "ExportJobsOperationResultInfo",
+export const NameInfo: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: OperationResultInfoBase.type.polymorphicDiscriminator,
-    uberParent: "OperationResultInfoBase",
-    className: "ExportJobsOperationResultInfo",
+    className: "NameInfo",
     modelProperties: {
-      ...OperationResultInfoBase.type.modelProperties,
-      blobUrl: {
-        serializedName: "blobUrl",
+      value: {
+        serializedName: "value",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      blobSasKey: {
-        serializedName: "blobSasKey",
+      localizedValue: {
+        serializedName: "localizedValue",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      excelFileBlobUrl: {
-        serializedName: "excelFileBlobUrl",
-        type: {
-          name: "String"
-        }
-      },
-      excelFileBlobSasKey: {
-        serializedName: "excelFileBlobSasKey",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const GenericProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "GenericProtectionPolicy",
+export const ClientDiscoveryResponse: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
-    uberParent: "ProtectionPolicy",
-    className: "GenericProtectionPolicy",
+    className: "ClientDiscoveryResponse",
     modelProperties: {
-      ...ProtectionPolicy.type.modelProperties,
-      subProtectionPolicy: {
-        serializedName: "subProtectionPolicy",
+      value: {
+        serializedName: "value",
         type: {
           name: "Sequence",
           element: {
             type: {
               name: "Composite",
-              className: "SubProtectionPolicy"
-            }
-          }
-        }
+              className: "ClientDiscoveryValueForSingleApi",
+            },
+          },
+        },
       },
-      timeZone: {
-        serializedName: "timeZone",
+      nextLink: {
+        serializedName: "nextLink",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      fabricName: {
-        serializedName: "fabricName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const GenericProtectedItem: msRest.CompositeMapper = {
-  serializedName: "GenericProtectedItem",
+export const ClientDiscoveryValueForSingleApi: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "GenericProtectedItem",
+    className: "ClientDiscoveryValueForSingleApi",
     modelProperties: {
-      ...ProtectedItem.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
+      name: {
+        serializedName: "name",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      policyState: {
-        serializedName: "policyState",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      protectedItemId: {
-        serializedName: "protectedItemId",
-        type: {
-          name: "Number"
-        }
-      },
-      sourceAssociations: {
-        serializedName: "sourceAssociations",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      fabricName: {
-        serializedName: "fabricName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const GenericRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "GenericRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "GenericRecoveryPoint",
-    modelProperties: {
-      ...RecoveryPoint.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      recoveryPointType: {
-        serializedName: "recoveryPointType",
-        type: {
-          name: "String"
-        }
-      },
-      recoveryPointTime: {
-        serializedName: "recoveryPointTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      recoveryPointAdditionalInfo: {
-        serializedName: "recoveryPointAdditionalInfo",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const GetProtectedItemQueryObject: msRest.CompositeMapper = {
-  serializedName: "GetProtectedItemQueryObject",
-  type: {
-    name: "Composite",
-    className: "GetProtectedItemQueryObject",
-    modelProperties: {
-      expand: {
-        serializedName: "expand",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const KEKDetails: msRest.CompositeMapper = {
-  serializedName: "KEKDetails",
-  type: {
-    name: "Composite",
-    className: "KEKDetails",
-    modelProperties: {
-      keyUrl: {
-        serializedName: "keyUrl",
-        type: {
-          name: "String"
-        }
-      },
-      keyVaultId: {
-        serializedName: "keyVaultId",
-        type: {
-          name: "String"
-        }
-      },
-      keyBackupData: {
-        serializedName: "keyBackupData",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const KeyAndSecretDetails: msRest.CompositeMapper = {
-  serializedName: "KeyAndSecretDetails",
-  type: {
-    name: "Composite",
-    className: "KeyAndSecretDetails",
-    modelProperties: {
-      kekDetails: {
-        serializedName: "kekDetails",
+      display: {
+        serializedName: "display",
         type: {
           name: "Composite",
-          className: "KEKDetails"
-        }
+          className: "ClientDiscoveryDisplay",
+        },
       },
-      bekDetails: {
-        serializedName: "bekDetails",
+      origin: {
+        serializedName: "origin",
         type: {
-          name: "Composite",
-          className: "BEKDetails"
-        }
+          name: "String",
+        },
       },
-      encryptionMechanism: {
-        serializedName: "encryptionMechanism",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const RecoveryPointDiskConfiguration: msRest.CompositeMapper = {
-  serializedName: "RecoveryPointDiskConfiguration",
-  type: {
-    name: "Composite",
-    className: "RecoveryPointDiskConfiguration",
-    modelProperties: {
-      numberOfDisksIncludedInBackup: {
-        serializedName: "numberOfDisksIncludedInBackup",
-        type: {
-          name: "Number"
-        }
-      },
-      numberOfDisksAttachedToVm: {
-        serializedName: "numberOfDisksAttachedToVm",
-        type: {
-          name: "Number"
-        }
-      },
-      includedDiskList: {
-        serializedName: "includedDiskList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "DiskInformation"
-            }
-          }
-        }
-      },
-      excludedDiskList: {
-        serializedName: "excludedDiskList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "DiskInformation"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const IaasVMRecoveryPoint: msRest.CompositeMapper = {
-  serializedName: "IaasVMRecoveryPoint",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
-    uberParent: "RecoveryPoint",
-    className: "IaasVMRecoveryPoint",
-    modelProperties: {
-      ...RecoveryPoint.type.modelProperties,
-      recoveryPointType: {
-        readOnly: true,
-        serializedName: "recoveryPointType",
-        type: {
-          name: "String"
-        }
-      },
-      recoveryPointTime: {
-        readOnly: true,
-        serializedName: "recoveryPointTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      recoveryPointAdditionalInfo: {
-        readOnly: true,
-        serializedName: "recoveryPointAdditionalInfo",
-        type: {
-          name: "String"
-        }
-      },
-      sourceVMStorageType: {
-        readOnly: true,
-        serializedName: "sourceVMStorageType",
-        type: {
-          name: "String"
-        }
-      },
-      isSourceVMEncrypted: {
-        readOnly: true,
-        serializedName: "isSourceVMEncrypted",
-        type: {
-          name: "Boolean"
-        }
-      },
-      keyAndSecret: {
-        serializedName: "keyAndSecret",
-        type: {
-          name: "Composite",
-          className: "KeyAndSecretDetails"
-        }
-      },
-      isInstantIlrSessionActive: {
-        serializedName: "isInstantIlrSessionActive",
-        type: {
-          name: "Boolean"
-        }
-      },
-      recoveryPointTierDetails: {
-        serializedName: "recoveryPointTierDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "RecoveryPointTierInformation"
-            }
-          }
-        }
-      },
-      isManagedVirtualMachine: {
-        serializedName: "isManagedVirtualMachine",
-        type: {
-          name: "Boolean"
-        }
-      },
-      virtualMachineSize: {
-        serializedName: "virtualMachineSize",
-        type: {
-          name: "String"
-        }
-      },
-      originalStorageAccountOption: {
-        serializedName: "originalStorageAccountOption",
-        type: {
-          name: "Boolean"
-        }
-      },
-      osType: {
-        serializedName: "osType",
-        type: {
-          name: "String"
-        }
-      },
-      recoveryPointDiskConfiguration: {
-        serializedName: "recoveryPointDiskConfiguration",
-        type: {
-          name: "Composite",
-          className: "RecoveryPointDiskConfiguration"
-        }
-      },
-      zones: {
-        serializedName: "zones",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      recoveryPointMoveReadinessInfo: {
-        serializedName: "recoveryPointMoveReadinessInfo",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "Composite",
-              className: "RecoveryPointMoveReadinessInfo"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const IaasVMRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "IaasVMRestoreRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "IaasVMRestoreRequest",
-    modelProperties: {
-      ...RestoreRequest.type.modelProperties,
-      recoveryPointId: {
-        serializedName: "recoveryPointId",
-        type: {
-          name: "String"
-        }
-      },
-      recoveryType: {
-        serializedName: "recoveryType",
-        type: {
-          name: "String"
-        }
-      },
-      sourceResourceId: {
-        serializedName: "sourceResourceId",
-        type: {
-          name: "String"
-        }
-      },
-      targetVirtualMachineId: {
-        serializedName: "targetVirtualMachineId",
-        type: {
-          name: "String"
-        }
-      },
-      targetResourceGroupId: {
-        serializedName: "targetResourceGroupId",
-        type: {
-          name: "String"
-        }
-      },
-      storageAccountId: {
-        serializedName: "storageAccountId",
-        type: {
-          name: "String"
-        }
-      },
-      virtualNetworkId: {
-        serializedName: "virtualNetworkId",
-        type: {
-          name: "String"
-        }
-      },
-      subnetId: {
-        serializedName: "subnetId",
-        type: {
-          name: "String"
-        }
-      },
-      targetDomainNameId: {
-        serializedName: "targetDomainNameId",
-        type: {
-          name: "String"
-        }
-      },
-      region: {
-        serializedName: "region",
-        type: {
-          name: "String"
-        }
-      },
-      affinityGroup: {
-        serializedName: "affinityGroup",
-        type: {
-          name: "String"
-        }
-      },
-      createNewCloudService: {
-        serializedName: "createNewCloudService",
-        type: {
-          name: "Boolean"
-        }
-      },
-      originalStorageAccountOption: {
-        serializedName: "originalStorageAccountOption",
-        type: {
-          name: "Boolean"
-        }
-      },
-      encryptionDetails: {
-        serializedName: "encryptionDetails",
-        type: {
-          name: "Composite",
-          className: "EncryptionDetails"
-        }
-      },
-      restoreDiskLunList: {
-        serializedName: "restoreDiskLunList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Number"
-            }
-          }
-        }
-      },
-      restoreWithManagedDisks: {
-        serializedName: "restoreWithManagedDisks",
-        type: {
-          name: "Boolean"
-        }
-      },
-      diskEncryptionSetId: {
-        serializedName: "diskEncryptionSetId",
-        type: {
-          name: "String"
-        }
-      },
-      zones: {
-        serializedName: "zones",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const JobQueryObject: msRest.CompositeMapper = {
-  serializedName: "JobQueryObject",
-  type: {
-    name: "Composite",
-    className: "JobQueryObject",
-    modelProperties: {
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      operation: {
-        serializedName: "operation",
-        type: {
-          name: "String"
-        }
-      },
-      jobId: {
-        serializedName: "jobId",
-        type: {
-          name: "String"
-        }
-      },
-      startTime: {
-        serializedName: "startTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      endTime: {
-        serializedName: "endTime",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const JobResource: msRest.CompositeMapper = {
-  serializedName: "JobResource",
-  type: {
-    name: "Composite",
-    className: "JobResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
       properties: {
         serializedName: "properties",
         type: {
           name: "Composite",
-          className: "Job"
-        }
-      }
-    }
-  }
+          className: "ClientDiscoveryForProperties",
+        },
+      },
+    },
+  },
 };
 
-export const LogSchedulePolicy: msRest.CompositeMapper = {
-  serializedName: "LogSchedulePolicy",
+export const ClientDiscoveryDisplay: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: SchedulePolicy.type.polymorphicDiscriminator,
-    uberParent: "SchedulePolicy",
-    className: "LogSchedulePolicy",
+    className: "ClientDiscoveryDisplay",
     modelProperties: {
-      ...SchedulePolicy.type.modelProperties,
-      scheduleFrequencyInMins: {
-        serializedName: "scheduleFrequencyInMins",
+      provider: {
+        serializedName: "provider",
         type: {
-          name: "Number"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+      resource: {
+        serializedName: "resource",
+        type: {
+          name: "String",
+        },
+      },
+      operation: {
+        serializedName: "operation",
+        type: {
+          name: "String",
+        },
+      },
+      description: {
+        serializedName: "description",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const WeeklyRetentionSchedule: msRest.CompositeMapper = {
-  serializedName: "WeeklyRetentionSchedule",
+export const ClientDiscoveryForProperties: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "WeeklyRetentionSchedule",
+    className: "ClientDiscoveryForProperties",
     modelProperties: {
-      daysOfTheWeek: {
-        serializedName: "daysOfTheWeek",
+      serviceSpecification: {
+        serializedName: "serviceSpecification",
+        type: {
+          name: "Composite",
+          className: "ClientDiscoveryForServiceSpecification",
+        },
+      },
+    },
+  },
+};
+
+export const ClientDiscoveryForServiceSpecification: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "ClientDiscoveryForServiceSpecification",
+      modelProperties: {
+        logSpecifications: {
+          serializedName: "logSpecifications",
+          type: {
+            name: "Sequence",
+            element: {
+              type: {
+                name: "Composite",
+                className: "ClientDiscoveryForLogSpecification",
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
+export const ClientDiscoveryForLogSpecification: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ClientDiscoveryForLogSpecification",
+    modelProperties: {
+      name: {
+        serializedName: "name",
+        type: {
+          name: "String",
+        },
+      },
+      displayName: {
+        serializedName: "displayName",
+        type: {
+          name: "String",
+        },
+      },
+      blobDuration: {
+        serializedName: "blobDuration",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BackupResourceVaultConfig: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupResourceVaultConfig",
+    modelProperties: {
+      storageModelType: {
+        serializedName: "storageModelType",
+        type: {
+          name: "String",
+        },
+      },
+      storageType: {
+        serializedName: "storageType",
+        type: {
+          name: "String",
+        },
+      },
+      storageTypeState: {
+        serializedName: "storageTypeState",
+        type: {
+          name: "String",
+        },
+      },
+      enhancedSecurityState: {
+        serializedName: "enhancedSecurityState",
+        type: {
+          name: "String",
+        },
+      },
+      softDeleteFeatureState: {
+        serializedName: "softDeleteFeatureState",
+        type: {
+          name: "String",
+        },
+      },
+      softDeleteRetentionPeriodInDays: {
+        serializedName: "softDeleteRetentionPeriodInDays",
+        type: {
+          name: "Number",
+        },
+      },
+      resourceGuardOperationRequests: {
+        serializedName: "resourceGuardOperationRequests",
         type: {
           name: "Sequence",
           element: {
             type: {
-              name: "Enum",
-              allowedValues: [
-                "Sunday",
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday"
-              ]
-            }
-          }
-        }
+              name: "String",
+            },
+          },
+        },
       },
-      retentionTimes: {
-        serializedName: "retentionTimes",
+      isSoftDeleteFeatureStateEditable: {
+        serializedName: "isSoftDeleteFeatureStateEditable",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const BackupResourceEncryptionConfig: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupResourceEncryptionConfig",
+    modelProperties: {
+      encryptionAtRestType: {
+        serializedName: "encryptionAtRestType",
+        type: {
+          name: "String",
+        },
+      },
+      keyUri: {
+        serializedName: "keyUri",
+        type: {
+          name: "String",
+        },
+      },
+      subscriptionId: {
+        serializedName: "subscriptionId",
+        type: {
+          name: "String",
+        },
+      },
+      lastUpdateStatus: {
+        serializedName: "lastUpdateStatus",
+        type: {
+          name: "String",
+        },
+      },
+      infrastructureEncryptionState: {
+        serializedName: "infrastructureEncryptionState",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PrivateEndpointConnection: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PrivateEndpointConnection",
+    modelProperties: {
+      provisioningState: {
+        serializedName: "provisioningState",
+        type: {
+          name: "String",
+        },
+      },
+      privateEndpoint: {
+        serializedName: "privateEndpoint",
+        type: {
+          name: "Composite",
+          className: "PrivateEndpoint",
+        },
+      },
+      groupIds: {
+        serializedName: "groupIds",
         type: {
           name: "Sequence",
           element: {
             type: {
-              name: "DateTime"
-            }
-          }
-        }
+              name: "String",
+            },
+          },
+        },
       },
-      retentionDuration: {
-        serializedName: "retentionDuration",
+      privateLinkServiceConnectionState: {
+        serializedName: "privateLinkServiceConnectionState",
         type: {
           name: "Composite",
-          className: "RetentionDuration"
-        }
-      }
-    }
-  }
+          className: "PrivateLinkServiceConnectionState",
+        },
+      },
+    },
+  },
 };
 
-export const WeeklyRetentionFormat: msRest.CompositeMapper = {
-  serializedName: "WeeklyRetentionFormat",
+export const PrivateEndpoint: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "WeeklyRetentionFormat",
+    className: "PrivateEndpoint",
     modelProperties: {
-      daysOfTheWeek: {
-        serializedName: "daysOfTheWeek",
+      id: {
+        serializedName: "id",
         type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: [
-                "Sunday",
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday"
-              ]
-            }
-          }
-        }
+          name: "String",
+        },
       },
-      weeksOfTheMonth: {
-        serializedName: "weeksOfTheMonth",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["First", "Second", "Third", "Fourth", "Last", "Invalid"]
-            }
-          }
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const MonthlyRetentionSchedule: msRest.CompositeMapper = {
-  serializedName: "MonthlyRetentionSchedule",
+export const PrivateLinkServiceConnectionState: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "MonthlyRetentionSchedule",
+    className: "PrivateLinkServiceConnectionState",
     modelProperties: {
-      retentionScheduleFormatType: {
-        serializedName: "retentionScheduleFormatType",
+      status: {
+        serializedName: "status",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      retentionScheduleDaily: {
-        serializedName: "retentionScheduleDaily",
+      description: {
+        serializedName: "description",
         type: {
-          name: "Composite",
-          className: "DailyRetentionFormat"
-        }
+          name: "String",
+        },
       },
-      retentionScheduleWeekly: {
-        serializedName: "retentionScheduleWeekly",
+      actionsRequired: {
+        serializedName: "actionsRequired",
         type: {
-          name: "Composite",
-          className: "WeeklyRetentionFormat"
-        }
+          name: "String",
+        },
       },
-      retentionTimes: {
-        serializedName: "retentionTimes",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "DateTime"
-            }
-          }
-        }
-      },
-      retentionDuration: {
-        serializedName: "retentionDuration",
-        type: {
-          name: "Composite",
-          className: "RetentionDuration"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const YearlyRetentionSchedule: msRest.CompositeMapper = {
-  serializedName: "YearlyRetentionSchedule",
+export const CloudError: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "YearlyRetentionSchedule",
+    className: "CloudError",
     modelProperties: {
-      retentionScheduleFormatType: {
-        serializedName: "retentionScheduleFormatType",
-        type: {
-          name: "String"
-        }
-      },
-      monthsOfYear: {
-        serializedName: "monthsOfYear",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: [
-                "Invalid",
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-                "August",
-                "September",
-                "October",
-                "November",
-                "December"
-              ]
-            }
-          }
-        }
-      },
-      retentionScheduleDaily: {
-        serializedName: "retentionScheduleDaily",
+      error: {
+        serializedName: "error",
         type: {
           name: "Composite",
-          className: "DailyRetentionFormat"
-        }
+          className: "CloudErrorBody",
+        },
       },
-      retentionScheduleWeekly: {
-        serializedName: "retentionScheduleWeekly",
-        type: {
-          name: "Composite",
-          className: "WeeklyRetentionFormat"
-        }
-      },
-      retentionTimes: {
-        serializedName: "retentionTimes",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "DateTime"
-            }
-          }
-        }
-      },
-      retentionDuration: {
-        serializedName: "retentionDuration",
-        type: {
-          name: "Composite",
-          className: "RetentionDuration"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const LongTermRetentionPolicy: msRest.CompositeMapper = {
-  serializedName: "LongTermRetentionPolicy",
+export const CloudErrorBody: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: RetentionPolicy.type.polymorphicDiscriminator,
-    uberParent: "RetentionPolicy",
-    className: "LongTermRetentionPolicy",
+    className: "CloudErrorBody",
     modelProperties: {
-      ...RetentionPolicy.type.modelProperties,
-      dailySchedule: {
-        serializedName: "dailySchedule",
-        type: {
-          name: "Composite",
-          className: "DailyRetentionSchedule"
-        }
-      },
-      weeklySchedule: {
-        serializedName: "weeklySchedule",
-        type: {
-          name: "Composite",
-          className: "WeeklyRetentionSchedule"
-        }
-      },
-      monthlySchedule: {
-        serializedName: "monthlySchedule",
-        type: {
-          name: "Composite",
-          className: "MonthlyRetentionSchedule"
-        }
-      },
-      yearlySchedule: {
-        serializedName: "yearlySchedule",
-        type: {
-          name: "Composite",
-          className: "YearlyRetentionSchedule"
-        }
-      }
-    }
-  }
-};
-
-export const LongTermSchedulePolicy: msRest.CompositeMapper = {
-  serializedName: "LongTermSchedulePolicy",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: SchedulePolicy.type.polymorphicDiscriminator,
-    uberParent: "SchedulePolicy",
-    className: "LongTermSchedulePolicy",
-    modelProperties: {
-      ...SchedulePolicy.type.modelProperties
-    }
-  }
-};
-
-export const MabErrorInfo: msRest.CompositeMapper = {
-  serializedName: "MabErrorInfo",
-  type: {
-    name: "Composite",
-    className: "MabErrorInfo",
-    modelProperties: {
-      errorString: {
+      code: {
+        serializedName: "code",
         readOnly: true,
-        serializedName: "errorString",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      recommendations: {
+      message: {
+        serializedName: "message",
         readOnly: true,
-        serializedName: "recommendations",
+        type: {
+          name: "String",
+        },
+      },
+      target: {
+        serializedName: "target",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      details: {
+        serializedName: "details",
+        readOnly: true,
         type: {
           name: "Sequence",
           element: {
             type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
+              name: "Composite",
+              className: "CloudErrorBody",
+            },
+          },
+        },
+      },
+      additionalInfo: {
+        serializedName: "additionalInfo",
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ErrorAdditionalInfo",
+            },
+          },
+        },
+      },
+    },
+  },
 };
 
-export const MabFileFolderProtectedItemExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "MabFileFolderProtectedItemExtendedInfo",
+export const OperationStatus: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "MabFileFolderProtectedItemExtendedInfo",
+    className: "OperationStatus",
     modelProperties: {
-      lastRefreshedAt: {
-        serializedName: "lastRefreshedAt",
+      id: {
+        serializedName: "id",
         type: {
-          name: "DateTime"
-        }
+          name: "String",
+        },
       },
-      oldestRecoveryPoint: {
-        serializedName: "oldestRecoveryPoint",
+      name: {
+        serializedName: "name",
         type: {
-          name: "DateTime"
-        }
-      },
-      recoveryPointCount: {
-        serializedName: "recoveryPointCount",
-        type: {
-          name: "Number"
-        }
-      }
-    }
-  }
-};
-
-export const MabFileFolderProtectedItem: msRest.CompositeMapper = {
-  serializedName: "MabFileFolderProtectedItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
-    uberParent: "ProtectedItem",
-    className: "MabFileFolderProtectedItem",
-    modelProperties: {
-      ...ProtectedItem.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      computerName: {
-        serializedName: "computerName",
-        type: {
-          name: "String"
-        }
-      },
-      lastBackupStatus: {
-        serializedName: "lastBackupStatus",
-        type: {
-          name: "String"
-        }
-      },
-      lastBackupTime: {
-        serializedName: "lastBackupTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      deferredDeleteSyncTimeInUTC: {
-        serializedName: "deferredDeleteSyncTimeInUTC",
-        type: {
-          name: "Number"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "MabFileFolderProtectedItemExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const MabJobTaskDetails: msRest.CompositeMapper = {
-  serializedName: "MabJobTaskDetails",
-  type: {
-    name: "Composite",
-    className: "MabJobTaskDetails",
-    modelProperties: {
-      taskId: {
-        serializedName: "taskId",
-        type: {
-          name: "String"
-        }
-      },
-      startTime: {
-        serializedName: "startTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      endTime: {
-        serializedName: "endTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
+          name: "String",
+        },
       },
       status: {
         serializedName: "status",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const MabJobExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "MabJobExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "MabJobExtendedInfo",
-    modelProperties: {
-      tasksList: {
-        serializedName: "tasksList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "MabJobTaskDetails"
-            }
-          }
-        }
+          name: "String",
+        },
       },
-      propertyBag: {
-        serializedName: "propertyBag",
+      startTime: {
+        serializedName: "startTime",
         type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
+          name: "DateTime",
+        },
       },
-      dynamicErrorMessage: {
-        serializedName: "dynamicErrorMessage",
+      endTime: {
+        serializedName: "endTime",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const MabJob: msRest.CompositeMapper = {
-  serializedName: "MabJob",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
-    uberParent: "Job",
-    className: "MabJob",
-    modelProperties: {
-      ...Job.type.modelProperties,
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
+          name: "DateTime",
+        },
       },
-      actionsInfo: {
-        serializedName: "actionsInfo",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["Invalid", "Cancellable", "Retriable"]
-            }
-          }
-        }
-      },
-      mabServerName: {
-        serializedName: "mabServerName",
-        type: {
-          name: "String"
-        }
-      },
-      mabServerType: {
-        serializedName: "mabServerType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      errorDetails: {
-        serializedName: "errorDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "MabErrorInfo"
-            }
-          }
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
+      error: {
+        serializedName: "error",
         type: {
           name: "Composite",
-          className: "MabJobExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const MabProtectionPolicy: msRest.CompositeMapper = {
-  serializedName: "MAB",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
-    uberParent: "ProtectionPolicy",
-    className: "MabProtectionPolicy",
-    modelProperties: {
-      ...ProtectionPolicy.type.modelProperties,
-      schedulePolicy: {
-        serializedName: "schedulePolicy",
-        type: {
-          name: "Composite",
-          className: "SchedulePolicy"
-        }
+          className: "OperationStatusError",
+        },
       },
-      retentionPolicy: {
-        serializedName: "retentionPolicy",
+      properties: {
+        serializedName: "properties",
         type: {
           name: "Composite",
-          className: "RetentionPolicy"
-        }
-      }
-    }
-  }
+          className: "OperationStatusExtendedInfo",
+        },
+      },
+    },
+  },
 };
 
-export const OperationResultInfo: msRest.CompositeMapper = {
-  serializedName: "OperationResultInfo",
+export const OperationStatusError: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: OperationResultInfoBase.type.polymorphicDiscriminator,
-    uberParent: "OperationResultInfoBase",
-    className: "OperationResultInfo",
+    className: "OperationStatusError",
     modelProperties: {
-      ...OperationResultInfoBase.type.modelProperties,
-      jobList: {
-        serializedName: "jobList",
+      code: {
+        serializedName: "code",
         type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+      message: {
+        serializedName: "message",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const PrepareDataMoveRequest: msRest.CompositeMapper = {
-  serializedName: "PrepareDataMoveRequest",
+export const OperationStatusExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OperationStatusExtendedInfo",
+    uberParent: "OperationStatusExtendedInfo",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PrepareDataMoveRequest: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "PrepareDataMoveRequest",
     modelProperties: {
       targetResourceId: {
-        required: true,
         serializedName: "targetResourceId",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       targetRegion: {
-        required: true,
         serializedName: "targetRegion",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       dataMoveLevel: {
-        required: true,
         serializedName: "dataMoveLevel",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       sourceContainerArmIds: {
         serializedName: "sourceContainerArmIds",
@@ -4472,107 +1111,75 @@ export const PrepareDataMoveRequest: msRest.CompositeMapper = {
           name: "Sequence",
           element: {
             type: {
-              name: "String"
-            }
-          }
-        }
+              name: "String",
+            },
+          },
+        },
       },
       ignoreMoved: {
         serializedName: "ignoreMoved",
         type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const VaultStorageConfigOperationResultResponse: msRest.CompositeMapper = {
-  serializedName: "VaultStorageConfigOperationResultResponse",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
-    },
-    uberParent: "VaultStorageConfigOperationResultResponse",
-    className: "VaultStorageConfigOperationResultResponse",
-    modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const PrepareDataMoveResponse: msRest.CompositeMapper = {
-  serializedName: "PrepareDataMoveResponse",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator:
-      VaultStorageConfigOperationResultResponse.type.polymorphicDiscriminator,
-    uberParent: "VaultStorageConfigOperationResultResponse",
-    className: "PrepareDataMoveResponse",
-    modelProperties: {
-      ...VaultStorageConfigOperationResultResponse.type.modelProperties,
-      correlationId: {
-        serializedName: "correlationId",
-        type: {
-          name: "String"
-        }
+          name: "Boolean",
+        },
       },
-      sourceVaultProperties: {
-        serializedName: "sourceVaultProperties",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const TriggerDataMoveRequest: msRest.CompositeMapper = {
-  serializedName: "TriggerDataMoveRequest",
+export const VaultStorageConfigOperationResultResponse: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "VaultStorageConfigOperationResultResponse",
+      uberParent: "VaultStorageConfigOperationResultResponse",
+      polymorphicDiscriminator: {
+        serializedName: "objectType",
+        clientName: "objectType",
+      },
+      modelProperties: {
+        objectType: {
+          serializedName: "objectType",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const TriggerDataMoveRequest: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "TriggerDataMoveRequest",
     modelProperties: {
       sourceResourceId: {
-        required: true,
         serializedName: "sourceResourceId",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       sourceRegion: {
-        required: true,
         serializedName: "sourceRegion",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       dataMoveLevel: {
-        required: true,
         serializedName: "dataMoveLevel",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       correlationId: {
-        required: true,
         serializedName: "correlationId",
+        required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       sourceContainerArmIds: {
         serializedName: "sourceContainerArmIds",
@@ -4580,23 +1187,334 @@ export const TriggerDataMoveRequest: msRest.CompositeMapper = {
           name: "Sequence",
           element: {
             type: {
-              name: "String"
-            }
-          }
-        }
+              name: "String",
+            },
+          },
+        },
       },
       pauseGC: {
         serializedName: "pauseGC",
         type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
+          name: "Boolean",
+        },
+      },
+    },
+  },
 };
 
-export const OperationWorkerResponse: msRest.CompositeMapper = {
-  serializedName: "OperationWorkerResponse",
+export const ProtectedItem: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: {
+      serializedName: "protectedItemType",
+      clientName: "protectedItemType",
+    },
+    modelProperties: {
+      protectedItemType: {
+        serializedName: "protectedItemType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      containerName: {
+        serializedName: "containerName",
+        type: {
+          name: "String",
+        },
+      },
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+      policyId: {
+        serializedName: "policyId",
+        type: {
+          name: "String",
+        },
+      },
+      lastRecoveryPoint: {
+        serializedName: "lastRecoveryPoint",
+        type: {
+          name: "DateTime",
+        },
+      },
+      backupSetName: {
+        serializedName: "backupSetName",
+        type: {
+          name: "String",
+        },
+      },
+      createMode: {
+        serializedName: "createMode",
+        type: {
+          name: "String",
+        },
+      },
+      deferredDeleteTimeInUTC: {
+        serializedName: "deferredDeleteTimeInUTC",
+        type: {
+          name: "DateTime",
+        },
+      },
+      isScheduledForDeferredDelete: {
+        serializedName: "isScheduledForDeferredDelete",
+        type: {
+          name: "Boolean",
+        },
+      },
+      deferredDeleteTimeRemaining: {
+        serializedName: "deferredDeleteTimeRemaining",
+        type: {
+          name: "String",
+        },
+      },
+      isDeferredDeleteScheduleUpcoming: {
+        serializedName: "isDeferredDeleteScheduleUpcoming",
+        type: {
+          name: "Boolean",
+        },
+      },
+      isRehydrate: {
+        serializedName: "isRehydrate",
+        type: {
+          name: "Boolean",
+        },
+      },
+      resourceGuardOperationRequests: {
+        serializedName: "resourceGuardOperationRequests",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      isArchiveEnabled: {
+        serializedName: "isArchiveEnabled",
+        type: {
+          name: "Boolean",
+        },
+      },
+      policyName: {
+        serializedName: "policyName",
+        type: {
+          name: "String",
+        },
+      },
+      softDeleteRetentionPeriodInDays: {
+        serializedName: "softDeleteRetentionPeriodInDays",
+        type: {
+          name: "Number",
+        },
+      },
+      vaultId: {
+        serializedName: "vaultId",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const RecoveryPoint: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RecoveryPoint",
+    uberParent: "RecoveryPoint",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const RestoreRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RestoreRequest",
+    uberParent: "RestoreRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      resourceGuardOperationRequests: {
+        serializedName: "resourceGuardOperationRequests",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ProtectionPolicy: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionPolicy",
+    uberParent: "ProtectionPolicy",
+    polymorphicDiscriminator: {
+      serializedName: "backupManagementType",
+      clientName: "backupManagementType",
+    },
+    modelProperties: {
+      protectedItemsCount: {
+        serializedName: "protectedItemsCount",
+        type: {
+          name: "Number",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      resourceGuardOperationRequests: {
+        serializedName: "resourceGuardOperationRequests",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const Job: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "Job",
+    uberParent: "Job",
+    polymorphicDiscriminator: {
+      serializedName: "jobType",
+      clientName: "jobType",
+    },
+    modelProperties: {
+      entityFriendlyName: {
+        serializedName: "entityFriendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      operation: {
+        serializedName: "operation",
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      startTime: {
+        serializedName: "startTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      endTime: {
+        serializedName: "endTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      activityId: {
+        serializedName: "activityId",
+        type: {
+          name: "String",
+        },
+      },
+      jobType: {
+        serializedName: "jobType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const OperationResultInfoBase: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OperationResultInfoBase",
+    uberParent: "OperationResultInfoBase",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const OperationWorkerResponse: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "OperationWorkerResponse",
@@ -4652,50 +1570,3144 @@ export const OperationWorkerResponse: msRest.CompositeMapper = {
             "BadGateway",
             "ServiceUnavailable",
             "GatewayTimeout",
-            "HttpVersionNotSupported"
-          ]
-        }
+            "HttpVersionNotSupported",
+          ],
+        },
       },
       headers: {
         serializedName: "headers",
         type: {
           name: "Dictionary",
           value: {
-            type: {
-              name: "Sequence",
-              element: {
-                type: {
-                  name: "String"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+            type: { name: "Sequence", element: { type: { name: "String" } } },
+          },
+        },
+      },
+    },
+  },
 };
 
-export const OperationResultInfoBaseResource: msRest.CompositeMapper = {
-  serializedName: "OperationResultInfoBaseResource",
+export const ValidateOperationRequestResource: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "OperationResultInfoBaseResource",
+    className: "ValidateOperationRequestResource",
     modelProperties: {
-      ...OperationWorkerResponse.type.modelProperties,
+      id: {
+        serializedName: "id",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "ValidateOperationRequest",
+        },
+      },
+    },
+  },
+};
+
+export const ValidateOperationRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ValidateOperationRequest",
+    uberParent: "ValidateOperationRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ValidateOperationsResponse: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ValidateOperationsResponse",
+    modelProperties: {
+      validateOperationResponse: {
+        serializedName: "validateOperationResponse",
+        type: {
+          name: "Composite",
+          className: "ValidateOperationResponse",
+        },
+      },
+    },
+  },
+};
+
+export const ValidateOperationResponse: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ValidateOperationResponse",
+    modelProperties: {
+      validationResults: {
+        serializedName: "validationResults",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ErrorDetail",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ErrorDetail: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ErrorDetail",
+    modelProperties: {
+      code: {
+        serializedName: "code",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      message: {
+        serializedName: "message",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const BackupEngineBase: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupEngineBase",
+    uberParent: "BackupEngineBase",
+    polymorphicDiscriminator: {
+      serializedName: "backupEngineType",
+      clientName: "backupEngineType",
+    },
+    modelProperties: {
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      registrationStatus: {
+        serializedName: "registrationStatus",
+        type: {
+          name: "String",
+        },
+      },
+      backupEngineState: {
+        serializedName: "backupEngineState",
+        type: {
+          name: "String",
+        },
+      },
+      healthStatus: {
+        serializedName: "healthStatus",
+        type: {
+          name: "String",
+        },
+      },
+      backupEngineType: {
+        serializedName: "backupEngineType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      canReRegister: {
+        serializedName: "canReRegister",
+        type: {
+          name: "Boolean",
+        },
+      },
+      backupEngineId: {
+        serializedName: "backupEngineId",
+        type: {
+          name: "String",
+        },
+      },
+      dpmVersion: {
+        serializedName: "dpmVersion",
+        type: {
+          name: "String",
+        },
+      },
+      azureBackupAgentVersion: {
+        serializedName: "azureBackupAgentVersion",
+        type: {
+          name: "String",
+        },
+      },
+      isAzureBackupAgentUpgradeAvailable: {
+        serializedName: "isAzureBackupAgentUpgradeAvailable",
+        type: {
+          name: "Boolean",
+        },
+      },
+      isDpmUpgradeAvailable: {
+        serializedName: "isDpmUpgradeAvailable",
+        type: {
+          name: "Boolean",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "BackupEngineExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const BackupEngineExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupEngineExtendedInfo",
+    modelProperties: {
+      databaseName: {
+        serializedName: "databaseName",
+        type: {
+          name: "String",
+        },
+      },
+      protectedItemsCount: {
+        serializedName: "protectedItemsCount",
+        type: {
+          name: "Number",
+        },
+      },
+      protectedServersCount: {
+        serializedName: "protectedServersCount",
+        type: {
+          name: "Number",
+        },
+      },
+      diskCount: {
+        serializedName: "diskCount",
+        type: {
+          name: "Number",
+        },
+      },
+      usedDiskSpace: {
+        serializedName: "usedDiskSpace",
+        type: {
+          name: "Number",
+        },
+      },
+      availableDiskSpace: {
+        serializedName: "availableDiskSpace",
+        type: {
+          name: "Number",
+        },
+      },
+      refreshedAt: {
+        serializedName: "refreshedAt",
+        type: {
+          name: "DateTime",
+        },
+      },
+      azureProtectedInstances: {
+        serializedName: "azureProtectedInstances",
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectableContainer: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectableContainer",
+    uberParent: "ProtectableContainer",
+    polymorphicDiscriminator: {
+      serializedName: "protectableContainerType",
+      clientName: "protectableContainerType",
+    },
+    modelProperties: {
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      protectableContainerType: {
+        serializedName: "protectableContainerType",
+        required: true,
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "Invalid",
+            "Unknown",
+            "IaasVMContainer",
+            "IaasVMServiceContainer",
+            "DPMContainer",
+            "AzureBackupServerContainer",
+            "MABContainer",
+            "Cluster",
+            "AzureSqlContainer",
+            "Windows",
+            "VCenter",
+            "VMAppContainer",
+            "SQLAGWorkLoadContainer",
+            "StorageContainer",
+            "GenericContainer",
+            "Microsoft.ClassicCompute/virtualMachines",
+            "Microsoft.Compute/virtualMachines",
+            "AzureWorkloadContainer",
+          ],
+        },
+      },
+      healthStatus: {
+        serializedName: "healthStatus",
+        type: {
+          name: "String",
+        },
+      },
+      containerId: {
+        serializedName: "containerId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectionContainer: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: {
+      serializedName: "containerType",
+      clientName: "containerType",
+    },
+    modelProperties: {
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      registrationStatus: {
+        serializedName: "registrationStatus",
+        type: {
+          name: "String",
+        },
+      },
+      healthStatus: {
+        serializedName: "healthStatus",
+        type: {
+          name: "String",
+        },
+      },
+      containerType: {
+        serializedName: "containerType",
+        required: true,
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "Invalid",
+            "Unknown",
+            "IaasVMContainer",
+            "IaasVMServiceContainer",
+            "DPMContainer",
+            "AzureBackupServerContainer",
+            "MABContainer",
+            "Cluster",
+            "AzureSqlContainer",
+            "Windows",
+            "VCenter",
+            "VMAppContainer",
+            "SQLAGWorkLoadContainer",
+            "StorageContainer",
+            "GenericContainer",
+            "Microsoft.ClassicCompute/virtualMachines",
+            "Microsoft.Compute/virtualMachines",
+            "AzureWorkloadContainer",
+          ],
+        },
+      },
+      protectableObjectType: {
+        serializedName: "protectableObjectType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const WorkloadItem: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkloadItem",
+    uberParent: "WorkloadItem",
+    polymorphicDiscriminator: {
+      serializedName: "workloadItemType",
+      clientName: "workloadItemType",
+    },
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadItemType: {
+        serializedName: "workloadItemType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BackupRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupRequest",
+    uberParent: "BackupRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ILRRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ILRRequest",
+    uberParent: "ILRRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const WorkloadProtectableItem: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkloadProtectableItem",
+    uberParent: "WorkloadProtectableItem",
+    polymorphicDiscriminator: {
+      serializedName: "protectableItemType",
+      clientName: "protectableItemType",
+    },
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      protectableItemType: {
+        serializedName: "protectableItemType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const SecurityPinBase: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SecurityPinBase",
+    modelProperties: {
+      resourceGuardOperationRequests: {
+        serializedName: "resourceGuardOperationRequests",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const TokenInformation: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "TokenInformation",
+    modelProperties: {
+      token: {
+        serializedName: "token",
+        type: {
+          name: "String",
+        },
+      },
+      expiryTimeInUtcTicks: {
+        serializedName: "expiryTimeInUtcTicks",
+        type: {
+          name: "Number",
+        },
+      },
+      securityPIN: {
+        serializedName: "securityPIN",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const MoveRPAcrossTiersRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "MoveRPAcrossTiersRequest",
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        type: {
+          name: "String",
+        },
+      },
+      sourceTierType: {
+        serializedName: "sourceTierType",
+        type: {
+          name: "Enum",
+          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"],
+        },
+      },
+      targetTierType: {
+        serializedName: "targetTierType",
+        type: {
+          name: "Enum",
+          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"],
+        },
+      },
+    },
+  },
+};
+
+export const ListRecoveryPointsRecommendedForMoveRequest: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "ListRecoveryPointsRecommendedForMoveRequest",
+      modelProperties: {
+        objectType: {
+          serializedName: "objectType",
+          type: {
+            name: "String",
+          },
+        },
+        excludedRPList: {
+          serializedName: "excludedRPList",
+          type: {
+            name: "Sequence",
+            element: {
+              type: {
+                name: "String",
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
+export const ResourceGuardProxyBase: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ResourceGuardProxyBase",
+    modelProperties: {
+      resourceGuardResourceId: {
+        serializedName: "resourceGuardResourceId",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      resourceGuardOperationDetails: {
+        serializedName: "resourceGuardOperationDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ResourceGuardOperationDetail",
+            },
+          },
+        },
+      },
+      lastUpdatedTime: {
+        serializedName: "lastUpdatedTime",
+        type: {
+          name: "String",
+        },
+      },
+      description: {
+        serializedName: "description",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ResourceGuardOperationDetail: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ResourceGuardOperationDetail",
+    modelProperties: {
+      vaultCriticalOperation: {
+        serializedName: "vaultCriticalOperation",
+        type: {
+          name: "String",
+        },
+      },
+      defaultResourceRequest: {
+        serializedName: "defaultResourceRequest",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const UnlockDeleteRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "UnlockDeleteRequest",
+    modelProperties: {
+      resourceGuardOperationRequests: {
+        serializedName: "resourceGuardOperationRequests",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      resourceToBeDeleted: {
+        serializedName: "resourceToBeDeleted",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const UnlockDeleteResponse: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "UnlockDeleteResponse",
+    modelProperties: {
+      unlockDeleteExpiryTime: {
+        serializedName: "unlockDeleteExpiryTime",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const FetchTieringCostInfoRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "FetchTieringCostInfoRequest",
+    uberParent: "FetchTieringCostInfoRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      sourceTierType: {
+        serializedName: "sourceTierType",
+        required: true,
+        type: {
+          name: "Enum",
+          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"],
+        },
+      },
+      targetTierType: {
+        serializedName: "targetTierType",
+        required: true,
+        type: {
+          name: "Enum",
+          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"],
+        },
+      },
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const TieringCostInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "TieringCostInfo",
+    uberParent: "TieringCostInfo",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const KPIResourceHealthDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "KPIResourceHealthDetails",
+    modelProperties: {
+      resourceHealthStatus: {
+        serializedName: "resourceHealthStatus",
+        type: {
+          name: "String",
+        },
+      },
+      resourceHealthDetails: {
+        serializedName: "resourceHealthDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ResourceHealthDetails",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ResourceHealthDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ResourceHealthDetails",
+    modelProperties: {
+      code: {
+        serializedName: "code",
+        readOnly: true,
+        type: {
+          name: "Number",
+        },
+      },
+      title: {
+        serializedName: "title",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      message: {
+        serializedName: "message",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileshareProtectedItemExtendedInfo: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AzureFileshareProtectedItemExtendedInfo",
+      modelProperties: {
+        oldestRecoveryPoint: {
+          serializedName: "oldestRecoveryPoint",
+          type: {
+            name: "DateTime",
+          },
+        },
+        recoveryPointCount: {
+          serializedName: "recoveryPointCount",
+          type: {
+            name: "Number",
+          },
+        },
+        policyState: {
+          serializedName: "policyState",
+          type: {
+            name: "String",
+          },
+        },
+        resourceState: {
+          serializedName: "resourceState",
+          readOnly: true,
+          type: {
+            name: "String",
+          },
+        },
+        resourceStateSyncTime: {
+          serializedName: "resourceStateSyncTime",
+          readOnly: true,
+          type: {
+            name: "DateTime",
+          },
+        },
+      },
+    },
+  };
+
+export const RecoveryPointProperties: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RecoveryPointProperties",
+    modelProperties: {
+      expiryTime: {
+        serializedName: "expiryTime",
+        type: {
+          name: "String",
+        },
+      },
+      ruleName: {
+        serializedName: "ruleName",
+        type: {
+          name: "String",
+        },
+      },
+      isSoftDeleted: {
+        serializedName: "isSoftDeleted",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const RestoreFileSpecs: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RestoreFileSpecs",
+    modelProperties: {
+      path: {
+        serializedName: "path",
+        type: {
+          name: "String",
+        },
+      },
+      fileSpecType: {
+        serializedName: "fileSpecType",
+        type: {
+          name: "String",
+        },
+      },
+      targetFolderPath: {
+        serializedName: "targetFolderPath",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const TargetAFSRestoreInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "TargetAFSRestoreInfo",
+    modelProperties: {
+      name: {
+        serializedName: "name",
+        type: {
+          name: "String",
+        },
+      },
+      targetResourceId: {
+        serializedName: "targetResourceId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const Settings: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "Settings",
+    modelProperties: {
+      timeZone: {
+        serializedName: "timeZone",
+        type: {
+          name: "String",
+        },
+      },
+      issqlcompression: {
+        serializedName: "issqlcompression",
+        type: {
+          name: "Boolean",
+        },
+      },
+      isCompression: {
+        serializedName: "isCompression",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const SubProtectionPolicy: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SubProtectionPolicy",
+    modelProperties: {
+      policyType: {
+        serializedName: "policyType",
+        type: {
+          name: "String",
+        },
+      },
+      schedulePolicy: {
+        serializedName: "schedulePolicy",
+        type: {
+          name: "Composite",
+          className: "SchedulePolicy",
+        },
+      },
+      retentionPolicy: {
+        serializedName: "retentionPolicy",
+        type: {
+          name: "Composite",
+          className: "RetentionPolicy",
+        },
+      },
+      tieringPolicy: {
+        serializedName: "tieringPolicy",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "Composite", className: "TieringPolicy" } },
+        },
+      },
+      snapshotBackupAdditionalDetails: {
+        serializedName: "snapshotBackupAdditionalDetails",
+        type: {
+          name: "Composite",
+          className: "SnapshotBackupAdditionalDetails",
+        },
+      },
+    },
+  },
+};
+
+export const SchedulePolicy: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SchedulePolicy",
+    uberParent: "SchedulePolicy",
+    polymorphicDiscriminator: {
+      serializedName: "schedulePolicyType",
+      clientName: "schedulePolicyType",
+    },
+    modelProperties: {
+      schedulePolicyType: {
+        serializedName: "schedulePolicyType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const RetentionPolicy: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RetentionPolicy",
+    uberParent: "RetentionPolicy",
+    polymorphicDiscriminator: {
+      serializedName: "retentionPolicyType",
+      clientName: "retentionPolicyType",
+    },
+    modelProperties: {
+      retentionPolicyType: {
+        serializedName: "retentionPolicyType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const TieringPolicy: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "TieringPolicy",
+    modelProperties: {
+      tieringMode: {
+        serializedName: "tieringMode",
+        type: {
+          name: "String",
+        },
+      },
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "Number",
+        },
+      },
+      durationType: {
+        serializedName: "durationType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const SnapshotBackupAdditionalDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SnapshotBackupAdditionalDetails",
+    modelProperties: {
+      instantRpRetentionRangeInDays: {
+        serializedName: "instantRpRetentionRangeInDays",
+        type: {
+          name: "Number",
+        },
+      },
+      instantRPDetails: {
+        serializedName: "instantRPDetails",
+        type: {
+          name: "String",
+        },
+      },
+      userAssignedManagedIdentityDetails: {
+        serializedName: "userAssignedManagedIdentityDetails",
+        type: {
+          name: "Composite",
+          className: "UserAssignedManagedIdentityDetails",
+        },
+      },
+    },
+  },
+};
+
+export const UserAssignedManagedIdentityDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "UserAssignedManagedIdentityDetails",
+    modelProperties: {
+      identityArmId: {
+        serializedName: "identityArmId",
+        type: {
+          name: "String",
+        },
+      },
+      identityName: {
+        serializedName: "identityName",
+        type: {
+          name: "String",
+        },
+      },
+      userAssignedIdentityProperties: {
+        serializedName: "userAssignedIdentityProperties",
+        type: {
+          name: "Composite",
+          className: "UserAssignedIdentityProperties",
+        },
+      },
+    },
+  },
+};
+
+export const UserAssignedIdentityProperties: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "UserAssignedIdentityProperties",
+    modelProperties: {
+      clientId: {
+        serializedName: "clientId",
+        type: {
+          name: "String",
+        },
+      },
+      principalId: {
+        serializedName: "principalId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const VaultRetentionPolicy: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "VaultRetentionPolicy",
+    modelProperties: {
+      vaultRetention: {
+        serializedName: "vaultRetention",
+        type: {
+          name: "Composite",
+          className: "RetentionPolicy",
+        },
+      },
+      snapshotRetentionInDays: {
+        serializedName: "snapshotRetentionInDays",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMProtectedItemExtendedInfo: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AzureIaaSVMProtectedItemExtendedInfo",
+      modelProperties: {
+        oldestRecoveryPoint: {
+          serializedName: "oldestRecoveryPoint",
+          type: {
+            name: "DateTime",
+          },
+        },
+        oldestRecoveryPointInVault: {
+          serializedName: "oldestRecoveryPointInVault",
+          type: {
+            name: "DateTime",
+          },
+        },
+        oldestRecoveryPointInArchive: {
+          serializedName: "oldestRecoveryPointInArchive",
+          type: {
+            name: "DateTime",
+          },
+        },
+        newestRecoveryPointInArchive: {
+          serializedName: "newestRecoveryPointInArchive",
+          type: {
+            name: "DateTime",
+          },
+        },
+        recoveryPointCount: {
+          serializedName: "recoveryPointCount",
+          type: {
+            name: "Number",
+          },
+        },
+        policyInconsistent: {
+          serializedName: "policyInconsistent",
+          type: {
+            name: "Boolean",
+          },
+        },
+      },
+    },
+  };
+
+export const ExtendedProperties: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ExtendedProperties",
+    modelProperties: {
+      diskExclusionProperties: {
+        serializedName: "diskExclusionProperties",
+        type: {
+          name: "Composite",
+          className: "DiskExclusionProperties",
+        },
+      },
+      linuxVmApplicationName: {
+        serializedName: "linuxVmApplicationName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const DiskExclusionProperties: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DiskExclusionProperties",
+    modelProperties: {
+      diskLunList: {
+        serializedName: "diskLunList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Number",
+            },
+          },
+        },
+      },
+      isInclusionList: {
+        serializedName: "isInclusionList",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMErrorInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMErrorInfo",
+    modelProperties: {
+      errorCode: {
+        serializedName: "errorCode",
+        readOnly: true,
+        type: {
+          name: "Number",
+        },
+      },
+      errorTitle: {
+        serializedName: "errorTitle",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      errorString: {
+        serializedName: "errorString",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMJobExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMJobExtendedInfo",
+    modelProperties: {
+      tasksList: {
+        serializedName: "tasksList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureIaaSVMJobTaskDetails",
+            },
+          },
+        },
+      },
+      propertyBag: {
+        serializedName: "propertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      internalPropertyBag: {
+        serializedName: "internalPropertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      progressPercentage: {
+        serializedName: "progressPercentage",
+        type: {
+          name: "Number",
+        },
+      },
+      estimatedRemainingDuration: {
+        serializedName: "estimatedRemainingDuration",
+        type: {
+          name: "String",
+        },
+      },
+      dynamicErrorMessage: {
+        serializedName: "dynamicErrorMessage",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMJobTaskDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMJobTaskDetails",
+    modelProperties: {
+      taskId: {
+        serializedName: "taskId",
+        type: {
+          name: "String",
+        },
+      },
+      startTime: {
+        serializedName: "startTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      endTime: {
+        serializedName: "endTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      instanceId: {
+        serializedName: "instanceId",
+        type: {
+          name: "String",
+        },
+      },
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      progressPercentage: {
+        serializedName: "progressPercentage",
+        type: {
+          name: "Number",
+        },
+      },
+      taskExecutionDetails: {
+        serializedName: "taskExecutionDetails",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const InstantRPAdditionalDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "InstantRPAdditionalDetails",
+    modelProperties: {
+      azureBackupRGNamePrefix: {
+        serializedName: "azureBackupRGNamePrefix",
+        type: {
+          name: "String",
+        },
+      },
+      azureBackupRGNameSuffix: {
+        serializedName: "azureBackupRGNameSuffix",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureSqlProtectedItemExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureSqlProtectedItemExtendedInfo",
+    modelProperties: {
+      oldestRecoveryPoint: {
+        serializedName: "oldestRecoveryPoint",
+        type: {
+          name: "DateTime",
+        },
+      },
+      recoveryPointCount: {
+        serializedName: "recoveryPointCount",
+        type: {
+          name: "Number",
+        },
+      },
+      policyState: {
+        serializedName: "policyState",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureStorageErrorInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureStorageErrorInfo",
+    modelProperties: {
+      errorCode: {
+        serializedName: "errorCode",
+        type: {
+          name: "Number",
+        },
+      },
+      errorString: {
+        serializedName: "errorString",
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const AzureStorageJobExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureStorageJobExtendedInfo",
+    modelProperties: {
+      tasksList: {
+        serializedName: "tasksList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureStorageJobTaskDetails",
+            },
+          },
+        },
+      },
+      propertyBag: {
+        serializedName: "propertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      dynamicErrorMessage: {
+        serializedName: "dynamicErrorMessage",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureStorageJobTaskDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureStorageJobTaskDetails",
+    modelProperties: {
+      taskId: {
+        serializedName: "taskId",
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureVmWorkloadProtectedItemExtendedInfo: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadProtectedItemExtendedInfo",
+      modelProperties: {
+        oldestRecoveryPoint: {
+          serializedName: "oldestRecoveryPoint",
+          type: {
+            name: "DateTime",
+          },
+        },
+        oldestRecoveryPointInVault: {
+          serializedName: "oldestRecoveryPointInVault",
+          type: {
+            name: "DateTime",
+          },
+        },
+        oldestRecoveryPointInArchive: {
+          serializedName: "oldestRecoveryPointInArchive",
+          type: {
+            name: "DateTime",
+          },
+        },
+        newestRecoveryPointInArchive: {
+          serializedName: "newestRecoveryPointInArchive",
+          type: {
+            name: "DateTime",
+          },
+        },
+        recoveryPointCount: {
+          serializedName: "recoveryPointCount",
+          type: {
+            name: "Number",
+          },
+        },
+        policyState: {
+          serializedName: "policyState",
+          type: {
+            name: "String",
+          },
+        },
+        recoveryModel: {
+          serializedName: "recoveryModel",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const DistributedNodesInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DistributedNodesInfo",
+    modelProperties: {
+      nodeName: {
+        serializedName: "nodeName",
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      errorDetail: {
+        serializedName: "errorDetail",
+        type: {
+          name: "Composite",
+          className: "ErrorDetail",
+        },
+      },
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadErrorInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadErrorInfo",
+    modelProperties: {
+      errorCode: {
+        serializedName: "errorCode",
+        type: {
+          name: "Number",
+        },
+      },
+      errorString: {
+        serializedName: "errorString",
+        type: {
+          name: "String",
+        },
+      },
+      errorTitle: {
+        serializedName: "errorTitle",
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      additionalDetails: {
+        serializedName: "additionalDetails",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadJobExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadJobExtendedInfo",
+    modelProperties: {
+      tasksList: {
+        serializedName: "tasksList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureWorkloadJobTaskDetails",
+            },
+          },
+        },
+      },
+      propertyBag: {
+        serializedName: "propertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      dynamicErrorMessage: {
+        serializedName: "dynamicErrorMessage",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadJobTaskDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadJobTaskDetails",
+    modelProperties: {
+      taskId: {
+        serializedName: "taskId",
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const PointInTimeRange: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PointInTimeRange",
+    modelProperties: {
+      startTime: {
+        serializedName: "startTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      endTime: {
+        serializedName: "endTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+    },
+  },
+};
+
+export const RecoveryPointTierInformation: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RecoveryPointTierInformation",
+    modelProperties: {
+      type: {
+        serializedName: "type",
+        type: {
+          name: "Enum",
+          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"],
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "Invalid",
+            "Valid",
+            "Disabled",
+            "Deleted",
+            "Rehydrated",
+          ],
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+    },
+  },
+};
+
+export const RecoveryPointMoveReadinessInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RecoveryPointMoveReadinessInfo",
+    modelProperties: {
+      isReadyForMove: {
+        serializedName: "isReadyForMove",
+        type: {
+          name: "Boolean",
+        },
+      },
+      additionalInfo: {
+        serializedName: "additionalInfo",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const TargetRestoreInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "TargetRestoreInfo",
+    modelProperties: {
+      overwriteOption: {
+        serializedName: "overwriteOption",
+        type: {
+          name: "String",
+        },
+      },
+      containerId: {
+        serializedName: "containerId",
+        type: {
+          name: "String",
+        },
+      },
+      databaseName: {
+        serializedName: "databaseName",
+        type: {
+          name: "String",
+        },
+      },
+      targetDirectoryForFileRestore: {
+        serializedName: "targetDirectoryForFileRestore",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const SnapshotRestoreParameters: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SnapshotRestoreParameters",
+    modelProperties: {
+      skipAttachAndMount: {
+        serializedName: "skipAttachAndMount",
+        type: {
+          name: "Boolean",
+        },
+      },
+      logPointInTimeForDBRecovery: {
+        serializedName: "logPointInTimeForDBRecovery",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadSQLRecoveryPointExtendedInfo: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSQLRecoveryPointExtendedInfo",
+      modelProperties: {
+        dataDirectoryTimeInUTC: {
+          serializedName: "dataDirectoryTimeInUTC",
+          type: {
+            name: "DateTime",
+          },
+        },
+        dataDirectoryPaths: {
+          serializedName: "dataDirectoryPaths",
+          type: {
+            name: "Sequence",
+            element: {
+              type: {
+                name: "Composite",
+                className: "SQLDataDirectory",
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
+export const SQLDataDirectory: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SQLDataDirectory",
+    modelProperties: {
+      type: {
+        serializedName: "type",
+        type: {
+          name: "String",
+        },
+      },
+      path: {
+        serializedName: "path",
+        type: {
+          name: "String",
+        },
+      },
+      logicalName: {
+        serializedName: "logicalName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const SQLDataDirectoryMapping: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SQLDataDirectoryMapping",
+    modelProperties: {
+      mappingType: {
+        serializedName: "mappingType",
+        type: {
+          name: "String",
+        },
+      },
+      sourceLogicalName: {
+        serializedName: "sourceLogicalName",
+        type: {
+          name: "String",
+        },
+      },
+      sourcePath: {
+        serializedName: "sourcePath",
+        type: {
+          name: "String",
+        },
+      },
+      targetPath: {
+        serializedName: "targetPath",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BEKDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BEKDetails",
+    modelProperties: {
+      secretUrl: {
+        serializedName: "secretUrl",
+        type: {
+          name: "String",
+        },
+      },
+      secretVaultId: {
+        serializedName: "secretVaultId",
+        type: {
+          name: "String",
+        },
+      },
+      secretData: {
+        serializedName: "secretData",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BmsrpQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BmsrpQueryObject",
+    modelProperties: {
+      startDate: {
+        serializedName: "startDate",
+        type: {
+          name: "DateTime",
+        },
+      },
+      endDate: {
+        serializedName: "endDate",
+        type: {
+          name: "DateTime",
+        },
+      },
+      restorePointQueryType: {
+        serializedName: "restorePointQueryType",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Boolean",
+        },
+      },
+      moveReadyRPOnly: {
+        serializedName: "moveReadyRPOnly",
+        type: {
+          name: "Boolean",
+        },
+      },
+      includeSoftDeletedRP: {
+        serializedName: "includeSoftDeletedRP",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const DiskInformation: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DiskInformation",
+    modelProperties: {
+      lun: {
+        serializedName: "lun",
+        type: {
+          name: "Number",
+        },
+      },
+      name: {
+        serializedName: "name",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const DailyRetentionFormat: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DailyRetentionFormat",
+    modelProperties: {
+      daysOfTheMonth: {
+        serializedName: "daysOfTheMonth",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "Day",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const Day: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "Day",
+    modelProperties: {
+      date: {
+        serializedName: "date",
+        type: {
+          name: "Number",
+        },
+      },
+      isLast: {
+        serializedName: "isLast",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const DailyRetentionSchedule: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DailyRetentionSchedule",
+    modelProperties: {
+      retentionTimes: {
+        serializedName: "retentionTimes",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "DateTime",
+            },
+          },
+        },
+      },
+      retentionDuration: {
+        serializedName: "retentionDuration",
+        type: {
+          name: "Composite",
+          className: "RetentionDuration",
+        },
+      },
+    },
+  },
+};
+
+export const RetentionDuration: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RetentionDuration",
+    modelProperties: {
+      count: {
+        serializedName: "count",
+        type: {
+          name: "Number",
+        },
+      },
+      durationType: {
+        serializedName: "durationType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const DpmErrorInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DpmErrorInfo",
+    modelProperties: {
+      errorString: {
+        serializedName: "errorString",
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const DpmJobExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DpmJobExtendedInfo",
+    modelProperties: {
+      tasksList: {
+        serializedName: "tasksList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "DpmJobTaskDetails",
+            },
+          },
+        },
+      },
+      propertyBag: {
+        serializedName: "propertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      dynamicErrorMessage: {
+        serializedName: "dynamicErrorMessage",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const DpmJobTaskDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DpmJobTaskDetails",
+    modelProperties: {
+      taskId: {
+        serializedName: "taskId",
+        type: {
+          name: "String",
+        },
+      },
+      startTime: {
+        serializedName: "startTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      endTime: {
+        serializedName: "endTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const DPMProtectedItemExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DPMProtectedItemExtendedInfo",
+    modelProperties: {
+      protectableObjectLoadPath: {
+        serializedName: "protectableObjectLoadPath",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      protected: {
+        serializedName: "protected",
+        type: {
+          name: "Boolean",
+        },
+      },
+      isPresentOnCloud: {
+        serializedName: "isPresentOnCloud",
+        type: {
+          name: "Boolean",
+        },
+      },
+      lastBackupStatus: {
+        serializedName: "lastBackupStatus",
+        type: {
+          name: "String",
+        },
+      },
+      lastRefreshedAt: {
+        serializedName: "lastRefreshedAt",
+        type: {
+          name: "DateTime",
+        },
+      },
+      oldestRecoveryPoint: {
+        serializedName: "oldestRecoveryPoint",
+        type: {
+          name: "DateTime",
+        },
+      },
+      recoveryPointCount: {
+        serializedName: "recoveryPointCount",
+        type: {
+          name: "Number",
+        },
+      },
+      onPremiseOldestRecoveryPoint: {
+        serializedName: "onPremiseOldestRecoveryPoint",
+        type: {
+          name: "DateTime",
+        },
+      },
+      onPremiseLatestRecoveryPoint: {
+        serializedName: "onPremiseLatestRecoveryPoint",
+        type: {
+          name: "DateTime",
+        },
+      },
+      onPremiseRecoveryPointCount: {
+        serializedName: "onPremiseRecoveryPointCount",
+        type: {
+          name: "Number",
+        },
+      },
+      isCollocated: {
+        serializedName: "isCollocated",
+        type: {
+          name: "Boolean",
+        },
+      },
+      protectionGroupName: {
+        serializedName: "protectionGroupName",
+        type: {
+          name: "String",
+        },
+      },
+      diskStorageUsedInBytes: {
+        serializedName: "diskStorageUsedInBytes",
+        type: {
+          name: "String",
+        },
+      },
+      totalDiskStorageSizeInBytes: {
+        serializedName: "totalDiskStorageSizeInBytes",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const EncryptionDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "EncryptionDetails",
+    modelProperties: {
+      encryptionEnabled: {
+        serializedName: "encryptionEnabled",
+        type: {
+          name: "Boolean",
+        },
+      },
+      kekUrl: {
+        serializedName: "kekUrl",
+        type: {
+          name: "String",
+        },
+      },
+      secretKeyUrl: {
+        serializedName: "secretKeyUrl",
+        type: {
+          name: "String",
+        },
+      },
+      kekVaultId: {
+        serializedName: "kekVaultId",
+        type: {
+          name: "String",
+        },
+      },
+      secretKeyVaultId: {
+        serializedName: "secretKeyVaultId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const HourlySchedule: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "HourlySchedule",
+    modelProperties: {
+      interval: {
+        serializedName: "interval",
+        type: {
+          name: "Number",
+        },
+      },
+      scheduleWindowStartTime: {
+        serializedName: "scheduleWindowStartTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      scheduleWindowDuration: {
+        serializedName: "scheduleWindowDuration",
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const DailySchedule: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DailySchedule",
+    modelProperties: {
+      scheduleRunTimes: {
+        serializedName: "scheduleRunTimes",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "DateTime",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const WeeklySchedule: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WeeklySchedule",
+    modelProperties: {
+      scheduleRunDays: {
+        serializedName: "scheduleRunDays",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ],
+            },
+          },
+        },
+      },
+      scheduleRunTimes: {
+        serializedName: "scheduleRunTimes",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "DateTime",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const IdentityBasedRestoreDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "IdentityBasedRestoreDetails",
+    modelProperties: {
+      objectType: {
+        serializedName: "objectType",
+        type: {
+          name: "String",
+        },
+      },
+      targetStorageAccountId: {
+        serializedName: "targetStorageAccountId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const IdentityInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "IdentityInfo",
+    modelProperties: {
+      isSystemAssignedIdentity: {
+        serializedName: "isSystemAssignedIdentity",
+        type: {
+          name: "Boolean",
+        },
+      },
+      managedIdentityResourceId: {
+        serializedName: "managedIdentityResourceId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const GetProtectedItemQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "GetProtectedItemQueryObject",
+    modelProperties: {
+      expand: {
+        serializedName: "expand",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const KeyAndSecretDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "KeyAndSecretDetails",
+    modelProperties: {
+      kekDetails: {
+        serializedName: "kekDetails",
+        type: {
+          name: "Composite",
+          className: "KEKDetails",
+        },
+      },
+      bekDetails: {
+        serializedName: "bekDetails",
+        type: {
+          name: "Composite",
+          className: "BEKDetails",
+        },
+      },
+      encryptionMechanism: {
+        serializedName: "encryptionMechanism",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const KEKDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "KEKDetails",
+    modelProperties: {
+      keyUrl: {
+        serializedName: "keyUrl",
+        type: {
+          name: "String",
+        },
+      },
+      keyVaultId: {
+        serializedName: "keyVaultId",
+        type: {
+          name: "String",
+        },
+      },
+      keyBackupData: {
+        serializedName: "keyBackupData",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const RecoveryPointDiskConfiguration: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RecoveryPointDiskConfiguration",
+    modelProperties: {
+      numberOfDisksIncludedInBackup: {
+        serializedName: "numberOfDisksIncludedInBackup",
+        type: {
+          name: "Number",
+        },
+      },
+      numberOfDisksAttachedToVm: {
+        serializedName: "numberOfDisksAttachedToVm",
+        type: {
+          name: "Number",
+        },
+      },
+      includedDiskList: {
+        serializedName: "includedDiskList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "DiskInformation",
+            },
+          },
+        },
+      },
+      excludedDiskList: {
+        serializedName: "excludedDiskList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "DiskInformation",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ExtendedLocation: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ExtendedLocation",
+    modelProperties: {
+      name: {
+        serializedName: "name",
+        type: {
+          name: "String",
+        },
+      },
+      type: {
+        serializedName: "type",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const SecuredVMDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SecuredVMDetails",
+    modelProperties: {
+      securedVMOsDiskEncryptionSetId: {
+        serializedName: "securedVMOsDiskEncryptionSetId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const TargetDiskNetworkAccessSettings: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "TargetDiskNetworkAccessSettings",
+    modelProperties: {
+      targetDiskNetworkAccessOption: {
+        serializedName: "targetDiskNetworkAccessOption",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "SameAsOnSourceDisks",
+            "EnablePrivateAccessForAllDisks",
+            "EnablePublicAccessForAllDisks",
+          ],
+        },
+      },
+      targetDiskAccessId: {
+        serializedName: "targetDiskAccessId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const JobQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobQueryObject",
+    modelProperties: {
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
       operation: {
         serializedName: "operation",
         type: {
-          name: "Composite",
-          className: "OperationResultInfoBase"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+      jobId: {
+        serializedName: "jobId",
+        type: {
+          name: "String",
+        },
+      },
+      startTime: {
+        serializedName: "startTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      endTime: {
+        serializedName: "endTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+    },
+  },
 };
 
-export const ProtectedItemQueryObject: msRest.CompositeMapper = {
-  serializedName: "ProtectedItemQueryObject",
+export const WeeklyRetentionSchedule: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WeeklyRetentionSchedule",
+    modelProperties: {
+      daysOfTheWeek: {
+        serializedName: "daysOfTheWeek",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ],
+            },
+          },
+        },
+      },
+      retentionTimes: {
+        serializedName: "retentionTimes",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "DateTime",
+            },
+          },
+        },
+      },
+      retentionDuration: {
+        serializedName: "retentionDuration",
+        type: {
+          name: "Composite",
+          className: "RetentionDuration",
+        },
+      },
+    },
+  },
+};
+
+export const MonthlyRetentionSchedule: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "MonthlyRetentionSchedule",
+    modelProperties: {
+      retentionScheduleFormatType: {
+        serializedName: "retentionScheduleFormatType",
+        type: {
+          name: "String",
+        },
+      },
+      retentionScheduleDaily: {
+        serializedName: "retentionScheduleDaily",
+        type: {
+          name: "Composite",
+          className: "DailyRetentionFormat",
+        },
+      },
+      retentionScheduleWeekly: {
+        serializedName: "retentionScheduleWeekly",
+        type: {
+          name: "Composite",
+          className: "WeeklyRetentionFormat",
+        },
+      },
+      retentionTimes: {
+        serializedName: "retentionTimes",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "DateTime",
+            },
+          },
+        },
+      },
+      retentionDuration: {
+        serializedName: "retentionDuration",
+        type: {
+          name: "Composite",
+          className: "RetentionDuration",
+        },
+      },
+    },
+  },
+};
+
+export const WeeklyRetentionFormat: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WeeklyRetentionFormat",
+    modelProperties: {
+      daysOfTheWeek: {
+        serializedName: "daysOfTheWeek",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ],
+            },
+          },
+        },
+      },
+      weeksOfTheMonth: {
+        serializedName: "weeksOfTheMonth",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: [
+                "First",
+                "Second",
+                "Third",
+                "Fourth",
+                "Last",
+                "Invalid",
+              ],
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const YearlyRetentionSchedule: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "YearlyRetentionSchedule",
+    modelProperties: {
+      retentionScheduleFormatType: {
+        serializedName: "retentionScheduleFormatType",
+        type: {
+          name: "String",
+        },
+      },
+      monthsOfYear: {
+        serializedName: "monthsOfYear",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: [
+                "Invalid",
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+              ],
+            },
+          },
+        },
+      },
+      retentionScheduleDaily: {
+        serializedName: "retentionScheduleDaily",
+        type: {
+          name: "Composite",
+          className: "DailyRetentionFormat",
+        },
+      },
+      retentionScheduleWeekly: {
+        serializedName: "retentionScheduleWeekly",
+        type: {
+          name: "Composite",
+          className: "WeeklyRetentionFormat",
+        },
+      },
+      retentionTimes: {
+        serializedName: "retentionTimes",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "DateTime",
+            },
+          },
+        },
+      },
+      retentionDuration: {
+        serializedName: "retentionDuration",
+        type: {
+          name: "Composite",
+          className: "RetentionDuration",
+        },
+      },
+    },
+  },
+};
+
+export const MabErrorInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "MabErrorInfo",
+    modelProperties: {
+      errorString: {
+        serializedName: "errorString",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const MabFileFolderProtectedItemExtendedInfo: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "MabFileFolderProtectedItemExtendedInfo",
+      modelProperties: {
+        lastRefreshedAt: {
+          serializedName: "lastRefreshedAt",
+          type: {
+            name: "DateTime",
+          },
+        },
+        oldestRecoveryPoint: {
+          serializedName: "oldestRecoveryPoint",
+          type: {
+            name: "DateTime",
+          },
+        },
+        recoveryPointCount: {
+          serializedName: "recoveryPointCount",
+          type: {
+            name: "Number",
+          },
+        },
+      },
+    },
+  };
+
+export const MabJobExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "MabJobExtendedInfo",
+    modelProperties: {
+      tasksList: {
+        serializedName: "tasksList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "MabJobTaskDetails",
+            },
+          },
+        },
+      },
+      propertyBag: {
+        serializedName: "propertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      dynamicErrorMessage: {
+        serializedName: "dynamicErrorMessage",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const MabJobTaskDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "MabJobTaskDetails",
+    modelProperties: {
+      taskId: {
+        serializedName: "taskId",
+        type: {
+          name: "String",
+        },
+      },
+      startTime: {
+        serializedName: "startTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      endTime: {
+        serializedName: "endTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectedItemQueryObject: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ProtectedItemQueryObject",
@@ -4703,63 +4715,885 @@ export const ProtectedItemQueryObject: msRest.CompositeMapper = {
       healthState: {
         serializedName: "healthState",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       backupManagementType: {
         serializedName: "backupManagementType",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       itemType: {
         serializedName: "itemType",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       policyName: {
         serializedName: "policyName",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       containerName: {
         serializedName: "containerName",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       backupEngineName: {
         serializedName: "backupEngineName",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       friendlyName: {
         serializedName: "friendlyName",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       fabricName: {
         serializedName: "fabricName",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       backupSetName: {
         serializedName: "backupSetName",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const ProtectedItemResource: msRest.CompositeMapper = {
-  serializedName: "ProtectedItemResource",
+export const ProtectionPolicyQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionPolicyQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      fabricName: {
+        serializedName: "fabricName",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const VaultJobErrorInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "VaultJobErrorInfo",
+    modelProperties: {
+      errorCode: {
+        serializedName: "errorCode",
+        type: {
+          name: "Number",
+        },
+      },
+      errorString: {
+        serializedName: "errorString",
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const VaultJobExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "VaultJobExtendedInfo",
+    modelProperties: {
+      propertyBag: {
+        serializedName: "propertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+    },
+  },
+};
+
+export const DPMContainerExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "DPMContainerExtendedInfo",
+    modelProperties: {
+      lastRefreshedAt: {
+        serializedName: "lastRefreshedAt",
+        type: {
+          name: "DateTime",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadContainerExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadContainerExtendedInfo",
+    modelProperties: {
+      hostServerName: {
+        serializedName: "hostServerName",
+        type: {
+          name: "String",
+        },
+      },
+      inquiryInfo: {
+        serializedName: "inquiryInfo",
+        type: {
+          name: "Composite",
+          className: "InquiryInfo",
+        },
+      },
+      nodesList: {
+        serializedName: "nodesList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "DistributedNodesInfo",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const InquiryInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "InquiryInfo",
+    modelProperties: {
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      errorDetail: {
+        serializedName: "errorDetail",
+        type: {
+          name: "Composite",
+          className: "ErrorDetail",
+        },
+      },
+      inquiryDetails: {
+        serializedName: "inquiryDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "WorkloadInquiryDetails",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const WorkloadInquiryDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkloadInquiryDetails",
+    modelProperties: {
+      type: {
+        serializedName: "type",
+        type: {
+          name: "String",
+        },
+      },
+      itemCount: {
+        serializedName: "itemCount",
+        type: {
+          name: "Number",
+        },
+      },
+      inquiryValidation: {
+        serializedName: "inquiryValidation",
+        type: {
+          name: "Composite",
+          className: "InquiryValidation",
+        },
+      },
+    },
+  },
+};
+
+export const InquiryValidation: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "InquiryValidation",
+    modelProperties: {
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      errorDetail: {
+        serializedName: "errorDetail",
+        type: {
+          name: "Composite",
+          className: "ErrorDetail",
+        },
+      },
+      additionalDetail: {
+        serializedName: "additionalDetail",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      protectableItemCount: {
+        serializedName: "protectableItemCount",
+        readOnly: true,
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "any" } },
+        },
+      },
+    },
+  },
+};
+
+export const PreBackupValidation: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PreBackupValidation",
+    modelProperties: {
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      code: {
+        serializedName: "code",
+        type: {
+          name: "String",
+        },
+      },
+      message: {
+        serializedName: "message",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BMSBackupSummariesQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BMSBackupSummariesQueryObject",
+    modelProperties: {
+      type: {
+        serializedName: "type",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectionIntentQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionIntentQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      itemType: {
+        serializedName: "itemType",
+        type: {
+          name: "String",
+        },
+      },
+      parentName: {
+        serializedName: "parentName",
+        type: {
+          name: "String",
+        },
+      },
+      itemName: {
+        serializedName: "itemName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BMSBackupEngineQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BMSBackupEngineQueryObject",
+    modelProperties: {
+      expand: {
+        serializedName: "expand",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BMSBackupEnginesQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BMSBackupEnginesQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      expand: {
+        serializedName: "expand",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BMSContainerQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BMSContainerQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      containerType: {
+        serializedName: "containerType",
+        type: {
+          name: "String",
+        },
+      },
+      backupEngineName: {
+        serializedName: "backupEngineName",
+        type: {
+          name: "String",
+        },
+      },
+      fabricName: {
+        serializedName: "fabricName",
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BMSContainersInquiryQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BMSContainersInquiryQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BmspoQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BmspoQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      containerName: {
+        serializedName: "containerName",
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BMSRefreshContainersQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BMSRefreshContainersQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BMSWorkloadItemQueryObject: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BMSWorkloadItemQueryObject",
+    modelProperties: {
+      backupManagementType: {
+        serializedName: "backupManagementType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadItemType: {
+        serializedName: "workloadItemType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      protectionStatus: {
+        serializedName: "protectionStatus",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ClientScriptForConnect: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ClientScriptForConnect",
+    modelProperties: {
+      scriptContent: {
+        serializedName: "scriptContent",
+        type: {
+          name: "String",
+        },
+      },
+      scriptExtension: {
+        serializedName: "scriptExtension",
+        type: {
+          name: "String",
+        },
+      },
+      osType: {
+        serializedName: "osType",
+        type: {
+          name: "String",
+        },
+      },
+      url: {
+        serializedName: "url",
+        type: {
+          name: "String",
+        },
+      },
+      scriptNameSuffix: {
+        serializedName: "scriptNameSuffix",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ContainerIdentityInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ContainerIdentityInfo",
+    modelProperties: {
+      uniqueName: {
+        serializedName: "uniqueName",
+        type: {
+          name: "String",
+        },
+      },
+      aadTenantId: {
+        serializedName: "aadTenantId",
+        type: {
+          name: "String",
+        },
+      },
+      servicePrincipalClientId: {
+        serializedName: "servicePrincipalClientId",
+        type: {
+          name: "String",
+        },
+      },
+      audience: {
+        serializedName: "audience",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const GenericContainerExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "GenericContainerExtendedInfo",
+    modelProperties: {
+      rawCertData: {
+        serializedName: "rawCertData",
+        type: {
+          name: "String",
+        },
+      },
+      containerIdentityInfo: {
+        serializedName: "containerIdentityInfo",
+        type: {
+          name: "Composite",
+          className: "ContainerIdentityInfo",
+        },
+      },
+      serviceEndpoints: {
+        serializedName: "serviceEndpoints",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+    },
+  },
+};
+
+export const InstantItemRecoveryTarget: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "InstantItemRecoveryTarget",
+    modelProperties: {
+      clientScripts: {
+        serializedName: "clientScripts",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ClientScriptForConnect",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const MabContainerExtendedInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "MabContainerExtendedInfo",
+    modelProperties: {
+      lastRefreshedAt: {
+        serializedName: "lastRefreshedAt",
+        type: {
+          name: "DateTime",
+        },
+      },
+      backupItemType: {
+        serializedName: "backupItemType",
+        type: {
+          name: "String",
+        },
+      },
+      backupItems: {
+        serializedName: "backupItems",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      policyName: {
+        serializedName: "policyName",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupStatus: {
+        serializedName: "lastBackupStatus",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const MABContainerHealthDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "MABContainerHealthDetails",
+    modelProperties: {
+      code: {
+        serializedName: "code",
+        type: {
+          name: "Number",
+        },
+      },
+      title: {
+        serializedName: "title",
+        type: {
+          name: "String",
+        },
+      },
+      message: {
+        serializedName: "message",
+        type: {
+          name: "String",
+        },
+      },
+      recommendations: {
+        serializedName: "recommendations",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const RecoveryPointRehydrationInfo: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RecoveryPointRehydrationInfo",
+    modelProperties: {
+      rehydrationRetentionDuration: {
+        serializedName: "rehydrationRetentionDuration",
+        type: {
+          name: "String",
+        },
+      },
+      rehydrationPriority: {
+        serializedName: "rehydrationPriority",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const BackupResourceConfigResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupResourceConfigResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "BackupResourceConfig",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectionIntentResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionIntentResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "ProtectionIntent",
+        },
+      },
+    },
+  },
+};
+
+export const BackupResourceVaultConfigResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupResourceVaultConfigResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "BackupResourceVaultConfig",
+        },
+      },
+    },
+  },
+};
+
+export const BackupResourceEncryptionConfigExtendedResource: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "BackupResourceEncryptionConfigExtendedResource",
+      modelProperties: {
+        ...Resource.type.modelProperties,
+        properties: {
+          serializedName: "properties",
+          type: {
+            name: "Composite",
+            className: "BackupResourceEncryptionConfigExtended",
+          },
+        },
+      },
+    },
+  };
+
+export const BackupResourceEncryptionConfigResource: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "BackupResourceEncryptionConfigResource",
+      modelProperties: {
+        ...Resource.type.modelProperties,
+        properties: {
+          serializedName: "properties",
+          type: {
+            name: "Composite",
+            className: "BackupResourceEncryptionConfig",
+          },
+        },
+      },
+    },
+  };
+
+export const PrivateEndpointConnectionResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "PrivateEndpointConnectionResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "PrivateEndpointConnection",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectedItemResource: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ProtectedItemResource",
@@ -4769,61 +5603,14 @@ export const ProtectedItemResource: msRest.CompositeMapper = {
         serializedName: "properties",
         type: {
           name: "Composite",
-          className: "ProtectedItem"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionPolicyQueryObject: msRest.CompositeMapper = {
-  serializedName: "ProtectionPolicyQueryObject",
-  type: {
-    name: "Composite",
-    className: "ProtectionPolicyQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
+          className: "ProtectedItem",
+        },
       },
-      fabricName: {
-        serializedName: "fabricName",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const ProtectionPolicyResource: msRest.CompositeMapper = {
-  serializedName: "ProtectionPolicyResource",
-  type: {
-    name: "Composite",
-    className: "ProtectionPolicyResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "ProtectionPolicy"
-        }
-      }
-    }
-  }
-};
-
-export const RecoveryPointResource: msRest.CompositeMapper = {
-  serializedName: "RecoveryPointResource",
+export const RecoveryPointResource: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "RecoveryPointResource",
@@ -4833,31 +5620,14 @@ export const RecoveryPointResource: msRest.CompositeMapper = {
         serializedName: "properties",
         type: {
           name: "Composite",
-          className: "RecoveryPoint"
-        }
-      }
-    }
-  }
+          className: "RecoveryPoint",
+        },
+      },
+    },
+  },
 };
 
-export const ResourceList: msRest.CompositeMapper = {
-  serializedName: "ResourceList",
-  type: {
-    name: "Composite",
-    className: "ResourceList",
-    modelProperties: {
-      nextLink: {
-        serializedName: "nextLink",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const RestoreRequestResource: msRest.CompositeMapper = {
-  serializedName: "RestoreRequestResource",
+export const RestoreRequestResource: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "RestoreRequestResource",
@@ -4867,47 +5637,3395 @@ export const RestoreRequestResource: msRest.CompositeMapper = {
         serializedName: "properties",
         type: {
           name: "Composite",
-          className: "RestoreRequest"
-        }
-      }
-    }
-  }
+          className: "RestoreRequest",
+        },
+      },
+    },
+  },
 };
 
-export const SimpleRetentionPolicy: msRest.CompositeMapper = {
-  serializedName: "SimpleRetentionPolicy",
+export const ProtectionPolicyResource: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: RetentionPolicy.type.polymorphicDiscriminator,
-    uberParent: "RetentionPolicy",
-    className: "SimpleRetentionPolicy",
+    className: "ProtectionPolicyResource",
     modelProperties: {
-      ...RetentionPolicy.type.modelProperties,
-      retentionDuration: {
-        serializedName: "retentionDuration",
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
         type: {
           name: "Composite",
-          className: "RetentionDuration"
-        }
-      }
-    }
-  }
+          className: "ProtectionPolicy",
+        },
+      },
+    },
+  },
 };
 
-export const SimpleSchedulePolicy: msRest.CompositeMapper = {
+export const JobResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "Job",
+        },
+      },
+    },
+  },
+};
+
+export const BackupEngineBaseResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupEngineBaseResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "BackupEngineBase",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectableContainerResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectableContainerResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "ProtectableContainer",
+        },
+      },
+    },
+  },
+};
+
+export const ProtectionContainerResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionContainerResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "ProtectionContainer",
+        },
+      },
+    },
+  },
+};
+
+export const WorkloadItemResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkloadItemResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "WorkloadItem",
+        },
+      },
+    },
+  },
+};
+
+export const BackupRequestResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupRequestResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "BackupRequest",
+        },
+      },
+    },
+  },
+};
+
+export const ILRRequestResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ILRRequestResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "ILRRequest",
+        },
+      },
+    },
+  },
+};
+
+export const WorkloadProtectableItemResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkloadProtectableItemResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "WorkloadProtectableItem",
+        },
+      },
+    },
+  },
+};
+
+export const ResourceGuardProxyBaseResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ResourceGuardProxyBaseResource",
+    modelProperties: {
+      ...Resource.type.modelProperties,
+      properties: {
+        serializedName: "properties",
+        type: {
+          name: "Composite",
+          className: "ResourceGuardProxyBase",
+        },
+      },
+    },
+  },
+};
+
+export const AzureBackupGoalFeatureSupportRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureBackupGoals",
+    type: {
+      name: "Composite",
+      className: "AzureBackupGoalFeatureSupportRequest",
+      uberParent: "FeatureSupportRequest",
+      polymorphicDiscriminator:
+        FeatureSupportRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...FeatureSupportRequest.type.modelProperties,
+      },
+    },
+  };
+
+export const AzureVMResourceFeatureSupportRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureVMResourceBackup",
+    type: {
+      name: "Composite",
+      className: "AzureVMResourceFeatureSupportRequest",
+      uberParent: "FeatureSupportRequest",
+      polymorphicDiscriminator:
+        FeatureSupportRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...FeatureSupportRequest.type.modelProperties,
+        vmSize: {
+          serializedName: "vmSize",
+          type: {
+            name: "String",
+          },
+        },
+        vmSku: {
+          serializedName: "vmSku",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AzureRecoveryServiceVaultProtectionIntent: coreClient.CompositeMapper =
+  {
+    serializedName: "RecoveryServiceVaultItem",
+    type: {
+      name: "Composite",
+      className: "AzureRecoveryServiceVaultProtectionIntent",
+      uberParent: "ProtectionIntent",
+      polymorphicDiscriminator: {
+        serializedName: "protectionIntentItemType",
+        clientName: "protectionIntentItemType",
+      },
+      modelProperties: {
+        ...ProtectionIntent.type.modelProperties,
+      },
+    },
+  };
+
+export const AzureResourceProtectionIntent: coreClient.CompositeMapper = {
+  serializedName: "AzureResourceItem",
+  type: {
+    name: "Composite",
+    className: "AzureResourceProtectionIntent",
+    uberParent: "ProtectionIntent",
+    polymorphicDiscriminator: ProtectionIntent.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionIntent.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadContainerAutoProtectionIntent: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadContainerAutoProtectionIntent",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadContainerAutoProtectionIntent",
+      uberParent: "ProtectionIntent",
+      polymorphicDiscriminator: ProtectionIntent.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...ProtectionIntent.type.modelProperties,
+      },
+    },
+  };
+
+export const ProtectionIntentResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionIntentResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ProtectionIntentResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const RecoveryPointResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "RecoveryPointResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "RecoveryPointResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ProtectionPolicyResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionPolicyResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ProtectionPolicyResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const JobResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "JobResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ProtectedItemResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectedItemResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ProtectedItemResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const BackupEngineBaseResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "BackupEngineBaseResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "BackupEngineBaseResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ProtectableContainerResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectableContainerResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ProtectableContainerResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const WorkloadItemResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkloadItemResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "WorkloadItemResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const WorkloadProtectableItemResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "WorkloadProtectableItemResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "WorkloadProtectableItemResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ProtectionContainerResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProtectionContainerResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ProtectionContainerResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ResourceGuardProxyBaseResourceList: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ResourceGuardProxyBaseResourceList",
+    modelProperties: {
+      ...ResourceList.type.modelProperties,
+      value: {
+        serializedName: "value",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ResourceGuardProxyBaseResource",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const BackupResourceEncryptionConfigExtended: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "BackupResourceEncryptionConfigExtended",
+      modelProperties: {
+        ...BackupResourceEncryptionConfig.type.modelProperties,
+        userAssignedIdentity: {
+          serializedName: "userAssignedIdentity",
+          type: {
+            name: "String",
+          },
+        },
+        useSystemAssignedIdentity: {
+          serializedName: "useSystemAssignedIdentity",
+          type: {
+            name: "Boolean",
+          },
+        },
+      },
+    },
+  };
+
+export const OperationStatusJobExtendedInfo: coreClient.CompositeMapper = {
+  serializedName: "OperationStatusJobExtendedInfo",
+  type: {
+    name: "Composite",
+    className: "OperationStatusJobExtendedInfo",
+    uberParent: "OperationStatusExtendedInfo",
+    polymorphicDiscriminator:
+      OperationStatusExtendedInfo.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...OperationStatusExtendedInfo.type.modelProperties,
+      jobId: {
+        serializedName: "jobId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const OperationStatusJobsExtendedInfo: coreClient.CompositeMapper = {
+  serializedName: "OperationStatusJobsExtendedInfo",
+  type: {
+    name: "Composite",
+    className: "OperationStatusJobsExtendedInfo",
+    uberParent: "OperationStatusExtendedInfo",
+    polymorphicDiscriminator:
+      OperationStatusExtendedInfo.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...OperationStatusExtendedInfo.type.modelProperties,
+      jobIds: {
+        serializedName: "jobIds",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      failedJobsError: {
+        serializedName: "failedJobsError",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+    },
+  },
+};
+
+export const OperationStatusProvisionILRExtendedInfo: coreClient.CompositeMapper =
+  {
+    serializedName: "OperationStatusProvisionILRExtendedInfo",
+    type: {
+      name: "Composite",
+      className: "OperationStatusProvisionILRExtendedInfo",
+      uberParent: "OperationStatusExtendedInfo",
+      polymorphicDiscriminator:
+        OperationStatusExtendedInfo.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...OperationStatusExtendedInfo.type.modelProperties,
+        recoveryTarget: {
+          serializedName: "recoveryTarget",
+          type: {
+            name: "Composite",
+            className: "InstantItemRecoveryTarget",
+          },
+        },
+      },
+    },
+  };
+
+export const OperationStatusValidateOperationExtendedInfo: coreClient.CompositeMapper =
+  {
+    serializedName: "OperationStatusValidateOperationExtendedInfo",
+    type: {
+      name: "Composite",
+      className: "OperationStatusValidateOperationExtendedInfo",
+      uberParent: "OperationStatusExtendedInfo",
+      polymorphicDiscriminator:
+        OperationStatusExtendedInfo.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...OperationStatusExtendedInfo.type.modelProperties,
+        validateOperationResponse: {
+          serializedName: "validateOperationResponse",
+          type: {
+            name: "Composite",
+            className: "ValidateOperationResponse",
+          },
+        },
+      },
+    },
+  };
+
+export const PrepareDataMoveResponse: coreClient.CompositeMapper = {
+  serializedName: "PrepareDataMoveResponse",
+  type: {
+    name: "Composite",
+    className: "PrepareDataMoveResponse",
+    uberParent: "VaultStorageConfigOperationResultResponse",
+    polymorphicDiscriminator:
+      VaultStorageConfigOperationResultResponse.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...VaultStorageConfigOperationResultResponse.type.modelProperties,
+      correlationId: {
+        serializedName: "correlationId",
+        type: {
+          name: "String",
+        },
+      },
+      sourceVaultProperties: {
+        serializedName: "sourceVaultProperties",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileshareProtectedItem: coreClient.CompositeMapper = {
+  serializedName: "AzureFileShareProtectedItem",
+  type: {
+    name: "Composite",
+    className: "AzureFileshareProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectedItem.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      protectionStatus: {
+        serializedName: "protectionStatus",
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupStatus: {
+        serializedName: "lastBackupStatus",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupTime: {
+        serializedName: "lastBackupTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      kpisHealths: {
+        serializedName: "kpisHealths",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: { name: "Composite", className: "KPIResourceHealthDetails" },
+          },
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureFileshareProtectedItemExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMProtectedItem: coreClient.CompositeMapper = {
+  serializedName: "AzureIaaSVMProtectedItem",
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: {
+      serializedName: "protectedItemType",
+      clientName: "protectedItemType",
+    },
+    modelProperties: {
+      ...ProtectedItem.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      virtualMachineId: {
+        serializedName: "virtualMachineId",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      protectionStatus: {
+        serializedName: "protectionStatus",
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+      healthStatus: {
+        serializedName: "healthStatus",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      healthDetails: {
+        serializedName: "healthDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureIaaSVMHealthDetails",
+            },
+          },
+        },
+      },
+      kpisHealths: {
+        serializedName: "kpisHealths",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: { name: "Composite", className: "KPIResourceHealthDetails" },
+          },
+        },
+      },
+      lastBackupStatus: {
+        serializedName: "lastBackupStatus",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupTime: {
+        serializedName: "lastBackupTime",
+        readOnly: true,
+        type: {
+          name: "DateTime",
+        },
+      },
+      protectedItemDataId: {
+        serializedName: "protectedItemDataId",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureIaaSVMProtectedItemExtendedInfo",
+        },
+      },
+      extendedProperties: {
+        serializedName: "extendedProperties",
+        type: {
+          name: "Composite",
+          className: "ExtendedProperties",
+        },
+      },
+    },
+  },
+};
+
+export const AzureSqlProtectedItem: coreClient.CompositeMapper = {
+  serializedName: "Microsoft.Sql/servers/databases",
+  type: {
+    name: "Composite",
+    className: "AzureSqlProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectedItem.type.modelProperties,
+      protectedItemDataId: {
+        serializedName: "protectedItemDataId",
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureSqlProtectedItemExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const AzureVmWorkloadProtectedItem: coreClient.CompositeMapper = {
+  serializedName: "AzureVmWorkloadProtectedItem",
+  type: {
+    name: "Composite",
+    className: "AzureVmWorkloadProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: {
+      serializedName: "protectedItemType",
+      clientName: "protectedItemType",
+    },
+    modelProperties: {
+      ...ProtectedItem.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      serverName: {
+        serializedName: "serverName",
+        type: {
+          name: "String",
+        },
+      },
+      parentName: {
+        serializedName: "parentName",
+        type: {
+          name: "String",
+        },
+      },
+      parentType: {
+        serializedName: "parentType",
+        type: {
+          name: "String",
+        },
+      },
+      protectionStatus: {
+        serializedName: "protectionStatus",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupStatus: {
+        serializedName: "lastBackupStatus",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupTime: {
+        serializedName: "lastBackupTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      lastBackupErrorDetail: {
+        serializedName: "lastBackupErrorDetail",
+        type: {
+          name: "Composite",
+          className: "ErrorDetail",
+        },
+      },
+      protectedItemDataSourceId: {
+        serializedName: "protectedItemDataSourceId",
+        type: {
+          name: "String",
+        },
+      },
+      protectedItemHealthStatus: {
+        serializedName: "protectedItemHealthStatus",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureVmWorkloadProtectedItemExtendedInfo",
+        },
+      },
+      kpisHealths: {
+        serializedName: "kpisHealths",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: { name: "Composite", className: "KPIResourceHealthDetails" },
+          },
+        },
+      },
+      nodesList: {
+        serializedName: "nodesList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "DistributedNodesInfo",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const DPMProtectedItem: coreClient.CompositeMapper = {
+  serializedName: "DPMProtectedItem",
+  type: {
+    name: "Composite",
+    className: "DPMProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectedItem.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      backupEngineName: {
+        serializedName: "backupEngineName",
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "DPMProtectedItemExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const GenericProtectedItem: coreClient.CompositeMapper = {
+  serializedName: "GenericProtectedItem",
+  type: {
+    name: "Composite",
+    className: "GenericProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectedItem.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      policyState: {
+        serializedName: "policyState",
+        type: {
+          name: "String",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+      protectedItemId: {
+        serializedName: "protectedItemId",
+        type: {
+          name: "Number",
+        },
+      },
+      sourceAssociations: {
+        serializedName: "sourceAssociations",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      fabricName: {
+        serializedName: "fabricName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const MabFileFolderProtectedItem: coreClient.CompositeMapper = {
+  serializedName: "MabFileFolderProtectedItem",
+  type: {
+    name: "Composite",
+    className: "MabFileFolderProtectedItem",
+    uberParent: "ProtectedItem",
+    polymorphicDiscriminator: ProtectedItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectedItem.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      computerName: {
+        serializedName: "computerName",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupStatus: {
+        serializedName: "lastBackupStatus",
+        type: {
+          name: "String",
+        },
+      },
+      lastBackupTime: {
+        serializedName: "lastBackupTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      protectionState: {
+        serializedName: "protectionState",
+        type: {
+          name: "String",
+        },
+      },
+      deferredDeleteSyncTimeInUTC: {
+        serializedName: "deferredDeleteSyncTimeInUTC",
+        type: {
+          name: "Number",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "MabFileFolderProtectedItemExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileShareRecoveryPoint: coreClient.CompositeMapper = {
+  serializedName: "AzureFileShareRecoveryPoint",
+  type: {
+    name: "Composite",
+    className: "AzureFileShareRecoveryPoint",
+    uberParent: "RecoveryPoint",
+    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...RecoveryPoint.type.modelProperties,
+      recoveryPointType: {
+        serializedName: "recoveryPointType",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointTime: {
+        serializedName: "recoveryPointTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      fileShareSnapshotUri: {
+        serializedName: "fileShareSnapshotUri",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointSizeInGB: {
+        serializedName: "recoveryPointSizeInGB",
+        type: {
+          name: "Number",
+        },
+      },
+      recoveryPointProperties: {
+        serializedName: "recoveryPointProperties",
+        type: {
+          name: "Composite",
+          className: "RecoveryPointProperties",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadRecoveryPoint: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadRecoveryPoint",
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadRecoveryPoint",
+    uberParent: "RecoveryPoint",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      ...RecoveryPoint.type.modelProperties,
+      recoveryPointTimeInUTC: {
+        serializedName: "recoveryPointTimeInUTC",
+        type: {
+          name: "DateTime",
+        },
+      },
+      type: {
+        serializedName: "type",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointTierDetails: {
+        serializedName: "recoveryPointTierDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "RecoveryPointTierInformationV2",
+            },
+          },
+        },
+      },
+      recoveryPointMoveReadinessInfo: {
+        serializedName: "recoveryPointMoveReadinessInfo",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: {
+              name: "Composite",
+              className: "RecoveryPointMoveReadinessInfo",
+            },
+          },
+        },
+      },
+      recoveryPointProperties: {
+        serializedName: "recoveryPointProperties",
+        type: {
+          name: "Composite",
+          className: "RecoveryPointProperties",
+        },
+      },
+    },
+  },
+};
+
+export const GenericRecoveryPoint: coreClient.CompositeMapper = {
+  serializedName: "GenericRecoveryPoint",
+  type: {
+    name: "Composite",
+    className: "GenericRecoveryPoint",
+    uberParent: "RecoveryPoint",
+    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...RecoveryPoint.type.modelProperties,
+      friendlyName: {
+        serializedName: "friendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointType: {
+        serializedName: "recoveryPointType",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointTime: {
+        serializedName: "recoveryPointTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      recoveryPointAdditionalInfo: {
+        serializedName: "recoveryPointAdditionalInfo",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointProperties: {
+        serializedName: "recoveryPointProperties",
+        type: {
+          name: "Composite",
+          className: "RecoveryPointProperties",
+        },
+      },
+    },
+  },
+};
+
+export const IaasVMRecoveryPoint: coreClient.CompositeMapper = {
+  serializedName: "IaasVMRecoveryPoint",
+  type: {
+    name: "Composite",
+    className: "IaasVMRecoveryPoint",
+    uberParent: "RecoveryPoint",
+    polymorphicDiscriminator: RecoveryPoint.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...RecoveryPoint.type.modelProperties,
+      recoveryPointType: {
+        serializedName: "recoveryPointType",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointTime: {
+        serializedName: "recoveryPointTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      recoveryPointAdditionalInfo: {
+        serializedName: "recoveryPointAdditionalInfo",
+        type: {
+          name: "String",
+        },
+      },
+      sourceVMStorageType: {
+        serializedName: "sourceVMStorageType",
+        type: {
+          name: "String",
+        },
+      },
+      isSourceVMEncrypted: {
+        serializedName: "isSourceVMEncrypted",
+        type: {
+          name: "Boolean",
+        },
+      },
+      keyAndSecret: {
+        serializedName: "keyAndSecret",
+        type: {
+          name: "Composite",
+          className: "KeyAndSecretDetails",
+        },
+      },
+      isInstantIlrSessionActive: {
+        serializedName: "isInstantIlrSessionActive",
+        type: {
+          name: "Boolean",
+        },
+      },
+      recoveryPointTierDetails: {
+        serializedName: "recoveryPointTierDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "RecoveryPointTierInformationV2",
+            },
+          },
+        },
+      },
+      isManagedVirtualMachine: {
+        serializedName: "isManagedVirtualMachine",
+        type: {
+          name: "Boolean",
+        },
+      },
+      virtualMachineSize: {
+        serializedName: "virtualMachineSize",
+        type: {
+          name: "String",
+        },
+      },
+      originalStorageAccountOption: {
+        serializedName: "originalStorageAccountOption",
+        type: {
+          name: "Boolean",
+        },
+      },
+      osType: {
+        serializedName: "osType",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointDiskConfiguration: {
+        serializedName: "recoveryPointDiskConfiguration",
+        type: {
+          name: "Composite",
+          className: "RecoveryPointDiskConfiguration",
+        },
+      },
+      zones: {
+        serializedName: "zones",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      recoveryPointMoveReadinessInfo: {
+        serializedName: "recoveryPointMoveReadinessInfo",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: {
+              name: "Composite",
+              className: "RecoveryPointMoveReadinessInfo",
+            },
+          },
+        },
+      },
+      securityType: {
+        serializedName: "securityType",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryPointProperties: {
+        serializedName: "recoveryPointProperties",
+        type: {
+          name: "Composite",
+          className: "RecoveryPointProperties",
+        },
+      },
+      isPrivateAccessEnabledOnAnyDisk: {
+        serializedName: "isPrivateAccessEnabledOnAnyDisk",
+        type: {
+          name: "Boolean",
+        },
+      },
+      extendedLocation: {
+        serializedName: "extendedLocation",
+        type: {
+          name: "Composite",
+          className: "ExtendedLocation",
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileShareRestoreRequest: coreClient.CompositeMapper = {
+  serializedName: "AzureFileShareRestoreRequest",
+  type: {
+    name: "Composite",
+    className: "AzureFileShareRestoreRequest",
+    uberParent: "RestoreRequest",
+    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...RestoreRequest.type.modelProperties,
+      recoveryType: {
+        serializedName: "recoveryType",
+        type: {
+          name: "String",
+        },
+      },
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+      copyOptions: {
+        serializedName: "copyOptions",
+        type: {
+          name: "String",
+        },
+      },
+      restoreRequestType: {
+        serializedName: "restoreRequestType",
+        type: {
+          name: "String",
+        },
+      },
+      restoreFileSpecs: {
+        serializedName: "restoreFileSpecs",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "RestoreFileSpecs",
+            },
+          },
+        },
+      },
+      targetDetails: {
+        serializedName: "targetDetails",
+        type: {
+          name: "Composite",
+          className: "TargetAFSRestoreInfo",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadRestoreRequest: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadRestoreRequest",
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadRestoreRequest",
+    uberParent: "RestoreRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      ...RestoreRequest.type.modelProperties,
+      recoveryType: {
+        serializedName: "recoveryType",
+        type: {
+          name: "String",
+        },
+      },
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+      propertyBag: {
+        serializedName: "propertyBag",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      targetInfo: {
+        serializedName: "targetInfo",
+        type: {
+          name: "Composite",
+          className: "TargetRestoreInfo",
+        },
+      },
+      recoveryMode: {
+        serializedName: "recoveryMode",
+        type: {
+          name: "String",
+        },
+      },
+      targetResourceGroupName: {
+        serializedName: "targetResourceGroupName",
+        type: {
+          name: "String",
+        },
+      },
+      userAssignedManagedIdentityDetails: {
+        serializedName: "userAssignedManagedIdentityDetails",
+        type: {
+          name: "Composite",
+          className: "UserAssignedManagedIdentityDetails",
+        },
+      },
+      snapshotRestoreParameters: {
+        serializedName: "snapshotRestoreParameters",
+        type: {
+          name: "Composite",
+          className: "SnapshotRestoreParameters",
+        },
+      },
+      targetVirtualMachineId: {
+        serializedName: "targetVirtualMachineId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const IaasVMRestoreRequest: coreClient.CompositeMapper = {
+  serializedName: "IaasVMRestoreRequest",
+  type: {
+    name: "Composite",
+    className: "IaasVMRestoreRequest",
+    uberParent: "RestoreRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      ...RestoreRequest.type.modelProperties,
+      recoveryPointId: {
+        serializedName: "recoveryPointId",
+        type: {
+          name: "String",
+        },
+      },
+      recoveryType: {
+        serializedName: "recoveryType",
+        type: {
+          name: "String",
+        },
+      },
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+      targetVirtualMachineId: {
+        serializedName: "targetVirtualMachineId",
+        type: {
+          name: "String",
+        },
+      },
+      targetResourceGroupId: {
+        serializedName: "targetResourceGroupId",
+        type: {
+          name: "String",
+        },
+      },
+      storageAccountId: {
+        serializedName: "storageAccountId",
+        type: {
+          name: "String",
+        },
+      },
+      virtualNetworkId: {
+        serializedName: "virtualNetworkId",
+        type: {
+          name: "String",
+        },
+      },
+      subnetId: {
+        serializedName: "subnetId",
+        type: {
+          name: "String",
+        },
+      },
+      targetDomainNameId: {
+        serializedName: "targetDomainNameId",
+        type: {
+          name: "String",
+        },
+      },
+      region: {
+        serializedName: "region",
+        type: {
+          name: "String",
+        },
+      },
+      affinityGroup: {
+        serializedName: "affinityGroup",
+        type: {
+          name: "String",
+        },
+      },
+      createNewCloudService: {
+        serializedName: "createNewCloudService",
+        type: {
+          name: "Boolean",
+        },
+      },
+      originalStorageAccountOption: {
+        serializedName: "originalStorageAccountOption",
+        type: {
+          name: "Boolean",
+        },
+      },
+      encryptionDetails: {
+        serializedName: "encryptionDetails",
+        type: {
+          name: "Composite",
+          className: "EncryptionDetails",
+        },
+      },
+      restoreDiskLunList: {
+        serializedName: "restoreDiskLunList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Number",
+            },
+          },
+        },
+      },
+      restoreWithManagedDisks: {
+        serializedName: "restoreWithManagedDisks",
+        type: {
+          name: "Boolean",
+        },
+      },
+      diskEncryptionSetId: {
+        serializedName: "diskEncryptionSetId",
+        type: {
+          name: "String",
+        },
+      },
+      zones: {
+        serializedName: "zones",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      identityInfo: {
+        serializedName: "identityInfo",
+        type: {
+          name: "Composite",
+          className: "IdentityInfo",
+        },
+      },
+      identityBasedRestoreDetails: {
+        serializedName: "identityBasedRestoreDetails",
+        type: {
+          name: "Composite",
+          className: "IdentityBasedRestoreDetails",
+        },
+      },
+      extendedLocation: {
+        serializedName: "extendedLocation",
+        type: {
+          name: "Composite",
+          className: "ExtendedLocation",
+        },
+      },
+      securedVMDetails: {
+        serializedName: "securedVMDetails",
+        type: {
+          name: "Composite",
+          className: "SecuredVMDetails",
+        },
+      },
+      targetDiskNetworkAccessSettings: {
+        serializedName: "targetDiskNetworkAccessSettings",
+        type: {
+          name: "Composite",
+          className: "TargetDiskNetworkAccessSettings",
+        },
+      },
+    },
+  },
+};
+
+export const AzureVmWorkloadProtectionPolicy: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkload",
+  type: {
+    name: "Composite",
+    className: "AzureVmWorkloadProtectionPolicy",
+    uberParent: "ProtectionPolicy",
+    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionPolicy.type.modelProperties,
+      workLoadType: {
+        serializedName: "workLoadType",
+        type: {
+          name: "String",
+        },
+      },
+      settings: {
+        serializedName: "settings",
+        type: {
+          name: "Composite",
+          className: "Settings",
+        },
+      },
+      subProtectionPolicy: {
+        serializedName: "subProtectionPolicy",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "SubProtectionPolicy",
+            },
+          },
+        },
+      },
+      makePolicyConsistent: {
+        serializedName: "makePolicyConsistent",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileShareProtectionPolicy: coreClient.CompositeMapper = {
+  serializedName: "AzureStorage",
+  type: {
+    name: "Composite",
+    className: "AzureFileShareProtectionPolicy",
+    uberParent: "ProtectionPolicy",
+    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionPolicy.type.modelProperties,
+      workLoadType: {
+        serializedName: "workLoadType",
+        type: {
+          name: "String",
+        },
+      },
+      schedulePolicy: {
+        serializedName: "schedulePolicy",
+        type: {
+          name: "Composite",
+          className: "SchedulePolicy",
+        },
+      },
+      retentionPolicy: {
+        serializedName: "retentionPolicy",
+        type: {
+          name: "Composite",
+          className: "RetentionPolicy",
+        },
+      },
+      vaultRetentionPolicy: {
+        serializedName: "vaultRetentionPolicy",
+        type: {
+          name: "Composite",
+          className: "VaultRetentionPolicy",
+        },
+      },
+      timeZone: {
+        serializedName: "timeZone",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMProtectionPolicy: coreClient.CompositeMapper = {
+  serializedName: "AzureIaasVM",
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMProtectionPolicy",
+    uberParent: "ProtectionPolicy",
+    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionPolicy.type.modelProperties,
+      instantRPDetails: {
+        serializedName: "instantRPDetails",
+        type: {
+          name: "Composite",
+          className: "InstantRPAdditionalDetails",
+        },
+      },
+      schedulePolicy: {
+        serializedName: "schedulePolicy",
+        type: {
+          name: "Composite",
+          className: "SchedulePolicy",
+        },
+      },
+      retentionPolicy: {
+        serializedName: "retentionPolicy",
+        type: {
+          name: "Composite",
+          className: "RetentionPolicy",
+        },
+      },
+      tieringPolicy: {
+        serializedName: "tieringPolicy",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "Composite", className: "TieringPolicy" } },
+        },
+      },
+      instantRpRetentionRangeInDays: {
+        serializedName: "instantRpRetentionRangeInDays",
+        type: {
+          name: "Number",
+        },
+      },
+      timeZone: {
+        serializedName: "timeZone",
+        type: {
+          name: "String",
+        },
+      },
+      policyType: {
+        serializedName: "policyType",
+        type: {
+          name: "String",
+        },
+      },
+      snapshotConsistencyType: {
+        serializedName: "snapshotConsistencyType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureSqlProtectionPolicy: coreClient.CompositeMapper = {
+  serializedName: "AzureSql",
+  type: {
+    name: "Composite",
+    className: "AzureSqlProtectionPolicy",
+    uberParent: "ProtectionPolicy",
+    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionPolicy.type.modelProperties,
+      retentionPolicy: {
+        serializedName: "retentionPolicy",
+        type: {
+          name: "Composite",
+          className: "RetentionPolicy",
+        },
+      },
+    },
+  },
+};
+
+export const GenericProtectionPolicy: coreClient.CompositeMapper = {
+  serializedName: "GenericProtectionPolicy",
+  type: {
+    name: "Composite",
+    className: "GenericProtectionPolicy",
+    uberParent: "ProtectionPolicy",
+    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionPolicy.type.modelProperties,
+      subProtectionPolicy: {
+        serializedName: "subProtectionPolicy",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "SubProtectionPolicy",
+            },
+          },
+        },
+      },
+      timeZone: {
+        serializedName: "timeZone",
+        type: {
+          name: "String",
+        },
+      },
+      fabricName: {
+        serializedName: "fabricName",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const MabProtectionPolicy: coreClient.CompositeMapper = {
+  serializedName: "MAB",
+  type: {
+    name: "Composite",
+    className: "MabProtectionPolicy",
+    uberParent: "ProtectionPolicy",
+    polymorphicDiscriminator: ProtectionPolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionPolicy.type.modelProperties,
+      schedulePolicy: {
+        serializedName: "schedulePolicy",
+        type: {
+          name: "Composite",
+          className: "SchedulePolicy",
+        },
+      },
+      retentionPolicy: {
+        serializedName: "retentionPolicy",
+        type: {
+          name: "Composite",
+          className: "RetentionPolicy",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMJob: coreClient.CompositeMapper = {
+  serializedName: "AzureIaaSVMJob",
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMJob",
+    uberParent: "Job",
+    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...Job.type.modelProperties,
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      actionsInfo: {
+        serializedName: "actionsInfo",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: ["Invalid", "Cancellable", "Retriable"],
+            },
+          },
+        },
+      },
+      errorDetails: {
+        serializedName: "errorDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureIaaSVMErrorInfo",
+            },
+          },
+        },
+      },
+      virtualMachineVersion: {
+        serializedName: "virtualMachineVersion",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureIaaSVMJobExtendedInfo",
+        },
+      },
+      containerName: {
+        serializedName: "containerName",
+        type: {
+          name: "String",
+        },
+      },
+      isUserTriggered: {
+        serializedName: "isUserTriggered",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMJobV2: coreClient.CompositeMapper = {
+  serializedName: "AzureIaaSVMJobV2",
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMJobV2",
+    uberParent: "Job",
+    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...Job.type.modelProperties,
+      actionsInfo: {
+        serializedName: "actionsInfo",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: ["Invalid", "Cancellable", "Retriable"],
+            },
+          },
+        },
+      },
+      containerName: {
+        serializedName: "containerName",
+        type: {
+          name: "String",
+        },
+      },
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      errorDetails: {
+        serializedName: "errorDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureIaaSVMErrorInfo",
+            },
+          },
+        },
+      },
+      virtualMachineVersion: {
+        serializedName: "virtualMachineVersion",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureIaaSVMJobExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const AzureStorageJob: coreClient.CompositeMapper = {
+  serializedName: "AzureStorageJob",
+  type: {
+    name: "Composite",
+    className: "AzureStorageJob",
+    uberParent: "Job",
+    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...Job.type.modelProperties,
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      actionsInfo: {
+        serializedName: "actionsInfo",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: ["Invalid", "Cancellable", "Retriable"],
+            },
+          },
+        },
+      },
+      errorDetails: {
+        serializedName: "errorDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureStorageErrorInfo",
+            },
+          },
+        },
+      },
+      storageAccountName: {
+        serializedName: "storageAccountName",
+        type: {
+          name: "String",
+        },
+      },
+      storageAccountVersion: {
+        serializedName: "storageAccountVersion",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureStorageJobExtendedInfo",
+        },
+      },
+      isUserTriggered: {
+        serializedName: "isUserTriggered",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadJob: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadJob",
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadJob",
+    uberParent: "Job",
+    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...Job.type.modelProperties,
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      actionsInfo: {
+        serializedName: "actionsInfo",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: ["Invalid", "Cancellable", "Retriable"],
+            },
+          },
+        },
+      },
+      errorDetails: {
+        serializedName: "errorDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "AzureWorkloadErrorInfo",
+            },
+          },
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureWorkloadJobExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const DpmJob: coreClient.CompositeMapper = {
+  serializedName: "DpmJob",
+  type: {
+    name: "Composite",
+    className: "DpmJob",
+    uberParent: "Job",
+    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...Job.type.modelProperties,
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      dpmServerName: {
+        serializedName: "dpmServerName",
+        type: {
+          name: "String",
+        },
+      },
+      containerName: {
+        serializedName: "containerName",
+        type: {
+          name: "String",
+        },
+      },
+      containerType: {
+        serializedName: "containerType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      actionsInfo: {
+        serializedName: "actionsInfo",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: ["Invalid", "Cancellable", "Retriable"],
+            },
+          },
+        },
+      },
+      errorDetails: {
+        serializedName: "errorDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "DpmErrorInfo",
+            },
+          },
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "DpmJobExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const MabJob: coreClient.CompositeMapper = {
+  serializedName: "MabJob",
+  type: {
+    name: "Composite",
+    className: "MabJob",
+    uberParent: "Job",
+    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...Job.type.modelProperties,
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      actionsInfo: {
+        serializedName: "actionsInfo",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: ["Invalid", "Cancellable", "Retriable"],
+            },
+          },
+        },
+      },
+      mabServerName: {
+        serializedName: "mabServerName",
+        type: {
+          name: "String",
+        },
+      },
+      mabServerType: {
+        serializedName: "mabServerType",
+        type: {
+          name: "String",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      errorDetails: {
+        serializedName: "errorDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "MabErrorInfo",
+            },
+          },
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "MabJobExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const VaultJob: coreClient.CompositeMapper = {
+  serializedName: "VaultJob",
+  type: {
+    name: "Composite",
+    className: "VaultJob",
+    uberParent: "Job",
+    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...Job.type.modelProperties,
+      duration: {
+        serializedName: "duration",
+        type: {
+          name: "TimeSpan",
+        },
+      },
+      actionsInfo: {
+        serializedName: "actionsInfo",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Enum",
+              allowedValues: ["Invalid", "Cancellable", "Retriable"],
+            },
+          },
+        },
+      },
+      errorDetails: {
+        serializedName: "errorDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "VaultJobErrorInfo",
+            },
+          },
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "VaultJobExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const ExportJobsOperationResultInfo: coreClient.CompositeMapper = {
+  serializedName: "ExportJobsOperationResultInfo",
+  type: {
+    name: "Composite",
+    className: "ExportJobsOperationResultInfo",
+    uberParent: "OperationResultInfoBase",
+    polymorphicDiscriminator:
+      OperationResultInfoBase.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...OperationResultInfoBase.type.modelProperties,
+      blobUrl: {
+        serializedName: "blobUrl",
+        type: {
+          name: "String",
+        },
+      },
+      blobSasKey: {
+        serializedName: "blobSasKey",
+        type: {
+          name: "String",
+        },
+      },
+      excelFileBlobUrl: {
+        serializedName: "excelFileBlobUrl",
+        type: {
+          name: "String",
+        },
+      },
+      excelFileBlobSasKey: {
+        serializedName: "excelFileBlobSasKey",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const OperationResultInfo: coreClient.CompositeMapper = {
+  serializedName: "OperationResultInfo",
+  type: {
+    name: "Composite",
+    className: "OperationResultInfo",
+    uberParent: "OperationResultInfoBase",
+    modelProperties: {
+      ...OperationResultInfoBase.type.modelProperties,
+      jobList: {
+        serializedName: "jobList",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+OperationResultInfoBase.type.polymorphicDiscriminator =
+  OperationResultInfoBase.type.polymorphicDiscriminator;
+
+export const OperationResultInfoBaseResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OperationResultInfoBaseResource",
+    modelProperties: {
+      ...OperationWorkerResponse.type.modelProperties,
+      operation: {
+        serializedName: "operation",
+        type: {
+          name: "Composite",
+          className: "OperationResultInfoBase",
+        },
+      },
+    },
+  },
+};
+
+export const ValidateRestoreOperationRequest: coreClient.CompositeMapper = {
+  serializedName: "ValidateRestoreOperationRequest",
+  type: {
+    name: "Composite",
+    className: "ValidateRestoreOperationRequest",
+    uberParent: "ValidateOperationRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
+    modelProperties: {
+      ...ValidateOperationRequest.type.modelProperties,
+      restoreRequest: {
+        serializedName: "restoreRequest",
+        type: {
+          name: "Composite",
+          className: "RestoreRequest",
+        },
+      },
+    },
+  },
+};
+
+export const AzureBackupServerEngine: coreClient.CompositeMapper = {
+  serializedName: "AzureBackupServerEngine",
+  type: {
+    name: "Composite",
+    className: "AzureBackupServerEngine",
+    uberParent: "BackupEngineBase",
+    polymorphicDiscriminator: BackupEngineBase.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...BackupEngineBase.type.modelProperties,
+    },
+  },
+};
+
+export const DpmBackupEngine: coreClient.CompositeMapper = {
+  serializedName: "DpmBackupEngine",
+  type: {
+    name: "Composite",
+    className: "DpmBackupEngine",
+    uberParent: "BackupEngineBase",
+    polymorphicDiscriminator: BackupEngineBase.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...BackupEngineBase.type.modelProperties,
+    },
+  },
+};
+
+export const AzureStorageProtectableContainer: coreClient.CompositeMapper = {
+  serializedName: "StorageContainer",
+  type: {
+    name: "Composite",
+    className: "AzureStorageProtectableContainer",
+    uberParent: "ProtectableContainer",
+    polymorphicDiscriminator:
+      ProtectableContainer.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectableContainer.type.modelProperties,
+    },
+  },
+};
+
+export const AzureVMAppContainerProtectableContainer: coreClient.CompositeMapper =
+  {
+    serializedName: "VMAppContainer",
+    type: {
+      name: "Composite",
+      className: "AzureVMAppContainerProtectableContainer",
+      uberParent: "ProtectableContainer",
+      polymorphicDiscriminator:
+        ProtectableContainer.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...ProtectableContainer.type.modelProperties,
+      },
+    },
+  };
+
+export const DpmContainer: coreClient.CompositeMapper = {
+  serializedName: "DPMContainer",
+  type: {
+    name: "Composite",
+    className: "DpmContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: {
+      serializedName: "containerType",
+      clientName: "containerType",
+    },
+    modelProperties: {
+      ...ProtectionContainer.type.modelProperties,
+      canReRegister: {
+        serializedName: "canReRegister",
+        type: {
+          name: "Boolean",
+        },
+      },
+      containerId: {
+        serializedName: "containerId",
+        type: {
+          name: "String",
+        },
+      },
+      protectedItemCount: {
+        serializedName: "protectedItemCount",
+        type: {
+          name: "Number",
+        },
+      },
+      dpmAgentVersion: {
+        serializedName: "dpmAgentVersion",
+        type: {
+          name: "String",
+        },
+      },
+      dpmServers: {
+        serializedName: "dpmServers",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+      upgradeAvailable: {
+        serializedName: "upgradeAvailable",
+        type: {
+          name: "Boolean",
+        },
+      },
+      protectionStatus: {
+        serializedName: "protectionStatus",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "DPMContainerExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const IaaSVMContainer: coreClient.CompositeMapper = {
+  serializedName: "IaasVMContainer",
+  type: {
+    name: "Composite",
+    className: "IaaSVMContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: {
+      serializedName: "containerType",
+      clientName: "containerType",
+    },
+    modelProperties: {
+      ...ProtectionContainer.type.modelProperties,
+      virtualMachineId: {
+        serializedName: "virtualMachineId",
+        type: {
+          name: "String",
+        },
+      },
+      virtualMachineVersion: {
+        serializedName: "virtualMachineVersion",
+        type: {
+          name: "String",
+        },
+      },
+      resourceGroup: {
+        serializedName: "resourceGroup",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadContainer: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadContainer",
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: {
+      serializedName: "containerType",
+      clientName: "containerType",
+    },
+    modelProperties: {
+      ...ProtectionContainer.type.modelProperties,
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+      lastUpdatedTime: {
+        serializedName: "lastUpdatedTime",
+        type: {
+          name: "DateTime",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "AzureWorkloadContainerExtendedInfo",
+        },
+      },
+      workloadType: {
+        serializedName: "workloadType",
+        type: {
+          name: "String",
+        },
+      },
+      operationType: {
+        serializedName: "operationType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureSqlContainer: coreClient.CompositeMapper = {
+  serializedName: "AzureSqlContainer",
+  type: {
+    name: "Composite",
+    className: "AzureSqlContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionContainer.type.modelProperties,
+    },
+  },
+};
+
+export const AzureStorageContainer: coreClient.CompositeMapper = {
+  serializedName: "StorageContainer",
+  type: {
+    name: "Composite",
+    className: "AzureStorageContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionContainer.type.modelProperties,
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+      storageAccountVersion: {
+        serializedName: "storageAccountVersion",
+        type: {
+          name: "String",
+        },
+      },
+      resourceGroup: {
+        serializedName: "resourceGroup",
+        type: {
+          name: "String",
+        },
+      },
+      protectedItemCount: {
+        serializedName: "protectedItemCount",
+        type: {
+          name: "Number",
+        },
+      },
+      acquireStorageAccountLock: {
+        serializedName: "acquireStorageAccountLock",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const GenericContainer: coreClient.CompositeMapper = {
+  serializedName: "GenericContainer",
+  type: {
+    name: "Composite",
+    className: "GenericContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionContainer.type.modelProperties,
+      fabricName: {
+        serializedName: "fabricName",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInformation: {
+        serializedName: "extendedInformation",
+        type: {
+          name: "Composite",
+          className: "GenericContainerExtendedInfo",
+        },
+      },
+    },
+  },
+};
+
+export const MabContainer: coreClient.CompositeMapper = {
+  serializedName: "Windows",
+  type: {
+    name: "Composite",
+    className: "MabContainer",
+    uberParent: "ProtectionContainer",
+    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ProtectionContainer.type.modelProperties,
+      canReRegister: {
+        serializedName: "canReRegister",
+        type: {
+          name: "Boolean",
+        },
+      },
+      containerId: {
+        serializedName: "containerId",
+        type: {
+          name: "Number",
+        },
+      },
+      protectedItemCount: {
+        serializedName: "protectedItemCount",
+        type: {
+          name: "Number",
+        },
+      },
+      agentVersion: {
+        serializedName: "agentVersion",
+        type: {
+          name: "String",
+        },
+      },
+      extendedInfo: {
+        serializedName: "extendedInfo",
+        type: {
+          name: "Composite",
+          className: "MabContainerExtendedInfo",
+        },
+      },
+      mabContainerHealthDetails: {
+        serializedName: "mabContainerHealthDetails",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "MABContainerHealthDetails",
+            },
+          },
+        },
+      },
+      containerHealthState: {
+        serializedName: "containerHealthState",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureVmWorkloadItem: coreClient.CompositeMapper = {
+  serializedName: "AzureVmWorkloadItem",
+  type: {
+    name: "Composite",
+    className: "AzureVmWorkloadItem",
+    uberParent: "WorkloadItem",
+    polymorphicDiscriminator: {
+      serializedName: "workloadItemType",
+      clientName: "workloadItemType",
+    },
+    modelProperties: {
+      ...WorkloadItem.type.modelProperties,
+      parentName: {
+        serializedName: "parentName",
+        type: {
+          name: "String",
+        },
+      },
+      serverName: {
+        serializedName: "serverName",
+        type: {
+          name: "String",
+        },
+      },
+      isAutoProtectable: {
+        serializedName: "isAutoProtectable",
+        type: {
+          name: "Boolean",
+        },
+      },
+      subinquireditemcount: {
+        serializedName: "subinquireditemcount",
+        type: {
+          name: "Number",
+        },
+      },
+      subWorkloadItemCount: {
+        serializedName: "subWorkloadItemCount",
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileShareBackupRequest: coreClient.CompositeMapper = {
+  serializedName: "AzureFileShareBackupRequest",
+  type: {
+    name: "Composite",
+    className: "AzureFileShareBackupRequest",
+    uberParent: "BackupRequest",
+    polymorphicDiscriminator: BackupRequest.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...BackupRequest.type.modelProperties,
+      recoveryPointExpiryTimeInUTC: {
+        serializedName: "recoveryPointExpiryTimeInUTC",
+        type: {
+          name: "DateTime",
+        },
+      },
+    },
+  },
+};
+
+export const AzureWorkloadBackupRequest: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadBackupRequest",
+  type: {
+    name: "Composite",
+    className: "AzureWorkloadBackupRequest",
+    uberParent: "BackupRequest",
+    polymorphicDiscriminator: BackupRequest.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...BackupRequest.type.modelProperties,
+      backupType: {
+        serializedName: "backupType",
+        type: {
+          name: "String",
+        },
+      },
+      enableCompression: {
+        serializedName: "enableCompression",
+        type: {
+          name: "Boolean",
+        },
+      },
+      recoveryPointExpiryTimeInUTC: {
+        serializedName: "recoveryPointExpiryTimeInUTC",
+        type: {
+          name: "DateTime",
+        },
+      },
+    },
+  },
+};
+
+export const IaasVMBackupRequest: coreClient.CompositeMapper = {
+  serializedName: "IaasVMBackupRequest",
+  type: {
+    name: "Composite",
+    className: "IaasVMBackupRequest",
+    uberParent: "BackupRequest",
+    polymorphicDiscriminator: BackupRequest.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...BackupRequest.type.modelProperties,
+      recoveryPointExpiryTimeInUTC: {
+        serializedName: "recoveryPointExpiryTimeInUTC",
+        type: {
+          name: "DateTime",
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileShareProvisionILRRequest: coreClient.CompositeMapper = {
+  serializedName: "AzureFileShareProvisionILRRequest",
+  type: {
+    name: "Composite",
+    className: "AzureFileShareProvisionILRRequest",
+    uberParent: "ILRRequest",
+    polymorphicDiscriminator: ILRRequest.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ILRRequest.type.modelProperties,
+      recoveryPointId: {
+        serializedName: "recoveryPointId",
+        type: {
+          name: "String",
+        },
+      },
+      sourceResourceId: {
+        serializedName: "sourceResourceId",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const IaasVmilrRegistrationRequest: coreClient.CompositeMapper = {
+  serializedName: "IaasVMILRRegistrationRequest",
+  type: {
+    name: "Composite",
+    className: "IaasVmilrRegistrationRequest",
+    uberParent: "ILRRequest",
+    polymorphicDiscriminator: ILRRequest.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...ILRRequest.type.modelProperties,
+      recoveryPointId: {
+        serializedName: "recoveryPointId",
+        type: {
+          name: "String",
+        },
+      },
+      virtualMachineId: {
+        serializedName: "virtualMachineId",
+        type: {
+          name: "String",
+        },
+      },
+      initiatorName: {
+        serializedName: "initiatorName",
+        type: {
+          name: "String",
+        },
+      },
+      renewExistingRegistration: {
+        serializedName: "renewExistingRegistration",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const AzureFileShareProtectableItem: coreClient.CompositeMapper = {
+  serializedName: "AzureFileShare",
+  type: {
+    name: "Composite",
+    className: "AzureFileShareProtectableItem",
+    uberParent: "WorkloadProtectableItem",
+    polymorphicDiscriminator:
+      WorkloadProtectableItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...WorkloadProtectableItem.type.modelProperties,
+      parentContainerFabricId: {
+        serializedName: "parentContainerFabricId",
+        type: {
+          name: "String",
+        },
+      },
+      parentContainerFriendlyName: {
+        serializedName: "parentContainerFriendlyName",
+        type: {
+          name: "String",
+        },
+      },
+      azureFileShareType: {
+        serializedName: "azureFileShareType",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const IaaSVMProtectableItem: coreClient.CompositeMapper = {
+  serializedName: "IaaSVMProtectableItem",
+  type: {
+    name: "Composite",
+    className: "IaaSVMProtectableItem",
+    uberParent: "WorkloadProtectableItem",
+    polymorphicDiscriminator: {
+      serializedName: "protectableItemType",
+      clientName: "protectableItemType",
+    },
+    modelProperties: {
+      ...WorkloadProtectableItem.type.modelProperties,
+      virtualMachineId: {
+        serializedName: "virtualMachineId",
+        type: {
+          name: "String",
+        },
+      },
+      virtualMachineVersion: {
+        serializedName: "virtualMachineVersion",
+        type: {
+          name: "String",
+        },
+      },
+      resourceGroup: {
+        serializedName: "resourceGroup",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const AzureVmWorkloadProtectableItem: coreClient.CompositeMapper = {
+  serializedName: "AzureVmWorkloadProtectableItem",
+  type: {
+    name: "Composite",
+    className: "AzureVmWorkloadProtectableItem",
+    uberParent: "WorkloadProtectableItem",
+    polymorphicDiscriminator: {
+      serializedName: "protectableItemType",
+      clientName: "protectableItemType",
+    },
+    modelProperties: {
+      ...WorkloadProtectableItem.type.modelProperties,
+      parentName: {
+        serializedName: "parentName",
+        type: {
+          name: "String",
+        },
+      },
+      parentUniqueName: {
+        serializedName: "parentUniqueName",
+        type: {
+          name: "String",
+        },
+      },
+      serverName: {
+        serializedName: "serverName",
+        type: {
+          name: "String",
+        },
+      },
+      isAutoProtectable: {
+        serializedName: "isAutoProtectable",
+        type: {
+          name: "Boolean",
+        },
+      },
+      isAutoProtected: {
+        serializedName: "isAutoProtected",
+        type: {
+          name: "Boolean",
+        },
+      },
+      subinquireditemcount: {
+        serializedName: "subinquireditemcount",
+        type: {
+          name: "Number",
+        },
+      },
+      subprotectableitemcount: {
+        serializedName: "subprotectableitemcount",
+        type: {
+          name: "Number",
+        },
+      },
+      prebackupvalidation: {
+        serializedName: "prebackupvalidation",
+        type: {
+          name: "Composite",
+          className: "PreBackupValidation",
+        },
+      },
+      isProtectable: {
+        serializedName: "isProtectable",
+        type: {
+          name: "Boolean",
+        },
+      },
+    },
+  },
+};
+
+export const FetchTieringCostInfoForRehydrationRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "FetchTieringCostInfoForRehydrationRequest",
+    type: {
+      name: "Composite",
+      className: "FetchTieringCostInfoForRehydrationRequest",
+      uberParent: "FetchTieringCostInfoRequest",
+      polymorphicDiscriminator:
+        FetchTieringCostInfoRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...FetchTieringCostInfoRequest.type.modelProperties,
+        containerName: {
+          serializedName: "containerName",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+        protectedItemName: {
+          serializedName: "protectedItemName",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+        recoveryPointId: {
+          serializedName: "recoveryPointId",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+        rehydrationPriority: {
+          serializedName: "rehydrationPriority",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const FetchTieringCostSavingsInfoForPolicyRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "FetchTieringCostSavingsInfoForPolicyRequest",
+    type: {
+      name: "Composite",
+      className: "FetchTieringCostSavingsInfoForPolicyRequest",
+      uberParent: "FetchTieringCostInfoRequest",
+      polymorphicDiscriminator:
+        FetchTieringCostInfoRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...FetchTieringCostInfoRequest.type.modelProperties,
+        policyName: {
+          serializedName: "policyName",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const FetchTieringCostSavingsInfoForProtectedItemRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "FetchTieringCostSavingsInfoForProtectedItemRequest",
+    type: {
+      name: "Composite",
+      className: "FetchTieringCostSavingsInfoForProtectedItemRequest",
+      uberParent: "FetchTieringCostInfoRequest",
+      polymorphicDiscriminator:
+        FetchTieringCostInfoRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...FetchTieringCostInfoRequest.type.modelProperties,
+        containerName: {
+          serializedName: "containerName",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+        protectedItemName: {
+          serializedName: "protectedItemName",
+          required: true,
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const FetchTieringCostSavingsInfoForVaultRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "FetchTieringCostSavingsInfoForVaultRequest",
+    type: {
+      name: "Composite",
+      className: "FetchTieringCostSavingsInfoForVaultRequest",
+      uberParent: "FetchTieringCostInfoRequest",
+      polymorphicDiscriminator:
+        FetchTieringCostInfoRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...FetchTieringCostInfoRequest.type.modelProperties,
+      },
+    },
+  };
+
+export const TieringCostRehydrationInfo: coreClient.CompositeMapper = {
+  serializedName: "TieringCostRehydrationInfo",
+  type: {
+    name: "Composite",
+    className: "TieringCostRehydrationInfo",
+    uberParent: "TieringCostInfo",
+    polymorphicDiscriminator: TieringCostInfo.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...TieringCostInfo.type.modelProperties,
+      rehydrationSizeInBytes: {
+        serializedName: "rehydrationSizeInBytes",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+      retailRehydrationCostPerGBPerMonth: {
+        serializedName: "retailRehydrationCostPerGBPerMonth",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const TieringCostSavingInfo: coreClient.CompositeMapper = {
+  serializedName: "TieringCostSavingInfo",
+  type: {
+    name: "Composite",
+    className: "TieringCostSavingInfo",
+    uberParent: "TieringCostInfo",
+    polymorphicDiscriminator: TieringCostInfo.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...TieringCostInfo.type.modelProperties,
+      sourceTierSizeReductionInBytes: {
+        serializedName: "sourceTierSizeReductionInBytes",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+      targetTierSizeIncreaseInBytes: {
+        serializedName: "targetTierSizeIncreaseInBytes",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+      retailSourceTierCostPerGBPerMonth: {
+        serializedName: "retailSourceTierCostPerGBPerMonth",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+      retailTargetTierCostPerGBPerMonth: {
+        serializedName: "retailTargetTierCostPerGBPerMonth",
+        required: true,
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const AzureIaaSVMHealthDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "AzureIaaSVMHealthDetails",
+    modelProperties: {
+      ...ResourceHealthDetails.type.modelProperties,
+    },
+  },
+};
+
+export const LogSchedulePolicy: coreClient.CompositeMapper = {
+  serializedName: "LogSchedulePolicy",
+  type: {
+    name: "Composite",
+    className: "LogSchedulePolicy",
+    uberParent: "SchedulePolicy",
+    polymorphicDiscriminator: SchedulePolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...SchedulePolicy.type.modelProperties,
+      scheduleFrequencyInMins: {
+        serializedName: "scheduleFrequencyInMins",
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
+};
+
+export const LongTermSchedulePolicy: coreClient.CompositeMapper = {
+  serializedName: "LongTermSchedulePolicy",
+  type: {
+    name: "Composite",
+    className: "LongTermSchedulePolicy",
+    uberParent: "SchedulePolicy",
+    polymorphicDiscriminator: SchedulePolicy.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...SchedulePolicy.type.modelProperties,
+    },
+  },
+};
+
+export const SimpleSchedulePolicy: coreClient.CompositeMapper = {
   serializedName: "SimpleSchedulePolicy",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: SchedulePolicy.type.polymorphicDiscriminator,
-    uberParent: "SchedulePolicy",
     className: "SimpleSchedulePolicy",
+    uberParent: "SchedulePolicy",
+    polymorphicDiscriminator: SchedulePolicy.type.polymorphicDiscriminator,
     modelProperties: {
       ...SchedulePolicy.type.modelProperties,
       scheduleRunFrequency: {
         serializedName: "scheduleRunFrequency",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       scheduleRunDays: {
         serializedName: "scheduleRunDays",
@@ -4923,11 +9041,11 @@ export const SimpleSchedulePolicy: msRest.CompositeMapper = {
                 "Wednesday",
                 "Thursday",
                 "Friday",
-                "Saturday"
-              ]
-            }
-          }
-        }
+                "Saturday",
+              ],
+            },
+          },
+        },
       },
       scheduleRunTimes: {
         serializedName: "scheduleRunTimes",
@@ -4935,4199 +9053,1165 @@ export const SimpleSchedulePolicy: msRest.CompositeMapper = {
           name: "Sequence",
           element: {
             type: {
-              name: "DateTime"
-            }
-          }
-        }
+              name: "DateTime",
+            },
+          },
+        },
+      },
+      hourlySchedule: {
+        serializedName: "hourlySchedule",
+        type: {
+          name: "Composite",
+          className: "HourlySchedule",
+        },
       },
       scheduleWeeklyFrequency: {
         serializedName: "scheduleWeeklyFrequency",
         type: {
-          name: "Number"
-        }
-      }
-    }
-  }
-};
-
-export const ValidateOperationRequest: msRest.CompositeMapper = {
-  serializedName: "ValidateOperationRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
+          name: "Number",
+        },
+      },
     },
-    uberParent: "ValidateOperationRequest",
-    className: "ValidateOperationRequest",
-    modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const ValidateRestoreOperationRequest: msRest.CompositeMapper = {
-  serializedName: "ValidateRestoreOperationRequest",
+export const SimpleSchedulePolicyV2: coreClient.CompositeMapper = {
+  serializedName: "SimpleSchedulePolicyV2",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: ValidateOperationRequest.type.polymorphicDiscriminator,
-    uberParent: "ValidateOperationRequest",
-    className: "ValidateRestoreOperationRequest",
+    className: "SimpleSchedulePolicyV2",
+    uberParent: "SchedulePolicy",
+    polymorphicDiscriminator: SchedulePolicy.type.polymorphicDiscriminator,
     modelProperties: {
-      ...ValidateOperationRequest.type.modelProperties,
-      restoreRequest: {
-        serializedName: "restoreRequest",
+      ...SchedulePolicy.type.modelProperties,
+      scheduleRunFrequency: {
+        serializedName: "scheduleRunFrequency",
+        type: {
+          name: "String",
+        },
+      },
+      hourlySchedule: {
+        serializedName: "hourlySchedule",
         type: {
           name: "Composite",
-          className: "RestoreRequest"
-        }
-      }
-    }
-  }
-};
-
-export const ValidateIaasVMRestoreOperationRequest: msRest.CompositeMapper = {
-  serializedName: "ValidateIaasVMRestoreOperationRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ValidateOperationRequest.type.polymorphicDiscriminator,
-    uberParent: "ValidateOperationRequest",
-    className: "ValidateIaasVMRestoreOperationRequest",
-    modelProperties: {
-      ...ValidateRestoreOperationRequest.type.modelProperties
-    }
-  }
-};
-
-export const ValidateOperationResponse: msRest.CompositeMapper = {
-  serializedName: "ValidateOperationResponse",
-  type: {
-    name: "Composite",
-    className: "ValidateOperationResponse",
-    modelProperties: {
-      validationResults: {
-        serializedName: "validationResults",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ErrorDetail"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ValidateOperationsResponse: msRest.CompositeMapper = {
-  serializedName: "ValidateOperationsResponse",
-  type: {
-    name: "Composite",
-    className: "ValidateOperationsResponse",
-    modelProperties: {
-      validateOperationResponse: {
-        serializedName: "validateOperationResponse",
+          className: "HourlySchedule",
+        },
+      },
+      dailySchedule: {
+        serializedName: "dailySchedule",
         type: {
           name: "Composite",
-          className: "ValidateOperationResponse"
-        }
-      }
-    }
-  }
-};
-
-export const BackupResourceVaultConfig: msRest.CompositeMapper = {
-  serializedName: "BackupResourceVaultConfig",
-  type: {
-    name: "Composite",
-    className: "BackupResourceVaultConfig",
-    modelProperties: {
-      storageModelType: {
-        serializedName: "storageModelType",
-        type: {
-          name: "String"
-        }
+          className: "DailySchedule",
+        },
       },
-      storageType: {
-        serializedName: "storageType",
-        type: {
-          name: "String"
-        }
-      },
-      storageTypeState: {
-        serializedName: "storageTypeState",
-        type: {
-          name: "String"
-        }
-      },
-      enhancedSecurityState: {
-        serializedName: "enhancedSecurityState",
-        type: {
-          name: "String"
-        }
-      },
-      softDeleteFeatureState: {
-        serializedName: "softDeleteFeatureState",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BackupResourceVaultConfigResource: msRest.CompositeMapper = {
-  serializedName: "BackupResourceVaultConfigResource",
-  type: {
-    name: "Composite",
-    className: "BackupResourceVaultConfigResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
+      weeklySchedule: {
+        serializedName: "weeklySchedule",
         type: {
           name: "Composite",
-          className: "BackupResourceVaultConfig"
-        }
-      }
-    }
-  }
+          className: "WeeklySchedule",
+        },
+      },
+    },
+  },
 };
 
-export const VaultJobErrorInfo: msRest.CompositeMapper = {
-  serializedName: "VaultJobErrorInfo",
+export const LongTermRetentionPolicy: coreClient.CompositeMapper = {
+  serializedName: "LongTermRetentionPolicy",
   type: {
     name: "Composite",
-    className: "VaultJobErrorInfo",
+    className: "LongTermRetentionPolicy",
+    uberParent: "RetentionPolicy",
+    polymorphicDiscriminator: RetentionPolicy.type.polymorphicDiscriminator,
     modelProperties: {
-      errorCode: {
-        serializedName: "errorCode",
-        type: {
-          name: "Number"
-        }
-      },
-      errorString: {
-        serializedName: "errorString",
-        type: {
-          name: "String"
-        }
-      },
-      recommendations: {
-        serializedName: "recommendations",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const VaultJobExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "VaultJobExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "VaultJobExtendedInfo",
-    modelProperties: {
-      propertyBag: {
-        serializedName: "propertyBag",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const VaultJob: msRest.CompositeMapper = {
-  serializedName: "VaultJob",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: Job.type.polymorphicDiscriminator,
-    uberParent: "Job",
-    className: "VaultJob",
-    modelProperties: {
-      ...Job.type.modelProperties,
-      duration: {
-        serializedName: "duration",
-        type: {
-          name: "TimeSpan"
-        }
-      },
-      actionsInfo: {
-        serializedName: "actionsInfo",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Enum",
-              allowedValues: ["Invalid", "Cancellable", "Retriable"]
-            }
-          }
-        }
-      },
-      errorDetails: {
-        serializedName: "errorDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "VaultJobErrorInfo"
-            }
-          }
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
+      ...RetentionPolicy.type.modelProperties,
+      dailySchedule: {
+        serializedName: "dailySchedule",
         type: {
           name: "Composite",
-          className: "VaultJobExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionContainer: msRest.CompositeMapper = {
-  serializedName: "ProtectionContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "containerType",
-      clientName: "containerType"
-    },
-    uberParent: "ProtectionContainer",
-    className: "ProtectionContainer",
-    modelProperties: {
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
+          className: "DailyRetentionSchedule",
+        },
       },
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      registrationStatus: {
-        serializedName: "registrationStatus",
-        type: {
-          name: "String"
-        }
-      },
-      healthStatus: {
-        serializedName: "healthStatus",
-        type: {
-          name: "String"
-        }
-      },
-      containerType: {
-        required: true,
-        serializedName: "containerType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const DpmContainer: msRest.CompositeMapper = {
-  serializedName: "DPMContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "DpmContainer",
-    modelProperties: {
-      ...ProtectionContainer.type.modelProperties,
-      canReRegister: {
-        serializedName: "canReRegister",
-        type: {
-          name: "Boolean"
-        }
-      },
-      containerId: {
-        serializedName: "containerId",
-        type: {
-          name: "String"
-        }
-      },
-      protectedItemCount: {
-        serializedName: "protectedItemCount",
-        type: {
-          name: "Number"
-        }
-      },
-      dpmAgentVersion: {
-        serializedName: "dpmAgentVersion",
-        type: {
-          name: "String"
-        }
-      },
-      dpmServers: {
-        serializedName: "dpmServers",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      upgradeAvailable: {
-        serializedName: "upgradeAvailable",
-        type: {
-          name: "Boolean"
-        }
-      },
-      protectionStatus: {
-        serializedName: "protectionStatus",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
+      weeklySchedule: {
+        serializedName: "weeklySchedule",
         type: {
           name: "Composite",
-          className: "DPMContainerExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const AzureBackupServerContainer: msRest.CompositeMapper = {
-  serializedName: "AzureBackupServerContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureBackupServerContainer",
-    modelProperties: {
-      ...DpmContainer.type.modelProperties
-    }
-  }
-};
-
-export const BackupEngineBase: msRest.CompositeMapper = {
-  serializedName: "BackupEngineBase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "backupEngineType",
-      clientName: "backupEngineType"
-    },
-    uberParent: "BackupEngineBase",
-    className: "BackupEngineBase",
-    modelProperties: {
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
+          className: "WeeklyRetentionSchedule",
+        },
       },
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      registrationStatus: {
-        serializedName: "registrationStatus",
-        type: {
-          name: "String"
-        }
-      },
-      backupEngineState: {
-        serializedName: "backupEngineState",
-        type: {
-          name: "String"
-        }
-      },
-      healthStatus: {
-        serializedName: "healthStatus",
-        type: {
-          name: "String"
-        }
-      },
-      canReRegister: {
-        serializedName: "canReRegister",
-        type: {
-          name: "Boolean"
-        }
-      },
-      backupEngineId: {
-        serializedName: "backupEngineId",
-        type: {
-          name: "String"
-        }
-      },
-      dpmVersion: {
-        serializedName: "dpmVersion",
-        type: {
-          name: "String"
-        }
-      },
-      azureBackupAgentVersion: {
-        serializedName: "azureBackupAgentVersion",
-        type: {
-          name: "String"
-        }
-      },
-      isAzureBackupAgentUpgradeAvailable: {
-        serializedName: "isAzureBackupAgentUpgradeAvailable",
-        type: {
-          name: "Boolean"
-        }
-      },
-      isDpmUpgradeAvailable: {
-        serializedName: "isDpmUpgradeAvailable",
-        type: {
-          name: "Boolean"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
+      monthlySchedule: {
+        serializedName: "monthlySchedule",
         type: {
           name: "Composite",
-          className: "BackupEngineExtendedInfo"
-        }
+          className: "MonthlyRetentionSchedule",
+        },
       },
-      backupEngineType: {
-        required: true,
-        serializedName: "backupEngineType",
+      yearlySchedule: {
+        serializedName: "yearlySchedule",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureBackupServerEngine: msRest.CompositeMapper = {
-  serializedName: "AzureBackupServerEngine",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: BackupEngineBase.type.polymorphicDiscriminator,
-    uberParent: "BackupEngineBase",
-    className: "AzureBackupServerEngine",
-    modelProperties: {
-      ...BackupEngineBase.type.modelProperties
-    }
-  }
-};
-
-export const BackupRequest: msRest.CompositeMapper = {
-  serializedName: "BackupRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
+          name: "Composite",
+          className: "YearlyRetentionSchedule",
+        },
+      },
     },
-    uberParent: "BackupRequest",
-    className: "BackupRequest",
-    modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const AzureFileShareBackupRequest: msRest.CompositeMapper = {
-  serializedName: "AzureFileShareBackupRequest",
+export const SimpleRetentionPolicy: coreClient.CompositeMapper = {
+  serializedName: "SimpleRetentionPolicy",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: BackupRequest.type.polymorphicDiscriminator,
-    uberParent: "BackupRequest",
-    className: "AzureFileShareBackupRequest",
+    className: "SimpleRetentionPolicy",
+    uberParent: "RetentionPolicy",
+    polymorphicDiscriminator: RetentionPolicy.type.polymorphicDiscriminator,
     modelProperties: {
-      ...BackupRequest.type.modelProperties,
-      recoveryPointExpiryTimeInUTC: {
-        serializedName: "recoveryPointExpiryTimeInUTC",
+      ...RetentionPolicy.type.modelProperties,
+      retentionDuration: {
+        serializedName: "retentionDuration",
         type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const WorkloadProtectableItem: msRest.CompositeMapper = {
-  serializedName: "WorkloadProtectableItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "protectableItemType",
-      clientName: "protectableItemType"
+          name: "Composite",
+          className: "RetentionDuration",
+        },
+      },
     },
-    uberParent: "WorkloadProtectableItem",
-    className: "WorkloadProtectableItem",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      protectableItemType: {
-        required: true,
-        serializedName: "protectableItemType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const AzureFileShareProtectableItem: msRest.CompositeMapper = {
-  serializedName: "AzureFileShare",
+export const RecoveryPointTierInformationV2: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureFileShareProtectableItem",
+    className: "RecoveryPointTierInformationV2",
     modelProperties: {
-      ...WorkloadProtectableItem.type.modelProperties,
-      parentContainerFabricId: {
-        serializedName: "parentContainerFabricId",
-        type: {
-          name: "String"
-        }
-      },
-      parentContainerFriendlyName: {
-        serializedName: "parentContainerFriendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      azureFileShareType: {
-        serializedName: "azureFileShareType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const ILRRequest: msRest.CompositeMapper = {
-  serializedName: "ILRRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
+      ...RecoveryPointTierInformation.type.modelProperties,
     },
-    uberParent: "ILRRequest",
-    className: "ILRRequest",
-    modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const AzureFileShareProvisionILRRequest: msRest.CompositeMapper = {
-  serializedName: "AzureFileShareProvisionILRRequest",
+export const AzureWorkloadAutoProtectionIntent: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadAutoProtectionIntent",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: ILRRequest.type.polymorphicDiscriminator,
-    uberParent: "ILRRequest",
-    className: "AzureFileShareProvisionILRRequest",
+    className: "AzureWorkloadAutoProtectionIntent",
+    uberParent: "AzureRecoveryServiceVaultProtectionIntent",
+    polymorphicDiscriminator: {
+      serializedName: "protectionIntentItemType",
+      clientName: "protectionIntentItemType",
+    },
     modelProperties: {
-      ...ILRRequest.type.modelProperties,
-      recoveryPointId: {
-        serializedName: "recoveryPointId",
-        type: {
-          name: "String"
-        }
+      ...AzureRecoveryServiceVaultProtectionIntent.type.modelProperties,
+    },
+  },
+};
+
+export const AzureIaaSClassicComputeVMProtectedItem: coreClient.CompositeMapper =
+  {
+    serializedName: "Microsoft.ClassicCompute/virtualMachines",
+    type: {
+      name: "Composite",
+      className: "AzureIaaSClassicComputeVMProtectedItem",
+      uberParent: "AzureIaaSVMProtectedItem",
+      polymorphicDiscriminator:
+        AzureIaaSVMProtectedItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureIaaSVMProtectedItem.type.modelProperties,
       },
-      sourceResourceId: {
-        serializedName: "sourceResourceId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+    },
+  };
 
-export const IaaSVMContainer: msRest.CompositeMapper = {
-  serializedName: "IaaSVMContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "IaaSVMContainer",
-    modelProperties: {
-      ...ProtectionContainer.type.modelProperties,
-      virtualMachineId: {
-        serializedName: "virtualMachineId",
-        type: {
-          name: "String"
-        }
-      },
-      virtualMachineVersion: {
-        serializedName: "virtualMachineVersion",
-        type: {
-          name: "String"
-        }
-      },
-      resourceGroup: {
-        serializedName: "resourceGroup",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSClassicComputeVMContainer: msRest.CompositeMapper = {
-  serializedName: "Microsoft.ClassicCompute/virtualMachines",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureIaaSClassicComputeVMContainer",
-    modelProperties: {
-      ...IaaSVMContainer.type.modelProperties
-    }
-  }
-};
-
-export const IaaSVMProtectableItem: msRest.CompositeMapper = {
-  serializedName: "IaaSVMProtectableItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "IaaSVMProtectableItem",
-    modelProperties: {
-      ...WorkloadProtectableItem.type.modelProperties,
-      virtualMachineId: {
-        serializedName: "virtualMachineId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureIaaSClassicComputeVMProtectableItem: msRest.CompositeMapper = {
-  serializedName: "Microsoft.ClassicCompute/virtualMachines",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureIaaSClassicComputeVMProtectableItem",
-    modelProperties: {
-      ...IaaSVMProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureIaaSComputeVMContainer: msRest.CompositeMapper = {
+export const AzureIaaSComputeVMProtectedItem: coreClient.CompositeMapper = {
   serializedName: "Microsoft.Compute/virtualMachines",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureIaaSComputeVMContainer",
+    className: "AzureIaaSComputeVMProtectedItem",
+    uberParent: "AzureIaaSVMProtectedItem",
+    polymorphicDiscriminator:
+      AzureIaaSVMProtectedItem.type.polymorphicDiscriminator,
     modelProperties: {
-      ...IaaSVMContainer.type.modelProperties
-    }
-  }
-};
-
-export const AzureIaaSComputeVMProtectableItem: msRest.CompositeMapper = {
-  serializedName: "Microsoft.Compute/virtualMachines",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureIaaSComputeVMProtectableItem",
-    modelProperties: {
-      ...IaaSVMProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureWorkloadContainer: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureWorkloadContainer",
-    modelProperties: {
-      ...ProtectionContainer.type.modelProperties,
-      sourceResourceId: {
-        serializedName: "sourceResourceId",
-        type: {
-          name: "String"
-        }
-      },
-      lastUpdatedTime: {
-        serializedName: "lastUpdatedTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "AzureWorkloadContainerExtendedInfo"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      operationType: {
-        serializedName: "operationType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureSQLAGWorkloadContainerProtectionContainer: msRest.CompositeMapper = {
-  serializedName: "SQLAGWorkLoadContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureSQLAGWorkloadContainerProtectionContainer",
-    modelProperties: {
-      ...AzureWorkloadContainer.type.modelProperties
-    }
-  }
-};
-
-export const AzureSqlContainer: msRest.CompositeMapper = {
-  serializedName: "AzureSqlContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureSqlContainer",
-    modelProperties: {
-      ...ProtectionContainer.type.modelProperties
-    }
-  }
-};
-
-export const AzureStorageContainer: msRest.CompositeMapper = {
-  serializedName: "StorageContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureStorageContainer",
-    modelProperties: {
-      ...ProtectionContainer.type.modelProperties,
-      sourceResourceId: {
-        serializedName: "sourceResourceId",
-        type: {
-          name: "String"
-        }
-      },
-      storageAccountVersion: {
-        serializedName: "storageAccountVersion",
-        type: {
-          name: "String"
-        }
-      },
-      resourceGroup: {
-        serializedName: "resourceGroup",
-        type: {
-          name: "String"
-        }
-      },
-      protectedItemCount: {
-        serializedName: "protectedItemCount",
-        type: {
-          name: "Number"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectableContainer: msRest.CompositeMapper = {
-  serializedName: "ProtectableContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "protectableContainerType",
-      clientName: "protectableContainerType"
+      ...AzureIaaSVMProtectedItem.type.modelProperties,
     },
-    uberParent: "ProtectableContainer",
-    className: "ProtectableContainer",
-    modelProperties: {
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      healthStatus: {
-        serializedName: "healthStatus",
-        type: {
-          name: "String"
-        }
-      },
-      containerId: {
-        serializedName: "containerId",
-        type: {
-          name: "String"
-        }
-      },
-      protectableContainerType: {
-        required: true,
-        serializedName: "protectableContainerType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+  },
 };
 
-export const AzureStorageProtectableContainer: msRest.CompositeMapper = {
-  serializedName: "StorageContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectableContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectableContainer",
-    className: "AzureStorageProtectableContainer",
-    modelProperties: {
-      ...ProtectableContainer.type.modelProperties
-    }
-  }
-};
-
-export const AzureVMAppContainerProtectableContainer: msRest.CompositeMapper = {
-  serializedName: "VMAppContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectableContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectableContainer",
-    className: "AzureVMAppContainerProtectableContainer",
-    modelProperties: {
-      ...ProtectableContainer.type.modelProperties
-    }
-  }
-};
-
-export const AzureVMAppContainerProtectionContainer: msRest.CompositeMapper = {
-  serializedName: "VMAppContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "AzureVMAppContainerProtectionContainer",
-    modelProperties: {
-      ...AzureWorkloadContainer.type.modelProperties
-    }
-  }
-};
-
-export const WorkloadItem: msRest.CompositeMapper = {
-  serializedName: "WorkloadItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "workloadItemType",
-      clientName: "workloadItemType"
+export const AzureVmWorkloadSAPAseDatabaseProtectedItem: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureVmWorkloadSAPAseDatabase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPAseDatabaseProtectedItem",
+      uberParent: "AzureVmWorkloadProtectedItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectedItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectedItem.type.modelProperties,
+      },
     },
-    uberParent: "WorkloadItem",
-    className: "WorkloadItem",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      workloadItemType: {
-        required: true,
-        serializedName: "workloadItemType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+  };
 
-export const AzureVmWorkloadItem: msRest.CompositeMapper = {
-  serializedName: "AzureVmWorkloadItem",
+export const AzureVmWorkloadSAPHanaDatabaseProtectedItem: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureVmWorkloadSAPHanaDatabase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPHanaDatabaseProtectedItem",
+      uberParent: "AzureVmWorkloadProtectedItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectedItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectedItem.type.modelProperties,
+      },
+    },
+  };
+
+export const AzureVmWorkloadSAPHanaDBInstanceProtectedItem: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureVmWorkloadSAPHanaDBInstance",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPHanaDBInstanceProtectedItem",
+      uberParent: "AzureVmWorkloadProtectedItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectedItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectedItem.type.modelProperties,
+      },
+    },
+  };
+
+export const AzureVmWorkloadSQLDatabaseProtectedItem: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureVmWorkloadSQLDatabase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSQLDatabaseProtectedItem",
+      uberParent: "AzureVmWorkloadProtectedItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectedItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectedItem.type.modelProperties,
+      },
+    },
+  };
+
+export const AzureWorkloadPointInTimeRecoveryPoint: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadPointInTimeRecoveryPoint",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadPointInTimeRecoveryPoint",
+      uberParent: "AzureWorkloadRecoveryPoint",
+      polymorphicDiscriminator: {
+        serializedName: "objectType",
+        clientName: "objectType",
+      },
+      modelProperties: {
+        ...AzureWorkloadRecoveryPoint.type.modelProperties,
+        timeRanges: {
+          serializedName: "timeRanges",
+          type: {
+            name: "Sequence",
+            element: {
+              type: {
+                name: "Composite",
+                className: "PointInTimeRange",
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
+export const AzureWorkloadSAPHanaRecoveryPoint: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadSAPHanaRecoveryPoint",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: WorkloadItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadItem",
-    className: "AzureVmWorkloadItem",
+    className: "AzureWorkloadSAPHanaRecoveryPoint",
+    uberParent: "AzureWorkloadRecoveryPoint",
+    polymorphicDiscriminator:
+      AzureWorkloadRecoveryPoint.type.polymorphicDiscriminator,
     modelProperties: {
-      ...WorkloadItem.type.modelProperties,
-      parentName: {
-        serializedName: "parentName",
-        type: {
-          name: "String"
-        }
-      },
-      serverName: {
-        serializedName: "serverName",
-        type: {
-          name: "String"
-        }
-      },
-      isAutoProtectable: {
-        serializedName: "isAutoProtectable",
-        type: {
-          name: "Boolean"
-        }
-      },
-      subinquireditemcount: {
-        serializedName: "subinquireditemcount",
-        type: {
-          name: "Number"
-        }
-      },
-      subWorkloadItemCount: {
-        serializedName: "subWorkloadItemCount",
-        type: {
-          name: "Number"
-        }
-      }
-    }
-  }
+      ...AzureWorkloadRecoveryPoint.type.modelProperties,
+    },
+  },
 };
 
-export const PreBackupValidation: msRest.CompositeMapper = {
-  serializedName: "PreBackupValidation",
+export const AzureWorkloadSQLRecoveryPoint: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadSQLRecoveryPoint",
   type: {
     name: "Composite",
-    className: "PreBackupValidation",
-    modelProperties: {
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      code: {
-        serializedName: "code",
-        type: {
-          name: "String"
-        }
-      },
-      message: {
-        serializedName: "message",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureVmWorkloadProtectableItem: msRest.CompositeMapper = {
-  serializedName: "AzureVmWorkloadProtectableItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureVmWorkloadProtectableItem",
-    modelProperties: {
-      ...WorkloadProtectableItem.type.modelProperties,
-      parentName: {
-        serializedName: "parentName",
-        type: {
-          name: "String"
-        }
-      },
-      parentUniqueName: {
-        serializedName: "parentUniqueName",
-        type: {
-          name: "String"
-        }
-      },
-      serverName: {
-        serializedName: "serverName",
-        type: {
-          name: "String"
-        }
-      },
-      isAutoProtectable: {
-        serializedName: "isAutoProtectable",
-        type: {
-          name: "Boolean"
-        }
-      },
-      isAutoProtected: {
-        serializedName: "isAutoProtected",
-        type: {
-          name: "Boolean"
-        }
-      },
-      subinquireditemcount: {
-        serializedName: "subinquireditemcount",
-        type: {
-          name: "Number"
-        }
-      },
-      subprotectableitemcount: {
-        serializedName: "subprotectableitemcount",
-        type: {
-          name: "Number"
-        }
-      },
-      prebackupvalidation: {
-        serializedName: "prebackupvalidation",
-        type: {
-          name: "Composite",
-          className: "PreBackupValidation"
-        }
-      }
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPAseDatabaseWorkloadItem: msRest.CompositeMapper = {
-  serializedName: "SAPAseDatabase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadItem",
-    className: "AzureVmWorkloadSAPAseDatabaseWorkloadItem",
-    modelProperties: {
-      ...AzureVmWorkloadItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPAseSystemProtectableItem: msRest.CompositeMapper = {
-  serializedName: "SAPAseSystem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureVmWorkloadSAPAseSystemProtectableItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPAseSystemWorkloadItem: msRest.CompositeMapper = {
-  serializedName: "SAPAseSystem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadItem",
-    className: "AzureVmWorkloadSAPAseSystemWorkloadItem",
-    modelProperties: {
-      ...AzureVmWorkloadItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPHanaDatabaseProtectableItem: msRest.CompositeMapper = {
-  serializedName: "SAPHanaDatabase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureVmWorkloadSAPHanaDatabaseProtectableItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPHanaDatabaseWorkloadItem: msRest.CompositeMapper = {
-  serializedName: "SAPHanaDatabase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadItem",
-    className: "AzureVmWorkloadSAPHanaDatabaseWorkloadItem",
-    modelProperties: {
-      ...AzureVmWorkloadItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPHanaSystemProtectableItem: msRest.CompositeMapper = {
-  serializedName: "SAPHanaSystem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureVmWorkloadSAPHanaSystemProtectableItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSAPHanaSystemWorkloadItem: msRest.CompositeMapper = {
-  serializedName: "SAPHanaSystem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadItem",
-    className: "AzureVmWorkloadSAPHanaSystemWorkloadItem",
-    modelProperties: {
-      ...AzureVmWorkloadItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSQLAvailabilityGroupProtectableItem: msRest.CompositeMapper = {
-  serializedName: "SQLAvailabilityGroupContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureVmWorkloadSQLAvailabilityGroupProtectableItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSQLDatabaseProtectableItem: msRest.CompositeMapper = {
-  serializedName: "SQLDataBase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureVmWorkloadSQLDatabaseProtectableItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSQLDatabaseWorkloadItem: msRest.CompositeMapper = {
-  serializedName: "SQLDataBase",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadItem",
-    className: "AzureVmWorkloadSQLDatabaseWorkloadItem",
-    modelProperties: {
-      ...AzureVmWorkloadItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSQLInstanceProtectableItem: msRest.CompositeMapper = {
-  serializedName: "SQLInstance",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadProtectableItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadProtectableItem",
-    className: "AzureVmWorkloadSQLInstanceProtectableItem",
-    modelProperties: {
-      ...AzureVmWorkloadProtectableItem.type.modelProperties
-    }
-  }
-};
-
-export const AzureVmWorkloadSQLInstanceWorkloadItem: msRest.CompositeMapper = {
-  serializedName: "SQLInstance",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: WorkloadItem.type.polymorphicDiscriminator,
-    uberParent: "WorkloadItem",
-    className: "AzureVmWorkloadSQLInstanceWorkloadItem",
-    modelProperties: {
-      ...AzureVmWorkloadItem.type.modelProperties,
-      dataDirectoryPaths: {
-        serializedName: "dataDirectoryPaths",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "SQLDataDirectory"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadBackupRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadBackupRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: BackupRequest.type.polymorphicDiscriminator,
-    uberParent: "BackupRequest",
-    className: "AzureWorkloadBackupRequest",
-    modelProperties: {
-      ...BackupRequest.type.modelProperties,
-      backupType: {
-        serializedName: "backupType",
-        type: {
-          name: "String"
-        }
-      },
-      enableCompression: {
-        serializedName: "enableCompression",
-        type: {
-          name: "Boolean"
-        }
-      },
-      recoveryPointExpiryTimeInUTC: {
-        serializedName: "recoveryPointExpiryTimeInUTC",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const InquiryValidation: msRest.CompositeMapper = {
-  serializedName: "InquiryValidation",
-  type: {
-    name: "Composite",
-    className: "InquiryValidation",
-    modelProperties: {
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      errorDetail: {
-        serializedName: "errorDetail",
-        type: {
-          name: "Composite",
-          className: "ErrorDetail"
-        }
-      },
-      additionalDetail: {
-        readOnly: true,
-        serializedName: "additionalDetail",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const WorkloadInquiryDetails: msRest.CompositeMapper = {
-  serializedName: "WorkloadInquiryDetails",
-  type: {
-    name: "Composite",
-    className: "WorkloadInquiryDetails",
-    modelProperties: {
-      type: {
-        serializedName: "type",
-        type: {
-          name: "String"
-        }
-      },
-      itemCount: {
-        serializedName: "itemCount",
-        type: {
-          name: "Number"
-        }
-      },
-      inquiryValidation: {
-        serializedName: "inquiryValidation",
-        type: {
-          name: "Composite",
-          className: "InquiryValidation"
-        }
-      }
-    }
-  }
-};
-
-export const InquiryInfo: msRest.CompositeMapper = {
-  serializedName: "InquiryInfo",
-  type: {
-    name: "Composite",
-    className: "InquiryInfo",
-    modelProperties: {
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      errorDetail: {
-        serializedName: "errorDetail",
-        type: {
-          name: "Composite",
-          className: "ErrorDetail"
-        }
-      },
-      inquiryDetails: {
-        serializedName: "inquiryDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "WorkloadInquiryDetails"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const DistributedNodesInfo: msRest.CompositeMapper = {
-  serializedName: "DistributedNodesInfo",
-  type: {
-    name: "Composite",
-    className: "DistributedNodesInfo",
-    modelProperties: {
-      nodeName: {
-        serializedName: "nodeName",
-        type: {
-          name: "String"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      errorDetail: {
-        serializedName: "errorDetail",
-        type: {
-          name: "Composite",
-          className: "ErrorDetail"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadContainerExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadContainerExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "AzureWorkloadContainerExtendedInfo",
-    modelProperties: {
-      hostServerName: {
-        serializedName: "hostServerName",
-        type: {
-          name: "String"
-        }
-      },
-      inquiryInfo: {
-        serializedName: "inquiryInfo",
-        type: {
-          name: "Composite",
-          className: "InquiryInfo"
-        }
-      },
-      nodesList: {
-        serializedName: "nodesList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "DistributedNodesInfo"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const BackupEngineExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "BackupEngineExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "BackupEngineExtendedInfo",
-    modelProperties: {
-      databaseName: {
-        serializedName: "databaseName",
-        type: {
-          name: "String"
-        }
-      },
-      protectedItemsCount: {
-        serializedName: "protectedItemsCount",
-        type: {
-          name: "Number"
-        }
-      },
-      protectedServersCount: {
-        serializedName: "protectedServersCount",
-        type: {
-          name: "Number"
-        }
-      },
-      diskCount: {
-        serializedName: "diskCount",
-        type: {
-          name: "Number"
-        }
-      },
-      usedDiskSpace: {
-        serializedName: "usedDiskSpace",
-        type: {
-          name: "Number"
-        }
-      },
-      availableDiskSpace: {
-        serializedName: "availableDiskSpace",
-        type: {
-          name: "Number"
-        }
-      },
-      refreshedAt: {
-        serializedName: "refreshedAt",
-        type: {
-          name: "DateTime"
-        }
-      },
-      azureProtectedInstances: {
-        serializedName: "azureProtectedInstances",
-        type: {
-          name: "Number"
-        }
-      }
-    }
-  }
-};
-
-export const BackupEngineBaseResource: msRest.CompositeMapper = {
-  serializedName: "BackupEngineBaseResource",
-  type: {
-    name: "Composite",
-    className: "BackupEngineBaseResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "BackupEngineBase"
-        }
-      }
-    }
-  }
-};
-
-export const BackupRequestResource: msRest.CompositeMapper = {
-  serializedName: "BackupRequestResource",
-  type: {
-    name: "Composite",
-    className: "BackupRequestResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "BackupRequest"
-        }
-      }
-    }
-  }
-};
-
-export const BMSBackupEngineQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSBackupEngineQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSBackupEngineQueryObject",
-    modelProperties: {
-      expand: {
-        serializedName: "expand",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BMSBackupEnginesQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSBackupEnginesQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSBackupEnginesQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      expand: {
-        serializedName: "expand",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BMSContainerQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSContainerQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSContainerQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        required: true,
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      containerType: {
-        serializedName: "containerType",
-        type: {
-          name: "String"
-        }
-      },
-      backupEngineName: {
-        serializedName: "backupEngineName",
-        type: {
-          name: "String"
-        }
-      },
-      fabricName: {
-        serializedName: "fabricName",
-        type: {
-          name: "String"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BMSContainersInquiryQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSContainersInquiryQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSContainersInquiryQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BMSPOQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSPOQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSPOQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      containerName: {
-        serializedName: "containerName",
-        type: {
-          name: "String"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BMSRefreshContainersQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSRefreshContainersQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSRefreshContainersQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BMSWorkloadItemQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSWorkloadItemQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSWorkloadItemQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadItemType: {
-        serializedName: "workloadItemType",
-        type: {
-          name: "String"
-        }
-      },
-      workloadType: {
-        serializedName: "workloadType",
-        type: {
-          name: "String"
-        }
-      },
-      protectionStatus: {
-        serializedName: "protectionStatus",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const ClientScriptForConnect: msRest.CompositeMapper = {
-  serializedName: "ClientScriptForConnect",
-  type: {
-    name: "Composite",
-    className: "ClientScriptForConnect",
-    modelProperties: {
-      scriptContent: {
-        serializedName: "scriptContent",
-        type: {
-          name: "String"
-        }
-      },
-      scriptExtension: {
-        serializedName: "scriptExtension",
-        type: {
-          name: "String"
-        }
-      },
-      osType: {
-        serializedName: "osType",
-        type: {
-          name: "String"
-        }
-      },
-      url: {
-        serializedName: "url",
-        type: {
-          name: "String"
-        }
-      },
-      scriptNameSuffix: {
-        serializedName: "scriptNameSuffix",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const ContainerIdentityInfo: msRest.CompositeMapper = {
-  serializedName: "ContainerIdentityInfo",
-  type: {
-    name: "Composite",
-    className: "ContainerIdentityInfo",
-    modelProperties: {
-      uniqueName: {
-        serializedName: "uniqueName",
-        type: {
-          name: "String"
-        }
-      },
-      aadTenantId: {
-        serializedName: "aadTenantId",
-        type: {
-          name: "String"
-        }
-      },
-      servicePrincipalClientId: {
-        serializedName: "servicePrincipalClientId",
-        type: {
-          name: "String"
-        }
-      },
-      audience: {
-        serializedName: "audience",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const DpmBackupEngine: msRest.CompositeMapper = {
-  serializedName: "DpmBackupEngine",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: BackupEngineBase.type.polymorphicDiscriminator,
-    uberParent: "BackupEngineBase",
-    className: "DpmBackupEngine",
-    modelProperties: {
-      ...BackupEngineBase.type.modelProperties
-    }
-  }
-};
-
-export const DPMContainerExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "DPMContainerExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "DPMContainerExtendedInfo",
-    modelProperties: {
-      lastRefreshedAt: {
-        serializedName: "lastRefreshedAt",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const GenericContainerExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "GenericContainerExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "GenericContainerExtendedInfo",
-    modelProperties: {
-      rawCertData: {
-        serializedName: "rawCertData",
-        type: {
-          name: "String"
-        }
-      },
-      containerIdentityInfo: {
-        serializedName: "containerIdentityInfo",
-        type: {
-          name: "Composite",
-          className: "ContainerIdentityInfo"
-        }
-      },
-      serviceEndpoints: {
-        serializedName: "serviceEndpoints",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const GenericContainer: msRest.CompositeMapper = {
-  serializedName: "GenericContainer",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "GenericContainer",
-    modelProperties: {
-      ...ProtectionContainer.type.modelProperties,
-      fabricName: {
-        serializedName: "fabricName",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInformation: {
-        serializedName: "extendedInformation",
-        type: {
-          name: "Composite",
-          className: "GenericContainerExtendedInfo"
-        }
-      }
-    }
-  }
-};
-
-export const IaasVMBackupRequest: msRest.CompositeMapper = {
-  serializedName: "IaasVMBackupRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: BackupRequest.type.polymorphicDiscriminator,
-    uberParent: "BackupRequest",
-    className: "IaasVMBackupRequest",
-    modelProperties: {
-      ...BackupRequest.type.modelProperties,
-      recoveryPointExpiryTimeInUTC: {
-        serializedName: "recoveryPointExpiryTimeInUTC",
-        type: {
-          name: "DateTime"
-        }
-      }
-    }
-  }
-};
-
-export const IaasVMILRRegistrationRequest: msRest.CompositeMapper = {
-  serializedName: "IaasVMILRRegistrationRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ILRRequest.type.polymorphicDiscriminator,
-    uberParent: "ILRRequest",
-    className: "IaasVMILRRegistrationRequest",
-    modelProperties: {
-      ...ILRRequest.type.modelProperties,
-      recoveryPointId: {
-        serializedName: "recoveryPointId",
-        type: {
-          name: "String"
-        }
-      },
-      virtualMachineId: {
-        serializedName: "virtualMachineId",
-        type: {
-          name: "String"
-        }
-      },
-      initiatorName: {
-        serializedName: "initiatorName",
-        type: {
-          name: "String"
-        }
-      },
-      renewExistingRegistration: {
-        serializedName: "renewExistingRegistration",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const ILRRequestResource: msRest.CompositeMapper = {
-  serializedName: "ILRRequestResource",
-  type: {
-    name: "Composite",
-    className: "ILRRequestResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "ILRRequest"
-        }
-      }
-    }
-  }
-};
-
-export const InstantItemRecoveryTarget: msRest.CompositeMapper = {
-  serializedName: "InstantItemRecoveryTarget",
-  type: {
-    name: "Composite",
-    className: "InstantItemRecoveryTarget",
-    modelProperties: {
-      clientScripts: {
-        serializedName: "clientScripts",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ClientScriptForConnect"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const MabContainerExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "MabContainerExtendedInfo",
-  type: {
-    name: "Composite",
-    className: "MabContainerExtendedInfo",
-    modelProperties: {
-      lastRefreshedAt: {
-        serializedName: "lastRefreshedAt",
-        type: {
-          name: "DateTime"
-        }
-      },
-      backupItemType: {
-        serializedName: "backupItemType",
-        type: {
-          name: "String"
-        }
-      },
-      backupItems: {
-        serializedName: "backupItems",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      policyName: {
-        serializedName: "policyName",
-        type: {
-          name: "String"
-        }
-      },
-      lastBackupStatus: {
-        serializedName: "lastBackupStatus",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const MABContainerHealthDetails: msRest.CompositeMapper = {
-  serializedName: "MABContainerHealthDetails",
-  type: {
-    name: "Composite",
-    className: "MABContainerHealthDetails",
-    modelProperties: {
-      code: {
-        serializedName: "code",
-        type: {
-          name: "Number"
-        }
-      },
-      title: {
-        serializedName: "title",
-        type: {
-          name: "String"
-        }
-      },
-      message: {
-        serializedName: "message",
-        type: {
-          name: "String"
-        }
-      },
-      recommendations: {
-        serializedName: "recommendations",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const MabContainer: msRest.CompositeMapper = {
-  serializedName: "Windows",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionContainer.type.polymorphicDiscriminator,
-    uberParent: "ProtectionContainer",
-    className: "MabContainer",
-    modelProperties: {
-      ...ProtectionContainer.type.modelProperties,
-      canReRegister: {
-        serializedName: "canReRegister",
-        type: {
-          name: "Boolean"
-        }
-      },
-      containerId: {
-        serializedName: "containerId",
-        type: {
-          name: "Number"
-        }
-      },
-      protectedItemCount: {
-        serializedName: "protectedItemCount",
-        type: {
-          name: "Number"
-        }
-      },
-      agentVersion: {
-        serializedName: "agentVersion",
-        type: {
-          name: "String"
-        }
-      },
-      extendedInfo: {
-        serializedName: "extendedInfo",
-        type: {
-          name: "Composite",
-          className: "MabContainerExtendedInfo"
-        }
-      },
-      mabContainerHealthDetails: {
-        serializedName: "mabContainerHealthDetails",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "MABContainerHealthDetails"
-            }
-          }
-        }
-      },
-      containerHealthState: {
-        serializedName: "containerHealthState",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const OperationStatusError: msRest.CompositeMapper = {
-  serializedName: "OperationStatusError",
-  type: {
-    name: "Composite",
-    className: "OperationStatusError",
-    modelProperties: {
-      code: {
-        serializedName: "code",
-        type: {
-          name: "String"
-        }
-      },
-      message: {
-        serializedName: "message",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const OperationStatusExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "OperationStatusExtendedInfo",
-  type: {
-    name: "Composite",
+    className: "AzureWorkloadSQLRecoveryPoint",
+    uberParent: "AzureWorkloadRecoveryPoint",
     polymorphicDiscriminator: {
       serializedName: "objectType",
-      clientName: "objectType"
+      clientName: "objectType",
     },
-    uberParent: "OperationStatusExtendedInfo",
-    className: "OperationStatusExtendedInfo",
     modelProperties: {
-      objectType: {
-        required: true,
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const OperationStatus: msRest.CompositeMapper = {
-  serializedName: "OperationStatus",
-  type: {
-    name: "Composite",
-    className: "OperationStatus",
-    modelProperties: {
-      id: {
-        serializedName: "id",
-        type: {
-          name: "String"
-        }
-      },
-      name: {
-        serializedName: "name",
-        type: {
-          name: "String"
-        }
-      },
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      startTime: {
-        serializedName: "startTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      endTime: {
-        serializedName: "endTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      error: {
-        serializedName: "error",
+      ...AzureWorkloadRecoveryPoint.type.modelProperties,
+      extendedInfo: {
+        serializedName: "extendedInfo",
         type: {
           name: "Composite",
-          className: "OperationStatusError"
-        }
+          className: "AzureWorkloadSQLRecoveryPointExtendedInfo",
+        },
       },
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "OperationStatusExtendedInfo"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const OperationStatusJobExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "OperationStatusJobExtendedInfo",
+export const AzureWorkloadPointInTimeRestoreRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadPointInTimeRestoreRequest",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadPointInTimeRestoreRequest",
+      uberParent: "AzureWorkloadRestoreRequest",
+      polymorphicDiscriminator:
+        AzureWorkloadRestoreRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadRestoreRequest.type.modelProperties,
+        pointInTime: {
+          serializedName: "pointInTime",
+          type: {
+            name: "DateTime",
+          },
+        },
+      },
+    },
+  };
+
+export const AzureWorkloadSAPHanaRestoreRequest: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadSAPHanaRestoreRequest",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: OperationStatusExtendedInfo.type.polymorphicDiscriminator,
-    uberParent: "OperationStatusExtendedInfo",
-    className: "OperationStatusJobExtendedInfo",
+    className: "AzureWorkloadSAPHanaRestoreRequest",
+    uberParent: "AzureWorkloadRestoreRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
     modelProperties: {
-      ...OperationStatusExtendedInfo.type.modelProperties,
-      jobId: {
-        serializedName: "jobId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+      ...AzureWorkloadRestoreRequest.type.modelProperties,
+    },
+  },
 };
 
-export const OperationStatusJobsExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "OperationStatusJobsExtendedInfo",
+export const AzureWorkloadSQLRestoreRequest: coreClient.CompositeMapper = {
+  serializedName: "AzureWorkloadSQLRestoreRequest",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: OperationStatusExtendedInfo.type.polymorphicDiscriminator,
-    uberParent: "OperationStatusExtendedInfo",
-    className: "OperationStatusJobsExtendedInfo",
+    className: "AzureWorkloadSQLRestoreRequest",
+    uberParent: "AzureWorkloadRestoreRequest",
+    polymorphicDiscriminator: {
+      serializedName: "objectType",
+      clientName: "objectType",
+    },
     modelProperties: {
-      ...OperationStatusExtendedInfo.type.modelProperties,
-      jobIds: {
-        serializedName: "jobIds",
+      ...AzureWorkloadRestoreRequest.type.modelProperties,
+      shouldUseAlternateTargetLocation: {
+        serializedName: "shouldUseAlternateTargetLocation",
+        type: {
+          name: "Boolean",
+        },
+      },
+      isNonRecoverable: {
+        serializedName: "isNonRecoverable",
+        type: {
+          name: "Boolean",
+        },
+      },
+      alternateDirectoryPaths: {
+        serializedName: "alternateDirectoryPaths",
         type: {
           name: "Sequence",
           element: {
             type: {
-              name: "String"
-            }
-          }
-        }
+              name: "Composite",
+              className: "SQLDataDirectoryMapping",
+            },
+          },
+        },
       },
-      failedJobsError: {
-        serializedName: "failedJobsError",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const OperationStatusProvisionILRExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "OperationStatusProvisionILRExtendedInfo",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: OperationStatusExtendedInfo.type.polymorphicDiscriminator,
-    uberParent: "OperationStatusExtendedInfo",
-    className: "OperationStatusProvisionILRExtendedInfo",
-    modelProperties: {
-      ...OperationStatusExtendedInfo.type.modelProperties,
-      recoveryTarget: {
-        serializedName: "recoveryTarget",
-        type: {
-          name: "Composite",
-          className: "InstantItemRecoveryTarget"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectableContainerResource: msRest.CompositeMapper = {
-  serializedName: "ProtectableContainerResource",
-  type: {
-    name: "Composite",
-    className: "ProtectableContainerResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "ProtectableContainer"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionContainerResource: msRest.CompositeMapper = {
-  serializedName: "ProtectionContainerResource",
-  type: {
-    name: "Composite",
-    className: "ProtectionContainerResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "ProtectionContainer"
-        }
-      }
-    }
-  }
-};
-
-export const TokenInformation: msRest.CompositeMapper = {
-  serializedName: "TokenInformation",
-  type: {
-    name: "Composite",
-    className: "TokenInformation",
-    modelProperties: {
-      token: {
-        serializedName: "token",
-        type: {
-          name: "String"
-        }
-      },
-      expiryTimeInUtcTicks: {
-        serializedName: "expiryTimeInUtcTicks",
-        type: {
-          name: "Number"
-        }
-      },
-      securityPIN: {
-        serializedName: "securityPIN",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const WorkloadItemResource: msRest.CompositeMapper = {
-  serializedName: "WorkloadItemResource",
-  type: {
-    name: "Composite",
-    className: "WorkloadItemResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "WorkloadItem"
-        }
-      }
-    }
-  }
-};
-
-export const WorkloadProtectableItemResource: msRest.CompositeMapper = {
-  serializedName: "WorkloadProtectableItemResource",
-  type: {
-    name: "Composite",
-    className: "WorkloadProtectableItemResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "WorkloadProtectableItem"
-        }
-      }
-    }
-  }
-};
-
-export const RecoveryPointRehydrationInfo: msRest.CompositeMapper = {
-  serializedName: "RecoveryPointRehydrationInfo",
-  type: {
-    name: "Composite",
-    className: "RecoveryPointRehydrationInfo",
-    modelProperties: {
-      rehydrationRetentionDuration: {
-        serializedName: "rehydrationRetentionDuration",
-        type: {
-          name: "String"
-        }
-      },
-      rehydrationPriority: {
-        serializedName: "rehydrationPriority",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest",
-    modelProperties: {
-      ...AzureWorkloadSAPHanaPointInTimeRestoreRequest.type.modelProperties,
-      recoveryPointRehydrationInfo: {
-        serializedName: "recoveryPointRehydrationInfo",
-        type: {
-          name: "Composite",
-          className: "RecoveryPointRehydrationInfo"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSAPHanaRestoreWithRehydrateRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSAPHanaRestoreWithRehydrateRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSAPHanaRestoreWithRehydrateRequest",
-    modelProperties: {
-      ...AzureWorkloadSAPHanaRestoreRequest.type.modelProperties,
-      recoveryPointRehydrationInfo: {
-        serializedName: "recoveryPointRehydrationInfo",
-        type: {
-          name: "Composite",
-          className: "RecoveryPointRehydrationInfo"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest",
-    modelProperties: {
-      ...AzureWorkloadSQLPointInTimeRestoreRequest.type.modelProperties,
-      recoveryPointRehydrationInfo: {
-        serializedName: "recoveryPointRehydrationInfo",
-        type: {
-          name: "Composite",
-          className: "RecoveryPointRehydrationInfo"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadSQLRestoreWithRehydrateRequest: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLRestoreWithRehydrateRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
-    className: "AzureWorkloadSQLRestoreWithRehydrateRequest",
-    modelProperties: {
-      ...AzureWorkloadSQLRestoreRequest.type.modelProperties,
-      recoveryPointRehydrationInfo: {
-        serializedName: "recoveryPointRehydrationInfo",
-        type: {
-          name: "Composite",
-          className: "RecoveryPointRehydrationInfo"
-        }
-      }
-    }
-  }
-};
-
-export const IaasVMRestoreWithRehydrationRequest: msRest.CompositeMapper = {
+export const IaasVMRestoreWithRehydrationRequest: coreClient.CompositeMapper = {
   serializedName: "IaasVMRestoreWithRehydrationRequest",
   type: {
     name: "Composite",
-    polymorphicDiscriminator: RestoreRequest.type.polymorphicDiscriminator,
-    uberParent: "RestoreRequest",
     className: "IaasVMRestoreWithRehydrationRequest",
+    uberParent: "IaasVMRestoreRequest",
+    polymorphicDiscriminator:
+      IaasVMRestoreRequest.type.polymorphicDiscriminator,
     modelProperties: {
       ...IaasVMRestoreRequest.type.modelProperties,
       recoveryPointRehydrationInfo: {
         serializedName: "recoveryPointRehydrationInfo",
         type: {
           name: "Composite",
-          className: "RecoveryPointRehydrationInfo"
-        }
-      }
-    }
-  }
-};
-
-export const MoveRPAcrossTiersRequest: msRest.CompositeMapper = {
-  serializedName: "MoveRPAcrossTiersRequest",
-  type: {
-    name: "Composite",
-    className: "MoveRPAcrossTiersRequest",
-    modelProperties: {
-      objectType: {
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
+          className: "RecoveryPointRehydrationInfo",
+        },
       },
-      sourceTierType: {
-        serializedName: "sourceTierType",
-        type: {
-          name: "Enum",
-          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"]
-        }
-      },
-      targetTierType: {
-        serializedName: "targetTierType",
-        type: {
-          name: "Enum",
-          allowedValues: ["Invalid", "InstantRP", "HardenedRP", "ArchivedRP"]
-        }
-      }
-    }
-  }
-};
-
-export const ListRecoveryPointsRecommendedForMoveRequest: msRest.CompositeMapper = {
-  serializedName: "ListRecoveryPointsRecommendedForMoveRequest",
-  type: {
-    name: "Composite",
-    className: "ListRecoveryPointsRecommendedForMoveRequest",
-    modelProperties: {
-      objectType: {
-        serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      },
-      excludedRPList: {
-        serializedName: "excludedRPList",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const NameInfo: msRest.CompositeMapper = {
-  serializedName: "NameInfo",
-  type: {
-    name: "Composite",
-    className: "NameInfo",
-    modelProperties: {
-      value: {
-        serializedName: "value",
-        type: {
-          name: "String"
-        }
-      },
-      localizedValue: {
-        serializedName: "localizedValue",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BackupManagementUsage: msRest.CompositeMapper = {
-  serializedName: "BackupManagementUsage",
-  type: {
-    name: "Composite",
-    className: "BackupManagementUsage",
-    modelProperties: {
-      unit: {
-        serializedName: "unit",
-        type: {
-          name: "String"
-        }
-      },
-      quotaPeriod: {
-        serializedName: "quotaPeriod",
-        type: {
-          name: "String"
-        }
-      },
-      nextResetTime: {
-        serializedName: "nextResetTime",
-        type: {
-          name: "DateTime"
-        }
-      },
-      currentValue: {
-        serializedName: "currentValue",
-        type: {
-          name: "Number"
-        }
-      },
-      limit: {
-        serializedName: "limit",
-        type: {
-          name: "Number"
-        }
-      },
-      name: {
-        serializedName: "name",
-        type: {
-          name: "Composite",
-          className: "NameInfo"
-        }
-      }
-    }
-  }
-};
-
-export const BMSBackupSummariesQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSBackupSummariesQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSBackupSummariesQueryObject",
-    modelProperties: {
-      type: {
-        serializedName: "type",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AADProperties: msRest.CompositeMapper = {
-  serializedName: "AADProperties",
-  type: {
-    name: "Composite",
-    className: "AADProperties",
-    modelProperties: {
-      servicePrincipalClientId: {
-        serializedName: "servicePrincipalClientId",
-        type: {
-          name: "String"
-        }
-      },
-      tenantId: {
-        serializedName: "tenantId",
-        type: {
-          name: "String"
-        }
-      },
-      authority: {
-        serializedName: "authority",
-        type: {
-          name: "String"
-        }
-      },
-      audience: {
-        serializedName: "audience",
-        type: {
-          name: "String"
-        }
-      },
-      servicePrincipalObjectId: {
-        serializedName: "servicePrincipalObjectId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AADPropertiesResource: msRest.CompositeMapper = {
-  serializedName: "AADPropertiesResource",
-  type: {
-    name: "Composite",
-    className: "AADPropertiesResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "AADProperties"
-        }
-      }
-    }
-  }
-};
-
-export const BackupResourceConfig: msRest.CompositeMapper = {
-  serializedName: "BackupResourceConfig",
-  type: {
-    name: "Composite",
-    className: "BackupResourceConfig",
-    modelProperties: {
-      storageModelType: {
-        serializedName: "storageModelType",
-        type: {
-          name: "String"
-        }
-      },
-      storageType: {
-        serializedName: "storageType",
-        type: {
-          name: "String"
-        }
-      },
-      storageTypeState: {
-        serializedName: "storageTypeState",
-        type: {
-          name: "String"
-        }
-      },
-      crossRegionRestoreFlag: {
-        serializedName: "crossRegionRestoreFlag",
-        type: {
-          name: "Boolean"
-        }
-      }
-    }
-  }
-};
-
-export const CrrJobRequest: msRest.CompositeMapper = {
-  serializedName: "CrrJobRequest",
-  type: {
-    name: "Composite",
-    className: "CrrJobRequest",
-    modelProperties: {
-      resourceId: {
-        serializedName: "resourceId",
-        type: {
-          name: "String"
-        }
-      },
-      jobName: {
-        serializedName: "jobName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const CrrJobRequestResource: msRest.CompositeMapper = {
-  serializedName: "CrrJobRequestResource",
-  type: {
-    name: "Composite",
-    className: "CrrJobRequestResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "CrrJobRequest"
-        }
-      }
-    }
-  }
-};
-
-export const BackupResourceConfigResource: msRest.CompositeMapper = {
-  serializedName: "BackupResourceConfigResource",
-  type: {
-    name: "Composite",
-    className: "BackupResourceConfigResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "BackupResourceConfig"
-        }
-      }
-    }
-  }
-};
-
-export const CrrAccessToken: msRest.CompositeMapper = {
-  serializedName: "CrrAccessToken",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "objectType",
-      clientName: "objectType"
     },
-    uberParent: "CrrAccessToken",
-    className: "CrrAccessToken",
+  },
+};
+
+export const ValidateIaasVMRestoreOperationRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "ValidateIaasVMRestoreOperationRequest",
+    type: {
+      name: "Composite",
+      className: "ValidateIaasVMRestoreOperationRequest",
+      uberParent: "ValidateRestoreOperationRequest",
+      polymorphicDiscriminator:
+        ValidateRestoreOperationRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...ValidateRestoreOperationRequest.type.modelProperties,
+      },
+    },
+  };
+
+export const AzureBackupServerContainer: coreClient.CompositeMapper = {
+  serializedName: "AzureBackupServerContainer",
+  type: {
+    name: "Composite",
+    className: "AzureBackupServerContainer",
+    uberParent: "DpmContainer",
+    polymorphicDiscriminator: DpmContainer.type.polymorphicDiscriminator,
     modelProperties: {
-      accessTokenString: {
-        serializedName: "accessTokenString",
-        type: {
-          name: "String"
-        }
+      ...DpmContainer.type.modelProperties,
+    },
+  },
+};
+
+export const AzureIaaSClassicComputeVMContainer: coreClient.CompositeMapper = {
+  serializedName: "Microsoft.ClassicCompute/virtualMachines",
+  type: {
+    name: "Composite",
+    className: "AzureIaaSClassicComputeVMContainer",
+    uberParent: "IaaSVMContainer",
+    polymorphicDiscriminator: IaaSVMContainer.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...IaaSVMContainer.type.modelProperties,
+    },
+  },
+};
+
+export const AzureIaaSComputeVMContainer: coreClient.CompositeMapper = {
+  serializedName: "Microsoft.Compute/virtualMachines",
+  type: {
+    name: "Composite",
+    className: "AzureIaaSComputeVMContainer",
+    uberParent: "IaaSVMContainer",
+    polymorphicDiscriminator: IaaSVMContainer.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...IaaSVMContainer.type.modelProperties,
+    },
+  },
+};
+
+export const AzureSqlagWorkloadContainerProtectionContainer: coreClient.CompositeMapper =
+  {
+    serializedName: "SQLAGWorkLoadContainer",
+    type: {
+      name: "Composite",
+      className: "AzureSqlagWorkloadContainerProtectionContainer",
+      uberParent: "AzureWorkloadContainer",
+      polymorphicDiscriminator:
+        AzureWorkloadContainer.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadContainer.type.modelProperties,
       },
-      subscriptionId: {
-        serializedName: "subscriptionId",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVMAppContainerProtectionContainer: coreClient.CompositeMapper =
+  {
+    serializedName: "VMAppContainer",
+    type: {
+      name: "Composite",
+      className: "AzureVMAppContainerProtectionContainer",
+      uberParent: "AzureWorkloadContainer",
+      polymorphicDiscriminator:
+        AzureWorkloadContainer.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadContainer.type.modelProperties,
       },
-      resourceGroupName: {
-        serializedName: "resourceGroupName",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSAPAseDatabaseWorkloadItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SAPAseDatabase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPAseDatabaseWorkloadItem",
+      uberParent: "AzureVmWorkloadItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadItem.type.modelProperties,
       },
-      resourceName: {
-        serializedName: "resourceName",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSAPAseSystemWorkloadItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SAPAseSystem",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPAseSystemWorkloadItem",
+      uberParent: "AzureVmWorkloadItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadItem.type.modelProperties,
       },
-      resourceId: {
-        serializedName: "resourceId",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSAPHanaDatabaseWorkloadItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SAPHanaDatabase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPHanaDatabaseWorkloadItem",
+      uberParent: "AzureVmWorkloadItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadItem.type.modelProperties,
       },
-      protectionContainerId: {
-        serializedName: "protectionContainerId",
-        type: {
-          name: "Number"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSAPHanaSystemWorkloadItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SAPHanaSystem",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPHanaSystemWorkloadItem",
+      uberParent: "AzureVmWorkloadItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadItem.type.modelProperties,
       },
-      recoveryPointId: {
-        serializedName: "recoveryPointId",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSQLDatabaseWorkloadItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SQLDataBase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSQLDatabaseWorkloadItem",
+      uberParent: "AzureVmWorkloadItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadItem.type.modelProperties,
       },
-      recoveryPointTime: {
-        serializedName: "recoveryPointTime",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSQLInstanceWorkloadItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SQLInstance",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSQLInstanceWorkloadItem",
+      uberParent: "AzureVmWorkloadItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadItem.type.modelProperties,
+        dataDirectoryPaths: {
+          serializedName: "dataDirectoryPaths",
+          type: {
+            name: "Sequence",
+            element: {
+              type: {
+                name: "Composite",
+                className: "SQLDataDirectory",
+              },
+            },
+          },
+        },
       },
-      containerName: {
-        serializedName: "containerName",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureIaaSClassicComputeVMProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "Microsoft.ClassicCompute/virtualMachines",
+    type: {
+      name: "Composite",
+      className: "AzureIaaSClassicComputeVMProtectableItem",
+      uberParent: "IaaSVMProtectableItem",
+      polymorphicDiscriminator:
+        IaaSVMProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...IaaSVMProtectableItem.type.modelProperties,
       },
-      containerType: {
-        serializedName: "containerType",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureIaaSComputeVMProtectableItem: coreClient.CompositeMapper = {
+  serializedName: "Microsoft.Compute/virtualMachines",
+  type: {
+    name: "Composite",
+    className: "AzureIaaSComputeVMProtectableItem",
+    uberParent: "IaaSVMProtectableItem",
+    polymorphicDiscriminator:
+      IaaSVMProtectableItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...IaaSVMProtectableItem.type.modelProperties,
+    },
+  },
+};
+
+export const AzureVmWorkloadSAPAseSystemProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SAPAseSystem",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPAseSystemProtectableItem",
+      uberParent: "AzureVmWorkloadProtectableItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectableItem.type.modelProperties,
       },
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSAPHanaDatabaseProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SAPHanaDatabase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPHanaDatabaseProtectableItem",
+      uberParent: "AzureVmWorkloadProtectableItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectableItem.type.modelProperties,
       },
-      datasourceType: {
-        serializedName: "datasourceType",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSAPHanaSystemProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SAPHanaSystem",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPHanaSystemProtectableItem",
+      uberParent: "AzureVmWorkloadProtectableItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectableItem.type.modelProperties,
       },
-      datasourceName: {
-        serializedName: "datasourceName",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSAPHanaDBInstance: coreClient.CompositeMapper = {
+  serializedName: "SAPHanaDBInstance",
+  type: {
+    name: "Composite",
+    className: "AzureVmWorkloadSAPHanaDBInstance",
+    uberParent: "AzureVmWorkloadProtectableItem",
+    polymorphicDiscriminator:
+      AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...AzureVmWorkloadProtectableItem.type.modelProperties,
+    },
+  },
+};
+
+export const AzureVmWorkloadSAPHanaHSRProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "HanaHSRContainer",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSAPHanaHSRProtectableItem",
+      uberParent: "AzureVmWorkloadProtectableItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectableItem.type.modelProperties,
       },
-      datasourceId: {
-        serializedName: "datasourceId",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSQLAvailabilityGroupProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SQLAvailabilityGroupContainer",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSQLAvailabilityGroupProtectableItem",
+      uberParent: "AzureVmWorkloadProtectableItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectableItem.type.modelProperties,
+        nodesList: {
+          serializedName: "nodesList",
+          type: {
+            name: "Sequence",
+            element: {
+              type: {
+                name: "Composite",
+                className: "DistributedNodesInfo",
+              },
+            },
+          },
+        },
       },
-      datasourceContainerName: {
-        serializedName: "datasourceContainerName",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSQLDatabaseProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SQLDataBase",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSQLDatabaseProtectableItem",
+      uberParent: "AzureVmWorkloadProtectableItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectableItem.type.modelProperties,
       },
-      coordinatorServiceStampId: {
-        serializedName: "coordinatorServiceStampId",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureVmWorkloadSQLInstanceProtectableItem: coreClient.CompositeMapper =
+  {
+    serializedName: "SQLInstance",
+    type: {
+      name: "Composite",
+      className: "AzureVmWorkloadSQLInstanceProtectableItem",
+      uberParent: "AzureVmWorkloadProtectableItem",
+      polymorphicDiscriminator:
+        AzureVmWorkloadProtectableItem.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureVmWorkloadProtectableItem.type.modelProperties,
       },
-      coordinatorServiceStampUri: {
-        serializedName: "coordinatorServiceStampUri",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureWorkloadSQLAutoProtectionIntent: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSQLAutoProtectionIntent",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSQLAutoProtectionIntent",
+      uberParent: "AzureWorkloadAutoProtectionIntent",
+      polymorphicDiscriminator:
+        AzureWorkloadAutoProtectionIntent.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadAutoProtectionIntent.type.modelProperties,
+        workloadItemType: {
+          serializedName: "workloadItemType",
+          type: {
+            name: "String",
+          },
+        },
       },
-      protectionServiceStampId: {
-        serializedName: "protectionServiceStampId",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureWorkloadSAPHanaPointInTimeRecoveryPoint: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSAPHanaPointInTimeRecoveryPoint",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSAPHanaPointInTimeRecoveryPoint",
+      uberParent: "AzureWorkloadPointInTimeRecoveryPoint",
+      polymorphicDiscriminator:
+        AzureWorkloadPointInTimeRecoveryPoint.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadPointInTimeRecoveryPoint.type.modelProperties,
       },
-      protectionServiceStampUri: {
-        serializedName: "protectionServiceStampUri",
-        type: {
-          name: "String"
-        }
+    },
+  };
+
+export const AzureWorkloadSQLPointInTimeRecoveryPoint: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSQLPointInTimeRecoveryPoint",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSQLPointInTimeRecoveryPoint",
+      uberParent: "AzureWorkloadSQLRecoveryPoint",
+      polymorphicDiscriminator:
+        AzureWorkloadSQLRecoveryPoint.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadSQLRecoveryPoint.type.modelProperties,
+        timeRanges: {
+          serializedName: "timeRanges",
+          type: {
+            name: "Sequence",
+            element: {
+              type: {
+                name: "Composite",
+                className: "PointInTimeRange",
+              },
+            },
+          },
+        },
       },
-      tokenExtendedInformation: {
-        serializedName: "tokenExtendedInformation",
-        type: {
-          name: "String"
-        }
-      },
-      rpTierInformation: {
-        serializedName: "rpTierInformation",
-        type: {
-          name: "Dictionary",
-          value: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
-      rpOriginalSAOption: {
-        serializedName: "rpOriginalSAOption",
-        type: {
-          name: "Boolean"
-        }
-      },
-      rpIsManagedVirtualMachine: {
-        serializedName: "rpIsManagedVirtualMachine",
-        type: {
-          name: "Boolean"
-        }
-      },
-      rpVMSizeDescription: {
-        serializedName: "rpVMSizeDescription",
-        type: {
-          name: "String"
-        }
-      },
-      bMSActiveRegion: {
-        serializedName: "bMSActiveRegion",
-        type: {
-          name: "String"
-        }
-      },
-      objectType: {
-        required: true,
+    },
+  };
+
+export const AzureWorkloadSAPHanaPointInTimeRestoreRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSAPHanaPointInTimeRestoreRequest",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSAPHanaPointInTimeRestoreRequest",
+      uberParent: "AzureWorkloadSAPHanaRestoreRequest",
+      polymorphicDiscriminator: {
         serializedName: "objectType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const CrossRegionRestoreRequest: msRest.CompositeMapper = {
-  serializedName: "CrossRegionRestoreRequest",
-  type: {
-    name: "Composite",
-    className: "CrossRegionRestoreRequest",
-    modelProperties: {
-      crossRegionRestoreAccessDetails: {
-        serializedName: "crossRegionRestoreAccessDetails",
-        type: {
-          name: "Composite",
-          className: "CrrAccessToken"
-        }
+        clientName: "objectType",
       },
-      restoreRequest: {
-        serializedName: "restoreRequest",
-        type: {
-          name: "Composite",
-          className: "RestoreRequest"
-        }
-      }
-    }
-  }
-};
-
-export const CrossRegionRestoreRequestResource: msRest.CompositeMapper = {
-  serializedName: "CrossRegionRestoreRequestResource",
-  type: {
-    name: "Composite",
-    className: "CrossRegionRestoreRequestResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "CrossRegionRestoreRequest"
-        }
-      }
-    }
-  }
-};
-
-export const CrrAccessTokenResource: msRest.CompositeMapper = {
-  serializedName: "CrrAccessTokenResource",
-  type: {
-    name: "Composite",
-    className: "CrrAccessTokenResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "CrrAccessToken"
-        }
-      }
-    }
-  }
-};
-
-export const BMSAADPropertiesQueryObject: msRest.CompositeMapper = {
-  serializedName: "BMSAADPropertiesQueryObject",
-  type: {
-    name: "Composite",
-    className: "BMSAADPropertiesQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const OperationStatusRecoveryPointExtendedInfo: msRest.CompositeMapper = {
-  serializedName: "OperationStatusRecoveryPointExtendedInfo",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: OperationStatusExtendedInfo.type.polymorphicDiscriminator,
-    uberParent: "OperationStatusExtendedInfo",
-    className: "OperationStatusRecoveryPointExtendedInfo",
-    modelProperties: {
-      ...OperationStatusExtendedInfo.type.modelProperties,
-      updatedRecoveryPoint: {
-        serializedName: "updatedRecoveryPoint",
-        type: {
-          name: "Composite",
-          className: "RecoveryPoint"
-        }
+      modelProperties: {
+        ...AzureWorkloadSAPHanaRestoreRequest.type.modelProperties,
+        pointInTime: {
+          serializedName: "pointInTime",
+          type: {
+            name: "DateTime",
+          },
+        },
       },
-      deletedBackupItemVersion: {
-        serializedName: "deletedBackupItemVersion",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const WorkloadCrrAccessToken: msRest.CompositeMapper = {
-  serializedName: "WorkloadCrrAccessToken",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: CrrAccessToken.type.polymorphicDiscriminator,
-    uberParent: "CrrAccessToken",
-    className: "WorkloadCrrAccessToken",
-    modelProperties: {
-      ...CrrAccessToken.type.modelProperties,
-      protectableObjectUniqueName: {
-        serializedName: "protectableObjectUniqueName",
-        type: {
-          name: "String"
-        }
-      },
-      protectableObjectFriendlyName: {
-        serializedName: "protectableObjectFriendlyName",
-        type: {
-          name: "String"
-        }
-      },
-      protectableObjectWorkloadType: {
-        serializedName: "protectableObjectWorkloadType",
-        type: {
-          name: "String"
-        }
-      },
-      protectableObjectProtectionState: {
-        serializedName: "protectableObjectProtectionState",
-        type: {
-          name: "String"
-        }
-      },
-      protectableObjectContainerHostOsName: {
-        serializedName: "protectableObjectContainerHostOsName",
-        type: {
-          name: "String"
-        }
-      },
-      protectableObjectParentLogicalContainerName: {
-        serializedName: "protectableObjectParentLogicalContainerName",
-        type: {
-          name: "String"
-        }
-      },
-      containerId: {
-        serializedName: "containerId",
-        type: {
-          name: "String"
-        }
-      },
-      policyName: {
-        serializedName: "policyName",
-        type: {
-          name: "String"
-        }
-      },
-      policyId: {
-        serializedName: "policyId",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const FeatureSupportRequest: msRest.CompositeMapper = {
-  serializedName: "FeatureSupportRequest",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "featureType",
-      clientName: "featureType"
     },
-    uberParent: "FeatureSupportRequest",
-    className: "FeatureSupportRequest",
-    modelProperties: {
-      featureType: {
-        required: true,
-        serializedName: "featureType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+  };
 
-export const AzureBackupGoalFeatureSupportRequest: msRest.CompositeMapper = {
-  serializedName: "AzureBackupGoals",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: FeatureSupportRequest.type.polymorphicDiscriminator,
-    uberParent: "FeatureSupportRequest",
-    className: "AzureBackupGoalFeatureSupportRequest",
-    modelProperties: {
-      ...FeatureSupportRequest.type.modelProperties
-    }
-  }
-};
-
-export const ProtectionIntent: msRest.CompositeMapper = {
-  serializedName: "ProtectionIntent",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: {
-      serializedName: "protectionIntentItemType",
-      clientName: "protectionIntentItemType"
+export const AzureWorkloadSAPHanaRestoreWithRehydrateRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSAPHanaRestoreWithRehydrateRequest",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSAPHanaRestoreWithRehydrateRequest",
+      uberParent: "AzureWorkloadSAPHanaRestoreRequest",
+      polymorphicDiscriminator:
+        AzureWorkloadSAPHanaRestoreRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadSAPHanaRestoreRequest.type.modelProperties,
+        recoveryPointRehydrationInfo: {
+          serializedName: "recoveryPointRehydrationInfo",
+          type: {
+            name: "Composite",
+            className: "RecoveryPointRehydrationInfo",
+          },
+        },
+      },
     },
-    uberParent: "ProtectionIntent",
-    className: "ProtectionIntent",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      sourceResourceId: {
-        serializedName: "sourceResourceId",
-        type: {
-          name: "String"
-        }
-      },
-      itemId: {
-        serializedName: "itemId",
-        type: {
-          name: "String"
-        }
-      },
-      policyId: {
-        serializedName: "policyId",
-        type: {
-          name: "String"
-        }
-      },
-      protectionState: {
-        serializedName: "protectionState",
-        type: {
-          name: "String"
-        }
-      },
-      protectionIntentItemType: {
-        required: true,
-        serializedName: "protectionIntentItemType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+  };
 
-export const AzureRecoveryServiceVaultProtectionIntent: msRest.CompositeMapper = {
-  serializedName: "RecoveryServiceVaultItem",
+export const AzureWorkloadSQLPointInTimeRestoreRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSQLPointInTimeRestoreRequest",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSQLPointInTimeRestoreRequest",
+      uberParent: "AzureWorkloadSQLRestoreRequest",
+      polymorphicDiscriminator: {
+        serializedName: "objectType",
+        clientName: "objectType",
+      },
+      modelProperties: {
+        ...AzureWorkloadSQLRestoreRequest.type.modelProperties,
+        pointInTime: {
+          serializedName: "pointInTime",
+          type: {
+            name: "DateTime",
+          },
+        },
+      },
+    },
+  };
+
+export const AzureWorkloadSQLRestoreWithRehydrateRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSQLRestoreWithRehydrateRequest",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSQLRestoreWithRehydrateRequest",
+      uberParent: "AzureWorkloadSQLRestoreRequest",
+      polymorphicDiscriminator:
+        AzureWorkloadSQLRestoreRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadSQLRestoreRequest.type.modelProperties,
+        recoveryPointRehydrationInfo: {
+          serializedName: "recoveryPointRehydrationInfo",
+          type: {
+            name: "Composite",
+            className: "RecoveryPointRehydrationInfo",
+          },
+        },
+      },
+    },
+  };
+
+export const AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest: coreClient.CompositeMapper =
+  {
+    serializedName:
+      "AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest",
+      uberParent: "AzureWorkloadSAPHanaPointInTimeRestoreRequest",
+      polymorphicDiscriminator:
+        AzureWorkloadSAPHanaPointInTimeRestoreRequest.type
+          .polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadSAPHanaPointInTimeRestoreRequest.type.modelProperties,
+        recoveryPointRehydrationInfo: {
+          serializedName: "recoveryPointRehydrationInfo",
+          type: {
+            name: "Composite",
+            className: "RecoveryPointRehydrationInfo",
+          },
+        },
+      },
+    },
+  };
+
+export const AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest: coreClient.CompositeMapper =
+  {
+    serializedName: "AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest",
+    type: {
+      name: "Composite",
+      className: "AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest",
+      uberParent: "AzureWorkloadSQLPointInTimeRestoreRequest",
+      polymorphicDiscriminator:
+        AzureWorkloadSQLPointInTimeRestoreRequest.type.polymorphicDiscriminator,
+      modelProperties: {
+        ...AzureWorkloadSQLPointInTimeRestoreRequest.type.modelProperties,
+        recoveryPointRehydrationInfo: {
+          serializedName: "recoveryPointRehydrationInfo",
+          type: {
+            name: "Composite",
+            className: "RecoveryPointRehydrationInfo",
+          },
+        },
+      },
+    },
+  };
+
+export const FetchTieringCostPostHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    polymorphicDiscriminator: ProtectionIntent.type.polymorphicDiscriminator,
-    uberParent: "ProtectionIntent",
-    className: "AzureRecoveryServiceVaultProtectionIntent",
+    className: "FetchTieringCostPostHeaders",
     modelProperties: {
-      ...ProtectionIntent.type.modelProperties
-    }
-  }
+      location: {
+        serializedName: "location",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AzureResourceProtectionIntent: msRest.CompositeMapper = {
-  serializedName: "AzureResourceItem",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionIntent.type.polymorphicDiscriminator,
-    uberParent: "ProtectionIntent",
-    className: "AzureResourceProtectionIntent",
-    modelProperties: {
-      ...ProtectionIntent.type.modelProperties,
-      friendlyName: {
-        serializedName: "friendlyName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureVMResourceFeatureSupportRequest: msRest.CompositeMapper = {
-  serializedName: "AzureVMResourceBackup",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: FeatureSupportRequest.type.polymorphicDiscriminator,
-    uberParent: "FeatureSupportRequest",
-    className: "AzureVMResourceFeatureSupportRequest",
-    modelProperties: {
-      ...FeatureSupportRequest.type.modelProperties,
-      vmSize: {
-        serializedName: "vmSize",
-        type: {
-          name: "String"
-        }
-      },
-      vmSku: {
-        serializedName: "vmSku",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureVMResourceFeatureSupportResponse: msRest.CompositeMapper = {
-  serializedName: "AzureVMResourceFeatureSupportResponse",
-  type: {
-    name: "Composite",
-    className: "AzureVMResourceFeatureSupportResponse",
-    modelProperties: {
-      supportStatus: {
-        serializedName: "supportStatus",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AzureWorkloadAutoProtectionIntent: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadAutoProtectionIntent",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionIntent.type.polymorphicDiscriminator,
-    uberParent: "ProtectionIntent",
-    className: "AzureWorkloadAutoProtectionIntent",
-    modelProperties: {
-      ...AzureRecoveryServiceVaultProtectionIntent.type.modelProperties
-    }
-  }
-};
-
-export const AzureWorkloadSQLAutoProtectionIntent: msRest.CompositeMapper = {
-  serializedName: "AzureWorkloadSQLAutoProtectionIntent",
-  type: {
-    name: "Composite",
-    polymorphicDiscriminator: ProtectionIntent.type.polymorphicDiscriminator,
-    uberParent: "ProtectionIntent",
-    className: "AzureWorkloadSQLAutoProtectionIntent",
-    modelProperties: {
-      ...AzureWorkloadAutoProtectionIntent.type.modelProperties,
-      workloadItemType: {
-        serializedName: "workloadItemType",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BackupStatusRequest: msRest.CompositeMapper = {
-  serializedName: "BackupStatusRequest",
-  type: {
-    name: "Composite",
-    className: "BackupStatusRequest",
-    modelProperties: {
-      resourceType: {
-        serializedName: "resourceType",
-        type: {
-          name: "String"
-        }
-      },
-      resourceId: {
-        serializedName: "resourceId",
-        type: {
-          name: "String"
-        }
-      },
-      poLogicalName: {
-        serializedName: "poLogicalName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const BackupStatusResponse: msRest.CompositeMapper = {
-  serializedName: "BackupStatusResponse",
-  type: {
-    name: "Composite",
-    className: "BackupStatusResponse",
-    modelProperties: {
-      protectionStatus: {
-        serializedName: "protectionStatus",
-        type: {
-          name: "String"
-        }
-      },
-      vaultId: {
-        serializedName: "vaultId",
-        type: {
-          name: "String"
-        }
-      },
-      fabricName: {
-        serializedName: "fabricName",
-        type: {
-          name: "String"
-        }
-      },
-      containerName: {
-        serializedName: "containerName",
-        type: {
-          name: "String"
-        }
-      },
-      protectedItemName: {
-        serializedName: "protectedItemName",
-        type: {
-          name: "String"
-        }
-      },
-      errorCode: {
-        serializedName: "errorCode",
-        type: {
-          name: "String"
-        }
-      },
-      errorMessage: {
-        serializedName: "errorMessage",
-        type: {
-          name: "String"
-        }
-      },
-      policyName: {
-        serializedName: "policyName",
-        type: {
-          name: "String"
-        }
-      },
-      registrationStatus: {
-        serializedName: "registrationStatus",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const PreValidateEnableBackupRequest: msRest.CompositeMapper = {
-  serializedName: "PreValidateEnableBackupRequest",
-  type: {
-    name: "Composite",
-    className: "PreValidateEnableBackupRequest",
-    modelProperties: {
-      resourceType: {
-        serializedName: "resourceType",
-        type: {
-          name: "String"
-        }
-      },
-      resourceId: {
-        serializedName: "resourceId",
-        type: {
-          name: "String"
-        }
-      },
-      vaultId: {
-        serializedName: "vaultId",
-        type: {
-          name: "String"
-        }
-      },
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const PreValidateEnableBackupResponse: msRest.CompositeMapper = {
-  serializedName: "PreValidateEnableBackupResponse",
-  type: {
-    name: "Composite",
-    className: "PreValidateEnableBackupResponse",
-    modelProperties: {
-      status: {
-        serializedName: "status",
-        type: {
-          name: "String"
-        }
-      },
-      errorCode: {
-        serializedName: "errorCode",
-        type: {
-          name: "String"
-        }
-      },
-      errorMessage: {
-        serializedName: "errorMessage",
-        type: {
-          name: "String"
-        }
-      },
-      recommendation: {
-        serializedName: "recommendation",
-        type: {
-          name: "String"
-        }
-      },
-      containerName: {
-        serializedName: "containerName",
-        type: {
-          name: "String"
-        }
-      },
-      protectedItemName: {
-        serializedName: "protectedItemName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionIntentQueryObject: msRest.CompositeMapper = {
-  serializedName: "ProtectionIntentQueryObject",
-  type: {
-    name: "Composite",
-    className: "ProtectionIntentQueryObject",
-    modelProperties: {
-      backupManagementType: {
-        serializedName: "backupManagementType",
-        type: {
-          name: "String"
-        }
-      },
-      itemType: {
-        serializedName: "itemType",
-        type: {
-          name: "String"
-        }
-      },
-      parentName: {
-        serializedName: "parentName",
-        type: {
-          name: "String"
-        }
-      },
-      itemName: {
-        serializedName: "itemName",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionIntentResource: msRest.CompositeMapper = {
-  serializedName: "ProtectionIntentResource",
-  type: {
-    name: "Composite",
-    className: "ProtectionIntentResource",
-    modelProperties: {
-      ...Resource.type.modelProperties,
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "ProtectionIntent"
-        }
-      }
-    }
-  }
-};
-
-export const ClientDiscoveryDisplay: msRest.CompositeMapper = {
-  serializedName: "ClientDiscoveryDisplay",
-  type: {
-    name: "Composite",
-    className: "ClientDiscoveryDisplay",
-    modelProperties: {
-      provider: {
-        serializedName: "provider",
-        type: {
-          name: "String"
-        }
-      },
-      resource: {
-        serializedName: "resource",
-        type: {
-          name: "String"
-        }
-      },
-      operation: {
-        serializedName: "operation",
-        type: {
-          name: "String"
-        }
-      },
-      description: {
-        serializedName: "description",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const ClientDiscoveryForLogSpecification: msRest.CompositeMapper = {
-  serializedName: "ClientDiscoveryForLogSpecification",
-  type: {
-    name: "Composite",
-    className: "ClientDiscoveryForLogSpecification",
-    modelProperties: {
-      name: {
-        serializedName: "name",
-        type: {
-          name: "String"
-        }
-      },
-      displayName: {
-        serializedName: "displayName",
-        type: {
-          name: "String"
-        }
-      },
-      blobDuration: {
-        serializedName: "blobDuration",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const ClientDiscoveryForServiceSpecification: msRest.CompositeMapper = {
-  serializedName: "ClientDiscoveryForServiceSpecification",
-  type: {
-    name: "Composite",
-    className: "ClientDiscoveryForServiceSpecification",
-    modelProperties: {
-      logSpecifications: {
-        serializedName: "logSpecifications",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ClientDiscoveryForLogSpecification"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ClientDiscoveryForProperties: msRest.CompositeMapper = {
-  serializedName: "ClientDiscoveryForProperties",
-  type: {
-    name: "Composite",
-    className: "ClientDiscoveryForProperties",
-    modelProperties: {
-      serviceSpecification: {
-        serializedName: "serviceSpecification",
-        type: {
-          name: "Composite",
-          className: "ClientDiscoveryForServiceSpecification"
-        }
-      }
-    }
-  }
-};
-
-export const ClientDiscoveryValueForSingleApi: msRest.CompositeMapper = {
-  serializedName: "ClientDiscoveryValueForSingleApi",
-  type: {
-    name: "Composite",
-    className: "ClientDiscoveryValueForSingleApi",
-    modelProperties: {
-      name: {
-        serializedName: "name",
-        type: {
-          name: "String"
-        }
-      },
-      display: {
-        serializedName: "display",
-        type: {
-          name: "Composite",
-          className: "ClientDiscoveryDisplay"
-        }
-      },
-      origin: {
-        serializedName: "origin",
-        type: {
-          name: "String"
-        }
-      },
-      properties: {
-        serializedName: "properties",
-        type: {
-          name: "Composite",
-          className: "ClientDiscoveryForProperties"
-        }
-      }
-    }
-  }
-};
-
-export const RecoveryPointResourceList: msRest.CompositeMapper = {
-  serializedName: "RecoveryPointResourceList",
-  type: {
-    name: "Composite",
-    className: "RecoveryPointResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "RecoveryPointResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionPolicyResourceList: msRest.CompositeMapper = {
-  serializedName: "ProtectionPolicyResourceList",
-  type: {
-    name: "Composite",
-    className: "ProtectionPolicyResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ProtectionPolicyResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const JobResourceList: msRest.CompositeMapper = {
-  serializedName: "JobResourceList",
-  type: {
-    name: "Composite",
-    className: "JobResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "JobResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ProtectedItemResourceList: msRest.CompositeMapper = {
-  serializedName: "ProtectedItemResourceList",
-  type: {
-    name: "Composite",
-    className: "ProtectedItemResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ProtectedItemResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const BackupEngineBaseResourceList: msRest.CompositeMapper = {
-  serializedName: "BackupEngineBaseResourceList",
-  type: {
-    name: "Composite",
-    className: "BackupEngineBaseResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "BackupEngineBaseResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ProtectableContainerResourceList: msRest.CompositeMapper = {
-  serializedName: "ProtectableContainerResourceList",
-  type: {
-    name: "Composite",
-    className: "ProtectableContainerResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ProtectableContainerResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const WorkloadItemResourceList: msRest.CompositeMapper = {
-  serializedName: "WorkloadItemResourceList",
-  type: {
-    name: "Composite",
-    className: "WorkloadItemResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "WorkloadItemResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const WorkloadProtectableItemResourceList: msRest.CompositeMapper = {
-  serializedName: "WorkloadProtectableItemResourceList",
-  type: {
-    name: "Composite",
-    className: "WorkloadProtectableItemResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "WorkloadProtectableItemResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionContainerResourceList: msRest.CompositeMapper = {
-  serializedName: "ProtectionContainerResourceList",
-  type: {
-    name: "Composite",
-    className: "ProtectionContainerResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ProtectionContainerResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const BackupManagementUsageList: msRest.CompositeMapper = {
-  serializedName: "BackupManagementUsageList",
-  type: {
-    name: "Composite",
-    className: "BackupManagementUsageList",
-    modelProperties: {
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "BackupManagementUsage"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ProtectionIntentResourceList: msRest.CompositeMapper = {
-  serializedName: "ProtectionIntentResourceList",
-  type: {
-    name: "Composite",
-    className: "ProtectionIntentResourceList",
-    modelProperties: {
-      ...ResourceList.type.modelProperties,
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ProtectionIntentResource"
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
-export const ClientDiscoveryResponse: msRest.CompositeMapper = {
-  serializedName: "ClientDiscoveryResponse",
-  type: {
-    name: "Composite",
-    className: "ClientDiscoveryResponse",
-    modelProperties: {
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "ClientDiscoveryValueForSingleApi"
-            }
-          }
-        }
-      },
-      nextLink: {
-        serializedName: "nextLink",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const discriminators = {
-  "ProtectedItem.AzureFileShareProtectedItem": AzureFileshareProtectedItem,
-  "RecoveryPoint.AzureFileShareRecoveryPoint": AzureFileShareRecoveryPoint,
-  "RestoreRequest.AzureFileShareRestoreRequest": AzureFileShareRestoreRequest,
-  SchedulePolicy: SchedulePolicy,
-  RetentionPolicy: RetentionPolicy,
-  "ProtectionPolicy.AzureWorkload": AzureVmWorkloadProtectionPolicy,
-  "ProtectionPolicy.AzureStorage": AzureFileShareProtectionPolicy,
-  "ProtectedItem.Microsoft.ClassicCompute/virtualMachines": AzureIaaSClassicComputeVMProtectedItem,
-  "ProtectedItem.Microsoft.Compute/virtualMachines": AzureIaaSComputeVMProtectedItem,
-  "Job.AzureIaaSVMJob": AzureIaaSVMJob,
-  "ProtectedItem.AzureIaaSVMProtectedItem": AzureIaaSVMProtectedItem,
-  "ProtectionPolicy.AzureIaasVM": AzureIaaSVMProtectionPolicy,
-  "ProtectedItem.Microsoft.Sql/servers/databases": AzureSqlProtectedItem,
-  "ProtectionPolicy.AzureSql": AzureSqlProtectionPolicy,
-  "Job.AzureStorageJob": AzureStorageJob,
-  "ProtectedItem.AzureVmWorkloadProtectedItem": AzureVmWorkloadProtectedItem,
-  "ProtectedItem.AzureVmWorkloadSAPAseDatabase": AzureVmWorkloadSAPAseDatabaseProtectedItem,
-  "ProtectedItem.AzureVmWorkloadSAPHanaDatabase": AzureVmWorkloadSAPHanaDatabaseProtectedItem,
-  "ProtectedItem.AzureVmWorkloadSQLDatabase": AzureVmWorkloadSQLDatabaseProtectedItem,
-  "Job.AzureWorkloadJob": AzureWorkloadJob,
-  "RecoveryPoint.AzureWorkloadPointInTimeRecoveryPoint": AzureWorkloadPointInTimeRecoveryPoint,
-  "RestoreRequest.AzureWorkloadPointInTimeRestoreRequest": AzureWorkloadPointInTimeRestoreRequest,
-  "RecoveryPoint.AzureWorkloadRecoveryPoint": AzureWorkloadRecoveryPoint,
-  "RestoreRequest.AzureWorkloadRestoreRequest": AzureWorkloadRestoreRequest,
-  "RecoveryPoint.AzureWorkloadSAPHanaPointInTimeRecoveryPoint": AzureWorkloadSAPHanaPointInTimeRecoveryPoint,
-  "RestoreRequest.AzureWorkloadSAPHanaPointInTimeRestoreRequest": AzureWorkloadSAPHanaPointInTimeRestoreRequest,
-  "RecoveryPoint.AzureWorkloadSAPHanaRecoveryPoint": AzureWorkloadSAPHanaRecoveryPoint,
-  "RestoreRequest.AzureWorkloadSAPHanaRestoreRequest": AzureWorkloadSAPHanaRestoreRequest,
-  "RecoveryPoint.AzureWorkloadSQLPointInTimeRecoveryPoint": AzureWorkloadSQLPointInTimeRecoveryPoint,
-  "RestoreRequest.AzureWorkloadSQLPointInTimeRestoreRequest": AzureWorkloadSQLPointInTimeRestoreRequest,
-  "RecoveryPoint.AzureWorkloadSQLRecoveryPoint": AzureWorkloadSQLRecoveryPoint,
-  "RestoreRequest.AzureWorkloadSQLRestoreRequest": AzureWorkloadSQLRestoreRequest,
-  "Job.DpmJob": DpmJob,
-  "ProtectedItem.DPMProtectedItem": DPMProtectedItem,
-  "OperationResultInfoBase.ExportJobsOperationResultInfo": ExportJobsOperationResultInfo,
-  "ProtectionPolicy.GenericProtectionPolicy": GenericProtectionPolicy,
-  "ProtectedItem.GenericProtectedItem": GenericProtectedItem,
-  "RecoveryPoint.GenericRecoveryPoint": GenericRecoveryPoint,
-  "RecoveryPoint.IaasVMRecoveryPoint": IaasVMRecoveryPoint,
-  "RestoreRequest.IaasVMRestoreRequest": IaasVMRestoreRequest,
-  Job: Job,
-  "SchedulePolicy.LogSchedulePolicy": LogSchedulePolicy,
-  "RetentionPolicy.LongTermRetentionPolicy": LongTermRetentionPolicy,
-  "SchedulePolicy.LongTermSchedulePolicy": LongTermSchedulePolicy,
-  "ProtectedItem.MabFileFolderProtectedItem": MabFileFolderProtectedItem,
-  "Job.MabJob": MabJob,
-  "ProtectionPolicy.MAB": MabProtectionPolicy,
-  "OperationResultInfoBase.OperationResultInfo": OperationResultInfo,
-  OperationResultInfoBase: OperationResultInfoBase,
-  "VaultStorageConfigOperationResultResponse.PrepareDataMoveResponse": PrepareDataMoveResponse,
-  VaultStorageConfigOperationResultResponse: VaultStorageConfigOperationResultResponse,
+export let discriminators = {
+  FeatureSupportRequest: FeatureSupportRequest,
+  ProtectionIntent: ProtectionIntent,
+  OperationStatusExtendedInfo: OperationStatusExtendedInfo,
+  VaultStorageConfigOperationResultResponse:
+    VaultStorageConfigOperationResultResponse,
   ProtectedItem: ProtectedItem,
-  ProtectionPolicy: ProtectionPolicy,
   RecoveryPoint: RecoveryPoint,
   RestoreRequest: RestoreRequest,
-  "RetentionPolicy.SimpleRetentionPolicy": SimpleRetentionPolicy,
-  "SchedulePolicy.SimpleSchedulePolicy": SimpleSchedulePolicy,
-  "ValidateOperationRequest.ValidateIaasVMRestoreOperationRequest": ValidateIaasVMRestoreOperationRequest,
+  ProtectionPolicy: ProtectionPolicy,
+  Job: Job,
+  OperationResultInfoBase: OperationResultInfoBase,
   ValidateOperationRequest: ValidateOperationRequest,
-  "ValidateOperationRequest.ValidateRestoreOperationRequest": ValidateRestoreOperationRequest,
-  "Job.VaultJob": VaultJob,
-  "ProtectionContainer.AzureBackupServerContainer": AzureBackupServerContainer,
-  "BackupEngineBase.AzureBackupServerEngine": AzureBackupServerEngine,
-  "BackupRequest.AzureFileShareBackupRequest": AzureFileShareBackupRequest,
-  "WorkloadProtectableItem.AzureFileShare": AzureFileShareProtectableItem,
-  "ILRRequest.AzureFileShareProvisionILRRequest": AzureFileShareProvisionILRRequest,
-  "ProtectionContainer.Microsoft.ClassicCompute/virtualMachines": AzureIaaSClassicComputeVMContainer,
-  "WorkloadProtectableItem.Microsoft.ClassicCompute/virtualMachines": AzureIaaSClassicComputeVMProtectableItem,
-  "ProtectionContainer.Microsoft.Compute/virtualMachines": AzureIaaSComputeVMContainer,
-  "WorkloadProtectableItem.Microsoft.Compute/virtualMachines": AzureIaaSComputeVMProtectableItem,
-  "ProtectionContainer.SQLAGWorkLoadContainer": AzureSQLAGWorkloadContainerProtectionContainer,
-  "ProtectionContainer.AzureSqlContainer": AzureSqlContainer,
-  "ProtectionContainer.StorageContainer": AzureStorageContainer,
-  "ProtectableContainer.StorageContainer": AzureStorageProtectableContainer,
-  "ProtectableContainer.VMAppContainer": AzureVMAppContainerProtectableContainer,
-  "ProtectionContainer.VMAppContainer": AzureVMAppContainerProtectionContainer,
-  "WorkloadItem.AzureVmWorkloadItem": AzureVmWorkloadItem,
-  "WorkloadProtectableItem.AzureVmWorkloadProtectableItem": AzureVmWorkloadProtectableItem,
-  "WorkloadItem.SAPAseDatabase": AzureVmWorkloadSAPAseDatabaseWorkloadItem,
-  "WorkloadProtectableItem.SAPAseSystem": AzureVmWorkloadSAPAseSystemProtectableItem,
-  "WorkloadItem.SAPAseSystem": AzureVmWorkloadSAPAseSystemWorkloadItem,
-  "WorkloadProtectableItem.SAPHanaDatabase": AzureVmWorkloadSAPHanaDatabaseProtectableItem,
-  "WorkloadItem.SAPHanaDatabase": AzureVmWorkloadSAPHanaDatabaseWorkloadItem,
-  "WorkloadProtectableItem.SAPHanaSystem": AzureVmWorkloadSAPHanaSystemProtectableItem,
-  "WorkloadItem.SAPHanaSystem": AzureVmWorkloadSAPHanaSystemWorkloadItem,
-  "WorkloadProtectableItem.SQLAvailabilityGroupContainer": AzureVmWorkloadSQLAvailabilityGroupProtectableItem,
-  "WorkloadProtectableItem.SQLDataBase": AzureVmWorkloadSQLDatabaseProtectableItem,
-  "WorkloadItem.SQLDataBase": AzureVmWorkloadSQLDatabaseWorkloadItem,
-  "WorkloadProtectableItem.SQLInstance": AzureVmWorkloadSQLInstanceProtectableItem,
-  "WorkloadItem.SQLInstance": AzureVmWorkloadSQLInstanceWorkloadItem,
-  "BackupRequest.AzureWorkloadBackupRequest": AzureWorkloadBackupRequest,
-  "ProtectionContainer.AzureWorkloadContainer": AzureWorkloadContainer,
   BackupEngineBase: BackupEngineBase,
-  BackupRequest: BackupRequest,
-  "BackupEngineBase.DpmBackupEngine": DpmBackupEngine,
-  "ProtectionContainer.DPMContainer": DpmContainer,
-  "ProtectionContainer.GenericContainer": GenericContainer,
-  "BackupRequest.IaasVMBackupRequest": IaasVMBackupRequest,
-  "ProtectionContainer.IaaSVMContainer": IaaSVMContainer,
-  "ILRRequest.IaasVMILRRegistrationRequest": IaasVMILRRegistrationRequest,
-  "WorkloadProtectableItem.IaaSVMProtectableItem": IaaSVMProtectableItem,
-  ILRRequest: ILRRequest,
-  "ProtectionContainer.Windows": MabContainer,
-  OperationStatusExtendedInfo: OperationStatusExtendedInfo,
-  "OperationStatusExtendedInfo.OperationStatusJobExtendedInfo": OperationStatusJobExtendedInfo,
-  "OperationStatusExtendedInfo.OperationStatusJobsExtendedInfo": OperationStatusJobsExtendedInfo,
-  "OperationStatusExtendedInfo.OperationStatusProvisionILRExtendedInfo": OperationStatusProvisionILRExtendedInfo,
   ProtectableContainer: ProtectableContainer,
   ProtectionContainer: ProtectionContainer,
   WorkloadItem: WorkloadItem,
+  BackupRequest: BackupRequest,
+  ILRRequest: ILRRequest,
   WorkloadProtectableItem: WorkloadProtectableItem,
-  "RestoreRequest.AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest": AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest,
-  "RestoreRequest.AzureWorkloadSAPHanaRestoreWithRehydrateRequest": AzureWorkloadSAPHanaRestoreWithRehydrateRequest,
-  "RestoreRequest.AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest": AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest,
-  "RestoreRequest.AzureWorkloadSQLRestoreWithRehydrateRequest": AzureWorkloadSQLRestoreWithRehydrateRequest,
-  "RestoreRequest.IaasVMRestoreWithRehydrationRequest": IaasVMRestoreWithRehydrationRequest,
-  CrrAccessToken: CrrAccessToken,
-  "OperationStatusExtendedInfo.OperationStatusRecoveryPointExtendedInfo": OperationStatusRecoveryPointExtendedInfo,
-  "CrrAccessToken.WorkloadCrrAccessToken": WorkloadCrrAccessToken,
-  "FeatureSupportRequest.AzureBackupGoals": AzureBackupGoalFeatureSupportRequest,
-  "ProtectionIntent.RecoveryServiceVaultItem": AzureRecoveryServiceVaultProtectionIntent,
+  FetchTieringCostInfoRequest: FetchTieringCostInfoRequest,
+  TieringCostInfo: TieringCostInfo,
+  SchedulePolicy: SchedulePolicy,
+  RetentionPolicy: RetentionPolicy,
+  "FeatureSupportRequest.AzureBackupGoals":
+    AzureBackupGoalFeatureSupportRequest,
+  "FeatureSupportRequest.AzureVMResourceBackup":
+    AzureVMResourceFeatureSupportRequest,
+  "ProtectionIntent.RecoveryServiceVaultItem":
+    AzureRecoveryServiceVaultProtectionIntent,
   "ProtectionIntent.AzureResourceItem": AzureResourceProtectionIntent,
-  "FeatureSupportRequest.AzureVMResourceBackup": AzureVMResourceFeatureSupportRequest,
-  "ProtectionIntent.AzureWorkloadAutoProtectionIntent": AzureWorkloadAutoProtectionIntent,
-  "ProtectionIntent.AzureWorkloadSQLAutoProtectionIntent": AzureWorkloadSQLAutoProtectionIntent,
-  FeatureSupportRequest: FeatureSupportRequest,
-  ProtectionIntent: ProtectionIntent
+  "ProtectionIntent.AzureWorkloadContainerAutoProtectionIntent":
+    AzureWorkloadContainerAutoProtectionIntent,
+  "OperationStatusExtendedInfo.OperationStatusJobExtendedInfo":
+    OperationStatusJobExtendedInfo,
+  "OperationStatusExtendedInfo.OperationStatusJobsExtendedInfo":
+    OperationStatusJobsExtendedInfo,
+  "OperationStatusExtendedInfo.OperationStatusProvisionILRExtendedInfo":
+    OperationStatusProvisionILRExtendedInfo,
+  "OperationStatusExtendedInfo.OperationStatusValidateOperationExtendedInfo":
+    OperationStatusValidateOperationExtendedInfo,
+  "VaultStorageConfigOperationResultResponse.PrepareDataMoveResponse":
+    PrepareDataMoveResponse,
+  "ProtectedItem.AzureFileShareProtectedItem": AzureFileshareProtectedItem,
+  "ProtectedItem.AzureIaaSVMProtectedItem": AzureIaaSVMProtectedItem,
+  "ProtectedItem.Microsoft.Sql/servers/databases": AzureSqlProtectedItem,
+  "ProtectedItem.AzureVmWorkloadProtectedItem": AzureVmWorkloadProtectedItem,
+  "ProtectedItem.DPMProtectedItem": DPMProtectedItem,
+  "ProtectedItem.GenericProtectedItem": GenericProtectedItem,
+  "ProtectedItem.MabFileFolderProtectedItem": MabFileFolderProtectedItem,
+  "RecoveryPoint.AzureFileShareRecoveryPoint": AzureFileShareRecoveryPoint,
+  "RecoveryPoint.AzureWorkloadRecoveryPoint": AzureWorkloadRecoveryPoint,
+  "RecoveryPoint.GenericRecoveryPoint": GenericRecoveryPoint,
+  "RecoveryPoint.IaasVMRecoveryPoint": IaasVMRecoveryPoint,
+  "RestoreRequest.AzureFileShareRestoreRequest": AzureFileShareRestoreRequest,
+  "RestoreRequest.AzureWorkloadRestoreRequest": AzureWorkloadRestoreRequest,
+  "RestoreRequest.IaasVMRestoreRequest": IaasVMRestoreRequest,
+  "ProtectionPolicy.AzureWorkload": AzureVmWorkloadProtectionPolicy,
+  "ProtectionPolicy.AzureStorage": AzureFileShareProtectionPolicy,
+  "ProtectionPolicy.AzureIaasVM": AzureIaaSVMProtectionPolicy,
+  "ProtectionPolicy.AzureSql": AzureSqlProtectionPolicy,
+  "ProtectionPolicy.GenericProtectionPolicy": GenericProtectionPolicy,
+  "ProtectionPolicy.MAB": MabProtectionPolicy,
+  "Job.AzureIaaSVMJob": AzureIaaSVMJob,
+  "Job.AzureIaaSVMJobV2": AzureIaaSVMJobV2,
+  "Job.AzureStorageJob": AzureStorageJob,
+  "Job.AzureWorkloadJob": AzureWorkloadJob,
+  "Job.DpmJob": DpmJob,
+  "Job.MabJob": MabJob,
+  "Job.VaultJob": VaultJob,
+  "OperationResultInfoBase.ExportJobsOperationResultInfo":
+    ExportJobsOperationResultInfo,
+  "OperationResultInfoBase.OperationResultInfo": OperationResultInfo,
+  "ValidateOperationRequest.ValidateRestoreOperationRequest":
+    ValidateRestoreOperationRequest,
+  "BackupEngineBase.AzureBackupServerEngine": AzureBackupServerEngine,
+  "BackupEngineBase.DpmBackupEngine": DpmBackupEngine,
+  "ProtectableContainer.StorageContainer": AzureStorageProtectableContainer,
+  "ProtectableContainer.VMAppContainer":
+    AzureVMAppContainerProtectableContainer,
+  "ProtectionContainer.DPMContainer": DpmContainer,
+  "ProtectionContainer.IaasVMContainer": IaaSVMContainer,
+  "ProtectionContainer.AzureWorkloadContainer": AzureWorkloadContainer,
+  "ProtectionContainer.AzureSqlContainer": AzureSqlContainer,
+  "ProtectionContainer.StorageContainer": AzureStorageContainer,
+  "ProtectionContainer.GenericContainer": GenericContainer,
+  "ProtectionContainer.Windows": MabContainer,
+  "WorkloadItem.AzureVmWorkloadItem": AzureVmWorkloadItem,
+  "BackupRequest.AzureFileShareBackupRequest": AzureFileShareBackupRequest,
+  "BackupRequest.AzureWorkloadBackupRequest": AzureWorkloadBackupRequest,
+  "BackupRequest.IaasVMBackupRequest": IaasVMBackupRequest,
+  "ILRRequest.AzureFileShareProvisionILRRequest":
+    AzureFileShareProvisionILRRequest,
+  "ILRRequest.IaasVMILRRegistrationRequest": IaasVmilrRegistrationRequest,
+  "WorkloadProtectableItem.AzureFileShare": AzureFileShareProtectableItem,
+  "WorkloadProtectableItem.IaaSVMProtectableItem": IaaSVMProtectableItem,
+  "WorkloadProtectableItem.AzureVmWorkloadProtectableItem":
+    AzureVmWorkloadProtectableItem,
+  "FetchTieringCostInfoRequest.FetchTieringCostInfoForRehydrationRequest":
+    FetchTieringCostInfoForRehydrationRequest,
+  "FetchTieringCostInfoRequest.FetchTieringCostSavingsInfoForPolicyRequest":
+    FetchTieringCostSavingsInfoForPolicyRequest,
+  "FetchTieringCostInfoRequest.FetchTieringCostSavingsInfoForProtectedItemRequest":
+    FetchTieringCostSavingsInfoForProtectedItemRequest,
+  "FetchTieringCostInfoRequest.FetchTieringCostSavingsInfoForVaultRequest":
+    FetchTieringCostSavingsInfoForVaultRequest,
+  "TieringCostInfo.TieringCostRehydrationInfo": TieringCostRehydrationInfo,
+  "TieringCostInfo.TieringCostSavingInfo": TieringCostSavingInfo,
+  "SchedulePolicy.LogSchedulePolicy": LogSchedulePolicy,
+  "SchedulePolicy.LongTermSchedulePolicy": LongTermSchedulePolicy,
+  "SchedulePolicy.SimpleSchedulePolicy": SimpleSchedulePolicy,
+  "SchedulePolicy.SimpleSchedulePolicyV2": SimpleSchedulePolicyV2,
+  "RetentionPolicy.LongTermRetentionPolicy": LongTermRetentionPolicy,
+  "RetentionPolicy.SimpleRetentionPolicy": SimpleRetentionPolicy,
+  "AzureRecoveryServiceVaultProtectionIntent.AzureWorkloadAutoProtectionIntent":
+    AzureWorkloadAutoProtectionIntent,
+  "AzureIaaSVMProtectedItem.Microsoft.ClassicCompute/virtualMachines":
+    AzureIaaSClassicComputeVMProtectedItem,
+  "AzureIaaSVMProtectedItem.Microsoft.Compute/virtualMachines":
+    AzureIaaSComputeVMProtectedItem,
+  "AzureVmWorkloadProtectedItem.AzureVmWorkloadSAPAseDatabase":
+    AzureVmWorkloadSAPAseDatabaseProtectedItem,
+  "AzureVmWorkloadProtectedItem.AzureVmWorkloadSAPHanaDatabase":
+    AzureVmWorkloadSAPHanaDatabaseProtectedItem,
+  "AzureVmWorkloadProtectedItem.AzureVmWorkloadSAPHanaDBInstance":
+    AzureVmWorkloadSAPHanaDBInstanceProtectedItem,
+  "AzureVmWorkloadProtectedItem.AzureVmWorkloadSQLDatabase":
+    AzureVmWorkloadSQLDatabaseProtectedItem,
+  "AzureWorkloadRecoveryPoint.AzureWorkloadPointInTimeRecoveryPoint":
+    AzureWorkloadPointInTimeRecoveryPoint,
+  "AzureWorkloadRecoveryPoint.AzureWorkloadSAPHanaRecoveryPoint":
+    AzureWorkloadSAPHanaRecoveryPoint,
+  "AzureWorkloadRecoveryPoint.AzureWorkloadSQLRecoveryPoint":
+    AzureWorkloadSQLRecoveryPoint,
+  "AzureWorkloadRestoreRequest.AzureWorkloadPointInTimeRestoreRequest":
+    AzureWorkloadPointInTimeRestoreRequest,
+  "AzureWorkloadRestoreRequest.AzureWorkloadSAPHanaRestoreRequest":
+    AzureWorkloadSAPHanaRestoreRequest,
+  "AzureWorkloadRestoreRequest.AzureWorkloadSQLRestoreRequest":
+    AzureWorkloadSQLRestoreRequest,
+  "IaasVMRestoreRequest.IaasVMRestoreWithRehydrationRequest":
+    IaasVMRestoreWithRehydrationRequest,
+  "ValidateRestoreOperationRequest.ValidateIaasVMRestoreOperationRequest":
+    ValidateIaasVMRestoreOperationRequest,
+  "DpmContainer.AzureBackupServerContainer": AzureBackupServerContainer,
+  "IaaSVMContainer.Microsoft.ClassicCompute/virtualMachines":
+    AzureIaaSClassicComputeVMContainer,
+  "IaaSVMContainer.Microsoft.Compute/virtualMachines":
+    AzureIaaSComputeVMContainer,
+  "AzureWorkloadContainer.SQLAGWorkLoadContainer":
+    AzureSqlagWorkloadContainerProtectionContainer,
+  "AzureWorkloadContainer.VMAppContainer":
+    AzureVMAppContainerProtectionContainer,
+  "AzureVmWorkloadItem.SAPAseDatabase":
+    AzureVmWorkloadSAPAseDatabaseWorkloadItem,
+  "AzureVmWorkloadItem.SAPAseSystem": AzureVmWorkloadSAPAseSystemWorkloadItem,
+  "AzureVmWorkloadItem.SAPHanaDatabase":
+    AzureVmWorkloadSAPHanaDatabaseWorkloadItem,
+  "AzureVmWorkloadItem.SAPHanaSystem": AzureVmWorkloadSAPHanaSystemWorkloadItem,
+  "AzureVmWorkloadItem.SQLDataBase": AzureVmWorkloadSQLDatabaseWorkloadItem,
+  "AzureVmWorkloadItem.SQLInstance": AzureVmWorkloadSQLInstanceWorkloadItem,
+  "IaaSVMProtectableItem.Microsoft.ClassicCompute/virtualMachines":
+    AzureIaaSClassicComputeVMProtectableItem,
+  "IaaSVMProtectableItem.Microsoft.Compute/virtualMachines":
+    AzureIaaSComputeVMProtectableItem,
+  "AzureVmWorkloadProtectableItem.SAPAseSystem":
+    AzureVmWorkloadSAPAseSystemProtectableItem,
+  "AzureVmWorkloadProtectableItem.SAPHanaDatabase":
+    AzureVmWorkloadSAPHanaDatabaseProtectableItem,
+  "AzureVmWorkloadProtectableItem.SAPHanaSystem":
+    AzureVmWorkloadSAPHanaSystemProtectableItem,
+  "AzureVmWorkloadProtectableItem.SAPHanaDBInstance":
+    AzureVmWorkloadSAPHanaDBInstance,
+  "AzureVmWorkloadProtectableItem.HanaHSRContainer":
+    AzureVmWorkloadSAPHanaHSRProtectableItem,
+  "AzureVmWorkloadProtectableItem.SQLAvailabilityGroupContainer":
+    AzureVmWorkloadSQLAvailabilityGroupProtectableItem,
+  "AzureVmWorkloadProtectableItem.SQLDataBase":
+    AzureVmWorkloadSQLDatabaseProtectableItem,
+  "AzureVmWorkloadProtectableItem.SQLInstance":
+    AzureVmWorkloadSQLInstanceProtectableItem,
+  "AzureWorkloadAutoProtectionIntent.AzureWorkloadSQLAutoProtectionIntent":
+    AzureWorkloadSQLAutoProtectionIntent,
+  "AzureWorkloadPointInTimeRecoveryPoint.AzureWorkloadSAPHanaPointInTimeRecoveryPoint":
+    AzureWorkloadSAPHanaPointInTimeRecoveryPoint,
+  "AzureWorkloadSQLRecoveryPoint.AzureWorkloadSQLPointInTimeRecoveryPoint":
+    AzureWorkloadSQLPointInTimeRecoveryPoint,
+  "AzureWorkloadSAPHanaRestoreRequest.AzureWorkloadSAPHanaPointInTimeRestoreRequest":
+    AzureWorkloadSAPHanaPointInTimeRestoreRequest,
+  "AzureWorkloadSAPHanaRestoreRequest.AzureWorkloadSAPHanaRestoreWithRehydrateRequest":
+    AzureWorkloadSAPHanaRestoreWithRehydrateRequest,
+  "AzureWorkloadSQLRestoreRequest.AzureWorkloadSQLPointInTimeRestoreRequest":
+    AzureWorkloadSQLPointInTimeRestoreRequest,
+  "AzureWorkloadSQLRestoreRequest.AzureWorkloadSQLRestoreWithRehydrateRequest":
+    AzureWorkloadSQLRestoreWithRehydrateRequest,
+  "AzureWorkloadSAPHanaPointInTimeRestoreRequest.AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest":
+    AzureWorkloadSAPHanaPointInTimeRestoreWithRehydrateRequest,
+  "AzureWorkloadSQLPointInTimeRestoreRequest.AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest":
+    AzureWorkloadSQLPointInTimeRestoreWithRehydrateRequest,
 };

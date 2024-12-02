@@ -6,7 +6,7 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualMachineExtension,
   VirtualMachineExtensionsCreateOrUpdateOptionalParams,
@@ -18,7 +18,7 @@ import {
   VirtualMachineExtensionsGetOptionalParams,
   VirtualMachineExtensionsGetResponse,
   VirtualMachineExtensionsListOptionalParams,
-  VirtualMachineExtensionsListResponse
+  VirtualMachineExtensionsListResponse,
 } from "../models";
 
 /** Interface representing a VirtualMachineExtensions. */
@@ -36,10 +36,10 @@ export interface VirtualMachineExtensions {
     vmName: string,
     vmExtensionName: string,
     extensionParameters: VirtualMachineExtension,
-    options?: VirtualMachineExtensionsCreateOrUpdateOptionalParams
+    options?: VirtualMachineExtensionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachineExtensionsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachineExtensionsCreateOrUpdateResponse>,
       VirtualMachineExtensionsCreateOrUpdateResponse
     >
   >;
@@ -56,7 +56,7 @@ export interface VirtualMachineExtensions {
     vmName: string,
     vmExtensionName: string,
     extensionParameters: VirtualMachineExtension,
-    options?: VirtualMachineExtensionsCreateOrUpdateOptionalParams
+    options?: VirtualMachineExtensionsCreateOrUpdateOptionalParams,
   ): Promise<VirtualMachineExtensionsCreateOrUpdateResponse>;
   /**
    * The operation to update the extension.
@@ -71,10 +71,10 @@ export interface VirtualMachineExtensions {
     vmName: string,
     vmExtensionName: string,
     extensionParameters: VirtualMachineExtensionUpdate,
-    options?: VirtualMachineExtensionsUpdateOptionalParams
+    options?: VirtualMachineExtensionsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachineExtensionsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachineExtensionsUpdateResponse>,
       VirtualMachineExtensionsUpdateResponse
     >
   >;
@@ -91,7 +91,7 @@ export interface VirtualMachineExtensions {
     vmName: string,
     vmExtensionName: string,
     extensionParameters: VirtualMachineExtensionUpdate,
-    options?: VirtualMachineExtensionsUpdateOptionalParams
+    options?: VirtualMachineExtensionsUpdateOptionalParams,
   ): Promise<VirtualMachineExtensionsUpdateResponse>;
   /**
    * The operation to delete the extension.
@@ -104,8 +104,8 @@ export interface VirtualMachineExtensions {
     resourceGroupName: string,
     vmName: string,
     vmExtensionName: string,
-    options?: VirtualMachineExtensionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachineExtensionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to delete the extension.
    * @param resourceGroupName The name of the resource group.
@@ -117,7 +117,7 @@ export interface VirtualMachineExtensions {
     resourceGroupName: string,
     vmName: string,
     vmExtensionName: string,
-    options?: VirtualMachineExtensionsDeleteOptionalParams
+    options?: VirtualMachineExtensionsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * The operation to get the extension.
@@ -130,7 +130,7 @@ export interface VirtualMachineExtensions {
     resourceGroupName: string,
     vmName: string,
     vmExtensionName: string,
-    options?: VirtualMachineExtensionsGetOptionalParams
+    options?: VirtualMachineExtensionsGetOptionalParams,
   ): Promise<VirtualMachineExtensionsGetResponse>;
   /**
    * The operation to get all extensions of a Virtual Machine.
@@ -141,6 +141,6 @@ export interface VirtualMachineExtensions {
   list(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachineExtensionsListOptionalParams
+    options?: VirtualMachineExtensionsListOptionalParams,
   ): Promise<VirtualMachineExtensionsListResponse>;
 }

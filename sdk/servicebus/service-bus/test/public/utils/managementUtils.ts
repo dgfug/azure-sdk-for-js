@@ -1,15 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { delay } from "../../../src";
-import { CreateTopicOptions } from "../../../src";
-import { CreateSubscriptionOptions } from "../../../src";
-import { ServiceBusAdministrationClient } from "../../../src";
-
-import { EnvVarNames, getEnvVars } from "./envVarUtils";
-import chai from "chai";
-import { CreateQueueOptions } from "../../../src";
-const should = chai.should();
+import { delay } from "../../../src/index.js";
+import type { CreateTopicOptions } from "../../../src/index.js";
+import type { CreateSubscriptionOptions } from "../../../src/index.js";
+import { ServiceBusAdministrationClient } from "../../../src/index.js";
+import type { CreateQueueOptions } from "../../../src/index.js";
+import { createTestCredential } from "@azure-tools/test-credential";
+import { EnvVarNames, getEnvVars } from "./envVarUtils.js";
+import { should } from "./chai.js";
 
 let client: ServiceBusAdministrationClient;
 
@@ -20,7 +19,10 @@ let client: ServiceBusAdministrationClient;
 function getManagementClient(): ServiceBusAdministrationClient {
   if (client === undefined) {
     const env = getEnvVars();
-    client = new ServiceBusAdministrationClient(env[EnvVarNames.SERVICEBUS_CONNECTION_STRING]);
+    client = new ServiceBusAdministrationClient(
+      env[EnvVarNames.SERVICEBUS_FQDN],
+      createTestCredential(),
+    );
   }
   return client;
 }
@@ -34,7 +36,7 @@ function getManagementClient(): ServiceBusAdministrationClient {
 async function retry(
   operationCallback: () => void,
   breakConditionCallback: () => Promise<boolean>,
-  operationDescription: string
+  operationDescription: string,
 ): Promise<void> {
   const retryAttempts = 5;
   const retryDelayInMs = 1000;
@@ -50,7 +52,7 @@ async function retry(
         break;
       }
       await operationCallback();
-    } catch (err) {
+    } catch (err: any) {
       lastKnownError = err;
       // Ignore error and wait before retrying
       await delay(retryDelayInMs);
@@ -74,7 +76,7 @@ async function retry(
  */
 export async function recreateQueue(
   queueName: string,
-  parameters?: Omit<CreateQueueOptions, "name">
+  parameters?: Omit<CreateQueueOptions, "name">,
 ): Promise<void> {
   getManagementClient();
 
@@ -89,7 +91,7 @@ export async function recreateQueue(
   const checkIfQueueExistsOperation = async (): Promise<boolean> => {
     try {
       await client.getQueue(queueName);
-    } catch (err) {
+    } catch {
       return false;
     }
     return true;
@@ -100,7 +102,7 @@ export async function recreateQueue(
     async (): Promise<boolean> => {
       return !(await checkIfQueueExistsOperation());
     },
-    `Delete queue "${queueName}"`
+    `Delete queue "${queueName}"`,
   );
   await retry(createQueueOperation, checkIfQueueExistsOperation, `Create queue "${queueName}"`);
 }
@@ -110,7 +112,7 @@ export async function recreateQueue(
  */
 export async function recreateTopic(
   topicName: string,
-  parameters?: Omit<CreateTopicOptions, "name">
+  parameters?: Omit<CreateTopicOptions, "name">,
 ): Promise<void> {
   getManagementClient();
 
@@ -125,7 +127,7 @@ export async function recreateTopic(
   const checkIfTopicExistsOperation = async (): Promise<boolean> => {
     try {
       await client.getTopic(topicName);
-    } catch (err) {
+    } catch {
       return false;
     }
     return true;
@@ -136,7 +138,7 @@ export async function recreateTopic(
     async () => {
       return !(await checkIfTopicExistsOperation());
     },
-    `Delete topic "${topicName}"`
+    `Delete topic "${topicName}"`,
   );
   await retry(createTopicOperation, checkIfTopicExistsOperation, `Create topic "${topicName}"`);
 }
@@ -147,7 +149,9 @@ export async function recreateTopic(
 export async function recreateSubscription(
   topicName: string,
   subscriptionName: string,
-  parameters?: Omit<CreateSubscriptionOptions, "topicName" | "subscriptionName">
+  parameters?: Omit<CreateSubscriptionOptions, "topicName" | "subscriptionName"> & {
+    deleteFirst?: boolean;
+  },
 ): Promise<void> {
   getManagementClient();
   /*
@@ -160,19 +164,31 @@ export async function recreateSubscription(
     await client.createSubscription(topicName, subscriptionName, parameters);
   };
 
+  const deleteSubscriptionOperation = async (): Promise<void> => {
+    await client.deleteSubscription(topicName, subscriptionName);
+  };
+
   const checkIfSubscriptionExistsOperation = async (): Promise<boolean> => {
     try {
       await client.getSubscription(topicName, subscriptionName);
-    } catch (err) {
+    } catch {
       return false;
     }
     return true;
   };
 
+  if (parameters?.deleteFirst) {
+    await retry(
+      deleteSubscriptionOperation,
+      async () => !(await checkIfSubscriptionExistsOperation()),
+      `Delete subscription "${subscriptionName}"`,
+    );
+  }
+
   await retry(
     createSubscriptionOperation,
     checkIfSubscriptionExistsOperation,
-    `Create subscription "${subscriptionName}"`
+    `Create subscription "${subscriptionName}"`,
   );
 }
 
@@ -183,7 +199,7 @@ export async function verifyMessageCount(
   expectedMessageCount: number,
   queueName?: string,
   topicName?: string,
-  subscriptionName?: string
+  subscriptionName?: string,
 ): Promise<void> {
   getManagementClient();
   should.equal(
@@ -192,7 +208,7 @@ export async function verifyMessageCount(
       : (await client.getSubscriptionRuntimeProperties(topicName!, subscriptionName!))
           .totalMessageCount,
     expectedMessageCount,
-    `Unexpected number of messages are present in the entity.`
+    `Unexpected number of messages are present in the entity.`,
   );
 }
 

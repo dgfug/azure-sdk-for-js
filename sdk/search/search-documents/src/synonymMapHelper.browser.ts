@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { SynonymMap } from "./serviceModels";
+import type { SynonymMap } from "./serviceModels";
 
 /**
  * Helper method to create a SynonymMap object. This is a NodeJS only method.
@@ -13,7 +13,7 @@ import { SynonymMap } from "./serviceModels";
  */
 export async function createSynonymMapFromFile(
   _name: string,
-  _filePath: string
+  _filePath: string,
 ): Promise<SynonymMap> {
   throw new Error("Not implemented for browser.");
 }

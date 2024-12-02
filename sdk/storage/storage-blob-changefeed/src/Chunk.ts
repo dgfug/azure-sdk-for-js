@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AvroReader } from "../../storage-internal-avro/src";
-import { BlobChangeFeedEvent } from "./models/BlobChangeFeedEvent";
-import { CommonOptions } from "@azure/storage-blob";
-import { AbortSignalLike } from "@azure/core-http";
-import { AvroParseOptions } from "../../storage-internal-avro/src/AvroReader";
+import type { AvroReader } from "../../storage-internal-avro/src";
+import type { BlobChangeFeedEvent } from "./models/BlobChangeFeedEvent";
+import type { CommonOptions } from "@azure/storage-blob";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { AvroParseOptions } from "../../storage-internal-avro/src/AvroReader";
+import { rawEventToBlobChangeFeedEvent } from "./utils/utils.common";
 
 /**
  * Options to configure {@link Chunk.getChange} operation.
@@ -37,7 +38,7 @@ export class Chunk {
     blockOffset: number,
     eventIndex: number,
     public readonly chunkPath: string,
-    avroOptions: AvroParseOptions = {}
+    avroOptions: AvroParseOptions = {},
   ) {
     this.avroReader = avroReader;
     this._blockOffset = blockOffset;
@@ -66,14 +67,7 @@ export class Chunk {
         return undefined;
       }
 
-      if (eventRaw.eventTime) {
-        eventRaw.eventTime = new Date(eventRaw.eventTime);
-      }
-      if (eventRaw.eTag) {
-        eventRaw.etag = eventRaw.eTag;
-        delete eventRaw.eTag;
-      }
-      return eventRaw as BlobChangeFeedEvent;
+      return rawEventToBlobChangeFeedEvent(eventRaw);
     }
   }
 }

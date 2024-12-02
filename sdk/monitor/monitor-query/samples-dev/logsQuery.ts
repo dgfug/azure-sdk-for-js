@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Demonstrates how to run a query against a Log Analytics workspace
@@ -11,7 +11,7 @@ import {
   LogsQueryClient,
   LogsTable,
   LogsQueryOptions,
-  LogsQueryResultStatus
+  LogsQueryResultStatus,
 } from "@azure/monitor-query";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -32,10 +32,10 @@ export async function main() {
   console.log(`Running '${kustoQuery}' over the last One Hour`);
   const queryLogsOptions: LogsQueryOptions = {
     // explicitly control the amount of time the server can spend processing the query.
-    serverTimeoutInSeconds: 60,
+    serverTimeoutInSeconds: 600, // sets the timeout to 10 minutes
     // optionally enable returning additional statistics about the query's execution.
     // (by default this is off)
-    includeQueryStatistics: true
+    includeQueryStatistics: true,
   };
 
   const result = await logsQueryClient.queryWorkspace(
@@ -45,7 +45,7 @@ export async function main() {
     // are available (like OneDay, OneHour, FoutyEightHours, etc..) but any properly formatted ISO8601
     // value is valid.
     { duration: Durations.oneHour },
-    queryLogsOptions
+    queryLogsOptions,
   );
   const executionTime =
     result.statistics && result.statistics.query && (result.statistics.query as any).executionTime;
@@ -53,7 +53,7 @@ export async function main() {
   console.log(
     `Results for query '${kustoQuery}', execution time: ${
       executionTime == null ? "unknown" : executionTime
-    }`
+    }`,
   );
 
   if (result.status === LogsQueryResultStatus.Success) {

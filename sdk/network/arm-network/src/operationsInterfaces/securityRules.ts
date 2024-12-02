@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   SecurityRule,
   SecurityRulesListOptionalParams,
@@ -15,7 +15,7 @@ import {
   SecurityRulesGetOptionalParams,
   SecurityRulesGetResponse,
   SecurityRulesCreateOrUpdateOptionalParams,
-  SecurityRulesCreateOrUpdateResponse
+  SecurityRulesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface SecurityRules {
   list(
     resourceGroupName: string,
     networkSecurityGroupName: string,
-    options?: SecurityRulesListOptionalParams
+    options?: SecurityRulesListOptionalParams,
   ): PagedAsyncIterableIterator<SecurityRule>;
   /**
    * Deletes the specified network security rule.
@@ -43,8 +43,8 @@ export interface SecurityRules {
     resourceGroupName: string,
     networkSecurityGroupName: string,
     securityRuleName: string,
-    options?: SecurityRulesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SecurityRulesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified network security rule.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface SecurityRules {
     resourceGroupName: string,
     networkSecurityGroupName: string,
     securityRuleName: string,
-    options?: SecurityRulesDeleteOptionalParams
+    options?: SecurityRulesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Get the specified network security rule.
@@ -69,7 +69,7 @@ export interface SecurityRules {
     resourceGroupName: string,
     networkSecurityGroupName: string,
     securityRuleName: string,
-    options?: SecurityRulesGetOptionalParams
+    options?: SecurityRulesGetOptionalParams,
   ): Promise<SecurityRulesGetResponse>;
   /**
    * Creates or updates a security rule in the specified network security group.
@@ -85,10 +85,10 @@ export interface SecurityRules {
     networkSecurityGroupName: string,
     securityRuleName: string,
     securityRuleParameters: SecurityRule,
-    options?: SecurityRulesCreateOrUpdateOptionalParams
+    options?: SecurityRulesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SecurityRulesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SecurityRulesCreateOrUpdateResponse>,
       SecurityRulesCreateOrUpdateResponse
     >
   >;
@@ -106,6 +106,6 @@ export interface SecurityRules {
     networkSecurityGroupName: string,
     securityRuleName: string,
     securityRuleParameters: SecurityRule,
-    options?: SecurityRulesCreateOrUpdateOptionalParams
+    options?: SecurityRulesCreateOrUpdateOptionalParams,
   ): Promise<SecurityRulesCreateOrUpdateResponse>;
 }

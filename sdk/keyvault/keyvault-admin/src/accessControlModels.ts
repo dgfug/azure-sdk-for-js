@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CommonClientOptions, OperationOptions } from "@azure/core-client";
-import { SUPPORTED_API_VERSIONS } from "./constants";
+import type { CommonClientOptions, OperationOptions } from "@azure/core-client";
 import {
   DataAction as KeyVaultDataAction,
   RoleScope as KeyVaultRoleScope,
   KnownDataAction as KnownKeyVaultDataAction,
-  KnownRoleScope as KnownKeyVaultRoleScope
-} from "./generated/index";
+  KnownRoleScope as KnownKeyVaultRoleScope,
+} from "./generated/index.js";
+import type { SUPPORTED_API_VERSIONS } from "./constants.js";
 
 export { KeyVaultDataAction, KeyVaultRoleScope, KnownKeyVaultDataAction, KnownKeyVaultRoleScope };
 
@@ -20,6 +20,12 @@ export interface AccessControlClientOptions extends CommonClientOptions {
    * The accepted versions of the Key Vault's service API.
    */
   serviceVersion?: SUPPORTED_API_VERSIONS;
+
+  /**
+   * Whether to disable verification that the authentication challenge resource matches the Key Vault or Managed HSM domain.
+   * Defaults to false.
+   */
+  disableChallengeResourceVerification?: boolean;
 }
 
 /**

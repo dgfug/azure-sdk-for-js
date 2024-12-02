@@ -1,73 +1,72 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  TableEntity,
-  ListTableEntitiesOptions,
-  GetTableEntityResponse,
-  UpdateTableEntityOptions,
-  DeleteTableEntityOptions,
-  GetTableEntityOptions,
-  UpdateMode,
+import type {
   CreateTableEntityResponse,
-  TableEntityQueryOptions,
-  TableServiceClientOptions as TableClientOptions,
-  TableEntityResult,
-  TransactionAction,
-  TableTransactionResponse,
-  SignedIdentifier,
+  DeleteTableEntityOptions,
   GetAccessPolicyResponse,
-  TableEntityResultPage
-} from "./models";
-import {
+  GetTableEntityOptions,
+  GetTableEntityResponse,
+  ListTableEntitiesOptions,
+  SignedIdentifier,
+  TableServiceClientOptions as TableClientOptions,
+  TableEntity,
+  TableEntityQueryOptions,
+  TableEntityResult,
+  TableEntityResultPage,
+  TableTransactionResponse,
+  TransactionAction,
+  UpdateMode,
+  UpdateTableEntityOptions,
+} from "./models.js";
+import type {
+  DeleteTableEntityResponse,
+  SetAccessPolicyResponse,
   UpdateEntityResponse,
   UpsertEntityResponse,
-  DeleteTableEntityResponse,
-  SetAccessPolicyResponse
-} from "./generatedModels";
-import { TableQueryEntitiesOptionalParams } from "./generated/models";
-import { getClientParamsFromConnectionString } from "./utils/connectionString";
-import {
-  isNamedKeyCredential,
-  isSASCredential,
-  isTokenCredential,
-  NamedKeyCredential,
-  SASCredential,
-  TokenCredential
-} from "@azure/core-auth";
-import { tablesNamedKeyCredentialPolicy } from "./tablesNamedCredentialPolicy";
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { GeneratedClient, TableDeleteEntityOptionalParams } from "./generated";
+} from "./generatedModels.js";
+import type {
+  FullOperationResponse,
+  InternalClientPipelineOptions,
+  OperationOptions,
+  ServiceClient,
+  ServiceClientOptions,
+} from "@azure/core-client";
+import type { TableDeleteEntityOptionalParams } from "./generated/index.js";
+import { GeneratedClient } from "./generated/index.js";
+import type { NamedKeyCredential, SASCredential, TokenCredential } from "@azure/core-auth";
+import { isNamedKeyCredential, isSASCredential, isTokenCredential } from "@azure/core-auth";
+import { COSMOS_SCOPE, STORAGE_SCOPE, TablesLoggingAllowedHeaderNames } from "./utils/constants.js";
+import { decodeContinuationToken, encodeContinuationToken } from "./utils/continuationToken.js";
 import {
   deserialize,
   deserializeObjectsArray,
   deserializeSignedIdentifier,
   serialize,
   serializeQueryOptions,
-  serializeSignedIdentifiers
-} from "./serialization";
-import { Table } from "./generated/operationsInterfaces";
-import { STORAGE_SCOPE, TablesLoggingAllowedHeaderNames } from "./utils/constants";
-import {
-  FullOperationResponse,
-  InternalClientPipelineOptions,
-  OperationOptions
-} from "@azure/core-client";
-import { logger } from "./logger";
-import { createSpan } from "./utils/tracing";
-import { SpanStatusCode } from "@azure/core-tracing";
-import { InternalTableTransaction } from "./TableTransaction";
-import { ListEntitiesResponse } from "./utils/internalModels";
-import { Uuid } from "./utils/uuid";
+  serializeSignedIdentifiers,
+} from "./serialization.js";
 import { parseXML, stringifyXML } from "@azure/core-xml";
-import { Pipeline } from "@azure/core-rest-pipeline";
-import { isCredential } from "./utils/isCredential";
-import { tablesSASTokenPolicy } from "./tablesSASTokenPolicy";
-import { isCosmosEndpoint } from "./utils/isCosmosEndpoint";
-import { cosmosPatchPolicy } from "./cosmosPathPolicy";
-import { decodeContinuationToken, encodeContinuationToken } from "./utils/continuationToken";
-import { escapeQuotes } from "./odata";
+
+import { InternalTableTransaction } from "./TableTransaction.js";
+import type { ListEntitiesResponse } from "./utils/internalModels.js";
+import type { PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { Pipeline } from "@azure/core-rest-pipeline";
+import type { Table } from "./generated/operationsInterfaces/index.js";
+import type { TableQueryEntitiesOptionalParams } from "./generated/models/index.js";
+import { Uuid } from "./utils/uuid.js";
+import { apiVersionPolicy } from "./utils/apiVersionPolicy.js";
+import { cosmosPatchPolicy } from "./cosmosPathPolicy.js";
+import { escapeQuotes } from "./odata.js";
+import { getClientParamsFromConnectionString } from "./utils/connectionString.js";
+import { handleTableAlreadyExists } from "./utils/errorHelpers.js";
+import { isCosmosEndpoint } from "./utils/isCosmosEndpoint.js";
+import { isCredential } from "./utils/isCredential.js";
+import { logger } from "./logger.js";
+import { setTokenChallengeAuthenticationPolicy } from "./utils/challengeAuthenticationUtils.js";
+import { tablesNamedKeyCredentialPolicy } from "./tablesNamedCredentialPolicy.js";
+import { tablesSASTokenPolicy } from "./tablesSASTokenPolicy.js";
+import { tracingClient } from "./utils/tracing.js";
 
 /**
  * A TableClient represents a Client to the Azure Tables service allowing you
@@ -84,8 +83,9 @@ export class TableClient {
    */
   public pipeline: Pipeline;
   private table: Table;
+  private generatedClient: ServiceClient;
   private credential?: NamedKeyCredential | SASCredential | TokenCredential;
-  private transactionClient?: InternalTableTransaction;
+  private clientOptions: TableClientOptions;
   private readonly allowInsecureConnection: boolean;
 
   /**
@@ -122,7 +122,7 @@ export class TableClient {
     url: string,
     tableName: string,
     credential: NamedKeyCredential,
-    options?: TableClientOptions
+    options?: TableClientOptions,
   );
   /**
    * Creates a new instance of the TableClient class.
@@ -153,7 +153,7 @@ export class TableClient {
     url: string,
     tableName: string,
     credential: SASCredential,
-    options?: TableClientOptions
+    options?: TableClientOptions,
   );
   /**
    * Creates a new instance of the TableClient class.
@@ -185,7 +185,7 @@ export class TableClient {
     url: string,
     tableName: string,
     credential: TokenCredential,
-    options?: TableClientOptions
+    options?: TableClientOptions,
   );
   /**
    * Creates an instance of TableClient.
@@ -215,36 +215,32 @@ export class TableClient {
     url: string,
     tableName: string,
     credentialOrOptions?: NamedKeyCredential | SASCredential | TableClientOptions | TokenCredential,
-    options: TableClientOptions = {}
+    options: TableClientOptions = {},
   ) {
     this.url = url;
     this.tableName = tableName;
+    const isCosmos = isCosmosEndpoint(this.url);
 
     const credential = isCredential(credentialOrOptions) ? credentialOrOptions : undefined;
     this.credential = credential;
 
-    const clientOptions =
-      (!isCredential(credentialOrOptions) ? credentialOrOptions : options) || {};
+    this.clientOptions = (!isCredential(credentialOrOptions) ? credentialOrOptions : options) || {};
 
-    this.allowInsecureConnection = clientOptions.allowInsecureConnection ?? false;
-    clientOptions.endpoint = clientOptions.endpoint || this.url;
+    this.allowInsecureConnection = this.clientOptions.allowInsecureConnection ?? false;
 
-    const internalPipelineOptions: InternalClientPipelineOptions = {
-      ...clientOptions,
+    const internalPipelineOptions: ServiceClientOptions & InternalClientPipelineOptions = {
+      ...this.clientOptions,
+      endpoint: this.clientOptions.endpoint || this.url,
       loggingOptions: {
         logger: logger.info,
-        additionalAllowedHeaderNames: [...TablesLoggingAllowedHeaderNames]
+        additionalAllowedHeaderNames: [...TablesLoggingAllowedHeaderNames],
       },
       deserializationOptions: {
-        parseXML
+        parseXML,
       },
       serializationOptions: {
-        stringifyXML
+        stringifyXML,
       },
-      ...(isTokenCredential(this.credential) && {
-        credential: this.credential,
-        credentialScopes: STORAGE_SCOPE
-      })
     };
 
     const generatedClient = new GeneratedClient(this.url, internalPipelineOptions);
@@ -254,10 +250,20 @@ export class TableClient {
       generatedClient.pipeline.addPolicy(tablesSASTokenPolicy(credential));
     }
 
-    if (isCosmosEndpoint(this.url)) {
+    if (isTokenCredential(credential)) {
+      const scope = isCosmos ? COSMOS_SCOPE : STORAGE_SCOPE;
+      setTokenChallengeAuthenticationPolicy(generatedClient.pipeline, credential, scope);
+    }
+
+    if (isCosmos) {
       generatedClient.pipeline.addPolicy(cosmosPatchPolicy());
     }
 
+    if (options.version) {
+      generatedClient.pipeline.addPolicy(apiVersionPolicy(options.version));
+    }
+
+    this.generatedClient = generatedClient;
     this.table = generatedClient.table;
     this.pipeline = generatedClient.pipeline;
   }
@@ -287,20 +293,18 @@ export class TableClient {
    * ```
    */
   // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-  public async deleteTable(options: OperationOptions = {}): Promise<void> {
-    const { span, updatedOptions } = createSpan("TableClient-deleteTable", options);
-    try {
-      await this.table.delete(this.tableName, updatedOptions);
-    } catch (e) {
-      if (e.statusCode === 404) {
-        logger.info("TableClient-deleteTable: Table doesn't exist");
-      } else {
-        span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-        throw e;
+  public deleteTable(options: OperationOptions = {}): Promise<void> {
+    return tracingClient.withSpan("TableClient.deleteTable", options, async (updatedOptions) => {
+      try {
+        await this.table.delete(this.tableName, updatedOptions);
+      } catch (e: any) {
+        if (e.statusCode === 404) {
+          logger.info("TableClient.deleteTable: Table doesn't exist");
+        } else {
+          throw e;
+        }
       }
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -324,25 +328,19 @@ export class TableClient {
    * // calling create table will create the table used
    * // to instantiate the TableClient.
    * // Note: If the table already
-   * // exists this function doesn't fail.
+   * // exists this function doesn't throw.
    * await client.createTable();
    * ```
    */
   // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-  public async createTable(options: OperationOptions = {}): Promise<void> {
-    const { span, updatedOptions } = createSpan("TableClient-createTable", options);
-    try {
-      await this.table.create({ name: this.tableName }, updatedOptions);
-    } catch (e) {
-      if (e.statusCode === 409) {
-        logger.info("TableClient-createTable: Table Already Exists");
-      } else {
-        span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-        throw e;
+  public createTable(options: OperationOptions = {}): Promise<void> {
+    return tracingClient.withSpan("TableClient.createTable", options, async (updatedOptions) => {
+      try {
+        await this.table.create({ name: this.tableName }, updatedOptions);
+      } catch (e: any) {
+        handleTableAlreadyExists(e, { ...updatedOptions, logger, tableName: this.tableName });
       }
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -372,24 +370,21 @@ export class TableClient {
    * console.log(entity);
    * ```
    */
-  public async getEntity<T extends object = Record<string, unknown>>(
+  public getEntity<T extends object = Record<string, unknown>>(
     partitionKey: string,
     rowKey: string,
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options: GetTableEntityOptions = {}
+    options: GetTableEntityOptions = {},
   ): Promise<GetTableEntityResponse<TableEntityResult<T>>> {
-    const { span, updatedOptions } = createSpan("TableClient-getEntity", options);
-
-    let parsedBody: any;
-    function onResponse(rawResponse: FullOperationResponse, flatResponse: unknown): void {
-      parsedBody = rawResponse.parsedBody;
-      if (updatedOptions.onResponse) {
-        updatedOptions.onResponse(rawResponse, flatResponse);
+    return tracingClient.withSpan("TableClient.getEntity", options, async (updatedOptions) => {
+      let parsedBody: any;
+      function onResponse(rawResponse: FullOperationResponse, flatResponse: unknown): void {
+        parsedBody = rawResponse.parsedBody;
+        if (updatedOptions.onResponse) {
+          updatedOptions.onResponse(rawResponse, flatResponse);
+        }
       }
-    }
-
-    try {
-      const { disableTypeConversion, queryOptions, ...getEntityOptions } = updatedOptions || {};
+      const { disableTypeConversion, queryOptions, ...getEntityOptions } = updatedOptions;
       await this.table.queryEntitiesWithPartitionAndRowKey(
         this.tableName,
         escapeQuotes(partitionKey),
@@ -397,21 +392,16 @@ export class TableClient {
         {
           ...getEntityOptions,
           queryOptions: serializeQueryOptions(queryOptions || {}),
-          onResponse
-        }
+          onResponse,
+        },
       );
       const tableEntity = deserialize<TableEntityResult<T>>(
         parsedBody,
-        disableTypeConversion ?? false
+        disableTypeConversion ?? false,
       );
 
       return tableEntity;
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -446,7 +436,7 @@ export class TableClient {
    */
   public listEntities<T extends object = Record<string, unknown>>(
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options: ListTableEntitiesOptions = {}
+    options: ListTableEntitiesOptions = {},
   ): PagedAsyncIterableIterator<TableEntityResult<T>, TableEntityResultPage<T>> {
     const tableName = this.tableName;
     const iter = this.listEntitiesAll<T>(tableName, options);
@@ -461,7 +451,7 @@ export class TableClient {
       byPage: (settings) => {
         const pageOptions: InternalListTableEntitiesOptions = {
           ...options,
-          queryOptions: { ...options.queryOptions, top: settings?.maxPageSize }
+          queryOptions: { ...options.queryOptions, top: settings?.maxPageSize },
         };
 
         if (settings?.continuationToken) {
@@ -469,20 +459,20 @@ export class TableClient {
         }
 
         return this.listEntitiesPage(tableName, pageOptions);
-      }
+      },
     };
   }
 
   private async *listEntitiesAll<T extends object>(
     tableName: string,
-    options?: InternalListTableEntitiesOptions
+    options?: InternalListTableEntitiesOptions,
   ): AsyncIterableIterator<TableEntityResult<T>> {
     const firstPage = await this._listEntities<T>(tableName, options);
     yield* firstPage;
     if (firstPage.continuationToken) {
       const optionsWithContinuation: InternalListTableEntitiesOptions = {
         ...options,
-        continuationToken: firstPage.continuationToken
+        continuationToken: firstPage.continuationToken,
       };
       for await (const page of this.listEntitiesPage<T>(tableName, optionsWithContinuation)) {
         yield* page;
@@ -492,45 +482,43 @@ export class TableClient {
 
   private async *listEntitiesPage<T extends object>(
     tableName: string,
-    options: InternalListTableEntitiesOptions = {}
+    options: InternalListTableEntitiesOptions = {},
   ): AsyncIterableIterator<ListEntitiesResponse<TableEntityResult<T>>> {
-    const { span, updatedOptions } = createSpan("TableClient-listEntitiesPage", options);
+    let result = await tracingClient.withSpan(
+      "TableClient.listEntitiesPage",
+      options,
+      (updatedOptions) => this._listEntities<T>(tableName, updatedOptions),
+    );
 
-    try {
-      let result = await this._listEntities<T>(tableName, updatedOptions);
+    yield result;
 
+    while (result.continuationToken) {
+      const optionsWithContinuation: InternalListTableEntitiesOptions = {
+        ...options,
+        continuationToken: result.continuationToken,
+      };
+
+      result = await tracingClient.withSpan(
+        "TableClient.listEntitiesPage",
+        optionsWithContinuation,
+        (updatedOptions, span) => {
+          span.setAttribute("continuationToken", result.continuationToken);
+          return this._listEntities<T>(tableName, updatedOptions);
+        },
+      );
       yield result;
-
-      while (result.continuationToken) {
-        const optionsWithContinuation: InternalListTableEntitiesOptions = {
-          ...updatedOptions,
-          continuationToken: result.continuationToken
-        };
-
-        result = await this._listEntities(tableName, optionsWithContinuation);
-
-        yield result;
-      }
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
     }
   }
 
   private async _listEntities<T extends object>(
     tableName: string,
-    options: InternalListTableEntitiesOptions = {}
+    options: InternalListTableEntitiesOptions = {},
   ): Promise<TableEntityResultPage<T>> {
     const { disableTypeConversion = false } = options;
     const queryOptions = serializeQueryOptions(options.queryOptions || {});
     const listEntitiesOptions: TableQueryEntitiesOptionalParams = {
       ...options,
-      queryOptions
+      queryOptions,
     };
 
     // If a continuation token is used, decode it and set the next row and partition key
@@ -543,19 +531,19 @@ export class TableClient {
     const {
       xMsContinuationNextPartitionKey: nextPartitionKey,
       xMsContinuationNextRowKey: nextRowKey,
-      value
+      value,
     } = await this.table.queryEntities(tableName, listEntitiesOptions);
 
     const tableEntities = deserializeObjectsArray<TableEntityResult<T>>(
       value ?? [],
-      disableTypeConversion
+      disableTypeConversion,
     );
 
     // Encode nextPartitionKey and nextRowKey as a single continuation token and add it as a
     // property to the page.
     const continuationToken = encodeContinuationToken(nextPartitionKey, nextRowKey);
     const page: TableEntityResultPage<T> = Object.assign([...tableEntities], {
-      continuationToken
+      continuationToken,
     });
 
     return page;
@@ -585,26 +573,19 @@ export class TableClient {
    * await client.createEntity({partitionKey: "p1", rowKey: "r1", foo: "Hello!"});
    * ```
    */
-  public async createEntity<T extends object>(
+  public createEntity<T extends object>(
     entity: TableEntity<T>,
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options: OperationOptions = {}
+    options: OperationOptions = {},
   ): Promise<CreateTableEntityResponse> {
-    const { span, updatedOptions } = createSpan("TableClient-createEntity", options);
-
-    try {
+    return tracingClient.withSpan("TableClient.createEntity", options, (updatedOptions) => {
       const { ...createTableEntity } = updatedOptions || {};
-      return await this.table.insertEntity(this.tableName, {
+      return this.table.insertEntity(this.tableName, {
         ...createTableEntity,
         tableEntityProperties: serialize(entity),
-        responsePreference: "return-no-content"
+        responsePreference: "return-no-content",
       });
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -632,32 +613,25 @@ export class TableClient {
    * await client.deleteEntity("<partitionKey>", "<rowKey>")
    * ```
    */
-  public async deleteEntity(
+  public deleteEntity(
     partitionKey: string,
     rowKey: string,
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options: DeleteTableEntityOptions = {}
+    options: DeleteTableEntityOptions = {},
   ): Promise<DeleteTableEntityResponse> {
-    const { span, updatedOptions } = createSpan("TableClient-deleteEntity", options);
-
-    try {
-      const { etag = "*", ...rest } = updatedOptions || {};
+    return tracingClient.withSpan("TableClient.deleteEntity", options, (updatedOptions) => {
+      const { etag = "*", ...rest } = updatedOptions;
       const deleteOptions: TableDeleteEntityOptionalParams = {
-        ...rest
+        ...rest,
       };
-      return await this.table.deleteEntity(
+      return this.table.deleteEntity(
         this.tableName,
         escapeQuotes(partitionKey),
         escapeQuotes(rowKey),
         etag,
-        deleteOptions
+        deleteOptions,
       );
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -699,41 +673,43 @@ export class TableClient {
    * await client.updateEntity(entity, "Replace")
    * ```
    */
-  public async updateEntity<T extends object>(
+  public updateEntity<T extends object>(
     entity: TableEntity<T>,
     mode: UpdateMode = "Merge",
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options: UpdateTableEntityOptions = {}
+    options: UpdateTableEntityOptions = {},
   ): Promise<UpdateEntityResponse> {
-    const { span, updatedOptions } = createSpan(`TableClient-updateEntity-${mode}`, options);
+    return tracingClient.withSpan(
+      "TableClient.updateEntity",
+      options,
+      async (updatedOptions) => {
+        const partitionKey = escapeQuotes(entity.partitionKey);
+        const rowKey = escapeQuotes(entity.rowKey);
 
-    try {
-      const partitionKey = escapeQuotes(entity.partitionKey);
-      const rowKey = escapeQuotes(entity.rowKey);
+        const { etag = "*", ...updateEntityOptions } = updatedOptions || {};
+        if (mode === "Merge") {
+          return this.table.mergeEntity(this.tableName, partitionKey, rowKey, {
+            tableEntityProperties: serialize(entity),
+            ifMatch: etag,
+            ...updateEntityOptions,
+          });
+        }
+        if (mode === "Replace") {
+          return this.table.updateEntity(this.tableName, partitionKey, rowKey, {
+            tableEntityProperties: serialize(entity),
+            ifMatch: etag,
+            ...updateEntityOptions,
+          });
+        }
 
-      const { etag = "*", ...updateEntityOptions } = updatedOptions || {};
-      if (mode === "Merge") {
-        return await this.table.mergeEntity(this.tableName, partitionKey, rowKey, {
-          tableEntityProperties: serialize(entity),
-          ifMatch: etag,
-          ...updateEntityOptions
-        });
-      }
-      if (mode === "Replace") {
-        return await this.table.updateEntity(this.tableName, partitionKey, rowKey, {
-          tableEntityProperties: serialize(entity),
-          ifMatch: etag,
-          ...updateEntityOptions
-        });
-      }
-
-      throw new Error(`Unexpected value for update mode: ${mode}`);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+        throw new Error(`Unexpected value for update mode: ${mode}`);
+      },
+      {
+        spanAttributes: {
+          updateEntityMode: mode,
+        },
+      },
+    );
   }
 
   /**
@@ -771,38 +747,40 @@ export class TableClient {
    * await client.upsertEntity(entity, "Replace")
    * ```
    */
-  public async upsertEntity<T extends object>(
+  public upsertEntity<T extends object>(
     entity: TableEntity<T>,
     mode: UpdateMode = "Merge",
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options: OperationOptions = {}
+    options: OperationOptions = {},
   ): Promise<UpsertEntityResponse> {
-    const { span, updatedOptions } = createSpan(`TableClient-upsertEntity-${mode}`, options);
+    return tracingClient.withSpan(
+      "TableClient.upsertEntity",
+      options,
+      async (updatedOptions) => {
+        const partitionKey = escapeQuotes(entity.partitionKey);
+        const rowKey = escapeQuotes(entity.rowKey);
 
-    try {
-      const partitionKey = escapeQuotes(entity.partitionKey);
-      const rowKey = escapeQuotes(entity.rowKey);
+        if (mode === "Merge") {
+          return this.table.mergeEntity(this.tableName, partitionKey, rowKey, {
+            tableEntityProperties: serialize(entity),
+            ...updatedOptions,
+          });
+        }
 
-      if (mode === "Merge") {
-        return await this.table.mergeEntity(this.tableName, partitionKey, rowKey, {
-          tableEntityProperties: serialize(entity),
-          ...updatedOptions
-        });
-      }
-
-      if (mode === "Replace") {
-        return await this.table.updateEntity(this.tableName, partitionKey, rowKey, {
-          tableEntityProperties: serialize(entity),
-          ...updatedOptions
-        });
-      }
-      throw new Error(`Unexpected value for update mode: ${mode}`);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+        if (mode === "Replace") {
+          return this.table.updateEntity(this.tableName, partitionKey, rowKey, {
+            tableEntityProperties: serialize(entity),
+            ...updatedOptions,
+          });
+        }
+        throw new Error(`Unexpected value for update mode: ${mode}`);
+      },
+      {
+        spanAttributes: {
+          upsertEntityMode: mode,
+        },
+      },
+    );
   }
 
   /**
@@ -810,17 +788,16 @@ export class TableClient {
    * Shared Access Signatures.
    * @param options - The options parameters.
    */
-  public async getAccessPolicy(options: OperationOptions = {}): Promise<GetAccessPolicyResponse> {
-    const { span, updatedOptions } = createSpan("TableClient-getAccessPolicy", options);
-    try {
-      const signedIdentifiers = await this.table.getAccessPolicy(this.tableName, updatedOptions);
-      return deserializeSignedIdentifier(signedIdentifiers);
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+  // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+  public getAccessPolicy(options: OperationOptions = {}): Promise<GetAccessPolicyResponse> {
+    return tracingClient.withSpan(
+      "TableClient.getAccessPolicy",
+      options,
+      async (updatedOptions) => {
+        const signedIdentifiers = await this.table.getAccessPolicy(this.tableName, updatedOptions);
+        return deserializeSignedIdentifier(signedIdentifiers);
+      },
+    );
   }
 
   /**
@@ -828,23 +805,18 @@ export class TableClient {
    * @param tableAcl - The Access Control List for the table.
    * @param options - The options parameters.
    */
-  public async setAccessPolicy(
+  public setAccessPolicy(
     tableAcl: SignedIdentifier[],
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<SetAccessPolicyResponse> {
-    const { span, updatedOptions } = createSpan("TableClient-setAccessPolicy", options);
-    try {
+    return tracingClient.withSpan("TableClient.setAccessPolicy", options, (updatedOptions) => {
       const serlializedAcl = serializeSignedIdentifiers(tableAcl);
-      return await this.table.setAccessPolicy(this.tableName, {
+      return this.table.setAccessPolicy(this.tableName, {
         ...updatedOptions,
-        tableAcl: serlializedAcl
+        tableAcl: serlializedAcl,
       });
-    } catch (e) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -887,39 +859,36 @@ export class TableClient {
     const transactionId = Uuid.generateUuid();
     const changesetId = Uuid.generateUuid();
 
-    if (!this.transactionClient) {
-      // Add pipeline
-      this.transactionClient = new InternalTableTransaction(
-        this.url,
-        partitionKey,
-        transactionId,
-        changesetId,
-        new TableClient(this.url, this.tableName),
-        this.credential,
-        this.allowInsecureConnection
-      );
-    } else {
-      this.transactionClient.reset(transactionId, changesetId, partitionKey);
-    }
+    // Add pipeline
+    const transactionClient = new InternalTableTransaction(
+      this.url,
+      partitionKey,
+      transactionId,
+      changesetId,
+      this.generatedClient,
+      new TableClient(this.url, this.tableName),
+      this.credential,
+      this.allowInsecureConnection,
+    );
 
     for (const item of actions) {
-      const [action, entity, updateMode = "Merge"] = item;
+      const [action, entity, updateMode = "Merge", updateOptions] = item;
       switch (action) {
         case "create":
-          this.transactionClient.createEntity(entity);
+          transactionClient.createEntity(entity);
           break;
         case "delete":
-          this.transactionClient.deleteEntity(entity.partitionKey, entity.rowKey);
+          transactionClient.deleteEntity(entity.partitionKey, entity.rowKey);
           break;
         case "update":
-          this.transactionClient.updateEntity(entity, updateMode);
+          transactionClient.updateEntity(entity, updateMode, updateOptions);
           break;
         case "upsert":
-          this.transactionClient.upsertEntity(entity, updateMode);
+          transactionClient.upsertEntity(entity, updateMode);
       }
     }
 
-    return this.transactionClient.submitTransaction();
+    return transactionClient.submitTransaction();
   }
 
   /**
@@ -939,12 +908,13 @@ export class TableClient {
     connectionString: string,
     tableName: string,
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options?: TableClientOptions
+    options?: TableClientOptions,
   ): TableClient {
-    const { url, options: clientOptions, credential } = getClientParamsFromConnectionString(
-      connectionString,
-      options
-    );
+    const {
+      url,
+      options: clientOptions,
+      credential,
+    } = getClientParamsFromConnectionString(connectionString, options);
     if (credential) {
       return new TableClient(url, tableName, credential, clientOptions);
     } else {

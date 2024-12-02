@@ -6,30 +6,31 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { StartMenuItems } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DesktopVirtualizationAPIClientContext } from "../desktopVirtualizationAPIClientContext";
+import { DesktopVirtualizationAPIClient } from "../desktopVirtualizationAPIClient";
 import {
   StartMenuItem,
   StartMenuItemsListNextOptionalParams,
   StartMenuItemsListOptionalParams,
   StartMenuItemsListResponse,
-  StartMenuItemsListNextResponse
+  StartMenuItemsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing StartMenuItems operations. */
 export class StartMenuItemsImpl implements StartMenuItems {
-  private readonly client: DesktopVirtualizationAPIClientContext;
+  private readonly client: DesktopVirtualizationAPIClient;
 
   /**
    * Initialize a new instance of the class StartMenuItems class.
    * @param client Reference to the service client
    */
-  constructor(client: DesktopVirtualizationAPIClientContext) {
+  constructor(client: DesktopVirtualizationAPIClient) {
     this.client = client;
   }
 
@@ -42,12 +43,12 @@ export class StartMenuItemsImpl implements StartMenuItems {
   public list(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: StartMenuItemsListOptionalParams
+    options?: StartMenuItemsListOptionalParams,
   ): PagedAsyncIterableIterator<StartMenuItem> {
     const iter = this.listPagingAll(
       resourceGroupName,
       applicationGroupName,
-      options
+      options,
     );
     return {
       next() {
@@ -56,49 +57,62 @@ export class StartMenuItemsImpl implements StartMenuItems {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           applicationGroupName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: StartMenuItemsListOptionalParams
+    options?: StartMenuItemsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<StartMenuItem[]> {
-    let result = await this._list(
-      resourceGroupName,
-      applicationGroupName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: StartMenuItemsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        applicationGroupName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         applicationGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: StartMenuItemsListOptionalParams
+    options?: StartMenuItemsListOptionalParams,
   ): AsyncIterableIterator<StartMenuItem> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       applicationGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -113,11 +127,11 @@ export class StartMenuItemsImpl implements StartMenuItems {
   private _list(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: StartMenuItemsListOptionalParams
+    options?: StartMenuItemsListOptionalParams,
   ): Promise<StartMenuItemsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -132,11 +146,11 @@ export class StartMenuItemsImpl implements StartMenuItems {
     resourceGroupName: string,
     applicationGroupName: string,
     nextLink: string,
-    options?: StartMenuItemsListNextOptionalParams
+    options?: StartMenuItemsListNextOptionalParams,
   ): Promise<StartMenuItemsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -144,46 +158,49 @@ export class StartMenuItemsImpl implements StartMenuItems {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/startMenuItems",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/startMenuItems",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.StartMenuItemList
+      bodyMapper: Mappers.StartMenuItemList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.pageSize,
+    Parameters.isDescending,
+    Parameters.initialSkip,
+  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.StartMenuItemList
+      bodyMapper: Mappers.StartMenuItemList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

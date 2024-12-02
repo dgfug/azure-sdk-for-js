@@ -9,7 +9,7 @@
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   ReplicationUsage,
-  ReplicationUsagesListOptionalParams
+  ReplicationUsagesListOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -17,14 +17,13 @@ import {
 export interface ReplicationUsages {
   /**
    * Fetches the replication usages of the vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param options The options parameters.
    */
   list(
     resourceGroupName: string,
     vaultName: string,
-    options?: ReplicationUsagesListOptionalParams
+    options?: ReplicationUsagesListOptionalParams,
   ): PagedAsyncIterableIterator<ReplicationUsage>;
 }

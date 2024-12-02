@@ -6,47 +6,46 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { Usages } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { RecoveryServicesClientContext } from "../recoveryServicesClientContext";
+import { RecoveryServicesClient } from "../recoveryServicesClient";
 import {
   VaultUsage,
   UsagesListByVaultsOptionalParams,
-  UsagesListByVaultsResponse
+  UsagesListByVaultsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Usages operations. */
 export class UsagesImpl implements Usages {
-  private readonly client: RecoveryServicesClientContext;
+  private readonly client: RecoveryServicesClient;
 
   /**
    * Initialize a new instance of the class Usages class.
    * @param client Reference to the service client
    */
-  constructor(client: RecoveryServicesClientContext) {
+  constructor(client: RecoveryServicesClient) {
     this.client = client;
   }
 
   /**
    * Fetches the usages of the vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param options The options parameters.
    */
   public listByVaults(
     resourceGroupName: string,
     vaultName: string,
-    options?: UsagesListByVaultsOptionalParams
+    options?: UsagesListByVaultsOptionalParams,
   ): PagedAsyncIterableIterator<VaultUsage> {
     const iter = this.listByVaultsPagingAll(
       resourceGroupName,
       vaultName,
-      options
+      options,
     );
     return {
       next() {
@@ -55,38 +54,40 @@ export class UsagesImpl implements Usages {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByVaultsPagingPage(
           resourceGroupName,
           vaultName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByVaultsPagingPage(
     resourceGroupName: string,
     vaultName: string,
-    options?: UsagesListByVaultsOptionalParams
+    options?: UsagesListByVaultsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<VaultUsage[]> {
-    let result = await this._listByVaults(
-      resourceGroupName,
-      vaultName,
-      options
-    );
+    let result: UsagesListByVaultsResponse;
+    result = await this._listByVaults(resourceGroupName, vaultName, options);
     yield result.value || [];
   }
 
   private async *listByVaultsPagingAll(
     resourceGroupName: string,
     vaultName: string,
-    options?: UsagesListByVaultsOptionalParams
+    options?: UsagesListByVaultsOptionalParams,
   ): AsyncIterableIterator<VaultUsage> {
     for await (const page of this.listByVaultsPagingPage(
       resourceGroupName,
       vaultName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -94,19 +95,18 @@ export class UsagesImpl implements Usages {
 
   /**
    * Fetches the usages of the vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param options The options parameters.
    */
   private _listByVaults(
     resourceGroupName: string,
     vaultName: string,
-    options?: UsagesListByVaultsOptionalParams
+    options?: UsagesListByVaultsOptionalParams,
   ): Promise<UsagesListByVaultsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vaultName, options },
-      listByVaultsOperationSpec
+      listByVaultsOperationSpec,
     );
   }
 }
@@ -114,21 +114,20 @@ export class UsagesImpl implements Usages {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByVaultsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/usages",
+  path: "/Subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RecoveryServices/vaults/{vaultName}/usages",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VaultUsageList
-    }
+      bodyMapper: Mappers.VaultUsageList,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.vaultName
+    Parameters.vaultName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

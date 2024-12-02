@@ -4,51 +4,28 @@ const process = require("process");
 const { spawnSync } = require("child_process");
 
 const reducedDependencyTestMatrix = {
-  'core': ['@azure-rest/core-client',
-    '@azure-rest/core-client-lro',
-    '@azure-rest/core-client-paging',
-    '@azure-rest/purview-account',
-    '@azure-tests/perf-storage-blob',
-    '@azure/ai-text-analytics',
-    '@azure/arm-compute',
-    '@azure/dev-tool',
+  'core': [
+    '@azure-rest/synapse-access-control',
+    '@azure/arm-resources',
     '@azure/identity',
-    '@azure/identity-cache-persistence',
-    '@azure/identity-vscode',
     '@azure/service-bus',
-    '@azure/storage-blob',
-    '@azure/template',
-    '@azure/test-utils',
-    '@azure/test-utils-perf',
-    '@azure-tools/test-recorder',
-    '@azure/synapse-monitoring'
+    '@azure/template'
   ],
   'test-utils': [
-    '@azure-rest/purview-account',
     '@azure-tests/perf-storage-blob',
-    '@azure-tests/perf-data-tables',
     '@azure/arm-eventgrid',
     '@azure/ai-text-analytics',
     '@azure/identity',
-    '@azure/identity-cache-persistence',
-    '@azure/identity-vscode',
-    '@azure/storage-file-share',
     '@azure/template'
   ],
   'identity': [
-    '@azure-rest/core-client',
-    '@azure-rest/core-client-lro',
-    '@azure-rest/core-client-paging',
-    '@azure-rest/purview-account',
     '@azure-tests/perf-storage-blob',
     '@azure/ai-text-analytics',
-    '@azure/arm-compute',
+    '@azure/arm-resources',
     '@azure/identity-cache-persistence',
     '@azure/identity-vscode',
-    '@azure/service-bus',
     '@azure/storage-blob',
     '@azure/template',
-    '@azure/synapse-monitoring'
   ],
 };
 
@@ -63,26 +40,37 @@ const parseArgs = () => {
   }
 
   let inFlags = false;
+  let isPackageFilter = false;
+  let artifactNames = "";
   const services = [],
     flags = [];
   const [scriptPath, action, ...givenArgs] = process.argv.slice(1);
   const baseDir = path.resolve(`${path.dirname(scriptPath)}/../..`);
 
   for (const arg of givenArgs) {
-    if (!inFlags && arg.startsWith("-")) {
+    if (arg === "-packages") {
+      isPackageFilter = true;
+      continue;
+    }
+    else if (!inFlags && arg.startsWith("-")) {
       inFlags = true;
     }
 
     if (inFlags) {
       flags.push(arg);
-    } else {
+    }
+    else if (isPackageFilter) {
+      artifactNames = arg;
+      isPackageFilter = false;
+    }
+    else {
       if (arg && arg !== "*") {
         // exclude empty value and special value "*" meaning all libraries
-        services.push(arg);
+        arg.split(" ").forEach(serviceDirectory => services.push(serviceDirectory));
       }
     }
   }
-  return [baseDir, action, services, flags];
+  return [baseDir, action, services, flags, artifactNames];
 };
 
 const getPackageJsons = (searchDir) => {
@@ -104,22 +92,82 @@ const getPackageJsons = (searchDir) => {
   return sdkDirectories.concat(perfTestDirectories).filter((f) => fs.existsSync(f)); // only keep paths for files that actually exist
 };
 
-const getServicePackages = (baseDir, serviceDirs) => {
+const restrictedToPackages = [
+  "@azure/abort-controller",
+  "@azure/core-amqp",
+  "@azure/core-auth",
+  "@azure/core-client",
+  "@azure/core-http-compat",
+  "@azure/core-lro",
+  "@azure/core-paging",
+  "@azure/core-rest-pipeline",
+  "@azure/core-sse",
+  "@azure/core-tracing",
+  "@azure/core-util",
+  "@azure/core-xml",
+  "@azure/logger",
+  "@azure-rest/core-client",
+  "@typespec/ts-http-runtime",
+  "@azure/identity",
+  "@azure/arm-resources",
+  "@azure-tools/test-perf",
+  "@azure-tools/test-recorder",
+  "@azure-tools/test-credential",
+  "@azure-tools/test-utils"
+];
+
+/**
+ * Helper function that determines the rush command flag to use based on each individual package name for the 'build' check.
+ *
+ * If the targeted package is one of the restricted packages with a ton of dependents, we only want to run that package
+ * and not all of its dependents.
+ * @param packageNames string[] An array of strings containing the packages names to run the action on.
+ */
+const getDirectionMappedPackages = (packageNames) => {
+  const mappedPackages = [];
+
+  for (const packageName of packageNames) {
+    // Build command without any additional option should build the project and downstream
+    // If service is configured to run only a set of downstream projects then build all projects leading to them to support testing
+    // If the package is a core package, azure-identity or arm-resources then build only the package,
+    // otherwise build the package and all its dependents
+    var rushCommandFlag = "--impacted-by";
+
+    if (restrictedToPackages.includes(packageName)) {
+      // if this is one of our restricted packages with a ton of deps, make it targeted
+      // as including all dependents will be too much
+      rushCommandFlag = "--to";
+    }
+    else if (actionComponents.length == 1) {
+      // else we are building the project and its dependents
+      rushCommandFlag = "--from";
+    }
+
+    mappedPackages.push([rushCommandFlag, packageName]);
+  }
+
+  return mappedPackages;
+};
+
+const getServicePackages = (baseDir, serviceDirs, artifactNames) => {
   const packageNames = [];
   const packageDirs = [];
-  const validSdkTypes =  ["client", "mgmt", "perf-test", "utility"]; // valid "sdk-type"s that we are looking for, to be able to apply rush-runner jobs on
+  let validSdkTypes = ["client", "mgmt", "perf-test", "utility"]; // valid "sdk-type"s that we are looking for, to be able to apply rush-runner jobs on
+  console.log(`Packages to build: ${artifactNames}`);
+  const artifacts = artifactNames.split(",");
   for (const serviceDir of serviceDirs) {
     const searchDir = path.resolve(path.join(baseDir, "sdk", serviceDir));
     const packageJsons = getPackageJsons(searchDir);
     for (const filePath of packageJsons) {
       const contents = JSON.parse(fs.readFileSync(filePath, "utf8"));
-      if (validSdkTypes.includes(contents["sdk-type"])) {
+      const artifactName = contents.name.replace("@", "").replace("/", "-");
+      if (validSdkTypes.includes(contents["sdk-type"]) && (artifactNames.length === 0 || artifacts.includes(artifactName))) {
         packageNames.push(contents.name);
         packageDirs.push(path.dirname(filePath));
       }
     }
   }
-
+  console.log(`Packages eligible to run rush task: ${packageNames}`);
   return [packageNames, packageDirs];
 };
 
@@ -141,9 +189,10 @@ const flatMap = (arr, f) => {
   return [].concat(...result);
 };
 
-const [baseDir, action, serviceDirs, rushParams] = parseArgs();
+const [baseDir, action, serviceDirs, rushParams, artifactNames] = parseArgs();
+const actionComponents = action.toLowerCase().split(":");
 
-const [packageNames, packageDirs] = getServicePackages(baseDir, serviceDirs);
+const [packageNames, packageDirs] = getServicePackages(baseDir, serviceDirs, artifactNames);
 
 /**
  * Helper function to provide the rush logic that is used frequently below
@@ -157,10 +206,20 @@ function rushRunAll(direction, packages) {
 }
 
 /**
+ * Helper function to invoke the rush logic split up by direction.
+ *
+ * @param packagesWithDirection string[] Any array of strings containing ["direction packageName"...]
+ */
+function rushRunAllWithDirection(packagesWithDirection) {
+  const invocation = packagesWithDirection.flatMap(([direction, packageName]) => [direction, packageName]);
+  spawnNode(baseDir, "common/scripts/install-run-rush.js", action, ...invocation, ...rushParams);
+}
+
+/**
  * Helper function to get the relative path of a package directory from an absolute
  * one
- * 
- * @param {string} absolutePath absolute path to a package 
+ *
+ * @param {string} absolutePath absolute path to a package
  * @returns either the relative path of the package starting from the "sdk" directory
  *          or the just the absolute path itself if "sdk" if not found
  */
@@ -175,33 +234,22 @@ if (isReducedTestScopeEnabled) {
   console.log(`Found reduced test matrix configured for ${serviceDirs}.`);
   packageNames.push(...reducedDependencyTestMatrix[serviceDirs]);
 }
+const packagesWithDirection = getDirectionMappedPackages(packageNames);
 const rushx_runner_path = path.join(baseDir, "common/scripts/install-run-rushx.js");
 if (serviceDirs.length === 0) {
   spawnNode(baseDir, "common/scripts/install-run-rush.js", action, ...rushParams);
 } else {
-  const actionComponents = action.toLowerCase().split(":");
   switch (actionComponents[0]) {
     case "build":
-      // Build command without any additional option should build the project and downstream
-      // If service is configured to run only a set of downstream projects then build all projects leading to them to support testing
-      // if this is build:test for any non-configured package service then all impacted projects downstream and it's dependents should be built
-      var rushCommandFlag = "--impacted-by";
-      if (isReducedTestScopeEnabled) {
-        // reduced preconfigured set of projects and it's required projects
-        rushCommandFlag = "--to";
-      }
-      else if (actionComponents.length == 1) {
-        rushCommandFlag = "--from";
-      }
-
-      rushRunAll(rushCommandFlag, packageNames);
+      rushRunAllWithDirection(packagesWithDirection);
       break;
 
     case "test":
     case "unit-test":
     case "integration-test":
       var rushCommandFlag = "--impacted-by";
-      if (isReducedTestScopeEnabled) {
+
+      if (isReducedTestScopeEnabled || serviceDirs.length > 1) {
         // If a service is configured to have reduced test matrix then run rush test only for those projects
         rushCommandFlag = "--only";
       }

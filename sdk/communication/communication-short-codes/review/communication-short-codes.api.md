@@ -4,16 +4,21 @@
 
 ```ts
 
-import * as coreHttp from '@azure/core-http';
-import { KeyCredential } from '@azure/core-auth';
-import { OperationOptions } from '@azure/core-http';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PipelineOptions } from '@azure/core-http';
-import { RestResponse } from '@azure/core-http';
-import { TokenCredential } from '@azure/core-auth';
+import type { CommonClientOptions } from '@azure/core-client';
+import * as coreClient from '@azure/core-client';
+import type { KeyCredential } from '@azure/core-auth';
+import type { OperationOptions } from '@azure/core-client';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { TokenCredential } from '@azure/core-auth';
+
+// @public
+export type AttachmentType = "callToAction" | "termsOfService" | "privacyPolicy" | "other";
 
 // @public
 export type BillingFrequency = "monthly" | "once";
+
+// @public
+export type CallToActionType = "website" | "pointOfSale" | "sms" | "interactiveVoiceResponse";
 
 // @public (undocumented)
 export interface CompanyInformation {
@@ -23,6 +28,9 @@ export interface CompanyInformation {
     name?: string;
     url?: string;
 }
+
+// @public (undocumented)
+export const CompanyInformationMapper: coreClient.CompositeMapper;
 
 // @public
 export interface ContactInformation {
@@ -42,7 +50,14 @@ export interface DeleteUSProgramBriefOptions extends OperationOptions {
 }
 
 // @public
+export type FileType = "png" | "jpg" | "jpeg" | "pdf";
+
+// @public
 export interface GetUSProgramBriefOptions extends OperationOptions {
+}
+
+// @public
+export interface ListShortCodeCostsOptions extends ShortCodesGetCostsOptionalParams {
 }
 
 // @public
@@ -50,26 +65,29 @@ export interface ListShortCodesOptions extends ShortCodesGetShortCodesOptionalPa
 }
 
 // @public
-export interface ListUSProgramBriefsOptions extends OperationOptions {
+export interface ListUSProgramBriefsOptions extends ShortCodesGetUSProgramBriefsOptionalParams {
 }
 
 // @public
-export type MessageContentCategory = "ringTones" | "smsChat" | "video" | "loyaltyProgramPointsPrizes" | "gifting" | "inApplicationBilling" | "textToScreen" | "games" | "audioChat" | "mmsPictures" | "sweepstakesContestAuction" | "financialBanking" | "premiumWap" | "queryService" | "wallpaperScreensaver" | "voting" | "application" | "mobileGivingDonations" | "coupons" | "loyaltyProgram" | "noPointsPrizes" | "informationalAlerts" | "microBilling" | "trivia" | "entertainmentAlerts" | "accountNotification" | "ageGatedContent" | "conversationalMessaging" | "deliveryNotification" | "education" | "emergencyAlerts" | "fraudAlerts" | "loanArrangement" | "onBehalfOfCarrier" | "political" | "promotionalMarketing" | "publicServiceAnnouncements" | "securityAlerts" | "socialMedia" | "twoFactorAuthentication" | "other";
+export type MessageContentType = "accountNotificationInformationalAlerts" | "ageGatedContent" | "chatConversationalMessaging" | "deliveryNotification" | "donationsPledge" | "education" | "fraudAlerts" | "loanArrangement" | "loyaltyProgram" | "marketingAndPromotion" | "mmsPicture" | "mmsVideo" | "oneTimePasswordOrMultiFactorAuthentication" | "political" | "publicServiceAnnouncements" | "securityAlerts" | "socialMedia" | "sweepstakesOrContest" | "votingOrPolling" | "other";
 
 // @public (undocumented)
 export interface MessageDetails {
-    // (undocumented)
-    confirmationMessage?: string;
     directionality?: MessageDirectionality;
-    helpMessage?: string;
+    helpAnswerToUser?: string;
+    optInAnswerFromUser?: string;
     // (undocumented)
-    optInMessage?: string;
-    optInReply?: string;
-    optOutMessage?: string;
+    optInConfirmationMessageToUser?: string;
+    // (undocumented)
+    optInMessageToUser?: string;
+    optOutAnswerToUser?: string;
     recurrence?: Recurrence;
-    supportedProtocols?: MessageProtocol[];
+    supportedProtocol?: MessageProtocol;
     useCases?: UseCase[];
 }
+
+// @public (undocumented)
+export const MessageDetailsMapper: coreClient.CompositeMapper;
 
 // @public
 export type MessageDirection = "toUser" | "fromUser";
@@ -95,10 +113,30 @@ export type MessageProtocol = "sms" | "mms";
 export type NumberType = "shortCode" | "alphaId";
 
 // @public
+export interface ProgramBriefAttachment {
+    fileContentBase64: string;
+    fileName: string;
+    fileSizeInBytes?: number;
+    fileType: FileType;
+    id: string;
+    type: AttachmentType;
+}
+
+// @public
+export interface ProgramBriefAttachmentSummary {
+    fileName?: string;
+    id?: string;
+    type?: AttachmentType;
+}
+
+// @public
 export type ProgramBriefStatus = "submitted" | "approved" | "submitNewVanityNumbers" | "updateProgramBrief" | "draft" | "denied";
 
 // @public (undocumented)
 export interface ProgramDetails {
+    callToAction?: string;
+    callToActionTypes?: CallToActionType[];
+    callToActionUrl?: string;
     description?: string;
     expectedDateOfService?: Date;
     isPoliticalCampaign?: boolean;
@@ -107,14 +145,12 @@ export interface ProgramDetails {
     numberType?: NumberType;
     preferredVanityNumbers?: string[];
     privacyPolicyUrl?: string;
-    signUpTypes?: ProgramSignUpType[];
-    signUpUrl?: string;
     termsOfServiceUrl?: string;
     url?: string;
 }
 
-// @public
-export type ProgramSignUpType = "website" | "pointOfSale" | "sms" | "interactiveVoiceResponse";
+// @public (undocumented)
+export const ProgramDetailsMapper: coreClient.CompositeMapper;
 
 // @public
 export type Recurrence = "subscription" | "transaction";
@@ -128,17 +164,18 @@ export interface ReviewNote {
 // @public
 export interface ShortCode {
     countryCode?: string;
-    number?: string;
-    numberType?: NumberType;
     programBriefIds?: string[];
     purchaseDate?: Date;
+    value?: string;
 }
 
 // @public
 export interface ShortCodeCost {
-    amount: number;
-    billingFrequency: BillingFrequency;
-    currencyCode: string;
+    amount?: number;
+    billingFrequency?: BillingFrequency;
+    countryCode?: string;
+    currencyCode?: string;
+    isVanityShortCode?: boolean;
 }
 
 // @public (undocumented)
@@ -147,31 +184,72 @@ export class ShortCodesClient {
     constructor(endpoint: string, credential: KeyCredential, options?: ShortCodesClientOptions);
     constructor(endpoint: string, credential: TokenCredential, options?: ShortCodesClientOptions);
     // (undocumented)
-    deleteUSProgramBrief(programBriefId: string, options?: DeleteUSProgramBriefOptions): Promise<RestResponse>;
+    createOrReplaceUSProgramBriefAttachment(programBriefId: string, attachmentId: string, fileName: string, fileType: FileType, fileContent: string, attachmentType: AttachmentType, options?: ShortCodesCreateOrReplaceUSProgramBriefAttachmentOptionalParams): Promise<ProgramBriefAttachment>;
+    // (undocumented)
+    deleteUSProgramBrief(programBriefId: string, options?: DeleteUSProgramBriefOptions): Promise<void>;
+    // (undocumented)
+    deleteUSProgramBriefAttachment(programBriefId: string, attachmentId: string, options?: ShortCodesDeleteUSProgramBriefAttachmentOptionalParams): Promise<void>;
     // (undocumented)
     getUSProgramBrief(programBriefId: string, options?: GetUSProgramBriefOptions): Promise<USProgramBrief>;
     // (undocumented)
+    getUSProgramBriefAttachment(programBriefId: string, attachmentId: string, options?: ShortCodesGetUSProgramBriefAttachmentOptionalParams): Promise<ProgramBriefAttachment>;
+    // (undocumented)
+    listShortCodeCosts(options?: ListShortCodeCostsOptions): PagedAsyncIterableIterator<ShortCodeCost>;
+    // (undocumented)
     listShortCodes(options?: ListShortCodesOptions): PagedAsyncIterableIterator<ShortCode>;
+    // (undocumented)
+    listUSProgramBriefAttachments(programBriefId: string, options?: ShortCodesGetUSProgramBriefAttachmentsOptionalParams): PagedAsyncIterableIterator<ProgramBriefAttachment>;
     // (undocumented)
     listUSProgramBriefs(options?: ListUSProgramBriefsOptions): PagedAsyncIterableIterator<USProgramBrief>;
     // (undocumented)
-    submitUSProgramBrief(programBriefId: string, options?: SubmitUSProgramBriefOptions): Promise<RestResponse>;
+    submitUSProgramBrief(programBriefId: string, options?: SubmitUSProgramBriefOptions): Promise<USProgramBrief>;
     // (undocumented)
-    upsertUSProgramBrief(programBriefId: string, options?: ShortCodesUpsertUSProgramBriefOptionalParams): Promise<RestResponse>;
+    upsertUSProgramBrief(programBriefId: string, options?: ShortCodesUpsertUSProgramBriefOptionalParams): Promise<USProgramBrief>;
 }
 
 // @public
-export interface ShortCodesClientOptions extends PipelineOptions {
+export interface ShortCodesClientOptions extends CommonClientOptions {
 }
 
 // @public
-export interface ShortCodesGetShortCodesOptionalParams extends coreHttp.OperationOptions {
+export interface ShortCodesCreateOrReplaceUSProgramBriefAttachmentOptionalParams extends coreClient.OperationOptions {
+    fileSizeInBytes?: number;
+}
+
+// @public
+export interface ShortCodesDeleteUSProgramBriefAttachmentOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface ShortCodesGetCostsOptionalParams extends coreClient.OperationOptions {
     skip?: number;
     top?: number;
 }
 
 // @public
-export interface ShortCodesUpsertUSProgramBriefOptionalParams extends coreHttp.OperationOptions {
+export interface ShortCodesGetShortCodesOptionalParams extends coreClient.OperationOptions {
+    skip?: number;
+    top?: number;
+}
+
+// @public
+export interface ShortCodesGetUSProgramBriefAttachmentOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface ShortCodesGetUSProgramBriefAttachmentsOptionalParams extends coreClient.OperationOptions {
+    skip?: number;
+    top?: number;
+}
+
+// @public
+export interface ShortCodesGetUSProgramBriefsOptionalParams extends coreClient.OperationOptions {
+    skip?: number;
+    top?: number;
+}
+
+// @public
+export interface ShortCodesUpsertUSProgramBriefOptionalParams extends coreClient.OperationOptions {
     body?: USProgramBrief;
 }
 
@@ -189,14 +267,19 @@ export interface TrafficDetails {
     totalMonthlyVolume?: number;
 }
 
+// @public (undocumented)
+export const TrafficDetailsMapper: coreClient.CompositeMapper;
+
 // @public
 export interface UseCase {
-    contentCategory?: MessageContentCategory;
+    contentType?: MessageContentType;
+    customContentType?: string;
     examples?: MessageExampleSequence[];
 }
 
 // @public
 export interface USProgramBrief {
+    attachments?: ProgramBriefAttachmentSummary[];
     // (undocumented)
     companyInformation?: CompanyInformation;
     costs?: ShortCodeCost[];
@@ -213,7 +296,6 @@ export interface USProgramBrief {
     // (undocumented)
     trafficDetails?: TrafficDetails;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

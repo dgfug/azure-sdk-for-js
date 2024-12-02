@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as chai from "chai";
-const should = chai.should();
+import { describe, it, assert } from "vitest";
 import { ConnectionConfig, ConnectionContextBase } from "../../src";
 import ws from "ws";
 
-describe("ConnectionContextBase (node.js)", function() {
+describe("ConnectionContextBase (node.js)", function () {
   it("should accept a websocket constructor", async () => {
     const host = "hostname.servicebus.windows.net";
     const connectionString = `Endpoint=sb://${host}/;SharedAccessKeyName=sakName;SharedAccessKey=sak;EntityPath=ep`;
@@ -21,11 +20,11 @@ describe("ConnectionContextBase (node.js)", function() {
       connectionProperties: {
         product: "MSJSClient",
         userAgent: "/js-amqp-client",
-        version: "1.0.0"
-      }
+        version: "1.0.0",
+      },
     });
 
-    should.exist(context);
-    should.equal(context.connection["options"]["webSocketOptions"]?.url, `wss://${host}:443/ws`);
+    assert.isDefined(context);
+    assert.equal(context.connection["options"]["webSocketOptions"]?.url, `wss://${host}:443/ws`);
   });
 });

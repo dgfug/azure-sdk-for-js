@@ -5,22 +5,27 @@
 ## Configuration
 
 ```yaml
-package-name: azure-communication-chat
+package-name: "@azure/communication-chat"
 title: ChatApiClient
 description: Chat Client
-generate-metadata: false
 license-header: MICROSOFT_MIT_NO_VERSION
 output-folder: ../src/generated
-tag: package-chat-2021-09-07
-require: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/communication/data-plane/Chat/readme.md
+tag: package-chat-2024-03-07
+require: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/72d4c8cae964a12dc27ad4684b0bddf493225338/specification/communication/data-plane/Chat/readme.md
 model-date-time-as-string: false
 optional-response-headers: true
-typescript: true
-azure-arm: false
 add-credentials: false
 disable-async-iterators: true
-package-version: 1.1.0
-v3: true
+package-version: 1.5.5
+use-extension:
+  "@autorest/typescript": "latest"
+tracing-info:
+  namespace: "Azure.Communication"
+  packagePrefix: "Microsoft.Communication"
+
+typescript:
+  generate-metadata: false
+  azure-arm: false
 ```
 
 ### Rename CommunicationError to ChatError
@@ -39,6 +44,16 @@ directive:
 directive:
   from: swagger-document
   where: "$.definitions.ChatMessageType"
+  transform: >
+    $["x-ms-enum"].modelAsString = false;
+```
+
+### Set ChatAttachmentType Model as string false
+
+```yaml
+directive:
+  from: swagger-document
+  where: "$.definitions.ChatAttachmentType"
   transform: >
     $["x-ms-enum"].modelAsString = false;
 ```

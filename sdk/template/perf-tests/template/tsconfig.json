@@ -1,0 +1,12 @@
+{
+  "extends": "../../../../tsconfig",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "declarationDir": "./typings/latest",
+    "lib": ["ES6", "ESNext.AsyncIterable"],
+    "outDir": "./dist-esm"
+  },
+  "compileOnSave": true,
+  "include": ["./test/**/*.ts"]
+}

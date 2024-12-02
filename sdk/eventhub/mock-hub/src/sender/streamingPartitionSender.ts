@@ -1,12 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Sender, SenderEvents, DeliveryAnnotations, types } from "rhea";
-import { AbortController, AbortSignalLike, AbortError } from "@azure/abort-controller";
-
-import { MessageStore, MessageRecord } from "../storage/messageStore";
-import { EventPosition } from "../utils/eventPosition";
-import { Message } from "rhea";
+import { AbortError } from "@azure/abort-controller";
+import rhea from "rhea";
+import type { MessageRecord, MessageStore } from "../storage/messageStore.js";
+import type { EventPosition } from "../utils/eventPosition.js";
 
 /**
  * The StreamingPartitionSender is responsible for sending stored events to a client
@@ -17,24 +15,24 @@ export class StreamingPartitionSender {
   private _messageStore: MessageStore;
   private _messageIterator: ReturnType<MessageStore["getMessageIterator"]>;
   private _partitionId: string;
-  private _sender: Sender;
+  private _sender: rhea.Sender;
   private _abortController = new AbortController();
   private _enableRuntimeMetric: boolean;
 
   /**
    * Instantiates a `StreamingPartitionSender`.
-   * @param messageStore The `MessageStore` that contains all of the messages sent to the service.
-   * @param sender The sender link that should be used to send messages to.
-   * @param partitionId Specifies which partition to send messages from.
-   * @param startPosition Specifies which message to start iterating from.
-   * @param enableRuntimeMetric Indicates whether partition info should be sent on each event.
+   * @param messageStore - The `MessageStore` that contains all of the messages sent to the service.
+   * @param sender - The sender link that should be used to send messages to.
+   * @param partitionId - Specifies which partition to send messages from.
+   * @param startPosition - Specifies which message to start iterating from.
+   * @param enableRuntimeMetric - Indicates whether partition info should be sent on each event.
    */
   constructor(
     messageStore: MessageStore,
-    sender: Sender,
+    sender: rhea.Sender,
     partitionId: string,
     startPosition: EventPosition,
-    enableRuntimeMetric: boolean
+    enableRuntimeMetric: boolean,
   ) {
     this._messageStore = messageStore;
     this._messageIterator = messageStore.getMessageIterator(partitionId, startPosition);
@@ -46,7 +44,7 @@ export class StreamingPartitionSender {
   /**
    * Starts sending messages.
    */
-  start() {
+  start(): void {
     this._sendMessages().catch((err) => {
       console.error(`Unexpected error while sending messages`, err);
     });
@@ -55,11 +53,11 @@ export class StreamingPartitionSender {
   /**
    * Stops sending messages.
    */
-  stop() {
+  stop(): void {
     this._abortController.abort();
   }
 
-  private async _sendMessages() {
+  private async _sendMessages(): Promise<void> {
     const abortSignal = this._abortController.signal;
     const iterator = this._messageIterator;
     const sender = this._sender;
@@ -76,7 +74,7 @@ export class StreamingPartitionSender {
 
         // Set the message's message annotations.
         const messageAnnotations = value.message.message_annotations ?? {};
-        messageAnnotations["x-opt-sequence-number"] = types.wrap_long(value.sequenceNumber);
+        messageAnnotations["x-opt-sequence-number"] = rhea.types.wrap_long(value.sequenceNumber);
         messageAnnotations["x-opt-offset"] = `${value.offset}`;
         messageAnnotations["x-opt-enqueued-time"] = value.enqueuedTime;
         if (value.partitionKey) {
@@ -84,12 +82,12 @@ export class StreamingPartitionSender {
         }
 
         // Set the `PartitionInfo` if `enableRuntimeMetric` is turned on.
-        const deliveryAnnotations: DeliveryAnnotations = {};
+        const deliveryAnnotations: rhea.DeliveryAnnotations = {};
         if (this._enableRuntimeMetric) {
           const partitionInfo = this._messageStore.getPartitionInfo(this._partitionId);
           deliveryAnnotations["last_enqueued_offset"] = partitionInfo.lastEnqueuedOffset;
-          deliveryAnnotations["last_enqueued_sequence_number"] = types.wrap_long(
-            partitionInfo.lastEnqueuedSequenceNumber
+          deliveryAnnotations["last_enqueued_sequence_number"] = rhea.types.wrap_long(
+            partitionInfo.lastEnqueuedSequenceNumber,
           );
           deliveryAnnotations["last_enqueued_time_utc"] = partitionInfo.lastEnqueuedTimeUtc;
           deliveryAnnotations["runtime_info_retrieval_time_utc"] = new Date();
@@ -100,8 +98,8 @@ export class StreamingPartitionSender {
           await this._waitForSendable(sender, abortSignal);
         }
 
-        const outgoingMessage: Message = {
-          ...value.message
+        const outgoingMessage: rhea.Message = {
+          ...value.message,
         };
         if (Object.keys(messageAnnotations).length) {
           outgoingMessage.message_annotations = messageAnnotations;
@@ -111,26 +109,29 @@ export class StreamingPartitionSender {
         }
         // And away it goes!
         sender.send(outgoingMessage);
-      } catch (err) {
-        if ((err as any)?.name !== "AbortError") {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== "AbortError") {
           console.error(`Unexpected error while streaming events: `, err);
         }
       }
     } while (!abortSignal.aborted && !nextResult?.done);
   }
 
-  private _waitForSendable(sender: Sender, abortSignal: AbortSignalLike): Promise<void> {
+  private _waitForSendable(sender: rhea.Sender, abortSignal: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
-      const onAbort = () => {
-        sender.removeListener(SenderEvents.sendable, onSendable);
+      const onAbort = (): void => {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        sender.removeListener(rhea.SenderEvents.sendable, onSendable);
         abortSignal.removeEventListener("abort", onAbort);
         reject(new AbortError("Cancelled operation."));
       };
-      const onSendable = () => {
+
+      const onSendable = (): void => {
         abortSignal.removeEventListener("abort", onAbort);
         resolve();
       };
-      sender.once(SenderEvents.sendable, onSendable);
+
+      sender.once(rhea.SenderEvents.sendable, onSendable);
 
       abortSignal.addEventListener("abort", onAbort);
     });

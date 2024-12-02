@@ -1,10 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { assert } from "chai";
-import { DeletedSecret, KeyVaultSecret } from "../../src";
-import { DeletedSecretBundle, SecretBundle } from "../../src/generated";
-import { getSecretFromSecretBundle } from "../../src/transformations";
+// Licensed under the MIT License.
+import type { DeletedSecret, KeyVaultSecret } from "../../src/index.js";
+import type { DeletedSecretBundle, SecretBundle } from "../../src/generated/index.js";
+import { getSecretFromSecretBundle } from "../../src/transformations.js";
+import { describe, it, assert } from "vitest";
 
 describe("Transformations", () => {
   it("correctly assigns all properties for a secret", () => {
@@ -17,7 +16,7 @@ describe("Transformations", () => {
         notBefore: date,
         recoverableDays: 7,
         recoveryLevel: "Purgable",
-        updated: date
+        updated: date,
       },
       contentType: "content_type",
       id: "https://azure_keyvault.vault.azure.net/keys/abc123/1",
@@ -25,9 +24,9 @@ describe("Transformations", () => {
       managed: true,
       tags: {
         tag1: "value1",
-        tag2: "value2"
+        tag2: "value2",
       },
-      value: "my secret value"
+      value: "my secret value",
     };
 
     const expectedResult: KeyVaultSecret = {
@@ -45,14 +44,14 @@ describe("Transformations", () => {
         contentType: "content_type",
         tags: {
           tag1: "value1",
-          tag2: "value2"
+          tag2: "value2",
         },
         managed: true,
         vaultUrl: "https://azure_keyvault.vault.azure.net",
         version: "1",
         name: "abc123",
-        certificateKeyId: "test_kid"
-      }
+        certificateKeyId: "test_kid",
+      },
     };
 
     const secret: KeyVaultSecret = getSecretFromSecretBundle(bundle);
@@ -65,7 +64,7 @@ describe("Transformations", () => {
       id: "https://azure_keyvault.vault.azure.net/keys/abc123/1",
       recoveryId: "recovery_id",
       scheduledPurgeDate: date,
-      deletedDate: date
+      deletedDate: date,
     };
 
     const secret: DeletedSecret = getSecretFromSecretBundle(bundle);

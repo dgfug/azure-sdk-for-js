@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type {
   AcsChatMessageDeletedEventData,
   AcsChatMessageDeletedInThreadEventData,
   AcsChatMessageEditedEventData,
@@ -42,6 +42,11 @@ import {
   ContainerRegistryImagePushedEventData,
   ContainerServiceNewKubernetesVersionAvailableEventData,
   EventHubCaptureFileCreatedEventData,
+  HealthcareDicomImageCreatedEventData,
+  HealthcareDicomImageDeletedEventData,
+  HealthcareFhirResourceCreatedEventData,
+  HealthcareFhirResourceDeletedEventData,
+  HealthcareFhirResourceUpdatedEventData,
   IotHubDeviceConnectedEventData,
   IotHubDeviceCreatedEventData,
   IotHubDeviceDeletedEventData,
@@ -128,10 +133,88 @@ import {
   WebSlotSwapFailedEventData,
   WebSlotSwapStartedEventData,
   WebSlotSwapWithPreviewCancelledEventData,
-  WebSlotSwapWithPreviewStartedEventData
-} from "./generated/models";
+  WebSlotSwapWithPreviewStartedEventData,
+  StorageTaskQueuedEventData,
+  StorageTaskCompletedEventData,
+  DataBoxCopyStartedEventData,
+  DataBoxCopyCompletedEventData,
+  DataBoxOrderCompletedEventData,
+  AcsIncomingCallEventData,
+  AcsEmailDeliveryReportReceivedEventData,
+  AcsEmailEngagementTrackingReportReceivedEventData,
+  ApiManagementGatewayCreatedEventData,
+  ApiManagementGatewayUpdatedEventData,
+  ApiManagementGatewayDeletedEventData,
+  ApiManagementGatewayHostnameConfigurationCreatedEventData,
+  ApiManagementGatewayHostnameConfigurationUpdatedEventData,
+  ApiManagementGatewayHostnameConfigurationDeletedEventData,
+  ApiManagementGatewayCertificateAuthorityCreatedEventData,
+  ApiManagementGatewayCertificateAuthorityUpdatedEventData,
+  ApiManagementGatewayCertificateAuthorityDeletedEventData,
+  ApiManagementGatewayApiAddedEventData,
+  ApiManagementGatewayApiRemovedEventData,
+  HealthcareDicomImageUpdatedEventData,
+  ContainerServiceClusterSupportEndedEventData,
+  ContainerServiceClusterSupportEndingEventData,
+  ContainerServiceNodePoolRollingStartedEventData,
+  ContainerServiceNodePoolRollingSucceededEventData,
+  ContainerServiceNodePoolRollingFailedEventData,
+  EventGridMqttClientCreatedOrUpdatedEventData,
+  EventGridMqttClientDeletedEventData,
+  EventGridMqttClientSessionConnectedEventData,
+  EventGridMqttClientSessionDisconnectedEventData,
+  AppConfigurationSnapshotCreatedEventData,
+  AppConfigurationSnapshotModifiedEventData,
+  ResourceNotificationsHealthResourcesAvailabilityStatusChangedEventData,
+  ResourceNotificationsHealthResourcesAnnotatedEventData,
+  AcsRouterWorkerDeregisteredEventData,
+  AcsRouterWorkerRegisteredEventData,
+  AcsRouterJobCancelledEventData,
+  AcsRouterJobClassificationFailedEventData,
+  AcsRouterJobClassifiedEventData,
+  AcsRouterJobClosedEventData,
+  AcsRouterJobCompletedEventData,
+  AcsRouterJobDeletedEventData,
+  AcsRouterJobExceptionTriggeredEventData,
+  AcsRouterJobQueuedEventData,
+  AcsRouterJobReceivedEventData,
+  AcsRouterJobSchedulingFailedEventData,
+  AcsRouterJobUnassignedEventData,
+  AcsRouterJobWaitingForActivationEventData,
+  AcsRouterJobWorkerSelectorsExpiredEventData,
+  AcsRouterWorkerDeletedEventData,
+  AcsRouterWorkerOfferAcceptedEventData,
+  AcsRouterWorkerOfferDeclinedEventData,
+  AcsRouterWorkerOfferExpiredEventData,
+  AcsRouterWorkerOfferIssuedEventData,
+  AcsRouterWorkerOfferRevokedEventData,
+  ResourceNotificationsResourceManagementCreatedOrUpdatedEventData,
+  ResourceNotificationsResourceManagementDeletedEventData,
+  StorageTaskAssignmentQueuedEventData,
+  AvsScriptExecutionStartedEventData,
+  AvsScriptExecutionCancelledEventData,
+  AvsClusterCreatedEventData,
+  AvsPrivateCloudFailedEventData,
+  AvsPrivateCloudUpdatingEventData,
+  AvsPrivateCloudUpdatedEventData,
+  AvsClusterUpdatingEventData,
+  AvsClusterDeletedEventData,
+  AvsScriptExecutionFailedEventData,
+  AvsScriptExecutionFinishedEventData,
+  StorageTaskAssignmentCompletedEventData,
+  AvsClusterUpdatedEventData,
+  AvsClusterFailedEventData,
+  ApiCenterApiDefinitionAddedEventData,
+  ApiCenterApiDefinitionUpdatedEventData,
+  AcsMessageDeliveryStatusUpdatedEventData,
+  AcsMessageReceivedEventData,
+  AcsRouterWorkerUpdatedEventData,
+  AcsChatThreadDeletedEventData,
+  AcsChatThreadCreatedEventData,
+  AcsChatThreadPropertiesUpdatedEventData,
+} from "./generated/models/index.js";
 
-import { CloudEvent, EventGridEvent } from "./models";
+import type { CloudEvent, EventGridEvent } from "./models.js";
 
 /**
  * The Event Types for all System Events. These may be used with `isSystemEvent` to determine if an
@@ -237,6 +320,16 @@ export interface SystemEventNameToEventData {
   "Microsoft.EventGrid.SubscriptionDeletedEvent": SubscriptionDeletedEventData;
   /** An interface for the event data of a "Microsoft.EventHub.CaptureFileCreated" event. */
   "Microsoft.EventHub.CaptureFileCreated": EventHubCaptureFileCreatedEventData;
+  /** An interface for the event data of a "Microsoft.HealthcareApis.DicomImageCreated" event. */
+  "Microsoft.HealthcareApis.DicomImageCreated": HealthcareDicomImageCreatedEventData;
+  /** An interface for the event data of a "Microsoft.HealthcareApis.DicomImageDeleted" event. */
+  "Microsoft.HealthcareApis.DicomImageDeleted": HealthcareDicomImageDeletedEventData;
+  /** An interface for the event data of a "Microsoft.HealthcareApis.FhirResourceCreated" event. */
+  "Microsoft.HealthcareApis.FhirResourceCreated": HealthcareFhirResourceCreatedEventData;
+  /** An interface for the event data of a "Microsoft.HealthcareApis.FhirUpdatedCreated" event. */
+  "Microsoft.HealthcareApis.FhirUpdatedCreated": HealthcareFhirResourceUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.HealthcareApis.FhirDeletedCreated" event. */
+  "Microsoft.HealthcareApis.FhirDeletedCreated": HealthcareFhirResourceDeletedEventData;
   /** An interface for the event data of a "Microsoft.KeyVault.CertificateNewVersionCreated" event. */
   "Microsoft.KeyVault.CertificateNewVersionCreated": KeyVaultCertificateNewVersionCreatedEventData;
   /** An interface for the event data of a "Microsoft.KeyVault.CertificateNearExpiry" event. */
@@ -397,6 +490,162 @@ export interface SystemEventNameToEventData {
   "Microsoft.Web.SlotSwapWithPreviewCancelled": WebSlotSwapWithPreviewCancelledEventData;
   /** An interface for the event data of a "Microsoft.Web.AppServicePlanUpdated" event. */
   "Microsoft.Web.AppServicePlanUpdated": WebAppServicePlanUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.Storage.StorageTaskQueued" event. */
+  "Microsoft.Storage.StorageTaskQueued": StorageTaskQueuedEventData;
+  /** An interface for the event data of a "Microsoft.Storage.StorageTaskCompleted" event. */
+  "Microsoft.Storage.StorageTaskCompleted": StorageTaskCompletedEventData;
+  /** An interface for the event data of a "Microsoft.DataBox.CopyStarted" event. */
+  "Microsoft.DataBox.CopyStarted": DataBoxCopyStartedEventData;
+  /** An interface for the event data of a "Microsoft.DataBox.CopyCompleted" event. */
+  "Microsoft.DataBox.CopyCompleted": DataBoxCopyCompletedEventData;
+  /** An interface for the event data of a "Microsoft.DataBox.OrderCompleted" event. */
+  "Microsoft.DataBox.OrderCompleted": DataBoxOrderCompletedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.IncomingCall" event. */
+  "Microsoft.Communication.IncomingCall": AcsIncomingCallEventData;
+  /** An interface for the event data of a "Microsoft.Communication.EmailDeliveryReportReceived" event. */
+  "Microsoft.Communication.EmailDeliveryReportReceived": AcsEmailDeliveryReportReceivedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.EmailEngagementTrackingReportReceived" event. */
+  "Microsoft.Communication.EmailEngagementTrackingReportReceived": AcsEmailEngagementTrackingReportReceivedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayCreated" event. */
+  "Microsoft.ApiManagement.GatewayCreated": ApiManagementGatewayCreatedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayUpdated" event. */
+  "Microsoft.ApiManagement.GatewayUpdated": ApiManagementGatewayUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayDeleted" event. */
+  "Microsoft.ApiManagement.GatewayDeleted": ApiManagementGatewayDeletedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayHostnameConfigurationCreated" event. */
+  "Microsoft.ApiManagement.GatewayHostnameConfigurationCreated": ApiManagementGatewayHostnameConfigurationCreatedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayHostnameConfigurationUpdated" event. */
+  "Microsoft.ApiManagement.GatewayHostnameConfigurationUpdated": ApiManagementGatewayHostnameConfigurationUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayHostnameConfigurationDeleted" event. */
+  "Microsoft.ApiManagement.GatewayHostnameConfigurationDeleted": ApiManagementGatewayHostnameConfigurationDeletedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayCertificateAuthorityCreated" event. */
+  "Microsoft.ApiManagement.GatewayCertificateAuthorityCreated": ApiManagementGatewayCertificateAuthorityCreatedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayCertificateAuthorityUpdated" event. */
+  "Microsoft.ApiManagement.GatewayCertificateAuthorityUpdated": ApiManagementGatewayCertificateAuthorityUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayCertificateAuthorityDeleted" event. */
+  "Microsoft.ApiManagement.GatewayCertificateAuthorityDeleted": ApiManagementGatewayCertificateAuthorityDeletedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayAPIAdded" event. */
+  "Microsoft.ApiManagement.GatewayAPIAdded": ApiManagementGatewayApiAddedEventData;
+  /** An interface for the event data of a "Microsoft.ApiManagement.GatewayAPIRemoved" event. */
+  "Microsoft.ApiManagement.GatewayAPIRemoved": ApiManagementGatewayApiRemovedEventData;
+  /** An interface for the event data of a "Microsoft.HealthcareApis.DicomImageUpdated" event. */
+  "Microsoft.HealthcareApis.DicomImageUpdated": HealthcareDicomImageUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.ContainerService.ClusterSupportEnded" event. */
+  "Microsoft.ContainerService.ClusterSupportEnded": ContainerServiceClusterSupportEndedEventData;
+  /** An interface for the event data of a "Microsoft.ContainerService.ClusterSupportEnding" event. */
+  "Microsoft.ContainerService.ClusterSupportEnding": ContainerServiceClusterSupportEndingEventData;
+  /** An interface for the event data of a "Microsoft.ContainerService.NodePoolRollingStarted" event. */
+  "Microsoft.ContainerService.NodePoolRollingStarted": ContainerServiceNodePoolRollingStartedEventData;
+  /** An interface for the event data of a "Microsoft.ContainerService.NodePoolRollingSucceeded" event. */
+  "Microsoft.ContainerService.NodePoolRollingSucceeded": ContainerServiceNodePoolRollingSucceededEventData;
+  /** An interface for the event data of a "Microsoft.ContainerService.NodePoolRollingFailed" event. */
+  "Microsoft.ContainerService.NodePoolRollingFailed": ContainerServiceNodePoolRollingFailedEventData;
+  /** An interface for the event data of a "Microsoft.EventGrid.MQTTClientCreatedOrUpdated" event. */
+  "Microsoft.EventGrid.MQTTClientCreatedOrUpdated": EventGridMqttClientCreatedOrUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.EventGrid.MQTTClientDeleted" event. */
+  "Microsoft.EventGrid.MQTTClientDeleted": EventGridMqttClientDeletedEventData;
+  /** An interface for the event data of a "Microsoft.EventGrid.MQTTClientSessionConnected" event. */
+  "Microsoft.EventGrid.MQTTClientSessionConnected": EventGridMqttClientSessionConnectedEventData;
+  /** An interface for the event data of a "Microsoft.EventGrid.MQTTClientSessionDisconnected" event. */
+  "Microsoft.EventGrid.MQTTClientSessionDisconnected": EventGridMqttClientSessionDisconnectedEventData;
+  /** An interface for the event data of a "Microsoft.AppConfiguration.SnapshotCreated" event. */
+  "Microsoft.AppConfiguration.SnapshotCreated": AppConfigurationSnapshotCreatedEventData;
+  /** An interface for the event data of a "Microsoft.AppConfiguration.SnapshotModified" event. */
+  "Microsoft.AppConfiguration.SnapshotModified": AppConfigurationSnapshotModifiedEventData;
+  /** An interface for the event data of a "Microsoft.ResourceNotifications.HealthResources.AvailabilityStatusChanged" event. */
+  "Microsoft.ResourceNotifications.HealthResources.AvailabilityStatusChanged": ResourceNotificationsHealthResourcesAvailabilityStatusChangedEventData;
+  /** An interface for the event data of a "Microsoft.ResourceNotifications.HealthResources.ResourceAnnotated" event. */
+  "Microsoft.ResourceNotifications.HealthResources.ResourceAnnotated": ResourceNotificationsHealthResourcesAnnotatedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerDeregistered" event. */
+  "Microsoft.Communication.RouterWorkerDeregistered": AcsRouterWorkerDeregisteredEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerRegistered" event. */
+  "Microsoft.Communication.RouterWorkerRegistered": AcsRouterWorkerRegisteredEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobCancelled" event. */
+  "Microsoft.Communication.RouterJobCancelled": AcsRouterJobCancelledEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobClassificationFailed" event. */
+  "Microsoft.Communication.RouterJobClassificationFailed": AcsRouterJobClassificationFailedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobClassified" event. */
+  "Microsoft.Communication.RouterJobClassified": AcsRouterJobClassifiedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobClosed" event. */
+  "Microsoft.Communication.RouterJobClosed": AcsRouterJobClosedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobCompleted" event. */
+  "Microsoft.Communication.RouterJobCompleted": AcsRouterJobCompletedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobDeleted" event. */
+  "Microsoft.Communication.RouterJobDeleted": AcsRouterJobDeletedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobExceptionTriggered" event. */
+  "Microsoft.Communication.RouterJobExceptionTriggered": AcsRouterJobExceptionTriggeredEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobQueued" event. */
+  "Microsoft.Communication.RouterJobQueued": AcsRouterJobQueuedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobReceived" event. */
+  "Microsoft.Communication.RouterJobReceived": AcsRouterJobReceivedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobSchedulingFailed" event. */
+  "Microsoft.Communication.RouterJobSchedulingFailed": AcsRouterJobSchedulingFailedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobUnassigned" event. */
+  "Microsoft.Communication.RouterJobUnassigned": AcsRouterJobUnassignedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobWaitingForActivation" event. */
+  "Microsoft.Communication.RouterJobWaitingForActivation": AcsRouterJobWaitingForActivationEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterJobWorkerSelectorsExpire" event. */
+  "Microsoft.Communication.RouterJobWorkerSelectorsExpire": AcsRouterJobWorkerSelectorsExpiredEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerDeleted" event. */
+  "Microsoft.Communication.RouterWorkerDeleted": AcsRouterWorkerDeletedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerOfferAccepted" event. */
+  "Microsoft.Communication.RouterWorkerOfferAccepted": AcsRouterWorkerOfferAcceptedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerOfferDeclined" event. */
+  "Microsoft.Communication.RouterWorkerOfferDeclined": AcsRouterWorkerOfferDeclinedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerOfferExpired" event. */
+  "Microsoft.Communication.RouterWorkerOfferExpired": AcsRouterWorkerOfferExpiredEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerOfferIssued" event. */
+  "Microsoft.Communication.RouterWorkerOfferIssued": AcsRouterWorkerOfferIssuedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerOfferRevoked" event. */
+  "Microsoft.Communication.RouterWorkerOfferRevoked": AcsRouterWorkerOfferRevokedEventData;
+  /** An interface for the event data of a "Microsoft.ResourceNotifications.Resources.CreatedOrUpdated" event. */
+  "Microsoft.ResourceNotifications.Resources.CreatedOrUpdated": ResourceNotificationsResourceManagementCreatedOrUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.ResourceNotifications.Resources.Deleted" event. */
+  "Microsoft.ResourceNotifications.Resources.Deleted": ResourceNotificationsResourceManagementDeletedEventData;
+  /** An interface for the event data of a "Microsoft.Storage.StorageTaskAssignmentQueued" event. */
+  "Microsoft.Storage.StorageTaskAssignmentQueued": StorageTaskAssignmentQueuedEventData;
+  /** An interface for the event data of a "Microsoft.Storage.StorageTaskAssignmentCompleted" event. */
+  "Microsoft.Storage.StorageTaskAssignmentCompleted": StorageTaskAssignmentCompletedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ScriptExecutionStarted" event. */
+  "Microsoft.AVS.ScriptExecutionStarted": AvsScriptExecutionStartedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ScriptExecutionFinished" event. */
+  "Microsoft.AVS.ScriptExecutionFinished": AvsScriptExecutionFinishedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ScriptExecutionCancelled" event. */
+  "Microsoft.AVS.ScriptExecutionCancelled": AvsScriptExecutionCancelledEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ScriptExecutionFailed" event. */
+  "Microsoft.AVS.ScriptExecutionFailed": AvsScriptExecutionFailedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.PrivateCloudUpdating" event. */
+  "Microsoft.AVS.PrivateCloudUpdating": AvsPrivateCloudUpdatingEventData;
+  /** An interface for the event data of a "Microsoft.AVS.PrivateCloudUpdated" event. */
+  "Microsoft.AVS.PrivateCloudUpdated": AvsPrivateCloudUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.PrivateCloudFailed" event. */
+  "Microsoft.AVS.PrivateCloudFailed": AvsPrivateCloudFailedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ClusterCreated" event. */
+  "Microsoft.AVS.ClusterCreated": AvsClusterCreatedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ClusterDeleted" event. */
+  "Microsoft.AVS.ClusterDeleted": AvsClusterDeletedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ClusterUpdating" event. */
+  "Microsoft.AVS.ClusterUpdating": AvsClusterUpdatingEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ClusterUpdated" event. */
+  "Microsoft.AVS.ClusterUpdated": AvsClusterUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.AVS.ClusterFailed" event. */
+  "Microsoft.AVS.ClusterFailed": AvsClusterFailedEventData;
+  /** An interface for the event data of a "Microsoft.ApiCenter.ApiDefinitionAdded" event. */
+  "Microsoft.ApiCenter.ApiDefinitionAdded": ApiCenterApiDefinitionAddedEventData;
+  /** An interface for the event data of a "Microsoft.ApiCenter.ApiDefinitionUpdated" event. */
+  "Microsoft.ApiCenter.ApiDefinitionUpdated": ApiCenterApiDefinitionUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.AdvancedMessageDeliveryStatusUpdated" event. */
+  "Microsoft.Communication.AdvancedMessageDeliveryStatusUpdated": AcsMessageDeliveryStatusUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.AdvancedMessageReceived" event. */
+  "Microsoft.Communication.AdvancedMessageReceived": AcsMessageReceivedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.RouterWorkerUpdated" event. */
+  "Microsoft.Communication.RouterWorkerUpdated": AcsRouterWorkerUpdatedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.ChatThreadCreated" event. */
+  "Microsoft.Communication.ChatThreadCreated": AcsChatThreadCreatedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.ChatThreadDeleted" event. */
+  "Microsoft.Communication.ChatThreadDeleted": AcsChatThreadDeletedEventData;
+  /** An interface for the event data of a "Microsoft.Communication.ChatThreadPropertiesUpdated" event. */
+  "Microsoft.Communication.ChatThreadPropertiesUpdated": AcsChatThreadPropertiesUpdatedEventData;
 }
 
 /**
@@ -405,7 +654,7 @@ export interface SystemEventNameToEventData {
  * @param o - Either an EventGrid our CloudEvent event.
  */
 function isCloudEventLike(
-  o: EventGridEvent<unknown> | CloudEvent<unknown>
+  o: EventGridEvent<unknown> | CloudEvent<unknown>,
 ): o is CloudEvent<unknown> {
   return (o as any).source !== undefined;
 }
@@ -420,7 +669,7 @@ function isCloudEventLike(
  */
 export function isSystemEvent<T extends KnownSystemEventTypes>(
   eventType: T,
-  event: EventGridEvent<unknown>
+  event: EventGridEvent<unknown>,
 ): event is EventGridEvent<SystemEventNameToEventData[T]>;
 
 /**
@@ -433,12 +682,12 @@ export function isSystemEvent<T extends KnownSystemEventTypes>(
  */
 export function isSystemEvent<T extends KnownSystemEventTypes>(
   eventType: T,
-  event: CloudEvent<unknown>
+  event: CloudEvent<unknown>,
 ): event is CloudEvent<SystemEventNameToEventData[T]>;
 
 export function isSystemEvent<T extends KnownSystemEventTypes>(
   eventType: T,
-  event: EventGridEvent<unknown> | CloudEvent<unknown>
+  event: EventGridEvent<unknown> | CloudEvent<unknown>,
 ): event is
   | EventGridEvent<SystemEventNameToEventData[T]>
   | CloudEvent<SystemEventNameToEventData[T]> {

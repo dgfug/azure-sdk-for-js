@@ -1,15 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
+import type { ServiceBusSender, ServiceBusReceiver } from "../../src/index.js";
+import { TestClientType, TestMessage } from "./utils/testUtils.js";
+import type { ServiceBusClientForTests } from "./utils/testutils2.js";
+import { createServiceBusClientForTests } from "./utils/testutils2.js";
+import { afterAll, afterEach, beforeAll, describe, it } from "vitest";
 
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import { ServiceBusSender, ServiceBusReceiver } from "../../src";
-import { TestClientType, TestMessage } from "./utils/testUtils";
-import { ServiceBusClientForTests, createServiceBusClientForTests } from "./utils/testutils2";
-chai.should();
-chai.use(chaiAsPromised);
-
-describe("ManagementClient - disconnects", function(): void {
+describe("ManagementClient - disconnects", function (): void {
   let serviceBusClient: ServiceBusClientForTests;
   let sender: ServiceBusSender;
   let receiver: ServiceBusReceiver;
@@ -19,14 +16,14 @@ describe("ManagementClient - disconnects", function(): void {
     receiver = await serviceBusClient.test.createPeekLockReceiver(entityNames);
 
     sender = serviceBusClient.test.addToCleanup(
-      serviceBusClient.createSender(entityNames.queue ?? entityNames.topic!)
+      serviceBusClient.createSender(entityNames.queue ?? entityNames.topic!),
     );
   }
-  before(() => {
+  beforeAll(() => {
     serviceBusClient = createServiceBusClientForTests();
   });
 
-  after(() => {
+  afterAll(() => {
     return serviceBusClient.test.after();
   });
 
@@ -37,7 +34,7 @@ describe("ManagementClient - disconnects", function(): void {
     await afterEachTest();
   });
 
-  it("can receive and settle messages after a disconnect", async function(): Promise<void> {
+  it("can receive and settle messages after a disconnect", async function (): Promise<void> {
     // Create the sender and receiver.
     await beforeEachTest(TestClientType.UnpartitionedQueue);
     // Send a message so we have something to peek.
@@ -54,7 +51,7 @@ describe("ManagementClient - disconnects", function(): void {
     const connectionContext = (receiver as any)["_context"];
     const refreshConnection = connectionContext.refreshConnection;
     let refreshConnectionCalled = 0;
-    connectionContext.refreshConnection = function(...args: any) {
+    connectionContext.refreshConnection = function (...args: any) {
       refreshConnectionCalled++;
       refreshConnection.apply(this, args);
     };
@@ -70,16 +67,14 @@ describe("ManagementClient - disconnects", function(): void {
     refreshConnectionCalled.should.be.greaterThan(0, "refreshConnection was not called.");
   });
 
-  it("schedule can receive and settle messages after a disconnect", async function(): Promise<
-    void
-  > {
+  it("schedule can receive and settle messages after a disconnect", async function (): Promise<void> {
     // Create the sender and receiver.
     await beforeEachTest(TestClientType.UnpartitionedQueue);
     // Send a message so we have something to peek.
 
     const deliveryIds = await sender.scheduleMessages(
       TestMessage.getSample(),
-      new Date("2020-04-25T12:00:00Z")
+      new Date("2020-04-25T12:00:00Z"),
     );
 
     deliveryIds.length.should.equal(1, "Unexpected number of scheduled messages.");
@@ -87,7 +82,7 @@ describe("ManagementClient - disconnects", function(): void {
     const connectionContext = (receiver as any)["_context"];
     const refreshConnection = connectionContext.refreshConnection;
     let refreshConnectionCalled = 0;
-    connectionContext.refreshConnection = function(...args: any) {
+    connectionContext.refreshConnection = function (...args: any) {
       refreshConnectionCalled++;
       refreshConnection.apply(this, args);
     };
@@ -98,7 +93,7 @@ describe("ManagementClient - disconnects", function(): void {
     // peek additional messages
     const [deliveryId] = await sender.scheduleMessages(
       TestMessage.getSample(),
-      new Date("2020-04-25T12:00:00Z")
+      new Date("2020-04-25T12:00:00Z"),
     );
     deliveryIds.push(deliveryId);
     deliveryIds.length.should.equal(2, "Unexpected number of scheduled messages.");

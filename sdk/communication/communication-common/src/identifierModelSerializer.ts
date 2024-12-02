@@ -1,17 +1,22 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import {
-  CommunicationIdentifier,
-  CommunicationIdentifierKind,
-  getIdentifierKind
-} from "./identifierModels";
+  type CommunicationIdentifier,
+  type CommunicationIdentifierKind,
+  getIdentifierKind,
+  getIdentifierRawId,
+} from "./identifierModels.js";
 
 /**
  * @hidden
  * Identifies a participant in Azure Communication services. A participant is, for example, a phone number or an Azure communication user. This model must be interpreted as a union: Apart from rawId, at most one further property may be set.
  */
 export interface SerializedCommunicationIdentifier {
+  /**
+   * Kind of the identifier, optional.
+   */
+  kind?: string;
   /**
    * Raw Id of the identifier. Optional in requests, required in responses.
    */
@@ -28,6 +33,10 @@ export interface SerializedCommunicationIdentifier {
    * The Microsoft Teams user.
    */
   microsoftTeamsUser?: SerializedMicrosoftTeamsUserIdentifier;
+  /**
+   * The Microsoft Teams App.
+   */
+  microsoftTeamsApp?: SerializedMicrosoftTeamsAppIdentifier;
 }
 
 /**
@@ -73,24 +82,33 @@ export interface SerializedMicrosoftTeamsUserIdentifier {
 
 /**
  * @hidden
+ * A Microsoft Teams App.
+ */
+export interface SerializedMicrosoftTeamsAppIdentifier {
+  /**
+   * Id of the Microsoft Teams App.
+   */
+  appId: string;
+
+  /**
+   * The cloud that the Microsoft Teams App belongs to. By default 'public' if missing.
+   */
+  cloud?: SerializedCommunicationCloudEnvironment;
+}
+
+/**
+ * @hidden
  * Defines values for CommunicationCloudEnvironmentModel.
  */
 export type SerializedCommunicationCloudEnvironment = "public" | "dod" | "gcch";
 
-const addRawIdIfExisting = <T>(
-  identifier: T,
-  rawId: string | undefined
-): T & { rawId?: string } => {
-  return rawId === undefined ? identifier : { ...identifier, rawId: rawId };
-};
-
 const assertNotNullOrUndefined = <
   T extends Record<string, unknown>,
   P extends keyof T,
-  Q extends keyof T[P]
+  Q extends string & keyof T[P],
 >(
   obj: T,
-  prop: Q
+  prop: Q,
 ): Required<Required<T>[P]>[Q] => {
   const subObjName = Object.keys(obj)[0];
   const subObj = (obj as any)[subObjName];
@@ -101,10 +119,23 @@ const assertNotNullOrUndefined = <
 };
 
 const assertMaximumOneNestedModel = (identifier: SerializedCommunicationIdentifier): void => {
-  const { rawId: _rawId, ...props } = identifier;
-  const keys = Object.keys(props);
-  if (keys.length > 1) {
-    throw new Error(`Only one of the properties in ${JSON.stringify(keys)} should be present.`);
+  const presentProperties: string[] = [];
+  if (identifier.communicationUser !== undefined) {
+    presentProperties.push("communicationUser");
+  }
+  if (identifier.microsoftTeamsUser !== undefined) {
+    presentProperties.push("microsoftTeamsUser");
+  }
+  if (identifier.microsoftTeamsApp !== undefined) {
+    presentProperties.push("microsoftTeamsApp");
+  }
+  if (identifier.phoneNumber !== undefined) {
+    presentProperties.push("phoneNumber");
+  }
+  if (presentProperties.length > 1) {
+    throw new Error(
+      `Only one of the properties in ${JSON.stringify(presentProperties)} should be present.`,
+    );
   }
 };
 
@@ -114,33 +145,64 @@ const assertMaximumOneNestedModel = (identifier: SerializedCommunicationIdentifi
  * @param identifier - The CommunicationIdentifier to be serialized.
  */
 export const serializeCommunicationIdentifier = (
-  identifier: CommunicationIdentifier
+  identifier: CommunicationIdentifier,
 ): SerializedCommunicationIdentifier => {
   const identifierKind = getIdentifierKind(identifier);
   switch (identifierKind.kind) {
     case "communicationUser":
-      return { communicationUser: { id: identifierKind.communicationUserId } };
+      return {
+        rawId: getIdentifierRawId(identifierKind),
+        communicationUser: { id: identifierKind.communicationUserId },
+      };
     case "phoneNumber":
-      return addRawIdIfExisting(
-        { phoneNumber: { value: identifierKind.phoneNumber } },
-        identifierKind.rawId
-      );
-    case "microsoftTeamsUser":
-      return addRawIdIfExisting(
-        {
-          microsoftTeamsUser: {
-            userId: identifierKind.microsoftTeamsUserId,
-            isAnonymous: identifierKind.isAnonymous ?? false,
-            cloud: identifierKind.cloud ?? "public"
-          }
+      return {
+        rawId: identifierKind.rawId ?? getIdentifierRawId(identifierKind),
+        phoneNumber: {
+          value: identifierKind.phoneNumber,
         },
-        identifierKind.rawId
-      );
+      };
+    case "microsoftTeamsUser":
+      return {
+        rawId: identifierKind.rawId ?? getIdentifierRawId(identifierKind),
+        microsoftTeamsUser: {
+          userId: identifierKind.microsoftTeamsUserId,
+          isAnonymous: identifierKind.isAnonymous ?? false,
+          cloud: identifierKind.cloud ?? "public",
+        },
+      };
+    case "microsoftTeamsApp":
+      return {
+        rawId: identifierKind.rawId ?? getIdentifierRawId(identifierKind),
+        microsoftTeamsApp: {
+          appId: identifierKind.teamsAppId,
+          cloud: identifierKind.cloud ?? "public",
+        },
+      };
     case "unknown":
       return { rawId: identifierKind.id };
     default:
       throw new Error(`Can't serialize an identifier with kind ${(identifierKind as any).kind}`);
   }
+};
+
+const getKind = (serializedIdentifier: SerializedCommunicationIdentifier): string => {
+  if (serializedIdentifier.communicationUser) {
+    return "communicationUser";
+  }
+
+  if (serializedIdentifier.phoneNumber) {
+    return "phoneNumber";
+  }
+
+  if (serializedIdentifier.microsoftTeamsUser) {
+    return "microsoftTeamsUser";
+  }
+
+  if (serializedIdentifier.microsoftTeamsApp) {
+    return "microsoftTeamsApp";
+  }
+
+  return "unknown";
 };
 
 /**
@@ -149,35 +211,46 @@ export const serializeCommunicationIdentifier = (
  * @param serializedIdentifier - The SerializedCommunicationIdentifier to be deserialized.
  */
 export const deserializeCommunicationIdentifier = (
-  serializedIdentifier: SerializedCommunicationIdentifier
+  serializedIdentifier: SerializedCommunicationIdentifier,
 ): CommunicationIdentifierKind => {
   assertMaximumOneNestedModel(serializedIdentifier);
 
-  const { communicationUser, microsoftTeamsUser, phoneNumber } = serializedIdentifier;
-  if (communicationUser) {
+  const { communicationUser, microsoftTeamsUser, microsoftTeamsApp, phoneNumber } =
+    serializedIdentifier;
+  const kind = serializedIdentifier.kind ?? getKind(serializedIdentifier);
+
+  if (kind === "communicationUser" && communicationUser) {
     return {
       kind: "communicationUser",
-      communicationUserId: assertNotNullOrUndefined({ communicationUser }, "id")
+      communicationUserId: assertNotNullOrUndefined({ communicationUser }, "id"),
     };
   }
-  if (phoneNumber) {
+  if (kind === "phoneNumber" && phoneNumber) {
     return {
       kind: "phoneNumber",
       phoneNumber: assertNotNullOrUndefined({ phoneNumber }, "value"),
-      rawId: assertNotNullOrUndefined({ phoneNumber: serializedIdentifier }, "rawId")
+      rawId: assertNotNullOrUndefined({ phoneNumber: serializedIdentifier }, "rawId"),
     };
   }
-  if (microsoftTeamsUser) {
+  if (kind === "microsoftTeamsUser" && microsoftTeamsUser) {
     return {
       kind: "microsoftTeamsUser",
       microsoftTeamsUserId: assertNotNullOrUndefined({ microsoftTeamsUser }, "userId"),
       isAnonymous: assertNotNullOrUndefined({ microsoftTeamsUser }, "isAnonymous"),
       cloud: assertNotNullOrUndefined({ microsoftTeamsUser }, "cloud"),
-      rawId: assertNotNullOrUndefined({ microsoftTeamsUser: serializedIdentifier }, "rawId")
+      rawId: assertNotNullOrUndefined({ microsoftTeamsUser: serializedIdentifier }, "rawId"),
+    };
+  }
+  if (kind === "microsoftTeamsApp" && microsoftTeamsApp) {
+    return {
+      kind: "microsoftTeamsApp",
+      teamsAppId: assertNotNullOrUndefined({ microsoftTeamsApp }, "appId"),
+      cloud: assertNotNullOrUndefined({ microsoftTeamsApp }, "cloud"),
+      rawId: assertNotNullOrUndefined({ microsoftTeamsApp: serializedIdentifier }, "rawId"),
     };
   }
   return {
     kind: "unknown",
-    id: assertNotNullOrUndefined({ unknown: serializedIdentifier }, "rawId")
+    id: assertNotNullOrUndefined({ unknown: serializedIdentifier }, "rawId"),
   };
 };

@@ -1,33 +1,31 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  PipelineResponse,
-  PipelineRequest,
-  SendRequest,
-  PipelinePolicy,
-  createHttpHeaders,
-  createPipelineRequest
-} from "@azure/core-rest-pipeline";
 import {
   HeaderConstants,
   TRANSACTION_HTTP_LINE_ENDING,
-  TRANSACTION_HTTP_VERSION_1_1
-} from "./utils/constants";
-import { getChangeSetBoundary } from "./utils/transactionHelpers";
-import { URL } from "./utils/url";
+  TRANSACTION_HTTP_VERSION_1_1,
+} from "./utils/constants.js";
+import type {
+  PipelinePolicy,
+  PipelineRequest,
+  PipelineResponse,
+  SendRequest,
+} from "@azure/core-rest-pipeline";
+import { createHttpHeaders, createPipelineRequest } from "@azure/core-rest-pipeline";
+import { getChangeSetBoundary } from "./utils/transactionHelpers.js";
 
 export const transactionRequestAssemblePolicyName = "transactionRequestAssemblePolicy";
 
 const dummyResponse: PipelineResponse = {
   request: createPipelineRequest({ url: "FAKE" }),
   status: 200,
-  headers: createHttpHeaders()
+  headers: createHttpHeaders(),
 };
 
 export function transactionRequestAssemblePolicy(
   bodyParts: string[],
-  changesetId: string
+  changesetId: string,
 ): PipelinePolicy {
   return {
     name: transactionRequestAssemblePolicyName,
@@ -36,7 +34,7 @@ export function transactionRequestAssemblePolicy(
       bodyParts.push(subRequest);
       // Intercept request from going to wire
       return dummyResponse;
-    }
+    },
   };
 }
 
@@ -49,7 +47,7 @@ export function transactionHeaderFilterPolicy(): PipelinePolicy {
       // The subrequests should not have the x-ms-version header.
       request.headers.delete(HeaderConstants.X_MS_VERSION);
       return next(request);
-    }
+    },
   };
 }
 
@@ -60,7 +58,7 @@ function getSubRequestUrl(url: string): string {
   return urlParsed.toString();
 }
 
-function getNextSubrequestBodyPart(request: PipelineRequest, changesetId: string) {
+function getNextSubrequestBodyPart(request: PipelineRequest, changesetId: string): string {
   const changesetBoundary = getChangeSetBoundary(changesetId);
   const subRequestPrefix = `--${changesetBoundary}${TRANSACTION_HTTP_LINE_ENDING}${HeaderConstants.CONTENT_TYPE}: application/http${TRANSACTION_HTTP_LINE_ENDING}${HeaderConstants.CONTENT_TRANSFER_ENCODING}: binary`;
 
@@ -69,7 +67,7 @@ function getNextSubrequestBodyPart(request: PipelineRequest, changesetId: string
   const subRequest = [
     subRequestPrefix, // sub request constant prefix
     "", // empty line after sub request's content ID
-    `${request.method.toString()} ${subRequestUrl} ${TRANSACTION_HTTP_VERSION_1_1}` // sub request start line with method,
+    `${request.method.toString()} ${subRequestUrl} ${TRANSACTION_HTTP_VERSION_1_1}`, // sub request start line with method,
   ];
 
   // Add required headers

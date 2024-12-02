@@ -1,14 +1,219 @@
 # Release History
 
-## 12.8.0-beta.2 (Unreleased)
+## 12.25.0 (2024-11-13)
 
 ### Features Added
 
-### Breaking Changes
+- Includes all features released in 12.25.0-beta.1.
+
+## 12.25.0-beta.1 (2024-10-15)
+
+### Features Added
+
+- Added support for service version 2025-01-05.
+- Added generateUserDelegationSasUrl() for DataLakeFileSystemClient, DataLakeFileClient, and DataLakeDirectoryClient.
+
+## 12.24.0 (2024-09-22)
+
+### Features Added
+
+- Includes all features released in 12.24.0-beta.1.
+
+### Other Changes
+
+- Upgraded dependency on `@azure/core-xml` to version `1.4.3`.
+
+## 12.24.0-beta.1 (2024-08-09)
+
+### Features Added
+
+- Added support for service version 2024-11-04.
+- Added ability to retrieve SAS string to sign for debugging purposes.
+
+## 12.23.0 (2024-07-18)
+
+### Features Added
+
+- Includes all features released in 12.23.0-beta.1.
 
 ### Bugs Fixed
 
+- Correct content-length header with request body length. (#30138)
+
+## 12.23.0-beta.1 (2024-06-13)
+
+### Features Added
+
+- Added support for service version 2024-08-04.
+- Added more detailed messaging for authorization failure cases.
+
+## 12.22.0 (2024-06-04)
+
+### Features Added
+
+- Includes all features released in 12.22.0-beta.1.
+- Allow HTTP connections
+
+## 12.17.0 (2024-05-11)
+
+### Features Added
+
+- Includes all features released in 12.17.0-beta.1.
+
+## 12.17.0-beta.1 (2024-04-18)
+
+### Features Added
+
+- Added support for service version 2024-05-04.
+- Added ability to retrieve path ACL with DataLakePathClient.getProperties(), DataLakeFileClient.getProperties(), DataLakeDirectoryClient.getProperties(), DataLakeFileClient.read().
+
+## 12.16.0 (2023-11-09)
+
+### Features Added
+
+- Includes all features released in 12.16.0-beta.1.
+
+## 12.22.0-beta.1 (2023-11-01)
+
 ### Other Changes
+
+- Migrated dependency on `@azure/core-http` to `@azure/core-rest-pipeline`.
+
+## 12.16.0-beta.1 (2023-10-18)
+
+### Features Added
+
+- Added support for service version 2023-11-03.
+- Added support for indicating audience in StoragePipelineOptions.
+
+## 12.15.0 (2023-09-14)
+
+## 12.15.0-beta.1 (2023-08-11)
+
+### Features Added
+
+- Added support for service version 2023-08-03.
+- Added support for paginated directory delete when using AAD authentication. Note that this feature only applies to HNS storage accounts.
+
+## 12.14.0 (2023-07-12)
+
+### Features Added
+
+- Includes all features released in 12.14.0-beta.1.
+
+## 12.14.0-beta.1 (2023-05-31)
+
+### Features Added
+
+- Added support for service version 2023-01-03.
+- Added owner, group and permissions properties for response of DataLakePathClient.getProperties(), DataLakeFileClient.getProperties(), DataLakeFileClient,read(), and DataLakeDirectoryClient.getProperties().
+
+## 12.13.0 (2023-04-13)
+
+### Features Added
+
+- Includes all features released in 12.13.0-beta.1.
+
+## 12.13.0-beta.1 (2023-03-29)
+
+### Features Added
+
+- Added support for service version 2022-11-02.
+- Added support for Encryption Context.
+
+## 12.12.0 (2023-02-23)
+
+### Features Added
+
+- Includes all features released in 12.12.0-beta.1.
+- Added FileReadHeaders.CreatedOn property for interface DataLakeFileClient.read().
+
+### Bugs Fixed
+
+- Renamed option 'leaseDuration' to 'leaseDurationInSeconds' in methods DataLakeFileClient.append() and flush(), the option was added in 12.12.0-beta.1.
+- Fixed an issue of getting 403 error for file or directory name with './' or '../'
+
+## 12.12.0-beta.1 (2023-02-09)
+
+### Features Added
+
+- Added support for service version 2021-12-02.
+- Add support for acquiring, renewing and releasing lease in methods DataLakeFileClient.append() and flush().
+
+### Other Changes
+
+- Update dependency `@azure/core-http` version to `^3.0.0`.
+
+## 12.11.0 (2022-10-14)
+
+### Features Added
+
+- Includes all features released in 12.11.0-beta.1.
+
+### Bugs Fixed
+
+- Fixed an issue of escaping slashes in file or directory path unnecessarily.
+
+## 12.11.0-beta.1 (2022-08-26)
+
+### Features Added
+
+- Added support for service version 2021-10-04.
+- Added support for flush parameter to DataLakeFileClient.append().
+- Added support for encryption scopes.
+- Added support for encryption scope SAS.
+
+### Bugs Fixed
+
+- Correted permission string parsing in DataLakePathClient.setPermissions() and DataLakePathClient.getAccessControl().
+- Refined URL parsing method to let it be able to correctly parse URLs with account name in path.
+
+## 12.10.0 (2022-07-08)
+
+### Features Added
+
+- Includes all features released in 12.10.0-beta.1.
+
+## 12.10.0-beta.1 (2022-06-17)
+
+### Features Added
+
+- Added support for service version 2021-08-06.
+- Added ability to set permission, umask, owner, group, ACL, lease, and expiry time on DataLakeFileClient.create() and .createIfNotExists(), DataLakeDirectoryClient.create() and .createIfNotExists(), and DataLakePathClient.create() and .createIfNotExists().
+
+## 12.9.0 (2022-05-12)
+
+### Features Added
+
+- Includes all features released in 12.9.0-beta.1.
+
+### Bugs Fixed
+
+- Refined user-agent value to avoid failure when os information is not available on some platforms.
+
+## 12.9.0-beta.1 (2022-04-19)
+
+### Features Added
+
+- Added support for service version 2021-06-08.
+- Added support for Customer Provided Key server-side encryption of files.
+- Added ability to retrieve path createdOn and expiresOn times with DataLakeFileSystemClient.listPaths().
+
+### Bugs Fixed
+
+- Add missing browser mapping for `./dist-esm/storage-common/src/BufferScheduler.js`
+- Add `react-native` mapping to ESM entry point
+
+## 12.8.0 (2022-03-11)
+
+### Features Added
+
+- Includes all features released in 12.8.0-beta.1.
+
+### Bugs Fixed
+
+- Fixed a bug where customized `ProxyOptions` is overwrited by a default one when initializing `DataLakeServiceClient` with connection string.
+- Set correct content length in requests for uploading operations to avoid unexpected failure if customized content length is incorrect.
 
 ## 12.8.0-beta.1 (2021-11-09)
 

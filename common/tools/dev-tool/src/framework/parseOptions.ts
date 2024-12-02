@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license
+// Licensed under the MIT License
 
 import getArgs from "minimist";
-
 import { createPrinter } from "../util/printer";
 import { CommandOptions, StringOptionDescription, BooleanOptionDescription } from "./CommandInfo";
 
@@ -12,7 +11,13 @@ const { debug: parseDebug, error: parseError } = createPrinter("parseOptions");
  * This helper type implements the logic for determining the
  * type of an option according to its possible multiplicity
  */
-export type MaybeMultiple<P, T> = boolean extends P ? T | T[] : true extends P ? T[] : T;
+export type MaybeMultiple<P, T> = unknown extends P
+  ? T | T[]
+  : P extends undefined
+    ? T
+    : P extends true
+      ? T[]
+      : T;
 
 /**
  * The real type of an option parsed from an OptionDescription
@@ -22,8 +27,8 @@ export type OptionFor<Opt extends CommandOptions[string]> = MaybeMultiple<
   Opt extends StringOptionDescription
     ? string
     : Opt extends BooleanOptionDescription
-    ? boolean
-    : string | boolean
+      ? boolean
+      : string | boolean
 >;
 
 /**
@@ -38,12 +43,13 @@ export type OptionFor<Opt extends CommandOptions[string]> = MaybeMultiple<
  */
 export type ParsedOptions<Opts extends CommandOptions = CommandOptions> = {
   /**
-   * If the argument "--" was encountered when parsing, this property
-   * holds all arguments that occurred after the "--"
+   * Extra arguments. If the argument "--" was encountered when parsing, this property holds all arguments that were
+   * encountered after the "--".
    */
   "--"?: string[] | undefined;
   /**
-   * Array of arguments to the command
+   * Array of arguments to the command. The `args` begin at the first string in the argument array that is not
+   * recognized as an option.
    */
   args: string[];
 } & {
@@ -68,13 +74,14 @@ export type ParsedOptions<Opts extends CommandOptions = CommandOptions> = {
  */
 export function parseOptions<Opts extends CommandOptions>(
   args: string[],
-  opts?: Opts
+  opts?: Opts,
 ): ParsedOptions<NonNullable<Opts>> {
   // If options are not provided, use an empty set
   const options: CommandOptions = opts ?? {};
 
   const keys = Object.keys(options);
   const argMap = getArgs(args, {
+    "--": true,
     // Once an unidentified argument is encountered, stop parsing
     stopEarly: true,
     // Use type information for hinting to minimist about how arguments should
@@ -87,31 +94,35 @@ export function parseOptions<Opts extends CommandOptions>(
         options[key].shortName !== undefined
           ? { ...o, [options[key].shortName as string]: key }
           : o,
-      {}
+      {},
     ),
     // Roll up the default values into the arg parser
     default: {
       ...keys.reduce(
         (o, key) =>
           options[key].default !== undefined ? { ...o, [key]: options[key].default } : o,
-        {}
+        {},
       ),
-      help: false
-    }
+      help: false,
+    },
   });
 
   parseDebug("Parsed args:", JSON.stringify(argMap));
 
-  const result: ParsedOptions = { help: argMap.help, args: argMap._ };
+  const result: ParsedOptions = { help: argMap.help, args: argMap._, "--": argMap["--"] };
 
-  function expectType<T>(key: string, value: T, expected: string): void {
+  function expectType<T extends string | boolean | Array<string | boolean> | undefined>(
+    key: string,
+    value: T,
+    expected: string,
+  ): void {
     if (Array.isArray(value)) {
       parseError(`Too many arguments for "${key}"`);
       throw new Error(`More than one value for "${key}" was given, but only one was expected`);
     } else if (typeof value !== expected && typeof value !== "undefined") {
-      parseError(`Bad argument: "${key}" = ${value}`);
+      parseError(`Bad argument: "${key}" = ${value.toString()}`);
       throw new Error(
-        `Value of argument "${key}" was a ${typeof value} but a ${expected} was expected.`
+        `Value of argument "${key}" was a ${typeof value} but a ${expected} was expected.`,
       );
     }
   }

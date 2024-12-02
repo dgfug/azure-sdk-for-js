@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export interface PartitionKeyRangePropertiesNames {
   // Partition Key Range Constants
@@ -70,11 +70,14 @@ export const Constants = {
 
     // Our custom Azure Cosmos DB headers
     Continuation: "x-ms-continuation",
+    ContinuationToken: "x-ms-continuation-token",
     PageSize: "x-ms-max-item-count",
     ItemCount: "x-ms-item-count",
+    ChangeFeedWireFormatVersion: "x-ms-cosmos-changefeed-wire-format-version",
 
     // Request sender generated. Simply echoed by backend.
     ActivityId: "x-ms-activity-id",
+    CorrelatedActivityId: "x-ms-cosmos-correlated-activityid",
     PreTriggerInclude: "x-ms-documentdb-pre-trigger-include",
     PreTriggerExclude: "x-ms-documentdb-pre-trigger-exclude",
     PostTriggerInclude: "x-ms-documentdb-post-trigger-include",
@@ -102,6 +105,11 @@ export const Constants = {
     // Response header that holds the serialized version of query metrics.
     QueryMetrics: "x-ms-documentdb-query-metrics",
 
+    // IndexMetrics
+    // Request header to tell backend to give you index metrics.
+    PopulateIndexMetrics: "x-ms-cosmos-populateindexmetrics",
+    // Response header that holds the serialized version of index metrics.
+    IndexUtilization: "x-ms-cosmos-index-utilization",
     // Version headers and values
     Version: "x-ms-version",
 
@@ -114,6 +122,13 @@ export const Constants = {
     // Partition Key
     PartitionKey: "x-ms-documentdb-partitionkey",
     PartitionKeyRangeID: "x-ms-documentdb-partitionkeyrangeid",
+
+    // Epk Range headers
+    StartEpk: "x-ms-start-epk",
+    EndEpk: "x-ms-end-epk",
+
+    // Read Feed Type
+    ReadFeedKeyType: "x-ms-read-key-type",
 
     // Quota Info
     MaxEntityCount: "x-ms-root-entity-max-count",
@@ -158,13 +173,21 @@ export const Constants = {
     IsBatchAtomic: "x-ms-cosmos-batch-atomic",
     BatchContinueOnError: "x-ms-cosmos-batch-continue-on-error",
 
+    // Dedicated Gateway Headers
+    DedicatedGatewayPerRequestCacheStaleness: "x-ms-dedicatedgateway-max-age",
+    DedicatedGatewayPerRequestBypassCache: "x-ms-dedicatedgateway-bypass-cache",
+
     // Cache Refresh header
-    ForceRefresh: "x-ms-force-refresh"
+    ForceRefresh: "x-ms-force-refresh",
+
+    // Priority Based throttling header
+    PriorityLevel: "x-ms-cosmos-priority-level",
   },
 
   // GlobalDB related constants
   WritableLocations: "writableLocations",
   ReadableLocations: "readableLocations",
+  LocationUnavailableExpirationTimeInMs: 5 * 60 * 1000, // 5 minutes
 
   // ServiceDocument Resource
   ENABLE_MULTIPLE_WRITABLE_LOCATIONS: "enableMultipleWriteLocations",
@@ -176,13 +199,21 @@ export const Constants = {
   ThrottleRetryCount: "x-ms-throttle-retry-count",
   ThrottleRetryWaitTimeInMs: "x-ms-throttle-retry-wait-time-ms",
 
-  CurrentVersion: "2018-12-31",
-
+  // Platform
+  CurrentVersion: "2020-07-15",
+  AzureNamespace: "Azure.Cosmos",
+  AzurePackageName: "@azure/cosmos",
   SDKName: "azure-cosmos-js",
-  SDKVersion: "REPLACE_SDK_VERSION",
+  SDKVersion: "4.2.1",
+
+  // Diagnostics
+  CosmosDbDiagnosticLevelEnvVarName: "AZURE_COSMOSDB_DIAGNOSTICS_LEVEL",
+
+  // Bulk Operations
+  DefaultMaxBulkRequestBodySizeInBytes: 220201,
 
   Quota: {
-    CollectionSize: "collectionSize"
+    CollectionSize: "collectionSize",
   },
 
   Path: {
@@ -201,21 +232,21 @@ export const Constants = {
     SchemasPathSegment: "schemas",
     OffersPathSegment: "offers",
     TopologyPathSegment: "topology",
-    DatabaseAccountPathSegment: "databaseaccount"
+    DatabaseAccountPathSegment: "databaseaccount",
   },
 
   PartitionKeyRange: {
     // Partition Key Range Constants
     MinInclusive: "minInclusive",
     MaxExclusive: "maxExclusive",
-    Id: "id"
+    Id: "id",
   } as PartitionKeyRangePropertiesNames,
 
   QueryRangeConstants: {
     // Partition Key Range Constants
     MinInclusive: "minInclusive",
     MaxExclusive: "maxExclusive",
-    min: "min"
+    min: "min",
   },
 
   /**
@@ -223,13 +254,17 @@ export const Constants = {
    */
   EffectiveParitionKeyConstants: {
     MinimumInclusiveEffectivePartitionKey: "",
-    MaximumExclusiveEffectivePartitionKey: "FF"
+    MaximumExclusiveEffectivePartitionKey: "FF",
   },
 
   EffectivePartitionKeyConstants: {
     MinimumInclusiveEffectivePartitionKey: "",
-    MaximumExclusiveEffectivePartitionKey: "FF"
-  }
+    MaximumExclusiveEffectivePartitionKey: "FF",
+  },
+
+  // Changefeed AllVersionsAndDeletesMode formatting version
+  AllVersionsAndDeletesChangeFeedWireFormatVersion: "2021-09-15",
+  ChangeFeedIfNoneMatchStartFromNowHeader: "*",
 };
 
 /**
@@ -247,7 +282,8 @@ export enum ResourceType {
   udf = "udfs",
   trigger = "triggers",
   item = "docs",
-  pkranges = "pkranges"
+  pkranges = "pkranges",
+  partitionkey = "partitionKey",
 }
 
 /**
@@ -258,7 +294,7 @@ export enum HTTPMethod {
   patch = "PATCH",
   post = "POST",
   put = "PUT",
-  delete = "DELETE"
+  delete = "DELETE",
 }
 
 /**
@@ -273,7 +309,7 @@ export enum OperationType {
   Query = "query",
   Execute = "execute",
   Batch = "batch",
-  Patch = "patch"
+  Patch = "patch",
 }
 
 /**
@@ -283,7 +319,7 @@ export enum CosmosKeyType {
   PrimaryMaster = "PRIMARY_MASTER",
   SecondaryMaster = "SECONDARY_MASTER",
   PrimaryReadOnly = "PRIMARY_READONLY",
-  SecondaryReadOnly = "SECONDARY_READONLY"
+  SecondaryReadOnly = "SECONDARY_READONLY",
 }
 
 /**
@@ -293,7 +329,7 @@ export enum CosmosContainerChildResourceKind {
   Item = "ITEM",
   StoredProcedure = "STORED_PROCEDURE",
   UserDefinedFunction = "USER_DEFINED_FUNCTION",
-  Trigger = "TRIGGER"
+  Trigger = "TRIGGER",
 }
 /**
  * @hidden
@@ -395,7 +431,7 @@ export enum PermissionScopeValues {
     PermissionScopeValues.ScopeItemUpsertValue |
     PermissionScopeValues.ScopeItemDeleteValue,
 
-  NoneValue = 0
+  NoneValue = 0,
 }
 /**
  * @hidden
@@ -439,5 +475,22 @@ export enum SasTokenPermissionKind {
   UserDefinedFuntionDelete = PermissionScopeValues.ScopeUserDefinedFunctionDeleteValue,
   TriggerRead = PermissionScopeValues.ScopeTriggerReadValue,
   TriggerReplace = PermissionScopeValues.ScopeTriggerReplaceValue,
-  TriggerDelete = PermissionScopeValues.ScopeTriggerDeleteValue
+  TriggerDelete = PermissionScopeValues.ScopeTriggerDeleteValue,
+}
+
+export enum QueryFeature {
+  NonValueAggregate = "NonValueAggregate",
+  Aggregate = "Aggregate",
+  Distinct = "Distinct",
+  MultipleOrderBy = "MultipleOrderBy",
+  OffsetAndLimit = "OffsetAndLimit",
+  OrderBy = "OrderBy",
+  Top = "Top",
+  CompositeAggregate = "CompositeAggregate",
+  GroupBy = "GroupBy",
+  MultipleAggregates = "MultipleAggregates",
+  NonStreamingOrderBy = "NonStreamingOrderBy",
+  ListAndSetAggregate = "ListAndSetAggregate",
+  CountIf = "CountIf",
+  HybridSearch = "HybridSearch",
 }

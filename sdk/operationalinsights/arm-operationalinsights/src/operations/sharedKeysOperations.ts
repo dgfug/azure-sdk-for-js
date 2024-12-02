@@ -10,7 +10,7 @@ import { SharedKeysOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { OperationalInsightsManagementClientContext } from "../operationalInsightsManagementClientContext";
+import { OperationalInsightsManagementClient } from "../operationalInsightsManagementClient";
 import {
   SharedKeysGetSharedKeysOptionalParams,
   SharedKeysGetSharedKeysResponse,
@@ -20,13 +20,13 @@ import {
 
 /** Class containing SharedKeysOperations operations. */
 export class SharedKeysOperationsImpl implements SharedKeysOperations {
-  private readonly client: OperationalInsightsManagementClientContext;
+  private readonly client: OperationalInsightsManagementClient;
 
   /**
    * Initialize a new instance of the class SharedKeysOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: OperationalInsightsManagementClientContext) {
+  constructor(client: OperationalInsightsManagementClient) {
     this.client = client;
   }
 
@@ -77,7 +77,7 @@ const getSharedKeysOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.SharedKeys
     }
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -96,7 +96,7 @@ const regenerateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.SharedKeys
     }
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

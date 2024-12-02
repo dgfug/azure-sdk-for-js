@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import { Constants } from "../common/constants";
 import { InMemoryCollectionRoutingMap } from "./inMemoryCollectionRoutingMap";
 
@@ -20,7 +20,7 @@ function compareRanges(a: any, b: any): 0 | 1 | -1 {
 
 /** @hidden */
 export function createCompleteRoutingMap(
-  partitionKeyRangeInfoTuppleList: any[]
+  partitionKeyRangeInfoTuppleList: any[],
 ): InMemoryCollectionRoutingMap {
   const rangeById: any = {}; // TODO: any
   const rangeByInfo: any = {}; // TODO: any

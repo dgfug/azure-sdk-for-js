@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { LocalNetworkGateways } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   LocalNetworkGateway,
   LocalNetworkGatewaysListNextOptionalParams,
   LocalNetworkGatewaysListOptionalParams,
+  LocalNetworkGatewaysListResponse,
   LocalNetworkGatewaysCreateOrUpdateOptionalParams,
   LocalNetworkGatewaysCreateOrUpdateResponse,
   LocalNetworkGatewaysGetOptionalParams,
@@ -26,20 +32,19 @@ import {
   TagsObject,
   LocalNetworkGatewaysUpdateTagsOptionalParams,
   LocalNetworkGatewaysUpdateTagsResponse,
-  LocalNetworkGatewaysListResponse,
-  LocalNetworkGatewaysListNextResponse
+  LocalNetworkGatewaysListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing LocalNetworkGateways operations. */
 export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class LocalNetworkGateways class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -50,7 +55,7 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
    */
   public list(
     resourceGroupName: string,
-    options?: LocalNetworkGatewaysListOptionalParams
+    options?: LocalNetworkGatewaysListOptionalParams,
   ): PagedAsyncIterableIterator<LocalNetworkGateway> {
     const iter = this.listPagingAll(resourceGroupName, options);
     return {
@@ -60,33 +65,45 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(resourceGroupName, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
-    options?: LocalNetworkGatewaysListOptionalParams
+    options?: LocalNetworkGatewaysListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<LocalNetworkGateway[]> {
-    let result = await this._list(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: LocalNetworkGatewaysListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
-    options?: LocalNetworkGatewaysListOptionalParams
+    options?: LocalNetworkGatewaysListOptionalParams,
   ): AsyncIterableIterator<LocalNetworkGateway> {
     for await (const page of this.listPagingPage(resourceGroupName, options)) {
       yield* page;
@@ -104,30 +121,29 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
     resourceGroupName: string,
     localNetworkGatewayName: string,
     parameters: LocalNetworkGateway,
-    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams
+    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<LocalNetworkGatewaysCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<LocalNetworkGatewaysCreateOrUpdateResponse>,
       LocalNetworkGatewaysCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<LocalNetworkGatewaysCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -136,8 +152,8 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -145,21 +161,26 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, localNetworkGatewayName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, localNetworkGatewayName, parameters, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      LocalNetworkGatewaysCreateOrUpdateResponse,
+      OperationState<LocalNetworkGatewaysCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -173,13 +194,13 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
     resourceGroupName: string,
     localNetworkGatewayName: string,
     parameters: LocalNetworkGateway,
-    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams
+    options?: LocalNetworkGatewaysCreateOrUpdateOptionalParams,
   ): Promise<LocalNetworkGatewaysCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       localNetworkGatewayName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -193,11 +214,11 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
   get(
     resourceGroupName: string,
     localNetworkGatewayName: string,
-    options?: LocalNetworkGatewaysGetOptionalParams
+    options?: LocalNetworkGatewaysGetOptionalParams,
   ): Promise<LocalNetworkGatewaysGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, localNetworkGatewayName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -210,25 +231,24 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
   async beginDelete(
     resourceGroupName: string,
     localNetworkGatewayName: string,
-    options?: LocalNetworkGatewaysDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: LocalNetworkGatewaysDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -237,8 +257,8 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -246,21 +266,23 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, localNetworkGatewayName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, localNetworkGatewayName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -272,12 +294,12 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
   async beginDeleteAndWait(
     resourceGroupName: string,
     localNetworkGatewayName: string,
-    options?: LocalNetworkGatewaysDeleteOptionalParams
+    options?: LocalNetworkGatewaysDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       localNetworkGatewayName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -293,11 +315,11 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
     resourceGroupName: string,
     localNetworkGatewayName: string,
     parameters: TagsObject,
-    options?: LocalNetworkGatewaysUpdateTagsOptionalParams
+    options?: LocalNetworkGatewaysUpdateTagsOptionalParams,
   ): Promise<LocalNetworkGatewaysUpdateTagsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, localNetworkGatewayName, parameters, options },
-      updateTagsOperationSpec
+      updateTagsOperationSpec,
     );
   }
 
@@ -308,11 +330,11 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
    */
   private _list(
     resourceGroupName: string,
-    options?: LocalNetworkGatewaysListOptionalParams
+    options?: LocalNetworkGatewaysListOptionalParams,
   ): Promise<LocalNetworkGatewaysListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -325,11 +347,11 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
   private _listNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: LocalNetworkGatewaysListNextOptionalParams
+    options?: LocalNetworkGatewaysListNextOptionalParams,
   ): Promise<LocalNetworkGatewaysListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -337,63 +359,60 @@ export class LocalNetworkGatewaysImpl implements LocalNetworkGateways {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.LocalNetworkGateway
+      bodyMapper: Mappers.LocalNetworkGateway,
     },
     201: {
-      bodyMapper: Mappers.LocalNetworkGateway
+      bodyMapper: Mappers.LocalNetworkGateway,
     },
     202: {
-      bodyMapper: Mappers.LocalNetworkGateway
+      bodyMapper: Mappers.LocalNetworkGateway,
     },
     204: {
-      bodyMapper: Mappers.LocalNetworkGateway
+      bodyMapper: Mappers.LocalNetworkGateway,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters66,
+  requestBody: Parameters.parameters81,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.localNetworkGatewayName
+    Parameters.localNetworkGatewayName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LocalNetworkGateway
+      bodyMapper: Mappers.LocalNetworkGateway,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.localNetworkGatewayName
+    Parameters.localNetworkGatewayName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -401,30 +420,29 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.localNetworkGatewayName
+    Parameters.localNetworkGatewayName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateTagsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways/{localNetworkGatewayName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.LocalNetworkGateway
+      bodyMapper: Mappers.LocalNetworkGateway,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.parameters1,
   queryParameters: [Parameters.apiVersion],
@@ -432,51 +450,49 @@ const updateTagsOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.localNetworkGatewayName
+    Parameters.localNetworkGatewayName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/localNetworkGateways",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LocalNetworkGatewayListResult
+      bodyMapper: Mappers.LocalNetworkGatewayListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.LocalNetworkGatewayListResult
+      bodyMapper: Mappers.CloudError,
     },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const listNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.LocalNetworkGatewayListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.nextLink,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };

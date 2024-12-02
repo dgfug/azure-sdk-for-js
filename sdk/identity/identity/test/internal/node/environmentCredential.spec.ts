@@ -1,50 +1,48 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
+import { getSendCertificateChain } from "../../../src/credentials/environmentCredential.js";
+import { describe, it, assert, vi, afterEach } from "vitest";
 
-/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
-
-import Sinon from "sinon";
-import { assert } from "chai";
-import { ConfidentialClientApplication } from "@azure/msal-node";
-import { EnvironmentCredential } from "../../../src";
-import { MsalTestCleanup, msalNodeTestSetup } from "../../msalTestUtils";
-import { MsalNode } from "../../../src/msal/nodeFlows/msalNodeCommon";
-import { Context } from "mocha";
-
-describe("EnvironmentCredential (internal)", function() {
-  let cleanup: MsalTestCleanup;
-  let getTokenSilentSpy: Sinon.SinonSpy;
-  let doGetTokenSpy: Sinon.SinonSpy;
-
-  beforeEach(function(this: Context) {
-    const setup = msalNodeTestSetup(this);
-    cleanup = setup.cleanup;
-
-    getTokenSilentSpy = setup.sandbox.spy(MsalNode.prototype, "getTokenSilent");
-
-    // MsalClientSecret calls to this method underneath.
-    doGetTokenSpy = setup.sandbox.spy(
-      ConfidentialClientApplication.prototype,
-      "acquireTokenByClientCredential"
-    );
-  });
-  afterEach(async function() {
-    await cleanup();
+describe("EnvironmentCredential (internal)", function () {
+  afterEach(function () {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
-  const scope = "https://vault.azure.net/.default";
+  describe("#getSendCertificateChain", () => {
+    it("should parse 'true' correctly", async () => {
+      vi.stubEnv("AZURE_CLIENT_SEND_CERTIFICATE_CHAIN", "true");
 
-  it("Authenticates silently after the initial request", async function() {
-    const credential = new EnvironmentCredential();
+      const sendCertificateChain = getSendCertificateChain();
+      assert.isTrue(sendCertificateChain);
+    });
 
-    const { token: firstToken } = await credential.getToken(scope);
-    assert.equal(getTokenSilentSpy.callCount, 1);
-    assert.equal(doGetTokenSpy.callCount, 1);
+    it("should parse '1' correctly", async () => {
+      vi.stubEnv("AZURE_CLIENT_SEND_CERTIFICATE_CHAIN", "1");
 
-    const { token: secondToken } = await credential.getToken(scope);
-    assert.strictEqual(firstToken, secondToken);
-    assert.equal(getTokenSilentSpy.callCount, 2);
+      const sendCertificateChain = getSendCertificateChain();
+      assert.isTrue(sendCertificateChain);
+    });
 
-    assert.equal(doGetTokenSpy.callCount, 1);
+    it("is case insensitive", async () => {
+      vi.stubEnv("AZURE_CLIENT_SEND_CERTIFICATE_CHAIN", "TrUe");
+
+      const sendCertificateChain = getSendCertificateChain();
+      assert.isTrue(sendCertificateChain);
+    });
+
+    it("should parse undefined correctly", async () => {
+      vi.stubEnv("AZURE_CLIENT_SEND_CERTIFICATE_CHAIN", undefined);
+
+      const sendCertificateChain = getSendCertificateChain();
+      assert.isFalse(sendCertificateChain);
+    });
+
+    it("should default other values to false", async () => {
+      vi.stubEnv("AZURE_CLIENT_SEND_CERTIFICATE_CHAIN", "foobar");
+
+      const sendCertificateChain = getSendCertificateChain();
+      assert.isFalse(sendCertificateChain);
+    });
   });
 });

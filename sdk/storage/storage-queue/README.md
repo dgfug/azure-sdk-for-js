@@ -11,6 +11,7 @@ Use the client libraries in this package to:
 - Send/Receive/Peek/Clear/Update/Delete Queue Messages
 
 Key links:
+
 - [Source code](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/storage/storage-queue)
 - [Package (npm)](https://www.npmjs.com/package/@azure/storage-queue)
 - [API Reference Documentation](https://docs.microsoft.com/javascript/api/@azure/storage-queue)
@@ -22,14 +23,14 @@ Key links:
 
 ### Currently supported environments
 
-- [LTS versions of Node.js](https://nodejs.org/about/releases/)
+- [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule)
 - Latest versions of Safari, Chrome, Edge, and Firefox.
 
 See our [support policy](https://github.com/Azure/azure-sdk-for-js/blob/main/SUPPORT.md) for more details.
 
 ### Prerequisites
 
-- An [Azure subscription](https://azure.microsoft.com/free/) 
+- An [Azure subscription](https://azure.microsoft.com/free/)
 - A [Storage Account](https://docs.microsoft.com/azure/storage/common/storage-account-create)
 
 ### Install the package
@@ -232,7 +233,7 @@ const queueServiceClient = new QueueServiceClient(
 );
 
 async function main() {
-  let iter1 = queueServiceClient.listQueues();
+  const iter1 = queueServiceClient.listQueues();
   let i = 1;
   for await (const item of iter1) {
     console.log(`Queue${i}: ${item.name}`);
@@ -258,7 +259,7 @@ const queueServiceClient = new QueueServiceClient(
 );
 
 async function main() {
-  let iter2 = queueServiceClient.listQueues();
+  const iter2 = queueServiceClient.listQueues();
   let i = 1;
   let item = await iter2.next();
   while (!item.done) {
@@ -270,7 +271,7 @@ async function main() {
 main();
 ```
 
-For a complete sample on iterating queues please see [samples/typescript/iterators.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-queue/samples/typescript/src/iterators.ts).
+For a complete sample on iterating queues please see [samples/v12/typescript/listQueues.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-queue/samples/v12/typescript/src/listQueues.ts).
 
 ### Create a new queue
 
@@ -385,7 +386,7 @@ const queueName = "<valid queue name>";
 async function main() {
   const queueClient = queueServiceClient.getQueueClient(queueName);
   const response = await queueClient.receiveMessages();
-  if (response.receivedMessageItems.length == 1) {
+  if (response.receivedMessageItems.length === 1) {
     const receivedMessageItem = response.receivedMessageItems[0];
     console.log(`Processing & deleting message with content: ${receivedMessageItem.messageText}`);
     const deleteMessageResponse = await queueClient.deleteMessage(
@@ -428,14 +429,14 @@ async function main() {
 main();
 ```
 
-A complete example of basic scenarios is at [samples/basic.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-queue/samples/typescript/src/basic.ts).
+A complete example of simple `QueueServiceClient` scenarios is at [samples/v12/typescript/src/queueClient.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-queue/samples/v12/typescript/src/queueClient.ts).
 
 ## Troubleshooting
 
 Enabling logging may help uncover useful information about failures. In order to see a log of HTTP requests and responses, set the `AZURE_LOG_LEVEL` environment variable to `info`. Alternatively, logging can be enabled at runtime by calling `setLogLevel` in the `@azure/logger`:
 
 ```javascript
-import { setLogLevel } from "@azure/logger";
+const { setLogLevel } = require("@azure/logger");
 
 setLogLevel("info");
 ```

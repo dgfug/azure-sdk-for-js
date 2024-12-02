@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT Licence.
+// Licensed under the MIT License.
 
 /**
  * @summary Use AAD token credentials when sending a SMS message.
@@ -7,7 +7,7 @@
 
 import { parseConnectionString } from "@azure/communication-common";
 import { SmsClient, SmsSendRequest } from "@azure/communication-sms";
-import { isNode } from "@azure/core-http";
+import { isNode } from "@azure/core-util";
 import { ClientSecretCredential, DefaultAzureCredential, TokenCredential } from "@azure/identity";
 
 // Load the .env file if it exists
@@ -29,7 +29,7 @@ export async function main() {
     !process.env.AZURE_CLIENT_SECRET
   ) {
     console.error(
-      "Azure AD authentication information not provided, but it is required to run this sample. Exiting."
+      "Azure AD authentication information not provided, but it is required to run this sample. Exiting.",
     );
     return;
   }
@@ -40,20 +40,26 @@ export async function main() {
     : new ClientSecretCredential(
         process.env.AZURE_TENANT_ID,
         process.env.AZURE_CLIENT_ID,
-        process.env.AZURE_CLIENT_SECRET
+        process.env.AZURE_CLIENT_SECRET,
       );
 
   // create new client with endpoint and credentials
   const client = new SmsClient(endpoint, credential);
 
   // construct send request
+  let phoneNumbers: string[];
+  if (process.env.TO_PHONE_NUMBERS !== undefined) {
+    phoneNumbers = process.env.TO_PHONE_NUMBERS.split(",");
+  } else if (process.env.AZURE_PHONE_NUMBER !== undefined) {
+    phoneNumbers = [process.env.AZURE_PHONE_NUMBER];
+  } else {
+    phoneNumbers = ["<to-phone-number-1>", "<to-phone-number-2>"];
+  }
+
   const sendRequest: SmsSendRequest = {
     from: process.env.FROM_PHONE_NUMBER || process.env.AZURE_PHONE_NUMBER || "<from-phone-number>",
-    to: process.env.TO_PHONE_NUMBERS?.split(",") || [process.env.AZURE_PHONE_NUMBER!] || [
-        "<to-phone-number-1>",
-        "<to-phone-number-2>"
-      ],
-    message: "Hello World via SMS!"
+    to: phoneNumbers,
+    message: "Hello World via SMS!",
   };
 
   // send sms with request

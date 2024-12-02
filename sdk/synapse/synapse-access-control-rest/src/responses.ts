@@ -1,28 +1,26 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HttpResponse } from "@azure-rest/core-client";
-import { RawHttpHeaders } from "@azure/core-rest-pipeline";
-import {
-  CheckPrincipalAccessResponse,
-  ErrorContract,
-  RoleAssignmentDetailsList,
-  RoleAssignmentDetails,
-  SynapseRoleDefinition
-} from "./models";
+import type { RawHttpHeaders } from "@azure/core-rest-pipeline";
+import type { HttpResponse } from "@azure-rest/core-client";
+import type {
+  CheckPrincipalAccessResponseOutput,
+  ErrorContractOutput,
+  RoleAssignmentDetailsListOutput,
+  RoleAssignmentDetailsOutput,
+  SynapseRoleDefinitionOutput,
+} from "./outputModels.js";
 
 /** Check if the given principalId has access to perform list of actions at a given scope. */
-export interface RoleAssignmentsCheckPrincipalAccess200Response
-  extends HttpResponse {
+export interface RoleAssignmentsCheckPrincipalAccess200Response extends HttpResponse {
   status: "200";
-  body: CheckPrincipalAccessResponse;
+  body: CheckPrincipalAccessResponseOutput;
 }
 
 /** Check if the given principalId has access to perform list of actions at a given scope. */
-export interface RoleAssignmentsCheckPrincipalAccessdefaultResponse
-  extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+export interface RoleAssignmentsCheckPrincipalAccessdefaultResponse extends HttpResponse {
+  status: string;
+  body: ErrorContractOutput;
 }
 
 export interface RoleAssignmentsListRoleAssignments200Headers {
@@ -31,95 +29,82 @@ export interface RoleAssignmentsListRoleAssignments200Headers {
 }
 
 /** List role assignments. */
-export interface RoleAssignmentsListRoleAssignments200Response
-  extends HttpResponse {
+export interface RoleAssignmentsListRoleAssignments200Response extends HttpResponse {
   status: "200";
-  body: RoleAssignmentDetailsList;
+  body: RoleAssignmentDetailsListOutput;
   headers: RawHttpHeaders & RoleAssignmentsListRoleAssignments200Headers;
 }
 
 /** List role assignments. */
-export interface RoleAssignmentsListRoleAssignmentsdefaultResponse
-  extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+export interface RoleAssignmentsListRoleAssignmentsdefaultResponse extends HttpResponse {
+  status: string;
+  body: ErrorContractOutput;
 }
 
 /** Create role assignment. */
-export interface RoleAssignmentsCreateRoleAssignment200Response
-  extends HttpResponse {
+export interface RoleAssignmentsCreateRoleAssignment200Response extends HttpResponse {
   status: "200";
-  body: RoleAssignmentDetails;
+  body: RoleAssignmentDetailsOutput;
 }
 
 /** Create role assignment. */
-export interface RoleAssignmentsCreateRoleAssignmentdefaultResponse
-  extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+export interface RoleAssignmentsCreateRoleAssignmentdefaultResponse extends HttpResponse {
+  status: string;
+  body: ErrorContractOutput;
 }
 
 /** Get role assignment by role assignment Id. */
-export interface RoleAssignmentsGetRoleAssignmentById200Response
-  extends HttpResponse {
+export interface RoleAssignmentsGetRoleAssignmentById200Response extends HttpResponse {
   status: "200";
-  body: RoleAssignmentDetails;
+  body: RoleAssignmentDetailsOutput;
 }
 
 /** Get role assignment by role assignment Id. */
-export interface RoleAssignmentsGetRoleAssignmentByIddefaultResponse
-  extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+export interface RoleAssignmentsGetRoleAssignmentByIddefaultResponse extends HttpResponse {
+  status: string;
+  body: ErrorContractOutput;
 }
 
 /** Delete role assignment by role assignment Id. */
-export interface RoleAssignmentsDeleteRoleAssignmentById200Response
-  extends HttpResponse {
+export interface RoleAssignmentsDeleteRoleAssignmentById200Response extends HttpResponse {
   status: "200";
   body: Record<string, unknown>;
 }
 
 /** Delete role assignment by role assignment Id. */
-export interface RoleAssignmentsDeleteRoleAssignmentById204Response
-  extends HttpResponse {
+export interface RoleAssignmentsDeleteRoleAssignmentById204Response extends HttpResponse {
   status: "204";
   body: Record<string, unknown>;
 }
 
 /** Delete role assignment by role assignment Id. */
-export interface RoleAssignmentsDeleteRoleAssignmentByIddefaultResponse
-  extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+export interface RoleAssignmentsDeleteRoleAssignmentByIddefaultResponse extends HttpResponse {
+  status: string;
+  body: ErrorContractOutput;
 }
 
 /** List role definitions. */
-export interface RoleDefinitionsListRoleDefinitions200Response
-  extends HttpResponse {
+export interface RoleDefinitionsListRoleDefinitions200Response extends HttpResponse {
   status: "200";
-  body: Array<SynapseRoleDefinition>;
+  body: Array<SynapseRoleDefinitionOutput>;
 }
 
 /** List role definitions. */
-export interface RoleDefinitionsListRoleDefinitionsdefaultResponse
-  extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+export interface RoleDefinitionsListRoleDefinitionsdefaultResponse extends HttpResponse {
+  status: string;
+  body: ErrorContractOutput;
 }
 
 /** Get role definition by role definition Id. */
-export interface RoleDefinitionsGetRoleDefinitionById200Response
-  extends HttpResponse {
+export interface RoleDefinitionsGetRoleDefinitionById200Response extends HttpResponse {
   status: "200";
-  body: SynapseRoleDefinition;
+  body: SynapseRoleDefinitionOutput;
 }
 
 /** Get role definition by role definition Id. */
-export interface RoleDefinitionsGetRoleDefinitionByIddefaultResponse
-  extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+export interface RoleDefinitionsGetRoleDefinitionByIddefaultResponse extends HttpResponse {
+  status: string;
+  body: ErrorContractOutput;
 }
 
 /** List rbac scopes. */
@@ -130,6 +115,6 @@ export interface RoleDefinitionsListScopes200Response extends HttpResponse {
 
 /** List rbac scopes. */
 export interface RoleDefinitionsListScopesdefaultResponse extends HttpResponse {
-  status: "500";
-  body: ErrorContract;
+  status: string;
+  body: ErrorContractOutput;
 }

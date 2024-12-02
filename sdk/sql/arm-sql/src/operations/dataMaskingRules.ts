@@ -6,31 +6,30 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { DataMaskingRules } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   DataMaskingRule,
   DataMaskingRulesListByDatabaseOptionalParams,
+  DataMaskingRulesListByDatabaseResponse,
   DataMaskingRulesCreateOrUpdateOptionalParams,
   DataMaskingRulesCreateOrUpdateResponse,
-  DataMaskingRulesListByDatabaseResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DataMaskingRules operations. */
 export class DataMaskingRulesImpl implements DataMaskingRules {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class DataMaskingRules class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -46,13 +45,13 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DataMaskingRulesListByDatabaseOptionalParams
+    options?: DataMaskingRulesListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<DataMaskingRule> {
     const iter = this.listByDatabasePagingAll(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     );
     return {
       next() {
@@ -61,14 +60,18 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByDatabasePagingPage(
           resourceGroupName,
           serverName,
           databaseName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -76,13 +79,15 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DataMaskingRulesListByDatabaseOptionalParams
+    options?: DataMaskingRulesListByDatabaseOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<DataMaskingRule[]> {
-    let result = await this._listByDatabase(
+    let result: DataMaskingRulesListByDatabaseResponse;
+    result = await this._listByDatabase(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -91,13 +96,13 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DataMaskingRulesListByDatabaseOptionalParams
+    options?: DataMaskingRulesListByDatabaseOptionalParams,
   ): AsyncIterableIterator<DataMaskingRule> {
     for await (const page of this.listByDatabasePagingPage(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -119,7 +124,7 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
     databaseName: string,
     dataMaskingRuleName: string,
     parameters: DataMaskingRule,
-    options?: DataMaskingRulesCreateOrUpdateOptionalParams
+    options?: DataMaskingRulesCreateOrUpdateOptionalParams,
   ): Promise<DataMaskingRulesCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -128,9 +133,9 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
         databaseName,
         dataMaskingRuleName,
         parameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -146,11 +151,11 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DataMaskingRulesListByDatabaseOptionalParams
+    options?: DataMaskingRulesListByDatabaseOptionalParams,
   ): Promise<DataMaskingRulesListByDatabaseResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, options },
-      listByDatabaseOperationSpec
+      listByDatabaseOperationSpec,
     );
   }
 }
@@ -158,18 +163,17 @@ export class DataMaskingRulesImpl implements DataMaskingRules {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/dataMaskingPolicies/{dataMaskingPolicyName}/rules/{dataMaskingRuleName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/dataMaskingPolicies/{dataMaskingPolicyName}/rules/{dataMaskingRuleName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.DataMaskingRule
+      bodyMapper: Mappers.DataMaskingRule,
     },
     201: {
-      bodyMapper: Mappers.DataMaskingRule
-    }
+      bodyMapper: Mappers.DataMaskingRule,
+    },
   },
-  requestBody: Parameters.parameters2,
+  requestBody: Parameters.parameters1,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -178,20 +182,19 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.serverName,
     Parameters.databaseName,
     Parameters.dataMaskingPolicyName,
-    Parameters.dataMaskingRuleName
+    Parameters.dataMaskingRuleName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByDatabaseOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/dataMaskingPolicies/{dataMaskingPolicyName}/rules",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/dataMaskingPolicies/{dataMaskingPolicyName}/rules",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DataMaskingRuleListResult
-    }
+      bodyMapper: Mappers.DataMaskingRuleListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -200,8 +203,8 @@ const listByDatabaseOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.dataMaskingPolicyName
+    Parameters.dataMaskingPolicyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

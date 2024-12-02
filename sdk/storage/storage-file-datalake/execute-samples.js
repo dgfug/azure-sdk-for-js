@@ -15,20 +15,20 @@ const { g, y, r, b } = [
   ["r", 1],
   ["g", 2],
   ["b", 4],
-  ["y", 3]
+  ["y", 3],
 ].reduce(
   (cols, col) => ({
     ...cols,
-    [col[0]]: (f) => `\x1b[3${col[1]}m${f}\x1b[0m`
+    [col[0]]: (f) => `\x1b[3${col[1]}m${f}\x1b[0m`,
   }),
-  {}
+  {},
 );
 
 // Executes `cmd` in `cwd`(directory).
 async function exec(cmd, cwd) {
   let command = execa(cmd, {
     cwd,
-    shell: true
+    shell: true,
   });
   command.stderr.pipe(process.stderr);
   command.stdout.pipe(process.stdout);

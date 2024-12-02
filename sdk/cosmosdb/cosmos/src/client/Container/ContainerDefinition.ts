@@ -1,9 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { IndexingPolicy, PartitionKeyDefinition } from "../../documents";
-import { ConflictResolutionPolicy } from "../Conflict/ConflictResolutionPolicy";
-import { UniqueKeyPolicy } from "./UniqueKeyPolicy";
-import { GeospatialType } from "../../documents/GeospatialType";
+// Licensed under the MIT License.
+import type { IndexingPolicy, PartitionKeyDefinition } from "../../documents";
+import type { ConflictResolutionPolicy } from "../Conflict/ConflictResolutionPolicy";
+import type { UniqueKeyPolicy } from "./UniqueKeyPolicy";
+import type { GeospatialType } from "../../documents/GeospatialType";
+import type { ChangeFeedPolicy } from "../ChangeFeed/ChangeFeedPolicy";
+import type { ComputedProperty } from "../../documents/ComputedProperty";
+import type { VectorEmbeddingPolicy } from "../../documents/VectorEmbeddingPolicy";
+import type { FullTextPolicy } from "../../documents/FullTextPolicy";
 
 export interface ContainerDefinition {
   /** The id of the container. */
@@ -22,4 +26,12 @@ export interface ContainerDefinition {
   geospatialConfig?: {
     type: GeospatialType;
   };
+  /** Change feed policy related to the container */
+  changeFeedPolicy?: ChangeFeedPolicy;
+  /** The computed properties of the container */
+  computedProperties?: ComputedProperty[];
+  /** The vector embedding policy information for storing items in a container. */
+  vectorEmbeddingPolicy?: VectorEmbeddingPolicy;
+  /** The full text policy information for storing items in a container. */
+  fullTextPolicy?: FullTextPolicy;
 }

@@ -1,29 +1,30 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { hmac } from "./hmac";
-import { HTTPMethod, ResourceType, Constants } from "../common";
+import type { HTTPMethod } from "../common";
+import { ResourceType, Constants } from "../common";
 
 export async function generateHeaders(
   masterKey: string,
   method: HTTPMethod,
   resourceType: ResourceType = ResourceType.none,
   resourceId: string = "",
-  date = new Date()
+  date = new Date(),
 ): Promise<{
   [x: string]: string;
 }> {
   if (masterKey.startsWith("type=sas&")) {
     return {
       [Constants.HttpHeaders.Authorization]: encodeURIComponent(masterKey),
-      [Constants.HttpHeaders.XDate]: date.toUTCString()
+      [Constants.HttpHeaders.XDate]: date.toUTCString(),
     };
   }
   const sig = await signature(masterKey, method, resourceType, resourceId, date);
 
   return {
     [Constants.HttpHeaders.Authorization]: sig,
-    [Constants.HttpHeaders.XDate]: date.toUTCString()
+    [Constants.HttpHeaders.XDate]: date.toUTCString(),
   };
 }
 
@@ -32,7 +33,7 @@ async function signature(
   method: HTTPMethod,
   resourceType: ResourceType,
   resourceId: string = "",
-  date = new Date()
+  date = new Date(),
 ): Promise<string> {
   const type = "master";
   const version = "1.0";

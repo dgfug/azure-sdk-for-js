@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Subnet,
   SubnetsListOptionalParams,
@@ -19,7 +19,7 @@ import {
   PrepareNetworkPoliciesRequest,
   SubnetsPrepareNetworkPoliciesOptionalParams,
   UnprepareNetworkPoliciesRequest,
-  SubnetsUnprepareNetworkPoliciesOptionalParams
+  SubnetsUnprepareNetworkPoliciesOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -34,7 +34,7 @@ export interface Subnets {
   list(
     resourceGroupName: string,
     virtualNetworkName: string,
-    options?: SubnetsListOptionalParams
+    options?: SubnetsListOptionalParams,
   ): PagedAsyncIterableIterator<Subnet>;
   /**
    * Deletes the specified subnet.
@@ -47,8 +47,8 @@ export interface Subnets {
     resourceGroupName: string,
     virtualNetworkName: string,
     subnetName: string,
-    options?: SubnetsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SubnetsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified subnet.
    * @param resourceGroupName The name of the resource group.
@@ -60,7 +60,7 @@ export interface Subnets {
     resourceGroupName: string,
     virtualNetworkName: string,
     subnetName: string,
-    options?: SubnetsDeleteOptionalParams
+    options?: SubnetsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified subnet by virtual network and resource group.
@@ -73,7 +73,7 @@ export interface Subnets {
     resourceGroupName: string,
     virtualNetworkName: string,
     subnetName: string,
-    options?: SubnetsGetOptionalParams
+    options?: SubnetsGetOptionalParams,
   ): Promise<SubnetsGetResponse>;
   /**
    * Creates or updates a subnet in the specified virtual network.
@@ -88,10 +88,10 @@ export interface Subnets {
     virtualNetworkName: string,
     subnetName: string,
     subnetParameters: Subnet,
-    options?: SubnetsCreateOrUpdateOptionalParams
+    options?: SubnetsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubnetsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SubnetsCreateOrUpdateResponse>,
       SubnetsCreateOrUpdateResponse
     >
   >;
@@ -108,7 +108,7 @@ export interface Subnets {
     virtualNetworkName: string,
     subnetName: string,
     subnetParameters: Subnet,
-    options?: SubnetsCreateOrUpdateOptionalParams
+    options?: SubnetsCreateOrUpdateOptionalParams,
   ): Promise<SubnetsCreateOrUpdateResponse>;
   /**
    * Prepares a subnet by applying network intent policies.
@@ -124,8 +124,8 @@ export interface Subnets {
     virtualNetworkName: string,
     subnetName: string,
     prepareNetworkPoliciesRequestParameters: PrepareNetworkPoliciesRequest,
-    options?: SubnetsPrepareNetworkPoliciesOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SubnetsPrepareNetworkPoliciesOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Prepares a subnet by applying network intent policies.
    * @param resourceGroupName The name of the resource group.
@@ -140,7 +140,7 @@ export interface Subnets {
     virtualNetworkName: string,
     subnetName: string,
     prepareNetworkPoliciesRequestParameters: PrepareNetworkPoliciesRequest,
-    options?: SubnetsPrepareNetworkPoliciesOptionalParams
+    options?: SubnetsPrepareNetworkPoliciesOptionalParams,
   ): Promise<void>;
   /**
    * Unprepares a subnet by removing network intent policies.
@@ -156,8 +156,8 @@ export interface Subnets {
     virtualNetworkName: string,
     subnetName: string,
     unprepareNetworkPoliciesRequestParameters: UnprepareNetworkPoliciesRequest,
-    options?: SubnetsUnprepareNetworkPoliciesOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SubnetsUnprepareNetworkPoliciesOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Unprepares a subnet by removing network intent policies.
    * @param resourceGroupName The name of the resource group.
@@ -172,6 +172,6 @@ export interface Subnets {
     virtualNetworkName: string,
     subnetName: string,
     unprepareNetworkPoliciesRequestParameters: UnprepareNetworkPoliciesRequest,
-    options?: SubnetsUnprepareNetworkPoliciesOptionalParams
+    options?: SubnetsUnprepareNetworkPoliciesOptionalParams,
   ): Promise<void>;
 }

@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * `Queue` stores items in the order that they are received.
@@ -41,7 +41,7 @@ export class Queue<T> {
 
   /**
    * Appends new item to the queue.
-   * @param item
+   * @param item - the item to append
    */
   public push(item: T): void {
     if (!this._resolveNextItem(item)) {
@@ -49,7 +49,7 @@ export class Queue<T> {
     }
   }
 
-  private _resolveNextItem(item: T) {
+  private _resolveNextItem(item: T): boolean {
     if (!this._nextItemResolve) {
       return false;
     }

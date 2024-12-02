@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   RestorableDroppedDatabase,
   RestorableDroppedDatabasesListByServerOptionalParams,
   RestorableDroppedDatabasesGetOptionalParams,
-  RestorableDroppedDatabasesGetResponse
+  RestorableDroppedDatabasesGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -28,7 +27,7 @@ export interface RestorableDroppedDatabases {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: RestorableDroppedDatabasesListByServerOptionalParams
+    options?: RestorableDroppedDatabasesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<RestorableDroppedDatabase>;
   /**
    * Gets a restorable dropped database.
@@ -42,6 +41,6 @@ export interface RestorableDroppedDatabases {
     resourceGroupName: string,
     serverName: string,
     restorableDroppedDatabaseId: string,
-    options?: RestorableDroppedDatabasesGetOptionalParams
+    options?: RestorableDroppedDatabasesGetOptionalParams,
   ): Promise<RestorableDroppedDatabasesGetResponse>;
 }

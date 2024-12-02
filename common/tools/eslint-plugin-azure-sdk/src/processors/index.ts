@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Definition of processors
- * @author Arpan Laha
  */
 
-import { Linter } from "eslint";
+import type { Linter } from "eslint";
 
 /**
  * An object containing processors used by the plugin
@@ -20,8 +19,8 @@ export = {
     preprocess: (text: string): string[] => [text],
     postprocess: (messages: Linter.LintMessage[][]): Linter.LintMessage[] =>
       messages[0].filter(
-        (message: Linter.LintMessage): boolean => message.ruleId !== "no-unused-expressions"
+        (message: Linter.LintMessage): boolean => message.ruleId !== "no-unused-expressions",
       ),
-    supportsAutofix: true
-  }
+    supportsAutofix: true,
+  },
 };

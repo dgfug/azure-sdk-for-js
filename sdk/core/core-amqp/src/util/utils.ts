@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortError, AbortSignalLike } from "@azure/abort-controller";
-import { WebSocketImpl } from "rhea-promise";
-import { isDefined } from "./typeGuards";
-import { StandardAbortMessage } from "../errors";
-import { CancellableAsyncLock, CancellableAsyncLockImpl } from "./lock";
+import type { CancellableAsyncLock } from "./lock.js";
+import { CancellableAsyncLockImpl } from "./lock.js";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { WebSocketImpl } from "rhea-promise";
+import { delay as wrapperDelay } from "@azure/core-util";
 
 /**
  * @internal
@@ -53,14 +53,6 @@ export interface WebSocketOptions {
 }
 
 /**
- * @internal
- *
- * A constant that indicates whether the environment is node.js or browser based.
- */
-export const isNode =
-  !!process && !!process.version && !!process.versions && !!process.versions.node;
-
-/**
  * Defines an object with possible properties defined in T.
  */
 export type ParsedOutput<T> = { [P in keyof T]: T[P] };
@@ -94,7 +86,7 @@ export function parseConnectionString<T>(connectionString: string): ParsedOutput
     const splitIndex = part.indexOf("=");
     if (splitIndex === -1) {
       throw new Error(
-        "Connection string malformed: each part of the connection string must have an `=` assignment."
+        "Connection string malformed: each part of the connection string must have an `=` assignment.",
       );
     }
 
@@ -123,14 +115,12 @@ export const defaultCancellableLock: CancellableAsyncLock = new CancellableAsync
  * the promise with the given value.
  */
 export class Timeout {
-  // Node and browsers return different types from setTimeout
-  // Any is the easiest way to avoid type errors in either platform
-  private _timer?: any;
+  private _timer?: ReturnType<typeof setTimeout>;
 
   set<T>(t: number, value?: T): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       this.clear();
-      const callback = value ? () => reject(new Error(`${value}`)) : resolve;
+      const callback: (args: any) => void = value ? () => reject(new Error(`${value}`)) : resolve;
       this._timer = setTimeout(callback, t);
     });
   }
@@ -176,47 +166,28 @@ export class Timeout {
  * @param value - The value to be resolved with after a timeout of t milliseconds.
  * @returns - Resolved promise
  */
-export function delay<T>(
+export async function delay<T>(
   delayInMs: number,
   abortSignal?: AbortSignalLike,
   abortErrorMsg?: string,
-  value?: T
+  value?: T,
 ): Promise<T | void> {
-  return new Promise((resolve, reject) => {
-    let timer: ReturnType<typeof setTimeout> | undefined = undefined;
-    let onAborted: (() => void) | undefined = undefined;
-
-    const rejectOnAbort = (): void => {
-      return reject(new AbortError(abortErrorMsg ? abortErrorMsg : StandardAbortMessage));
-    };
-
-    const removeListeners = (): void => {
-      if (abortSignal && onAborted) {
-        abortSignal.removeEventListener("abort", onAborted);
-      }
-    };
-
-    onAborted = (): void => {
-      if (isDefined(timer)) {
-        clearTimeout(timer);
-      }
-      removeListeners();
-      return rejectOnAbort();
-    };
-
-    if (abortSignal && abortSignal.aborted) {
-      return rejectOnAbort();
-    }
-
-    timer = setTimeout(() => {
-      removeListeners();
-      resolve(value);
-    }, delayInMs);
-
-    if (abortSignal) {
-      abortSignal.addEventListener("abort", onAborted);
-    }
+  await wrapperDelay(delayInMs, {
+    abortSignal: abortSignal,
+    abortErrorMsg: abortErrorMsg,
   });
+  if (value !== undefined) {
+    return value;
+  }
+}
+
+/**
+ * Checks if an address is localhost.
+ * @param address - The address to check.
+ * @returns true if the address is localhost, false otherwise.
+ */
+export function isLoopbackAddress(address: string): boolean {
+  return /^(.*:\/\/)?(127\.[\d.]+|[0:]+1|localhost)/.test(address.toLowerCase());
 }
 
 /**
@@ -253,7 +224,7 @@ export type Func<T, V> = (a: T) => V;
  */
 export function executePromisesSequentially(
   promiseFactories: Array<any>,
-  kickstart?: unknown
+  kickstart?: unknown,
 ): Promise<any> {
   let result = Promise.resolve(kickstart);
   promiseFactories.forEach((promiseFactory) => {

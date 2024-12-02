@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import { FileSystemAttributes } from "./FileSystemAttributes";
 import { truncatedISO8061Date } from "./utils/utils.common";
 import { logger } from "./log";
+import type { FilePermissionFormat, ShareTokenIntent } from "./generatedModels";
+import type { StoragePipelineOptions } from "./Pipeline";
 
 export interface Metadata {
   [propertyName: string]: string;
@@ -74,13 +76,22 @@ export type FileAttributesPreserveType = "preserve";
 export interface FileAndDirectoryCreateCommonOptions {
   /**
    * The permission(security descriptor) to be set for the file or directory in the
-   * Security Descriptor Definition Language (SDDL). If specified, it must have an owner, group, and discretionary access control list (DACL).
+   * Security Descriptor Definition Language (SDDL) or binary.
+   * If specified, it must have an owner, group, and discretionary access control list (DACL).
    * A value of inherit may be passed to inherit from the parent directory.
    *
    * Note that only one of filePermission or filePermissionKey can be specified.
    * And if both are not specified, inherit will be set to filePermission as default value by client library.
    */
   filePermission?: string | FilePermissionInheritType;
+
+  /**
+   * Optional. Available for version 2023-06-01 and later.
+   * Specifies the format in which the permission is returned. Acceptable values are SDDL or binary.
+   * If x-ms-file-permission-format is unspecified or explicitly set to SDDL, the permission is returned in SDDL format.
+   * If x-ms-file-permission-format is explicitly set to binary, the permission is returned as a base64 string representing the binary encoding of the permission
+   */
+  filePermissionFormat?: FilePermissionFormat;
 
   /**
    * The key of the permission to be set for the file or directory. This can be created using the Create-Permission API.
@@ -107,6 +118,13 @@ export interface FileAndDirectoryCreateCommonOptions {
    * By default, the value will be set as now.
    */
   lastWriteTime?: Date | TimeNowType;
+
+  /**
+   * The Coordinated Universal Time (UTC) change time property for the directory.
+   * A value of now may be used to indicate the time of the request.
+   * By default, the value will be set to the time of the request.
+   */
+  changeTime?: Date | TimeNowType;
 }
 
 export interface FileAndDirectorySetPropertiesCommonOptions {
@@ -120,6 +138,14 @@ export interface FileAndDirectorySetPropertiesCommonOptions {
    * And if both are not specified, preserve will be set to filePermission as default value by client library.
    */
   filePermission?: string | FilePermissionInheritType | FilePermissionPreserveType;
+
+  /**
+   * Optional. Available for version 2023-06-01 and later.
+   * Specifies the format in which the permission is returned. Acceptable values are SDDL or binary.
+   * If x-ms-file-permission-format is unspecified or explicitly set to SDDL, the permission is returned in SDDL format.
+   * If x-ms-file-permission-format is explicitly set to binary, the permission is returned as a base64 string representing the binary encoding of the permission
+   */
+  filePermissionFormat?: FilePermissionFormat;
 
   /**
    * The key of the permission to be set for the file or directory. This can be created using the Create-Permission API.
@@ -148,6 +174,13 @@ export interface FileAndDirectorySetPropertiesCommonOptions {
    * By default, the value will be set as preserve.
    */
   lastWriteTime?: Date | TimeNowType | TimePreserveType;
+
+  /**
+   * The Coordinated Universal Time (UTC) change time property for the directory.
+   * A value of now may be used to indicate the time of the request.
+   * By default, the value will be set to the time of the request.
+   */
+  changeTime?: Date | TimeNowType;
 }
 
 /**
@@ -174,6 +207,26 @@ export interface ShareProtocols {
    */
   nfsEnabled?: boolean;
 }
+
+export interface ShareClientConfig {
+  /**
+   * The Files OAuth over REST feature requires special permissions to be included in the role definition to use
+   * These special permissions will give privileged access to file share data -
+   * It will allow users to bypass file/directory level ACL/NTFS permissions and get read/write access to file share data
+   * Since this additional permission can be unintended and to prevent unintended and over privileged access,
+   * additional checks has been implemented that requires users to explicitly indicate their intent to use these additional permissions.
+   * This is done using the fileRequestIntent option.
+   * Currently, the only value that the header supports is 'backup'
+   * Any user who wishes to use Files OAuth over REST feature has to call the API with the intent header. If the API is not called with the intent header, any subsequent data operation requests will be denied.
+   */
+  fileRequestIntent?: ShareTokenIntent;
+  /** If true, the trailing dot will not be trimmed from the target URI. */
+  allowTrailingDot?: boolean;
+  /** If true, the trailing dot will not be trimmed from the source URI. */
+  allowSourceTrailingDot?: boolean;
+}
+
+export type ShareClientOptions = StoragePipelineOptions & ShareClientConfig;
 
 /**
  * Convert protocols from joined string to ShareProtocols.
@@ -210,7 +263,7 @@ export function toShareProtocolsString(protocols: ShareProtocols = {}): string |
   }
   if (protocols.nfsEnabled === true) {
     logger.info(
-      `Using "NFS" in favor of "SMB" for the share protocol as currently they can't be supported at the same time.`
+      `Using "NFS" in favor of "SMB" for the share protocol as currently they can't be supported at the same time.`,
     );
     protocolStr = "NFS";
   }
@@ -219,7 +272,7 @@ export function toShareProtocolsString(protocols: ShareProtocols = {}): string |
 
 export function validateFilePermissionOptions(
   filePermission?: string,
-  filePermissionKey?: string
+  filePermissionKey?: string,
 ): void {
   if (filePermission && filePermissionKey) {
     throw new RangeError("Only one of filePermission or filePermissionKey can be specified.");
@@ -227,7 +280,7 @@ export function validateFilePermissionOptions(
 }
 
 export function validateAndSetDefaultsForFileAndDirectoryCreateCommonOptions(
-  options: FileAndDirectoryCreateCommonOptions
+  options: FileAndDirectoryCreateCommonOptions,
 ): FileAndDirectoryCreateCommonOptions {
   // Would better deep copy params set by user.
 
@@ -253,7 +306,7 @@ export function validateAndSetDefaultsForFileAndDirectoryCreateCommonOptions(
 }
 
 export function validateAndSetDefaultsForFileAndDirectorySetPropertiesCommonOptions(
-  options: FileAndDirectorySetPropertiesCommonOptions
+  options: FileAndDirectorySetPropertiesCommonOptions,
 ): FileAndDirectorySetPropertiesCommonOptions {
   // Would better deep copy params set by user.
 
@@ -283,18 +336,28 @@ export function validateAndSetDefaultsForFileAndDirectorySetPropertiesCommonOpti
 }
 
 export function fileAttributesToString(
-  fileAttributes: FileSystemAttributes | FileAttributesPreserveType
+  fileAttributes: FileSystemAttributes | FileAttributesPreserveType,
 ): string {
   return fileAttributes instanceof FileSystemAttributes
     ? fileAttributes.toString()
     : fileAttributes;
 }
 
-export function fileCreationTimeToString(time: Date | TimeNowType | TimePreserveType): string {
+export function fileCreationTimeToString(
+  time: Date | TimeNowType | TimePreserveType | undefined,
+): string | undefined {
   return time instanceof Date ? truncatedISO8061Date(time) : time;
 }
 
-export function fileLastWriteTimeToString(time: Date | TimeNowType | TimePreserveType): string {
+export function fileLastWriteTimeToString(
+  time: Date | TimeNowType | TimePreserveType | undefined,
+): string | undefined {
+  return time instanceof Date ? truncatedISO8061Date(time) : time;
+}
+
+export function fileChangeTimeToString(
+  time: Date | TimeNowType | TimePreserveType | undefined,
+): string | undefined {
   return time instanceof Date ? truncatedISO8061Date(time) : time;
 }
 
@@ -312,4 +375,21 @@ export interface HttpAuthorization {
    * the credentials containing the authentication information of the user agent for the resource being requested.
    */
   value: string;
+}
+
+/**
+ * Defines the known cloud audiences for Storage.
+ */
+export enum StorageFileAudience {
+  /**
+   * The OAuth scope to use to retrieve an AAD token for Azure Storage.
+   */
+  StorageOAuthScopes = "https://storage.azure.com/.default",
+}
+
+/**
+ * To get the OAuth audience for a storage account for file service.
+ */
+export function getFileServiceAccountAudience(storageAccountName: string): string {
+  return `https://${storageAccountName}.file.core.windows.net/.default`;
 }

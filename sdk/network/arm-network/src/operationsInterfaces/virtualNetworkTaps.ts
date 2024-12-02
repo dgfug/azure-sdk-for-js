@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualNetworkTap,
   VirtualNetworkTapsListAllOptionalParams,
@@ -19,7 +19,7 @@ import {
   VirtualNetworkTapsCreateOrUpdateResponse,
   TagsObject,
   VirtualNetworkTapsUpdateTagsOptionalParams,
-  VirtualNetworkTapsUpdateTagsResponse
+  VirtualNetworkTapsUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface VirtualNetworkTaps {
    * @param options The options parameters.
    */
   listAll(
-    options?: VirtualNetworkTapsListAllOptionalParams
+    options?: VirtualNetworkTapsListAllOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkTap>;
   /**
    * Gets all the VirtualNetworkTaps in a subscription.
@@ -39,7 +39,7 @@ export interface VirtualNetworkTaps {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: VirtualNetworkTapsListByResourceGroupOptionalParams
+    options?: VirtualNetworkTapsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<VirtualNetworkTap>;
   /**
    * Deletes the specified virtual network tap.
@@ -50,8 +50,8 @@ export interface VirtualNetworkTaps {
   beginDelete(
     resourceGroupName: string,
     tapName: string,
-    options?: VirtualNetworkTapsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualNetworkTapsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified virtual network tap.
    * @param resourceGroupName The name of the resource group.
@@ -61,7 +61,7 @@ export interface VirtualNetworkTaps {
   beginDeleteAndWait(
     resourceGroupName: string,
     tapName: string,
-    options?: VirtualNetworkTapsDeleteOptionalParams
+    options?: VirtualNetworkTapsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets information about the specified virtual network tap.
@@ -72,7 +72,7 @@ export interface VirtualNetworkTaps {
   get(
     resourceGroupName: string,
     tapName: string,
-    options?: VirtualNetworkTapsGetOptionalParams
+    options?: VirtualNetworkTapsGetOptionalParams,
   ): Promise<VirtualNetworkTapsGetResponse>;
   /**
    * Creates or updates a Virtual Network Tap.
@@ -85,10 +85,10 @@ export interface VirtualNetworkTaps {
     resourceGroupName: string,
     tapName: string,
     parameters: VirtualNetworkTap,
-    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualNetworkTapsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualNetworkTapsCreateOrUpdateResponse>,
       VirtualNetworkTapsCreateOrUpdateResponse
     >
   >;
@@ -103,7 +103,7 @@ export interface VirtualNetworkTaps {
     resourceGroupName: string,
     tapName: string,
     parameters: VirtualNetworkTap,
-    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams
+    options?: VirtualNetworkTapsCreateOrUpdateOptionalParams,
   ): Promise<VirtualNetworkTapsCreateOrUpdateResponse>;
   /**
    * Updates an VirtualNetworkTap tags.
@@ -116,6 +116,6 @@ export interface VirtualNetworkTaps {
     resourceGroupName: string,
     tapName: string,
     tapParameters: TagsObject,
-    options?: VirtualNetworkTapsUpdateTagsOptionalParams
+    options?: VirtualNetworkTapsUpdateTagsOptionalParams,
   ): Promise<VirtualNetworkTapsUpdateTagsResponse>;
 }

@@ -6,51 +6,57 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Topics } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { EventGridManagementClientContext } from "../eventGridManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { EventGridManagementClient } from "../eventGridManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   Topic,
   TopicsListBySubscriptionNextOptionalParams,
   TopicsListBySubscriptionOptionalParams,
+  TopicsListBySubscriptionResponse,
   TopicsListByResourceGroupNextOptionalParams,
   TopicsListByResourceGroupOptionalParams,
+  TopicsListByResourceGroupResponse,
   EventType,
   TopicsListEventTypesOptionalParams,
+  TopicsListEventTypesResponse,
   TopicsGetOptionalParams,
   TopicsGetResponse,
   TopicsCreateOrUpdateOptionalParams,
   TopicsCreateOrUpdateResponse,
   TopicsDeleteOptionalParams,
+  TopicsDeleteResponse,
   TopicUpdateParameters,
   TopicsUpdateOptionalParams,
-  TopicsListBySubscriptionResponse,
-  TopicsListByResourceGroupResponse,
   TopicsListSharedAccessKeysOptionalParams,
   TopicsListSharedAccessKeysResponse,
   TopicRegenerateKeyRequest,
   TopicsRegenerateKeyOptionalParams,
   TopicsRegenerateKeyResponse,
-  TopicsListEventTypesResponse,
   TopicsListBySubscriptionNextResponse,
-  TopicsListByResourceGroupNextResponse
+  TopicsListByResourceGroupNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Topics operations. */
 export class TopicsImpl implements Topics {
-  private readonly client: EventGridManagementClientContext;
+  private readonly client: EventGridManagementClient;
 
   /**
    * Initialize a new instance of the class Topics class.
    * @param client Reference to the service client
    */
-  constructor(client: EventGridManagementClientContext) {
+  constructor(client: EventGridManagementClient) {
     this.client = client;
   }
 
@@ -59,7 +65,7 @@ export class TopicsImpl implements Topics {
    * @param options The options parameters.
    */
   public listBySubscription(
-    options?: TopicsListBySubscriptionOptionalParams
+    options?: TopicsListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<Topic> {
     const iter = this.listBySubscriptionPagingAll(options);
     return {
@@ -69,27 +75,39 @@ export class TopicsImpl implements Topics {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySubscriptionPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySubscriptionPagingPage(options, settings);
+      },
     };
   }
 
   private async *listBySubscriptionPagingPage(
-    options?: TopicsListBySubscriptionOptionalParams
+    options?: TopicsListBySubscriptionOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Topic[]> {
-    let result = await this._listBySubscription(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TopicsListBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySubscription(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySubscriptionNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listBySubscriptionPagingAll(
-    options?: TopicsListBySubscriptionOptionalParams
+    options?: TopicsListBySubscriptionOptionalParams,
   ): AsyncIterableIterator<Topic> {
     for await (const page of this.listBySubscriptionPagingPage(options)) {
       yield* page;
@@ -103,7 +121,7 @@ export class TopicsImpl implements Topics {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: TopicsListByResourceGroupOptionalParams
+    options?: TopicsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Topic> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -113,37 +131,53 @@ export class TopicsImpl implements Topics {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: TopicsListByResourceGroupOptionalParams
+    options?: TopicsListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Topic[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TopicsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: TopicsListByResourceGroupOptionalParams
+    options?: TopicsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<Topic> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -162,14 +196,14 @@ export class TopicsImpl implements Topics {
     providerNamespace: string,
     resourceTypeName: string,
     resourceName: string,
-    options?: TopicsListEventTypesOptionalParams
+    options?: TopicsListEventTypesOptionalParams,
   ): PagedAsyncIterableIterator<EventType> {
     const iter = this.listEventTypesPagingAll(
       resourceGroupName,
       providerNamespace,
       resourceTypeName,
       resourceName,
-      options
+      options,
     );
     return {
       next() {
@@ -178,15 +212,19 @@ export class TopicsImpl implements Topics {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listEventTypesPagingPage(
           resourceGroupName,
           providerNamespace,
           resourceTypeName,
           resourceName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -195,14 +233,16 @@ export class TopicsImpl implements Topics {
     providerNamespace: string,
     resourceTypeName: string,
     resourceName: string,
-    options?: TopicsListEventTypesOptionalParams
+    options?: TopicsListEventTypesOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<EventType[]> {
-    let result = await this._listEventTypes(
+    let result: TopicsListEventTypesResponse;
+    result = await this._listEventTypes(
       resourceGroupName,
       providerNamespace,
       resourceTypeName,
       resourceName,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -212,14 +252,14 @@ export class TopicsImpl implements Topics {
     providerNamespace: string,
     resourceTypeName: string,
     resourceName: string,
-    options?: TopicsListEventTypesOptionalParams
+    options?: TopicsListEventTypesOptionalParams,
   ): AsyncIterableIterator<EventType> {
     for await (const page of this.listEventTypesPagingPage(
       resourceGroupName,
       providerNamespace,
       resourceTypeName,
       resourceName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -234,11 +274,11 @@ export class TopicsImpl implements Topics {
   get(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsGetOptionalParams
+    options?: TopicsGetOptionalParams,
   ): Promise<TopicsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, topicName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -253,30 +293,29 @@ export class TopicsImpl implements Topics {
     resourceGroupName: string,
     topicName: string,
     topicInfo: Topic,
-    options?: TopicsCreateOrUpdateOptionalParams
+    options?: TopicsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<TopicsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<TopicsCreateOrUpdateResponse>,
       TopicsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<TopicsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -285,8 +324,8 @@ export class TopicsImpl implements Topics {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -294,20 +333,25 @@ export class TopicsImpl implements Topics {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, topicName, topicInfo, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, topicName, topicInfo, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      TopicsCreateOrUpdateResponse,
+      OperationState<TopicsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -321,13 +365,13 @@ export class TopicsImpl implements Topics {
     resourceGroupName: string,
     topicName: string,
     topicInfo: Topic,
-    options?: TopicsCreateOrUpdateOptionalParams
+    options?: TopicsCreateOrUpdateOptionalParams,
   ): Promise<TopicsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       topicName,
       topicInfo,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -341,25 +385,26 @@ export class TopicsImpl implements Topics {
   async beginDelete(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: TopicsDeleteOptionalParams,
+  ): Promise<
+    SimplePollerLike<OperationState<TopicsDeleteResponse>, TopicsDeleteResponse>
+  > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<void> => {
+      spec: coreClient.OperationSpec,
+    ): Promise<TopicsDeleteResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -368,8 +413,8 @@ export class TopicsImpl implements Topics {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -377,20 +422,25 @@ export class TopicsImpl implements Topics {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, topicName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, topicName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<
+      TopicsDeleteResponse,
+      OperationState<TopicsDeleteResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -402,12 +452,12 @@ export class TopicsImpl implements Topics {
   async beginDeleteAndWait(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsDeleteOptionalParams
-  ): Promise<void> {
+    options?: TopicsDeleteOptionalParams,
+  ): Promise<TopicsDeleteResponse> {
     const poller = await this.beginDelete(
       resourceGroupName,
       topicName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -423,25 +473,24 @@ export class TopicsImpl implements Topics {
     resourceGroupName: string,
     topicName: string,
     topicUpdateParameters: TopicUpdateParameters,
-    options?: TopicsUpdateOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: TopicsUpdateOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -450,8 +499,8 @@ export class TopicsImpl implements Topics {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -459,20 +508,22 @@ export class TopicsImpl implements Topics {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, topicName, topicUpdateParameters, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, topicName, topicUpdateParameters, options },
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -486,13 +537,13 @@ export class TopicsImpl implements Topics {
     resourceGroupName: string,
     topicName: string,
     topicUpdateParameters: TopicUpdateParameters,
-    options?: TopicsUpdateOptionalParams
+    options?: TopicsUpdateOptionalParams,
   ): Promise<void> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       topicName,
       topicUpdateParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -502,11 +553,11 @@ export class TopicsImpl implements Topics {
    * @param options The options parameters.
    */
   private _listBySubscription(
-    options?: TopicsListBySubscriptionOptionalParams
+    options?: TopicsListBySubscriptionOptionalParams,
   ): Promise<TopicsListBySubscriptionResponse> {
     return this.client.sendOperationRequest(
       { options },
-      listBySubscriptionOperationSpec
+      listBySubscriptionOperationSpec,
     );
   }
 
@@ -517,11 +568,11 @@ export class TopicsImpl implements Topics {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: TopicsListByResourceGroupOptionalParams
+    options?: TopicsListByResourceGroupOptionalParams,
   ): Promise<TopicsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -534,11 +585,11 @@ export class TopicsImpl implements Topics {
   listSharedAccessKeys(
     resourceGroupName: string,
     topicName: string,
-    options?: TopicsListSharedAccessKeysOptionalParams
+    options?: TopicsListSharedAccessKeysOptionalParams,
   ): Promise<TopicsListSharedAccessKeysResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, topicName, options },
-      listSharedAccessKeysOperationSpec
+      listSharedAccessKeysOperationSpec,
     );
   }
 
@@ -553,30 +604,29 @@ export class TopicsImpl implements Topics {
     resourceGroupName: string,
     topicName: string,
     regenerateKeyRequest: TopicRegenerateKeyRequest,
-    options?: TopicsRegenerateKeyOptionalParams
+    options?: TopicsRegenerateKeyOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<TopicsRegenerateKeyResponse>,
+    SimplePollerLike<
+      OperationState<TopicsRegenerateKeyResponse>,
       TopicsRegenerateKeyResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<TopicsRegenerateKeyResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -585,8 +635,8 @@ export class TopicsImpl implements Topics {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -594,20 +644,25 @@ export class TopicsImpl implements Topics {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, topicName, regenerateKeyRequest, options },
-      regenerateKeyOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, topicName, regenerateKeyRequest, options },
+      spec: regenerateKeyOperationSpec,
     });
+    const poller = await createHttpPoller<
+      TopicsRegenerateKeyResponse,
+      OperationState<TopicsRegenerateKeyResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -621,13 +676,13 @@ export class TopicsImpl implements Topics {
     resourceGroupName: string,
     topicName: string,
     regenerateKeyRequest: TopicRegenerateKeyRequest,
-    options?: TopicsRegenerateKeyOptionalParams
+    options?: TopicsRegenerateKeyOptionalParams,
   ): Promise<TopicsRegenerateKeyResponse> {
     const poller = await this.beginRegenerateKey(
       resourceGroupName,
       topicName,
       regenerateKeyRequest,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -645,7 +700,7 @@ export class TopicsImpl implements Topics {
     providerNamespace: string,
     resourceTypeName: string,
     resourceName: string,
-    options?: TopicsListEventTypesOptionalParams
+    options?: TopicsListEventTypesOptionalParams,
   ): Promise<TopicsListEventTypesResponse> {
     return this.client.sendOperationRequest(
       {
@@ -653,9 +708,9 @@ export class TopicsImpl implements Topics {
         providerNamespace,
         resourceTypeName,
         resourceName,
-        options
+        options,
       },
-      listEventTypesOperationSpec
+      listEventTypesOperationSpec,
     );
   }
 
@@ -666,11 +721,11 @@ export class TopicsImpl implements Topics {
    */
   private _listBySubscriptionNext(
     nextLink: string,
-    options?: TopicsListBySubscriptionNextOptionalParams
+    options?: TopicsListBySubscriptionNextOptionalParams,
   ): Promise<TopicsListBySubscriptionNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listBySubscriptionNextOperationSpec
+      listBySubscriptionNextOperationSpec,
     );
   }
 
@@ -683,11 +738,11 @@ export class TopicsImpl implements Topics {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: TopicsListByResourceGroupNextOptionalParams
+    options?: TopicsListByResourceGroupNextOptionalParams,
   ): Promise<TopicsListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 }
@@ -695,43 +750,41 @@ export class TopicsImpl implements Topics {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.Topic
+      bodyMapper: Mappers.Topic,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.topicName
+    Parameters.topicName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.Topic
+      bodyMapper: Mappers.Topic,
     },
     201: {
-      bodyMapper: Mappers.Topic
+      bodyMapper: Mappers.Topic,
     },
     202: {
-      bodyMapper: Mappers.Topic
+      bodyMapper: Mappers.Topic,
     },
     204: {
-      bodyMapper: Mappers.Topic
+      bodyMapper: Mappers.Topic,
     },
-    default: {}
+    default: {},
   },
   requestBody: Parameters.topicInfo,
   queryParameters: [Parameters.apiVersion],
@@ -739,29 +792,41 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.topicName
+    Parameters.topicName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
   httpMethod: "DELETE",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {}, default: {} },
+  responses: {
+    200: {
+      headersMapper: Mappers.TopicsDeleteHeaders,
+    },
+    201: {
+      headersMapper: Mappers.TopicsDeleteHeaders,
+    },
+    202: {
+      headersMapper: Mappers.TopicsDeleteHeaders,
+    },
+    204: {
+      headersMapper: Mappers.TopicsDeleteHeaders,
+    },
+    default: {},
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.topicName
+    Parameters.topicName,
   ],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}",
   httpMethod: "PATCH",
   responses: { 200: {}, 201: {}, 202: {}, 204: {}, default: {} },
   requestBody: Parameters.topicUpdateParameters,
@@ -770,105 +835,101 @@ const updateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.topicName
+    Parameters.topicName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listBySubscriptionOperationSpec: coreClient.OperationSpec = {
   path: "/subscriptions/{subscriptionId}/providers/Microsoft.EventGrid/topics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TopicsListResult
+      bodyMapper: Mappers.TopicsListResult,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TopicsListResult
+      bodyMapper: Mappers.TopicsListResult,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listSharedAccessKeysOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/listKeys",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/listKeys",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TopicSharedAccessKeys
+      bodyMapper: Mappers.TopicSharedAccessKeys,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.topicName
+    Parameters.topicName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const regenerateKeyOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/regenerateKey",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}/regenerateKey",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TopicSharedAccessKeys
+      bodyMapper: Mappers.TopicSharedAccessKeys,
     },
     201: {
-      bodyMapper: Mappers.TopicSharedAccessKeys
+      bodyMapper: Mappers.TopicSharedAccessKeys,
     },
     202: {
-      bodyMapper: Mappers.TopicSharedAccessKeys
+      bodyMapper: Mappers.TopicSharedAccessKeys,
     },
     204: {
-      bodyMapper: Mappers.TopicSharedAccessKeys
+      bodyMapper: Mappers.TopicSharedAccessKeys,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.regenerateKeyRequest1,
+  requestBody: Parameters.regenerateKeyRequest2,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.topicName
+    Parameters.topicName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listEventTypesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{providerNamespace}/{resourceTypeName}/{resourceName}/providers/Microsoft.EventGrid/eventTypes",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{providerNamespace}/{resourceTypeName}/{resourceName}/providers/Microsoft.EventGrid/eventTypes",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.EventTypesListResult
+      bodyMapper: Mappers.EventTypesListResult,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -877,45 +938,43 @@ const listEventTypesOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.providerNamespace,
     Parameters.resourceTypeName,
-    Parameters.resourceName
+    Parameters.resourceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySubscriptionNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TopicsListResult
+      bodyMapper: Mappers.TopicsListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TopicsListResult
+      bodyMapper: Mappers.TopicsListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

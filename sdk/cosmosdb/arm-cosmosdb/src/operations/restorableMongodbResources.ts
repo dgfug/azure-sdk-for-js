@@ -6,29 +6,30 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { RestorableMongodbResources } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
-  DatabaseRestoreResource,
+  RestorableMongodbResourcesGetResult,
   RestorableMongodbResourcesListOptionalParams,
-  RestorableMongodbResourcesListResponse
+  RestorableMongodbResourcesListResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RestorableMongodbResources operations. */
 export class RestorableMongodbResourcesImpl
-  implements RestorableMongodbResources {
-  private readonly client: CosmosDBManagementClientContext;
+  implements RestorableMongodbResources
+{
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class RestorableMongodbResources class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -43,8 +44,8 @@ export class RestorableMongodbResourcesImpl
   public list(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbResourcesListOptionalParams
-  ): PagedAsyncIterableIterator<DatabaseRestoreResource> {
+    options?: RestorableMongodbResourcesListOptionalParams,
+  ): PagedAsyncIterableIterator<RestorableMongodbResourcesGetResult> {
     const iter = this.listPagingAll(location, instanceId, options);
     return {
       next() {
@@ -53,30 +54,35 @@ export class RestorableMongodbResourcesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(location, instanceId, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(location, instanceId, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbResourcesListOptionalParams
-  ): AsyncIterableIterator<DatabaseRestoreResource[]> {
-    let result = await this._list(location, instanceId, options);
+    options?: RestorableMongodbResourcesListOptionalParams,
+    _settings?: PageSettings,
+  ): AsyncIterableIterator<RestorableMongodbResourcesGetResult[]> {
+    let result: RestorableMongodbResourcesListResponse;
+    result = await this._list(location, instanceId, options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbResourcesListOptionalParams
-  ): AsyncIterableIterator<DatabaseRestoreResource> {
+    options?: RestorableMongodbResourcesListOptionalParams,
+  ): AsyncIterableIterator<RestorableMongodbResourcesGetResult> {
     for await (const page of this.listPagingPage(
       location,
       instanceId,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -93,11 +99,11 @@ export class RestorableMongodbResourcesImpl
   private _list(
     location: string,
     instanceId: string,
-    options?: RestorableMongodbResourcesListOptionalParams
+    options?: RestorableMongodbResourcesListOptionalParams,
   ): Promise<RestorableMongodbResourcesListResponse> {
     return this.client.sendOperationRequest(
       { location, instanceId, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 }
@@ -105,28 +111,27 @@ export class RestorableMongodbResourcesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}/restorableMongodbResources",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}/restorableMongodbResources",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorableMongodbResourcesListResult
+      bodyMapper: Mappers.RestorableMongodbResourcesListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.restoreLocation,
-    Parameters.restoreTimestampInUtc
+    Parameters.restoreTimestampInUtc,
   ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.location1,
-    Parameters.instanceId
+    Parameters.instanceId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

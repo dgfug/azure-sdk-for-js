@@ -1,80 +1,134 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as dotenv from "dotenv";
+import { createTestCredential } from "@azure-tools/test-credential";
+import type { Recorder, RecorderStartOptions, SanitizerOptions } from "@azure-tools/test-recorder";
+import { assertEnvironmentVariable, env } from "@azure-tools/test-recorder";
+import { isDefined } from "@azure/core-util";
+import { OpenAIClient } from "@azure/openai";
+import { SearchClient, SearchIndexClient, SearchIndexerClient } from "../../../src";
 
-import { env, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-
-import {
-  AzureKeyCredential,
-  SearchClient,
-  SearchIndexerClient,
-  SearchIndexClient
-} from "../../../src";
-
-const isNode =
-  typeof process !== "undefined" &&
-  !!process.version &&
-  !!process.versions &&
-  !!process.versions.node;
-
-if (isNode) {
-  dotenv.config();
-}
-
-export interface Clients<IndexModel> {
+export interface Clients<IndexModel extends object> {
   searchClient: SearchClient<IndexModel>;
   indexClient: SearchIndexClient;
   indexerClient: SearchIndexerClient;
+  indexName: string;
+  openAIClient: OpenAIClient;
 }
 
-const replaceableVariables: { [k: string]: string } = {
-  SEARCH_API_ADMIN_KEY: "admin_key",
-  SEARCH_API_ADMIN_KEY_ALT: "admin_key_alt",
-  ENDPOINT: "https://endpoint"
-};
+interface Env {
+  ENDPOINT: string;
+  AZURE_OPENAI_ENDPOINT: string;
+}
 
-export const testEnv = new Proxy(replaceableVariables, {
-  get: (target, key: string) => {
-    return env[key] || target[key];
-  }
-});
+// modifies URIs in the environment to end in a trailing slash
+const uriEnvVars = ["ENDPOINT", "AZURE_OPENAI_ENDPOINT"] as const;
 
-export const environmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording.replace(/"access_token"\s?:\s?"[^"]*"/g, `"access_token":"access_token"`),
-    // If we put ENDPOINT in replaceableVariables above, it will not capture
-    // the endpoint string used with nock, which will be expanded to
-    // https://<endpoint>:443/ and therefore will not match, so we have to do
-    // this instead.
-    (recording: string): string => {
-      const match = testEnv.ENDPOINT.replace(/^https:\/\//, "").replace(/\/$/, "");
-      return recording.replace(match, "endpoint");
+function appendTrailingSlashesToEnvironment(envSetupForPlayback: Env): void {
+  for (const envBag of [env, envSetupForPlayback]) {
+    for (const name of uriEnvVars) {
+      const value = envBag[name];
+      if (value) {
+        envBag[name] = value.endsWith("/") ? value : `${value}/`;
+      }
     }
-  ],
-  queryParametersToSkip: []
-};
-
-export function createClients<IndexModel>(indexName: string): Clients<IndexModel> {
-  switch (testEnv.AZURE_AUTHORITY_HOST) {
-    case "https://login.microsoftonline.us":
-      process.env.ENDPOINT = process.env.ENDPOINT!.toString().replace(".windows.net", ".azure.us");
-      break;
-    case "https://login.chinacloudapi.cn":
-      process.env.ENDPOINT = process.env.ENDPOINT!.toString().replace(".windows.net", ".azure.cn");
-      break;
   }
+}
 
-  const credential = new AzureKeyCredential(testEnv.SEARCH_API_ADMIN_KEY);
-  const searchClient = new SearchClient<IndexModel>(testEnv.ENDPOINT, indexName, credential);
-  const indexClient = new SearchIndexClient(testEnv.ENDPOINT, credential);
-  const indexerClient = new SearchIndexerClient(testEnv.ENDPOINT, credential);
+function createRecorderStartOptions(): RecorderStartOptions {
+  const envSetupForPlayback = {
+    ENDPOINT: "https://subdomain.search.windows.net/",
+    AZURE_OPENAI_ENDPOINT: "https://subdomain.openai.azure.com/",
+  };
+
+  appendTrailingSlashesToEnvironment(envSetupForPlayback);
+  const generalSanitizers = getSubdomainSanitizers();
+  const bodyKeySanitizer = {
+    jsonPath: "$..deploymentId",
+    value: "deployment-name",
+  };
+  return {
+    envSetupForPlayback,
+    sanitizerOptions: {
+      generalSanitizers,
+      bodyKeySanitizers: [bodyKeySanitizer],
+    },
+  };
+}
+
+function getSubdomainSanitizers(): SanitizerOptions["generalSanitizers"] {
+  const uriDomainMap: Pick<Env, (typeof uriEnvVars)[number]> = {
+    ENDPOINT: "search.windows.net",
+    AZURE_OPENAI_ENDPOINT: "openai.azure.com",
+  };
+
+  const subdomains = Object.entries(uriDomainMap)
+    .map(([name, domain]) => {
+      const uri = env[name];
+      const subdomain = uri?.match(String.raw`\/\/(.*?)\.` + domain)?.[1];
+
+      return subdomain;
+    })
+    .filter(isDefined);
+
+  const generalSanitizers = subdomains.map((target) => {
+    return {
+      target,
+      value: "subdomain",
+    };
+  });
+
+  return generalSanitizers;
+}
+
+export async function createClients<IndexModel extends object>(
+  serviceVersion: string,
+  recorder: Recorder,
+  indexName: string,
+): Promise<Clients<IndexModel>> {
+  const recorderOptions = createRecorderStartOptions();
+  await recorder.start(recorderOptions);
+
+  indexName = recorder.variable("TEST_INDEX_NAME", indexName);
+
+  const credential = createTestCredential();
+
+  const endPoint: string = assertEnvironmentVariable("ENDPOINT");
+  const openAIEndpoint = assertEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+
+  const searchClient = new SearchClient<IndexModel>(
+    endPoint,
+    indexName,
+    credential,
+    recorder.configureClientOptions({
+      serviceVersion,
+    }),
+  );
+  const indexClient = new SearchIndexClient(
+    endPoint,
+    credential,
+    recorder.configureClientOptions({
+      serviceVersion,
+    }),
+  );
+  const indexerClient = new SearchIndexerClient(
+    endPoint,
+    credential,
+    recorder.configureClientOptions({
+      serviceVersion,
+    }),
+  );
+  const openAIClient = new OpenAIClient(
+    openAIEndpoint,
+    credential,
+    recorder.configureClientOptions({}),
+  );
 
   return {
     searchClient,
     indexClient,
-    indexerClient
+    indexerClient,
+    indexName,
+    openAIClient,
   };
 }

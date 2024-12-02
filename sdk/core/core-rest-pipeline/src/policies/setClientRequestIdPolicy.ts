@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PipelineResponse, PipelineRequest, SendRequest } from "../interfaces";
-import { PipelinePolicy } from "../pipeline";
+import type { PipelineRequest, PipelineResponse, SendRequest } from "../interfaces.js";
+import type { PipelinePolicy } from "../pipeline.js";
 
 /**
  * The programmatic identifier of the setClientRequestIdPolicy.
@@ -16,7 +16,7 @@ export const setClientRequestIdPolicyName = "setClientRequestIdPolicy";
  * @param requestIdHeaderName - The name of the header to pass the request ID to.
  */
 export function setClientRequestIdPolicy(
-  requestIdHeaderName = "x-ms-client-request-id"
+  requestIdHeaderName = "x-ms-client-request-id",
 ): PipelinePolicy {
   return {
     name: setClientRequestIdPolicyName,
@@ -25,6 +25,6 @@ export function setClientRequestIdPolicy(
         request.headers.set(requestIdHeaderName, request.requestId);
       }
       return next(request);
-    }
+    },
   };
 }

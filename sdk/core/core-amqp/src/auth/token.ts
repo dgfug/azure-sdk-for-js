@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * Describes the type of supported tokens.
@@ -12,5 +12,5 @@ export enum TokenType {
   /**
    * The sas token type. Used with SharedKeyCredential.
    */
-  CbsTokenTypeSas = "servicebus.windows.net:sastoken"
+  CbsTokenTypeSas = "servicebus.windows.net:sastoken",
 }

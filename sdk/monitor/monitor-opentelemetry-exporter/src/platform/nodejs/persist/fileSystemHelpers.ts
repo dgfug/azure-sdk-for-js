@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as fs from "fs";
-import * as path from "path";
-import { promisify } from "util";
+import { diag } from "@opentelemetry/api";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { promisify } from "node:util";
 
 const readdirAsync = promisify(fs.readdir);
 const statAsync = promisify(fs.stat);
@@ -15,20 +16,24 @@ const mkdirAsync = promisify(fs.mkdir);
  * @internal
  */
 export const getShallowDirectorySize = async (directory: string): Promise<number> => {
-  // Get the directory listing
-  const files = await readdirAsync(directory);
-
   let totalSize = 0;
+  try {
+    // Get the directory listing
+    const files = await readdirAsync(directory);
 
-  // Query all file sizes
-  for (const file of files) {
-    const fileStats = await statAsync(path.join(directory, file));
-    if (fileStats.isFile()) {
-      totalSize += fileStats.size;
+    // Query all file sizes
+    for (const file of files) {
+      const fileStats = await statAsync(path.join(directory, file));
+      if (fileStats.isFile()) {
+        totalSize += fileStats.size;
+      }
     }
-  }
 
-  return totalSize;
+    return totalSize;
+  } catch (err) {
+    diag.error(`Error getting directory size: ${err}`);
+    return 0;
+  }
 };
 
 /**
@@ -41,11 +46,12 @@ export const confirmDirExists = async (directory: string): Promise<void> => {
     if (!stats.isDirectory()) {
       throw new Error("Path existed but was not a directory");
     }
-  } catch (err) {
+  } catch (err: any) {
     if (err && err.code === "ENOENT") {
       try {
-        await mkdirAsync(directory);
-      } catch (mkdirErr) {
+        const options: fs.MakeDirectoryOptions = { recursive: true };
+        await mkdirAsync(directory, options);
+      } catch (mkdirErr: any) {
         if (mkdirErr && mkdirErr.code !== "EEXIST") {
           // Handle race condition by ignoring EEXIST
           throw mkdirErr;

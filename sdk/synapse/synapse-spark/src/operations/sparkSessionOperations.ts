@@ -6,14 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { createSpan } from "../tracing";
-import { SparkSessionOperations } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import type { SparkSessionOperations } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as coreTracing from "@azure/core-tracing";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { SparkClientContext } from "../sparkClientContext";
-import {
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import type { SparkClient } from "../sparkClient.js";
+import type {
   SparkSessionGetSparkSessionsOptionalParams,
   SparkSessionGetSparkSessionsResponse,
   SparkSessionOptions,
@@ -31,445 +30,357 @@ import {
   SparkSessionGetSparkStatementOptionalParams,
   SparkSessionGetSparkStatementResponse,
   SparkSessionCancelSparkStatementOptionalParams,
-  SparkSessionCancelSparkStatementResponse
-} from "../models";
+  SparkSessionCancelSparkStatementResponse,
+} from "../models/index.js";
 
-/** Class containing SparkSessionOperations operations. */
-export class SparkSessionOperationsImpl implements SparkSessionOperations {
-  private readonly client: SparkClientContext;
-
-  /**
-   * Initialize a new instance of the class SparkSessionOperations class.
-   * @param client Reference to the service client
-   */
-  constructor(client: SparkClientContext) {
-    this.client = client;
-  }
-
-  /**
-   * List all spark sessions which are running under a particular spark pool.
-   * @param options The options parameters.
-   */
-  async getSparkSessions(
-    options?: SparkSessionGetSparkSessionsOptionalParams
-  ): Promise<SparkSessionGetSparkSessionsResponse> {
-    const { span } = createSpan("SparkClient-getSparkSessions", options || {});
-    try {
-      const result = await this.client.sendOperationRequest(
-        { options },
-        getSparkSessionsOperationSpec
-      );
-      return result as SparkSessionGetSparkSessionsResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Create new spark session.
-   * @param sparkSessionOptions Livy compatible batch job request payload.
-   * @param options The options parameters.
-   */
-  async createSparkSession(
-    sparkSessionOptions: SparkSessionOptions,
-    options?: SparkSessionCreateSparkSessionOptionalParams
-  ): Promise<SparkSessionCreateSparkSessionResponse> {
-    const { span } = createSpan(
-      "SparkClient-createSparkSession",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sparkSessionOptions, options },
-        createSparkSessionOperationSpec
-      );
-      return result as SparkSessionCreateSparkSessionResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Gets a single spark session.
-   * @param sessionId Identifier for the session.
-   * @param options The options parameters.
-   */
-  async getSparkSession(
-    sessionId: number,
-    options?: SparkSessionGetSparkSessionOptionalParams
-  ): Promise<SparkSessionGetSparkSessionResponse> {
-    const { span } = createSpan("SparkClient-getSparkSession", options || {});
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sessionId, options },
-        getSparkSessionOperationSpec
-      );
-      return result as SparkSessionGetSparkSessionResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Cancels a running spark session.
-   * @param sessionId Identifier for the session.
-   * @param options The options parameters.
-   */
-  async cancelSparkSession(
-    sessionId: number,
-    options?: SparkSessionCancelSparkSessionOptionalParams
-  ): Promise<void> {
-    const { span } = createSpan(
-      "SparkClient-cancelSparkSession",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sessionId, options },
-        cancelSparkSessionOperationSpec
-      );
-      return result as void;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Sends a keep alive call to the current session to reset the session timeout.
-   * @param sessionId Identifier for the session.
-   * @param options The options parameters.
-   */
-  async resetSparkSessionTimeout(
-    sessionId: number,
-    options?: SparkSessionResetSparkSessionTimeoutOptionalParams
-  ): Promise<void> {
-    const { span } = createSpan(
-      "SparkClient-resetSparkSessionTimeout",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sessionId, options },
-        resetSparkSessionTimeoutOperationSpec
-      );
-      return result as void;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Gets a list of statements within a spark session.
-   * @param sessionId Identifier for the session.
-   * @param options The options parameters.
-   */
-  async getSparkStatements(
-    sessionId: number,
-    options?: SparkSessionGetSparkStatementsOptionalParams
-  ): Promise<SparkSessionGetSparkStatementsResponse> {
-    const { span } = createSpan(
-      "SparkClient-getSparkStatements",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sessionId, options },
-        getSparkStatementsOperationSpec
-      );
-      return result as SparkSessionGetSparkStatementsResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Create statement within a spark session.
-   * @param sessionId Identifier for the session.
-   * @param sparkStatementOptions Livy compatible batch job request payload.
-   * @param options The options parameters.
-   */
-  async createSparkStatement(
-    sessionId: number,
-    sparkStatementOptions: SparkStatementOptions,
-    options?: SparkSessionCreateSparkStatementOptionalParams
-  ): Promise<SparkSessionCreateSparkStatementResponse> {
-    const { span } = createSpan(
-      "SparkClient-createSparkStatement",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sessionId, sparkStatementOptions, options },
-        createSparkStatementOperationSpec
-      );
-      return result as SparkSessionCreateSparkStatementResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Gets a single statement within a spark session.
-   * @param sessionId Identifier for the session.
-   * @param statementId Identifier for the statement.
-   * @param options The options parameters.
-   */
-  async getSparkStatement(
-    sessionId: number,
-    statementId: number,
-    options?: SparkSessionGetSparkStatementOptionalParams
-  ): Promise<SparkSessionGetSparkStatementResponse> {
-    const { span } = createSpan("SparkClient-getSparkStatement", options || {});
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sessionId, statementId, options },
-        getSparkStatementOperationSpec
-      );
-      return result as SparkSessionGetSparkStatementResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Kill a statement within a session.
-   * @param sessionId Identifier for the session.
-   * @param statementId Identifier for the statement.
-   * @param options The options parameters.
-   */
-  async cancelSparkStatement(
-    sessionId: number,
-    statementId: number,
-    options?: SparkSessionCancelSparkStatementOptionalParams
-  ): Promise<SparkSessionCancelSparkStatementResponse> {
-    const { span } = createSpan(
-      "SparkClient-cancelSparkStatement",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { sessionId, statementId, options },
-        cancelSparkStatementOperationSpec
-      );
-      return result as SparkSessionCancelSparkStatementResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-}
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getSparkSessionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SparkSessionCollection
-    }
+      bodyMapper: Mappers.SparkSessionCollection,
+    },
   },
   queryParameters: [Parameters.fromParam, Parameters.size, Parameters.detailed],
-  urlParameters: [
-    Parameters.endpoint,
-    Parameters.livyApiVersion,
-    Parameters.sparkPoolName
-  ],
+  urlParameters: [Parameters.endpoint, Parameters.livyApiVersion, Parameters.sparkPoolName],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createSparkSessionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SparkSession
-    }
+      bodyMapper: Mappers.SparkSession,
+    },
   },
   requestBody: Parameters.sparkSessionOptions,
   queryParameters: [Parameters.detailed],
-  urlParameters: [
-    Parameters.endpoint,
-    Parameters.livyApiVersion,
-    Parameters.sparkPoolName
-  ],
+  urlParameters: [Parameters.endpoint, Parameters.livyApiVersion, Parameters.sparkPoolName],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getSparkSessionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SparkSession
-    }
+      bodyMapper: Mappers.SparkSession,
+    },
   },
   queryParameters: [Parameters.detailed],
   urlParameters: [
     Parameters.endpoint,
     Parameters.livyApiVersion,
     Parameters.sparkPoolName,
-    Parameters.sessionId
+    Parameters.sessionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const cancelSparkSessionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}",
   httpMethod: "DELETE",
   responses: { 200: {} },
   urlParameters: [
     Parameters.endpoint,
     Parameters.livyApiVersion,
     Parameters.sparkPoolName,
-    Parameters.sessionId
+    Parameters.sessionId,
   ],
-  serializer
+  serializer,
 };
 const resetSparkSessionTimeoutOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/reset-timeout",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/reset-timeout",
   httpMethod: "PUT",
   responses: { 200: {} },
   urlParameters: [
     Parameters.endpoint,
     Parameters.livyApiVersion,
     Parameters.sparkPoolName,
-    Parameters.sessionId
+    Parameters.sessionId,
   ],
-  serializer
+  serializer,
 };
 const getSparkStatementsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SparkStatementCollection
-    }
+      bodyMapper: Mappers.SparkStatementCollection,
+    },
   },
   urlParameters: [
     Parameters.endpoint,
     Parameters.livyApiVersion,
     Parameters.sparkPoolName,
-    Parameters.sessionId
+    Parameters.sessionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createSparkStatementOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SparkStatement
-    }
+      bodyMapper: Mappers.SparkStatement,
+    },
   },
   requestBody: Parameters.sparkStatementOptions,
   urlParameters: [
     Parameters.endpoint,
     Parameters.livyApiVersion,
     Parameters.sparkPoolName,
-    Parameters.sessionId
+    Parameters.sessionId,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getSparkStatementOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements/{statementId}",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements/{statementId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SparkStatement
-    }
+      bodyMapper: Mappers.SparkStatement,
+    },
   },
   urlParameters: [
     Parameters.endpoint,
     Parameters.livyApiVersion,
     Parameters.sparkPoolName,
     Parameters.sessionId,
-    Parameters.statementId
+    Parameters.statementId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const cancelSparkStatementOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements/{statementId}/cancel",
+  path: "/livyApi/versions/{livyApiVersion}/sparkPools/{sparkPoolName}/sessions/{sessionId}/statements/{statementId}/cancel",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SparkStatementCancellationResult
-    }
+      bodyMapper: Mappers.SparkStatementCancellationResult,
+    },
   },
   urlParameters: [
     Parameters.endpoint,
     Parameters.livyApiVersion,
     Parameters.sparkPoolName,
     Parameters.sessionId,
-    Parameters.statementId
+    Parameters.statementId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
+
+/** Class containing SparkSessionOperations operations. */
+export class SparkSessionOperationsImpl implements SparkSessionOperations {
+  private readonly client: SparkClient;
+
+  /**
+   * Initialize a new instance of the class SparkSessionOperations class.
+   * @param client - Reference to the service client
+   */
+  constructor(client: SparkClient) {
+    this.client = client;
+  }
+
+  /**
+   * List all spark sessions which are running under a particular spark pool.
+   * @param options - The options parameters.
+   */
+  async getSparkSessions(
+    options?: SparkSessionGetSparkSessionsOptionalParams,
+  ): Promise<SparkSessionGetSparkSessionsResponse> {
+    return tracingClient.withSpan(
+      "SparkClient.getSparkSessions",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { updatedOptions },
+          getSparkSessionsOperationSpec,
+        ) as Promise<SparkSessionGetSparkSessionsResponse>;
+      },
+    );
+  }
+
+  /**
+   * Create new spark session.
+   * @param sparkSessionOptions - Livy compatible batch job request payload.
+   * @param options - The options parameters.
+   */
+  async createSparkSession(
+    sparkSessionOptions: SparkSessionOptions,
+    options?: SparkSessionCreateSparkSessionOptionalParams,
+  ): Promise<SparkSessionCreateSparkSessionResponse> {
+    return tracingClient.withSpan(
+      "SparkClient.createSparkSession",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sparkSessionOptions, updatedOptions },
+          createSparkSessionOperationSpec,
+        ) as Promise<SparkSessionCreateSparkSessionResponse>;
+      },
+    );
+  }
+
+  /**
+   * Gets a single spark session.
+   * @param sessionId - Identifier for the session.
+   * @param options - The options parameters.
+   */
+  async getSparkSession(
+    sessionId: number,
+    options?: SparkSessionGetSparkSessionOptionalParams,
+  ): Promise<SparkSessionGetSparkSessionResponse> {
+    return tracingClient.withSpan(
+      "SparkClient.getSparkSession",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sessionId, updatedOptions },
+          getSparkSessionOperationSpec,
+        ) as Promise<SparkSessionGetSparkSessionResponse>;
+      },
+    );
+  }
+
+  /**
+   * Cancels a running spark session.
+   * @param sessionId - Identifier for the session.
+   * @param options - The options parameters.
+   */
+  async cancelSparkSession(
+    sessionId: number,
+    options?: SparkSessionCancelSparkSessionOptionalParams,
+  ): Promise<void> {
+    return tracingClient.withSpan(
+      "SparkClient.cancelSparkSession",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sessionId, updatedOptions },
+          cancelSparkSessionOperationSpec,
+        ) as Promise<void>;
+      },
+    );
+  }
+
+  /**
+   * Sends a keep alive call to the current session to reset the session timeout.
+   * @param sessionId - Identifier for the session.
+   * @param options - The options parameters.
+   */
+  async resetSparkSessionTimeout(
+    sessionId: number,
+    options?: SparkSessionResetSparkSessionTimeoutOptionalParams,
+  ): Promise<void> {
+    return tracingClient.withSpan(
+      "SparkClient.resetSparkSessionTimeout",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sessionId, updatedOptions },
+          resetSparkSessionTimeoutOperationSpec,
+        ) as Promise<void>;
+      },
+    );
+  }
+
+  /**
+   * Gets a list of statements within a spark session.
+   * @param sessionId - Identifier for the session.
+   * @param options - The options parameters.
+   */
+  async getSparkStatements(
+    sessionId: number,
+    options?: SparkSessionGetSparkStatementsOptionalParams,
+  ): Promise<SparkSessionGetSparkStatementsResponse> {
+    return tracingClient.withSpan(
+      "SparkClient.getSparkStatements",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sessionId, updatedOptions },
+          getSparkStatementsOperationSpec,
+        ) as Promise<SparkSessionGetSparkStatementsResponse>;
+      },
+    );
+  }
+
+  /**
+   * Create statement within a spark session.
+   * @param sessionId - Identifier for the session.
+   * @param sparkStatementOptions - Livy compatible batch job request payload.
+   * @param options - The options parameters.
+   */
+  async createSparkStatement(
+    sessionId: number,
+    sparkStatementOptions: SparkStatementOptions,
+    options?: SparkSessionCreateSparkStatementOptionalParams,
+  ): Promise<SparkSessionCreateSparkStatementResponse> {
+    return tracingClient.withSpan(
+      "SparkClient.createSparkStatement",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sessionId, sparkStatementOptions, updatedOptions },
+          createSparkStatementOperationSpec,
+        ) as Promise<SparkSessionCreateSparkStatementResponse>;
+      },
+    );
+  }
+
+  /**
+   * Gets a single statement within a spark session.
+   * @param sessionId - Identifier for the session.
+   * @param statementId - Identifier for the statement.
+   * @param options - The options parameters.
+   */
+  async getSparkStatement(
+    sessionId: number,
+    statementId: number,
+    options?: SparkSessionGetSparkStatementOptionalParams,
+  ): Promise<SparkSessionGetSparkStatementResponse> {
+    return tracingClient.withSpan(
+      "SparkClient.getSparkStatement",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sessionId, statementId, updatedOptions },
+          getSparkStatementOperationSpec,
+        ) as Promise<SparkSessionGetSparkStatementResponse>;
+      },
+    );
+  }
+
+  /**
+   * Kill a statement within a session.
+   * @param sessionId - Identifier for the session.
+   * @param statementId - Identifier for the statement.
+   * @param options - The options parameters.
+   */
+  async cancelSparkStatement(
+    sessionId: number,
+    statementId: number,
+    options?: SparkSessionCancelSparkStatementOptionalParams,
+  ): Promise<SparkSessionCancelSparkStatementResponse> {
+    return tracingClient.withSpan(
+      "SparkClient.cancelSparkStatement",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { sessionId, statementId, updatedOptions },
+          cancelSparkStatementOperationSpec,
+        ) as Promise<SparkSessionCancelSparkStatementResponse>;
+      },
+    );
+  }
+}

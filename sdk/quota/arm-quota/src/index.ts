@@ -7,7 +7,7 @@
  */
 
 /// <reference lib="esnext.asynciterable" />
+export { getContinuationToken } from "./pagingHelper";
 export * from "./models";
 export { AzureQuotaExtensionAPI } from "./azureQuotaExtensionAPI";
-export { AzureQuotaExtensionAPIContext } from "./azureQuotaExtensionAPIContext";
 export * from "./operationsInterfaces";

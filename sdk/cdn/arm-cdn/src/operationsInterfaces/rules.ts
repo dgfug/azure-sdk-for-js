@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Rule,
   RulesListByRuleSetOptionalParams,
@@ -18,7 +18,7 @@ import {
   RuleUpdateParameters,
   RulesUpdateOptionalParams,
   RulesUpdateResponse,
-  RulesDeleteOptionalParams
+  RulesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -27,7 +27,8 @@ export interface Rules {
   /**
    * Lists all of the existing delivery rules within a rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param options The options parameters.
    */
@@ -35,12 +36,13 @@ export interface Rules {
     resourceGroupName: string,
     profileName: string,
     ruleSetName: string,
-    options?: RulesListByRuleSetOptionalParams
+    options?: RulesListByRuleSetOptionalParams,
   ): PagedAsyncIterableIterator<Rule>;
   /**
    * Gets an existing delivery rule within a rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param ruleName Name of the delivery rule which is unique within the endpoint.
    * @param options The options parameters.
@@ -50,12 +52,13 @@ export interface Rules {
     profileName: string,
     ruleSetName: string,
     ruleName: string,
-    options?: RulesGetOptionalParams
+    options?: RulesGetOptionalParams,
   ): Promise<RulesGetResponse>;
   /**
    * Creates a new delivery rule within the specified rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param ruleName Name of the delivery rule which is unique within the endpoint.
    * @param rule The delivery rule properties.
@@ -67,14 +70,15 @@ export interface Rules {
     ruleSetName: string,
     ruleName: string,
     rule: Rule,
-    options?: RulesCreateOptionalParams
+    options?: RulesCreateOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<RulesCreateResponse>, RulesCreateResponse>
+    SimplePollerLike<OperationState<RulesCreateResponse>, RulesCreateResponse>
   >;
   /**
    * Creates a new delivery rule within the specified rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param ruleName Name of the delivery rule which is unique within the endpoint.
    * @param rule The delivery rule properties.
@@ -86,12 +90,13 @@ export interface Rules {
     ruleSetName: string,
     ruleName: string,
     rule: Rule,
-    options?: RulesCreateOptionalParams
+    options?: RulesCreateOptionalParams,
   ): Promise<RulesCreateResponse>;
   /**
    * Updates an existing delivery rule within a rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param ruleName Name of the delivery rule which is unique within the endpoint.
    * @param ruleUpdateProperties Delivery rule properties
@@ -103,14 +108,15 @@ export interface Rules {
     ruleSetName: string,
     ruleName: string,
     ruleUpdateProperties: RuleUpdateParameters,
-    options?: RulesUpdateOptionalParams
+    options?: RulesUpdateOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<RulesUpdateResponse>, RulesUpdateResponse>
+    SimplePollerLike<OperationState<RulesUpdateResponse>, RulesUpdateResponse>
   >;
   /**
    * Updates an existing delivery rule within a rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param ruleName Name of the delivery rule which is unique within the endpoint.
    * @param ruleUpdateProperties Delivery rule properties
@@ -122,12 +128,13 @@ export interface Rules {
     ruleSetName: string,
     ruleName: string,
     ruleUpdateProperties: RuleUpdateParameters,
-    options?: RulesUpdateOptionalParams
+    options?: RulesUpdateOptionalParams,
   ): Promise<RulesUpdateResponse>;
   /**
    * Deletes an existing delivery rule within a rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param ruleName Name of the delivery rule which is unique within the endpoint.
    * @param options The options parameters.
@@ -137,12 +144,13 @@ export interface Rules {
     profileName: string,
     ruleSetName: string,
     ruleName: string,
-    options?: RulesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: RulesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes an existing delivery rule within a rule set.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group.
    * @param ruleSetName Name of the rule set under the profile.
    * @param ruleName Name of the delivery rule which is unique within the endpoint.
    * @param options The options parameters.
@@ -152,6 +160,6 @@ export interface Rules {
     profileName: string,
     ruleSetName: string,
     ruleName: string,
-    options?: RulesDeleteOptionalParams
+    options?: RulesDeleteOptionalParams,
   ): Promise<void>;
 }

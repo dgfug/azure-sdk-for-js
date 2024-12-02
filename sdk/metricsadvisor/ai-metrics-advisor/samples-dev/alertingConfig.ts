@@ -13,7 +13,7 @@ dotenv.config();
 import {
   MetricsAdvisorKeyCredential,
   MetricsAdvisorAdministrationClient,
-  AnomalyAlertConfiguration
+  AnomalyAlertConfiguration,
 } from "@azure/ai-metrics-advisor";
 
 main()
@@ -49,7 +49,7 @@ export async function main() {
 // create a new alerting configuration
 async function createAlertConfig(
   adminClient: MetricsAdvisorAdministrationClient,
-  detectionConfigId: string
+  detectionConfigId: string,
 ) {
   console.log("Creating a new alerting configuration...");
   const alertConfig: Omit<AnomalyAlertConfiguration, "id"> = {
@@ -59,19 +59,19 @@ async function createAlertConfig(
       {
         detectionConfigurationId: detectionConfigId,
         alertScope: {
-          scopeType: "All"
-        }
+          scopeType: "All",
+        },
       },
       {
         detectionConfigurationId: detectionConfigId,
         alertScope: {
           scopeType: "Dimension",
-          seriesGroupInScope: { city: "Manila", category: "Handmade" }
-        }
-      }
+          seriesGroupInScope: { city: "Manila", category: "Handmade" },
+        },
+      },
     ],
     hookIds: [],
-    description: "alerting config description"
+    description: "alerting config description",
   };
   const result = await adminClient.createAlertConfig(alertConfig);
   console.log(result);
@@ -83,7 +83,7 @@ async function updateAlertConfig(
   adminClient: MetricsAdvisorAdministrationClient,
   alertConfigId: string,
   detectionConfigId: string,
-  hookIds: string[]
+  hookIds: string[],
 ) {
   const patch: Omit<AnomalyAlertConfiguration, "id"> = {
     name: "new Name",
@@ -94,8 +94,8 @@ async function updateAlertConfig(
       {
         detectionConfigurationId: detectionConfigId,
         alertScope: {
-          scopeType: "All"
-        }
+          scopeType: "All",
+        },
       },
       {
         detectionConfigurationId: detectionConfigId,
@@ -103,11 +103,11 @@ async function updateAlertConfig(
           scopeType: "Dimension",
           seriesGroupInScope: {
             city: "Kolkata",
-            category: "Shoes Handbags & Sunglasses"
-          }
-        }
-      }
-    ]
+            category: "Shoes Handbags & Sunglasses",
+          },
+        },
+      },
+    ],
   };
   console.log(`Updating alerting configuration ${detectionConfigId}`);
   const updated = await adminClient.updateAlertConfig(alertConfigId, patch);
@@ -116,7 +116,7 @@ async function updateAlertConfig(
 
 async function deleteAlertConfig(
   adminClient: MetricsAdvisorAdministrationClient,
-  alertConfigId: string
+  alertConfigId: string,
 ) {
   console.log(`Deleting alerting configuration ${alertConfigId}`);
   await adminClient.deleteAlertConfig(alertConfigId);
@@ -124,7 +124,7 @@ async function deleteAlertConfig(
 
 async function listAlertConfig(
   adminClient: MetricsAdvisorAdministrationClient,
-  detectdionConfigId: string
+  detectdionConfigId: string,
 ) {
   console.log(`Listing alert configurations for detection configuration ${detectdionConfigId}`);
   let i = 1;

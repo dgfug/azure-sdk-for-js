@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ExpressRouteCircuitAuthorization,
   ExpressRouteCircuitAuthorizationsListOptionalParams,
@@ -15,7 +15,7 @@ import {
   ExpressRouteCircuitAuthorizationsGetOptionalParams,
   ExpressRouteCircuitAuthorizationsGetResponse,
   ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams,
-  ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse
+  ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface ExpressRouteCircuitAuthorizations {
   list(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitAuthorizationsListOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteCircuitAuthorization>;
   /**
    * Deletes the specified authorization from the specified express route circuit.
@@ -43,8 +43,8 @@ export interface ExpressRouteCircuitAuthorizations {
     resourceGroupName: string,
     circuitName: string,
     authorizationName: string,
-    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified authorization from the specified express route circuit.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface ExpressRouteCircuitAuthorizations {
     resourceGroupName: string,
     circuitName: string,
     authorizationName: string,
-    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified authorization from the specified express route circuit.
@@ -69,7 +69,7 @@ export interface ExpressRouteCircuitAuthorizations {
     resourceGroupName: string,
     circuitName: string,
     authorizationName: string,
-    options?: ExpressRouteCircuitAuthorizationsGetOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsGetOptionalParams,
   ): Promise<ExpressRouteCircuitAuthorizationsGetResponse>;
   /**
    * Creates or updates an authorization in the specified express route circuit.
@@ -85,12 +85,10 @@ export interface ExpressRouteCircuitAuthorizations {
     circuitName: string,
     authorizationName: string,
     authorizationParameters: ExpressRouteCircuitAuthorization,
-    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse>,
       ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse
     >
   >;
@@ -108,6 +106,6 @@ export interface ExpressRouteCircuitAuthorizations {
     circuitName: string,
     authorizationName: string,
     authorizationParameters: ExpressRouteCircuitAuthorization,
-    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCircuitAuthorizationsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRouteCircuitAuthorizationsCreateOrUpdateResponse>;
 }

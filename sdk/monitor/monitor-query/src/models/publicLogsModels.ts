@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions } from "@azure/core-client";
-import { LogsColumnType } from "../generated/logquery/src";
-import { QueryTimeInterval } from "./timeInterval";
+import type { OperationOptions } from "@azure/core-client";
+import type { LogsColumnType } from "../generated/logquery/src/index.js";
+import type { QueryTimeInterval } from "./timeInterval.js";
 
 // https://dev.loganalytics.io/documentation/Using-the-API/RequestOptions
 // https://dev.loganalytics.io/documentation/Using-the-API/Timeouts
@@ -29,7 +29,7 @@ export interface LogsQueryOptions extends OperationOptions {
   /**
    * Results will also include statistics about the query.
    */
-  includeQueryStatistics?: boolean; // TODO: this data is not modeled in the current response object.
+  includeQueryStatistics?: boolean;
 
   /**
    * Results will also include visualization information, in JSON format.
@@ -69,7 +69,7 @@ export enum LogsQueryResultStatus {
   /** Represents Failure scenario where only error of type {@link LogsQueryError} is returned for query */
   Failure = "Failure",
   /** Represents Success scenario where all data of type {@link LogsQuerySuccessfulResult} is returned for query */
-  Success = "Success"
+  Success = "Success",
 }
 
 /** Result type for Success Scenario for logs query workspace and query batch operations. */
@@ -139,7 +139,7 @@ export interface QueryBatch {
   /**
    * Results will also include statistics about the query.
    */
-  includeQueryStatistics?: boolean; // TODO: this data is not modeled in the current response object.
+  includeQueryStatistics?: boolean;
 
   /**
    * Results will also include visualization information, in JSON format.

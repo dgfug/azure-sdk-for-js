@@ -1,15 +1,20 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { BlockBlobClient, BlobServiceClient } from "../src";
-import { getBSU, recorderEnvSetup } from "./utils/index";
-import * as assert from "assert";
-import { appendToURLPath } from "../src/utils/utils.common";
-import { record, Recorder } from "@azure-tools/test-recorder";
-import * as dotenv from "dotenv";
-import { ContainerClient } from "../src";
-import { Context } from "mocha";
-dotenv.config();
+import type { BlobServiceClient } from "../src";
+import { BlockBlobClient } from "../src";
+import {
+  getBSU,
+  getRecorderUniqueVariable,
+  getUniqueName,
+  recorderEnvSetup,
+  uriSanitizers,
+} from "./utils/index";
+import { assert } from "chai";
+import { appendToURLPath, EscapePath } from "../src/utils/utils.common";
+import { Recorder } from "@azure-tools/test-recorder";
+import type { ContainerClient } from "../src";
+import type { Context } from "mocha";
 
 describe("Special Naming Tests", () => {
   let containerName: string;
@@ -18,28 +23,30 @@ describe("Special Naming Tests", () => {
   let recorder: Recorder;
 
   let blobServiceClient: BlobServiceClient;
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    blobServiceClient = getBSU();
-    containerName = recorder.getUniqueName("1container-with-dash");
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
+    await recorder.addSanitizers({ uriSanitizers }, ["playback", "record"]);
+    blobServiceClient = getBSU(recorder);
+    containerName = getRecorderUniqueVariable(recorder, "1container-with-dash");
     containerClient = blobServiceClient.getContainerClient(containerName);
     await containerClient.create();
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await containerClient.delete();
     await recorder.stop();
   });
 
-  it("Should work with special container and blob names with spaces", async () => {
-    const blobName: string = recorder.getUniqueName("blob empty");
+  it("Should work with special container and blob names with spaces", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "blob empty");
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.upload("A", 1);
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -48,18 +55,18 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special container and blob names with spaces in URL string", async () => {
-    const blobName: string = recorder.getUniqueName("blob empty");
+  it("Should work with special container and blob names with spaces in URL string", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "blob empty");
     const blockBlobClient = new BlockBlobClient(
       appendToURLPath(containerClient.url, blobName),
-      (containerClient as any).pipeline
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -69,7 +76,7 @@ describe("Special Naming Tests", () => {
   });
 
   it("Should work with special container and blob names with /", async () => {
-    const blobName: string = recorder.getUniqueName("////blob/empty /another");
+    const blobName: string = getRecorderUniqueVariable(recorder, "////blob/empty /another");
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.upload("A", 1);
@@ -77,7 +84,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -87,10 +94,10 @@ describe("Special Naming Tests", () => {
   });
 
   it("Should work with special container and blob names with / in URL string", async () => {
-    const blobName: string = recorder.getUniqueName("////blob/empty /another");
+    const blobName: string = getRecorderUniqueVariable(recorder, "////blob/empty /another");
     const blockBlobClient = new BlockBlobClient(
       appendToURLPath(containerClient.url, blobName),
-      (containerClient as any).pipeline
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
@@ -98,7 +105,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -107,8 +114,8 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special container and blob names uppercase", async () => {
-    const blobName: string = recorder.getUniqueName("////Upper/blob/empty /another");
+  it("Should work with special container and blob names uppercase", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "////Upper/blob/empty /another");
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.upload("A", 1);
@@ -116,7 +123,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -125,11 +132,37 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special container and blob names uppercase in URL string", async () => {
-    const blobName: string = recorder.getUniqueName("////Upper/blob/empty /another");
+  it("Should work with special container and blob names with dots in blobname", async () => {
+    const blobName: string = recorder.variable(
+      "blobNameWithDots",
+      getUniqueName("/blobname/./blobname1/../blobname2/blobname3"),
+    );
     const blockBlobClient = new BlockBlobClient(
       appendToURLPath(containerClient.url, blobName),
-      (containerClient as any).pipeline
+      (containerClient as any).pipeline,
+    );
+
+    await blockBlobClient.upload("A", 1);
+    await blockBlobClient.getProperties();
+
+    const prefix = "/blobname/blobname2/blobname3";
+    const response = (
+      await containerClient
+        .listBlobsFlat({
+          prefix: prefix,
+        })
+        .byPage()
+        .next()
+    ).value;
+
+    assert.notDeepEqual(response.segment.blobItems.length, 0);
+  });
+
+  it("Should work with special container and blob names uppercase in URL string", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "////Upper/blob/empty /another");
+    const blockBlobClient = new BlockBlobClient(
+      appendToURLPath(containerClient.url, blobName),
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
@@ -137,7 +170,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -146,8 +179,11 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob names Chinese characters", async () => {
-    const blobName: string = recorder.getUniqueName("////Upper/blob/empty /another 汉字");
+  it("Should work with special blob names Chinese characters", async function () {
+    const blobName: string = getRecorderUniqueVariable(
+      recorder,
+      "////Upper/blob/empty /another 汉字",
+    );
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.upload("A", 1);
@@ -155,7 +191,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -164,11 +200,14 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob names Chinese characters in URL string", async () => {
-    const blobName: string = recorder.getUniqueName("////Upper/blob/empty /another 汉字");
+  it("Should work with special blob names Chinese characters in URL string", async function () {
+    const blobName: string = getRecorderUniqueVariable(
+      recorder,
+      "////Upper/blob/empty /another 汉字",
+    );
     const blockBlobClient = new BlockBlobClient(
       appendToURLPath(containerClient.url, blobName),
-      (containerClient as any).pipeline
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
@@ -176,7 +215,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -185,9 +224,10 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name characters", async () => {
-    const blobName: string = recorder.getUniqueName(
-      "汉字. special ~!@#$%^&*()_+`1234567890-={}|[]\\:\";'<>?,/'"
+  it("Should work with special blob name characters", async function () {
+    const blobName = getRecorderUniqueVariable(
+      recorder,
+      "汉字. special ~!@#$%^&*()_+`1234567890-={}|[]\\:\";'<>?,/'",
     );
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
@@ -197,7 +237,7 @@ describe("Special Naming Tests", () => {
       await containerClient
         .listBlobsFlat({
           // NOTICE: Azure Storage Server will replace "\" with "/" in the blob names
-          prefix: blobName.replace(/\\/g, "/")
+          prefix: blobName.replace(/\\/g, "/"),
         })
         .byPage()
         .next()
@@ -206,16 +246,14 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name characters in URL string", async () => {
-    const blobName: string = recorder.getUniqueName(
-      "汉字. special ~!@#$%^&*()_+`1234567890-={}|[]\\:\";'<>?,/'"
+  it("Should work with special blob name characters in URL string", async function () {
+    const blobName = getRecorderUniqueVariable(
+      recorder,
+      "汉字. special ~!@#$%^&*()_+`1234567890-={}|[]\\:\";'<>?,/'",
     );
     const blockBlobClient = new BlockBlobClient(
-      // There are 2 special cases for a URL string:
-      // Escape "%" when creating XxxClient object with URL strings
-      // Escape "?" otherwise string after "?" will be treated as URL parameters
-      appendToURLPath(containerClient.url, blobName.replace(/%/g, "%25").replace(/\?/g, "%3F")),
-      (containerClient as any).pipeline
+      appendToURLPath(containerClient.url, EscapePath(blobName)),
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
@@ -224,7 +262,7 @@ describe("Special Naming Tests", () => {
       await containerClient
         .listBlobsFlat({
           // NOTICE: Azure Storage Server will replace "\" with "/" in the blob names
-          prefix: blobName.replace(/\\/g, "/")
+          prefix: blobName.replace(/\\/g, "/"),
         })
         .byPage()
         .next()
@@ -233,8 +271,8 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Russian URI encoded", async () => {
-    const blobName: string = recorder.getUniqueName("ру́сский язы́к");
+  it("Should work with special blob name Russian URI encoded", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "ру́сский язы́к");
     const blobNameEncoded: string = encodeURIComponent(blobName);
     const blockBlobClient = containerClient.getBlockBlobClient(blobNameEncoded);
 
@@ -243,7 +281,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobNameEncoded
+          prefix: blobNameEncoded,
         })
         .byPage()
         .next()
@@ -252,8 +290,8 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Russian", async () => {
-    const blobName: string = recorder.getUniqueName("ру́сский язы́к");
+  it("Should work with special blob name Russian", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "ру́сский язы́к");
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.upload("A", 1);
@@ -261,7 +299,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -270,11 +308,11 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Russian in URL string", async () => {
-    const blobName: string = recorder.getUniqueName("ру́сский язы́к");
+  it("Should work with special blob name Russian in URL string", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "ру́сский язы́к");
     const blockBlobClient = new BlockBlobClient(
       appendToURLPath(containerClient.url, blobName),
-      (containerClient as any).pipeline
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
@@ -282,7 +320,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -291,8 +329,8 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Arabic URI encoded", async () => {
-    const blobName: string = recorder.getUniqueName("عربي/عربى");
+  it("Should work with special blob name Arabic URI encoded", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "عربي/عربى");
     const blobNameEncoded: string = encodeURIComponent(blobName);
     const blockBlobClient = containerClient.getBlockBlobClient(blobNameEncoded);
 
@@ -301,7 +339,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobNameEncoded
+          prefix: blobNameEncoded,
         })
         .byPage()
         .next()
@@ -310,8 +348,8 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Arabic", async () => {
-    const blobName: string = recorder.getUniqueName("عربي/عربى");
+  it("Should work with special blob name Arabic", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "عربي/عربى");
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.upload("A", 1);
@@ -319,7 +357,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -328,11 +366,11 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Arabic in URL string", async () => {
-    const blobName: string = recorder.getUniqueName("عربي/عربى");
+  it("Should work with special blob name Arabic in URL string", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "عربي/عربى");
     const blockBlobClient = new BlockBlobClient(
       appendToURLPath(containerClient.url, blobName),
-      (containerClient as any).pipeline
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
@@ -340,7 +378,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -349,8 +387,8 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Japanese URI encoded", async () => {
-    const blobName: string = recorder.getUniqueName("にっぽんご/にほんご");
+  it("Should work with special blob name Japanese URI encoded", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "にっぽんご/にほんご");
     const blobNameEncoded: string = encodeURIComponent(blobName);
     const blockBlobClient = containerClient.getBlockBlobClient(blobNameEncoded);
 
@@ -359,7 +397,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobNameEncoded
+          prefix: blobNameEncoded,
         })
         .byPage()
         .next()
@@ -368,8 +406,8 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Japanese", async () => {
-    const blobName: string = recorder.getUniqueName("にっぽんご/にほんご");
+  it("Should work with special blob name Japanese", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "にっぽんご/にほんご");
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await blockBlobClient.upload("A", 1);
@@ -377,7 +415,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()
@@ -386,11 +424,11 @@ describe("Special Naming Tests", () => {
     assert.notDeepEqual(response.segment.blobItems.length, 0);
   });
 
-  it("Should work with special blob name Japanese in URL string", async () => {
-    const blobName: string = recorder.getUniqueName("にっぽんご/にほんご");
+  it("Should work with special blob name Japanese in URL string", async function () {
+    const blobName: string = getRecorderUniqueVariable(recorder, "にっぽんご/にほんご");
     const blockBlobClient = new BlockBlobClient(
       appendToURLPath(containerClient.url, blobName),
-      (containerClient as any).pipeline
+      (containerClient as any).pipeline,
     );
 
     await blockBlobClient.upload("A", 1);
@@ -398,7 +436,7 @@ describe("Special Naming Tests", () => {
     const response = (
       await containerClient
         .listBlobsFlat({
-          prefix: blobName
+          prefix: blobName,
         })
         .byPage()
         .next()

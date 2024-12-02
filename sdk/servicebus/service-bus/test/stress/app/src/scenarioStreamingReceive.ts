@@ -1,7 +1,7 @@
 import {
   ServiceBusClient,
   ServiceBusReceiver,
-  ServiceBusReceiverOptions
+  ServiceBusReceiverOptions,
 } from "@azure/service-bus";
 import { ServiceBusStressTester } from "./serviceBusStressTester";
 import { delay } from "rhea-promise";
@@ -27,27 +27,27 @@ function sanitizeOptions(args: string[]): Required<ScenarioStreamingReceiveOptio
       "autoComplete",
       "manualLockRenewal",
       "completeMessageAfterDuration",
-      "settleMessageOnReceive"
+      "settleMessageOnReceive",
     ],
     default: {
       autoComplete: true,
       manualLockRenewal: true,
       completeMessageAfterDuration: true,
-      settleMessageOnReceive: false
-    }
+      settleMessageOnReceive: false,
+    },
   });
   return {
-    testDurationInMs: options.testDurationInMs || 60 * 60 * 1000, // Default = 60 minutes
+    testDurationInMs: options.testDurationInMs || 2 * 24 * 60 * 60 * 1000, // Default = 2 days
     receiveMode: options.receiveMode || "peekLock",
     autoComplete: !!options.autoComplete,
     maxConcurrentCalls: options.maxConcurrentCalls || 100,
     maxAutoRenewLockDurationInMs: options.maxAutoRenewLockDurationInMs || 0,
     manualLockRenewal: options.manualLockRenewal,
-    numberOfMessagesPerSend: options.numberOfMessagesPerSend || 1,
+    numberOfMessagesPerSend: options.numberOfMessagesPerSend || 0,
     delayBetweenSendsInMs: options.delayBetweenSendsInMs || 0,
-    totalNumberOfMessagesToSend: options.totalNumberOfMessagesToSend || Infinity,
+    totalNumberOfMessagesToSend: options.totalNumberOfMessagesToSend || 0,
     completeMessageAfterDuration: !!options.completeMessageAfterDuration,
-    settleMessageOnReceive: !!options.settleMessageOnReceive
+    settleMessageOnReceive: !!options.settleMessageOnReceive,
   };
 }
 
@@ -64,7 +64,7 @@ export async function scenarioStreamingReceive() {
     delayBetweenSendsInMs,
     totalNumberOfMessagesToSend,
     completeMessageAfterDuration,
-    settleMessageOnReceive
+    settleMessageOnReceive,
   } = testOptions;
 
   const testDurationForSendInMs = testDurationInMs * 0.7;
@@ -72,7 +72,6 @@ export async function scenarioStreamingReceive() {
 
   const stressBase = new ServiceBusStressTester({
     testName: "streamingReceive",
-    snapshotFocus: ["send-info", "receive-info", "message-lock-renewal-info"]
   });
 
   const operation = async (sbClient: ServiceBusClient) => {
@@ -82,7 +81,7 @@ export async function scenarioStreamingReceive() {
     if (receiveMode === "receiveAndDelete") {
       receiver = sbClient.createReceiver(stressBase.queueName, {
         receiveMode: "receiveAndDelete",
-        maxAutoLockRenewalDurationInMs: maxAutoRenewLockDurationInMs
+        maxAutoLockRenewalDurationInMs: maxAutoRenewLockDurationInMs,
       });
     } else {
       receiver = sbClient.createReceiver(stressBase.queueName);
@@ -110,13 +109,13 @@ export async function scenarioStreamingReceive() {
         maxAutoRenewLockDurationInMs,
         manualLockRenewal,
         completeMessageAfterDuration,
-        settleMessageOnReceive
-      })
+        settleMessageOnReceive,
+      }),
     ]);
   };
 
   return stressBase.runStressTest(operation, {
-    additionalEventProperties: testOptions
+    additionalEventProperties: testOptions,
   });
 }
 

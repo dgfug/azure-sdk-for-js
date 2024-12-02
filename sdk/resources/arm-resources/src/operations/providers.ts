@@ -6,21 +6,21 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Providers } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ResourceManagementClientContext } from "../resourceManagementClientContext";
+import { ResourceManagementClient } from "../resourceManagementClient";
 import {
   Provider,
   ProvidersListNextOptionalParams,
   ProvidersListOptionalParams,
+  ProvidersListResponse,
   ProvidersListAtTenantScopeNextOptionalParams,
   ProvidersListAtTenantScopeOptionalParams,
-  ProvidersListNextNextOptionalParams,
-  ProvidersListAtTenantScopeNextNextOptionalParams,
+  ProvidersListAtTenantScopeResponse,
   ProvidersUnregisterOptionalParams,
   ProvidersUnregisterResponse,
   ProvidersRegisterAtManagementGroupScopeOptionalParams,
@@ -28,28 +28,24 @@ import {
   ProvidersProviderPermissionsResponse,
   ProvidersRegisterOptionalParams,
   ProvidersRegisterResponse,
-  ProvidersListResponse,
-  ProvidersListAtTenantScopeResponse,
   ProvidersGetOptionalParams,
   ProvidersGetResponse,
   ProvidersGetAtTenantScopeOptionalParams,
   ProvidersGetAtTenantScopeResponse,
   ProvidersListNextResponse,
-  ProvidersListAtTenantScopeNextResponse,
-  ProvidersListNextNextResponse,
-  ProvidersListAtTenantScopeNextNextResponse
+  ProvidersListAtTenantScopeNextResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a Providers. */
+/** Class containing Providers operations. */
 export class ProvidersImpl implements Providers {
-  private readonly client: ResourceManagementClientContext;
+  private readonly client: ResourceManagementClient;
 
   /**
    * Initialize a new instance of the class Providers class.
    * @param client Reference to the service client
    */
-  constructor(client: ResourceManagementClientContext) {
+  constructor(client: ResourceManagementClient) {
     this.client = client;
   }
 
@@ -68,22 +64,34 @@ export class ProvidersImpl implements Providers {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
       }
     };
   }
 
   private async *listPagingPage(
-    options?: ProvidersListOptionalParams
+    options?: ProvidersListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Provider[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ProvidersListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -110,22 +118,34 @@ export class ProvidersImpl implements Providers {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAtTenantScopePagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAtTenantScopePagingPage(options, settings);
       }
     };
   }
 
   private async *listAtTenantScopePagingPage(
-    options?: ProvidersListAtTenantScopeOptionalParams
+    options?: ProvidersListAtTenantScopeOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<Provider[]> {
-    let result = await this._listAtTenantScope(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ProvidersListAtTenantScopeResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAtTenantScope(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAtTenantScopeNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -133,104 +153,6 @@ export class ProvidersImpl implements Providers {
     options?: ProvidersListAtTenantScopeOptionalParams
   ): AsyncIterableIterator<Provider> {
     for await (const page of this.listAtTenantScopePagingPage(options)) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListNext
-   * @param nextLink The nextLink from the previous successful call to the List method.
-   * @param options The options parameters.
-   */
-  public listNext(
-    nextLink: string,
-    options?: ProvidersListNextOptionalParams
-  ): PagedAsyncIterableIterator<Provider> {
-    const iter = this.listNextPagingAll(nextLink, options);
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listNextPagingPage(nextLink, options);
-      }
-    };
-  }
-
-  private async *listNextPagingPage(
-    nextLink: string,
-    options?: ProvidersListNextOptionalParams
-  ): AsyncIterableIterator<Provider[]> {
-    let result = await this._listNext(nextLink, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listNextNext(continuationToken, options);
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listNextPagingAll(
-    nextLink: string,
-    options?: ProvidersListNextOptionalParams
-  ): AsyncIterableIterator<Provider> {
-    for await (const page of this.listNextPagingPage(nextLink, options)) {
-      yield* page;
-    }
-  }
-
-  /**
-   * ListAtTenantScopeNext
-   * @param nextLink The nextLink from the previous successful call to the ListAtTenantScope method.
-   * @param options The options parameters.
-   */
-  public listAtTenantScopeNext(
-    nextLink: string,
-    options?: ProvidersListAtTenantScopeNextOptionalParams
-  ): PagedAsyncIterableIterator<Provider> {
-    const iter = this.listAtTenantScopeNextPagingAll(nextLink, options);
-    return {
-      next() {
-        return iter.next();
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-      byPage: () => {
-        return this.listAtTenantScopeNextPagingPage(nextLink, options);
-      }
-    };
-  }
-
-  private async *listAtTenantScopeNextPagingPage(
-    nextLink: string,
-    options?: ProvidersListAtTenantScopeNextOptionalParams
-  ): AsyncIterableIterator<Provider[]> {
-    let result = await this._listAtTenantScopeNext(nextLink, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listAtTenantScopeNextNext(
-        continuationToken,
-        options
-      );
-      continuationToken = result.nextLink;
-      yield result.value || [];
-    }
-  }
-
-  private async *listAtTenantScopeNextPagingAll(
-    nextLink: string,
-    options?: ProvidersListAtTenantScopeNextOptionalParams
-  ): AsyncIterableIterator<Provider> {
-    for await (const page of this.listAtTenantScopeNextPagingPage(
-      nextLink,
-      options
-    )) {
       yield* page;
     }
   }
@@ -379,36 +301,6 @@ export class ProvidersImpl implements Providers {
       listAtTenantScopeNextOperationSpec
     );
   }
-
-  /**
-   * ListNextNext
-   * @param nextLink The nextLink from the previous successful call to the ListNext method.
-   * @param options The options parameters.
-   */
-  private _listNextNext(
-    nextLink: string,
-    options?: ProvidersListNextNextOptionalParams
-  ): Promise<ProvidersListNextNextResponse> {
-    return this.client.sendOperationRequest(
-      { nextLink, options },
-      listNextNextOperationSpec
-    );
-  }
-
-  /**
-   * ListAtTenantScopeNextNext
-   * @param nextLink The nextLink from the previous successful call to the ListAtTenantScopeNext method.
-   * @param options The options parameters.
-   */
-  private _listAtTenantScopeNextNext(
-    nextLink: string,
-    options?: ProvidersListAtTenantScopeNextNextOptionalParams
-  ): Promise<ProvidersListAtTenantScopeNextNextResponse> {
-    return this.client.sendOperationRequest(
-      { nextLink, options },
-      listAtTenantScopeNextNextOperationSpec
-    );
-  }
 }
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
@@ -508,7 +400,7 @@ const listOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.top, Parameters.expand],
+  queryParameters: [Parameters.apiVersion, Parameters.expand],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
   serializer
@@ -524,7 +416,7 @@ const listAtTenantScopeOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.top, Parameters.expand],
+  queryParameters: [Parameters.apiVersion, Parameters.expand],
   urlParameters: [Parameters.$host],
   headerParameters: [Parameters.accept],
   serializer
@@ -576,7 +468,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.top, Parameters.expand],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
@@ -596,43 +487,6 @@ const listAtTenantScopeNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.CloudError
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.top, Parameters.expand],
-  urlParameters: [Parameters.$host, Parameters.nextLink],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ProviderListResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.top, Parameters.expand],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.nextLink,
-    Parameters.subscriptionId
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listAtTenantScopeNextNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ProviderListResult
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.top, Parameters.expand],
   urlParameters: [Parameters.$host, Parameters.nextLink],
   headerParameters: [Parameters.accept],
   serializer

@@ -1,24 +1,24 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { ServiceBusMessage, toRheaMessage } from "./serviceBusMessage";
+import type { ServiceBusMessage } from "./serviceBusMessage.js";
+import { toRheaMessage } from "./serviceBusMessage.js";
 import {
   errorInvalidMessageTypeSingle,
   throwIfNotValidServiceBusMessage,
-  throwTypeErrorIfParameterMissing
-} from "./util/errors";
-import { ConnectionContext } from "./connectionContext";
+  throwTypeErrorIfParameterMissing,
+} from "./util/errors.js";
+import type { ConnectionContext } from "./connectionContext.js";
+import type { MessageAnnotations, Message as RheaMessage } from "rhea-promise";
 import {
-  MessageAnnotations,
   messageProperties as RheaMessagePropertiesList,
   message as RheaMessageUtil,
-  Message as RheaMessage
 } from "rhea-promise";
-import { SpanContext } from "@azure/core-tracing";
-import { convertTryAddOptionsForCompatibility, instrumentMessage } from "./diagnostics/tracing";
-import { TryAddOptions } from "./modelsToBeSharedWithEventHubs";
-import { AmqpAnnotatedMessage } from "@azure/core-amqp";
-import { defaultDataTransformer } from "./dataTransformer";
+import type { TracingContext } from "@azure/core-tracing";
+import type { TryAddOptions } from "./modelsToBeSharedWithEventHubs.js";
+import type { AmqpAnnotatedMessage } from "@azure/core-amqp";
+import { defaultDataTransformer } from "./dataTransformer.js";
+import { instrumentMessage } from "./diagnostics/instrumentServiceBusMessage.js";
 
 /**
  * @internal
@@ -72,7 +72,7 @@ export interface ServiceBusMessageBatch {
    */
   tryAddMessage(
     message: ServiceBusMessage | AmqpAnnotatedMessage,
-    options?: TryAddOptions
+    options?: TryAddOptions,
   ): boolean;
 
   /**
@@ -92,7 +92,7 @@ export interface ServiceBusMessageBatch {
    * @internal
    * @hidden
    */
-  readonly _messageSpanContexts: SpanContext[];
+  readonly _messageSpanContexts: TracingContext[];
 }
 
 /**
@@ -112,14 +112,17 @@ export class ServiceBusMessageBatchImpl implements ServiceBusMessageBatch {
   /**
    * List of 'message' span contexts.
    */
-  private _spanContexts: SpanContext[] = [];
+  private _spanContexts: TracingContext[] = [];
   /**
    * ServiceBusMessageBatch should not be constructed using `new ServiceBusMessageBatch()`
    * Use the `createBatch()` method on your `Sender` instead.
    * @internal
    * @hidden
    */
-  constructor(private _context: ConnectionContext, private _maxSizeInBytes: number) {
+  constructor(
+    private _context: ConnectionContext,
+    private _maxSizeInBytes: number,
+  ) {
     this._sizeInBytes = 0;
     this._batchMessageProperties = {};
   }
@@ -154,7 +157,7 @@ export class ServiceBusMessageBatchImpl implements ServiceBusMessageBatch {
    * @internal
    * @hidden
    */
-  get _messageSpanContexts(): SpanContext[] {
+  get _messageSpanContexts(): TracingContext[] {
     return this._spanContexts;
   }
 
@@ -170,12 +173,12 @@ export class ServiceBusMessageBatchImpl implements ServiceBusMessageBatch {
     encodedMessages: Buffer[],
     annotations?: MessageAnnotations,
     applicationProperties?: { [key: string]: any },
-    messageProperties?: { [key: string]: string }
+    messageProperties?: { [key: string]: string },
   ): Buffer {
     const batchEnvelope: RheaMessage = {
       body: RheaMessageUtil.data_sections(encodedMessages),
       message_annotations: annotations,
-      application_properties: applicationProperties
+      application_properties: applicationProperties,
     };
     if (messageProperties) {
       for (const prop of RheaMessagePropertiesList) {
@@ -202,7 +205,7 @@ export class ServiceBusMessageBatchImpl implements ServiceBusMessageBatch {
       this._encodedMessages,
       this._batchAnnotations,
       this._batchApplicationProperties,
-      this._batchMessageProperties
+      this._batchMessageProperties,
     );
   }
 
@@ -235,24 +238,23 @@ export class ServiceBusMessageBatchImpl implements ServiceBusMessageBatch {
    */
   public tryAddMessage(
     originalMessage: ServiceBusMessage | AmqpAnnotatedMessage,
-    options: TryAddOptions = {}
+    options: TryAddOptions = {},
   ): boolean {
     throwTypeErrorIfParameterMissing(this._context.connectionId, "message", originalMessage);
     throwIfNotValidServiceBusMessage(originalMessage, errorInvalidMessageTypeSingle);
-
-    options = convertTryAddOptionsForCompatibility(options);
 
     const { message, spanContext } = instrumentMessage(
       originalMessage,
       options,
       this._context.config.entityPath!,
-      this._context.config.host
+      this._context.config.host,
+      "publish",
     );
 
     // Convert ServiceBusMessage to AmqpMessage.
     const amqpMessage = toRheaMessage(message, defaultDataTransformer);
 
-    let encodedMessage = RheaMessageUtil.encode(amqpMessage);
+    const encodedMessage = RheaMessageUtil.encode(amqpMessage);
     let currentSize = this._sizeInBytes;
 
     // The first time an event is added, we need to calculate
@@ -277,7 +279,7 @@ export class ServiceBusMessageBatchImpl implements ServiceBusMessageBatch {
         [],
         this._batchAnnotations,
         this._batchApplicationProperties,
-        this._batchMessageProperties
+        this._batchMessageProperties,
       ).length;
     }
 

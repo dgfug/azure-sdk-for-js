@@ -10,12 +10,12 @@ import {
   OperationParameter,
   OperationURLParameter,
   OperationQueryParameter
-} from "@azure/core-http";
+} from "@azure/core-client";
 import {
   SecretSetParameters as SecretSetParametersMapper,
   SecretUpdateParameters as SecretUpdateParametersMapper,
   SecretRestoreParameters as SecretRestoreParametersMapper
-} from "../models/mappers";
+} from "../models/mappers.js";
 
 export const contentType: OperationParameter = {
   parameterPath: ["options", "contentType"],

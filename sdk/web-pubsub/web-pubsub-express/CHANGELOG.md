@@ -1,5 +1,54 @@
 # Release History
 
+## 1.0.6 (Unreleased)
+
+### Features Added
+
+- Add support for MQTT event handling
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Fix issue with mismatched DTO for client protocol when calling generate client access URI API, which causes the response to be incorrect.
+
+### Other Changes
+
+## 1.0.5 (2023-06-28)
+
+### Other Changes
+
+- Remove the abuse protection check since the service always validates the request
+
+## 1.0.4 (2023-04-03)
+
+### Bugs Fixed
+
+- Address issue with `query` property from CloudEvent https://github.com/Azure/azure-sdk-for-js/issues/24515
+
+## 1.0.3 (2022-06-15)
+
+### Bugs Fixed
+
+- Fix issue https://github.com/Azure/azure-sdk-for-js/issues/22134 that hub name should be case insensitive
+
+## 1.0.2 (2022-01-30)
+
+### Bugs Fixed
+
+- Fix the issue that `UserEventRequest` failed to process request with content-type `application/octet-stream` correctly into `dataType` `binary`
+
+### Other Changes
+
+- Remove `cloudevents` package dependency
+
+## 1.0.1 (2022-01-11)
+
+### Bugs Fixed
+
+- Fix the `data` definition for `UserEventRequest` when `dataType` is `json`. When `dataType` is `json`, `data` is the JSON parsed result from request body, so the type of `data` depends on the user scenario.
+- Fix the CloudEvents parsing issue that now `data` also can be `boolean` or `number`.
+
 ## 1.0.0 (2021-11-11)
 
 No changes.
@@ -24,7 +73,7 @@ No changes.
       res.setState("calledTime", calledTime);
       res.success();
     },
-    allowedEndpoints: ["https://xxx.webpubsub.azure.com"]
+    allowedEndpoints: ["https://xxx.webpubsub.azure.com"],
   });
   ```
 
@@ -46,7 +95,7 @@ No changes.
       // You can also set the state here
       res.setState("calledTime", calledTime);
       res.success();
-    }
+    },
   });
   ```
 

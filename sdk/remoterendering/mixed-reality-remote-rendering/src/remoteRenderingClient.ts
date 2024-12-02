@@ -1,25 +1,22 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { InternalPipelineOptions } from "@azure/core-rest-pipeline";
-import { OperationOptions } from "@azure/core-client";
-import { SpanStatusCode } from "@azure/core-tracing";
+import type { InternalPipelineOptions } from "@azure/core-rest-pipeline";
+import type { OperationOptions } from "@azure/core-client";
 
-import {
-  AccessToken,
-  AzureKeyCredential,
-  isTokenCredential,
-  TokenCredential
-} from "@azure/core-auth";
+import type { AccessToken, TokenCredential } from "@azure/core-auth";
+import { AzureKeyCredential, isTokenCredential } from "@azure/core-auth";
 
 import { RemoteRenderingRestClient } from "./generated";
+import type {
+  RemoteRenderingCreateConversionResponse,
+  RemoteRenderingCreateSessionResponse,
+  RemoteRenderingRestClientOptionalParams,
+} from "./generated/models/index";
 import {
   AssetConversionSettings,
-  RemoteRenderingRestClientOptionalParams,
-  RemoteRenderingCreateConversionResponse,
   RenderingSessionSettings,
-  RemoteRenderingCreateSessionResponse,
-  UpdateSessionSettings
+  UpdateSessionSettings,
 } from "./generated/models/index";
 
 import { RemoteRenderingClientOptions } from "./options";
@@ -31,50 +28,51 @@ import { MixedRealityAccountKeyCredential } from "./authentication/mixedRealityA
 
 import { SDK_VERSION } from "./constants";
 import { logger } from "./logger";
-import { createSpan } from "./tracing";
+import { tracingClient } from "./generated/tracing";
 
-import { PollerLike } from "@azure/core-lro";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { PollerLike } from "@azure/core-lro";
+import type { PagedAsyncIterableIterator } from "@azure/core-paging";
 
 import { RemoteRenderingImpl } from "./generated/operations";
 import {
-  AssetConversionPoller,
   AssetConversionOperationState,
-  AssetConversionPollerOptions
+  AssetConversionPoller,
+  AssetConversionPollerOptions,
 } from "./lro/assetConversionPoller";
 import {
-  RenderingSessionPoller,
   RenderingSessionOperationState,
-  RenderingSessionPollerOptions
+  RenderingSessionPoller,
+  RenderingSessionPollerOptions,
+  PollerLikeWithCancellation,
 } from "./lro/renderingSessionPoller";
 
 import {
   endSessionInternal,
   getConversionInternal,
-  getSessionInternal
+  getSessionInternal,
 } from "./internal/commonQueries";
 
 import {
   AssetConversion,
   AssetConversionBase,
+  CancelledAssetConversion,
+  FailedAssetConversion,
   NonStartedAssetConversion,
   RunningAssetConversion,
   SucceededAssetConversion,
-  FailedAssetConversion,
-  CancelledAssetConversion,
-  assetConversionFromConversion
+  assetConversionFromConversion,
 } from "./internal/assetConversion";
 import {
+  ErrorRenderingSession,
+  ExpiredRenderingSession,
+  PartialRenderingSessionProperties,
+  ReadyRenderingSession,
   RenderingSession,
   RenderingSessionBase,
   RenderingSessionProperties,
-  PartialRenderingSessionProperties,
-  ReadyRenderingSession,
-  ErrorRenderingSession,
   StartingRenderingSession,
-  ExpiredRenderingSession,
   StoppedRenderingSession,
-  renderingSessionFromSessionProperties
+  renderingSessionFromSessionProperties,
 } from "./internal/renderingSession";
 
 export {
@@ -101,18 +99,19 @@ export {
   UpdateSessionSettings,
   RemoteRenderingClientOptions,
   AssetConversionPollerOptions,
-  RenderingSessionPollerOptions
+  RenderingSessionPollerOptions,
+  PollerLikeWithCancellation,
 };
 
 import {
   AssetConversionInputSettings,
-  AssetConversionOutputSettings,
   AssetConversionOutput,
+  AssetConversionOutputSettings,
   AssetConversionStatus,
   KnownAssetConversionStatus,
+  KnownRenderingServerSize,
   KnownRenderingSessionStatus,
   RenderingServerSize,
-  KnownRenderingServerSize
 } from "./generated/models/index";
 
 import { RemoteRenderingServiceError } from "./remoteRenderingServiceError";
@@ -126,7 +125,7 @@ export {
   KnownAssetConversionStatus,
   KnownRenderingSessionStatus,
   RenderingServerSize,
-  KnownRenderingServerSize
+  KnownRenderingServerSize,
 };
 
 /** The poller returned by the beginConversion operation. */
@@ -163,7 +162,7 @@ export type EndSessionOptions = OperationOptions;
 export type ListSessionsOptions = OperationOptions;
 
 /** The poller returned by the beginSession operation. */
-export type RenderingSessionPollerLike = PollerLike<
+export type RenderingSessionPollerLike = PollerLikeWithCancellation<
   RenderingSessionOperationState,
   RenderingSession
 >;
@@ -189,7 +188,7 @@ export class RemoteRenderingClient {
     accountId: string,
     accountDomain: string,
     credential: AzureKeyCredential,
-    options?: RemoteRenderingClientOptions
+    options?: RemoteRenderingClientOptions,
   );
 
   /**
@@ -205,7 +204,7 @@ export class RemoteRenderingClient {
     accountId: string,
     accountDomain: string,
     credential: TokenCredential,
-    options?: RemoteRenderingClientOptions
+    options?: RemoteRenderingClientOptions,
   );
 
   /**
@@ -220,7 +219,7 @@ export class RemoteRenderingClient {
     endpoint: string,
     accountId: string,
     credential: AccessToken,
-    options?: RemoteRenderingClientOptions
+    options?: RemoteRenderingClientOptions,
   );
 
   constructor(endpoint: string, accountId: string, ...args: Array<any>) {
@@ -257,7 +256,7 @@ export class RemoteRenderingClient {
         accountId,
         accountDomain,
         credential,
-        stsOptions
+        stsOptions,
       );
       if (args.length === 3) {
         options = args[2];
@@ -297,15 +296,15 @@ export class RemoteRenderingClient {
         logger: logger.info,
         // This array contains header names we want to log that are not already
         // included as safe. Unknown/unsafe headers are logged as "<REDACTED>".
-        additionalAllowedHeaderNames: ["X-MRC-CV", "MS-CV"]
-      }
+        additionalAllowedHeaderNames: ["X-MRC-CV", "MS-CV"],
+      },
     };
 
     const clientOptions: RemoteRenderingRestClientOptionalParams = {
       ...internalPipelineOptions,
       endpoint: endpoint,
       credential: tokenCredential,
-      credentialScopes: `${endpoint}/.default`
+      credentialScopes: `${endpoint}/.default`,
     };
 
     this.client = new RemoteRenderingRestClient(endpoint, clientOptions);
@@ -323,7 +322,7 @@ export class RemoteRenderingClient {
   public async beginConversion(
     conversionId: string,
     assetConversionSettings: AssetConversionSettings,
-    options?: BeginConversionOptions
+    options?: BeginConversionOptions,
   ): Promise<AssetConversionPollerLike>;
 
   /**
@@ -331,13 +330,13 @@ export class RemoteRenderingClient {
    * @param options - The options parameters, carrying a resumeFrom value.
    */
   public async beginConversion(
-    options: ResumeBeginConversionOptions
+    options: ResumeBeginConversionOptions,
   ): Promise<AssetConversionPollerLike>;
 
   public async beginConversion(
     conversionIdOrResumeOptions: string | ResumeBeginConversionOptions,
     assetConversionSettings?: AssetConversionSettings,
-    options?: BeginConversionOptions
+    options?: BeginConversionOptions,
   ): Promise<AssetConversionPollerLike> {
     let conversionId: string;
     let settings: AssetConversionSettings;
@@ -352,52 +351,44 @@ export class RemoteRenderingClient {
         this.operations,
         conversionIdOrResumeOptions.resumeFrom,
         "RemoteRenderingClient-GetConversionPoller",
-        options
+        options,
       );
 
       return new AssetConversionPoller(
         this.accountId,
         this.operations,
         assetConversion,
-        conversionIdOrResumeOptions
+        conversionIdOrResumeOptions,
       );
     }
 
-    const { span, updatedOptions } = createSpan("RemoteRenderingClient-BeginConversion", {
-      conversionId: conversionId,
-      ...options
-    });
+    return tracingClient.withSpan(
+      "RemoteRenderingClient-BeginConversion",
+      {
+        conversionId: conversionId,
+        ...options,
+      },
+      async (updatedOptions) => {
+        const conversion: RemoteRenderingCreateConversionResponse =
+          await this.operations.createConversion(
+            this.accountId,
+            conversionId,
+            { settings: settings },
+            updatedOptions,
+          );
 
-    try {
-      const conversion: RemoteRenderingCreateConversionResponse = await this.operations.createConversion(
-        this.accountId,
-        conversionId,
-        { settings: settings },
-        updatedOptions
-      );
+        const poller = new AssetConversionPoller(
+          this.accountId,
+          this.operations,
+          assetConversionFromConversion(conversion),
+          operationOptions,
+        );
 
-      const poller = new AssetConversionPoller(
-        this.accountId,
-        this.operations,
-        assetConversionFromConversion(conversion),
-        operationOptions
-      );
+        await poller.poll();
 
-      await poller.poll();
-
-      return poller;
-    } catch (e) {
-      // There are different standard codes available for different errors:
-      // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/api.md#status
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-
-      throw e;
-    } finally {
-      span.end();
-    }
+        return poller;
+      },
+    );
   }
 
   /**
@@ -407,19 +398,19 @@ export class RemoteRenderingClient {
    */
   public async getConversion(
     conversionId: string,
-    options?: GetConversionOptions
+    options?: GetConversionOptions,
   ): Promise<AssetConversion> {
     return getConversionInternal(
       this.accountId,
       this.operations,
       conversionId,
       "RemoteRenderingClient-GetConversion",
-      options
+      options,
     );
   }
 
   private async *getAllConversionsPagingPage(
-    options?: OperationOptions
+    options?: OperationOptions,
   ): AsyncIterableIterator<AssetConversion[]> {
     let result = await this.operations.listConversions(this.accountId, options);
     let assetConversionResult = Array.from(result.conversions).map(assetConversionFromConversion);
@@ -429,7 +420,7 @@ export class RemoteRenderingClient {
       result = await this.operations.listConversionsNext(
         this.accountId,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
       assetConversionResult = Array.from(result.conversions).map(assetConversionFromConversion);
@@ -438,7 +429,7 @@ export class RemoteRenderingClient {
   }
 
   private async *getAllConversionsPagingAll(
-    options?: OperationOptions
+    options?: OperationOptions,
   ): AsyncIterableIterator<AssetConversion> {
     for await (const page of this.getAllConversionsPagingPage(options)) {
       yield* page;
@@ -450,11 +441,14 @@ export class RemoteRenderingClient {
    * @param options - The options parameters.
    */
   public listConversions(
-    options?: ListConversionsOptions
+    options?: ListConversionsOptions,
   ): PagedAsyncIterableIterator<AssetConversion> {
-    const { span, updatedOptions } = createSpan("RemoteRenderingClient-ListConversion", {
-      ...options
-    });
+    const { span, updatedOptions } = tracingClient.startSpan(
+      "RemoteRenderingClient-ListConversion",
+      {
+        ...options,
+      },
+    );
     try {
       const iter = this.getAllConversionsPagingAll(updatedOptions);
       return {
@@ -466,12 +460,12 @@ export class RemoteRenderingClient {
         },
         byPage: () => {
           return this.getAllConversionsPagingPage(updatedOptions);
-        }
+        },
       };
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
+        status: "error",
+        error: e,
       });
       throw e;
     } finally {
@@ -490,7 +484,7 @@ export class RemoteRenderingClient {
   public async beginSession(
     sessionId: string,
     settings: RenderingSessionSettings,
-    options?: BeginSessionOptions
+    options?: BeginSessionOptions,
   ): Promise<RenderingSessionPollerLike>;
 
   /**
@@ -498,13 +492,13 @@ export class RemoteRenderingClient {
    * @param options - The options parameters, carrying a resumeFrom value.
    */
   public async beginSession(
-    options: ResumeBeginSessionOptions
+    options: ResumeBeginSessionOptions,
   ): Promise<RenderingSessionPollerLike>;
 
   public async beginSession(
     sessionIdOrResumeOptions: string | ResumeBeginSessionOptions,
     renderingSessionSettings?: RenderingSessionSettings,
-    options?: BeginSessionOptions
+    options?: BeginSessionOptions,
   ): Promise<RenderingSessionPollerLike> {
     let sessionId: string;
     let settings: RenderingSessionSettings;
@@ -519,49 +513,39 @@ export class RemoteRenderingClient {
         this.operations,
         sessionIdOrResumeOptions.resumeFrom,
         "RemoteRenderingClient-GetSessionPoller",
-        sessionIdOrResumeOptions
+        sessionIdOrResumeOptions,
       );
       return new RenderingSessionPoller(
         this.accountId,
         this.operations,
         renderingSession,
-        sessionIdOrResumeOptions
+        sessionIdOrResumeOptions,
       );
     }
 
-    const { span, updatedOptions } = createSpan("RemoteRenderingClient-BeginSession", {
-      conversionId: sessionId,
-      ...operationOptions
-    });
+    return tracingClient.withSpan(
+      "RemoteRenderingClient-BeginSession",
+      {
+        conversionId: sessionId,
+        ...operationOptions,
+      },
+      async (updatedOptions) => {
+        const sessionProperties: RemoteRenderingCreateSessionResponse =
+          await this.operations.createSession(this.accountId, sessionId, settings, updatedOptions);
 
-    try {
-      const sessionProperties: RemoteRenderingCreateSessionResponse = await this.operations.createSession(
-        this.accountId,
-        sessionId,
-        settings,
-        updatedOptions
-      );
+        const poller = new RenderingSessionPoller(
+          this.accountId,
+          this.operations,
+          renderingSessionFromSessionProperties(sessionProperties),
+          operationOptions,
+        );
 
-      const poller = new RenderingSessionPoller(
-        this.accountId,
-        this.operations,
-        renderingSessionFromSessionProperties(sessionProperties),
-        operationOptions
-      );
+        // Do I want this?
+        await poller.poll();
 
-      // Do I want this?
-      await poller.poll();
-
-      return poller;
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+        return poller;
+      },
+    );
   }
 
   /**
@@ -573,14 +557,14 @@ export class RemoteRenderingClient {
    */
   public async getSession(
     sessionId: string,
-    options?: GetSessionOptions
+    options?: GetSessionOptions,
   ): Promise<RenderingSession> {
     return getSessionInternal(
       this.accountId,
       this.operations,
       sessionId,
       "RemoteRenderingClient-GetSession",
-      options
+      options,
     );
   }
 
@@ -595,30 +579,24 @@ export class RemoteRenderingClient {
   public async updateSession(
     sessionId: string,
     settings: UpdateSessionSettings,
-    options?: UpdateSessionOptions
+    options?: UpdateSessionOptions,
   ): Promise<RenderingSession> {
-    const { span, updatedOptions } = createSpan("RemoteRenderingClient-UpdateSession", {
-      conversionId: sessionId,
-      ...options
-    });
-
-    try {
-      const sessionProperties = await this.operations.updateSession(
-        this.accountId,
-        sessionId,
-        settings,
-        updatedOptions
-      );
-      return renderingSessionFromSessionProperties(sessionProperties);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "RemoteRenderingClient-UpdateSession",
+      {
+        conversionId: sessionId,
+        ...options,
+      },
+      async (updatedOptions) => {
+        const sessionProperties = await this.operations.updateSession(
+          this.accountId,
+          sessionId,
+          settings,
+          updatedOptions,
+        );
+        return renderingSessionFromSessionProperties(sessionProperties);
+      },
+    );
   }
 
   /**
@@ -634,12 +612,12 @@ export class RemoteRenderingClient {
       this.operations,
       sessionId,
       "RemoteRenderingClient-EndSession",
-      options
+      options,
     );
   }
 
   private async *getAllSessionsPagingPage(
-    options?: OperationOptions
+    options?: OperationOptions,
   ): AsyncIterableIterator<RenderingSession[]> {
     let result = await this.operations.listSessions(this.accountId, options);
     let sessions = Array.from(result.sessions).map(renderingSessionFromSessionProperties);
@@ -654,7 +632,7 @@ export class RemoteRenderingClient {
   }
 
   private async *getAllSessionsPagingAll(
-    options?: OperationOptions
+    options?: OperationOptions,
   ): AsyncIterableIterator<RenderingSession> {
     for await (const page of this.getAllSessionsPagingPage(options)) {
       yield* page;
@@ -666,9 +644,12 @@ export class RemoteRenderingClient {
    * @param options - The options parameters.
    */
   public listSessions(options?: ListSessionsOptions): PagedAsyncIterableIterator<RenderingSession> {
-    const { span, updatedOptions } = createSpan("RemoteRenderingClient-ListConversion", {
-      ...options
-    });
+    const { span, updatedOptions } = tracingClient.startSpan(
+      "RemoteRenderingClient-ListConversion",
+      {
+        ...options,
+      },
+    );
     try {
       const iter = this.getAllSessionsPagingAll(updatedOptions);
       return {
@@ -680,12 +661,12 @@ export class RemoteRenderingClient {
         },
         byPage: () => {
           return this.getAllSessionsPagingPage(updatedOptions);
-        }
+        },
       };
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
+        status: "error",
+        error: e,
       });
       throw e;
     } finally {

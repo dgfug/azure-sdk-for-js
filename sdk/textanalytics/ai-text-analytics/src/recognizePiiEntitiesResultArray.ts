@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TextDocumentBatchStatistics, TextDocumentInput, PiiResult } from "./generated/models";
+import type { PiiResult, TextDocumentBatchStatistics, TextDocumentInput } from "./generated/models";
+import type { RecognizePiiEntitiesResult } from "./recognizePiiEntitiesResult";
 import {
-  RecognizePiiEntitiesResult,
+  makeRecognizePiiEntitiesErrorResult,
   makeRecognizePiiEntitiesResult,
-  makeRecognizePiiEntitiesErrorResult
 } from "./recognizePiiEntitiesResult";
 import { combineSuccessfulAndErroneousDocumentsWithStatisticsAndModelVersion } from "./textAnalyticsResult";
 
@@ -32,12 +32,12 @@ export interface RecognizePiiEntitiesResultArray extends Array<RecognizePiiEntit
  */
 export function makeRecognizePiiEntitiesResultArray(
   input: TextDocumentInput[],
-  response: PiiResult
+  response: PiiResult,
 ): RecognizePiiEntitiesResultArray {
   return combineSuccessfulAndErroneousDocumentsWithStatisticsAndModelVersion(
     input,
     response,
     makeRecognizePiiEntitiesResult,
-    makeRecognizePiiEntitiesErrorResult
+    makeRecognizePiiEntitiesErrorResult,
   );
 }

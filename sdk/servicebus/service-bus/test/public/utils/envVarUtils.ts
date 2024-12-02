@@ -1,28 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export const isNode =
-  !!process && !!process.version && !!process.versions && !!process.versions.node;
-
+import { assertEnvironmentVariable } from "@azure-tools/test-recorder";
 /**
  * Enum to abstract away string values used for referencing the Environment Variable names.
  */
 export enum EnvVarNames {
+  SERVICEBUS_FQDN = "SERVICEBUS_FQDN",
   SERVICEBUS_CONNECTION_STRING = "SERVICEBUS_CONNECTION_STRING",
-  AZURE_CLIENT_ID = "AZURE_CLIENT_ID",
-  AZURE_CLIENT_SECRET = "AZURE_CLIENT_SECRET",
-  AZURE_TENANT_ID = "AZURE_TENANT_ID"
 }
 
 /**
  * Utility to retrieve the environment variable value with given name.
  */
 export function getEnvVarValue(name: string): string | undefined {
-  if (isNode) {
-    return process.env[name];
-  } else {
-    // @ts-ignore
-    return self.__env__[name];
+  try {
+    return assertEnvironmentVariable(name);
+  } catch {
+    return undefined;
   }
 }
 
@@ -39,12 +34,7 @@ export function getEnvVars(): { [key in EnvVarNames]: string } {
   }
 
   // Throw error if required environment variables are missing.
-  [
-    EnvVarNames.SERVICEBUS_CONNECTION_STRING,
-    EnvVarNames.AZURE_CLIENT_ID,
-    EnvVarNames.AZURE_CLIENT_SECRET,
-    EnvVarNames.AZURE_TENANT_ID
-  ].forEach(function(name: string) {
+  [EnvVarNames.SERVICEBUS_FQDN].forEach(function (name: string) {
     if (!getEnvVarValue(name)) {
       throw new Error(`Define ${name} in your environment before running integration tests.`);
     }
@@ -52,11 +42,9 @@ export function getEnvVars(): { [key in EnvVarNames]: string } {
 
   envVars = {
     [EnvVarNames.SERVICEBUS_CONNECTION_STRING]: getEnvVarValue(
-      EnvVarNames.SERVICEBUS_CONNECTION_STRING
+      EnvVarNames.SERVICEBUS_CONNECTION_STRING,
     ),
-    [EnvVarNames.AZURE_CLIENT_ID]: getEnvVarValue(EnvVarNames.AZURE_CLIENT_ID),
-    [EnvVarNames.AZURE_CLIENT_SECRET]: getEnvVarValue(EnvVarNames.AZURE_CLIENT_SECRET),
-    [EnvVarNames.AZURE_TENANT_ID]: getEnvVarValue(EnvVarNames.AZURE_TENANT_ID)
+    [EnvVarNames.SERVICEBUS_FQDN]: getEnvVarValue(EnvVarNames.SERVICEBUS_FQDN),
   };
 
   return envVars;

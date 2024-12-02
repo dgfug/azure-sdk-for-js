@@ -6,6 +6,5 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-export * from "./models";
-export { ApplicationInsightsClient } from "./applicationInsightsClient";
-export { ApplicationInsightsClientContext } from "./applicationInsightsClientContext";
+export * from "./models/index.js";
+export { ApplicationInsightsClient } from "./applicationInsightsClient.js";

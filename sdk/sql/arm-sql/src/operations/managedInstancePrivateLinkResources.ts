@@ -6,13 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ManagedInstancePrivateLinkResources } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   ManagedInstancePrivateLink,
   ManagedInstancePrivateLinkResourcesListByManagedInstanceNextOptionalParams,
@@ -20,20 +20,21 @@ import {
   ManagedInstancePrivateLinkResourcesListByManagedInstanceResponse,
   ManagedInstancePrivateLinkResourcesGetOptionalParams,
   ManagedInstancePrivateLinkResourcesGetResponse,
-  ManagedInstancePrivateLinkResourcesListByManagedInstanceNextResponse
+  ManagedInstancePrivateLinkResourcesListByManagedInstanceNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ManagedInstancePrivateLinkResources operations. */
 export class ManagedInstancePrivateLinkResourcesImpl
-  implements ManagedInstancePrivateLinkResources {
-  private readonly client: SqlManagementClientContext;
+  implements ManagedInstancePrivateLinkResources
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ManagedInstancePrivateLinkResources class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -47,12 +48,12 @@ export class ManagedInstancePrivateLinkResourcesImpl
   public listByManagedInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams
+    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstancePrivateLink> {
     const iter = this.listByManagedInstancePagingAll(
       resourceGroupName,
       managedInstanceName,
-      options
+      options,
     );
     return {
       next() {
@@ -61,49 +62,62 @@ export class ManagedInstancePrivateLinkResourcesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByManagedInstancePagingPage(
           resourceGroupName,
           managedInstanceName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByManagedInstancePagingPage(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams
+    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ManagedInstancePrivateLink[]> {
-    let result = await this._listByManagedInstance(
-      resourceGroupName,
-      managedInstanceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ManagedInstancePrivateLinkResourcesListByManagedInstanceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByManagedInstance(
+        resourceGroupName,
+        managedInstanceName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByManagedInstanceNext(
         resourceGroupName,
         managedInstanceName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByManagedInstancePagingAll(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams
+    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams,
   ): AsyncIterableIterator<ManagedInstancePrivateLink> {
     for await (const page of this.listByManagedInstancePagingPage(
       resourceGroupName,
       managedInstanceName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -119,11 +133,11 @@ export class ManagedInstancePrivateLinkResourcesImpl
   private _listByManagedInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams
+    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceOptionalParams,
   ): Promise<ManagedInstancePrivateLinkResourcesListByManagedInstanceResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, options },
-      listByManagedInstanceOperationSpec
+      listByManagedInstanceOperationSpec,
     );
   }
 
@@ -139,11 +153,11 @@ export class ManagedInstancePrivateLinkResourcesImpl
     resourceGroupName: string,
     managedInstanceName: string,
     groupName: string,
-    options?: ManagedInstancePrivateLinkResourcesGetOptionalParams
+    options?: ManagedInstancePrivateLinkResourcesGetOptionalParams,
   ): Promise<ManagedInstancePrivateLinkResourcesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, groupName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -159,13 +173,11 @@ export class ManagedInstancePrivateLinkResourcesImpl
     resourceGroupName: string,
     managedInstanceName: string,
     nextLink: string,
-    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceNextOptionalParams
-  ): Promise<
-    ManagedInstancePrivateLinkResourcesListByManagedInstanceNextResponse
-  > {
+    options?: ManagedInstancePrivateLinkResourcesListByManagedInstanceNextOptionalParams,
+  ): Promise<ManagedInstancePrivateLinkResourcesListByManagedInstanceNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, managedInstanceName, nextLink, options },
-      listByManagedInstanceNextOperationSpec
+      listByManagedInstanceNextOperationSpec,
     );
   }
 }
@@ -173,63 +185,60 @@ export class ManagedInstancePrivateLinkResourcesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByManagedInstanceOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/privateLinkResources",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/privateLinkResources",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstancePrivateLinkListResult
+      bodyMapper: Mappers.ManagedInstancePrivateLinkListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.managedInstanceName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/privateLinkResources/{groupName}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ManagedInstancePrivateLink
-    },
-    default: {}
-  },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.managedInstanceName,
-    Parameters.groupName
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/managedInstances/{managedInstanceName}/privateLinkResources/{groupName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ManagedInstancePrivateLink,
+    },
+    default: {},
+  },
+  queryParameters: [Parameters.apiVersion3],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.managedInstanceName,
+    Parameters.groupName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const listByManagedInstanceNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedInstancePrivateLinkListResult
+      bodyMapper: Mappers.ManagedInstancePrivateLinkListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.nextLink,
-    Parameters.managedInstanceName
+    Parameters.managedInstanceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

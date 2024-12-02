@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type { TextAnalyticsErrorResult, TextAnalyticsSuccessResult } from "./textAnalyticsResult";
 import {
+  makeTextAnalyticsErrorResult,
   makeTextAnalyticsSuccessResult,
-  TextAnalyticsSuccessResult,
-  TextAnalyticsErrorResult,
-  makeTextAnalyticsErrorResult
 } from "./textAnalyticsResult";
-import { DetectedLanguage, TextAnalyticsError, DocumentLanguage } from "./generated/models";
+import type { DetectedLanguage, DocumentLanguage, TextAnalyticsError } from "./generated/models";
 
 /**
  * The result of the detect language operation on a single document.
@@ -37,7 +36,7 @@ export function makeDetectLanguageResult(response: DocumentLanguage): DetectLang
   const { id, warnings, statistics, detectedLanguage } = response;
   return {
     ...makeTextAnalyticsSuccessResult(id, warnings, statistics),
-    primaryLanguage: detectedLanguage
+    primaryLanguage: detectedLanguage,
   };
 }
 
@@ -46,7 +45,7 @@ export function makeDetectLanguageResult(response: DocumentLanguage): DetectLang
  */
 export function makeDetectLanguageErrorResult(
   id: string,
-  error: TextAnalyticsError
+  error: TextAnalyticsError,
 ): DetectLanguageErrorResult {
   return makeTextAnalyticsErrorResult(id, error);
 }

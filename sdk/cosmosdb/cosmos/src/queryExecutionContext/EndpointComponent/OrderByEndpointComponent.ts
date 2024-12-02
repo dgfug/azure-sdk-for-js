@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { Response } from "../../request";
-import { ExecutionContext } from "../ExecutionContext";
+// Licensed under the MIT License.
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
+import type { Response } from "../../request";
+import type { ExecutionContext } from "../ExecutionContext";
 
 /** @hidden */
 export class OrderByEndpointComponent implements ExecutionContext {
@@ -12,16 +13,26 @@ export class OrderByEndpointComponent implements ExecutionContext {
    * @param executionContext - Underlying Execution Context
    * @hidden
    */
-  constructor(private executionContext: ExecutionContext) {}
+  constructor(
+    private executionContext: ExecutionContext,
+    private emitRawOrderByPayload: boolean = false,
+  ) {}
   /**
    * Execute a provided function on the next element in the OrderByEndpointComponent.
    */
-  public async nextItem(): Promise<Response<any>> {
-    const { result: item, headers } = await this.executionContext.nextItem();
-    return {
-      result: item !== undefined ? item.payload : undefined,
-      headers
-    };
+  public async nextItem(diagnosticNode: DiagnosticNodeInternal): Promise<Response<any>> {
+    const { result: item, headers } = await this.executionContext.nextItem(diagnosticNode);
+    if (this.emitRawOrderByPayload) {
+      return {
+        result: item !== undefined ? item : undefined,
+        headers,
+      };
+    } else {
+      return {
+        result: item !== undefined ? item.payload : undefined,
+        headers,
+      };
+    }
   }
 
   /**

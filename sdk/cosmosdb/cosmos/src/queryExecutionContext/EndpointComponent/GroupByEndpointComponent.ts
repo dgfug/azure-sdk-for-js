@@ -1,13 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { Response } from "../../request";
-import { ExecutionContext } from "../ExecutionContext";
-import { CosmosHeaders } from "../CosmosHeaders";
-import { QueryInfo } from "../../request/ErrorResponse";
+// Licensed under the MIT License.
+import type { Response } from "../../request";
+import type { ExecutionContext } from "../ExecutionContext";
+import type { CosmosHeaders } from "../CosmosHeaders";
+import type { QueryInfo } from "../../request/ErrorResponse";
 import { hashObject } from "../../utils/hashObject";
-import { Aggregator, createAggregator } from "../Aggregators";
+import type { Aggregator } from "../Aggregators";
+import { createAggregator } from "../Aggregators";
 import { getInitialHeader, mergeHeaders } from "../headerUtils";
 import { emptyGroup, extractAggregateResult } from "./emptyGroup";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
 
 interface GroupByResponse {
   result: GroupByResult;
@@ -21,27 +23,38 @@ interface GroupByResult {
 
 /** @hidden */
 export class GroupByEndpointComponent implements ExecutionContext {
-  constructor(private executionContext: ExecutionContext, private queryInfo: QueryInfo) {}
+  constructor(
+    private executionContext: ExecutionContext,
+    private queryInfo: QueryInfo,
+  ) {}
 
   private readonly groupings: Map<string, Map<string, Aggregator>> = new Map();
   private readonly aggregateResultArray: any[] = [];
   private completed: boolean = false;
 
-  public async nextItem(): Promise<Response<any>> {
+  public async nextItem(diagnosticNode: DiagnosticNodeInternal): Promise<Response<any>> {
     // If we have a full result set, begin returning results
     if (this.aggregateResultArray.length > 0) {
-      return { result: this.aggregateResultArray.pop(), headers: getInitialHeader() };
+      return {
+        result: this.aggregateResultArray.pop(),
+        headers: getInitialHeader(),
+      };
     }
 
     if (this.completed) {
-      return { result: undefined, headers: getInitialHeader() };
+      return {
+        result: undefined,
+        headers: getInitialHeader(),
+      };
     }
 
     const aggregateHeaders = getInitialHeader();
 
     while (this.executionContext.hasMoreResults()) {
       // Grab the next result
-      const { result, headers } = (await this.executionContext.nextItem()) as GroupByResponse;
+      const { result, headers } = (await this.executionContext.nextItem(
+        diagnosticNode,
+      )) as GroupByResponse;
       mergeHeaders(aggregateHeaders, headers);
 
       // If it exists, process it via aggregators
@@ -52,7 +65,11 @@ export class GroupByEndpointComponent implements ExecutionContext {
         if (aggregators) {
           // Iterator over all results in the payload
           Object.keys(payload).map((key) => {
-            const aggregateResult = extractAggregateResult(payload[key]);
+            // in case the value of a group is null make sure we create a dummy payload with item2==null
+            const effectiveGroupByValue = payload[key]
+              ? payload[key]
+              : new Map().set("item2", null);
+            const aggregateResult = extractAggregateResult(effectiveGroupByValue);
             aggregators.get(key).aggregate(aggregateResult);
           });
         } else {
@@ -84,7 +101,10 @@ export class GroupByEndpointComponent implements ExecutionContext {
       this.aggregateResultArray.push(groupResult);
     }
     this.completed = true;
-    return { result: this.aggregateResultArray.pop(), headers: aggregateHeaders };
+    return {
+      result: this.aggregateResultArray.pop(),
+      headers: aggregateHeaders,
+    };
   }
 
   public hasMoreResults(): boolean {

@@ -1,52 +1,56 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type {
+  ServiceBusMessage,
+  ServiceBusReceivedMessage,
+} from "../../../src/serviceBusMessage.js";
 import {
   isAmqpAnnotatedMessage,
   isServiceBusMessage,
-  ServiceBusMessage,
   ServiceBusMessageImpl,
-  ServiceBusReceivedMessage,
-  toRheaMessage
-} from "../../../src/serviceBusMessage";
-import * as chai from "chai";
-import { Delivery, Message } from "rhea-promise";
-import { AmqpAnnotatedMessage, Constants } from "@azure/core-amqp";
+  toRheaMessage,
+} from "../../../src/serviceBusMessage.js";
+import type { Delivery, Message } from "rhea-promise";
+import type { AmqpAnnotatedMessage } from "@azure/core-amqp";
+import { Constants } from "@azure/core-amqp";
 import {
   dataSectionTypeCode,
   defaultDataTransformer,
   isRheaAmqpSection,
-  valueSectionTypeCode
-} from "../../../src/dataTransformer";
+  valueSectionTypeCode,
+} from "../../../src/dataTransformer.js";
 import {
   errorInvalidMessageTypeSingle,
-  errorInvalidMessageTypeSingleOrArray
-} from "../../../src/util/errors";
-const assert = chai.assert;
+  errorInvalidMessageTypeSingleOrArray,
+} from "../../../src/util/errors.js";
+import { assert, beforeEach, describe, it } from "vitest";
 
 describe("AMQP message encoding", () => {
   beforeEach(() => {
     assert.equal(
       "Provided value for 'messages' must be of type: ServiceBusMessage, AmqpAnnotatedMessage, ServiceBusMessageBatch or an array of type ServiceBusMessage or AmqpAnnotatedMessage.",
-      errorInvalidMessageTypeSingleOrArray
+      errorInvalidMessageTypeSingleOrArray,
     );
 
     assert.equal(
       "Provided value for 'message' must be of type: ServiceBusMessage or AmqpAnnotatedMessage.",
-      errorInvalidMessageTypeSingle
+      errorInvalidMessageTypeSingle,
     );
   });
 
   const exampleReceivedMessage: () => ServiceBusReceivedMessage = () =>
     new ServiceBusMessageImpl(
-      ({
+      {
         message_annotations: {
-          [Constants.enqueuedTime]: Date.now()
-        }
-      } as any) as Message,
+          [Constants.enqueuedTime]: Date.now(),
+        },
+      } as any as Message,
       {} as Delivery,
       false,
-      "receiveAndDelete"
+      "receiveAndDelete",
+      false,
+      false,
     );
 
   it("isAmqpAnnotatedMessage", () => {
@@ -57,39 +61,39 @@ describe("AMQP message encoding", () => {
     assert.isTrue(
       isAmqpAnnotatedMessage({
         body: "hello world",
-        bodyType: "sequence"
-      })
+        bodyType: "sequence",
+      }),
     );
     assert.isTrue(
       isAmqpAnnotatedMessage({
         body: "hello world",
-        bodyType: "value"
-      })
+        bodyType: "value",
+      }),
     );
     assert.isTrue(
       isAmqpAnnotatedMessage({
         body: "hello world",
-        bodyType: "data"
-      })
+        bodyType: "data",
+      }),
     );
 
     assert.isTrue(
       isAmqpAnnotatedMessage({
         body: "hello world",
-        bodyType: undefined // the property _must_ exist, but undefined is fine. We'll default to 'data'
-      })
+        bodyType: undefined, // the property _must_ exist, but undefined is fine. We'll default to 'data'
+      }),
     );
   });
 
   it("isServiceBusMessage", () => {
     assert.isTrue(
       isServiceBusMessage({ body: undefined }),
-      "object with undefined 'body' should be a ServiceBusMessage"
+      "object with undefined 'body' should be a ServiceBusMessage",
     ); // no field is really required for a Service Bus message.
     assert.isTrue(isServiceBusMessage({ body: "hello world" }), "object has a 'body' field"); // no field is really required for a Service Bus message.
     assert.isTrue(
       isServiceBusMessage(exampleReceivedMessage()),
-      "a ServiceBusReceivedMessage is also a sendable ServiceBusMessage"
+      "a ServiceBusReceivedMessage is also a sendable ServiceBusMessage",
     );
   });
 
@@ -97,7 +101,7 @@ describe("AMQP message encoding", () => {
     it("AmqpAnnotatedMessage (explicit type)", () => {
       const amqpAnnotatedMessage: AmqpAnnotatedMessage = {
         body: "hello",
-        bodyType: "value"
+        bodyType: "value",
       };
 
       const rheaMessage = toRheaMessage(amqpAnnotatedMessage, defaultDataTransformer);
@@ -112,7 +116,7 @@ describe("AMQP message encoding", () => {
     it("AmqpAnnotatedMessage (implicit type)", () => {
       const amqpAnnotatedMessage: AmqpAnnotatedMessage = {
         body: "hello",
-        bodyType: undefined
+        bodyType: undefined,
       };
 
       const rheaMessage = toRheaMessage(amqpAnnotatedMessage, defaultDataTransformer);
@@ -126,7 +130,7 @@ describe("AMQP message encoding", () => {
 
     it("ServiceBusMessage", () => {
       const serviceBusMessage: ServiceBusMessage = {
-        body: "hello"
+        body: "hello",
       };
 
       const rheaMessage = toRheaMessage(serviceBusMessage, defaultDataTransformer);
@@ -144,7 +148,7 @@ describe("AMQP message encoding", () => {
       (serviceBusReceivedMessage as Record<keyof ServiceBusReceivedMessage, any>)[
         "_rawAmqpMessage"
       ] = {
-        bodyType: "data"
+        bodyType: "data",
       };
 
       const rheaMessage = toRheaMessage(serviceBusReceivedMessage, defaultDataTransformer);
@@ -162,7 +166,7 @@ describe("AMQP message encoding", () => {
       (serviceBusReceivedMessage as Record<keyof ServiceBusReceivedMessage, any>)[
         "_rawAmqpMessage"
       ] = {
-        bodyType: "value"
+        bodyType: "value",
       };
 
       const rheaMessage = toRheaMessage(serviceBusReceivedMessage, defaultDataTransformer);
@@ -172,6 +176,21 @@ describe("AMQP message encoding", () => {
       }
 
       assert.equal(rheaMessage.body.typecode, valueSectionTypeCode);
+    });
+
+    it("sets absolute_expiry_time when timeToLive is passed", () => {
+      const ttl = 2 * 60 * 1000;
+      const sbMessage: ServiceBusMessage = {
+        body: "hello",
+        timeToLive: ttl,
+      };
+
+      const rheaMessage = toRheaMessage(sbMessage, defaultDataTransformer);
+      assert.equal(rheaMessage.ttl, ttl);
+      assert.ok(
+        rheaMessage.absolute_expiry_time instanceof Date &&
+          !isNaN(rheaMessage.absolute_expiry_time.getTime()),
+      );
     });
   });
 });

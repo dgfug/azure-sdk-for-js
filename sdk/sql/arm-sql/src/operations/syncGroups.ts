@@ -6,33 +6,38 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { SyncGroups } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { SqlManagementClient } from "../sqlManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   SyncDatabaseIdProperties,
   SyncGroupsListSyncDatabaseIdsNextOptionalParams,
   SyncGroupsListSyncDatabaseIdsOptionalParams,
+  SyncGroupsListSyncDatabaseIdsResponse,
   SyncFullSchemaProperties,
   SyncGroupsListHubSchemasNextOptionalParams,
   SyncGroupsListHubSchemasOptionalParams,
+  SyncGroupsListHubSchemasResponse,
   SyncGroupLogProperties,
-  Enum76,
   SyncGroupsListLogsNextOptionalParams,
+  SyncGroupsType,
   SyncGroupsListLogsOptionalParams,
+  SyncGroupsListLogsResponse,
   SyncGroup,
   SyncGroupsListByDatabaseNextOptionalParams,
   SyncGroupsListByDatabaseOptionalParams,
-  SyncGroupsListSyncDatabaseIdsResponse,
+  SyncGroupsListByDatabaseResponse,
   SyncGroupsRefreshHubSchemaOptionalParams,
-  SyncGroupsListHubSchemasResponse,
-  SyncGroupsListLogsResponse,
   SyncGroupsCancelSyncOptionalParams,
   SyncGroupsTriggerSyncOptionalParams,
   SyncGroupsGetOptionalParams,
@@ -42,23 +47,22 @@ import {
   SyncGroupsDeleteOptionalParams,
   SyncGroupsUpdateOptionalParams,
   SyncGroupsUpdateResponse,
-  SyncGroupsListByDatabaseResponse,
   SyncGroupsListSyncDatabaseIdsNextResponse,
   SyncGroupsListHubSchemasNextResponse,
   SyncGroupsListLogsNextResponse,
-  SyncGroupsListByDatabaseNextResponse
+  SyncGroupsListByDatabaseNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing SyncGroups operations. */
 export class SyncGroupsImpl implements SyncGroups {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class SyncGroups class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -69,7 +73,7 @@ export class SyncGroupsImpl implements SyncGroups {
    */
   public listSyncDatabaseIds(
     locationName: string,
-    options?: SyncGroupsListSyncDatabaseIdsOptionalParams
+    options?: SyncGroupsListSyncDatabaseIdsOptionalParams,
   ): PagedAsyncIterableIterator<SyncDatabaseIdProperties> {
     const iter = this.listSyncDatabaseIdsPagingAll(locationName, options);
     return {
@@ -79,37 +83,53 @@ export class SyncGroupsImpl implements SyncGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listSyncDatabaseIdsPagingPage(locationName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listSyncDatabaseIdsPagingPage(
+          locationName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listSyncDatabaseIdsPagingPage(
     locationName: string,
-    options?: SyncGroupsListSyncDatabaseIdsOptionalParams
+    options?: SyncGroupsListSyncDatabaseIdsOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<SyncDatabaseIdProperties[]> {
-    let result = await this._listSyncDatabaseIds(locationName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SyncGroupsListSyncDatabaseIdsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listSyncDatabaseIds(locationName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listSyncDatabaseIdsNext(
         locationName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listSyncDatabaseIdsPagingAll(
     locationName: string,
-    options?: SyncGroupsListSyncDatabaseIdsOptionalParams
+    options?: SyncGroupsListSyncDatabaseIdsOptionalParams,
   ): AsyncIterableIterator<SyncDatabaseIdProperties> {
     for await (const page of this.listSyncDatabaseIdsPagingPage(
       locationName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -129,14 +149,14 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsListHubSchemasOptionalParams
+    options?: SyncGroupsListHubSchemasOptionalParams,
   ): PagedAsyncIterableIterator<SyncFullSchemaProperties> {
     const iter = this.listHubSchemasPagingAll(
       resourceGroupName,
       serverName,
       databaseName,
       syncGroupName,
-      options
+      options,
     );
     return {
       next() {
@@ -145,15 +165,19 @@ export class SyncGroupsImpl implements SyncGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listHubSchemasPagingPage(
           resourceGroupName,
           serverName,
           databaseName,
           syncGroupName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -162,17 +186,24 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsListHubSchemasOptionalParams
+    options?: SyncGroupsListHubSchemasOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<SyncFullSchemaProperties[]> {
-    let result = await this._listHubSchemas(
-      resourceGroupName,
-      serverName,
-      databaseName,
-      syncGroupName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SyncGroupsListHubSchemasResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listHubSchemas(
+        resourceGroupName,
+        serverName,
+        databaseName,
+        syncGroupName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listHubSchemasNext(
         resourceGroupName,
@@ -180,10 +211,12 @@ export class SyncGroupsImpl implements SyncGroups {
         databaseName,
         syncGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -192,14 +225,14 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsListHubSchemasOptionalParams
+    options?: SyncGroupsListHubSchemasOptionalParams,
   ): AsyncIterableIterator<SyncFullSchemaProperties> {
     for await (const page of this.listHubSchemasPagingPage(
       resourceGroupName,
       serverName,
       databaseName,
       syncGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -224,8 +257,8 @@ export class SyncGroupsImpl implements SyncGroups {
     syncGroupName: string,
     startTime: string,
     endTime: string,
-    typeParam: Enum76,
-    options?: SyncGroupsListLogsOptionalParams
+    typeParam: SyncGroupsType,
+    options?: SyncGroupsListLogsOptionalParams,
   ): PagedAsyncIterableIterator<SyncGroupLogProperties> {
     const iter = this.listLogsPagingAll(
       resourceGroupName,
@@ -235,7 +268,7 @@ export class SyncGroupsImpl implements SyncGroups {
       startTime,
       endTime,
       typeParam,
-      options
+      options,
     );
     return {
       next() {
@@ -244,7 +277,10 @@ export class SyncGroupsImpl implements SyncGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listLogsPagingPage(
           resourceGroupName,
           serverName,
@@ -253,9 +289,10 @@ export class SyncGroupsImpl implements SyncGroups {
           startTime,
           endTime,
           typeParam,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -266,35 +303,41 @@ export class SyncGroupsImpl implements SyncGroups {
     syncGroupName: string,
     startTime: string,
     endTime: string,
-    typeParam: Enum76,
-    options?: SyncGroupsListLogsOptionalParams
+    typeParam: SyncGroupsType,
+    options?: SyncGroupsListLogsOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<SyncGroupLogProperties[]> {
-    let result = await this._listLogs(
-      resourceGroupName,
-      serverName,
-      databaseName,
-      syncGroupName,
-      startTime,
-      endTime,
-      typeParam,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
-    while (continuationToken) {
-      result = await this._listLogsNext(
+    let result: SyncGroupsListLogsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listLogs(
         resourceGroupName,
         serverName,
         databaseName,
         syncGroupName,
         startTime,
         endTime,
-        continuationToken,
         typeParam,
-        options
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+    while (continuationToken) {
+      result = await this._listLogsNext(
+        resourceGroupName,
+        serverName,
+        databaseName,
+        syncGroupName,
+        continuationToken,
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -305,8 +348,8 @@ export class SyncGroupsImpl implements SyncGroups {
     syncGroupName: string,
     startTime: string,
     endTime: string,
-    typeParam: Enum76,
-    options?: SyncGroupsListLogsOptionalParams
+    typeParam: SyncGroupsType,
+    options?: SyncGroupsListLogsOptionalParams,
   ): AsyncIterableIterator<SyncGroupLogProperties> {
     for await (const page of this.listLogsPagingPage(
       resourceGroupName,
@@ -316,7 +359,7 @@ export class SyncGroupsImpl implements SyncGroups {
       startTime,
       endTime,
       typeParam,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -334,13 +377,13 @@ export class SyncGroupsImpl implements SyncGroups {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: SyncGroupsListByDatabaseOptionalParams
+    options?: SyncGroupsListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<SyncGroup> {
     const iter = this.listByDatabasePagingAll(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     );
     return {
       next() {
@@ -349,14 +392,18 @@ export class SyncGroupsImpl implements SyncGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByDatabasePagingPage(
           resourceGroupName,
           serverName,
           databaseName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -364,26 +411,35 @@ export class SyncGroupsImpl implements SyncGroups {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: SyncGroupsListByDatabaseOptionalParams
+    options?: SyncGroupsListByDatabaseOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<SyncGroup[]> {
-    let result = await this._listByDatabase(
-      resourceGroupName,
-      serverName,
-      databaseName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SyncGroupsListByDatabaseResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByDatabase(
+        resourceGroupName,
+        serverName,
+        databaseName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByDatabaseNext(
         resourceGroupName,
         serverName,
         databaseName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -391,13 +447,13 @@ export class SyncGroupsImpl implements SyncGroups {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: SyncGroupsListByDatabaseOptionalParams
+    options?: SyncGroupsListByDatabaseOptionalParams,
   ): AsyncIterableIterator<SyncGroup> {
     for await (const page of this.listByDatabasePagingPage(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -410,11 +466,11 @@ export class SyncGroupsImpl implements SyncGroups {
    */
   private _listSyncDatabaseIds(
     locationName: string,
-    options?: SyncGroupsListSyncDatabaseIdsOptionalParams
+    options?: SyncGroupsListSyncDatabaseIdsOptionalParams,
   ): Promise<SyncGroupsListSyncDatabaseIdsResponse> {
     return this.client.sendOperationRequest(
       { locationName, options },
-      listSyncDatabaseIdsOperationSpec
+      listSyncDatabaseIdsOperationSpec,
     );
   }
 
@@ -432,25 +488,24 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsRefreshHubSchemaOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: SyncGroupsRefreshHubSchemaOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -459,8 +514,8 @@ export class SyncGroupsImpl implements SyncGroups {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -468,20 +523,28 @@ export class SyncGroupsImpl implements SyncGroups {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serverName, databaseName, syncGroupName, options },
-      refreshHubSchemaOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serverName,
+        databaseName,
+        syncGroupName,
+        options,
+      },
+      spec: refreshHubSchemaOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -498,14 +561,14 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsRefreshHubSchemaOptionalParams
+    options?: SyncGroupsRefreshHubSchemaOptionalParams,
   ): Promise<void> {
     const poller = await this.beginRefreshHubSchema(
       resourceGroupName,
       serverName,
       databaseName,
       syncGroupName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -524,11 +587,11 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsListHubSchemasOptionalParams
+    options?: SyncGroupsListHubSchemasOptionalParams,
   ): Promise<SyncGroupsListHubSchemasResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, syncGroupName, options },
-      listHubSchemasOperationSpec
+      listHubSchemasOperationSpec,
     );
   }
 
@@ -551,8 +614,8 @@ export class SyncGroupsImpl implements SyncGroups {
     syncGroupName: string,
     startTime: string,
     endTime: string,
-    typeParam: Enum76,
-    options?: SyncGroupsListLogsOptionalParams
+    typeParam: SyncGroupsType,
+    options?: SyncGroupsListLogsOptionalParams,
   ): Promise<SyncGroupsListLogsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -563,9 +626,9 @@ export class SyncGroupsImpl implements SyncGroups {
         startTime,
         endTime,
         typeParam,
-        options
+        options,
       },
-      listLogsOperationSpec
+      listLogsOperationSpec,
     );
   }
 
@@ -583,11 +646,11 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsCancelSyncOptionalParams
+    options?: SyncGroupsCancelSyncOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, syncGroupName, options },
-      cancelSyncOperationSpec
+      cancelSyncOperationSpec,
     );
   }
 
@@ -605,11 +668,11 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsTriggerSyncOptionalParams
+    options?: SyncGroupsTriggerSyncOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, syncGroupName, options },
-      triggerSyncOperationSpec
+      triggerSyncOperationSpec,
     );
   }
 
@@ -627,11 +690,11 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsGetOptionalParams
+    options?: SyncGroupsGetOptionalParams,
   ): Promise<SyncGroupsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, syncGroupName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -651,30 +714,29 @@ export class SyncGroupsImpl implements SyncGroups {
     databaseName: string,
     syncGroupName: string,
     parameters: SyncGroup,
-    options?: SyncGroupsCreateOrUpdateOptionalParams
+    options?: SyncGroupsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SyncGroupsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SyncGroupsCreateOrUpdateResponse>,
       SyncGroupsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<SyncGroupsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -683,8 +745,8 @@ export class SyncGroupsImpl implements SyncGroups {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -692,27 +754,32 @@ export class SyncGroupsImpl implements SyncGroups {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serverName,
         databaseName,
         syncGroupName,
         parameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      SyncGroupsCreateOrUpdateResponse,
+      OperationState<SyncGroupsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -731,7 +798,7 @@ export class SyncGroupsImpl implements SyncGroups {
     databaseName: string,
     syncGroupName: string,
     parameters: SyncGroup,
-    options?: SyncGroupsCreateOrUpdateOptionalParams
+    options?: SyncGroupsCreateOrUpdateOptionalParams,
   ): Promise<SyncGroupsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
@@ -739,7 +806,7 @@ export class SyncGroupsImpl implements SyncGroups {
       databaseName,
       syncGroupName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -758,25 +825,24 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: SyncGroupsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -785,8 +851,8 @@ export class SyncGroupsImpl implements SyncGroups {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -794,20 +860,28 @@ export class SyncGroupsImpl implements SyncGroups {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serverName, databaseName, syncGroupName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serverName,
+        databaseName,
+        syncGroupName,
+        options,
+      },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -824,14 +898,14 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncGroupsDeleteOptionalParams
+    options?: SyncGroupsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       serverName,
       databaseName,
       syncGroupName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -852,30 +926,29 @@ export class SyncGroupsImpl implements SyncGroups {
     databaseName: string,
     syncGroupName: string,
     parameters: SyncGroup,
-    options?: SyncGroupsUpdateOptionalParams
+    options?: SyncGroupsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SyncGroupsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SyncGroupsUpdateResponse>,
       SyncGroupsUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<SyncGroupsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -884,8 +957,8 @@ export class SyncGroupsImpl implements SyncGroups {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -893,27 +966,32 @@ export class SyncGroupsImpl implements SyncGroups {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serverName,
         databaseName,
         syncGroupName,
         parameters,
-        options
+        options,
       },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      SyncGroupsUpdateResponse,
+      OperationState<SyncGroupsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -932,7 +1010,7 @@ export class SyncGroupsImpl implements SyncGroups {
     databaseName: string,
     syncGroupName: string,
     parameters: SyncGroup,
-    options?: SyncGroupsUpdateOptionalParams
+    options?: SyncGroupsUpdateOptionalParams,
   ): Promise<SyncGroupsUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
@@ -940,7 +1018,7 @@ export class SyncGroupsImpl implements SyncGroups {
       databaseName,
       syncGroupName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -957,11 +1035,11 @@ export class SyncGroupsImpl implements SyncGroups {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: SyncGroupsListByDatabaseOptionalParams
+    options?: SyncGroupsListByDatabaseOptionalParams,
   ): Promise<SyncGroupsListByDatabaseResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, options },
-      listByDatabaseOperationSpec
+      listByDatabaseOperationSpec,
     );
   }
 
@@ -974,11 +1052,11 @@ export class SyncGroupsImpl implements SyncGroups {
   private _listSyncDatabaseIdsNext(
     locationName: string,
     nextLink: string,
-    options?: SyncGroupsListSyncDatabaseIdsNextOptionalParams
+    options?: SyncGroupsListSyncDatabaseIdsNextOptionalParams,
   ): Promise<SyncGroupsListSyncDatabaseIdsNextResponse> {
     return this.client.sendOperationRequest(
       { locationName, nextLink, options },
-      listSyncDatabaseIdsNextOperationSpec
+      listSyncDatabaseIdsNextOperationSpec,
     );
   }
 
@@ -998,7 +1076,7 @@ export class SyncGroupsImpl implements SyncGroups {
     databaseName: string,
     syncGroupName: string,
     nextLink: string,
-    options?: SyncGroupsListHubSchemasNextOptionalParams
+    options?: SyncGroupsListHubSchemasNextOptionalParams,
   ): Promise<SyncGroupsListHubSchemasNextResponse> {
     return this.client.sendOperationRequest(
       {
@@ -1007,9 +1085,9 @@ export class SyncGroupsImpl implements SyncGroups {
         databaseName,
         syncGroupName,
         nextLink,
-        options
+        options,
       },
-      listHubSchemasNextOperationSpec
+      listHubSchemasNextOperationSpec,
     );
   }
 
@@ -1020,10 +1098,7 @@ export class SyncGroupsImpl implements SyncGroups {
    * @param serverName The name of the server.
    * @param databaseName The name of the database on which the sync group is hosted.
    * @param syncGroupName The name of the sync group.
-   * @param startTime Get logs generated after this time.
-   * @param endTime Get logs generated before this time.
    * @param nextLink The nextLink from the previous successful call to the ListLogs method.
-   * @param typeParam The types of logs to retrieve.
    * @param options The options parameters.
    */
   private _listLogsNext(
@@ -1031,11 +1106,8 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    startTime: string,
-    endTime: string,
     nextLink: string,
-    typeParam: Enum76,
-    options?: SyncGroupsListLogsNextOptionalParams
+    options?: SyncGroupsListLogsNextOptionalParams,
   ): Promise<SyncGroupsListLogsNextResponse> {
     return this.client.sendOperationRequest(
       {
@@ -1043,13 +1115,10 @@ export class SyncGroupsImpl implements SyncGroups {
         serverName,
         databaseName,
         syncGroupName,
-        startTime,
-        endTime,
         nextLink,
-        typeParam,
-        options
+        options,
       },
-      listLogsNextOperationSpec
+      listLogsNextOperationSpec,
     );
   }
 
@@ -1067,11 +1136,11 @@ export class SyncGroupsImpl implements SyncGroups {
     serverName: string,
     databaseName: string,
     nextLink: string,
-    options?: SyncGroupsListByDatabaseNextOptionalParams
+    options?: SyncGroupsListByDatabaseNextOptionalParams,
   ): Promise<SyncGroupsListByDatabaseNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, nextLink, options },
-      listByDatabaseNextOperationSpec
+      listByDatabaseNextOperationSpec,
     );
   }
 }
@@ -1079,78 +1148,74 @@ export class SyncGroupsImpl implements SyncGroups {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listSyncDatabaseIdsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/syncDatabaseIds",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/syncDatabaseIds",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncDatabaseIdListResult
+      bodyMapper: Mappers.SyncDatabaseIdListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.locationName
+    Parameters.locationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const refreshHubSchemaOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/refreshHubSchema",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/refreshHubSchema",
   httpMethod: "POST",
   responses: { 200: {}, 201: {}, 202: {}, 204: {}, default: {} },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
-  serializer
+  serializer,
 };
 const listHubSchemasOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/hubSchemas",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/hubSchemas",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncFullSchemaPropertiesListResult
+      bodyMapper: Mappers.SyncFullSchemaPropertiesListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listLogsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/logs",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/logs",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncGroupLogListResult
+      bodyMapper: Mappers.SyncGroupLogListResult,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [
-    Parameters.apiVersion2,
+    Parameters.apiVersion3,
     Parameters.startTime1,
     Parameters.endTime1,
     Parameters.typeParam,
-    Parameters.continuationToken
+    Parameters.continuationToken,
   ],
   urlParameters: [
     Parameters.$host,
@@ -1158,197 +1223,188 @@ const listLogsOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const cancelSyncOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/cancelSync",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/cancelSync",
   httpMethod: "POST",
   responses: { 200: {}, default: {} },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
-  serializer
+  serializer,
 };
 const triggerSyncOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/triggerSync",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}/triggerSync",
   httpMethod: "POST",
   responses: { 200: {}, default: {} },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
     201: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
     202: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
     204: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters75,
-  queryParameters: [Parameters.apiVersion2],
+  requestBody: Parameters.parameters53,
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
   httpMethod: "DELETE",
   responses: { 200: {}, 201: {}, 202: {}, 204: {}, default: {} },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups/{syncGroupName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
     201: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
     202: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
     204: {
-      bodyMapper: Mappers.SyncGroup
+      bodyMapper: Mappers.SyncGroup,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters75,
-  queryParameters: [Parameters.apiVersion2],
+  requestBody: Parameters.parameters53,
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByDatabaseOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/syncGroups",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncGroupListResult
+      bodyMapper: Mappers.SyncGroupListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.databaseName
+    Parameters.databaseName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listSyncDatabaseIdsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncDatabaseIdListResult
+      bodyMapper: Mappers.SyncDatabaseIdListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.locationName
+    Parameters.locationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listHubSchemasNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncFullSchemaPropertiesListResult
+      bodyMapper: Mappers.SyncFullSchemaPropertiesListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -1356,27 +1412,20 @@ const listHubSchemasNextOperationSpec: coreClient.OperationSpec = {
     Parameters.serverName,
     Parameters.databaseName,
     Parameters.nextLink,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listLogsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncGroupLogListResult
+      bodyMapper: Mappers.SyncGroupLogListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [
-    Parameters.apiVersion2,
-    Parameters.startTime1,
-    Parameters.endTime1,
-    Parameters.typeParam,
-    Parameters.continuationToken
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -1384,29 +1433,28 @@ const listLogsNextOperationSpec: coreClient.OperationSpec = {
     Parameters.serverName,
     Parameters.databaseName,
     Parameters.nextLink,
-    Parameters.syncGroupName
+    Parameters.syncGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByDatabaseNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SyncGroupListResult
+      bodyMapper: Mappers.SyncGroupListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

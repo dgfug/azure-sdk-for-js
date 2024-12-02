@@ -1,14 +1,55 @@
-## 5.0.0-beta.1 (2021-11-08)
+# Release History
 
-This is the first preview for the new version of the `@azure/arm-mysql` package that follows the new [guidelines for TypeScript SDKs](https://azure.github.io/azure-sdk/typescript_introduction.html) for Azure services.
+## 5.1.1 (Unreleased)
 
-While this package remains auto generated, the SDK generator itself has undergone changes to comply with the above guidelines in order to generate packages that are idiomatic to the JavaScript/TypeScript ecosystem and consistent with other packages for Azure services. For more on this, please see [State of the Azure SDK 2021](https://devblogs.microsoft.com/azure-sdk/state-of-the-azure-sdk-2021/).
+### Features Added
 
-Please note that this version has breaking changes, all of which were made after careful consideration during the authoring of the guidelines and user studies.
+### Breaking Changes
 
-**Noteworthy changes and features**
-- Authentication: The packages `@azure/ms-rest-nodeauth` or `@azure/ms-rest-browserauth` are no longer supported. Use package [@azure/identity](https://www.npmjs.com/package/@azure/identity) instead. Select a credential from Azure Identity examples based on the authentication method of your choice.
-- Callbacks: Method overloads that used callbacks have been removed and the use of promises is encouraged instead.
-- List operations now return an iterable result that follows the `PagedAsyncIterableIterator` interface as opposed to the previous model where you had to make a new request using the link to the next page.
-- Long running operations i.e. the Lro related object returned by methods whose names started with `begin`, now uses `pollUntilDone` to check whether the request is finished, instead of `pollUntilFinished`. To get the final result, use the corresponding method that will have the suffix `AndWait`.
-- The SDK only supports ECMAScript 2015 (ES6) and beyond, all projects that referenced this SDK should be upgraded to use ES6.
+### Bugs Fixed
+
+### Other Changes
+
+## 5.1.0 (2022-12-01)
+    
+### Features Added
+
+  - Added Interface Advisor
+  - Added Interface Configuration
+  - Added Interface Database
+  - Added Interface FirewallRule
+  - Added Interface LogFile
+  - Added Interface PrivateEndpointConnection
+  - Added Interface PrivateLinkResource
+  - Added Interface ProxyResource
+  - Added Interface QueryStatistic
+  - Added Interface QueryText
+  - Added Interface RecommendationAction
+  - Added Interface RecoverableServerResource
+  - Added Interface Server
+  - Added Interface ServerAdministratorResource
+  - Added Interface ServerKey
+  - Added Interface ServerPropertiesForDefaultCreate
+  - Added Interface ServerPropertiesForGeoRestore
+  - Added Interface ServerPropertiesForReplica
+  - Added Interface ServerPropertiesForRestore
+  - Added Interface ServerSecurityAlertPolicy
+  - Added Interface TrackedResource
+  - Added Interface VirtualNetworkRule
+  - Added Interface WaitStatistic
+    
+## 5.0.1 (2022-04-25)
+
+### Features Added
+
+  - Bug fix
+
+## 5.0.0 (2021-12-21)
+
+The package of @azure/arm-mysql is using our next generation design principles since version 5.0.0, which contains breaking changes.
+
+To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
+
+To migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).
+
+To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart ).

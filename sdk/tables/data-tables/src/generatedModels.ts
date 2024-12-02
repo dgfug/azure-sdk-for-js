@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export {
   ServiceGetStatisticsResponse as GetStatisticsResponse,
@@ -29,5 +29,5 @@ export {
   Logging,
   TableSetAccessPolicyHeaders,
   ServiceSetPropertiesHeaders,
-  TableUpdateEntityHeaders
-} from "./generated/models";
+  TableUpdateEntityHeaders,
+} from "./generated/models/index.js";

@@ -6,10 +6,10 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VpnServerConfigurationsAssociatedWithVirtualWanListOptionalParams,
-  VpnServerConfigurationsAssociatedWithVirtualWanListResponse
+  VpnServerConfigurationsAssociatedWithVirtualWanListResponse,
 } from "../models";
 
 /** Interface representing a VpnServerConfigurationsAssociatedWithVirtualWan. */
@@ -23,12 +23,10 @@ export interface VpnServerConfigurationsAssociatedWithVirtualWan {
   beginList(
     resourceGroupName: string,
     virtualWANName: string,
-    options?: VpnServerConfigurationsAssociatedWithVirtualWanListOptionalParams
+    options?: VpnServerConfigurationsAssociatedWithVirtualWanListOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VpnServerConfigurationsAssociatedWithVirtualWanListResponse
-      >,
+    SimplePollerLike<
+      OperationState<VpnServerConfigurationsAssociatedWithVirtualWanListResponse>,
       VpnServerConfigurationsAssociatedWithVirtualWanListResponse
     >
   >;
@@ -41,6 +39,6 @@ export interface VpnServerConfigurationsAssociatedWithVirtualWan {
   beginListAndWait(
     resourceGroupName: string,
     virtualWANName: string,
-    options?: VpnServerConfigurationsAssociatedWithVirtualWanListOptionalParams
+    options?: VpnServerConfigurationsAssociatedWithVirtualWanListOptionalParams,
   ): Promise<VpnServerConfigurationsAssociatedWithVirtualWanListResponse>;
 }

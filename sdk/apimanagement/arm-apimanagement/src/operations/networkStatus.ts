@@ -10,7 +10,7 @@ import { NetworkStatus } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   NetworkStatusListByServiceOptionalParams,
   NetworkStatusListByServiceResponse,
@@ -20,20 +20,20 @@ import {
 
 /** Class containing NetworkStatus operations. */
 export class NetworkStatusImpl implements NetworkStatus {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class NetworkStatus class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Gets the Connectivity Status to the external resources on which the Api Management service depends
    * from inside the Cloud Service. This also returns the DNS Servers as visible to the CloudService.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -51,7 +51,7 @@ export class NetworkStatusImpl implements NetworkStatus {
   /**
    * Gets the Connectivity Status to the external resources on which the Api Management service depends
    * from inside the Cloud Service. This also returns the DNS Servers as visible to the CloudService.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param locationName Location in which the API Management service is deployed. This is one of the
    *                     Azure Regions like West US, East US, South Central US.

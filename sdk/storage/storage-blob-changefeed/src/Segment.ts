@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { BlobChangeFeedEvent } from "./models/BlobChangeFeedEvent";
-import { Shard } from "./Shard";
-import { SegmentCursor, ShardCursor } from "./models/ChangeFeedCursor";
-import { CommonOptions } from "@azure/storage-blob";
-import { AbortSignalLike } from "@azure/core-http";
-import { createSpan } from "./utils/tracing";
-import { SpanStatusCode } from "@azure/core-tracing";
+import type { BlobChangeFeedEvent } from "./models/BlobChangeFeedEvent";
+import type { Shard } from "./Shard";
+import type { SegmentCursor, ShardCursor } from "./models/ChangeFeedCursor";
+import type { CommonOptions } from "@azure/storage-blob";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import { tracingClient } from "./utils/tracing";
 
 /**
  * Options to configure {@link Segment.getChange} operation.
@@ -40,7 +39,7 @@ export class Segment {
     shards: Shard[],
     shardIndex: number,
     dateTime: Date,
-    private readonly manifestPath: string
+    private readonly manifestPath: string,
   ) {
     this.shards = shards;
     this.shardIndex = shardIndex;
@@ -55,11 +54,9 @@ export class Segment {
   }
 
   public async getChange(
-    options: SegmentGetChangeOptions = {}
+    options: SegmentGetChangeOptions = {},
   ): Promise<BlobChangeFeedEvent | undefined> {
-    const { span, updatedOptions } = createSpan("Segment-getChange", options);
-
-    try {
+    return tracingClient.withSpan("Segment-getChange", options, async (updatedOptions) => {
       if (this.shardIndex >= this.shards.length || this.shardIndex < 0) {
         throw new Error("shardIndex invalid.");
       }
@@ -74,7 +71,7 @@ export class Segment {
         const currentShard = this.shards[this.shardIndex];
         event = await currentShard.getChange({
           abortSignal: options.abortSignal,
-          tracingOptions: updatedOptions.tracingOptions
+          tracingOptions: updatedOptions.tracingOptions,
         });
 
         if (!currentShard.hasNext()) {
@@ -85,15 +82,7 @@ export class Segment {
         this.shardIndex = (this.shardIndex + 1) % this.shards.length;
       }
       return event;
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 
   public getCursor(): SegmentCursor {
@@ -108,7 +97,7 @@ export class Segment {
     return {
       SegmentPath: this.manifestPath,
       ShardCursors: shardCursors,
-      CurrentShardPath: this.shards[this.shardIndex].shardPath
+      CurrentShardPath: this.shards[this.shardIndex].shardPath,
     };
   }
 }

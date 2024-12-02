@@ -10,21 +10,21 @@ import { Capabilities } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   CapabilitiesListByLocationOptionalParams,
-  CapabilitiesListByLocationResponse
+  CapabilitiesListByLocationResponse,
 } from "../models";
 
 /** Class containing Capabilities operations. */
 export class CapabilitiesImpl implements Capabilities {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class Capabilities class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -35,11 +35,11 @@ export class CapabilitiesImpl implements Capabilities {
    */
   listByLocation(
     locationName: string,
-    options?: CapabilitiesListByLocationOptionalParams
+    options?: CapabilitiesListByLocationOptionalParams,
   ): Promise<CapabilitiesListByLocationResponse> {
     return this.client.sendOperationRequest(
       { locationName, options },
-      listByLocationOperationSpec
+      listByLocationOperationSpec,
     );
   }
 }
@@ -47,21 +47,20 @@ export class CapabilitiesImpl implements Capabilities {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByLocationOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/capabilities",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/capabilities",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.LocationCapabilities
+      bodyMapper: Mappers.LocationCapabilities,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2, Parameters.include],
+  queryParameters: [Parameters.apiVersion3, Parameters.include],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.locationName
+    Parameters.locationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -1,11 +1,11 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how the receive() function can be used to receive Service Bus messages
  * in a stream.
  *
- * Setup: Please run "sendMessages.ts" sample before running this to populate the queue/topic
+ * Setup: Please run "sendMessages" sample before running this to populate the queue/topic
  *
  * @summary Demonstrates how to receive Service Bus messages in a stream
  * @azsdk-weight 90
@@ -16,19 +16,21 @@ import {
   isServiceBusError,
   ProcessErrorArgs,
   ServiceBusClient,
-  ServiceBusReceivedMessage
+  ServiceBusReceivedMessage,
 } from "@azure/service-bus";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
 
 export async function main() {
-  const sbClient = new ServiceBusClient(connectionString);
+  const credential = new DefaultAzureCredential();
+  const sbClient = new ServiceBusClient(fqdn, credential);
 
   // - If receiving from a subscription you can use the createReceiver(topicName, subscriptionName) overload
   // instead.
@@ -60,7 +62,7 @@ export async function main() {
               // what is considered fatal for your program.
               console.log(
                 `An unrecoverable error occurred. Stopping processing. ${args.error.code}`,
-                args.error
+                args.error,
               );
               await subscription.close();
               break;
@@ -73,7 +75,7 @@ export async function main() {
               break;
           }
         }
-      }
+      },
     });
 
     // Waiting long enough before closing the receiver to receive messages

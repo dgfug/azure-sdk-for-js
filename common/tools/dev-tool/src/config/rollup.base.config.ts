@@ -1,143 +1,215 @@
-import { RollupWarning, WarningHandler } from "rollup";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
+import {
+  LoadResult,
+  PluginContext,
+  RollupOptions,
+  RollupLog,
+  WarningHandlerWithDefault,
+} from "rollup";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import cjs from "@rollup/plugin-commonjs";
-import sourcemaps from "rollup-plugin-sourcemaps";
 import multiEntry from "@rollup/plugin-multi-entry";
 import json from "@rollup/plugin-json";
-
+import * as path from "node:path";
+import { readFile } from "node:fs/promises";
 import nodeBuiltins from "builtin-modules";
+import { createPrinter } from "../util/printer";
+
+const { debug } = createPrinter("rollup.base.config");
 
 interface PackageJson {
   name: string;
-  module: string;
+  module?: string;
   dependencies: Record<string, string>;
   devDependencies: Record<string, string>;
-}
-
-/**
- * Gets the proper configuration needed for rollup's commonJS plugin for @opentelemetry/api.
- *
- * NOTE: this manual configuration is only needed because OpenTelemetry uses an
- * __exportStar downleveled helper function to declare its exports which confuses
- * rollup's automatic discovery mechanism.
- *
- * @returns an object reference that can be `...`'d into your cjs() configuration.
- */
-export function openTelemetryCommonJs(): Record<string, string[]> {
-  const namedExports: Record<string, string[]> = {};
-
-  for (const key of ["@opentelemetry/api", "@azure/core-tracing/node_modules/@opentelemetry/api"]) {
-    namedExports[key] = [
-      "SpanKind",
-      "TraceFlags",
-      "getSpan",
-      "setSpan",
-      "SpanStatusCode",
-      "getSpanContext",
-      "setSpanContext"
-    ];
-  }
-
-  const releasedOpenTelemetryVersions = ["0.10.2", "1.0.0-rc.0"];
-
-  for (const version of releasedOpenTelemetryVersions) {
-    namedExports[
-      // working around a limitation in the rollup common.js plugin - it's not able to resolve these modules so the named exports listed above will not get applied. We have to drill down to the actual path.
-      `../../../common/temp/node_modules/.pnpm/@opentelemetry+api@${version}/node_modules/@opentelemetry/api/build/src/index.js`
-    ] = [
-      "SpanKind",
-      "TraceFlags",
-      "getSpan",
-      "setSpan",
-      "StatusCode",
-      "CanonicalCode",
-      "getSpanContext",
-      "setSpanContext"
-    ];
-  }
-
-  return namedExports;
 }
 
 // #region Warning Handler
 
 /**
- * A function that can determine whether a rollupwarning should be ignored. If
+ * A function that can determine whether a rollup warning should be ignored. If
  * the function returns `true`, then the warning will not be displayed.
  */
-export type WarningInhibitor = (warning: RollupWarning) => boolean;
+export type WarningInhibitor = (warning: RollupLog) => boolean;
 
-function ignoreNiseSinonEvalWarnings(warning: RollupWarning): boolean {
+function matchesPathSegments(str: string | undefined, segments: string[]): boolean {
+  return !str ? false : str.includes(segments.join("/")) || str.includes(segments.join("\\"));
+}
+
+function ignoreNiseSinonEval(warning: RollupLog): boolean {
   return (
     warning.code === "EVAL" &&
-    (warning.id?.includes("node_modules/nise") || warning.id?.includes("node_modules/sinon")) ===
-      true
+    (matchesPathSegments(warning.id, ["node_modules", "nise"]) ||
+      matchesPathSegments(warning.id, ["node_modules", "sinon"]))
   );
 }
 
-function ignoreChaiCircularDependencyWarnings(warning: RollupWarning): boolean {
+function ignoreChaiCircularDependency(warning: RollupLog): boolean {
   return (
     warning.code === "CIRCULAR_DEPENDENCY" &&
-    warning.importer?.includes("node_modules/chai") === true
+    matchesPathSegments(warning.ids?.[0], ["node_modules", "chai"])
   );
 }
 
-const warningInhibitors: Array<(warning: RollupWarning) => boolean> = [
-  ignoreChaiCircularDependencyWarnings,
-  ignoreNiseSinonEvalWarnings
-];
+function ignoreRheaPromiseCircularDependency(warning: RollupLog): boolean {
+  return (
+    warning.code === "CIRCULAR_DEPENDENCY" &&
+    matchesPathSegments(warning.ids?.[0], ["node_modules", "rhea-promise"])
+  );
+}
+
+function ignoreOpenTelemetryCircularDependency(warning: RollupLog): boolean {
+  return (
+    warning.code === "CIRCULAR_DEPENDENCY" &&
+    matchesPathSegments(warning.ids?.[0], ["node_modules", "@opentelemetry"])
+  );
+}
+
+function ignoreOpenTelemetryThisIsUndefined(warning: RollupLog): boolean {
+  return (
+    warning.code === "THIS_IS_UNDEFINED" &&
+    matchesPathSegments(warning.id, ["node_modules", "@opentelemetry"])
+  );
+}
+
+/**
+ * We ignore these warnings because some packages explicitly browser-map node builtins to `false`. Rollup will then
+ * complain that node-resolve's empty module does not export symbols from them, but as long as the package doesn't
+ * actually use those symbols at runtime in the browser tests, it should be fine.
+ */
+function ignoreMissingExportsFromEmpty(warning: RollupLog): boolean {
+  return (
+    // I absolutely cannot explain why, but node-resolve's internal module ID for empty.js begins with a null byte.
+    warning.code === "MISSING_EXPORT" && warning.exporter?.trim() === "\0node-resolve:empty.js"
+  );
+}
+
+function ignoreExternalModules(warning: RollupLog): boolean {
+  return (
+    (warning.code === "MISSING_GLOBAL_NAME" && nodeBuiltins.includes(warning.id!)) ||
+    (warning.code === "UNRESOLVED_IMPORT" && nodeBuiltins.includes(warning.exporter!)) ||
+    warning.code === "MISSING_NODE_BUILTINS"
+  );
+}
+
+function createWarningInhibitors({
+  ignoreMissingNodeBuiltins,
+}: MakeOnWarnForTestingOptions = {}): Array<(warning: RollupLog) => boolean> {
+  return [
+    ignoreChaiCircularDependency,
+    ignoreRheaPromiseCircularDependency,
+    ignoreNiseSinonEval,
+    ignoreOpenTelemetryCircularDependency,
+    ignoreOpenTelemetryThisIsUndefined,
+    ignoreMissingExportsFromEmpty,
+    ...(ignoreMissingNodeBuiltins ? [ignoreExternalModules] : []),
+  ];
+}
+
+interface MakeOnWarnForTestingOptions {
+  ignoreMissingNodeBuiltins?: boolean;
+}
 
 /**
  * Construct a warning handler for the shared rollup configuration
  * that ignores certain warnings that are not relevant to testing.
  */
-function makeOnWarnForTesting(): (warning: RollupWarning, warn: WarningHandler) => void {
+export function makeOnWarnForTesting(
+  opts: MakeOnWarnForTestingOptions = {},
+): (warning: RollupLog, warn: WarningHandlerWithDefault) => void {
+  const warningInhibitors = createWarningInhibitors(opts);
   return (warning, warn) => {
-    // If every inhibitor returns false (i.e. no inhibitors), then show the warning
-    if (warningInhibitors.every((inhib) => !inhib(warning))) {
-      warn(warning);
+    if (!warningInhibitors.some((inhibited) => inhibited(warning))) {
+      debug("Warning:", warning.code, warning.id, warning.loc);
+      warn(warning, console.warn);
     }
+  };
+}
+
+export function sourcemaps() {
+  return {
+    name: "load-source-maps",
+    async load(this: PluginContext, id: string): Promise<LoadResult> {
+      if (!id.endsWith(".js")) {
+        return null;
+      }
+      if (id.startsWith("\x00")) {
+        // Some Rollup plugins mark virtual modules with \0 prefix. Other plugins should not try to process it.
+        //     https://rollupjs.org/plugin-development/#conventions
+        return null;
+      }
+      try {
+        const code = await readFile(id, "utf8");
+        if (code.includes("sourceMappingURL")) {
+          const basePath = path.dirname(id);
+          const mapping = code.match(/sourceMappingURL=(.*)/)?.[1];
+          if (!mapping) {
+            this.warn({ message: "Could not find source mapping in file " + id, id });
+            return null;
+          }
+          if (mapping.startsWith("data:")) {
+            debug("inline source map in", id);
+            if (mapping.startsWith("data:application/json;charset=utf-8;base64,")) {
+              const base64Encoded = mapping.split(",")?.[1];
+              const decoded = Buffer.from(base64Encoded, "base64").toString("utf-8");
+              const map = JSON.parse(decoded);
+              return { code, map };
+            }
+            this.warn({ message: "Unsupported inline source map for" + id, id });
+            return null;
+          }
+          const absoluteMapPath = path.join(basePath, mapping);
+          const map = JSON.parse(await readFile(absoluteMapPath, "utf8"));
+          debug("got map for file ", id);
+          return { code, map };
+        }
+        debug("no map for file ", id);
+        return { code, map: null };
+      } catch (e) {
+        // eslint-disable-next-line no-inner-declarations
+        function toString(error: unknown): string {
+          return error instanceof Error ? (error.stack ?? error.toString()) : JSON.stringify(error);
+        }
+        this.warn({ message: toString(e), id });
+        return null;
+      }
+    },
   };
 }
 
 // #endregion
 
-export function makeBrowserTestConfig() {
+export function makeBrowserTestConfig(pkg: PackageJson): RollupOptions {
+  const module = pkg["module"] ?? "dist-esm/src/index.js";
+  const basePath = path.dirname(path.parse(module).dir);
+
   const config: RollupOptions = {
-    input: {
-      include: ["dist-esm/test/**/*.spec.js"],
-      exclude: ["dist-esm/test/**/node/**"]
-    },
+    input: path.join(basePath, "test", "**", "*.spec.js"),
     output: {
       file: `dist-test/index.browser.js`,
       format: "umd",
-      sourcemap: true
+      sourcemap: true,
     },
     preserveSymlinks: false,
     plugins: [
-      multiEntry({ exports: false }),
+      multiEntry({ exports: false, exclude: ["**/test/**/node/**/*.js"] }),
       nodeResolve({
-        mainFields: ["module", "browser"]
+        mainFields: ["module", "browser"],
+        preferBuiltins: false,
+        browser: true,
       }),
-      cjs({
-        namedExports: {
-          // Chai's strange internal architecture makes it impossible to statically
-          // analyze its exports.
-          chai: ["version", "use", "util", "config", "expect", "should", "assert"],
-          ...openTelemetryCommonJs()
-        }
-      }),
+      cjs(),
       json(),
-      sourcemaps()
-      //viz({ filename: "dist-test/browser-stats.html", sourcemap: true })
+      sourcemaps(),
     ],
     onwarn: makeOnWarnForTesting(),
     // Disable tree-shaking of test code.  In rollup-plugin-node-resolve@5.0.0,
     // rollup started respecting the "sideEffects" field in package.json.  Since
     // our package.json sets "sideEffects=false", this also applies to test
     // code, which causes all tests to be removed by tree-shaking.
-    treeshake: false
+    treeshake: false,
   };
 
   return config;
@@ -148,13 +220,16 @@ export interface ConfigurationOptions {
 }
 
 const defaultConfigurationOptions: ConfigurationOptions = {
-  disableBrowserBundle: false
+  disableBrowserBundle: false,
 };
 
-export function makeConfig(pkg: PackageJson, options?: Partial<ConfigurationOptions>) {
+export function makeConfig(
+  pkg: PackageJson,
+  options?: Partial<ConfigurationOptions>,
+): RollupOptions[] {
   options = {
     ...defaultConfigurationOptions,
-    ...(options ?? {})
+    ...(options ?? {}),
   };
 
   const baseConfig = {
@@ -163,17 +238,17 @@ export function makeConfig(pkg: PackageJson, options?: Partial<ConfigurationOpti
     external: [
       ...nodeBuiltins,
       ...Object.keys(pkg.dependencies),
-      ...Object.keys(pkg.devDependencies)
+      ...Object.keys(pkg.devDependencies),
     ],
     output: { file: "dist/index.js", format: "cjs", sourcemap: true },
     preserveSymlinks: false,
-    plugins: [sourcemaps(), nodeResolve(), cjs()]
+    plugins: [sourcemaps(), nodeResolve(), cjs(), json()],
   };
 
   const config: RollupOptions[] = [baseConfig as RollupOptions];
 
   if (!options.disableBrowserBundle) {
-    config.push(makeBrowserTestConfig());
+    config.push(makeBrowserTestConfig(pkg));
   }
 
   return config;

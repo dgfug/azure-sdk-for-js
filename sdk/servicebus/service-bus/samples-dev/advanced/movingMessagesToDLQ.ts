@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates scenarios as to how a Service Bus message can be explicitly moved to
@@ -13,15 +13,17 @@
  * @azsdk-weight 50
  */
 import { ServiceBusClient, ServiceBusMessage } from "@azure/service-bus";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
-const sbClient: ServiceBusClient = new ServiceBusClient(connectionString);
+const credential = new DefaultAzureCredential();
+const sbClient: ServiceBusClient = new ServiceBusClient(fqdn, credential);
 
 export async function main() {
   try {
@@ -41,10 +43,10 @@ async function sendMessage() {
   const message: ServiceBusMessage = {
     body: {
       name: "Creamy Chicken Pasta",
-      type: "Dinner"
+      type: "Dinner",
     },
     contentType: "application/json",
-    subject: "Recipe"
+    subject: "Recipe",
   };
   await sender.sendMessages(message);
   await sender.close();
@@ -59,12 +61,12 @@ async function receiveMessage() {
   if (messages.length) {
     console.log(
       ">>>>> Deadletter the one message received from the main queue - ",
-      messages[0].body
+      messages[0].body,
     );
     // Deadletter the message received
     await receiver.deadLetterMessage(messages[0], {
       deadLetterReason: "Incorrect Recipe type",
-      deadLetterErrorDescription: "Recipe type does not match preferences."
+      deadLetterErrorDescription: "Recipe type does not match preferences.",
     });
   } else {
     console.log(">>>> Error: No messages were received from the main queue.");

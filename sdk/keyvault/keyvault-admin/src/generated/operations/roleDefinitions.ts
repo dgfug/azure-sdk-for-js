@@ -6,11 +6,11 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { RoleDefinitions } from "../operationsInterfaces";
+import { RoleDefinitions } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { KeyVaultClientContext } from "../keyVaultClientContext";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { KeyVaultClientContext } from "../keyVaultClientContext.js";
 import {
   RoleDefinitionsDeleteOptionalParams,
   RoleDefinitionCreateParameters,
@@ -22,9 +22,9 @@ import {
   RoleDefinitionsListResponse,
   RoleDefinitionsListNextOptionalParams,
   RoleDefinitionsListNextResponse
-} from "../models";
+} from "../models/index.js";
 
-/** Class representing a RoleDefinitions. */
+/** Class containing RoleDefinitions operations. */
 export class RoleDefinitionsImpl implements RoleDefinitions {
   private readonly client: KeyVaultClientContext;
 

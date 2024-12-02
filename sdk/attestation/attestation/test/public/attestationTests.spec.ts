@@ -1,31 +1,27 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { assert, expect, use as chaiUse } from "chai";
-import { Context } from "mocha";
-import chaiPromises from "chai-as-promised";
-chaiUse(chaiPromises);
-
+// Licensed under the MIT License.
 import { Recorder } from "@azure-tools/test-recorder";
 
+import type { EndpointType } from "../utils/recordedClient.js";
 import {
   createRecordedAdminClient,
   createRecordedClient,
-  createRecorder,
-  EndpointType
-} from "../utils/recordedClient";
-import * as base64url from "../utils/base64url";
+  recorderOptions,
+} from "../utils/recordedClient.js";
+import * as base64url from "../utils/base64url.js";
 
-import { KnownAttestationType } from "../../src";
+import { KnownAttestationType } from "../../src/index.js";
+import { describe, it, assert, expect, beforeEach, afterEach } from "vitest";
 
-describe("[AAD] Attestation Client", function() {
+describe("[AAD] Attestation Client", function () {
   let recorder: Recorder;
 
-  beforeEach(function(this: Context) {
-    recorder = createRecorder(this);
+  beforeEach(async function (ctx) {
+    recorder = new Recorder(ctx);
+    await recorder.start(recorderOptions);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
@@ -140,40 +136,40 @@ describe("[AAD] Attestation Client", function() {
     "RHZvOGgyazVkdTFpV0RkQmtBbiswaWlBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0" +
     "tLQoA";
 
-  it("#AttestOpenEnclaveShared", async () => {
+  it("#AttestOpenEnclaveShared", async function () {
     await testOpenEnclave("Shared");
   });
 
-  it("#AttestOpenEnclaveAad", async () => {
+  it("#AttestOpenEnclaveAad", async function () {
     await testOpenEnclave("AAD");
   });
 
-  it("#AttestOpenEnclaveIsolated", async () => {
+  it("#AttestOpenEnclaveIsolated", async function () {
     await testOpenEnclave("Isolated");
   });
 
-  it("#AttestSgxEnclaveShared", async () => {
+  it("#AttestSgxEnclaveShared", async function () {
     await testSgxEnclave("Shared");
   });
 
-  it("#AttestSgxEnclaveAad", async () => {
+  it("#AttestSgxEnclaveAad", async function () {
     await testSgxEnclave("AAD");
   });
 
-  it("#AttestSgxEnclaveIsolated", async () => {
+  it("#AttestSgxEnclaveIsolated", async function () {
     await testSgxEnclave("Isolated");
   });
 
   /* TPM Attestation can only be performed on an AAD or isolated mode client.
    */
-  it("#attestTpm", async () => {
-    const client = createRecordedClient("AAD", true);
-    const adminClient = createRecordedAdminClient("AAD");
+  it("#attestTpm", async function () {
+    const client = createRecordedClient(recorder, "AAD", true);
+    const adminClient = createRecordedAdminClient(recorder, "AAD");
 
     // Set the policy on the instance to a known value.
     await adminClient.setPolicy(
       KnownAttestationType.Tpm,
-      "version=1.0; authorizationrules{=> permit();}; issuancerules{};"
+      "version=1.0; authorizationrules{=> permit();}; issuancerules{};",
     );
 
     const encodedPayload = JSON.stringify({ payload: { type: "aikcert" } });
@@ -194,24 +190,22 @@ describe("[AAD] Attestation Client", function() {
 
   async function testOpenEnclave(endpointType: EndpointType): Promise<void> {
     const binaryRuntimeData = base64url.decodeString(_runtimeData);
-    const client = createRecordedClient(endpointType);
+    const client = createRecordedClient(recorder, endpointType);
 
-    {
-      // You can't specify both runtimeData and runtimeJson.
-      await expect(
-        client.attestOpenEnclave(base64url.decodeString(_openEnclaveReport).subarray(0x10), {
-          runTimeData: binaryRuntimeData,
-          runTimeJson: binaryRuntimeData
-        })
-      ).to.eventually.be.rejectedWith("Cannot provide both runTimeData and runTimeJson");
-    }
+    // You can't specify both runtimeData and runtimeJson.
+    await expect(
+      client.attestOpenEnclave(base64url.decodeString(_openEnclaveReport).subarray(0x10), {
+        runTimeData: binaryRuntimeData,
+        runTimeJson: binaryRuntimeData,
+      }),
+    ).rejects.toThrow("Cannot provide both runTimeData and runTimeJson.");
 
     {
       const attestationResult = await client.attestOpenEnclave(
         base64url.decodeString(_openEnclaveReport),
         {
-          runTimeData: binaryRuntimeData
-        }
+          runTimeData: binaryRuntimeData,
+        },
       );
 
       assert.isNotNull(attestationResult.body.sgxCollateral);
@@ -226,8 +220,8 @@ describe("[AAD] Attestation Client", function() {
       const attestationResult = await client.attestOpenEnclave(
         base64url.decodeString(_openEnclaveReport),
         {
-          runTimeJson: binaryRuntimeData
-        }
+          runTimeJson: binaryRuntimeData,
+        },
       );
 
       assert.isNotNull(attestationResult.body.sgxCollateral);
@@ -246,19 +240,16 @@ describe("[AAD] Attestation Client", function() {
   }
 
   async function testSgxEnclave(endpointType: EndpointType): Promise<void> {
-    const client = createRecordedClient(endpointType);
+    const client = createRecordedClient(recorder, endpointType);
 
     const binaryRuntimeData = base64url.decodeString(_runtimeData);
 
-    {
-      // You can't specify both runtimeData and runtimeJson.
-      await expect(
-        client.attestSgxEnclave(base64url.decodeString(_openEnclaveReport).subarray(0x10), {
-          runTimeData: binaryRuntimeData,
-          runTimeJson: binaryRuntimeData
-        })
-      ).to.eventually.be.rejectedWith("Cannot provide both runTimeData and runTimeJson");
-    }
+    await expect(
+      client.attestSgxEnclave(base64url.decodeString(_openEnclaveReport).subarray(0x10), {
+        runTimeData: binaryRuntimeData,
+        runTimeJson: binaryRuntimeData,
+      }),
+    ).rejects.toThrow("Cannot provide both runTimeData and runTimeJson.");
 
     {
       // An OpenEnclave report has a 16 byte header prepended to an SGX quote.
@@ -267,8 +258,8 @@ describe("[AAD] Attestation Client", function() {
       const attestationResult = await client.attestSgxEnclave(
         base64url.decodeString(_openEnclaveReport).subarray(0x10),
         {
-          runTimeData: binaryRuntimeData
-        }
+          runTimeData: binaryRuntimeData,
+        },
       );
 
       assert.isNotNull(attestationResult.body.sgxCollateral);
@@ -285,8 +276,8 @@ describe("[AAD] Attestation Client", function() {
       const attestationResult = await client.attestSgxEnclave(
         base64url.decodeString(_openEnclaveReport).subarray(0x10),
         {
-          runTimeJson: binaryRuntimeData
-        }
+          runTimeJson: binaryRuntimeData,
+        },
       );
 
       assert.isNotNull(attestationResult.body.sgxCollateral);

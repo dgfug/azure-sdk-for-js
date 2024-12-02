@@ -6,41 +6,49 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { FirewallPolicies } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   FirewallPolicy,
   FirewallPoliciesListNextOptionalParams,
   FirewallPoliciesListOptionalParams,
+  FirewallPoliciesListResponse,
   FirewallPoliciesListAllNextOptionalParams,
   FirewallPoliciesListAllOptionalParams,
+  FirewallPoliciesListAllResponse,
   FirewallPoliciesDeleteOptionalParams,
   FirewallPoliciesGetOptionalParams,
   FirewallPoliciesGetResponse,
   FirewallPoliciesCreateOrUpdateOptionalParams,
   FirewallPoliciesCreateOrUpdateResponse,
-  FirewallPoliciesListResponse,
-  FirewallPoliciesListAllResponse,
+  TagsObject,
+  FirewallPoliciesUpdateTagsOptionalParams,
+  FirewallPoliciesUpdateTagsResponse,
   FirewallPoliciesListNextResponse,
-  FirewallPoliciesListAllNextResponse
+  FirewallPoliciesListAllNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing FirewallPolicies operations. */
 export class FirewallPoliciesImpl implements FirewallPolicies {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class FirewallPolicies class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -51,7 +59,7 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
    */
   public list(
     resourceGroupName: string,
-    options?: FirewallPoliciesListOptionalParams
+    options?: FirewallPoliciesListOptionalParams,
   ): PagedAsyncIterableIterator<FirewallPolicy> {
     const iter = this.listPagingAll(resourceGroupName, options);
     return {
@@ -61,33 +69,45 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(resourceGroupName, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
-    options?: FirewallPoliciesListOptionalParams
+    options?: FirewallPoliciesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<FirewallPolicy[]> {
-    let result = await this._list(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: FirewallPoliciesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
-    options?: FirewallPoliciesListOptionalParams
+    options?: FirewallPoliciesListOptionalParams,
   ): AsyncIterableIterator<FirewallPolicy> {
     for await (const page of this.listPagingPage(resourceGroupName, options)) {
       yield* page;
@@ -99,7 +119,7 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
    * @param options The options parameters.
    */
   public listAll(
-    options?: FirewallPoliciesListAllOptionalParams
+    options?: FirewallPoliciesListAllOptionalParams,
   ): PagedAsyncIterableIterator<FirewallPolicy> {
     const iter = this.listAllPagingAll(options);
     return {
@@ -109,27 +129,39 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
+      },
     };
   }
 
   private async *listAllPagingPage(
-    options?: FirewallPoliciesListAllOptionalParams
+    options?: FirewallPoliciesListAllOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<FirewallPolicy[]> {
-    let result = await this._listAll(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: FirewallPoliciesListAllResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAll(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listAllPagingAll(
-    options?: FirewallPoliciesListAllOptionalParams
+    options?: FirewallPoliciesListAllOptionalParams,
   ): AsyncIterableIterator<FirewallPolicy> {
     for await (const page of this.listAllPagingPage(options)) {
       yield* page;
@@ -145,25 +177,24 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
   async beginDelete(
     resourceGroupName: string,
     firewallPolicyName: string,
-    options?: FirewallPoliciesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: FirewallPoliciesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -172,8 +203,8 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -181,21 +212,23 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, firewallPolicyName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, firewallPolicyName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -207,12 +240,12 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
   async beginDeleteAndWait(
     resourceGroupName: string,
     firewallPolicyName: string,
-    options?: FirewallPoliciesDeleteOptionalParams
+    options?: FirewallPoliciesDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       firewallPolicyName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -226,11 +259,11 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
   get(
     resourceGroupName: string,
     firewallPolicyName: string,
-    options?: FirewallPoliciesGetOptionalParams
+    options?: FirewallPoliciesGetOptionalParams,
   ): Promise<FirewallPoliciesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, firewallPolicyName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -245,30 +278,29 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
     resourceGroupName: string,
     firewallPolicyName: string,
     parameters: FirewallPolicy,
-    options?: FirewallPoliciesCreateOrUpdateOptionalParams
+    options?: FirewallPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<FirewallPoliciesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<FirewallPoliciesCreateOrUpdateResponse>,
       FirewallPoliciesCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<FirewallPoliciesCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -277,8 +309,8 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -286,21 +318,26 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, firewallPolicyName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, firewallPolicyName, parameters, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      FirewallPoliciesCreateOrUpdateResponse,
+      OperationState<FirewallPoliciesCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -314,15 +351,34 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
     resourceGroupName: string,
     firewallPolicyName: string,
     parameters: FirewallPolicy,
-    options?: FirewallPoliciesCreateOrUpdateOptionalParams
+    options?: FirewallPoliciesCreateOrUpdateOptionalParams,
   ): Promise<FirewallPoliciesCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       firewallPolicyName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
+  }
+
+  /**
+   * Updates tags of a Azure Firewall Policy resource.
+   * @param resourceGroupName The name of the resource group.
+   * @param firewallPolicyName The name of the Firewall Policy.
+   * @param parameters Parameters supplied to update Azure Firewall Policy tags.
+   * @param options The options parameters.
+   */
+  updateTags(
+    resourceGroupName: string,
+    firewallPolicyName: string,
+    parameters: TagsObject,
+    options?: FirewallPoliciesUpdateTagsOptionalParams,
+  ): Promise<FirewallPoliciesUpdateTagsResponse> {
+    return this.client.sendOperationRequest(
+      { resourceGroupName, firewallPolicyName, parameters, options },
+      updateTagsOperationSpec,
+    );
   }
 
   /**
@@ -332,11 +388,11 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
    */
   private _list(
     resourceGroupName: string,
-    options?: FirewallPoliciesListOptionalParams
+    options?: FirewallPoliciesListOptionalParams,
   ): Promise<FirewallPoliciesListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -345,7 +401,7 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
    * @param options The options parameters.
    */
   private _listAll(
-    options?: FirewallPoliciesListAllOptionalParams
+    options?: FirewallPoliciesListAllOptionalParams,
   ): Promise<FirewallPoliciesListAllResponse> {
     return this.client.sendOperationRequest({ options }, listAllOperationSpec);
   }
@@ -359,11 +415,11 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
   private _listNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: FirewallPoliciesListNextOptionalParams
+    options?: FirewallPoliciesListNextOptionalParams,
   ): Promise<FirewallPoliciesListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -374,11 +430,11 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
    */
   private _listAllNext(
     nextLink: string,
-    options?: FirewallPoliciesListAllNextOptionalParams
+    options?: FirewallPoliciesListAllNextOptionalParams,
   ): Promise<FirewallPoliciesListAllNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listAllNextOperationSpec
+      listAllNextOperationSpec,
     );
   }
 }
@@ -386,8 +442,7 @@ export class FirewallPoliciesImpl implements FirewallPolicies {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -395,150 +450,167 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.firewallPolicyName
+    Parameters.firewallPolicyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FirewallPolicy
+      bodyMapper: Mappers.FirewallPolicy,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.expand],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.firewallPolicyName
+    Parameters.firewallPolicyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.FirewallPolicy
+      bodyMapper: Mappers.FirewallPolicy,
     },
     201: {
-      bodyMapper: Mappers.FirewallPolicy
+      bodyMapper: Mappers.FirewallPolicy,
     },
     202: {
-      bodyMapper: Mappers.FirewallPolicy
+      bodyMapper: Mappers.FirewallPolicy,
     },
     204: {
-      bodyMapper: Mappers.FirewallPolicy
+      bodyMapper: Mappers.FirewallPolicy,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters15,
+  requestBody: Parameters.parameters19,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.firewallPolicyName
+    Parameters.firewallPolicyName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
+};
+const updateTagsOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}",
+  httpMethod: "PATCH",
+  responses: {
+    200: {
+      bodyMapper: Mappers.FirewallPolicy,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  requestBody: Parameters.parameters1,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.firewallPolicyName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FirewallPolicyListResult
+      bodyMapper: Mappers.FirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/firewallPolicies",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/firewallPolicies",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FirewallPolicyListResult
+      bodyMapper: Mappers.FirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FirewallPolicyListResult
+      bodyMapper: Mappers.FirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FirewallPolicyListResult
+      bodyMapper: Mappers.FirewallPolicyListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

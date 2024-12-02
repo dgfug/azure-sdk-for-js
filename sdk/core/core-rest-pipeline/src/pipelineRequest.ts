@@ -1,19 +1,20 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  PipelineRequest,
-  TransferProgressEvent,
-  RequestBodyType,
-  HttpMethods,
-  HttpHeaders,
+import type {
   FormDataMap,
-  ProxySettings
-} from "./interfaces";
-import { createHttpHeaders } from "./httpHeaders";
-import { AbortSignalLike } from "@azure/abort-controller";
-import { generateUuid } from "./util/uuid";
-import { OperationTracingOptions } from "@azure/core-tracing";
+  HttpHeaders,
+  MultipartRequestBody,
+  PipelineRequest,
+  ProxySettings,
+  RequestBodyType,
+  TransferProgressEvent,
+} from "./interfaces.js";
+import { createHttpHeaders } from "./httpHeaders.js";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import { randomUUID } from "@azure/core-util";
+import type { OperationTracingOptions } from "@azure/core-tracing";
+import type { HttpMethods } from "@azure/core-util";
 
 /**
  * Settings to initialize a request.
@@ -59,6 +60,11 @@ export interface PipelineRequestOptions {
   body?: RequestBodyType;
 
   /**
+   * Body for a multipart request.
+   */
+  multipartBody?: MultipartRequestBody;
+
+  /**
    * To simulate a browser form post
    */
   formData?: FormDataMap;
@@ -67,6 +73,17 @@ export interface PipelineRequestOptions {
    * A list of response status codes whose corresponding PipelineResponse body should be treated as a stream.
    */
   streamResponseStatusCodes?: Set<number>;
+
+  /**
+   * BROWSER ONLY
+   *
+   * A browser only option to enable use of the Streams API. If this option is set and streaming is used
+   * (see `streamResponseStatusCodes`), the response will have a property `browserStream` instead of
+   * `blobBody` which will be undefined.
+   *
+   * Default value is false
+   */
+  enableBrowserStreams?: boolean;
 
   /**
    * Proxy configuration.
@@ -107,8 +124,10 @@ class PipelineRequestImpl implements PipelineRequest {
   public timeout: number;
   public withCredentials: boolean;
   public body?: RequestBodyType;
+  public multipartBody?: MultipartRequestBody;
   public formData?: FormDataMap;
   public streamResponseStatusCodes?: Set<number>;
+  public enableBrowserStreams: boolean;
 
   public proxySettings?: ProxySettings;
   public disableKeepAlive: boolean;
@@ -125,6 +144,7 @@ class PipelineRequestImpl implements PipelineRequest {
     this.headers = options.headers ?? createHttpHeaders();
     this.method = options.method ?? "GET";
     this.timeout = options.timeout ?? 0;
+    this.multipartBody = options.multipartBody;
     this.formData = options.formData;
     this.disableKeepAlive = options.disableKeepAlive ?? false;
     this.proxySettings = options.proxySettings;
@@ -134,8 +154,9 @@ class PipelineRequestImpl implements PipelineRequest {
     this.tracingOptions = options.tracingOptions;
     this.onUploadProgress = options.onUploadProgress;
     this.onDownloadProgress = options.onDownloadProgress;
-    this.requestId = options.requestId || generateUuid();
+    this.requestId = options.requestId || randomUUID();
     this.allowInsecureConnection = options.allowInsecureConnection ?? false;
+    this.enableBrowserStreams = options.enableBrowserStreams ?? false;
   }
 }
 

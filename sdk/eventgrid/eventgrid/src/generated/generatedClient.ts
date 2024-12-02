@@ -7,17 +7,17 @@
  */
 
 import * as coreClient from "@azure/core-client";
-import * as Parameters from "./models/parameters";
-import * as Mappers from "./models/mappers";
-import { GeneratedClientContext } from "./generatedClientContext";
+import * as Parameters from "./models/parameters.js";
+import * as Mappers from "./models/mappers.js";
+import { GeneratedClientContext } from "./generatedClientContext.js";
 import {
   GeneratedClientOptionalParams,
   EventGridEvent,
-  GeneratedClientPublishEventsOptionalParams,
+  GeneratedClientPublishEventGridEventsOptionalParams,
   CloudEvent,
   GeneratedClientPublishCloudEventEventsOptionalParams,
   GeneratedClientPublishCustomEventEventsOptionalParams
-} from "./models";
+} from "./models/index.js";
 
 /** @internal */
 export class GeneratedClient extends GeneratedClientContext {
@@ -35,14 +35,14 @@ export class GeneratedClient extends GeneratedClientContext {
    * @param events An array of events to be published to Event Grid.
    * @param options The options parameters.
    */
-  publishEvents(
+  publishEventGridEvents(
     topicHostname: string,
     events: EventGridEvent[],
-    options?: GeneratedClientPublishEventsOptionalParams
+    options?: GeneratedClientPublishEventGridEventsOptionalParams
   ): Promise<void> {
     return this.sendOperationRequest(
       { topicHostname, events, options },
-      publishEventsOperationSpec
+      publishEventGridEventsOperationSpec
     );
   }
 
@@ -83,7 +83,7 @@ export class GeneratedClient extends GeneratedClientContext {
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
-const publishEventsOperationSpec: coreClient.OperationSpec = {
+const publishEventGridEventsOperationSpec: coreClient.OperationSpec = {
   path: "",
   httpMethod: "POST",
   responses: { 200: {}, default: {} },
@@ -101,7 +101,7 @@ const publishCloudEventEventsOperationSpec: coreClient.OperationSpec = {
   requestBody: Parameters.events1,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.topicHostname],
-  headerParameters: [Parameters.contentType1],
+  headerParameters: [Parameters.contentType1, Parameters.aegChannelName],
   mediaType: "json",
   serializer
 };

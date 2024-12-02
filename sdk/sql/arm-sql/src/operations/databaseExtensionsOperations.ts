@@ -6,38 +6,43 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DatabaseExtensionsOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { SqlManagementClient } from "../sqlManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   ImportExportExtensionsOperationResult,
-  DatabaseExtensionsOperationsListByDatabaseNextOptionalParams,
-  DatabaseExtensionsOperationsListByDatabaseOptionalParams,
-  DatabaseExtensionsOperationsGetOptionalParams,
+  DatabaseExtensionsListByDatabaseNextOptionalParams,
+  DatabaseExtensionsListByDatabaseOptionalParams,
+  DatabaseExtensionsListByDatabaseResponse,
+  DatabaseExtensionsGetOptionalParams,
   DatabaseExtensions,
-  DatabaseExtensionsOperationsCreateOrUpdateOptionalParams,
-  DatabaseExtensionsOperationsCreateOrUpdateResponse,
-  DatabaseExtensionsOperationsListByDatabaseResponse,
-  DatabaseExtensionsOperationsListByDatabaseNextResponse
+  DatabaseExtensionsCreateOrUpdateOptionalParams,
+  DatabaseExtensionsCreateOrUpdateResponse,
+  DatabaseExtensionsListByDatabaseNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DatabaseExtensionsOperations operations. */
 export class DatabaseExtensionsOperationsImpl
-  implements DatabaseExtensionsOperations {
-  private readonly client: SqlManagementClientContext;
+  implements DatabaseExtensionsOperations
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class DatabaseExtensionsOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -53,13 +58,13 @@ export class DatabaseExtensionsOperationsImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseExtensionsOperationsListByDatabaseOptionalParams
+    options?: DatabaseExtensionsListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<ImportExportExtensionsOperationResult> {
     const iter = this.listByDatabasePagingAll(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     );
     return {
       next() {
@@ -68,14 +73,18 @@ export class DatabaseExtensionsOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByDatabasePagingPage(
           resourceGroupName,
           serverName,
           databaseName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -83,26 +92,35 @@ export class DatabaseExtensionsOperationsImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseExtensionsOperationsListByDatabaseOptionalParams
+    options?: DatabaseExtensionsListByDatabaseOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ImportExportExtensionsOperationResult[]> {
-    let result = await this._listByDatabase(
-      resourceGroupName,
-      serverName,
-      databaseName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DatabaseExtensionsListByDatabaseResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByDatabase(
+        resourceGroupName,
+        serverName,
+        databaseName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByDatabaseNext(
         resourceGroupName,
         serverName,
         databaseName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -110,13 +128,13 @@ export class DatabaseExtensionsOperationsImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseExtensionsOperationsListByDatabaseOptionalParams
+    options?: DatabaseExtensionsListByDatabaseOptionalParams,
   ): AsyncIterableIterator<ImportExportExtensionsOperationResult> {
     for await (const page of this.listByDatabasePagingPage(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -136,11 +154,11 @@ export class DatabaseExtensionsOperationsImpl
     serverName: string,
     databaseName: string,
     extensionName: string,
-    options?: DatabaseExtensionsOperationsGetOptionalParams
+    options?: DatabaseExtensionsGetOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, extensionName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -160,30 +178,29 @@ export class DatabaseExtensionsOperationsImpl
     databaseName: string,
     extensionName: string,
     parameters: DatabaseExtensions,
-    options?: DatabaseExtensionsOperationsCreateOrUpdateOptionalParams
+    options?: DatabaseExtensionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DatabaseExtensionsOperationsCreateOrUpdateResponse>,
-      DatabaseExtensionsOperationsCreateOrUpdateResponse
+    SimplePollerLike<
+      OperationState<DatabaseExtensionsCreateOrUpdateResponse>,
+      DatabaseExtensionsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<DatabaseExtensionsOperationsCreateOrUpdateResponse> => {
+      spec: coreClient.OperationSpec,
+    ): Promise<DatabaseExtensionsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -192,8 +209,8 @@ export class DatabaseExtensionsOperationsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -201,27 +218,32 @@ export class DatabaseExtensionsOperationsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serverName,
         databaseName,
         extensionName,
         parameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DatabaseExtensionsCreateOrUpdateResponse,
+      OperationState<DatabaseExtensionsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -240,15 +262,15 @@ export class DatabaseExtensionsOperationsImpl
     databaseName: string,
     extensionName: string,
     parameters: DatabaseExtensions,
-    options?: DatabaseExtensionsOperationsCreateOrUpdateOptionalParams
-  ): Promise<DatabaseExtensionsOperationsCreateOrUpdateResponse> {
+    options?: DatabaseExtensionsCreateOrUpdateOptionalParams,
+  ): Promise<DatabaseExtensionsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       serverName,
       databaseName,
       extensionName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -265,11 +287,11 @@ export class DatabaseExtensionsOperationsImpl
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseExtensionsOperationsListByDatabaseOptionalParams
-  ): Promise<DatabaseExtensionsOperationsListByDatabaseResponse> {
+    options?: DatabaseExtensionsListByDatabaseOptionalParams,
+  ): Promise<DatabaseExtensionsListByDatabaseResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, options },
-      listByDatabaseOperationSpec
+      listByDatabaseOperationSpec,
     );
   }
 
@@ -287,11 +309,11 @@ export class DatabaseExtensionsOperationsImpl
     serverName: string,
     databaseName: string,
     nextLink: string,
-    options?: DatabaseExtensionsOperationsListByDatabaseNextOptionalParams
-  ): Promise<DatabaseExtensionsOperationsListByDatabaseNextResponse> {
+    options?: DatabaseExtensionsListByDatabaseNextOptionalParams,
+  ): Promise<DatabaseExtensionsListByDatabaseNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, nextLink, options },
-      listByDatabaseNextOperationSpec
+      listByDatabaseNextOperationSpec,
     );
   }
 }
@@ -299,93 +321,89 @@ export class DatabaseExtensionsOperationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/extensions/{extensionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/extensions/{extensionName}",
   httpMethod: "GET",
   responses: { 200: {}, default: {} },
-  queryParameters: [Parameters.apiVersion1],
+  queryParameters: [Parameters.apiVersion6],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.extensionName
+    Parameters.extensionName,
   ],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/extensions/{extensionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/extensions/{extensionName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ImportExportExtensionsOperationResult
+      bodyMapper: Mappers.ImportExportExtensionsOperationResult,
     },
     201: {
-      bodyMapper: Mappers.ImportExportExtensionsOperationResult
+      bodyMapper: Mappers.ImportExportExtensionsOperationResult,
     },
     202: {
-      bodyMapper: Mappers.ImportExportExtensionsOperationResult
+      bodyMapper: Mappers.ImportExportExtensionsOperationResult,
     },
     204: {
-      bodyMapper: Mappers.ImportExportExtensionsOperationResult
+      bodyMapper: Mappers.ImportExportExtensionsOperationResult,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters82,
-  queryParameters: [Parameters.apiVersion1],
+  requestBody: Parameters.parameters59,
+  queryParameters: [Parameters.apiVersion6],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.extensionName
+    Parameters.extensionName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByDatabaseOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/extensions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/extensions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ImportExportExtensionsOperationListResult
+      bodyMapper: Mappers.ImportExportExtensionsOperationListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion1],
+  queryParameters: [Parameters.apiVersion6],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.databaseName
+    Parameters.databaseName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByDatabaseNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ImportExportExtensionsOperationListResult
+      bodyMapper: Mappers.ImportExportExtensionsOperationListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

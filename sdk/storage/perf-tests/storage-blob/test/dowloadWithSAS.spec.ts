@@ -1,35 +1,33 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PerfOptionDictionary, getEnvVar, drainStream } from "@azure/test-utils-perf";
+import { PerfOptionDictionary, getEnvVar, drainStream } from "@azure-tools/test-perf";
 import { StorageBlobTest } from "./storageTest.spec";
 import {
   BlockBlobClient,
   generateBlobSASQueryParameters,
   BlobSASPermissions,
-  BlobClient
+  BlobClient,
 } from "@azure/storage-blob";
 import { getValueInConnString } from "./utils/utils";
-import { generateUuid } from "@azure/core-http";
+import { randomUUID } from "@azure/core-util";
 
 interface StorageBlobDownloadTestOptions {
   size: number;
 }
 
-export class StorageBlobDownloadWithSASTest extends StorageBlobTest<
-  StorageBlobDownloadTestOptions
-> {
+export class StorageBlobDownloadWithSASTest extends StorageBlobTest<StorageBlobDownloadTestOptions> {
   public options: PerfOptionDictionary<StorageBlobDownloadTestOptions> = {
     size: {
       required: true,
       description: "Size in bytes",
       shortName: "sz",
       longName: "size",
-      defaultValue: 10240
-    }
+      defaultValue: 10240,
+    },
   };
 
-  static blobName = generateUuid();
+  static blobName = randomUUID();
   blockBlobClient: BlockBlobClient;
   blobClientFromSAS: BlobClient;
   sasUrl: string;
@@ -37,7 +35,7 @@ export class StorageBlobDownloadWithSASTest extends StorageBlobTest<
   constructor() {
     super();
     this.blockBlobClient = this.containerClient.getBlockBlobClient(
-      StorageBlobDownloadWithSASTest.blobName
+      StorageBlobDownloadWithSASTest.blobName,
     );
     const sasParams = generateBlobSASQueryParameters(
       {
@@ -45,14 +43,14 @@ export class StorageBlobDownloadWithSASTest extends StorageBlobTest<
         expiresOn: new Date(new Date().getTime() + 86400000),
         containerName: StorageBlobDownloadWithSASTest.containerName,
         blobName: StorageBlobDownloadWithSASTest.blobName,
-        permissions: BlobSASPermissions.parse("r")
+        permissions: BlobSASPermissions.parse("r"),
       },
-      this.sharedKeyCredential
+      this.sharedKeyCredential,
     ).toString();
 
     this.sasUrl = `https://${getValueInConnString(
       getEnvVar("STORAGE_CONNECTION_STRING"),
-      "AccountName"
+      "AccountName",
     )}.blob.core.windows.net/${StorageBlobDownloadWithSASTest.containerName}/${
       StorageBlobDownloadWithSASTest.blobName
     }?${sasParams}`;
@@ -62,11 +60,10 @@ export class StorageBlobDownloadWithSASTest extends StorageBlobTest<
 
   public async globalSetup() {
     await super.globalSetup();
-
     // Create a blob
     await this.blockBlobClient.upload(
-      Buffer.alloc(this.parsedOptions.size.value!),
-      this.parsedOptions.size.value!
+      Buffer.alloc(this.parsedOptions.size.value),
+      this.parsedOptions.size.value,
     );
   }
 

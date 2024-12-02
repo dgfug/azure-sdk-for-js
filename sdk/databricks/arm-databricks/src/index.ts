@@ -7,7 +7,7 @@
  */
 
 /// <reference lib="esnext.asynciterable" />
+export { getContinuationToken } from "./pagingHelper";
 export * from "./models";
 export { AzureDatabricksManagementClient } from "./azureDatabricksManagementClient";
-export { AzureDatabricksManagementClientContext } from "./azureDatabricksManagementClientContext";
 export * from "./operationsInterfaces";

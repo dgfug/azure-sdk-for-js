@@ -1,6 +1,6 @@
 # Release History
 
-## 5.0.0-beta.2 (Unreleased)
+## 5.2.1 (Unreleased)
 
 ### Features Added
 
@@ -10,17 +10,57 @@
 
 ### Other Changes
 
-## 5.0.0-beta.1 (2021-10-09)
+## 5.2.0 (2023-03-13)
+    
+### Features Added
 
-This is the first preview for the new version of the `@azure/arm-resources` package that follows the new [guidelines for TypeScript SDKs](https://azure.github.io/azure-sdk/typescript_introduction.html) for Azure services.
+  - Interface DeploymentOperationsListAtManagementGroupScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentOperationsListAtScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentOperationsListAtSubscriptionScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentOperationsListAtTenantScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentOperationsListNextOptionalParams no longer has parameter top
+  - Interface DeploymentsListAtManagementGroupScopeNextOptionalParams no longer has parameter filter
+  - Interface DeploymentsListAtManagementGroupScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentsListAtScopeNextOptionalParams no longer has parameter filter
+  - Interface DeploymentsListAtScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentsListAtSubscriptionScopeNextOptionalParams no longer has parameter filter
+  - Interface DeploymentsListAtSubscriptionScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentsListAtTenantScopeNextOptionalParams no longer has parameter filter
+  - Interface DeploymentsListAtTenantScopeNextOptionalParams no longer has parameter top
+  - Interface DeploymentsListByResourceGroupNextOptionalParams no longer has parameter filter
+  - Interface DeploymentsListByResourceGroupNextOptionalParams no longer has parameter top
+  - Interface ProvidersListAtTenantScopeNextOptionalParams no longer has parameter expand
+  - Interface ProvidersListNextOptionalParams no longer has parameter expand
+  - Interface ResourceGroupsListNextOptionalParams no longer has parameter filter
+  - Interface ResourceGroupsListNextOptionalParams no longer has parameter top
+  - Interface ResourcesListByResourceGroupNextOptionalParams no longer has parameter expand
+  - Interface ResourcesListByResourceGroupNextOptionalParams no longer has parameter filter
+  - Interface ResourcesListByResourceGroupNextOptionalParams no longer has parameter top
+  - Interface ResourcesListNextOptionalParams no longer has parameter expand
+  - Interface ResourcesListNextOptionalParams no longer has parameter filter
+  - Interface ResourcesListNextOptionalParams no longer has parameter top
+    
+    
+## 5.1.0 (2022-11-10)
+    
+### Features Added
 
-While this package remains auto generated, the SDK generator itself has undergone changes to comply with the above guidelines in order to generate packages that are idiomatic to the JavaScript/TypeScript ecosystem and consistent with other packages for Azure services. For more on this, please see [State of the Azure SDK 2021](https://devblogs.microsoft.com/azure-sdk/state-of-the-azure-sdk-2021/).
+  - Added Interface DeploymentWhatIfProperties
+  - Added Interface GenericResource
+  - Added Interface GenericResourceExpanded
+    
+## 5.0.1 (2022-04-18)
 
-Please note that this version has breaking changes, all of which were made after careful consideration during the authoring of the guidelines and user studies.
+### Features Added
 
-**Noteworthy changes and features**
-- Authentication: The packages `@azure/ms-rest-nodeauth` or `@azure/ms-rest-browserauth` are no longer supported. Use package [@azure/identity](https://www.npmjs.com/package/@azure/identity) instead. Select a credential from Azure Identity examples based on the authentication method of your choice.
-- Callbacks: Method overloads that used callbacks have been removed and the use of promises is encouraged instead.
-- List operations now return an iterable result that follows the `PagedAsyncIterableIterator` interface as opposed to the previous model where you had to make a new request using the link to the next page.
-- Long running operations i.e. the Lro related object returned by methods whose names started with `begin`, now uses `pollUntilDone` to check whether the request is finished, instead of `pollUntilFinished`. To get the final result, use the corresponding method that will have the suffix `AndWait`.
-- The SDK only supports ECMAScript 2015 (ES6) and beyond, all projects that referenced this SDK should be upgraded to use ES6.
+  - Bug fix
+
+## 5.0.0 (2021-12-06)
+
+The package of @azure/arm-resources is using our next generation design principles since version 5.0.0, which contains breaking changes.
+
+To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
+
+To migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).
+
+To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart ).

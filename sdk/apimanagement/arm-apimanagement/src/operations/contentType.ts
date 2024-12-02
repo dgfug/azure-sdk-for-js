@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ContentType } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   ContentTypeContract,
   ContentTypeListByServiceNextOptionalParams,
@@ -28,20 +29,20 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ContentType operations. */
 export class ContentTypeImpl implements ContentType {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class ContentType class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists the developer portal's content types. Content types describe content items' properties,
    * validation rules, and constraints.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -62,11 +63,15 @@ export class ContentTypeImpl implements ContentType {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -75,15 +80,22 @@ export class ContentTypeImpl implements ContentType {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: ContentTypeListByServiceOptionalParams
+    options?: ContentTypeListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<ContentTypeContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ContentTypeListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -92,7 +104,9 @@ export class ContentTypeImpl implements ContentType {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -113,7 +127,7 @@ export class ContentTypeImpl implements ContentType {
   /**
    * Lists the developer portal's content types. Content types describe content items' properties,
    * validation rules, and constraints.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -131,7 +145,7 @@ export class ContentTypeImpl implements ContentType {
   /**
    * Gets the details of the developer portal's content type. Content types describe content items'
    * properties, validation rules, and constraints.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param options The options parameters.
@@ -152,19 +166,21 @@ export class ContentTypeImpl implements ContentType {
    * Creates or updates the developer portal's content type. Content types describe content items'
    * properties, validation rules, and constraints. Custom content types' identifiers need to start with
    * the `c-` prefix. Built-in content types can't be modified.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
+   * @param parameters Create or update parameters.
    * @param options The options parameters.
    */
   createOrUpdate(
     resourceGroupName: string,
     serviceName: string,
     contentTypeId: string,
+    parameters: ContentTypeContract,
     options?: ContentTypeCreateOrUpdateOptionalParams
   ): Promise<ContentTypeCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
-      { resourceGroupName, serviceName, contentTypeId, options },
+      { resourceGroupName, serviceName, contentTypeId, parameters, options },
       createOrUpdateOperationSpec
     );
   }
@@ -173,7 +189,7 @@ export class ContentTypeImpl implements ContentType {
    * Removes the specified developer portal's content type. Content types describe content items'
    * properties, validation rules, and constraints. Built-in content types (with identifiers starting
    * with the `c-` prefix) can't be removed.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param contentTypeId Content type identifier.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -195,7 +211,7 @@ export class ContentTypeImpl implements ContentType {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -278,6 +294,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
+  requestBody: Parameters.parameters33,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -286,7 +303,12 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.contentTypeId
   ],
-  headerParameters: [Parameters.accept, Parameters.ifMatch],
+  headerParameters: [
+    Parameters.accept,
+    Parameters.contentType,
+    Parameters.ifMatch
+  ],
+  mediaType: "json",
   serializer
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
@@ -322,7 +344,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

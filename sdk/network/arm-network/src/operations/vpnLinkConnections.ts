@@ -6,36 +6,154 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { VpnLinkConnections } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
+import {
+  ConnectionSharedKeyResult,
+  VpnLinkConnectionsGetAllSharedKeysNextOptionalParams,
+  VpnLinkConnectionsGetAllSharedKeysOptionalParams,
+  VpnLinkConnectionsGetAllSharedKeysResponse,
   VpnSiteLinkConnection,
   VpnLinkConnectionsListByVpnConnectionNextOptionalParams,
   VpnLinkConnectionsListByVpnConnectionOptionalParams,
+  VpnLinkConnectionsListByVpnConnectionResponse,
   VpnLinkConnectionsResetConnectionOptionalParams,
+  VpnLinkConnectionsGetDefaultSharedKeyOptionalParams,
+  VpnLinkConnectionsGetDefaultSharedKeyResponse,
+  VpnLinkConnectionsSetOrInitDefaultSharedKeyOptionalParams,
+  VpnLinkConnectionsSetOrInitDefaultSharedKeyResponse,
+  VpnLinkConnectionsListDefaultSharedKeyOptionalParams,
+  VpnLinkConnectionsListDefaultSharedKeyResponse,
   VpnLinkConnectionsGetIkeSasOptionalParams,
   VpnLinkConnectionsGetIkeSasResponse,
-  VpnLinkConnectionsListByVpnConnectionResponse,
-  VpnLinkConnectionsListByVpnConnectionNextResponse
+  VpnLinkConnectionsGetAllSharedKeysNextResponse,
+  VpnLinkConnectionsListByVpnConnectionNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing VpnLinkConnections operations. */
 export class VpnLinkConnectionsImpl implements VpnLinkConnections {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class VpnLinkConnections class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
+  }
+
+  /**
+   * Lists all shared keys of VpnLink connection specified.
+   * @param resourceGroupName The name of the resource group.
+   * @param gatewayName The name of the gateway.
+   * @param connectionName The name of the vpn connection.
+   * @param linkConnectionName The name of the vpn link connection.
+   * @param options The options parameters.
+   */
+  public listAllSharedKeys(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    options?: VpnLinkConnectionsGetAllSharedKeysOptionalParams,
+  ): PagedAsyncIterableIterator<ConnectionSharedKeyResult> {
+    const iter = this.getAllSharedKeysPagingAll(
+      resourceGroupName,
+      gatewayName,
+      connectionName,
+      linkConnectionName,
+      options,
+    );
+    return {
+      next() {
+        return iter.next();
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.getAllSharedKeysPagingPage(
+          resourceGroupName,
+          gatewayName,
+          connectionName,
+          linkConnectionName,
+          options,
+          settings,
+        );
+      },
+    };
+  }
+
+  private async *getAllSharedKeysPagingPage(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    options?: VpnLinkConnectionsGetAllSharedKeysOptionalParams,
+    settings?: PageSettings,
+  ): AsyncIterableIterator<ConnectionSharedKeyResult[]> {
+    let result: VpnLinkConnectionsGetAllSharedKeysResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._getAllSharedKeys(
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        linkConnectionName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+    while (continuationToken) {
+      result = await this._getAllSharedKeysNext(
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        linkConnectionName,
+        continuationToken,
+        options,
+      );
+      continuationToken = result.nextLink;
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+  }
+
+  private async *getAllSharedKeysPagingAll(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    options?: VpnLinkConnectionsGetAllSharedKeysOptionalParams,
+  ): AsyncIterableIterator<ConnectionSharedKeyResult> {
+    for await (const page of this.getAllSharedKeysPagingPage(
+      resourceGroupName,
+      gatewayName,
+      connectionName,
+      linkConnectionName,
+      options,
+    )) {
+      yield* page;
+    }
   }
 
   /**
@@ -49,13 +167,13 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     resourceGroupName: string,
     gatewayName: string,
     connectionName: string,
-    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams
+    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams,
   ): PagedAsyncIterableIterator<VpnSiteLinkConnection> {
     const iter = this.listByVpnConnectionPagingAll(
       resourceGroupName,
       gatewayName,
       connectionName,
-      options
+      options,
     );
     return {
       next() {
@@ -64,14 +182,18 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByVpnConnectionPagingPage(
           resourceGroupName,
           gatewayName,
           connectionName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -79,26 +201,35 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     resourceGroupName: string,
     gatewayName: string,
     connectionName: string,
-    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams
+    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<VpnSiteLinkConnection[]> {
-    let result = await this._listByVpnConnection(
-      resourceGroupName,
-      gatewayName,
-      connectionName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VpnLinkConnectionsListByVpnConnectionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByVpnConnection(
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByVpnConnectionNext(
         resourceGroupName,
         gatewayName,
         connectionName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -106,13 +237,13 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     resourceGroupName: string,
     gatewayName: string,
     connectionName: string,
-    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams
+    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams,
   ): AsyncIterableIterator<VpnSiteLinkConnection> {
     for await (const page of this.listByVpnConnectionPagingPage(
       resourceGroupName,
       gatewayName,
       connectionName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -131,25 +262,24 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     gatewayName: string,
     connectionName: string,
     linkConnectionName: string,
-    options?: VpnLinkConnectionsResetConnectionOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: VpnLinkConnectionsResetConnectionOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -158,8 +288,8 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -167,27 +297,29 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         gatewayName,
         connectionName,
         linkConnectionName,
-        options
+        options,
       },
-      resetConnectionOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+      spec: resetConnectionOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -203,16 +335,215 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     gatewayName: string,
     connectionName: string,
     linkConnectionName: string,
-    options?: VpnLinkConnectionsResetConnectionOptionalParams
+    options?: VpnLinkConnectionsResetConnectionOptionalParams,
   ): Promise<void> {
     const poller = await this.beginResetConnection(
       resourceGroupName,
       gatewayName,
       connectionName,
       linkConnectionName,
-      options
+      options,
     );
     return poller.pollUntilDone();
+  }
+
+  /**
+   * Lists all shared keys of VpnLink connection specified.
+   * @param resourceGroupName The name of the resource group.
+   * @param gatewayName The name of the gateway.
+   * @param connectionName The name of the vpn connection.
+   * @param linkConnectionName The name of the vpn link connection.
+   * @param options The options parameters.
+   */
+  private _getAllSharedKeys(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    options?: VpnLinkConnectionsGetAllSharedKeysOptionalParams,
+  ): Promise<VpnLinkConnectionsGetAllSharedKeysResponse> {
+    return this.client.sendOperationRequest(
+      {
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        linkConnectionName,
+        options,
+      },
+      getAllSharedKeysOperationSpec,
+    );
+  }
+
+  /**
+   * Gets the shared key of VpnLink connection specified.
+   * @param resourceGroupName The name of the resource group.
+   * @param gatewayName The name of the gateway.
+   * @param connectionName The name of the vpn connection.
+   * @param linkConnectionName The name of the vpn link connection.
+   * @param options The options parameters.
+   */
+  getDefaultSharedKey(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    options?: VpnLinkConnectionsGetDefaultSharedKeyOptionalParams,
+  ): Promise<VpnLinkConnectionsGetDefaultSharedKeyResponse> {
+    return this.client.sendOperationRequest(
+      {
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        linkConnectionName,
+        options,
+      },
+      getDefaultSharedKeyOperationSpec,
+    );
+  }
+
+  /**
+   * Sets or auto generates the shared key based on the user input. If users give a shared key value, it
+   * does the set operation. If key length is given, the operation creates a random key of the
+   * pre-defined length.
+   * @param resourceGroupName The resource group name of the VpnGateway.
+   * @param gatewayName The name of the gateway.
+   * @param connectionName The name of the connection.
+   * @param linkConnectionName The name of the vpn link connection.
+   * @param connectionSharedKeyParameters Parameters supplied to set or auto generate the shared key for
+   *                                      the vpn link connection.
+   * @param options The options parameters.
+   */
+  async beginSetOrInitDefaultSharedKey(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    connectionSharedKeyParameters: ConnectionSharedKeyResult,
+    options?: VpnLinkConnectionsSetOrInitDefaultSharedKeyOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<VpnLinkConnectionsSetOrInitDefaultSharedKeyResponse>,
+      VpnLinkConnectionsSetOrInitDefaultSharedKeyResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<VpnLinkConnectionsSetOrInitDefaultSharedKeyResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        linkConnectionName,
+        connectionSharedKeyParameters,
+        options,
+      },
+      spec: setOrInitDefaultSharedKeyOperationSpec,
+    });
+    const poller = await createHttpPoller<
+      VpnLinkConnectionsSetOrInitDefaultSharedKeyResponse,
+      OperationState<VpnLinkConnectionsSetOrInitDefaultSharedKeyResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Sets or auto generates the shared key based on the user input. If users give a shared key value, it
+   * does the set operation. If key length is given, the operation creates a random key of the
+   * pre-defined length.
+   * @param resourceGroupName The resource group name of the VpnGateway.
+   * @param gatewayName The name of the gateway.
+   * @param connectionName The name of the connection.
+   * @param linkConnectionName The name of the vpn link connection.
+   * @param connectionSharedKeyParameters Parameters supplied to set or auto generate the shared key for
+   *                                      the vpn link connection.
+   * @param options The options parameters.
+   */
+  async beginSetOrInitDefaultSharedKeyAndWait(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    connectionSharedKeyParameters: ConnectionSharedKeyResult,
+    options?: VpnLinkConnectionsSetOrInitDefaultSharedKeyOptionalParams,
+  ): Promise<VpnLinkConnectionsSetOrInitDefaultSharedKeyResponse> {
+    const poller = await this.beginSetOrInitDefaultSharedKey(
+      resourceGroupName,
+      gatewayName,
+      connectionName,
+      linkConnectionName,
+      connectionSharedKeyParameters,
+      options,
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Gets the value of the shared key of VpnLink connection specified.
+   * @param resourceGroupName The name of the resource group.
+   * @param gatewayName The name of the gateway.
+   * @param connectionName The name of the vpn connection.
+   * @param linkConnectionName The name of the vpn link connection.
+   * @param options The options parameters.
+   */
+  listDefaultSharedKey(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    options?: VpnLinkConnectionsListDefaultSharedKeyOptionalParams,
+  ): Promise<VpnLinkConnectionsListDefaultSharedKeyResponse> {
+    return this.client.sendOperationRequest(
+      {
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        linkConnectionName,
+        options,
+      },
+      listDefaultSharedKeyOperationSpec,
+    );
   }
 
   /**
@@ -228,30 +559,29 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     gatewayName: string,
     connectionName: string,
     linkConnectionName: string,
-    options?: VpnLinkConnectionsGetIkeSasOptionalParams
+    options?: VpnLinkConnectionsGetIkeSasOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VpnLinkConnectionsGetIkeSasResponse>,
+    SimplePollerLike<
+      OperationState<VpnLinkConnectionsGetIkeSasResponse>,
       VpnLinkConnectionsGetIkeSasResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<VpnLinkConnectionsGetIkeSasResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -260,8 +590,8 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -269,27 +599,32 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         gatewayName,
         connectionName,
         linkConnectionName,
-        options
+        options,
       },
-      getIkeSasOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+      spec: getIkeSasOperationSpec,
     });
+    const poller = await createHttpPoller<
+      VpnLinkConnectionsGetIkeSasResponse,
+      OperationState<VpnLinkConnectionsGetIkeSasResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -305,14 +640,14 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     gatewayName: string,
     connectionName: string,
     linkConnectionName: string,
-    options?: VpnLinkConnectionsGetIkeSasOptionalParams
+    options?: VpnLinkConnectionsGetIkeSasOptionalParams,
   ): Promise<VpnLinkConnectionsGetIkeSasResponse> {
     const poller = await this.beginGetIkeSas(
       resourceGroupName,
       gatewayName,
       connectionName,
       linkConnectionName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -328,11 +663,41 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     resourceGroupName: string,
     gatewayName: string,
     connectionName: string,
-    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams
+    options?: VpnLinkConnectionsListByVpnConnectionOptionalParams,
   ): Promise<VpnLinkConnectionsListByVpnConnectionResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, gatewayName, connectionName, options },
-      listByVpnConnectionOperationSpec
+      listByVpnConnectionOperationSpec,
+    );
+  }
+
+  /**
+   * GetAllSharedKeysNext
+   * @param resourceGroupName The name of the resource group.
+   * @param gatewayName The name of the gateway.
+   * @param connectionName The name of the vpn connection.
+   * @param linkConnectionName The name of the vpn link connection.
+   * @param nextLink The nextLink from the previous successful call to the GetAllSharedKeys method.
+   * @param options The options parameters.
+   */
+  private _getAllSharedKeysNext(
+    resourceGroupName: string,
+    gatewayName: string,
+    connectionName: string,
+    linkConnectionName: string,
+    nextLink: string,
+    options?: VpnLinkConnectionsGetAllSharedKeysNextOptionalParams,
+  ): Promise<VpnLinkConnectionsGetAllSharedKeysNextResponse> {
+    return this.client.sendOperationRequest(
+      {
+        resourceGroupName,
+        gatewayName,
+        connectionName,
+        linkConnectionName,
+        nextLink,
+        options,
+      },
+      getAllSharedKeysNextOperationSpec,
     );
   }
 
@@ -349,11 +714,11 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
     gatewayName: string,
     connectionName: string,
     nextLink: string,
-    options?: VpnLinkConnectionsListByVpnConnectionNextOptionalParams
+    options?: VpnLinkConnectionsListByVpnConnectionNextOptionalParams,
   ): Promise<VpnLinkConnectionsListByVpnConnectionNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, gatewayName, connectionName, nextLink, options },
-      listByVpnConnectionNextOperationSpec
+      listByVpnConnectionNextOperationSpec,
     );
   }
 }
@@ -361,8 +726,7 @@ export class VpnLinkConnectionsImpl implements VpnLinkConnections {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const resetConnectionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/resetconnection",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/resetconnection",
   httpMethod: "POST",
   responses: {
     200: {},
@@ -370,8 +734,8 @@ const resetConnectionOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -380,55 +744,21 @@ const resetConnectionOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.connectionName,
     Parameters.gatewayName,
-    Parameters.linkConnectionName
+    Parameters.linkConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const getIkeSasOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/getikesas",
-  httpMethod: "POST",
-  responses: {
-    200: {
-      bodyMapper: { type: { name: "String" } }
-    },
-    201: {
-      bodyMapper: { type: { name: "String" } }
-    },
-    202: {
-      bodyMapper: { type: { name: "String" } }
-    },
-    204: {
-      bodyMapper: { type: { name: "String" } }
-    },
-    default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId,
-    Parameters.connectionName,
-    Parameters.gatewayName,
-    Parameters.linkConnectionName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listByVpnConnectionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections",
+const getAllSharedKeysOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/sharedKeys",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListVpnSiteLinkConnectionsResult
+      bodyMapper: Mappers.ConnectionSharedKeyResultList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -436,31 +766,188 @@ const listByVpnConnectionOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.connectionName,
-    Parameters.gatewayName
+    Parameters.gatewayName,
+    Parameters.linkConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const listByVpnConnectionNextOperationSpec: coreClient.OperationSpec = {
+const getDefaultSharedKeyOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/sharedKeys/default",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ConnectionSharedKeyResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.connectionName,
+    Parameters.gatewayName,
+    Parameters.linkConnectionName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const setOrInitDefaultSharedKeyOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/sharedKeys/default",
+  httpMethod: "PUT",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ConnectionSharedKeyResult,
+    },
+    201: {
+      bodyMapper: Mappers.ConnectionSharedKeyResult,
+    },
+    202: {
+      bodyMapper: Mappers.ConnectionSharedKeyResult,
+    },
+    204: {
+      bodyMapper: Mappers.ConnectionSharedKeyResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  requestBody: Parameters.connectionSharedKeyParameters,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.connectionName,
+    Parameters.gatewayName,
+    Parameters.linkConnectionName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const listDefaultSharedKeyOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/sharedKeys/default/listSharedKey",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ConnectionSharedKeyResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.connectionName,
+    Parameters.gatewayName,
+    Parameters.linkConnectionName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const getIkeSasOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections/{linkConnectionName}/getikesas",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: { type: { name: "String" } },
+    },
+    201: {
+      bodyMapper: { type: { name: "String" } },
+    },
+    202: {
+      bodyMapper: { type: { name: "String" } },
+    },
+    204: {
+      bodyMapper: { type: { name: "String" } },
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.connectionName,
+    Parameters.gatewayName,
+    Parameters.linkConnectionName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const listByVpnConnectionOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/vpnGateways/{gatewayName}/vpnConnections/{connectionName}/vpnLinkConnections",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ListVpnSiteLinkConnectionsResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.connectionName,
+    Parameters.gatewayName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const getAllSharedKeysNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListVpnSiteLinkConnectionsResult
+      bodyMapper: Mappers.ConnectionSharedKeyResultList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
     Parameters.connectionName,
-    Parameters.gatewayName
+    Parameters.gatewayName,
+    Parameters.linkConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const listByVpnConnectionNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ListVpnSiteLinkConnectionsResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.nextLink,
+    Parameters.connectionName,
+    Parameters.gatewayName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };

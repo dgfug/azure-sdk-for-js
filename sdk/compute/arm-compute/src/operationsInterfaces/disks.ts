@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Disk,
   DisksListByResourceGroupOptionalParams,
@@ -23,7 +23,7 @@ import {
   GrantAccessData,
   DisksGrantAccessOptionalParams,
   DisksGrantAccessResponse,
-  DisksRevokeAccessOptionalParams
+  DisksRevokeAccessOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -36,7 +36,7 @@ export interface Disks {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: DisksListByResourceGroupOptionalParams
+    options?: DisksListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Disk>;
   /**
    * Lists all the disks under a subscription.
@@ -56,10 +56,10 @@ export interface Disks {
     resourceGroupName: string,
     diskName: string,
     disk: Disk,
-    options?: DisksCreateOrUpdateOptionalParams
+    options?: DisksCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DisksCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DisksCreateOrUpdateResponse>,
       DisksCreateOrUpdateResponse
     >
   >;
@@ -76,7 +76,7 @@ export interface Disks {
     resourceGroupName: string,
     diskName: string,
     disk: Disk,
-    options?: DisksCreateOrUpdateOptionalParams
+    options?: DisksCreateOrUpdateOptionalParams,
   ): Promise<DisksCreateOrUpdateResponse>;
   /**
    * Updates (patches) a disk.
@@ -91,9 +91,9 @@ export interface Disks {
     resourceGroupName: string,
     diskName: string,
     disk: DiskUpdate,
-    options?: DisksUpdateOptionalParams
+    options?: DisksUpdateOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<DisksUpdateResponse>, DisksUpdateResponse>
+    SimplePollerLike<OperationState<DisksUpdateResponse>, DisksUpdateResponse>
   >;
   /**
    * Updates (patches) a disk.
@@ -108,7 +108,7 @@ export interface Disks {
     resourceGroupName: string,
     diskName: string,
     disk: DiskUpdate,
-    options?: DisksUpdateOptionalParams
+    options?: DisksUpdateOptionalParams,
   ): Promise<DisksUpdateResponse>;
   /**
    * Gets information about a disk.
@@ -121,7 +121,7 @@ export interface Disks {
   get(
     resourceGroupName: string,
     diskName: string,
-    options?: DisksGetOptionalParams
+    options?: DisksGetOptionalParams,
   ): Promise<DisksGetResponse>;
   /**
    * Deletes a disk.
@@ -134,8 +134,8 @@ export interface Disks {
   beginDelete(
     resourceGroupName: string,
     diskName: string,
-    options?: DisksDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DisksDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a disk.
    * @param resourceGroupName The name of the resource group.
@@ -147,7 +147,7 @@ export interface Disks {
   beginDeleteAndWait(
     resourceGroupName: string,
     diskName: string,
-    options?: DisksDeleteOptionalParams
+    options?: DisksDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Grants access to a disk.
@@ -162,10 +162,10 @@ export interface Disks {
     resourceGroupName: string,
     diskName: string,
     grantAccessData: GrantAccessData,
-    options?: DisksGrantAccessOptionalParams
+    options?: DisksGrantAccessOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DisksGrantAccessResponse>,
+    SimplePollerLike<
+      OperationState<DisksGrantAccessResponse>,
       DisksGrantAccessResponse
     >
   >;
@@ -182,7 +182,7 @@ export interface Disks {
     resourceGroupName: string,
     diskName: string,
     grantAccessData: GrantAccessData,
-    options?: DisksGrantAccessOptionalParams
+    options?: DisksGrantAccessOptionalParams,
   ): Promise<DisksGrantAccessResponse>;
   /**
    * Revokes access to a disk.
@@ -195,8 +195,8 @@ export interface Disks {
   beginRevokeAccess(
     resourceGroupName: string,
     diskName: string,
-    options?: DisksRevokeAccessOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DisksRevokeAccessOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Revokes access to a disk.
    * @param resourceGroupName The name of the resource group.
@@ -208,6 +208,6 @@ export interface Disks {
   beginRevokeAccessAndWait(
     resourceGroupName: string,
     diskName: string,
-    options?: DisksRevokeAccessOptionalParams
+    options?: DisksRevokeAccessOptionalParams,
   ): Promise<void>;
 }

@@ -1,17 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type { Recorder } from "@azure-tools/test-recorder";
+import { isPlaybackMode } from "@azure-tools/test-recorder";
 import {
-  createAppConfigurationClientForTests,
-  assertThrowsRestError,
-  deleteKeyCompletely,
   assertThrowsAbortError,
-  startRecorder
-} from "./utils/testHelpers";
-import { AppConfigurationClient } from "../../src";
-import * as assert from "assert";
-import { Recorder } from "@azure-tools/test-recorder";
-import { Context } from "mocha";
+  assertThrowsRestError,
+  createAppConfigurationClientForTests,
+  deleteKeyCompletely,
+  startRecorder,
+} from "./utils/testHelpers.js";
+import type { AppConfigurationClient } from "../../src/index.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 describe("AppConfigurationClient (set|clear)ReadOnly", () => {
   let client: AppConfigurationClient;
@@ -19,26 +19,29 @@ describe("AppConfigurationClient (set|clear)ReadOnly", () => {
   const testConfigSetting = {
     key: "",
     value: "world",
-    label: "some label"
+    label: "some label",
   };
 
-  beforeEach(async function(this: Context) {
-    recorder = startRecorder(this);
-    testConfigSetting.key = recorder.getUniqueName("readOnlyTests");
-    client = createAppConfigurationClientForTests() || this.skip();
+  beforeEach(async function (ctx) {
+    recorder = await startRecorder(ctx);
+    testConfigSetting.key = recorder.variable(
+      "readOnlyTests",
+      `readOnlyTests${Math.floor(Math.random() * 1000)}`,
+    );
+    client = createAppConfigurationClientForTests(recorder.configureClientOptions({}));
     // before it's set to read only we can set it all we want
     await client.setConfigurationSetting(testConfigSetting);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await deleteKeyCompletely([testConfigSetting.key], client);
     await recorder.stop();
   });
 
-  it("basic", async function() {
+  it("basic", async function () {
     let storedSetting = await client.getConfigurationSetting({
       key: testConfigSetting.key,
-      label: testConfigSetting.label
+      label: testConfigSetting.label,
     });
     assert.ok(!storedSetting.isReadOnly);
 
@@ -46,7 +49,7 @@ describe("AppConfigurationClient (set|clear)ReadOnly", () => {
 
     storedSetting = await client.getConfigurationSetting({
       key: testConfigSetting.key,
-      label: testConfigSetting.label
+      label: testConfigSetting.label,
     });
     assert.ok(storedSetting.isReadOnly);
 
@@ -54,23 +57,27 @@ describe("AppConfigurationClient (set|clear)ReadOnly", () => {
     await assertThrowsRestError(
       () => client.setConfigurationSetting(testConfigSetting),
       409,
-      "Set should fail because the setting is read-only"
+      "Set should fail because the setting is read-only",
     );
     await assertThrowsRestError(
       () =>
         client.deleteConfigurationSetting({
           key: testConfigSetting.key,
-          label: testConfigSetting.label
+          label: testConfigSetting.label,
         }),
       409,
-      "Delete should fail because the setting is read-only"
+      "Delete should fail because the setting is read-only",
     );
   });
 
-  it("accepts operation options", async function() {
+  // Skipping all "accepts operation options flaky tests" https://github.com/Azure/azure-sdk-for-js/issues/26447
+  it.skip("accepts  operation options", async function (ctx) {
+    // Recorder checks for the recording and complains before core-rest-pipeline could throw the AbortError (Recorder v2 should help here)
+
+    if (isPlaybackMode()) ctx.skip();
     await client.getConfigurationSetting({
       key: testConfigSetting.key,
-      label: testConfigSetting.label
+      label: testConfigSetting.label,
     });
 
     await assertThrowsAbortError(async () => {

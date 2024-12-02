@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type { TextAnalyticsErrorResult, TextAnalyticsSuccessResult } from "./textAnalyticsResult";
 import {
+  makeTextAnalyticsErrorResult,
   makeTextAnalyticsSuccessResult,
-  TextAnalyticsSuccessResult,
-  TextAnalyticsErrorResult,
-  makeTextAnalyticsErrorResult
 } from "./textAnalyticsResult";
-import { TextAnalyticsError, DocumentKeyPhrases } from "./generated/models";
+import type { DocumentKeyPhrases, TextAnalyticsError } from "./generated/models";
 
 /**
  * The result of the extract key phrases operation on a single document.
@@ -35,12 +34,12 @@ export type ExtractKeyPhrasesErrorResult = TextAnalyticsErrorResult;
  * @internal
  */
 export function makeExtractKeyPhrasesResult(
-  result: DocumentKeyPhrases
+  result: DocumentKeyPhrases,
 ): ExtractKeyPhrasesSuccessResult {
   const { id, warnings, statistics, keyPhrases } = result;
   return {
     ...makeTextAnalyticsSuccessResult(id, warnings, statistics),
-    keyPhrases
+    keyPhrases,
   };
 }
 
@@ -49,7 +48,7 @@ export function makeExtractKeyPhrasesResult(
  */
 export function makeExtractKeyPhrasesErrorResult(
   id: string,
-  error: TextAnalyticsError
+  error: TextAnalyticsError,
 ): ExtractKeyPhrasesErrorResult {
   return makeTextAnalyticsErrorResult(id, error);
 }

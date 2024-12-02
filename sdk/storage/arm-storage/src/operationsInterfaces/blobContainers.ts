@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ListContainerItem,
   BlobContainersListOptionalParams,
@@ -37,7 +36,7 @@ import {
   BlobContainersExtendImmutabilityPolicyResponse,
   BlobContainersLeaseOptionalParams,
   BlobContainersLeaseResponse,
-  BlobContainersObjectLevelWormOptionalParams
+  BlobContainersObjectLevelWormOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -56,7 +55,7 @@ export interface BlobContainers {
   list(
     resourceGroupName: string,
     accountName: string,
-    options?: BlobContainersListOptionalParams
+    options?: BlobContainersListOptionalParams,
   ): PagedAsyncIterableIterator<ListContainerItem>;
   /**
    * Creates a new container under the specified account as described by request body. The container
@@ -79,7 +78,7 @@ export interface BlobContainers {
     accountName: string,
     containerName: string,
     blobContainer: BlobContainer,
-    options?: BlobContainersCreateOptionalParams
+    options?: BlobContainersCreateOptionalParams,
   ): Promise<BlobContainersCreateResponse>;
   /**
    * Updates container properties as specified in request body. Properties not mentioned in the request
@@ -101,7 +100,7 @@ export interface BlobContainers {
     accountName: string,
     containerName: string,
     blobContainer: BlobContainer,
-    options?: BlobContainersUpdateOptionalParams
+    options?: BlobContainersUpdateOptionalParams,
   ): Promise<BlobContainersUpdateResponse>;
   /**
    * Gets properties of a specified container.
@@ -120,7 +119,7 @@ export interface BlobContainers {
     resourceGroupName: string,
     accountName: string,
     containerName: string,
-    options?: BlobContainersGetOptionalParams
+    options?: BlobContainersGetOptionalParams,
   ): Promise<BlobContainersGetResponse>;
   /**
    * Deletes specified container under its account.
@@ -139,7 +138,7 @@ export interface BlobContainers {
     resourceGroupName: string,
     accountName: string,
     containerName: string,
-    options?: BlobContainersDeleteOptionalParams
+    options?: BlobContainersDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Sets legal hold tags. Setting the same tag results in an idempotent operation. SetLegalHold follows
@@ -161,7 +160,7 @@ export interface BlobContainers {
     accountName: string,
     containerName: string,
     legalHold: LegalHold,
-    options?: BlobContainersSetLegalHoldOptionalParams
+    options?: BlobContainersSetLegalHoldOptionalParams,
   ): Promise<BlobContainersSetLegalHoldResponse>;
   /**
    * Clears legal hold tags. Clearing the same or non-existent tag results in an idempotent operation.
@@ -183,7 +182,7 @@ export interface BlobContainers {
     accountName: string,
     containerName: string,
     legalHold: LegalHold,
-    options?: BlobContainersClearLegalHoldOptionalParams
+    options?: BlobContainersClearLegalHoldOptionalParams,
   ): Promise<BlobContainersClearLegalHoldResponse>;
   /**
    * Creates or updates an unlocked immutability policy. ETag in If-Match is honored if given but not
@@ -203,7 +202,7 @@ export interface BlobContainers {
     resourceGroupName: string,
     accountName: string,
     containerName: string,
-    options?: BlobContainersCreateOrUpdateImmutabilityPolicyOptionalParams
+    options?: BlobContainersCreateOrUpdateImmutabilityPolicyOptionalParams,
   ): Promise<BlobContainersCreateOrUpdateImmutabilityPolicyResponse>;
   /**
    * Gets the existing immutability policy along with the corresponding ETag in response headers and
@@ -223,7 +222,7 @@ export interface BlobContainers {
     resourceGroupName: string,
     accountName: string,
     containerName: string,
-    options?: BlobContainersGetImmutabilityPolicyOptionalParams
+    options?: BlobContainersGetImmutabilityPolicyOptionalParams,
   ): Promise<BlobContainersGetImmutabilityPolicyResponse>;
   /**
    * Aborts an unlocked immutability policy. The response of delete has
@@ -249,7 +248,7 @@ export interface BlobContainers {
     accountName: string,
     containerName: string,
     ifMatch: string,
-    options?: BlobContainersDeleteImmutabilityPolicyOptionalParams
+    options?: BlobContainersDeleteImmutabilityPolicyOptionalParams,
   ): Promise<BlobContainersDeleteImmutabilityPolicyResponse>;
   /**
    * Sets the ImmutabilityPolicy to Locked state. The only action allowed on a Locked policy is
@@ -273,7 +272,7 @@ export interface BlobContainers {
     accountName: string,
     containerName: string,
     ifMatch: string,
-    options?: BlobContainersLockImmutabilityPolicyOptionalParams
+    options?: BlobContainersLockImmutabilityPolicyOptionalParams,
   ): Promise<BlobContainersLockImmutabilityPolicyResponse>;
   /**
    * Extends the immutabilityPeriodSinceCreationInDays of a locked immutabilityPolicy. The only action
@@ -297,7 +296,7 @@ export interface BlobContainers {
     accountName: string,
     containerName: string,
     ifMatch: string,
-    options?: BlobContainersExtendImmutabilityPolicyOptionalParams
+    options?: BlobContainersExtendImmutabilityPolicyOptionalParams,
   ): Promise<BlobContainersExtendImmutabilityPolicyResponse>;
   /**
    * The Lease Container operation establishes and manages a lock on a container for delete operations.
@@ -317,7 +316,7 @@ export interface BlobContainers {
     resourceGroupName: string,
     accountName: string,
     containerName: string,
-    options?: BlobContainersLeaseOptionalParams
+    options?: BlobContainersLeaseOptionalParams,
   ): Promise<BlobContainersLeaseResponse>;
   /**
    * This operation migrates a blob container from container level WORM to object level immutability
@@ -339,8 +338,8 @@ export interface BlobContainers {
     resourceGroupName: string,
     accountName: string,
     containerName: string,
-    options?: BlobContainersObjectLevelWormOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: BlobContainersObjectLevelWormOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * This operation migrates a blob container from container level WORM to object level immutability
    * enabled container. Prerequisites require a container level immutability policy either in locked or
@@ -361,6 +360,6 @@ export interface BlobContainers {
     resourceGroupName: string,
     accountName: string,
     containerName: string,
-    options?: BlobContainersObjectLevelWormOptionalParams
+    options?: BlobContainersObjectLevelWormOptionalParams,
   ): Promise<void>;
 }

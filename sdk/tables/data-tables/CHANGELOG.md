@@ -1,6 +1,6 @@
 # Release History
 
-## 13.0.1 (Unreleased)
+## 13.3.1 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,77 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 13.3.0 (2024-11-18)
+
+### Features Added
+
+- Added support for Entra ID credentials when targeting a Cosmos endpoint.
+
+## 13.2.2 (2023-04-10)
+
+### Bugs Fixed
+
+- Fix issue [#25252](https://github.com/Azure/azure-sdk-for-js/issues/25252) where SAS was signed using srk, spk, erk and epk but the query parameters were not included in the result causing all requests with scoped partition and row keys to fail with `AuthorizationFailure`. [25293](https://github.com/Azure/azure-sdk-for-js/pull/25293)
+
+## 13.2.1 (2023-01-12)
+
+### Bugs Fixed
+
+- Fix issue [#22341](https://github.com/Azure/azure-sdk-for-js/issues/22341) when multiple transactions are submitted concurrently. [#24190](https://github.com/Azure/azure-sdk-for-js/pull/24190)
+
+## 13.2.0 (2022-09-07)
+
+### Features Added
+
+- Add option to `transaction.updateEntity()` [#22562](https://github.com/Azure/azure-sdk-for-js/pull/22562). (A community contribution, courtesy of _[tmcgannon](https://github.com/tmcgannon))_
+  - Add overloads to `TableTransaction.updateEntity` so `undefined` doesn't need to be passed explicitly for an optional argument. [#23132](https://github.com/Azure/azure-sdk-for-js/pull/23132)
+
+### Bugs Fixed
+
+- Fix encoding for Date objects when filtering on a DateTime field [#23058](https://github.com/Azure/azure-sdk-for-js/pull/23058)
+
+## 13.1.2 (2022-06-07)
+
+### Features Added
+
+- Support cross tenant authentication [#21678](https://github.com/Azure/azure-sdk-for-js/pull/21678)
+
+### Bugs Fixed
+
+- fix react native bundling issue by adding a `react-native` mapping to ESM
+  entry point so that dependencies can be loaded asynchronously.
+
+### Other Changes
+
+- Export NamedKeyCredential [#20935](https://github.com/Azure/azure-sdk-for-js/pull/20935). (A community contribution, courtesy of _[dhensby](https://github.com/dhensby))_
+
+## 13.1.1 (2022-04-14)
+
+### Bugs Fixed
+
+- Fixed issue where `deleteTable()` doesn't throw any errors [21408](https://github.com/Azure/azure-sdk-for-js/pull/21408).
+
+## 13.1.0 (2022-04-07)
+
+### Bugs Fixed
+
+- Fix issue when the Service returns an empty nextRowKey. [#20916](https://github.com/Azure/azure-sdk-for-js/pull/20916).
+- Fix issue with `getStatistics()` operation consistently failing and added test. [#20398](https://github.com/Azure/azure-sdk-for-js/pull/20398)
+
+### Other Changes
+
+- Updated our `@azure/core-tracing` dependency to the latest version (1.0.0)
+  - Notable changes include Removal of `@opentelemetry/api` as a transitive dependency and ensuring that the active context is properly propagated.
+  - Customers who would like to continue using OpenTelemetry driven tracing should visit our [OpenTelemetry Instrumentation](https://www.npmjs.com/package/@azure/opentelemetry-instrumentation-azure-sdk) package for instructions.
+
+## 13.0.1 (2022-01-12)
+
+### Bugs Fixed
+
+- Fix issue where custom HTTP Client passed in client options was being ignored in transactions. [#19470](https://github.com/Azure/azure-sdk-for-js/pull/19470)
+- Fix issue where optionality of expiresOn and permissions is not respected when signedIdentifier is provided.
+- Fix `createTable` not calling `onResponse` callback when the service returns `TableAlreadyExists`. [#18914](https://github.com/Azure/azure-sdk-for-js/pull/18914)
 
 ## 13.0.0 (2021-11-11)
 
@@ -37,7 +108,9 @@ Thank you to our developer community members who helped to make the Azure Tables
 - Issue #18521 - `upsertEntity` doesn't work with "" for partition or row keys. [#18586](https://github.com/Azure/azure-sdk-for-js/pull/18586)
 
 ### Other Changes
+
 - Export RestError [#18635](https://github.com/Azure/azure-sdk-for-js/pull/18635). (A community contribution, courtesy of _[dhensby](https://github.com/dhensby))_
+
 ## 12.1.2 (2021-09-07)
 
 ### Bugs Fixed

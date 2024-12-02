@@ -6,15 +6,15 @@
 
 import { AzureNamedKeyCredential } from '@azure/core-auth';
 import { AzureSASCredential } from '@azure/core-auth';
-import { CommonClientOptions } from '@azure/core-client';
+import type { CommonClientOptions } from '@azure/core-client';
 import * as coreClient from '@azure/core-client';
 import { NamedKeyCredential } from '@azure/core-auth';
-import { OperationOptions } from '@azure/core-client';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { Pipeline } from '@azure/core-rest-pipeline';
+import type { OperationOptions } from '@azure/core-client';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { Pipeline } from '@azure/core-rest-pipeline';
 import { RestError } from '@azure/core-rest-pipeline';
-import { SASCredential } from '@azure/core-auth';
-import { TokenCredential } from '@azure/core-auth';
+import type { SASCredential } from '@azure/core-auth';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export interface AccessPolicy {
@@ -159,6 +159,8 @@ export interface Metrics {
     retentionPolicy?: RetentionPolicy;
     version?: string;
 }
+
+export { NamedKeyCredential }
 
 // @public
 export function odata(strings: TemplateStringsArray, ...values: unknown[]): string;
@@ -414,7 +416,8 @@ export class TableTransaction {
     actions: TransactionAction[];
     createEntity<T extends object = Record<string, unknown>>(entity: TableEntity<T>): void;
     deleteEntity(partitionKey: string, rowKey: string): void;
-    updateEntity<T extends object = Record<string, unknown>>(entity: TableEntity<T>, updateMode?: UpdateMode): void;
+    updateEntity<T extends object = Record<string, unknown>>(entity: TableEntity<T>, updateOptions?: UpdateTableEntityOptions): void;
+    updateEntity<T extends object = Record<string, unknown>>(entity: TableEntity<T>, updateMode: UpdateMode, updateOptions?: UpdateTableEntityOptions): void;
     upsertEntity<T extends object = Record<string, unknown>>(entity: TableEntity<T>, updateMode?: UpdateMode): void;
 }
 
@@ -445,7 +448,7 @@ export interface TableUpdateEntityHeaders {
 export type TransactionAction = CreateDeleteEntityAction | UpdateEntityAction;
 
 // @public
-export type UpdateEntityAction = ["update" | "upsert", TableEntity] | ["update" | "upsert", TableEntity, "Merge" | "Replace"];
+export type UpdateEntityAction = ["update" | "upsert", TableEntity] | ["update" | "upsert", TableEntity, "Merge" | "Replace"] | ["update" | "upsert", TableEntity, "Merge" | "Replace", UpdateTableEntityOptions | undefined];
 
 // @public
 export type UpdateEntityResponse = TableUpdateEntityHeaders;

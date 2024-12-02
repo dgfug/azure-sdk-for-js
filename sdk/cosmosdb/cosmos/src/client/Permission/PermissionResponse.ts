@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { CosmosHeaders } from "../../queryExecutionContext";
+// Licensed under the MIT License.
+import type { CosmosDiagnostics } from "../../CosmosDiagnostics";
+import type { CosmosHeaders } from "../../queryExecutionContext";
 import { ResourceResponse } from "../../request";
-import { Resource } from "../Resource";
-import { Permission } from "./Permission";
-import { PermissionBody } from "./PermissionBody";
-import { PermissionDefinition } from "./PermissionDefinition";
+import type { Resource } from "../Resource";
+import type { Permission } from "./Permission";
+import type { PermissionBody } from "./PermissionBody";
+import type { PermissionDefinition } from "./PermissionDefinition";
 
 export class PermissionResponse extends ResourceResponse<
   PermissionDefinition & PermissionBody & Resource
@@ -14,9 +15,10 @@ export class PermissionResponse extends ResourceResponse<
     resource: PermissionDefinition & PermissionBody & Resource,
     headers: CosmosHeaders,
     statusCode: number,
-    permission: Permission
+    permission: Permission,
+    diagnostics: CosmosDiagnostics,
   ) {
-    super(resource, headers, statusCode);
+    super(resource, headers, statusCode, diagnostics);
     this.permission = permission;
   }
   /** A reference to the {@link Permission} corresponding to the returned {@link PermissionDefinition}. */

@@ -1,54 +1,60 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Rule to require client list methods to return a PagedAsyncIterableIterator.
- * @author Arpan Laha
+ *
  */
 
-import { TSESTree } from "@typescript-eslint/experimental-utils";
-import { Rule } from "eslint";
-import { Identifier, MethodDefinition } from "estree";
-import { getRuleMetaData } from "../utils";
+import { TSESTree } from "@typescript-eslint/utils";
+import { createRule } from "../utils";
 
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-export = {
-  meta: getRuleMetaData(
-    "ts-pagination-list",
-    "require client list methods to return a PagedAsyncIterableIterator"
-  ),
-  create: (context: Rule.RuleContext): Rule.RuleListener =>
-    ({
-      // callback functions
+export default createRule({
+  name: "ts-pagination-list",
+  meta: {
+    type: "suggestion",
+    docs: {
+      description: "require client list methods to return a PagedAsyncIterableIterator",
+    },
+    messages: {
+      NoReturnType: "list method does not have a return type",
+      NotAsyncIterator: "list method does not return a PagedAsyncIterableIterator",
+    },
+    schema: [],
+    fixable: "code",
+  },
+  defaultOptions: [],
+  create(context) {
+    // call on Client classes
+    return {
+      "ClassDeclaration[id.name=/Client$/] MethodDefinition[key.name=/^list($|([A-Z][a-zA-Z]*s$))/]":
+        (node: TSESTree.MethodDefinition): void => {
+          // check for return type existence
+          const TSFunction = node.value as TSESTree.FunctionExpression;
+          if (
+            TSFunction.returnType === undefined ||
+            TSFunction.returnType.typeAnnotation.type !== "TSTypeReference"
+          ) {
+            return context.report({
+              node,
+              messageId: "NoReturnType",
+            });
+          }
 
-      // call on Client classes
-      "ClassDeclaration[id.name=/Client$/] MethodDefinition[key.name=/^list($|([A-Z][a-zA-Z]*s$))/]": (
-        node: MethodDefinition
-      ): void => {
-        // check for return type existence
-        const TSFunction = node.value as TSESTree.FunctionExpression;
-        if (
-          TSFunction.returnType === undefined ||
-          TSFunction.returnType.typeAnnotation.type !== "TSTypeReference"
-        ) {
-          context.report({
-            node: node,
-            message: "list method does not have a return type"
-          });
-          return;
-        }
-
-        // report if return type is not PagedAsyncIterableIterator
-        const typeIdentifier = TSFunction.returnType.typeAnnotation.typeName as Identifier;
-        if (typeIdentifier.name !== "PagedAsyncIterableIterator") {
-          context.report({
-            node: node,
-            message: "list method does not return a PagedAsyncIterableIterator"
-          });
-        }
-      }
-    } as Rule.RuleListener)
-};
+          // report if return type is not PagedAsyncIterableIterator
+          const typeIdentifier = TSFunction.returnType.typeAnnotation
+            .typeName as TSESTree.Identifier;
+          if (typeIdentifier.name !== "PagedAsyncIterableIterator") {
+            context.report({
+              node,
+              messageId: "NotAsyncIterator",
+            });
+          }
+        },
+    };
+  },
+});

@@ -6,6 +6,5 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-export * from "./models";
-export { AppConfiguration } from "./appConfiguration";
-export { AppConfigurationContext } from "./appConfigurationContext";
+export * from "./models/index.js";
+export { AppConfiguration } from "./appConfiguration.js";

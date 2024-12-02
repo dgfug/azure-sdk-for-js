@@ -1,14 +1,221 @@
 # Release History
 
-## 12.9.0-beta.2 (Unreleased)
+## 12.26.0 (2024-11-13)
 
 ### Features Added
 
-### Breaking Changes
+- Includes all features released in 12.26.0-beta.1.
+
+## 12.26.0-beta.1 (2024-10-15)
+
+### Features Added
+
+- Added support for service version 2025-01-05.
+- Added support for the provisioned V2 billing model.
+- Added support for specifying the binary file permission format for ShareFileClient.startCopy().
+- Added ShareAccessTier.Premium enum value.
+
+## 12.25.0 (2024-09-22)
+
+### Features Added
+
+- Includes all features released in 12.25.0-beta.1.
+
+### Other Changes
+
+- Upgraded dependency on `@azure/core-xml` to version `1.4.3`.
+
+## 12.25.0-beta.1 (2024-08-09)
+
+### Features Added
+
+- Added support for service version 2024-11-04.
+- Added support for token-based authentication for all APIs.
+- Added support for paid bursting on premium file share accounts.
+- Added support for binary format for file permissions.
+- Added ability to retrieve SAS string to sign for debugging purposes.
+
+## 12.24.0 (2024-07-18)
+
+### Features Added
+
+- Includes all features released in 12.24.0-beta.1.
 
 ### Bugs Fixed
 
+- Correct content-length header with request body length. (#30138)
+
+## 12.24.0-beta.1 (2024-06-13)
+
+### Features Added
+
+- Added support for service version 2024-08-04.
+- Added more detailed messaging for authorization failure cases.
+- Added support for snapshot management on NFS shares.
+
+## 12.23.0 (2024-06-04)
+
+### Features Added
+
+- Includes all features released in 12.23.0-beta.1.
+- Allow HTTP connections
+
+## 12.18.1 (2024-05-11)
+
+### Features Added
+
+- Includes all features released in 12.18.1-beta.1.
+
+## 12.18.1-beta.1 (2024-04-18)
+
+### Features Added
+
+- Added support for service version 2024-05-04.
+- Added ability to call ShareFileClient.getRangeListDiff() on a file that has been renamed.
+- Added support OAuth for interface ShareFileClient.uploadRangeFromURL().
+- Added support to return clientName property in file/directory handle properties in ShareFileClient.listHandles() and ShareDirectoryClient.listHandles().
+
+## 12.17.0 (2023-11-09)
+
+### Features Added
+
+- Includes all features released in 12.17.0-beta.1.
+
+## 12.23.0-beta.1 (2023-11-01)
+
 ### Other Changes
+
+- Migrated dependency on `@azure/core-http` to `@azure/core-rest-pipeline`.
+
+## 12.17.0-beta.1 (2023-10-18)
+
+### Features Added
+
+- Added support for service version 2023-11-03.
+- Added support for indicating audience in StoragePipelineOptions.
+
+## 12.16.0 (2023-09-14)
+
+### Features Added
+
+- Added support for service version 2023-11-03.
+- Added support for indicating audience in StoragePipelineOptions.
+
+## 12.15.0 (2023-07-12)
+
+### Features Added
+
+- Includes all features released in 12.15.0.
+
+## 12.15.0-beta.1 (2023-05-31)
+
+### Features Added
+
+- Added support for service version 2023-01-03.
+- Added access rights in each handles returned by ShareDirectoryClient.listHandles()/ShareFileClient.listHandles().
+
+## 12.14.0 (2023-04-13)
+
+### Features Added
+
+- Includes all features released in 12.14.0-beta.1.
+
+## 12.14.0-beta.1 (2023-03-29)
+
+### Features Added
+
+- Added support for service version 2022-11-02.
+- Added support OAuth.
+- Added support for Trailing Dot.
+
+## 12.13.0 (2023-02-23)
+
+### Features Added
+
+- Includes all features released in 12.13.0-beta.1.
+
+### Bugs Fixed
+
+- Fixed an issue of getting 403 error for blob name with './' or '../'
+
+## 12.13.0-beta.1 (2023-02-09)
+
+### Features Added
+
+- Added support for service version 2021-12-02.
+- Added support for invalid XML characters in file and directory names for ShareDirectoryClient.listFilesAndDirectories(), .listHandles(), and ShareFileClient.listHandles().
+
+### Other Changes
+
+- Update dependency `@azure/core-http` version to `^3.0.0`.
+
+## 12.12.0 (2022-10-14)
+
+### Features Added
+
+- Added support for service version 2021-10-04.
+
+### Bugs Fixed
+
+- Fixed a hang issue in ShareFileClient.downloadToBuffer when encountering transient network failure.
+- Refined URL parsing method to let it be able to correctly parse URLs with account name in path.
+- Fixed an issue of escaping slashes in file or directory path unnecessarily.
+
+## 12.11.0 (2022-07-08)
+
+### Features Added
+
+- Added support for service version 2021-08-06.
+
+## 12.10.0 (2022-05-12)
+
+### Features Added
+
+- Includes all features released in 12.10.0-beta.1.
+
+### Bugs Fixed
+
+- Refined user-agent value to avoid failure when os information is not available on some platforms.
+
+## 12.10.0-beta.1 (2022-04-19)
+
+### Features Added
+
+- Added support for service version 2021-06-08.
+- Added ability to maintain a file's current last write time when calling ShareFileClient.uploadRange() and ShareFileClient.uploadRangeFromURL().
+- Added ability to specify a file or directory's change time when calling ShareFileClient.create(), ShareDirectoryClient.create(), ShareFileClient.setProperties(), ShareDirectoryClient.setProperties(), ShareFileClient.resize(), ShareFileClient.rename() and ShareDirectoryClient.rename().
+- Added ability to specify content-type on a file when calling ShareFileClient.rename().
+
+### Bugs Fixed
+
+- Add `react-native` mapping to ESM entry point
+
+## 12.9.0 (2022-03-11)
+
+### Features Added
+
+- Includes all features released in 12.9.0-beta.1, 12.9.0-beta.2, 12.9.0-beta.3 and 12.9.0-beta.4.
+
+## 12.9.0-beta.4 (2022-03-04)
+
+### Bugs Fixed
+
+- Fixed bug where ShareFileClient.startCopyFromURL() was not sending the ignoreReadonly parameter correctly.
+- Set correct content length in requests for uploading operations to avoid unexpected failure if customized content length is incorrect.
+
+## 12.9.0-beta.3 (2022-02-11)
+
+### Features Added
+
+- Added support for service version 2021-04-10.
+- Added support for renaming a file or a directory.
+
+## 12.9.0-beta.2 (2021-12-03)
+
+### Features Added
+
+- Added support for service version 2021-02-12.
+- Added support for premium file share `provisionedBandwidthMiBps` property.
 
 ## 12.9.0-beta.1 (2021-11-09)
 
@@ -199,14 +406,14 @@
   Before this change the option is specified as
   ```js
   fileServiceClient.listShares({
-    include: ["metadata", "snapshots"]
+    include: ["metadata", "snapshots"],
   });
   ```
   After this change:
   ```js
   fileServiceClient.listShares({
     includeMetadata: true,
-    includeSnapshots: true
+    includeSnapshots: true,
   });
   ```
 
@@ -237,7 +444,7 @@
 - Added `DirectoryClient.listHandlesSegment()` and `FileClient.listHandlesSegment()` to returns a list of open handles on a directory or a file.
 - Added `DirectoryClient.forceCloseHandlesSegment()`, `FileClient.forceCloseHandlesSegment()`, `DirectoryClient.forceCloseHandle()` and `FileClient.forceCloseHandle()` to close handles.
 - Pass through `options.abortSignal` to the optional `abortSignal` attribute in option bags instead of using `AbortSignal.none` as the default value when `options.abortSignal` is not specified.
-- Basic HTTP proxy authentication support is added. Proxy settings can be passed in the options while creating a new client. Example - [typescript/src/proxyAuth.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-file-share/samples/typescript/src/proxyAuth.ts)
+- Basic HTTP proxy authentication support is added. Proxy settings can be passed in the options while creating a new client. Example - [proxyAuth.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-file-share/samples-dev/proxyAuth.ts)
 - Connection strings for explicit storage endpoints are supported. - [Configure Azure Storage connection strings](https://docs.microsoft.com/azure/storage/common/storage-configure-connection-string#create-a-connection-string-for-an-explicit-storage-endpoint)
 
 ## 12.0.0-preview.2 (2019-08-01)
@@ -278,7 +485,7 @@
 - Creation/Deletion of child resources are duplicated to parent client type.
 - HTTP proxy support is added (Node.js only).
 
-  - Please refer to the `proxyAuth.ts` sample in the `samples/typescript` folder.
+  - Please refer to the `proxyAuth.ts` sample in the `samples/v12/typescript` folder.
 
 - Request and response headers are now logged at INFO level, with sensitive data redacted.
 - `downloadToFile()` is added to `FileClient`.

@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import * as fs from "fs";
-import * as assert from "assert";
-import { AvroReader, AvroReadableFromStream } from "../../src";
-import { arraysEqual } from "../../src/utils/utils.common";
-import { AbortController } from "@azure/abort-controller";
+import { AvroReadableFromStream, AvroReader } from "../../src";
 import { Readable } from "stream";
+import { arraysEqual } from "../../src/utils/utils.common";
+import { assert } from "chai";
 
 type Action = (o: Record<string, any> | null) => void;
 class TestCase {
@@ -19,25 +18,23 @@ class TestCase {
 }
 
 describe("AvroReader", () => {
-  if (typeof TextEncoder === "undefined" && typeof require !== "undefined") {
-    (global as any).TextEncoder = require("util").TextEncoder;
-  }
-
   it("test with local avro files", async () => {
     const testCases: TestCase[] = [
       new TestCase("test_null_0.avro", (o) => assert.strictEqual(null, o)), // null
-      new TestCase("test_null_1.avro", (o) => assert.strictEqual(true, o)), // boolean
-      new TestCase("test_null_2.avro", (o) => assert.strictEqual("adsfasdf09809dsf-=adsf", o)), // string
+      new TestCase("test_null_1.avro", (o) => assert.strictEqual(true, o as any)), // boolean
+      new TestCase("test_null_2.avro", (o) =>
+        assert.strictEqual("adsfasdf09809dsf-=adsf", o as any),
+      ), // string
       new TestCase("test_null_3.avro", (o) =>
-        assert.ok(arraysEqual(new TextEncoder().encode("12345abcd"), o as Uint8Array))
+        assert.ok(arraysEqual(new TextEncoder().encode("12345abcd"), o as Uint8Array)),
       ), // byte[]
-      new TestCase("test_null_4.avro", (o) => assert.strictEqual(1234, o)), // int
-      new TestCase("test_null_5.avro", (o) => assert.strictEqual(1234, o)), // long
-      new TestCase("test_null_6.avro", (o) => assert.strictEqual(1234.0, o)), // float
-      new TestCase("test_null_7.avro", (o) => assert.strictEqual(1234.0, o)), // double
+      new TestCase("test_null_4.avro", (o) => assert.strictEqual(1234, o as any)), // int
+      new TestCase("test_null_5.avro", (o) => assert.strictEqual(1234, o as any)), // long
+      new TestCase("test_null_6.avro", (o) => assert.strictEqual(1234.0, o as any)), // float
+      new TestCase("test_null_7.avro", (o) => assert.strictEqual(1234.0, o as any)), // double
       // Not supported today.
       // new TestCase("test_null_8.avro", o => assert.ok(arraysEqual(new TextEncoder().encode("B"), o as Uint8Array))), // fixed
-      new TestCase("test_null_9.avro", (o) => assert.strictEqual("B", o)), // enum
+      new TestCase("test_null_9.avro", (o) => assert.strictEqual("B", o as any)), // enum
       // Not supported today.
       // new TestCase("test_null_10.avro", o => assert.deepStrictEqual([1, 2, 3], o)), // array
       new TestCase("test_null_11.avro", (o) => assert.deepStrictEqual({ a: 1, b: 3, c: 2 }, o)), // map
@@ -51,7 +48,7 @@ describe("AvroReader", () => {
         for (const [key, value] of expectedEntries) {
           assert.deepStrictEqual(actualMap.get(key), value);
         }
-      }) // record
+      }), // record
     ];
 
     for (const testcase of testCases) {
@@ -67,26 +64,21 @@ describe("AvroReader", () => {
   });
 
   it("aborter", async () => {
-    // eslint-disable-next-line 	@typescript-eslint/no-empty-function
     const delayedReadable = new Readable({ read() {} });
     const rfs = new AvroReadableFromStream(delayedReadable);
     const avroReader = new AvroReader(rfs);
 
-    const timeoutSignal = AbortController.timeout(1);
-    const manualAborter = new AbortController();
-    const linkedAborter = new AbortController(timeoutSignal, manualAborter.signal);
+    const timeoutSignal = AbortSignal.timeout(1);
 
-    const iter = avroReader.parseObjects({ abortSignal: linkedAborter.signal });
+    const iter = avroReader.parseObjects({ abortSignal: timeoutSignal });
     let AbortErrorCaught = false;
     try {
       await iter.next();
-    } catch (err) {
+    } catch (err: any) {
       if (err.name === "AbortError") {
         AbortErrorCaught = true;
       }
     }
     assert.ok(AbortErrorCaught);
-
-    manualAborter.abort();
   });
 });

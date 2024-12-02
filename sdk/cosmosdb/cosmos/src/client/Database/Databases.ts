@@ -1,17 +1,20 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
 import { Constants, isResourceValid, ResourceType, StatusCodes } from "../../common";
-import { CosmosClient } from "../../CosmosClient";
-import { FetchFunctionCallback, mergeHeaders, SqlQuerySpec } from "../../queryExecutionContext";
+import type { CosmosClient } from "../../CosmosClient";
+import type { FetchFunctionCallback, SqlQuerySpec } from "../../queryExecutionContext";
+import { mergeHeaders } from "../../queryExecutionContext";
 import { QueryIterator } from "../../queryIterator";
-import { FeedOptions, RequestOptions } from "../../request";
-import { Resource } from "../Resource";
+import type { FeedOptions, RequestOptions } from "../../request";
+import type { Resource } from "../Resource";
 import { Database } from "./Database";
-import { DatabaseDefinition } from "./DatabaseDefinition";
-import { DatabaseRequest } from "./DatabaseRequest";
+import type { DatabaseDefinition } from "./DatabaseDefinition";
+import type { DatabaseRequest } from "./DatabaseRequest";
 import { DatabaseResponse } from "./DatabaseResponse";
 import { validateOffer } from "../../utils/offers";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
+import { getEmptyCosmosDiagnostics, withDiagnostics } from "../../utils/diagnostics";
 
 /**
  * Operations for creating new databases, and reading/querying all databases
@@ -30,7 +33,7 @@ export class Databases {
    */
   constructor(
     public readonly client: CosmosClient,
-    private readonly clientContext: ClientContext
+    private readonly clientContext: ClientContext,
   ) {}
 
   /**
@@ -68,14 +71,15 @@ export class Databases {
    */
   public query<T>(query: string | SqlQuerySpec, options?: FeedOptions): QueryIterator<T>;
   public query<T>(query: string | SqlQuerySpec, options?: FeedOptions): QueryIterator<T> {
-    const cb: FetchFunctionCallback = (innerOptions) => {
+    const cb: FetchFunctionCallback = (diagNode: DiagnosticNodeInternal, innerOptions) => {
       return this.clientContext.queryFeed({
         path: "/dbs",
         resourceType: ResourceType.database,
         resourceId: "",
         resultFn: (result) => result.Databases,
         query,
-        options: innerOptions
+        options: innerOptions,
+        diagnosticNode: diagNode,
       });
     };
     return new QueryIterator(this.clientContext, query, options, cb);
@@ -97,7 +101,20 @@ export class Databases {
    */
   public async create(
     body: DatabaseRequest,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
+  ): Promise<DatabaseResponse> {
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      return this.createInternal(diagnosticNode, body, options);
+    }, this.clientContext);
+  }
+
+  /**
+   * @hidden
+   */
+  public async createInternal(
+    diagnosticNode: DiagnosticNodeInternal,
+    body: DatabaseRequest,
+    options: RequestOptions = {},
   ): Promise<DatabaseResponse> {
     const err = {};
     if (!isResourceValid(body, err)) {
@@ -115,14 +132,14 @@ export class Databases {
           };
         };
       } = {
-        maxThroughput: body.maxThroughput
+        maxThroughput: body.maxThroughput,
       };
       if (body.autoUpgradePolicy) {
         autoscaleParams.autoUpgradePolicy = body.autoUpgradePolicy;
       }
       const autoscaleHeaders = JSON.stringify(autoscaleParams);
       options.initialHeaders = Object.assign({}, options.initialHeaders, {
-        [Constants.HttpHeaders.AutoscaleSettings]: autoscaleHeaders
+        [Constants.HttpHeaders.AutoscaleSettings]: autoscaleHeaders,
       });
       delete body.maxThroughput;
       delete body.autoUpgradePolicy;
@@ -130,7 +147,7 @@ export class Databases {
 
     if (body.throughput) {
       options.initialHeaders = Object.assign({}, options.initialHeaders, {
-        [Constants.HttpHeaders.OfferThroughput]: body.throughput
+        [Constants.HttpHeaders.OfferThroughput]: body.throughput,
       });
       delete body.throughput;
     }
@@ -141,10 +158,17 @@ export class Databases {
       path,
       resourceType: ResourceType.database,
       resourceId: undefined,
-      options
+      diagnosticNode,
+      options,
     });
     const ref = new Database(this.client, body.id, this.clientContext);
-    return new DatabaseResponse(response.result, response.headers, response.code, ref);
+    return new DatabaseResponse(
+      response.result,
+      response.headers,
+      response.code,
+      ref,
+      getEmptyCosmosDiagnostics(),
+    );
   }
 
   /**
@@ -164,7 +188,7 @@ export class Databases {
    */
   public async createIfNotExists(
     body: DatabaseRequest,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<DatabaseResponse> {
     if (!body || body.id === null || body.id === undefined) {
       throw new Error("body parameter must be an object with an id property");
@@ -173,19 +197,23 @@ export class Databases {
       1. Attempt to read the Database (based on an assumption that most databases will already exist, so its faster)
       2. If it fails with NotFound error, attempt to create the db. Else, return the read results.
     */
-    try {
-      const readResponse = await this.client.database(body.id).read(options);
-      return readResponse;
-    } catch (err) {
-      if (err.code === StatusCodes.NotFound) {
-        const createResponse = await this.create(body, options);
-        // Must merge the headers to capture RU costskaty
-        mergeHeaders(createResponse.headers, err.headers);
-        return createResponse;
-      } else {
-        throw err;
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      try {
+        const readResponse = await this.client
+          .database(body.id)
+          .readInternal(diagnosticNode, options);
+        return readResponse;
+      } catch (err: any) {
+        if (err.code === StatusCodes.NotFound) {
+          const createResponse = await this.createInternal(diagnosticNode, body, options);
+          // Must merge the headers to capture RU costskaty
+          mergeHeaders(createResponse.headers, err.headers);
+          return createResponse;
+        } else {
+          throw err;
+        }
       }
-    }
+    }, this.clientContext);
   }
 
   // TODO: DatabaseResponse for QueryIterator?

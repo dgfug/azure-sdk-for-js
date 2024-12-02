@@ -6,11 +6,11 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   SharingUpdate,
   GallerySharingProfileUpdateOptionalParams,
-  GallerySharingProfileUpdateResponse
+  GallerySharingProfileUpdateResponse,
 } from "../models";
 
 /** Interface representing a GallerySharingProfile. */
@@ -26,10 +26,10 @@ export interface GallerySharingProfile {
     resourceGroupName: string,
     galleryName: string,
     sharingUpdate: SharingUpdate,
-    options?: GallerySharingProfileUpdateOptionalParams
+    options?: GallerySharingProfileUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<GallerySharingProfileUpdateResponse>,
+    SimplePollerLike<
+      OperationState<GallerySharingProfileUpdateResponse>,
       GallerySharingProfileUpdateResponse
     >
   >;
@@ -44,6 +44,6 @@ export interface GallerySharingProfile {
     resourceGroupName: string,
     galleryName: string,
     sharingUpdate: SharingUpdate,
-    options?: GallerySharingProfileUpdateOptionalParams
+    options?: GallerySharingProfileUpdateOptionalParams,
   ): Promise<GallerySharingProfileUpdateResponse>;
 }

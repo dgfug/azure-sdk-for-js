@@ -1,9 +1,13 @@
 // Copyright (c) Microsoft Corporation
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import fs from "fs-extra";
-import os from "os";
-import path from "path";
+import os from "node:os";
+import path from "node:path";
+import { createPrinter } from "./printer";
+import * as git from "./git";
+
+const { debug } = createPrinter("fileTree");
 
 /**
  * Provides a way to instantiate a file within a base path.
@@ -20,7 +24,35 @@ import path from "path";
 export type FileTreeFactory = (basePath: string) => Promise<void>;
 
 function isAsyncIterable<T>(it: Iterable<T> | AsyncIterable<T>): it is AsyncIterable<T> {
-  return (it as AsyncIterable<unknown>)[Symbol.asyncIterator] !== undefined;
+  return (it as { [Symbol.asyncIterator]?: unknown })[Symbol.asyncIterator] !== undefined;
+}
+
+/**
+ * Removes a path before passing it to a child worker.
+ *
+ * This will fail if `git` believes the path is dirty.
+ *
+ * @param worker - the child factory to call after ensuring the dir is safe.
+ */
+export function safeClean(worker: FileTreeFactory): FileTreeFactory {
+  return async (basePath) => {
+    // If the path exists, then we will check it for a git diff before deleting it.
+    if (await fs.pathExists(basePath)) {
+      debug(basePath, "exists, checking it for safety.");
+
+      if (await git.hasDiff(basePath)) {
+        throw new Error(
+          `the directory ${basePath} exists and is dirty (according to \`git\`); commit or stash your changes first`,
+        );
+      }
+
+      debug(basePath, "is clean, removing it");
+
+      await fs.remove(basePath);
+    }
+
+    return worker(basePath);
+  };
 }
 
 /**
@@ -45,19 +77,21 @@ export function temp(worker: FileTreeFactory): FileTreeFactory {
  *
  * @param name - the name of the directory to create
  * @param contents - an Iterable or AsyncIterable of child factories to
- * instantiate within the directory
+ * instantiate within the directory, or a file tree to execute in the path
  * @returns - a factory for the directory
  */
 export function dir(
   name: string,
-  contents: Iterable<FileTreeFactory> | AsyncIterable<FileTreeFactory>
+  contents: FileTreeFactory | Iterable<FileTreeFactory> | AsyncIterable<FileTreeFactory>,
 ): FileTreeFactory {
   return async (basePath) => {
     // Create the directory for this model
     const selfPath = path.join(basePath, name);
     await fs.ensureDir(selfPath);
 
-    if (isAsyncIterable(contents)) {
+    if (typeof contents === "function") {
+      await contents(selfPath);
+    } else if (isAsyncIterable(contents)) {
       for await (const model of contents) {
         await model(selfPath);
       }
@@ -67,6 +101,16 @@ export function dir(
       }
     }
   };
+}
+
+/**
+ * Pass a file tree factory through to another lazy factory. This gives a user the opportunity to observe the path name.
+ *
+ * @param thunk - a function that will yield a file tree factory given a path
+ * @returns a file tree factory that will first evaluate the thunk and then run it
+ */
+export function lazy(thunk: (name: string) => FileTreeFactory): FileTreeFactory {
+  return (name) => thunk(name)(name);
 }
 
 /**
@@ -88,7 +132,11 @@ export function copy(name: string, source: string): FileTreeFactory {
  * - a string to be encoded as UTF-8 and written.
  * - a deferred computation (function/thunk) that yields one of the above.
  */
-export type FileContents = Buffer | string | (() => Buffer | string);
+export type FileContents =
+  | Buffer
+  | string
+  | (() => Buffer | string)
+  | (() => Promise<Buffer | string>);
 
 /**
  * A file tree factory that creates a file with the given contents.
@@ -97,8 +145,8 @@ export type FileContents = Buffer | string | (() => Buffer | string);
  * @param contents - a `FileContents` representing the data to write
  */
 export function file(name: string, contents: FileContents): FileTreeFactory {
-  const getContentsAsBuffer = (): Buffer => {
-    const immediateContents = typeof contents === "function" ? contents() : contents;
+  const getContentsAsBuffer = async (): Promise<Buffer> => {
+    const immediateContents = typeof contents === "function" ? await contents() : contents;
     return Buffer.isBuffer(immediateContents)
       ? immediateContents
       : Buffer.from(immediateContents, "utf8");
@@ -107,6 +155,6 @@ export function file(name: string, contents: FileContents): FileTreeFactory {
   return async (basePath) => {
     const dirName = path.resolve(basePath, path.dirname(name));
     await fs.ensureDir(dirName);
-    return fs.writeFile(path.join(basePath, name), getContentsAsBuffer());
+    return fs.writeFile(path.join(basePath, name), await getContentsAsBuffer());
   };
 }

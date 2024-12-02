@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CommunicationTokenCredential } from "@azure/communication-common";
-import {
-  bearerTokenAuthenticationPolicy,
+import type { CommunicationTokenCredential } from "@azure/communication-common";
+import type {
   BearerTokenAuthenticationPolicyOptions,
-  PipelinePolicy
+  PipelinePolicy,
 } from "@azure/core-rest-pipeline";
+import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
 
 /**
  * Creates a new CommunicationTokenCredentialPolicy factory.
@@ -14,13 +14,13 @@ import {
  * @param credential - The CommunicationTokenCredential implementation that can supply the user credential.
  */
 export const createCommunicationTokenCredentialPolicy = (
-  credential: CommunicationTokenCredential
+  credential: CommunicationTokenCredential,
 ): PipelinePolicy => {
   const policyOptions: BearerTokenAuthenticationPolicyOptions = {
     credential: {
-      getToken: (_scopes, options) => credential.getToken({ abortSignal: options?.abortSignal })
+      getToken: (_scopes, options) => credential.getToken({ abortSignal: options?.abortSignal }),
     },
-    scopes: []
+    scopes: [],
   };
 
   return bearerTokenAuthenticationPolicy(policyOptions);

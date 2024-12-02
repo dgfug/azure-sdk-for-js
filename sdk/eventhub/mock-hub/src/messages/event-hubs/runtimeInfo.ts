@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Message, types } from "rhea";
+import rhea from "rhea";
 
 /**
  * Checks whether the provided message is requesting the EventHub's runtime info.
- * @param entityPath The path the client sent the request to.
+ * @param entityPath - The path the client sent the request to.
  * Expected to be `$management` if the message is requesting runtime info.
- * @param message The message sent by the client.
+ * @param message - The message sent by the client.
  */
-export function isHubRuntimeInfo(entityPath: string, message: Message): boolean {
+export function isHubRuntimeInfo(entityPath: string, message: rhea.Message): boolean {
   if (entityPath !== "$management") {
     return false;
   }
@@ -31,7 +31,7 @@ export function isHubRuntimeInfo(entityPath: string, message: Message): boolean 
     if (Array.isArray(body) && !body.length) {
       return true;
     }
-  } catch (err) {
+  } catch (err: unknown) {
     return false;
   }
   return false;
@@ -53,18 +53,18 @@ export function generateHubRuntimeInfoResponse({
   partitions,
   targetLinkName,
   createdOn,
-  eventHubName
-}: GenerateHubRuntimeInfoResponseOptions): Message {
+  eventHubName,
+}: GenerateHubRuntimeInfoResponseOptions): rhea.Message {
   return {
     to: targetLinkName,
     correlation_id: correlationId,
-    application_properties: { operation: "READ", "status-code": types.wrap_int(200) },
+    application_properties: { operation: "READ", "status-code": rhea.types.wrap_int(200) },
     body: {
       name: eventHubName,
       type: "com.microsoft:eventhub",
       created_at: createdOn,
       partition_count: partitions.length,
-      partition_ids: types.wrap_array(partitions, 0xa1, undefined)
-    }
+      partition_ids: rhea.types.wrap_array(partitions, 0xa1, undefined),
+    },
   };
 }

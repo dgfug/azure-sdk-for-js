@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { ChunkFactory } from "./ChunkFactory";
-import { ShardCursor } from "./models/ChangeFeedCursor";
+import type { ChunkFactory } from "./ChunkFactory";
+import type { ShardCursor } from "./models/ChangeFeedCursor";
 import { Shard } from "./Shard";
-import { ContainerClient, CommonOptions } from "@azure/storage-blob";
-import { Chunk } from "./Chunk";
-import { AbortSignalLike } from "@azure/core-http";
-import { SpanStatusCode } from "@azure/core-tracing";
-import { createSpan } from "./utils/tracing";
+import type { ContainerClient, CommonOptions } from "@azure/storage-blob";
+import type { Chunk } from "./Chunk";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import { tracingClient } from "./utils/tracing";
 
 /**
  * Options to configure {@link ShardFactory.create} operation.
@@ -32,10 +31,9 @@ export class ShardFactory {
     containerClient: ContainerClient,
     shardPath: string,
     shardCursor?: ShardCursor,
-    options: CreateShardOptions = {}
+    options: CreateShardOptions = {},
   ): Promise<Shard> {
-    const { span, updatedOptions } = createSpan("ShardFactory-create", options);
-    try {
+    return tracingClient.withSpan("ShardFactory-create", options, async (updatedOptions) => {
       const chunks: string[] = [];
       const blockOffset: number = shardCursor?.BlockOffset || 0;
       const eventIndex: number = shardCursor?.EventIndex || 0;
@@ -43,7 +41,7 @@ export class ShardFactory {
       for await (const blobItem of containerClient.listBlobsFlat({
         prefix: shardPath,
         abortSignal: options.abortSignal,
-        tracingOptions: updatedOptions.tracingOptions
+        tracingOptions: updatedOptions.tracingOptions,
       })) {
         chunks.push(blobItem.name);
       }
@@ -80,20 +78,12 @@ export class ShardFactory {
           eventIndex,
           {
             abortSignal: options.abortSignal,
-            tracingOptions: updatedOptions.tracingOptions
-          }
+            tracingOptions: updatedOptions.tracingOptions,
+          },
         );
       }
 
       return new Shard(containerClient, this.chunkFactory, chunks, currentChunk, shardPath);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 }

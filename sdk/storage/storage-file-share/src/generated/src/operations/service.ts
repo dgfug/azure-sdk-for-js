@@ -6,10 +6,11 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import { Service } from "../operationsInterfaces";
+import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageClientContext } from "../storageClientContext";
+import { StorageClient } from "../storageClient";
 import {
   FileServiceProperties,
   ServiceSetPropertiesOptionalParams,
@@ -20,15 +21,15 @@ import {
   ServiceListSharesSegmentResponse
 } from "../models";
 
-/** Class representing a Service. */
-export class Service {
-  private readonly client: StorageClientContext;
+/** Class containing Service operations. */
+export class ServiceImpl implements Service {
+  private readonly client: StorageClient;
 
   /**
    * Initialize a new instance of the class Service class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageClientContext) {
+  constructor(client: StorageClient) {
     this.client = client;
   }
 
@@ -42,14 +43,10 @@ export class Service {
     properties: FileServiceProperties,
     options?: ServiceSetPropertiesOptionalParams
   ): Promise<ServiceSetPropertiesResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      properties,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
+      { properties, options },
       setPropertiesOperationSpec
-    ) as Promise<ServiceSetPropertiesResponse>;
+    );
   }
 
   /**
@@ -60,13 +57,10 @@ export class Service {
   getProperties(
     options?: ServiceGetPropertiesOptionalParams
   ): Promise<ServiceGetPropertiesResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
+      { options },
       getPropertiesOperationSpec
-    ) as Promise<ServiceGetPropertiesResponse>;
+    );
   }
 
   /**
@@ -77,19 +71,16 @@ export class Service {
   listSharesSegment(
     options?: ServiceListSharesSegmentOptionalParams
   ): Promise<ServiceListSharesSegmentResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
     return this.client.sendOperationRequest(
-      operationArguments,
+      { options },
       listSharesSegmentOperationSpec
-    ) as Promise<ServiceListSharesSegmentResponse>;
+    );
   }
 }
 // Operation Specifications
-const xmlSerializer = new coreHttp.Serializer(Mappers, /* isXml */ true);
+const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
 
-const setPropertiesOperationSpec: coreHttp.OperationSpec = {
+const setPropertiesOperationSpec: coreClient.OperationSpec = {
   path: "/",
   httpMethod: "PUT",
   responses: {
@@ -111,14 +102,15 @@ const setPropertiesOperationSpec: coreHttp.OperationSpec = {
   headerParameters: [
     Parameters.contentType,
     Parameters.accept,
-    Parameters.version
+    Parameters.version,
+    Parameters.fileRequestIntent
   ],
   isXML: true,
   contentType: "application/xml; charset=utf-8",
   mediaType: "xml",
   serializer: xmlSerializer
 };
-const getPropertiesOperationSpec: coreHttp.OperationSpec = {
+const getPropertiesOperationSpec: coreClient.OperationSpec = {
   path: "/",
   httpMethod: "GET",
   responses: {
@@ -137,11 +129,15 @@ const getPropertiesOperationSpec: coreHttp.OperationSpec = {
     Parameters.timeoutInSeconds
   ],
   urlParameters: [Parameters.url],
-  headerParameters: [Parameters.version, Parameters.accept1],
+  headerParameters: [
+    Parameters.version,
+    Parameters.fileRequestIntent,
+    Parameters.accept1
+  ],
   isXML: true,
   serializer: xmlSerializer
 };
-const listSharesSegmentOperationSpec: coreHttp.OperationSpec = {
+const listSharesSegmentOperationSpec: coreClient.OperationSpec = {
   path: "/",
   httpMethod: "GET",
   responses: {
@@ -163,7 +159,11 @@ const listSharesSegmentOperationSpec: coreHttp.OperationSpec = {
     Parameters.include
   ],
   urlParameters: [Parameters.url],
-  headerParameters: [Parameters.version, Parameters.accept1],
+  headerParameters: [
+    Parameters.version,
+    Parameters.fileRequestIntent,
+    Parameters.accept1
+  ],
   isXML: true,
   serializer: xmlSerializer
 };

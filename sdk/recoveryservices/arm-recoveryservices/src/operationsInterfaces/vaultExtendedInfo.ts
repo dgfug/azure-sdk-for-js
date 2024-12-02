@@ -13,27 +13,25 @@ import {
   VaultExtendedInfoCreateOrUpdateOptionalParams,
   VaultExtendedInfoCreateOrUpdateResponse,
   VaultExtendedInfoUpdateOptionalParams,
-  VaultExtendedInfoUpdateResponse
+  VaultExtendedInfoUpdateResponse,
 } from "../models";
 
 /** Interface representing a VaultExtendedInfo. */
 export interface VaultExtendedInfo {
   /**
    * Get the vault extended info.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param options The options parameters.
    */
   get(
     resourceGroupName: string,
     vaultName: string,
-    options?: VaultExtendedInfoGetOptionalParams
+    options?: VaultExtendedInfoGetOptionalParams,
   ): Promise<VaultExtendedInfoGetResponse>;
   /**
    * Create vault extended info.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param resourceExtendedInfoDetails Details of ResourceExtendedInfo
    * @param options The options parameters.
@@ -42,12 +40,11 @@ export interface VaultExtendedInfo {
     resourceGroupName: string,
     vaultName: string,
     resourceExtendedInfoDetails: VaultExtendedInfoResource,
-    options?: VaultExtendedInfoCreateOrUpdateOptionalParams
+    options?: VaultExtendedInfoCreateOrUpdateOptionalParams,
   ): Promise<VaultExtendedInfoCreateOrUpdateResponse>;
   /**
    * Update vault extended info.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param resourceExtendedInfoDetails Details of ResourceExtendedInfo
    * @param options The options parameters.
@@ -56,6 +53,6 @@ export interface VaultExtendedInfo {
     resourceGroupName: string,
     vaultName: string,
     resourceExtendedInfoDetails: VaultExtendedInfoResource,
-    options?: VaultExtendedInfoUpdateOptionalParams
+    options?: VaultExtendedInfoUpdateOptionalParams,
   ): Promise<VaultExtendedInfoUpdateResponse>;
 }

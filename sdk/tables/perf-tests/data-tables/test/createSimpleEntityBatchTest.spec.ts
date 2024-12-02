@@ -1,4 +1,7 @@
-import { PerfOptionDictionary } from "@azure/test-utils-perf";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import { PerfOptionDictionary } from "@azure-tools/test-perf";
 import { TablesTest } from "./tables.spec";
 import { TransactionAction } from "@azure/data-tables";
 import { createBatch } from "./utils/createBaseEntity";
@@ -7,16 +10,14 @@ interface TablesCreateSimpleEntityBatchTestOptions {
   batchSize: number;
 }
 
-export class CreateSimpleEntityBatchTest extends TablesTest<
-  TablesCreateSimpleEntityBatchTestOptions
-> {
+export class CreateSimpleEntityBatchTest extends TablesTest<TablesCreateSimpleEntityBatchTestOptions> {
   public options: PerfOptionDictionary<TablesCreateSimpleEntityBatchTestOptions> = {
     batchSize: {
       defaultValue: 100,
       longName: "batchSize",
       shortName: "s",
-      description: "Number of entities to batch create. Defaults to 100"
-    }
+      description: "Number of entities to batch create. Defaults to 100",
+    },
   };
 
   constructor() {
@@ -34,7 +35,7 @@ export class CreateSimpleEntityBatchTest extends TablesTest<
   async run(): Promise<void> {
     const batches: TransactionAction[][] = createBatch(
       "simple",
-      this.parsedOptions.batchSize.value!
+      this.parsedOptions.batchSize.value!,
     );
 
     for (const batch of batches) {

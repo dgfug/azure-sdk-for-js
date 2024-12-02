@@ -6,12 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { IntegrationAccountAssemblies } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { LogicManagementClientContext } from "../logicManagementClientContext";
+import { LogicManagementClient } from "../logicManagementClient";
 import {
   AssemblyDefinition,
   IntegrationAccountAssembliesListOptionalParams,
@@ -29,13 +29,13 @@ import {
 /** Class containing IntegrationAccountAssemblies operations. */
 export class IntegrationAccountAssembliesImpl
   implements IntegrationAccountAssemblies {
-  private readonly client: LogicManagementClientContext;
+  private readonly client: LogicManagementClient;
 
   /**
    * Initialize a new instance of the class IntegrationAccountAssemblies class.
    * @param client Reference to the service client
    */
-  constructor(client: LogicManagementClientContext) {
+  constructor(client: LogicManagementClient) {
     this.client = client;
   }
 
@@ -62,11 +62,15 @@ export class IntegrationAccountAssembliesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           integrationAccountName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -75,9 +79,11 @@ export class IntegrationAccountAssembliesImpl
   private async *listPagingPage(
     resourceGroupName: string,
     integrationAccountName: string,
-    options?: IntegrationAccountAssembliesListOptionalParams
+    options?: IntegrationAccountAssembliesListOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<AssemblyDefinition[]> {
-    let result = await this._list(
+    let result: IntegrationAccountAssembliesListResponse;
+    result = await this._list(
       resourceGroupName,
       integrationAccountName,
       options

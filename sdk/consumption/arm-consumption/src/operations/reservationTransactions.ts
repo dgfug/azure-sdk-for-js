@@ -6,20 +6,21 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ReservationTransactions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ConsumptionManagementClientContext } from "../consumptionManagementClientContext";
+import { ConsumptionManagementClient } from "../consumptionManagementClient";
 import {
   ReservationTransaction,
   ReservationTransactionsListNextOptionalParams,
   ReservationTransactionsListOptionalParams,
+  ReservationTransactionsListResponse,
   ModernReservationTransaction,
   ReservationTransactionsListByBillingProfileNextOptionalParams,
   ReservationTransactionsListByBillingProfileOptionalParams,
-  ReservationTransactionsListResponse,
   ReservationTransactionsListByBillingProfileResponse,
   ReservationTransactionsListNextResponse,
   ReservationTransactionsListByBillingProfileNextResponse
@@ -28,13 +29,13 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ReservationTransactions operations. */
 export class ReservationTransactionsImpl implements ReservationTransactions {
-  private readonly client: ConsumptionManagementClientContext;
+  private readonly client: ConsumptionManagementClient;
 
   /**
    * Initialize a new instance of the class ReservationTransactions class.
    * @param client Reference to the service client
    */
-  constructor(client: ConsumptionManagementClientContext) {
+  constructor(client: ConsumptionManagementClient) {
     this.client = client;
   }
 
@@ -55,19 +56,29 @@ export class ReservationTransactionsImpl implements ReservationTransactions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(billingAccountId, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(billingAccountId, options, settings);
       }
     };
   }
 
   private async *listPagingPage(
     billingAccountId: string,
-    options?: ReservationTransactionsListOptionalParams
+    options?: ReservationTransactionsListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<ReservationTransaction[]> {
-    let result = await this._list(billingAccountId, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ReservationTransactionsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(billingAccountId, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         billingAccountId,
@@ -75,7 +86,9 @@ export class ReservationTransactionsImpl implements ReservationTransactions {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -111,11 +124,15 @@ export class ReservationTransactionsImpl implements ReservationTransactions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByBillingProfilePagingPage(
           billingAccountId,
           billingProfileId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -124,15 +141,22 @@ export class ReservationTransactionsImpl implements ReservationTransactions {
   private async *listByBillingProfilePagingPage(
     billingAccountId: string,
     billingProfileId: string,
-    options?: ReservationTransactionsListByBillingProfileOptionalParams
+    options?: ReservationTransactionsListByBillingProfileOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<ModernReservationTransaction[]> {
-    let result = await this._listByBillingProfile(
-      billingAccountId,
-      billingProfileId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ReservationTransactionsListByBillingProfileResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByBillingProfile(
+        billingAccountId,
+        billingProfileId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByBillingProfileNext(
         billingAccountId,
@@ -141,7 +165,9 @@ export class ReservationTransactionsImpl implements ReservationTransactions {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -279,7 +305,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [Parameters.filter, Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
@@ -299,7 +324,6 @@ const listByBillingProfileNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [Parameters.filter, Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,

@@ -1,57 +1,47 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TableClient } from "../../src";
-import { Context } from "mocha";
-import { record, Recorder, isPlaybackMode } from "@azure-tools/test-recorder";
-import { recordedEnvironmentSetup, createTableClient } from "./utils/recordedClient";
-import { isNode } from "@azure/test-utils";
-import { assert } from "chai";
+import { Recorder, isPlaybackMode } from "@azure-tools/test-recorder";
+import type { TableClient } from "../../src/index.js";
+import { createTableClient } from "./utils/recordedClient.js";
+import { isNodeLike } from "@azure/core-util";
+import { describe, it, assert, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
 
-describe(`Access Policy operations`, () => {
+describe(`Access Policy operations`, { skip: !isNodeLike }, () => {
   let client: TableClient;
+  let unrecordedClient: TableClient;
   let recorder: Recorder;
   const tableName = `AccessPolicy`;
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recordedEnvironmentSetup);
-
-    if (!isNode) {
-      this.skip();
-    }
-
-    client = createTableClient(tableName, "AccountKey");
-
-    try {
-      if (!isPlaybackMode()) {
-        await client.createTable();
-      }
-    } catch {
-      console.warn("Table already exists");
-    }
+  beforeEach(async function (ctx) {
+    recorder = new Recorder(ctx);
+    client = await createTableClient(tableName, "AccountKey", recorder);
   });
 
-  afterEach(async function() {
+  afterEach(async () => {
     await recorder.stop();
   });
 
-  after(async () => {
-    try {
-      if (!isPlaybackMode()) {
-        await client.deleteTable();
-      }
-    } catch {
-      console.warn("Table was not deleted");
+  beforeAll(async () => {
+    if (!isPlaybackMode()) {
+      unrecordedClient = await createTableClient(tableName, "SASConnectionString");
+      await unrecordedClient.createTable();
     }
   });
 
-  it("should send a null AP", async function() {
+  afterAll(async () => {
+    if (!isPlaybackMode() && isNodeLike) {
+      await unrecordedClient.deleteTable();
+    }
+  });
+
+  it("should send a null AP", async () => {
     const date = new Date("2021-07-08T09:10:09Z");
     await client.setAccessPolicy([
       { id: "null" },
       { id: "empty", accessPolicy: {} },
       { id: "partial", accessPolicy: { permission: "r" } },
-      { id: "full", accessPolicy: { start: date, expiry: date, permission: "r" } }
+      { id: "full", accessPolicy: { start: date, expiry: date, permission: "r" } },
     ]);
 
     const acl = await client.getAccessPolicy();

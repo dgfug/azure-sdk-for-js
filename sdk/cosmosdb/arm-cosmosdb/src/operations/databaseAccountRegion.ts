@@ -6,28 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { DatabaseAccountRegion } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   Metric,
   DatabaseAccountRegionListMetricsOptionalParams,
-  DatabaseAccountRegionListMetricsResponse
+  DatabaseAccountRegionListMetricsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DatabaseAccountRegion operations. */
 export class DatabaseAccountRegionImpl implements DatabaseAccountRegion {
-  private readonly client: CosmosDBManagementClientContext;
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class DatabaseAccountRegion class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -46,14 +46,14 @@ export class DatabaseAccountRegionImpl implements DatabaseAccountRegion {
     accountName: string,
     region: string,
     filter: string,
-    options?: DatabaseAccountRegionListMetricsOptionalParams
+    options?: DatabaseAccountRegionListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<Metric> {
     const iter = this.listMetricsPagingAll(
       resourceGroupName,
       accountName,
       region,
       filter,
-      options
+      options,
     );
     return {
       next() {
@@ -62,15 +62,19 @@ export class DatabaseAccountRegionImpl implements DatabaseAccountRegion {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricsPagingPage(
           resourceGroupName,
           accountName,
           region,
           filter,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -79,14 +83,16 @@ export class DatabaseAccountRegionImpl implements DatabaseAccountRegion {
     accountName: string,
     region: string,
     filter: string,
-    options?: DatabaseAccountRegionListMetricsOptionalParams
+    options?: DatabaseAccountRegionListMetricsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Metric[]> {
-    let result = await this._listMetrics(
+    let result: DatabaseAccountRegionListMetricsResponse;
+    result = await this._listMetrics(
       resourceGroupName,
       accountName,
       region,
       filter,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -96,14 +102,14 @@ export class DatabaseAccountRegionImpl implements DatabaseAccountRegion {
     accountName: string,
     region: string,
     filter: string,
-    options?: DatabaseAccountRegionListMetricsOptionalParams
+    options?: DatabaseAccountRegionListMetricsOptionalParams,
   ): AsyncIterableIterator<Metric> {
     for await (const page of this.listMetricsPagingPage(
       resourceGroupName,
       accountName,
       region,
       filter,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -124,11 +130,11 @@ export class DatabaseAccountRegionImpl implements DatabaseAccountRegion {
     accountName: string,
     region: string,
     filter: string,
-    options?: DatabaseAccountRegionListMetricsOptionalParams
+    options?: DatabaseAccountRegionListMetricsOptionalParams,
   ): Promise<DatabaseAccountRegionListMetricsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, region, filter, options },
-      listMetricsOperationSpec
+      listMetricsOperationSpec,
     );
   }
 }
@@ -136,13 +142,12 @@ export class DatabaseAccountRegionImpl implements DatabaseAccountRegion {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/region/{region}/metrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/region/{region}/metrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricListResult
-    }
+      bodyMapper: Mappers.MetricListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
@@ -150,8 +155,8 @@ const listMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.accountName,
-    Parameters.region
+    Parameters.region,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

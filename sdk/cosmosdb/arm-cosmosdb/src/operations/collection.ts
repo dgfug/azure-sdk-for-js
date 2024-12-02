@@ -6,34 +6,34 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { Collection } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   Metric,
   CollectionListMetricsOptionalParams,
+  CollectionListMetricsResponse,
   Usage,
   CollectionListUsagesOptionalParams,
+  CollectionListUsagesResponse,
   MetricDefinition,
   CollectionListMetricDefinitionsOptionalParams,
-  CollectionListMetricsResponse,
-  CollectionListUsagesResponse,
-  CollectionListMetricDefinitionsResponse
+  CollectionListMetricDefinitionsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Collection operations. */
 export class CollectionImpl implements Collection {
-  private readonly client: CosmosDBManagementClientContext;
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class Collection class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -54,7 +54,7 @@ export class CollectionImpl implements Collection {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionListMetricsOptionalParams
+    options?: CollectionListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<Metric> {
     const iter = this.listMetricsPagingAll(
       resourceGroupName,
@@ -62,7 +62,7 @@ export class CollectionImpl implements Collection {
       databaseRid,
       collectionRid,
       filter,
-      options
+      options,
     );
     return {
       next() {
@@ -71,16 +71,20 @@ export class CollectionImpl implements Collection {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricsPagingPage(
           resourceGroupName,
           accountName,
           databaseRid,
           collectionRid,
           filter,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -90,15 +94,17 @@ export class CollectionImpl implements Collection {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionListMetricsOptionalParams
+    options?: CollectionListMetricsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Metric[]> {
-    let result = await this._listMetrics(
+    let result: CollectionListMetricsResponse;
+    result = await this._listMetrics(
       resourceGroupName,
       accountName,
       databaseRid,
       collectionRid,
       filter,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -109,7 +115,7 @@ export class CollectionImpl implements Collection {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionListMetricsOptionalParams
+    options?: CollectionListMetricsOptionalParams,
   ): AsyncIterableIterator<Metric> {
     for await (const page of this.listMetricsPagingPage(
       resourceGroupName,
@@ -117,7 +123,7 @@ export class CollectionImpl implements Collection {
       databaseRid,
       collectionRid,
       filter,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -136,14 +142,14 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListUsagesOptionalParams
+    options?: CollectionListUsagesOptionalParams,
   ): PagedAsyncIterableIterator<Usage> {
     const iter = this.listUsagesPagingAll(
       resourceGroupName,
       accountName,
       databaseRid,
       collectionRid,
-      options
+      options,
     );
     return {
       next() {
@@ -152,15 +158,19 @@ export class CollectionImpl implements Collection {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listUsagesPagingPage(
           resourceGroupName,
           accountName,
           databaseRid,
           collectionRid,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -169,14 +179,16 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListUsagesOptionalParams
+    options?: CollectionListUsagesOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Usage[]> {
-    let result = await this._listUsages(
+    let result: CollectionListUsagesResponse;
+    result = await this._listUsages(
       resourceGroupName,
       accountName,
       databaseRid,
       collectionRid,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -186,14 +198,14 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListUsagesOptionalParams
+    options?: CollectionListUsagesOptionalParams,
   ): AsyncIterableIterator<Usage> {
     for await (const page of this.listUsagesPagingPage(
       resourceGroupName,
       accountName,
       databaseRid,
       collectionRid,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -212,14 +224,14 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListMetricDefinitionsOptionalParams
+    options?: CollectionListMetricDefinitionsOptionalParams,
   ): PagedAsyncIterableIterator<MetricDefinition> {
     const iter = this.listMetricDefinitionsPagingAll(
       resourceGroupName,
       accountName,
       databaseRid,
       collectionRid,
-      options
+      options,
     );
     return {
       next() {
@@ -228,15 +240,19 @@ export class CollectionImpl implements Collection {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricDefinitionsPagingPage(
           resourceGroupName,
           accountName,
           databaseRid,
           collectionRid,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -245,14 +261,16 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListMetricDefinitionsOptionalParams
+    options?: CollectionListMetricDefinitionsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<MetricDefinition[]> {
-    let result = await this._listMetricDefinitions(
+    let result: CollectionListMetricDefinitionsResponse;
+    result = await this._listMetricDefinitions(
       resourceGroupName,
       accountName,
       databaseRid,
       collectionRid,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -262,14 +280,14 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListMetricDefinitionsOptionalParams
+    options?: CollectionListMetricDefinitionsOptionalParams,
   ): AsyncIterableIterator<MetricDefinition> {
     for await (const page of this.listMetricDefinitionsPagingPage(
       resourceGroupName,
       accountName,
       databaseRid,
       collectionRid,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -292,7 +310,7 @@ export class CollectionImpl implements Collection {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionListMetricsOptionalParams
+    options?: CollectionListMetricsOptionalParams,
   ): Promise<CollectionListMetricsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -301,9 +319,9 @@ export class CollectionImpl implements Collection {
         databaseRid,
         collectionRid,
         filter,
-        options
+        options,
       },
-      listMetricsOperationSpec
+      listMetricsOperationSpec,
     );
   }
 
@@ -320,11 +338,11 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListUsagesOptionalParams
+    options?: CollectionListUsagesOptionalParams,
   ): Promise<CollectionListUsagesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, databaseRid, collectionRid, options },
-      listUsagesOperationSpec
+      listUsagesOperationSpec,
     );
   }
 
@@ -341,11 +359,11 @@ export class CollectionImpl implements Collection {
     accountName: string,
     databaseRid: string,
     collectionRid: string,
-    options?: CollectionListMetricDefinitionsOptionalParams
+    options?: CollectionListMetricDefinitionsOptionalParams,
   ): Promise<CollectionListMetricDefinitionsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, databaseRid, collectionRid, options },
-      listMetricDefinitionsOperationSpec
+      listMetricDefinitionsOperationSpec,
     );
   }
 }
@@ -353,13 +371,12 @@ export class CollectionImpl implements Collection {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/databases/{databaseRid}/collections/{collectionRid}/metrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/databases/{databaseRid}/collections/{collectionRid}/metrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricListResult
-    }
+      bodyMapper: Mappers.MetricListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
@@ -368,19 +385,18 @@ const listMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.accountName,
     Parameters.databaseRid,
-    Parameters.collectionRid
+    Parameters.collectionRid,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listUsagesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/databases/{databaseRid}/collections/{collectionRid}/usages",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/databases/{databaseRid}/collections/{collectionRid}/usages",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UsagesResult
-    }
+      bodyMapper: Mappers.UsagesResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter1],
   urlParameters: [
@@ -389,19 +405,18 @@ const listUsagesOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.accountName,
     Parameters.databaseRid,
-    Parameters.collectionRid
+    Parameters.collectionRid,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listMetricDefinitionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/databases/{databaseRid}/collections/{collectionRid}/metricDefinitions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/databases/{databaseRid}/collections/{collectionRid}/metricDefinitions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricDefinitionsListResult
-    }
+      bodyMapper: Mappers.MetricDefinitionsListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -410,8 +425,8 @@ const listMetricDefinitionsOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.accountName,
     Parameters.databaseRid,
-    Parameters.collectionRid
+    Parameters.collectionRid,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

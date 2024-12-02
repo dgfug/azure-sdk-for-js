@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { CosmosClientOptions } from "../CosmosClientOptions";
-import { OperationType, ResourceType } from "./constants";
+// Licensed under the MIT License.
+import type { CosmosClientOptions } from "../CosmosClientOptions";
+import type { ResourceType } from "./constants";
+import { OperationType } from "./constants";
 
 const trimLeftSlashes = new RegExp("^[/]+");
 const trimRightSlashes = new RegExp("[/]+$");
 const illegalResourceIdCharacters = new RegExp("[/\\\\?#]");
+const illegalItemResourceIdCharacters = new RegExp("[/\\\\#]");
 
 /** @hidden */
 export function jsonStringifyAndEscapeNonASCII(arg: unknown): string {
@@ -19,9 +21,7 @@ export function jsonStringifyAndEscapeNonASCII(arg: unknown): string {
 /**
  * @hidden
  */
-export function parseLink(
-  resourcePath: string
-): {
+export function parseLink(resourcePath: string): {
   type: ResourceType;
   objectBody: {
     id: string;
@@ -32,7 +32,7 @@ export function parseLink(
     /* for DatabaseAccount case, both type and objectBody will be undefined. */
     return {
       type: undefined,
-      objectBody: undefined
+      objectBody: undefined,
     };
   }
 
@@ -72,8 +72,8 @@ export function parseLink(
     type,
     objectBody: {
       id,
-      self: resourcePath
-    }
+      self: resourcePath,
+    },
   };
 
   return result;
@@ -101,10 +101,14 @@ export function sleep(time: number): Promise<void> {
  * @hidden
  */
 export function getContainerLink(link: string): string {
-  return link
-    .split("/")
-    .slice(0, 4)
-    .join("/");
+  return link.split("/").slice(0, 4).join("/");
+}
+
+/**
+ * @hidden
+ */
+export function prepareURL(endpoint: string, path: string): string {
+  return trimSlashes(endpoint) + path;
 }
 
 /**
@@ -208,8 +212,32 @@ export function isResourceValid(resource: { id?: string }, err: { message?: stri
       err.message = "Id contains illegal chars.";
       return false;
     }
+
     if (resource.id[resource.id.length - 1] === " ") {
       err.message = "Id ends with a space.";
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * @hidden
+ */
+export function isItemResourceValid(resource: { id?: string }, err: { message?: string }): boolean {
+  // TODO: fix strictness issues so that caller contexts respects the types of the functions
+  if (resource.id) {
+    if (typeof resource.id !== "string") {
+      err.message = "Id must be a string.";
+      return false;
+    }
+
+    if (
+      resource.id.indexOf("/") !== -1 ||
+      resource.id.indexOf("\\") !== -1 ||
+      resource.id.indexOf("#") !== -1
+    ) {
+      err.message = "Id contains illegal chars.";
       return false;
     }
   }
@@ -257,17 +285,29 @@ export function trimSlashFromLeftAndRight(inputString: string): string {
 export function validateResourceId(resourceId: string): boolean {
   // if resourceId is not a string or is empty throw an error
   if (typeof resourceId !== "string" || isStringNullOrEmpty(resourceId)) {
-    throw new Error("Resource Id must be a string and cannot be undefined, null or empty");
-  }
-
-  // if resourceId starts or ends with space throw an error
-  if (resourceId[resourceId.length - 1] === " ") {
-    throw new Error("Resource Id cannot end with space");
+    throw new Error("Resource ID must be a string and cannot be undefined, null or empty");
   }
 
   // if resource id contains illegal characters throw an error
   if (illegalResourceIdCharacters.test(resourceId)) {
-    throw new Error("Illegal characters ['/', '\\', '?', '#'] cannot be used in resourceId");
+    throw new Error("Illegal characters ['/', '\\', '#', '?'] cannot be used in Resource ID");
+  }
+
+  return true;
+}
+
+/**
+ * @hidden
+ */
+export function validateItemResourceId(resourceId: string): boolean {
+  // if resourceId is not a string or is empty throw an error
+  if (typeof resourceId !== "string" || isStringNullOrEmpty(resourceId)) {
+    throw new Error("Resource ID must be a string and cannot be undefined, null or empty");
+  }
+
+  // if resource id contains illegal characters throw an error
+  if (illegalItemResourceIdCharacters.test(resourceId)) {
+    throw new Error("Illegal characters ['/', '\\', '#'] cannot be used in Resource ID");
   }
 
   return true;
@@ -311,13 +351,13 @@ export function parseConnectionString(connectionString: string): CosmosClientOpt
       (connectionObject as any)[key] = value.join("=");
       return connectionObject;
     },
-    {} as ConnectionObject
+    {} as ConnectionObject,
   );
   if (!AccountEndpoint || !AccountKey) {
     throw new Error("Could not parse the provided connection string");
   }
   return {
     endpoint: AccountEndpoint,
-    key: AccountKey
+    key: AccountKey,
   };
 }

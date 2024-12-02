@@ -1,51 +1,36 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  createPipelineFromOptions,
-  isTokenCredential,
-  TokenCredential,
-  signingPolicy
-} from "@azure/core-http";
-import {
-  EncryptParameters,
+import type { TokenCredential } from "@azure/core-auth";
+
+import type {
+  DecryptOptions,
+  DecryptParameters,
+  DecryptResult,
   EncryptOptions,
+  EncryptParameters,
   EncryptResult,
   KeyWrapAlgorithm,
-  WrapKeyOptions,
-  WrapResult,
+  SignOptions,
+  SignResult,
+  UnwrapKeyOptions,
   VerifyOptions,
   VerifyResult,
-  DecryptParameters,
-  DecryptOptions,
-  DecryptResult,
-  UnwrapKeyOptions,
-  SignOptions,
-  SignResult
-} from "../cryptographyClientModels";
-import { SDK_VERSION } from "../constants";
-import { UnwrapResult } from "../cryptographyClientModels";
-import { KeyVaultClient } from "../generated";
-import { parseKeyVaultKeyIdentifier } from "../identifier";
-import {
-  CryptographyClientOptions,
-  GetKeyOptions,
-  KeyVaultKey,
-  LATEST_API_VERSION
-} from "../keysModels";
-import { getKeyFromKeyBundle } from "../transformations";
-import { createHash } from "./crypto";
-import { CryptographyProvider, CryptographyProviderOperation } from "./models";
-import { logger } from "../log";
-import {
-  createTraceFunction,
-  TracedFunction,
-  challengeBasedAuthenticationPolicy
-} from "../../../keyvault-common/src";
-
-const withTrace: TracedFunction = createTraceFunction(
-  "Azure.KeyVault.Keys.RemoteCryptographyProvider"
-);
+  WrapKeyOptions,
+  WrapResult,
+} from "../cryptographyClientModels.js";
+import { SDK_VERSION } from "../constants.js";
+import type { UnwrapResult } from "../cryptographyClientModels.js";
+import { KeyVaultClient } from "../generated/index.js";
+import { parseKeyVaultKeyIdentifier } from "../identifier.js";
+import type { CryptographyClientOptions, GetKeyOptions, KeyVaultKey } from "../keysModels.js";
+import { LATEST_API_VERSION } from "../keysModels.js";
+import { getKeyFromKeyBundle } from "../transformations.js";
+import { createHash } from "./crypto.js";
+import type { CryptographyProvider, CryptographyProviderOperation } from "./models.js";
+import { logger } from "../log.js";
+import { keyVaultAuthenticationPolicy } from "@azure/keyvault-common";
+import { tracingClient } from "../tracing.js";
 
 /**
  * The remote cryptography provider is used to run crypto operations against KeyVault.
@@ -55,7 +40,7 @@ export class RemoteCryptographyProvider implements CryptographyProvider {
   constructor(
     key: string | KeyVaultKey,
     credential: TokenCredential,
-    pipelineOptions: CryptographyClientOptions = {}
+    pipelineOptions: CryptographyClientOptions = {},
   ) {
     this.client = getOrInitializeClient(credential, pipelineOptions);
 
@@ -81,7 +66,7 @@ export class RemoteCryptographyProvider implements CryptographyProvider {
       this.vaultUrl = parsed.vaultUrl;
       this.name = parsed.name;
       this.version = parsed.version ?? "";
-    } catch (err) {
+    } catch (err: any) {
       logger.error(err);
 
       throw new Error(`${keyId} is not a valid Key Vault key ID`);
@@ -95,165 +80,197 @@ export class RemoteCryptographyProvider implements CryptographyProvider {
 
   encrypt(
     encryptParameters: EncryptParameters,
-    options: EncryptOptions = {}
+    options: EncryptOptions = {},
   ): Promise<EncryptResult> {
     const { algorithm, plaintext, ...params } = encryptParameters;
     const requestOptions = { ...options, ...params };
 
-    return withTrace("encrypt", requestOptions, async (updatedOptions) => {
-      const result = await this.client.encrypt(
-        this.vaultUrl,
-        this.name,
-        this.version,
-        algorithm,
-        plaintext,
-        updatedOptions
-      );
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.encrypt",
+      requestOptions,
+      async (updatedOptions) => {
+        const result = await this.client.encrypt(
+          this.vaultUrl,
+          this.name,
+          this.version,
+          algorithm,
+          plaintext,
+          updatedOptions,
+        );
 
-      return {
-        algorithm: encryptParameters.algorithm,
-        result: result.result!,
-        keyID: this.getKeyID(),
-        additionalAuthenticatedData: result.additionalAuthenticatedData,
-        authenticationTag: result.authenticationTag,
-        iv: result.iv
-      };
-    });
+        return {
+          algorithm: encryptParameters.algorithm,
+          result: result.result!,
+          keyID: this.getKeyID(),
+          additionalAuthenticatedData: result.additionalAuthenticatedData,
+          authenticationTag: result.authenticationTag,
+          iv: result.iv,
+        };
+      },
+    );
   }
 
   decrypt(
     decryptParameters: DecryptParameters,
-    options: DecryptOptions = {}
+    options: DecryptOptions = {},
   ): Promise<DecryptResult> {
     const { algorithm, ciphertext, ...params } = decryptParameters;
     const requestOptions = { ...options, ...params };
 
-    return withTrace("decrypt", requestOptions, async (updatedOptions) => {
-      const result = await this.client.decrypt(
-        this.vaultUrl,
-        this.name,
-        this.version,
-        algorithm,
-        ciphertext,
-        updatedOptions
-      );
-      return {
-        result: result.result!,
-        keyID: this.getKeyID(),
-        algorithm
-      };
-    });
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.decrypt",
+      requestOptions,
+      async (updatedOptions) => {
+        const result = await this.client.decrypt(
+          this.vaultUrl,
+          this.name,
+          this.version,
+          algorithm,
+          ciphertext,
+          updatedOptions,
+        );
+        return {
+          result: result.result!,
+          keyID: this.getKeyID(),
+          algorithm,
+        };
+      },
+    );
   }
 
   wrapKey(
     algorithm: KeyWrapAlgorithm,
     keyToWrap: Uint8Array,
-    options: WrapKeyOptions = {}
+    options: WrapKeyOptions = {},
   ): Promise<WrapResult> {
-    return withTrace("wrapKey", options, async (updatedOptions) => {
-      const result = await this.client.wrapKey(
-        this.vaultUrl,
-        this.name,
-        this.version,
-        algorithm,
-        keyToWrap,
-        updatedOptions
-      );
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.wrapKey",
+      options,
+      async (updatedOptions) => {
+        const result = await this.client.wrapKey(
+          this.vaultUrl,
+          this.name,
+          this.version,
+          algorithm,
+          keyToWrap,
+          updatedOptions,
+        );
 
-      return {
-        result: result.result!,
-        algorithm,
-        keyID: this.getKeyID()
-      };
-    });
+        return {
+          result: result.result!,
+          algorithm,
+          keyID: this.getKeyID(),
+        };
+      },
+    );
   }
 
   unwrapKey(
     algorithm: KeyWrapAlgorithm,
     encryptedKey: Uint8Array,
-    options: UnwrapKeyOptions = {}
+    options: UnwrapKeyOptions = {},
   ): Promise<UnwrapResult> {
-    return withTrace("unwrapKey", options, async (updatedOptions) => {
-      const result = await this.client.unwrapKey(
-        this.vaultUrl,
-        this.name,
-        this.version,
-        algorithm,
-        encryptedKey,
-        updatedOptions
-      );
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.unwrapKey",
+      options,
+      async (updatedOptions) => {
+        const result = await this.client.unwrapKey(
+          this.vaultUrl,
+          this.name,
+          this.version,
+          algorithm,
+          encryptedKey,
+          updatedOptions,
+        );
 
-      return {
-        result: result.result!,
-        algorithm,
-        keyID: this.getKeyID()
-      };
-    });
+        return {
+          result: result.result!,
+          algorithm,
+          keyID: this.getKeyID(),
+        };
+      },
+    );
   }
 
   sign(algorithm: string, digest: Uint8Array, options: SignOptions = {}): Promise<SignResult> {
-    return withTrace("sign", options, async (updatedOptions) => {
-      const result = await this.client.sign(
-        this.vaultUrl,
-        this.name,
-        this.version,
-        algorithm,
-        digest,
-        updatedOptions
-      );
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.sign",
+      options,
+      async (updatedOptions) => {
+        const result = await this.client.sign(
+          this.vaultUrl,
+          this.name,
+          this.version,
+          algorithm,
+          digest,
+          updatedOptions,
+        );
 
-      return { result: result.result!, algorithm, keyID: this.getKeyID() };
-    });
+        return { result: result.result!, algorithm, keyID: this.getKeyID() };
+      },
+    );
   }
 
   verifyData(
     algorithm: string,
     data: Uint8Array,
     signature: Uint8Array,
-    options: VerifyOptions = {}
+    options: VerifyOptions = {},
   ): Promise<VerifyResult> {
-    return withTrace("verifyData", options, async (updatedOptions) => {
-      const hash = await createHash(algorithm, data);
-      return this.verify(algorithm, hash, signature, updatedOptions);
-    });
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.verifyData",
+      options,
+      async (updatedOptions) => {
+        const hash = await createHash(algorithm, data);
+        return this.verify(algorithm, hash, signature, updatedOptions);
+      },
+    );
   }
 
   verify(
     algorithm: string,
     digest: Uint8Array,
     signature: Uint8Array,
-    options: VerifyOptions = {}
+    options: VerifyOptions = {},
   ): Promise<VerifyResult> {
-    return withTrace("verify", options, async (updatedOptions) => {
-      const response = await this.client.verify(
-        this.vaultUrl,
-        this.name,
-        this.version,
-        algorithm,
-        digest,
-        signature,
-        updatedOptions
-      );
-      return {
-        result: response.value ? response.value : false,
-        keyID: this.getKeyID()
-      };
-    });
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.verify",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.verify(
+          this.vaultUrl,
+          this.name,
+          this.version,
+          algorithm,
+          digest,
+          signature,
+          updatedOptions,
+        );
+        return {
+          result: response.value ? response.value : false,
+          keyID: this.getKeyID(),
+        };
+      },
+    );
   }
 
   signData(algorithm: string, data: Uint8Array, options: SignOptions = {}): Promise<SignResult> {
-    return withTrace("signData", options, async (updatedOptions) => {
-      const digest = await createHash(algorithm, data);
-      const result = await this.client.sign(
-        this.vaultUrl,
-        this.name,
-        this.version,
-        algorithm,
-        digest,
-        updatedOptions
-      );
-      return { result: result.result!, algorithm, keyID: this.getKeyID() };
-    });
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.signData",
+      options,
+      async (updatedOptions) => {
+        const digest = await createHash(algorithm, data);
+        const result = await this.client.sign(
+          this.vaultUrl,
+          this.name,
+          this.version,
+          algorithm,
+          digest,
+          updatedOptions,
+        );
+        return { result: result.result!, algorithm, keyID: this.getKeyID() };
+      },
+    );
   }
 
   /**
@@ -274,25 +291,28 @@ export class RemoteCryptographyProvider implements CryptographyProvider {
    * @param options - Additional options.
    */
   getKey(options: GetKeyOptions = {}): Promise<KeyVaultKey> {
-    return withTrace("getKey", options, async (updatedOptions) => {
-      if (typeof this.key === "string") {
-        if (!this.name || this.name === "") {
-          throw new Error("getKey requires a key with a name");
+    return tracingClient.withSpan(
+      "RemoteCryptographyProvider.getKey",
+      options,
+      async (updatedOptions) => {
+        if (typeof this.key === "string") {
+          if (!this.name || this.name === "") {
+            throw new Error("getKey requires a key with a name");
+          }
+          const response = await this.client.getKey(
+            this.vaultUrl,
+            this.name,
+            options && options.version ? options.version : this.version ? this.version : "",
+            updatedOptions,
+          );
+          this.key = getKeyFromKeyBundle(response);
         }
-        const response = await this.client.getKey(
-          this.vaultUrl,
-          this.name,
-          options && options.version ? options.version : this.version ? this.version : "",
-          updatedOptions
-        );
-        this.key = getKeyFromKeyBundle(response);
-      }
-      return this.key;
-    });
+        return this.key;
+      },
+    );
   }
 
   /**
-   * @internal
    * A reference to the auto-generated KeyVault HTTP client.
    */
   private client: KeyVaultClient;
@@ -301,25 +321,21 @@ export class RemoteCryptographyProvider implements CryptographyProvider {
    * A reference to the key used for the cryptographic operations.
    * Based on what was provided to the CryptographyClient constructor,
    * it can be either a string with the URL of a Key Vault Key, or an already parsed {@link KeyVaultKey}.
-   * @internal
    */
   private key: string | KeyVaultKey;
 
   /**
    * Name of the key the client represents
-   * @internal
    */
   private name: string;
 
   /**
    * Version of the key the client represents
-   * @internal
    */
   private version: string;
 
   /**
    * Attempts to retrieve the ID of the key.
-   * @internal
    */
   private getKeyID(): string | undefined {
     let kid;
@@ -344,7 +360,7 @@ export class RemoteCryptographyProvider implements CryptographyProvider {
  */
 function getOrInitializeClient(
   credential: TokenCredential,
-  options: CryptographyClientOptions & { generatedClient?: KeyVaultClient }
+  options: CryptographyClientOptions & { generatedClient?: KeyVaultClient },
 ): KeyVaultClient {
   if (options.generatedClient) {
     return options.generatedClient;
@@ -358,12 +374,8 @@ function getOrInitializeClient(
     userAgentPrefix:
       userAgentOptions && userAgentOptions.userAgentPrefix
         ? `${userAgentOptions.userAgentPrefix} ${libInfo}`
-        : libInfo
+        : libInfo,
   };
-
-  const authPolicy = isTokenCredential(credential)
-    ? challengeBasedAuthenticationPolicy(credential)
-    : signingPolicy(credential);
 
   const internalPipelineOptions = {
     ...options,
@@ -372,13 +384,21 @@ function getOrInitializeClient(
       allowedHeaderNames: [
         "x-ms-keyvault-region",
         "x-ms-keyvault-network-info",
-        "x-ms-keyvault-service-version"
-      ]
-    }
+        "x-ms-keyvault-service-version",
+      ],
+    },
   };
 
-  return new KeyVaultClient(
+  const client = new KeyVaultClient(
     options.serviceVersion || LATEST_API_VERSION,
-    createPipelineFromOptions(internalPipelineOptions, authPolicy)
+    internalPipelineOptions,
   );
+
+  // The authentication policy must come after the deserialization policy since the deserialization policy
+  // converts 401 responses to an Error, and we don't want to deal with that.
+  client.pipeline.addPolicy(keyVaultAuthenticationPolicy(credential, options), {
+    afterPolicies: ["deserializationPolicy"],
+  });
+
+  return client;
 }

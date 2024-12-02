@@ -76,10 +76,6 @@ if (!$DeploymentOutputs['AZURE_MANAGEDHSM_URI']) {
 [Uri] $hsmUrl = $DeploymentOutputs['AZURE_MANAGEDHSM_URI']
 $hsmName = $hsmUrl.Host.Substring(0, $hsmUrl.Host.IndexOf('.'))
 
-$tenant = $DeploymentOutputs['KEYVAULT_TENANT_ID']
-$username = $DeploymentOutputs['KEYVAULT_CLIENT_ID']
-$password = $DeploymentOutputs['KEYVAULT_CLIENT_SECRET']
-
 Log 'Creating 3 X509 certificates to activate security domain'
 $wrappingFiles = foreach ($i in 0..2) {
     $certificate = New-X509Certificate2 "CN=$($hsmUrl.Host)"
@@ -99,7 +95,14 @@ if (Test-Path $sdpath) {
     Remove-Item $sdPath -Force
 }
 
-Export-AzKeyVaultSecurityDomain -Name $hsmName -Quorum 2 -Certificates $wrappingFiles -OutputPath $sdPath
+Export-AzKeyVaultSecurityDomain -Name $hsmName -Quorum 2 -Certificates $wrappingFiles -OutputPath $sdPath -ErrorAction SilentlyContinue -Verbose
+if ( !$? ) {
+    Write-Host $Error[0].Exception
+    Write-Error $Error[0]
+
+    exit
+}
+
 Log "Security domain downloaded to '$sdPath'; Managed HSM is now active at '$hsmUrl'"
 
 $testApplicationOid = $DeploymentOutputs["CLIENT_OBJECT_ID"]

@@ -6,53 +6,56 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { PrivateLinkResources } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { EventGridManagementClientContext } from "../eventGridManagementClientContext";
+import { EventGridManagementClient } from "../eventGridManagementClient";
 import {
   PrivateLinkResource,
   PrivateLinkResourcesListByResourceNextOptionalParams,
   PrivateLinkResourcesListByResourceOptionalParams,
+  PrivateLinkResourcesListByResourceResponse,
   PrivateLinkResourcesGetOptionalParams,
   PrivateLinkResourcesGetResponse,
-  PrivateLinkResourcesListByResourceResponse,
-  PrivateLinkResourcesListByResourceNextResponse
+  PrivateLinkResourcesListByResourceNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing PrivateLinkResources operations. */
 export class PrivateLinkResourcesImpl implements PrivateLinkResources {
-  private readonly client: EventGridManagementClientContext;
+  private readonly client: EventGridManagementClient;
 
   /**
    * Initialize a new instance of the class PrivateLinkResources class.
    * @param client Reference to the service client
    */
-  constructor(client: EventGridManagementClientContext) {
+  constructor(client: EventGridManagementClient) {
     this.client = client;
   }
 
   /**
-   * List all the private link resources under a topic or domain.
+   * List all the private link resources under a topic, domain, or partner namespace or namespace.
    * @param resourceGroupName The name of the resource group within the user's subscription.
-   * @param parentType The type of the parent resource. This can be either \'topics\' or \'domains\'.
-   * @param parentName The name of the parent resource (namely, either, the topic name or domain name).
+   * @param parentType The type of the parent resource. This can be either \'topics\', \'domains\', or
+   *                   \'partnerNamespaces\' or \'namespaces\'.
+   * @param parentName The name of the parent resource (namely, either, the topic name, domain name, or
+   *                   partner namespace or namespace name).
    * @param options The options parameters.
    */
   public listByResource(
     resourceGroupName: string,
     parentType: string,
     parentName: string,
-    options?: PrivateLinkResourcesListByResourceOptionalParams
+    options?: PrivateLinkResourcesListByResourceOptionalParams,
   ): PagedAsyncIterableIterator<PrivateLinkResource> {
     const iter = this.listByResourcePagingAll(
       resourceGroupName,
       parentType,
       parentName,
-      options
+      options,
     );
     return {
       next() {
@@ -61,14 +64,18 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByResourcePagingPage(
           resourceGroupName,
           parentType,
           parentName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -76,26 +83,35 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
     resourceGroupName: string,
     parentType: string,
     parentName: string,
-    options?: PrivateLinkResourcesListByResourceOptionalParams
+    options?: PrivateLinkResourcesListByResourceOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<PrivateLinkResource[]> {
-    let result = await this._listByResource(
-      resourceGroupName,
-      parentType,
-      parentName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: PrivateLinkResourcesListByResourceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResource(
+        resourceGroupName,
+        parentType,
+        parentName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceNext(
         resourceGroupName,
         parentType,
         parentName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -103,13 +119,13 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
     resourceGroupName: string,
     parentType: string,
     parentName: string,
-    options?: PrivateLinkResourcesListByResourceOptionalParams
+    options?: PrivateLinkResourcesListByResourceOptionalParams,
   ): AsyncIterableIterator<PrivateLinkResource> {
     for await (const page of this.listByResourcePagingPage(
       resourceGroupName,
       parentType,
       parentName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -118,9 +134,12 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
   /**
    * Get properties of a private link resource.
    * @param resourceGroupName The name of the resource group within the user's subscription.
-   * @param parentType The type of the parent resource. This can be either \'topics\' or \'domains\'.
-   * @param parentName The name of the parent resource (namely, either, the topic name or domain name).
-   * @param privateLinkResourceName The name of private link resource.
+   * @param parentType The type of the parent resource. This can be either \'topics\', \'domains\', or
+   *                   \'partnerNamespaces\' or \'namespaces\'.
+   * @param parentName The name of the parent resource (namely, either, the topic name, domain name, or
+   *                   partner namespace name or namespace name).
+   * @param privateLinkResourceName The name of private link resource will be either topic, domain,
+   *                                partnerNamespace or namespace.
    * @param options The options parameters.
    */
   get(
@@ -128,7 +147,7 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
     parentType: string,
     parentName: string,
     privateLinkResourceName: string,
-    options?: PrivateLinkResourcesGetOptionalParams
+    options?: PrivateLinkResourcesGetOptionalParams,
   ): Promise<PrivateLinkResourcesGetResponse> {
     return this.client.sendOperationRequest(
       {
@@ -136,36 +155,40 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
         parentType,
         parentName,
         privateLinkResourceName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
   /**
-   * List all the private link resources under a topic or domain.
+   * List all the private link resources under a topic, domain, or partner namespace or namespace.
    * @param resourceGroupName The name of the resource group within the user's subscription.
-   * @param parentType The type of the parent resource. This can be either \'topics\' or \'domains\'.
-   * @param parentName The name of the parent resource (namely, either, the topic name or domain name).
+   * @param parentType The type of the parent resource. This can be either \'topics\', \'domains\', or
+   *                   \'partnerNamespaces\' or \'namespaces\'.
+   * @param parentName The name of the parent resource (namely, either, the topic name, domain name, or
+   *                   partner namespace or namespace name).
    * @param options The options parameters.
    */
   private _listByResource(
     resourceGroupName: string,
     parentType: string,
     parentName: string,
-    options?: PrivateLinkResourcesListByResourceOptionalParams
+    options?: PrivateLinkResourcesListByResourceOptionalParams,
   ): Promise<PrivateLinkResourcesListByResourceResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, parentType, parentName, options },
-      listByResourceOperationSpec
+      listByResourceOperationSpec,
     );
   }
 
   /**
    * ListByResourceNext
    * @param resourceGroupName The name of the resource group within the user's subscription.
-   * @param parentType The type of the parent resource. This can be either \'topics\' or \'domains\'.
-   * @param parentName The name of the parent resource (namely, either, the topic name or domain name).
+   * @param parentType The type of the parent resource. This can be either \'topics\', \'domains\', or
+   *                   \'partnerNamespaces\' or \'namespaces\'.
+   * @param parentName The name of the parent resource (namely, either, the topic name, domain name, or
+   *                   partner namespace or namespace name).
    * @param nextLink The nextLink from the previous successful call to the ListByResource method.
    * @param options The options parameters.
    */
@@ -174,11 +197,11 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
     parentType: string,
     parentName: string,
     nextLink: string,
-    options?: PrivateLinkResourcesListByResourceNextOptionalParams
+    options?: PrivateLinkResourcesListByResourceNextOptionalParams,
   ): Promise<PrivateLinkResourcesListByResourceNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, parentType, parentName, nextLink, options },
-      listByResourceNextOperationSpec
+      listByResourceNextOperationSpec,
     );
   }
 }
@@ -186,14 +209,13 @@ export class PrivateLinkResourcesImpl implements PrivateLinkResources {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/{parentType}/{parentName}/privateLinkResources/{privateLinkResourceName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/{parentType}/{parentName}/privateLinkResources/{privateLinkResourceName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateLinkResource
+      bodyMapper: Mappers.PrivateLinkResource,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -201,21 +223,20 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.parentName,
-    Parameters.parentType4,
-    Parameters.privateLinkResourceName
+    Parameters.parentType1,
+    Parameters.privateLinkResourceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/{parentType}/{parentName}/privateLinkResources",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/{parentType}/{parentName}/privateLinkResources",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateLinkResourcesListResult
+      bodyMapper: Mappers.PrivateLinkResourcesListResult,
     },
-    default: {}
+    default: {},
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [
@@ -223,29 +244,28 @@ const listByResourceOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.parentName,
-    Parameters.parentType4
+    Parameters.parentType1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateLinkResourcesListResult
+      bodyMapper: Mappers.PrivateLinkResourcesListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter, Parameters.top],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.nextLink,
     Parameters.parentName,
-    Parameters.parentType4
+    Parameters.parentType1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -4,12 +4,15 @@
 
 ```ts
 
-import { AbortSignalLike } from '@azure/abort-controller';
+import type { AbortSignalLike } from '@azure/abort-controller';
+import { HttpMethods } from '@azure/core-util';
 
 // @public
 export interface AccessToken {
     expiresOnTimestamp: number;
+    refreshAfterTimestamp?: number;
     token: string;
+    tokenType?: "Bearer" | "pop";
 }
 
 // @public
@@ -35,23 +38,28 @@ export class AzureSASCredential implements SASCredential {
 }
 
 // @public
-export interface Context {
-    deleteValue(key: symbol): Context;
-    getValue(key: symbol): unknown;
-    setValue(key: symbol, value: unknown): Context;
-}
-
-// @public
 export interface GetTokenOptions {
     abortSignal?: AbortSignalLike;
+    claims?: string;
+    enableCae?: boolean;
+    proofOfPossessionOptions?: {
+        nonce: string;
+        resourceRequestMethod: HttpMethods;
+        resourceRequestUrl: string;
+    };
     requestOptions?: {
         timeout?: number;
     };
     tenantId?: string;
     tracingOptions?: {
-        tracingContext?: Context;
+        tracingContext?: TracingContext;
     };
 }
+
+export { HttpMethods }
+
+// @public
+export function isKeyCredential(credential: unknown): credential is KeyCredential;
 
 // @public
 export function isNamedKeyCredential(credential: unknown): credential is NamedKeyCredential;
@@ -83,6 +91,12 @@ export interface TokenCredential {
     getToken(scopes: string | string[], options?: GetTokenOptions): Promise<AccessToken | null>;
 }
 
+// @public
+export interface TracingContext {
+    deleteValue(key: symbol): TracingContext;
+    getValue(key: symbol): unknown;
+    setValue(key: symbol, value: unknown): TracingContext;
+}
 
 // (No @packageDocumentation comment for this package)
 

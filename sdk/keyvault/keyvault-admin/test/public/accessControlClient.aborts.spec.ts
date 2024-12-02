@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { env, Recorder } from "@azure-tools/test-recorder";
-import { AbortController } from "@azure/abort-controller";
+import { assertEnvironmentVariable, Recorder } from "@azure-tools/test-recorder";
 
-import { KeyVaultAccessControlClient } from "../../src";
-import { assertThrowsAbortError } from "../utils/common";
-import { authenticate } from "../utils/authentication";
+import { KeyVaultAccessControlClient } from "../../src/index.js";
+import { authenticate } from "./utils/authentication.js";
+import { describe, it, beforeEach, afterEach, expect } from "vitest";
+import { AbortError } from "@azure/abort-controller";
 
 describe("Aborting KeyVaultAccessControlClient's requests", () => {
   let client: KeyVaultAccessControlClient;
@@ -14,82 +14,84 @@ describe("Aborting KeyVaultAccessControlClient's requests", () => {
   let generateFakeUUID: () => string;
   const globalScope = "/";
 
-  beforeEach(async function() {
-    const authentication = await authenticate(this);
+  beforeEach(async function (ctx) {
+    const authentication = await authenticate(ctx);
     client = authentication.accessControlClient;
     recorder = authentication.recorder;
     generateFakeUUID = authentication.generateFakeUUID;
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
   // The tests follow
 
-  it("can abort listRoleDefinitions", async function() {
+  it("can abort listRoleDefinitions", async function () {
     const controller = new AbortController();
     controller.abort();
 
-    await assertThrowsAbortError(async () => {
-      await client
-        .listRoleDefinitions("/", {
-          abortSignal: controller.signal
-        })
-        .next();
-    });
+    await expect(
+      client.listRoleDefinitions("/", { abortSignal: controller.signal }).next(),
+    ).rejects.toThrow(AbortError);
   });
 
-  it("can abort listRoleAssignments", async function() {
+  it("can abort listRoleAssignments", async function () {
     const controller = new AbortController();
     controller.abort();
 
-    await assertThrowsAbortError(async () => {
-      await client
+    await expect(
+      client
         .listRoleAssignments("/", {
-          abortSignal: controller.signal
+          abortSignal: controller.signal,
         })
-        .next();
-    });
+        .next(),
+    ).rejects.toThrow(AbortError);
   });
 
-  it("can abort createRoleAssignment", async function() {
+  it("can abort createRoleAssignment", async function () {
     const roleDefinitionId = generateFakeUUID();
     const name = generateFakeUUID();
 
     const controller = new AbortController();
     controller.abort();
 
-    await assertThrowsAbortError(async () => {
-      await client.createRoleAssignment(globalScope, name, roleDefinitionId, env.CLIENT_OBJECT_ID, {
-        abortSignal: controller.signal
-      });
-    });
+    await expect(
+      client.createRoleAssignment(
+        globalScope,
+        name,
+        roleDefinitionId,
+        assertEnvironmentVariable("CLIENT_OBJECT_ID"),
+        {
+          abortSignal: controller.signal,
+        },
+      ),
+    ).rejects.toThrow(AbortError);
   });
 
-  it("can abort getRoleAssignment", async function() {
+  it("can abort getRoleAssignment", async function () {
     const name = generateFakeUUID();
 
     const controller = new AbortController();
     controller.abort();
 
-    await assertThrowsAbortError(async () => {
-      await client.getRoleAssignment(globalScope, name, {
-        abortSignal: controller.signal
-      });
-    });
+    await expect(
+      client.getRoleAssignment(globalScope, name, {
+        abortSignal: controller.signal,
+      }),
+    ).rejects.toThrow(AbortError);
   });
 
-  it("can abort deleteRoleAssignment", async function() {
+  it("can abort deleteRoleAssignment", async function () {
     const name = generateFakeUUID();
 
     const controller = new AbortController();
     controller.abort();
 
-    await assertThrowsAbortError(async () => {
-      await client.deleteRoleAssignment(globalScope, name, {
-        abortSignal: controller.signal
-      });
-    });
+    await expect(
+      client.deleteRoleAssignment(globalScope, name, {
+        abortSignal: controller.signal,
+      }),
+    ).rejects.toThrow(AbortError);
   });
 });

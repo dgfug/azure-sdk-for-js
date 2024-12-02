@@ -17,7 +17,7 @@ Key links:
 
 ### Currently supported environments
 
-- Node.js version 14.x.x or higher
+- [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule)
 
 ### Prerequisites
 
@@ -27,12 +27,12 @@ Key links:
 
 Follow [these][purview_resource] instructions to create your Purview resource
 
-### Install the `@azure-rest/purview-account` package
+### Install the `@azure-rest/purview-administration` package
 
-Install the Azure Purview Account client library for JavaScript with `npm`:
+Install the Azure Purview Administration client library for JavaScript with `npm`:
 
 ```bash
-npm install @azure-rest/purview-account
+npm install @azure-rest/purview-administration
 ```
 
 ### Create and authenticate a `PurviewAccount`
@@ -113,7 +113,7 @@ main().catch(console.error);
 
 Enabling logging may help uncover useful information about failures. In order to see a log of HTTP requests and responses, set the `AZURE_LOG_LEVEL` environment variable to `info`. Alternatively, logging can be enabled at runtime by calling `setLogLevel` in the `@azure/logger`:
 
-```javascript
+```ts
 import { setLogLevel } from "@azure/logger";
 
 setLogLevel("info");

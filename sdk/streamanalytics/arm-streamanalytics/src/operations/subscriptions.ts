@@ -10,9 +10,13 @@ import { Subscriptions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StreamAnalyticsManagementClientContext } from "../streamAnalyticsManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { StreamAnalyticsManagementClient } from "../streamAnalyticsManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   SubscriptionsListQuotasOptionalParams,
   SubscriptionsListQuotasResponse,
@@ -30,18 +34,18 @@ import {
   SubscriptionsTestInputResponse,
   TestOutput,
   SubscriptionsTestOutputOptionalParams,
-  SubscriptionsTestOutputResponse
+  SubscriptionsTestOutputResponse,
 } from "../models";
 
 /** Class containing Subscriptions operations. */
 export class SubscriptionsImpl implements Subscriptions {
-  private readonly client: StreamAnalyticsManagementClientContext;
+  private readonly client: StreamAnalyticsManagementClient;
 
   /**
    * Initialize a new instance of the class Subscriptions class.
    * @param client Reference to the service client
    */
-  constructor(client: StreamAnalyticsManagementClientContext) {
+  constructor(client: StreamAnalyticsManagementClient) {
     this.client = client;
   }
 
@@ -53,11 +57,11 @@ export class SubscriptionsImpl implements Subscriptions {
    */
   listQuotas(
     location: string,
-    options?: SubscriptionsListQuotasOptionalParams
+    options?: SubscriptionsListQuotasOptionalParams,
   ): Promise<SubscriptionsListQuotasResponse> {
     return this.client.sendOperationRequest(
       { location, options },
-      listQuotasOperationSpec
+      listQuotasOperationSpec,
     );
   }
 
@@ -72,30 +76,29 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginTestQuery(
     location: string,
     testQuery: TestQuery,
-    options?: SubscriptionsTestQueryOptionalParams
+    options?: SubscriptionsTestQueryOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsTestQueryResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsTestQueryResponse>,
       SubscriptionsTestQueryResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<SubscriptionsTestQueryResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -104,8 +107,8 @@ export class SubscriptionsImpl implements Subscriptions {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -113,21 +116,26 @@ export class SubscriptionsImpl implements Subscriptions {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { location, testQuery, options },
-      testQueryOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { location, testQuery, options },
+      spec: testQueryOperationSpec,
     });
+    const poller = await createHttpPoller<
+      SubscriptionsTestQueryResponse,
+      OperationState<SubscriptionsTestQueryResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -141,7 +149,7 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginTestQueryAndWait(
     location: string,
     testQuery: TestQuery,
-    options?: SubscriptionsTestQueryOptionalParams
+    options?: SubscriptionsTestQueryOptionalParams,
   ): Promise<SubscriptionsTestQueryResponse> {
     const poller = await this.beginTestQuery(location, testQuery, options);
     return poller.pollUntilDone();
@@ -158,11 +166,11 @@ export class SubscriptionsImpl implements Subscriptions {
   compileQuery(
     location: string,
     compileQuery: CompileQuery,
-    options?: SubscriptionsCompileQueryOptionalParams
+    options?: SubscriptionsCompileQueryOptionalParams,
   ): Promise<SubscriptionsCompileQueryResponse> {
     return this.client.sendOperationRequest(
       { location, compileQuery, options },
-      compileQueryOperationSpec
+      compileQueryOperationSpec,
     );
   }
 
@@ -176,30 +184,29 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginSampleInput(
     location: string,
     sampleInput: SampleInput,
-    options?: SubscriptionsSampleInputOptionalParams
+    options?: SubscriptionsSampleInputOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsSampleInputResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsSampleInputResponse>,
       SubscriptionsSampleInputResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<SubscriptionsSampleInputResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -208,8 +215,8 @@ export class SubscriptionsImpl implements Subscriptions {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -217,21 +224,26 @@ export class SubscriptionsImpl implements Subscriptions {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { location, sampleInput, options },
-      sampleInputOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { location, sampleInput, options },
+      spec: sampleInputOperationSpec,
     });
+    const poller = await createHttpPoller<
+      SubscriptionsSampleInputResponse,
+      OperationState<SubscriptionsSampleInputResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -244,7 +256,7 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginSampleInputAndWait(
     location: string,
     sampleInput: SampleInput,
-    options?: SubscriptionsSampleInputOptionalParams
+    options?: SubscriptionsSampleInputOptionalParams,
   ): Promise<SubscriptionsSampleInputResponse> {
     const poller = await this.beginSampleInput(location, sampleInput, options);
     return poller.pollUntilDone();
@@ -260,30 +272,29 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginTestInput(
     location: string,
     testInput: TestInput,
-    options?: SubscriptionsTestInputOptionalParams
+    options?: SubscriptionsTestInputOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsTestInputResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsTestInputResponse>,
       SubscriptionsTestInputResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<SubscriptionsTestInputResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -292,8 +303,8 @@ export class SubscriptionsImpl implements Subscriptions {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -301,21 +312,26 @@ export class SubscriptionsImpl implements Subscriptions {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { location, testInput, options },
-      testInputOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { location, testInput, options },
+      spec: testInputOperationSpec,
     });
+    const poller = await createHttpPoller<
+      SubscriptionsTestInputResponse,
+      OperationState<SubscriptionsTestInputResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -328,7 +344,7 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginTestInputAndWait(
     location: string,
     testInput: TestInput,
-    options?: SubscriptionsTestInputOptionalParams
+    options?: SubscriptionsTestInputOptionalParams,
   ): Promise<SubscriptionsTestInputResponse> {
     const poller = await this.beginTestInput(location, testInput, options);
     return poller.pollUntilDone();
@@ -344,30 +360,29 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginTestOutput(
     location: string,
     testOutput: TestOutput,
-    options?: SubscriptionsTestOutputOptionalParams
+    options?: SubscriptionsTestOutputOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SubscriptionsTestOutputResponse>,
+    SimplePollerLike<
+      OperationState<SubscriptionsTestOutputResponse>,
       SubscriptionsTestOutputResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<SubscriptionsTestOutputResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -376,8 +391,8 @@ export class SubscriptionsImpl implements Subscriptions {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -385,21 +400,26 @@ export class SubscriptionsImpl implements Subscriptions {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { location, testOutput, options },
-      testOutputOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { location, testOutput, options },
+      spec: testOutputOperationSpec,
     });
+    const poller = await createHttpPoller<
+      SubscriptionsTestOutputResponse,
+      OperationState<SubscriptionsTestOutputResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -412,7 +432,7 @@ export class SubscriptionsImpl implements Subscriptions {
   async beginTestOutputAndWait(
     location: string,
     testOutput: TestOutput,
-    options?: SubscriptionsTestOutputOptionalParams
+    options?: SubscriptionsTestOutputOptionalParams,
   ): Promise<SubscriptionsTestOutputResponse> {
     const poller = await this.beginTestOutput(location, testOutput, options);
     return poller.pollUntilDone();
@@ -422,174 +442,168 @@ export class SubscriptionsImpl implements Subscriptions {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listQuotasOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/quotas",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/quotas",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SubscriptionQuotasListResult
+      bodyMapper: Mappers.SubscriptionQuotasListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const testQueryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/testQuery",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/testQuery",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.QueryTestingResult
+      bodyMapper: Mappers.QueryTestingResult,
     },
     201: {
-      bodyMapper: Mappers.QueryTestingResult
+      bodyMapper: Mappers.QueryTestingResult,
     },
     202: {
-      bodyMapper: Mappers.QueryTestingResult
+      bodyMapper: Mappers.QueryTestingResult,
     },
     204: {
-      bodyMapper: Mappers.QueryTestingResult
+      bodyMapper: Mappers.QueryTestingResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.testQuery,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const compileQueryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/compileQuery",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/compileQuery",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.QueryCompilationResult
+      bodyMapper: Mappers.QueryCompilationResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.compileQuery,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const sampleInputOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/sampleInput",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/sampleInput",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SampleInputResult
+      bodyMapper: Mappers.SampleInputResult,
     },
     201: {
-      bodyMapper: Mappers.SampleInputResult
+      bodyMapper: Mappers.SampleInputResult,
     },
     202: {
-      bodyMapper: Mappers.SampleInputResult
+      bodyMapper: Mappers.SampleInputResult,
     },
     204: {
-      bodyMapper: Mappers.SampleInputResult
+      bodyMapper: Mappers.SampleInputResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.sampleInput,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const testInputOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/testInput",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/testInput",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     201: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     202: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     204: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.testInput,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const testOutputOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/testOutput",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.StreamAnalytics/locations/{location}/testOutput",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     201: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     202: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     204: {
-      bodyMapper: Mappers.TestDatasourceResult
+      bodyMapper: Mappers.TestDatasourceResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.testOutput,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };

@@ -1,5 +1,7 @@
-import { PerfTest, getEnvVar } from "@azure/test-utils-perf";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
+import { PerfTest, getEnvVar } from "@azure-tools/test-perf";
 import { TableClient } from "@azure/data-tables";
 
 export abstract class TablesTest<TOptions = Record<string, unknown>> extends PerfTest<TOptions> {
@@ -7,8 +9,10 @@ export abstract class TablesTest<TOptions = Record<string, unknown>> extends Per
   constructor(tableName: string) {
     super();
     const connectionString = getEnvVar("SAS_CONNECTION_STRING");
-    this.client = this.configureClient(
-      TableClient.fromConnectionString(connectionString, tableName)
+    this.client = TableClient.fromConnectionString(
+      connectionString,
+      tableName,
+      this.configureClientOptions({}),
     );
   }
 

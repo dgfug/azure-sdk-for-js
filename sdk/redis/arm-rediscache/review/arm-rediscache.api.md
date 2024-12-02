@@ -6,9 +6,134 @@
 
 import * as coreAuth from '@azure/core-auth';
 import * as coreClient from '@azure/core-client';
+import { OperationState } from '@azure/core-lro';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PollerLike } from '@azure/core-lro';
-import { PollOperationState } from '@azure/core-lro';
+import { SimplePollerLike } from '@azure/core-lro';
+
+// @public
+export interface AccessPolicy {
+    beginCreateUpdate(resourceGroupName: string, cacheName: string, accessPolicyName: string, parameters: RedisCacheAccessPolicy, options?: AccessPolicyCreateUpdateOptionalParams): Promise<SimplePollerLike<OperationState<AccessPolicyCreateUpdateResponse>, AccessPolicyCreateUpdateResponse>>;
+    beginCreateUpdateAndWait(resourceGroupName: string, cacheName: string, accessPolicyName: string, parameters: RedisCacheAccessPolicy, options?: AccessPolicyCreateUpdateOptionalParams): Promise<AccessPolicyCreateUpdateResponse>;
+    beginDelete(resourceGroupName: string, cacheName: string, accessPolicyName: string, options?: AccessPolicyDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginDeleteAndWait(resourceGroupName: string, cacheName: string, accessPolicyName: string, options?: AccessPolicyDeleteOptionalParams): Promise<void>;
+    get(resourceGroupName: string, cacheName: string, accessPolicyName: string, options?: AccessPolicyGetOptionalParams): Promise<AccessPolicyGetResponse>;
+    list(resourceGroupName: string, cacheName: string, options?: AccessPolicyListOptionalParams): PagedAsyncIterableIterator<RedisCacheAccessPolicy>;
+}
+
+// @public
+export interface AccessPolicyAssignment {
+    beginCreateUpdate(resourceGroupName: string, cacheName: string, accessPolicyAssignmentName: string, parameters: RedisCacheAccessPolicyAssignment, options?: AccessPolicyAssignmentCreateUpdateOptionalParams): Promise<SimplePollerLike<OperationState<AccessPolicyAssignmentCreateUpdateResponse>, AccessPolicyAssignmentCreateUpdateResponse>>;
+    beginCreateUpdateAndWait(resourceGroupName: string, cacheName: string, accessPolicyAssignmentName: string, parameters: RedisCacheAccessPolicyAssignment, options?: AccessPolicyAssignmentCreateUpdateOptionalParams): Promise<AccessPolicyAssignmentCreateUpdateResponse>;
+    beginDelete(resourceGroupName: string, cacheName: string, accessPolicyAssignmentName: string, options?: AccessPolicyAssignmentDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginDeleteAndWait(resourceGroupName: string, cacheName: string, accessPolicyAssignmentName: string, options?: AccessPolicyAssignmentDeleteOptionalParams): Promise<void>;
+    get(resourceGroupName: string, cacheName: string, accessPolicyAssignmentName: string, options?: AccessPolicyAssignmentGetOptionalParams): Promise<AccessPolicyAssignmentGetResponse>;
+    list(resourceGroupName: string, cacheName: string, options?: AccessPolicyAssignmentListOptionalParams): PagedAsyncIterableIterator<RedisCacheAccessPolicyAssignment>;
+}
+
+// @public
+export interface AccessPolicyAssignmentCreateUpdateOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type AccessPolicyAssignmentCreateUpdateResponse = RedisCacheAccessPolicyAssignment;
+
+// @public
+export interface AccessPolicyAssignmentDeleteHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
+export interface AccessPolicyAssignmentDeleteOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export interface AccessPolicyAssignmentGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessPolicyAssignmentGetResponse = RedisCacheAccessPolicyAssignment;
+
+// @public
+export interface AccessPolicyAssignmentListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessPolicyAssignmentListNextResponse = RedisCacheAccessPolicyAssignmentList;
+
+// @public
+export interface AccessPolicyAssignmentListOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessPolicyAssignmentListResponse = RedisCacheAccessPolicyAssignmentList;
+
+// @public
+export type AccessPolicyAssignmentProvisioningState = string;
+
+// @public
+export interface AccessPolicyCreateUpdateOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type AccessPolicyCreateUpdateResponse = RedisCacheAccessPolicy;
+
+// @public
+export interface AccessPolicyDeleteHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
+export interface AccessPolicyDeleteOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export interface AccessPolicyGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessPolicyGetResponse = RedisCacheAccessPolicy;
+
+// @public
+export interface AccessPolicyListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessPolicyListNextResponse = RedisCacheAccessPolicyList;
+
+// @public
+export interface AccessPolicyListOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AccessPolicyListResponse = RedisCacheAccessPolicyList;
+
+// @public
+export type AccessPolicyProvisioningState = string;
+
+// @public
+export type AccessPolicyType = string;
+
+// @public
+export interface AsyncOperationStatus {
+    get(location: string, operationId: string, options?: AsyncOperationStatusGetOptionalParams): Promise<AsyncOperationStatusGetResponse>;
+}
+
+// @public
+export interface AsyncOperationStatusGetOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type AsyncOperationStatusGetResponse = OperationStatus;
 
 // @public
 export interface CheckNameAvailabilityParameters {
@@ -46,7 +171,9 @@ export interface ErrorResponse {
 export interface ExportRDBParameters {
     container: string;
     format?: string;
+    preferredDataArchiveAuthMethod?: string;
     prefix: string;
+    storageSubscriptionId?: string;
 }
 
 // @public
@@ -90,82 +217,97 @@ export interface FirewallRulesListOptionalParams extends coreClient.OperationOpt
 export type FirewallRulesListResponse = RedisFirewallRuleListResult;
 
 // @public
+export function getContinuationToken(page: unknown): string | undefined;
+
+// @public
 export interface ImportRDBParameters {
     files: string[];
     format?: string;
+    preferredDataArchiveAuthMethod?: string;
+    storageSubscriptionId?: string;
+}
+
+// @public
+export enum KnownAccessPolicyAssignmentProvisioningState {
+    Canceled = "Canceled",
+    Deleted = "Deleted",
+    Deleting = "Deleting",
+    Failed = "Failed",
+    Succeeded = "Succeeded",
+    Updating = "Updating"
+}
+
+// @public
+export enum KnownAccessPolicyProvisioningState {
+    Canceled = "Canceled",
+    Deleted = "Deleted",
+    Deleting = "Deleting",
+    Failed = "Failed",
+    Succeeded = "Succeeded",
+    Updating = "Updating"
+}
+
+// @public
+export enum KnownAccessPolicyType {
+    BuiltIn = "BuiltIn",
+    Custom = "Custom"
 }
 
 // @public
 export enum KnownDefaultName {
-    // (undocumented)
     Default = "default"
 }
 
 // @public
+export enum KnownManagedServiceIdentityType {
+    None = "None",
+    SystemAssigned = "SystemAssigned",
+    SystemAssignedUserAssigned = "SystemAssigned, UserAssigned",
+    UserAssigned = "UserAssigned"
+}
+
+// @public
 export enum KnownPrivateEndpointConnectionProvisioningState {
-    // (undocumented)
     Creating = "Creating",
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Succeeded = "Succeeded"
 }
 
 // @public
 export enum KnownPrivateEndpointServiceConnectionStatus {
-    // (undocumented)
     Approved = "Approved",
-    // (undocumented)
     Pending = "Pending",
-    // (undocumented)
     Rejected = "Rejected"
 }
 
 // @public
 export enum KnownProvisioningState {
-    // (undocumented)
+    ConfiguringAAD = "ConfiguringAAD",
     Creating = "Creating",
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Disabled = "Disabled",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     Linking = "Linking",
-    // (undocumented)
     Provisioning = "Provisioning",
-    // (undocumented)
     RecoveringScaleFailure = "RecoveringScaleFailure",
-    // (undocumented)
     Scaling = "Scaling",
-    // (undocumented)
     Succeeded = "Succeeded",
-    // (undocumented)
     Unlinking = "Unlinking",
-    // (undocumented)
     Unprovisioning = "Unprovisioning",
-    // (undocumented)
     Updating = "Updating"
 }
 
 // @public
 export enum KnownPublicNetworkAccess {
-    // (undocumented)
     Disabled = "Disabled",
-    // (undocumented)
     Enabled = "Enabled"
 }
 
 // @public
 export enum KnownRebootType {
-    // (undocumented)
     AllNodes = "AllNodes",
-    // (undocumented)
     PrimaryNode = "PrimaryNode",
-    // (undocumented)
     SecondaryNode = "SecondaryNode"
 }
 
@@ -179,29 +321,30 @@ export enum KnownSkuFamily {
 
 // @public
 export enum KnownSkuName {
-    // (undocumented)
     Basic = "Basic",
-    // (undocumented)
     Premium = "Premium",
-    // (undocumented)
     Standard = "Standard"
 }
 
 // @public
 export enum KnownTlsVersion {
-    // (undocumented)
     One0 = "1.0",
-    // (undocumented)
     One1 = "1.1",
-    // (undocumented)
     One2 = "1.2"
 }
 
 // @public
+export enum KnownUpdateChannel {
+    Preview = "Preview",
+    Stable = "Stable"
+}
+
+// @public
 export interface LinkedServer {
-    beginCreate(resourceGroupName: string, name: string, linkedServerName: string, parameters: RedisLinkedServerCreateParameters, options?: LinkedServerCreateOptionalParams): Promise<PollerLike<PollOperationState<LinkedServerCreateResponse>, LinkedServerCreateResponse>>;
+    beginCreate(resourceGroupName: string, name: string, linkedServerName: string, parameters: RedisLinkedServerCreateParameters, options?: LinkedServerCreateOptionalParams): Promise<SimplePollerLike<OperationState<LinkedServerCreateResponse>, LinkedServerCreateResponse>>;
     beginCreateAndWait(resourceGroupName: string, name: string, linkedServerName: string, parameters: RedisLinkedServerCreateParameters, options?: LinkedServerCreateOptionalParams): Promise<LinkedServerCreateResponse>;
-    delete(resourceGroupName: string, name: string, linkedServerName: string, options?: LinkedServerDeleteOptionalParams): Promise<void>;
+    beginDelete(resourceGroupName: string, name: string, linkedServerName: string, options?: LinkedServerDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
+    beginDeleteAndWait(resourceGroupName: string, name: string, linkedServerName: string, options?: LinkedServerDeleteOptionalParams): Promise<void>;
     get(resourceGroupName: string, name: string, linkedServerName: string, options?: LinkedServerGetOptionalParams): Promise<LinkedServerGetResponse>;
     list(resourceGroupName: string, name: string, options?: LinkedServerListOptionalParams): PagedAsyncIterableIterator<RedisLinkedServerWithProperties>;
 }
@@ -216,7 +359,15 @@ export interface LinkedServerCreateOptionalParams extends coreClient.OperationOp
 export type LinkedServerCreateResponse = RedisLinkedServerWithProperties;
 
 // @public
+export interface LinkedServerDeleteHeaders {
+    // (undocumented)
+    location?: string;
+}
+
+// @public
 export interface LinkedServerDeleteOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
 }
 
 // @public
@@ -239,6 +390,19 @@ export interface LinkedServerListOptionalParams extends coreClient.OperationOpti
 
 // @public
 export type LinkedServerListResponse = RedisLinkedServerWithPropertiesList;
+
+// @public
+export interface ManagedServiceIdentity {
+    readonly principalId?: string;
+    readonly tenantId?: string;
+    type: ManagedServiceIdentityType;
+    userAssignedIdentities?: {
+        [propertyName: string]: UserAssignedIdentity;
+    };
+}
+
+// @public
+export type ManagedServiceIdentityType = string;
 
 // @public
 export interface NotificationListResponse {
@@ -286,8 +450,27 @@ export interface OperationsListOptionalParams extends coreClient.OperationOption
 export type OperationsListResponse = OperationListResult;
 
 // @public
+export interface OperationStatus extends OperationStatusResult {
+    properties?: {
+        [propertyName: string]: any;
+    };
+}
+
+// @public
+export interface OperationStatusResult {
+    endTime?: Date;
+    error?: ErrorDetail;
+    id?: string;
+    name?: string;
+    operations?: OperationStatusResult[];
+    percentComplete?: number;
+    startTime?: Date;
+    status: string;
+}
+
+// @public
 export interface PatchSchedules {
-    createOrUpdate(resourceGroupName: string, name: string, parameters: RedisPatchSchedule, defaultParam: DefaultName, options?: PatchSchedulesCreateOrUpdateOptionalParams): Promise<PatchSchedulesCreateOrUpdateResponse>;
+    createOrUpdate(resourceGroupName: string, name: string, defaultParam: DefaultName, parameters: RedisPatchSchedule, options?: PatchSchedulesCreateOrUpdateOptionalParams): Promise<PatchSchedulesCreateOrUpdateResponse>;
     delete(resourceGroupName: string, name: string, defaultParam: DefaultName, options?: PatchSchedulesDeleteOptionalParams): Promise<void>;
     get(resourceGroupName: string, name: string, defaultParam: DefaultName, options?: PatchSchedulesGetOptionalParams): Promise<PatchSchedulesGetResponse>;
     listByRedisResource(resourceGroupName: string, cacheName: string, options?: PatchSchedulesListByRedisResourceOptionalParams): PagedAsyncIterableIterator<RedisPatchSchedule>;
@@ -331,11 +514,11 @@ export interface PrivateEndpoint {
 }
 
 // @public
-export type PrivateEndpointConnection = Resource & {
+export interface PrivateEndpointConnection extends Resource {
     privateEndpoint?: PrivateEndpoint;
     privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;
     readonly provisioningState?: PrivateEndpointConnectionProvisioningState;
-};
+}
 
 // @public
 export interface PrivateEndpointConnectionListResult {
@@ -347,7 +530,7 @@ export type PrivateEndpointConnectionProvisioningState = string;
 
 // @public
 export interface PrivateEndpointConnections {
-    beginPut(resourceGroupName: string, cacheName: string, privateEndpointConnectionName: string, properties: PrivateEndpointConnection, options?: PrivateEndpointConnectionsPutOptionalParams): Promise<PollerLike<PollOperationState<PrivateEndpointConnectionsPutResponse>, PrivateEndpointConnectionsPutResponse>>;
+    beginPut(resourceGroupName: string, cacheName: string, privateEndpointConnectionName: string, properties: PrivateEndpointConnection, options?: PrivateEndpointConnectionsPutOptionalParams): Promise<SimplePollerLike<OperationState<PrivateEndpointConnectionsPutResponse>, PrivateEndpointConnectionsPutResponse>>;
     beginPutAndWait(resourceGroupName: string, cacheName: string, privateEndpointConnectionName: string, properties: PrivateEndpointConnection, options?: PrivateEndpointConnectionsPutOptionalParams): Promise<PrivateEndpointConnectionsPutResponse>;
     delete(resourceGroupName: string, cacheName: string, privateEndpointConnectionName: string, options?: PrivateEndpointConnectionsDeleteOptionalParams): Promise<void>;
     get(resourceGroupName: string, cacheName: string, privateEndpointConnectionName: string, options?: PrivateEndpointConnectionsGetOptionalParams): Promise<PrivateEndpointConnectionsGetResponse>;
@@ -385,11 +568,11 @@ export type PrivateEndpointConnectionsPutResponse = PrivateEndpointConnection;
 export type PrivateEndpointServiceConnectionStatus = string;
 
 // @public
-export type PrivateLinkResource = Resource & {
+export interface PrivateLinkResource extends Resource {
     readonly groupId?: string;
     readonly requiredMembers?: string[];
     requiredZoneNames?: string[];
-};
+}
 
 // @public
 export interface PrivateLinkResourceListResult {
@@ -419,7 +602,8 @@ export interface PrivateLinkServiceConnectionState {
 export type ProvisioningState = string;
 
 // @public
-export type ProxyResource = Resource & {};
+export interface ProxyResource extends Resource {
+}
 
 // @public
 export type PublicNetworkAccess = string;
@@ -429,14 +613,18 @@ export type RebootType = string;
 
 // @public
 export interface Redis {
-    beginCreate(resourceGroupName: string, name: string, parameters: RedisCreateParameters, options?: RedisCreateOptionalParams): Promise<PollerLike<PollOperationState<RedisCreateResponse>, RedisCreateResponse>>;
+    beginCreate(resourceGroupName: string, name: string, parameters: RedisCreateParameters, options?: RedisCreateOptionalParams): Promise<SimplePollerLike<OperationState<RedisCreateResponse>, RedisCreateResponse>>;
     beginCreateAndWait(resourceGroupName: string, name: string, parameters: RedisCreateParameters, options?: RedisCreateOptionalParams): Promise<RedisCreateResponse>;
-    beginDelete(resourceGroupName: string, name: string, options?: RedisDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, name: string, options?: RedisDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, name: string, options?: RedisDeleteOptionalParams): Promise<void>;
-    beginExportData(resourceGroupName: string, name: string, parameters: ExportRDBParameters, options?: RedisExportDataOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginExportData(resourceGroupName: string, name: string, parameters: ExportRDBParameters, options?: RedisExportDataOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginExportDataAndWait(resourceGroupName: string, name: string, parameters: ExportRDBParameters, options?: RedisExportDataOptionalParams): Promise<void>;
-    beginImportData(resourceGroupName: string, name: string, parameters: ImportRDBParameters, options?: RedisImportDataOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginFlushCache(resourceGroupName: string, cacheName: string, options?: RedisFlushCacheOptionalParams): Promise<SimplePollerLike<OperationState<RedisFlushCacheResponse>, RedisFlushCacheResponse>>;
+    beginFlushCacheAndWait(resourceGroupName: string, cacheName: string, options?: RedisFlushCacheOptionalParams): Promise<RedisFlushCacheResponse>;
+    beginImportData(resourceGroupName: string, name: string, parameters: ImportRDBParameters, options?: RedisImportDataOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginImportDataAndWait(resourceGroupName: string, name: string, parameters: ImportRDBParameters, options?: RedisImportDataOptionalParams): Promise<void>;
+    beginUpdate(resourceGroupName: string, name: string, parameters: RedisUpdateParameters, options?: RedisUpdateOptionalParams): Promise<SimplePollerLike<OperationState<RedisUpdateResponse>, RedisUpdateResponse>>;
+    beginUpdateAndWait(resourceGroupName: string, name: string, parameters: RedisUpdateParameters, options?: RedisUpdateOptionalParams): Promise<RedisUpdateResponse>;
     checkNameAvailability(parameters: CheckNameAvailabilityParameters, options?: RedisCheckNameAvailabilityOptionalParams): Promise<void>;
     forceReboot(resourceGroupName: string, name: string, parameters: RedisRebootParameters, options?: RedisForceRebootOptionalParams): Promise<RedisForceRebootOperationResponse>;
     get(resourceGroupName: string, name: string, options?: RedisGetOptionalParams): Promise<RedisGetResponse>;
@@ -445,7 +633,6 @@ export interface Redis {
     listKeys(resourceGroupName: string, name: string, options?: RedisListKeysOptionalParams): Promise<RedisListKeysResponse>;
     listUpgradeNotifications(resourceGroupName: string, name: string, history: number, options?: RedisListUpgradeNotificationsOptionalParams): PagedAsyncIterableIterator<UpgradeNotification>;
     regenerateKey(resourceGroupName: string, name: string, parameters: RedisRegenerateKeyParameters, options?: RedisRegenerateKeyOptionalParams): Promise<RedisRegenerateKeyResponse>;
-    update(resourceGroupName: string, name: string, parameters: RedisUpdateParameters, options?: RedisUpdateOptionalParams): Promise<RedisUpdateResponse>;
 }
 
 // @public
@@ -455,11 +642,39 @@ export interface RedisAccessKeys {
 }
 
 // @public
+export interface RedisCacheAccessPolicy extends ProxyResource {
+    permissions?: string;
+    readonly provisioningState?: AccessPolicyProvisioningState;
+    readonly typePropertiesType?: AccessPolicyType;
+}
+
+// @public
+export interface RedisCacheAccessPolicyAssignment extends ProxyResource {
+    accessPolicyName?: string;
+    objectId?: string;
+    objectIdAlias?: string;
+    readonly provisioningState?: AccessPolicyAssignmentProvisioningState;
+}
+
+// @public
+export interface RedisCacheAccessPolicyAssignmentList {
+    readonly nextLink?: string;
+    value?: RedisCacheAccessPolicyAssignment[];
+}
+
+// @public
+export interface RedisCacheAccessPolicyList {
+    readonly nextLink?: string;
+    value?: RedisCacheAccessPolicy[];
+}
+
+// @public
 export interface RedisCheckNameAvailabilityOptionalParams extends coreClient.OperationOptions {
 }
 
 // @public
 export interface RedisCommonProperties {
+    disableAccessKeyAuthentication?: boolean;
     enableNonSslPort?: boolean;
     minimumTlsVersion?: TlsVersion;
     publicNetworkAccess?: PublicNetworkAccess;
@@ -471,22 +686,31 @@ export interface RedisCommonProperties {
     tenantSettings?: {
         [propertyName: string]: string;
     };
+    updateChannel?: UpdateChannel;
 }
 
 // @public
 export interface RedisCommonPropertiesRedisConfiguration {
     [property: string]: any;
+    aadEnabled?: string;
+    aofBackupEnabled?: string;
     aofStorageConnectionString0?: string;
     aofStorageConnectionString1?: string;
+    authnotrequired?: string;
     readonly maxclients?: string;
     maxfragmentationmemoryReserved?: string;
     maxmemoryDelta?: string;
     maxmemoryPolicy?: string;
     maxmemoryReserved?: string;
+    notifyKeyspaceEvents?: string;
+    readonly preferredDataArchiveAuthMethod?: string;
+    preferredDataPersistenceAuthMethod?: string;
     rdbBackupEnabled?: string;
     rdbBackupFrequency?: string;
     rdbBackupMaxSnapshotCount?: string;
     rdbStorageConnectionString?: string;
+    storageSubscriptionId?: string;
+    readonly zonalConfiguration?: string;
 }
 
 // @public
@@ -497,7 +721,9 @@ export interface RedisCreateOptionalParams extends coreClient.OperationOptions {
 
 // @public
 export interface RedisCreateParameters {
+    disableAccessKeyAuthentication?: boolean;
     enableNonSslPort?: boolean;
+    identity?: ManagedServiceIdentity;
     location: string;
     minimumTlsVersion?: TlsVersion;
     publicNetworkAccess?: PublicNetworkAccess;
@@ -515,15 +741,16 @@ export interface RedisCreateParameters {
     tenantSettings?: {
         [propertyName: string]: string;
     };
+    updateChannel?: UpdateChannel;
     zones?: string[];
 }
 
 // @public
-export type RedisCreateProperties = RedisCommonProperties & {
+export interface RedisCreateProperties extends RedisCommonProperties {
     sku: Sku;
-    subnetId?: string;
     staticIP?: string;
-};
+    subnetId?: string;
+}
 
 // @public
 export type RedisCreateResponse = RedisResource;
@@ -541,19 +768,35 @@ export interface RedisExportDataOptionalParams extends coreClient.OperationOptio
 }
 
 // @public
-export type RedisFirewallRule = ProxyResource & {
-    startIP: string;
+export interface RedisFirewallRule extends ProxyResource {
     endIP: string;
-};
+    startIP: string;
+}
 
 // @public
-export type RedisFirewallRuleCreateParameters = RedisFirewallRule & {};
+export interface RedisFirewallRuleCreateParameters extends RedisFirewallRule {
+}
 
 // @public
 export interface RedisFirewallRuleListResult {
     readonly nextLink?: string;
     value?: RedisFirewallRule[];
 }
+
+// @public
+export interface RedisFlushCacheHeaders {
+    azureAsyncOperation?: string;
+    location?: string;
+}
+
+// @public
+export interface RedisFlushCacheOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
+}
+
+// @public
+export type RedisFlushCacheResponse = RedisFlushCacheHeaders & OperationStatusResult;
 
 // @public
 export type RedisForceRebootOperationResponse = RedisForceRebootResponse;
@@ -600,30 +843,36 @@ export interface RedisLinkedServer {
 
 // @public
 export interface RedisLinkedServerCreateParameters {
+    readonly geoReplicatedPrimaryHostName?: string;
     linkedRedisCacheId: string;
     linkedRedisCacheLocation: string;
+    readonly primaryHostName?: string;
     serverRole: ReplicationRole;
 }
 
 // @public
 export interface RedisLinkedServerCreateProperties {
+    readonly geoReplicatedPrimaryHostName?: string;
     linkedRedisCacheId: string;
     linkedRedisCacheLocation: string;
+    readonly primaryHostName?: string;
     serverRole: ReplicationRole;
 }
 
 // @public
-export type RedisLinkedServerProperties = RedisLinkedServerCreateProperties & {
+export interface RedisLinkedServerProperties extends RedisLinkedServerCreateProperties {
     readonly provisioningState?: string;
-};
+}
 
 // @public
-export type RedisLinkedServerWithProperties = ProxyResource & {
+export interface RedisLinkedServerWithProperties extends ProxyResource {
+    readonly geoReplicatedPrimaryHostName?: string;
     linkedRedisCacheId?: string;
     linkedRedisCacheLocation?: string;
-    serverRole?: ReplicationRole;
+    readonly primaryHostName?: string;
     readonly provisioningState?: string;
-};
+    serverRole?: ReplicationRole;
+}
 
 // @public
 export interface RedisLinkedServerWithPropertiesList {
@@ -687,8 +936,18 @@ export interface RedisListUpgradeNotificationsOptionalParams extends coreClient.
 export type RedisListUpgradeNotificationsResponse = NotificationListResponse;
 
 // @public (undocumented)
-export class RedisManagementClient extends RedisManagementClientContext {
+export class RedisManagementClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: RedisManagementClientOptionalParams);
+    // (undocumented)
+    accessPolicy: AccessPolicy;
+    // (undocumented)
+    accessPolicyAssignment: AccessPolicyAssignment;
+    // (undocumented)
+    apiVersion: string;
+    // (undocumented)
+    asyncOperationStatus: AsyncOperationStatus;
     // (undocumented)
     firewallRules: FirewallRules;
     // (undocumented)
@@ -703,15 +962,6 @@ export class RedisManagementClient extends RedisManagementClientContext {
     privateLinkResources: PrivateLinkResources;
     // (undocumented)
     redis: Redis;
-}
-
-// @public (undocumented)
-export class RedisManagementClientContext extends coreClient.ServiceClient {
-    // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: RedisManagementClientOptionalParams);
-    // (undocumented)
-    apiVersion: string;
     // (undocumented)
     subscriptionId: string;
 }
@@ -724,9 +974,10 @@ export interface RedisManagementClientOptionalParams extends coreClient.ServiceC
 }
 
 // @public
-export type RedisPatchSchedule = ProxyResource & {
+export interface RedisPatchSchedule extends ProxyResource {
+    readonly location?: string;
     scheduleEntries: ScheduleEntry[];
-};
+}
 
 // @public
 export interface RedisPatchScheduleListResult {
@@ -735,16 +986,16 @@ export interface RedisPatchScheduleListResult {
 }
 
 // @public
-export type RedisProperties = RedisCreateProperties & {
-    readonly provisioningState?: ProvisioningState;
-    readonly hostName?: string;
-    readonly port?: number;
-    readonly sslPort?: number;
+export interface RedisProperties extends RedisCreateProperties {
     readonly accessKeys?: RedisAccessKeys;
-    readonly linkedServers?: RedisLinkedServer[];
+    readonly hostName?: string;
     readonly instances?: RedisInstanceDetails[];
+    readonly linkedServers?: RedisLinkedServer[];
+    readonly port?: number;
     readonly privateEndpointConnections?: PrivateEndpointConnection[];
-};
+    readonly provisioningState?: ProvisioningState;
+    readonly sslPort?: number;
+}
 
 // @public
 export interface RedisRebootParameters {
@@ -766,39 +1017,46 @@ export interface RedisRegenerateKeyParameters {
 export type RedisRegenerateKeyResponse = RedisAccessKeys;
 
 // @public
-export type RedisResource = TrackedResource & {
-    zones?: string[];
+export interface RedisResource extends TrackedResource {
+    readonly accessKeys?: RedisAccessKeys;
+    disableAccessKeyAuthentication?: boolean;
+    enableNonSslPort?: boolean;
+    readonly hostName?: string;
+    identity?: ManagedServiceIdentity;
+    readonly instances?: RedisInstanceDetails[];
+    readonly linkedServers?: RedisLinkedServer[];
+    minimumTlsVersion?: TlsVersion;
+    readonly port?: number;
+    readonly privateEndpointConnections?: PrivateEndpointConnection[];
+    readonly provisioningState?: ProvisioningState;
+    publicNetworkAccess?: PublicNetworkAccess;
     redisConfiguration?: RedisCommonPropertiesRedisConfiguration;
     redisVersion?: string;
-    enableNonSslPort?: boolean;
     replicasPerMaster?: number;
     replicasPerPrimary?: number;
+    shardCount?: number;
+    sku: Sku;
+    readonly sslPort?: number;
+    staticIP?: string;
+    subnetId?: string;
     tenantSettings?: {
         [propertyName: string]: string;
     };
-    shardCount?: number;
-    minimumTlsVersion?: TlsVersion;
-    publicNetworkAccess?: PublicNetworkAccess;
-    sku: Sku;
-    subnetId?: string;
-    staticIP?: string;
-    readonly provisioningState?: ProvisioningState;
-    readonly hostName?: string;
-    readonly port?: number;
-    readonly sslPort?: number;
-    readonly accessKeys?: RedisAccessKeys;
-    readonly linkedServers?: RedisLinkedServer[];
-    readonly instances?: RedisInstanceDetails[];
-    readonly privateEndpointConnections?: PrivateEndpointConnection[];
-};
+    updateChannel?: UpdateChannel;
+    zones?: string[];
+}
 
 // @public
 export interface RedisUpdateOptionalParams extends coreClient.OperationOptions {
+    resumeFrom?: string;
+    updateIntervalInMs?: number;
 }
 
 // @public
 export interface RedisUpdateParameters {
+    disableAccessKeyAuthentication?: boolean;
     enableNonSslPort?: boolean;
+    identity?: ManagedServiceIdentity;
     minimumTlsVersion?: TlsVersion;
     publicNetworkAccess?: PublicNetworkAccess;
     redisConfiguration?: RedisCommonPropertiesRedisConfiguration;
@@ -813,12 +1071,13 @@ export interface RedisUpdateParameters {
     tenantSettings?: {
         [propertyName: string]: string;
     };
+    updateChannel?: UpdateChannel;
 }
 
 // @public
-export type RedisUpdateProperties = RedisCommonProperties & {
+export interface RedisUpdateProperties extends RedisCommonProperties {
     sku?: Sku;
-};
+}
 
 // @public
 export type RedisUpdateResponse = RedisResource;
@@ -857,12 +1116,15 @@ export type SkuName = string;
 export type TlsVersion = string;
 
 // @public
-export type TrackedResource = Resource & {
+export interface TrackedResource extends Resource {
+    location: string;
     tags?: {
         [propertyName: string]: string;
     };
-    location: string;
-};
+}
+
+// @public
+export type UpdateChannel = string;
 
 // @public
 export interface UpgradeNotification {
@@ -873,6 +1135,11 @@ export interface UpgradeNotification {
     };
 }
 
+// @public
+export interface UserAssignedIdentity {
+    readonly clientId?: string;
+    readonly principalId?: string;
+}
 
 // (No @packageDocumentation comment for this package)
 

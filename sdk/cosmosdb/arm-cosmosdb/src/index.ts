@@ -7,7 +7,7 @@
  */
 
 /// <reference lib="esnext.asynciterable" />
+export { getContinuationToken } from "./pagingHelper";
 export * from "./models";
 export { CosmosDBManagementClient } from "./cosmosDBManagementClient";
-export { CosmosDBManagementClientContext } from "./cosmosDBManagementClientContext";
 export * from "./operationsInterfaces";

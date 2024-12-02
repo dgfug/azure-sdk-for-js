@@ -1,34 +1,32 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { MessageReceiver, OnAmqpEventAsPromise, ReceiveOptions } from "./messageReceiver";
-import { ConnectionContext } from "../connectionContext";
+import type { OnAmqpEventAsPromise, ReceiveOptions } from "./messageReceiver.js";
+import { MessageReceiver } from "./messageReceiver.js";
+import type { ConnectionContext } from "../connectionContext.js";
 
-import { ReceiverHelper } from "./receiverHelper";
+import { ReceiverHelper } from "./receiverHelper.js";
 
-import { throwErrorIfConnectionClosed } from "../util/errors";
-import {
-  RetryOperationType,
-  MessagingError,
-  RetryOptions,
-  ConditionErrorNameMapper
-} from "@azure/core-amqp";
-import { OperationOptionsBase, trace } from "../modelsToBeSharedWithEventHubs";
-import { receiverLogger as logger } from "../log";
-import { AmqpError, EventContext, OnAmqpEvent } from "rhea-promise";
-import { ServiceBusMessageImpl } from "../serviceBusMessage";
-import { translateServiceBusError } from "../serviceBusError";
-import { abandonMessage, completeMessage, retryForever } from "../receivers/receiverCommon";
-import { ReceiverHandlers } from "./shared";
-import {
+import { throwErrorIfConnectionClosed } from "../util/errors.js";
+import type { MessagingError, RetryOptions } from "@azure/core-amqp";
+import { RetryOperationType, ConditionErrorNameMapper } from "@azure/core-amqp";
+import type { OperationOptionsBase } from "../modelsToBeSharedWithEventHubs.js";
+import { receiverLogger as logger } from "../log.js";
+import type { AmqpError, EventContext, OnAmqpEvent } from "rhea-promise";
+import { ServiceBusMessageImpl } from "../serviceBusMessage.js";
+import { translateServiceBusError } from "../serviceBusError.js";
+import { abandonMessage, completeMessage, retryForever } from "../receivers/receiverCommon.js";
+import type { ReceiverHandlers } from "./shared.js";
+import type {
   InternalMessageHandlers,
   InternalProcessErrorArgs,
   MessageHandlers,
   ProcessErrorArgs,
-  SubscribeOptions
-} from "../models";
-import { createProcessingSpan } from "../diagnostics/instrumentServiceBusMessage";
+  SubscribeOptions,
+} from "../models.js";
+import { toProcessingSpanOptions } from "../diagnostics/instrumentServiceBusMessage.js";
 import { AbortError } from "@azure/abort-controller";
+import { tracingClient } from "../diagnostics/tracing.js";
 
 /**
  * @internal
@@ -128,11 +126,17 @@ export class StreamingReceiver extends MessageReceiver {
   /**
    * Instantiate a new Streaming receiver for receiving messages with handlers.
    *
+   * @param identifier - the name used to identifier the receiver
    * @param connectionContext - The client entity context.
    * @param options - Options for how you'd like to connect.
    */
-  constructor(connectionContext: ConnectionContext, entityPath: string, options: ReceiveOptions) {
-    super(connectionContext, entityPath, "streaming", options);
+  constructor(
+    identifier: string,
+    connectionContext: ConnectionContext,
+    entityPath: string,
+    options: ReceiveOptions,
+  ) {
+    super(identifier, connectionContext, entityPath, "streaming", options);
 
     if (typeof options?.maxConcurrentCalls === "number" && options?.maxConcurrentCalls > 0) {
       this.maxConcurrentCalls = options.maxConcurrentCalls;
@@ -142,7 +146,7 @@ export class StreamingReceiver extends MessageReceiver {
 
     this._receiverHelper = new ReceiverHelper(() => ({
       receiver: this.link,
-      logPrefix: this.logPrefix
+      logPrefix: this.logPrefix,
     }));
 
     this._onAmqpClose = async (context: EventContext) => {
@@ -151,7 +155,7 @@ export class StreamingReceiver extends MessageReceiver {
 
       logger.logError(
         receiverError,
-        `${this.logPrefix} 'receiver_close' event occurred. The associated error is`
+        `${this.logPrefix} 'receiver_close' event occurred. The associated error is`,
       );
 
       this._lockRenewer?.stopAll(this);
@@ -165,7 +169,7 @@ export class StreamingReceiver extends MessageReceiver {
             "() handler.",
           this.logPrefix,
           this.name,
-          this.address
+          this.address,
         );
       }
     };
@@ -176,7 +180,7 @@ export class StreamingReceiver extends MessageReceiver {
 
       logger.logError(
         sessionError,
-        `${this.logPrefix} 'session_close' event occurred. The associated error is`
+        `${this.logPrefix} 'session_close' event occurred. The associated error is`,
       );
 
       this._lockRenewer?.stopAll(this);
@@ -190,7 +194,7 @@ export class StreamingReceiver extends MessageReceiver {
             "() handler.",
           this.logPrefix,
           this.name,
-          this.address
+          this.address,
         );
       }
     };
@@ -201,8 +205,15 @@ export class StreamingReceiver extends MessageReceiver {
         const sbError = translateServiceBusError(receiverError) as MessagingError;
         logger.logError(
           sbError,
-          `${this.logPrefix} 'receiver_error' event occurred. The associated error is`
+          `${this.logPrefix} 'receiver_error' event occurred. The associated error is`,
         );
+        this._messageHandlers().processError({
+          error: sbError,
+          errorSource: "receive",
+          entityPath: this.entityPath,
+          fullyQualifiedNamespace: this._context.config.host,
+          identifier,
+        });
       }
     };
 
@@ -212,8 +223,15 @@ export class StreamingReceiver extends MessageReceiver {
         const sbError = translateServiceBusError(sessionError) as MessagingError;
         logger.logError(
           sbError,
-          `${this.logPrefix} 'session_error' event occurred. The associated error is`
+          `${this.logPrefix} 'session_error' event occurred. The associated error is`,
         );
+        this._messageHandlers().processError({
+          error: sbError,
+          errorSource: "receive",
+          entityPath: this.entityPath,
+          fullyQualifiedNamespace: this._context.config.host,
+          identifier,
+        });
       }
     };
 
@@ -224,7 +242,7 @@ export class StreamingReceiver extends MessageReceiver {
         logger.verbose(
           "%s Not calling the user's message handler for the current message " +
             "as the receiver is closed",
-          this.logPrefix
+          this.logPrefix,
         );
         return;
       }
@@ -233,7 +251,9 @@ export class StreamingReceiver extends MessageReceiver {
         context.message!,
         context.delivery!,
         true,
-        this.receiveMode
+        this.receiveMode,
+        options.skipParsingBodyAsJson ?? false,
+        options.skipConvertingDate ?? false,
       );
 
       this._lockRenewer?.start(this, bMessage, (err) => {
@@ -241,20 +261,21 @@ export class StreamingReceiver extends MessageReceiver {
           error: err,
           errorSource: "renewLock",
           entityPath: this.entityPath,
-          fullyQualifiedNamespace: this._context.config.host
+          fullyQualifiedNamespace: this._context.config.host,
+          identifier,
         });
       });
 
       try {
         await this._messageHandlers().processMessage(bMessage);
-      } catch (err) {
+      } catch (err: any) {
         logger.logError(
           err,
           "%s An error occurred while running user's message handler for the message " +
             "with id '%s' on the receiver '%s'",
           this.logPrefix,
           bMessage.messageId,
-          this.name
+          this.name,
         );
 
         // Do not want renewLock to happen unnecessarily, while abandoning the message. Hence,
@@ -276,16 +297,16 @@ export class StreamingReceiver extends MessageReceiver {
               this.logPrefix,
               bMessage.messageId,
               this.name,
-              error
+              error,
             );
             await abandonMessage(
               bMessage,
               this._context,
               entityPath,
               undefined,
-              this._retryOptions
+              this._retryOptions,
             );
-          } catch (abandonError) {
+          } catch (abandonError: any) {
             const translatedError = translateServiceBusError(abandonError);
             logger.logError(
               translatedError,
@@ -293,13 +314,14 @@ export class StreamingReceiver extends MessageReceiver {
                 "receiver '%s'",
               this.logPrefix,
               bMessage.messageId,
-              this.name
+              this.name,
             );
             this._messageHandlers().processError({
               error: translatedError,
               errorSource: "abandon",
               entityPath: this.entityPath,
-              fullyQualifiedNamespace: this._context.config.host
+              fullyQualifiedNamespace: this._context.config.host,
+              identifier,
             });
           }
         }
@@ -307,13 +329,13 @@ export class StreamingReceiver extends MessageReceiver {
       } finally {
         try {
           this._receiverHelper.addCredit(1);
-        } catch (err) {
+        } catch (err: any) {
           // if we're aborting out of the receive operation we don't need to report it (the user already
           // knows the link is being torn down or stopped)
           if (err.name !== "AbortError") {
             logger.logError(
               err,
-              `[${this.logPrefix}] Failed to add credit after receiving message`
+              `[${this.logPrefix}] Failed to add credit after receiving message`,
             );
             await this._reportInternalError(err);
           }
@@ -331,10 +353,10 @@ export class StreamingReceiver extends MessageReceiver {
           logger.verbose(
             "%s Auto completing the message with id '%s' on " + "the receiver.",
             this.logPrefix,
-            bMessage.messageId
+            bMessage.messageId,
           );
           await completeMessage(bMessage, this._context, entityPath, this._retryOptions);
-        } catch (completeError) {
+        } catch (completeError: any) {
           const translatedError = translateServiceBusError(completeError);
           logger.logError(
             translatedError,
@@ -342,13 +364,14 @@ export class StreamingReceiver extends MessageReceiver {
               "receiver '%s'",
             this.logPrefix,
             bMessage.messageId,
-            this.name
+            this.name,
           );
           this._messageHandlers().processError({
             error: translatedError,
             errorSource: "complete",
             entityPath: this.entityPath,
-            fullyQualifiedNamespace: this._context.config.host
+            fullyQualifiedNamespace: this._context.config.host,
+            identifier,
           });
         }
       }
@@ -363,7 +386,8 @@ export class StreamingReceiver extends MessageReceiver {
         error,
         entityPath: this.entityPath,
         errorSource: "internal",
-        fullyQualifiedNamespace: this._context.config.host
+        fullyQualifiedNamespace: this._context.config.host,
+        identifier: this.identifier,
       };
 
       return messageHandlers.processError(errorArgs as ProcessErrorArgs);
@@ -381,7 +405,7 @@ export class StreamingReceiver extends MessageReceiver {
       onSessionClose: (context: EventContext) =>
         this._onSessionClose(context).catch((err) => this._reportInternalError(err)),
       onError: this._onAmqpError,
-      onSessionError: this._onSessionError
+      onSessionError: this._onSessionError,
     };
   }
 
@@ -417,7 +441,7 @@ export class StreamingReceiver extends MessageReceiver {
    */
   async subscribe(
     messageHandlers: InternalMessageHandlers,
-    subscribeOptions: SubscribeOptions | undefined
+    subscribeOptions: SubscribeOptions | undefined,
   ): Promise<void> {
     // these options and message handlers will be re-used if/when onDetach is called.
     this._subscribeOptions = subscribeOptions;
@@ -429,15 +453,17 @@ export class StreamingReceiver extends MessageReceiver {
     });
 
     try {
+      this._receiverHelper.resume();
       return await this._subscribeImpl("subscribe");
-    } catch (err) {
+    } catch (err: any) {
       // callers aren't going to be in a good position to forward this error properly
       // so we do it here.
       await this._messageHandlers().processError({
         entityPath: this.entityPath,
         fullyQualifiedNamespace: this._context.config.host,
         errorSource: "receive",
-        error: err
+        error: err,
+        identifier: this.identifier,
       });
 
       throw err;
@@ -451,33 +477,38 @@ export class StreamingReceiver extends MessageReceiver {
    * Wraps the individual message handlers with tracing and proper error handling
    * and assigns them to `this._messageHandlers`
    *
-   * @param userHandlers The user's message handlers
-   * @param operationOptions The subscribe(options)
+   * @param userHandlers - The user's message handlers
+   * @param operationOptions - The subscribe(options)
    */
   private _setMessageHandlers(
     userHandlers: InternalMessageHandlers,
-    operationOptions: OperationOptionsBase | undefined
-  ) {
+    operationOptions: OperationOptionsBase | undefined,
+  ): void {
     const messageHandlers = {
       processError: async (args: ProcessErrorArgs) => {
         try {
           args.error = translateServiceBusError(args.error);
           await userHandlers.processError(args);
-        } catch (err) {
+        } catch (err: any) {
           await this._reportInternalError(err);
           logger.logError(err, `An error was thrown from the user's processError handler`);
         }
       },
       processMessage: async (message: ServiceBusMessageImpl) => {
         try {
-          const span = createProcessingSpan(message, this, this._context.config, operationOptions);
-          return await trace(() => userHandlers.processMessage(message), span);
-        } catch (err) {
+          await tracingClient.withSpan(
+            "StreamReceiver.process",
+            operationOptions ?? {},
+            () => userHandlers.processMessage(message),
+            toProcessingSpanOptions(message, this, this._context.config, "process"),
+          );
+        } catch (err: any) {
           this._messageHandlers().processError({
             error: err,
             errorSource: "processMessageCallback",
             entityPath: this.entityPath,
-            fullyQualifiedNamespace: this._context.config.host
+            fullyQualifiedNamespace: this._context.config.host,
+            identifier: this.identifier,
           });
           throw err;
         }
@@ -492,8 +523,9 @@ export class StreamingReceiver extends MessageReceiver {
             error: err,
             errorSource: "processMessageCallback",
             entityPath: this.entityPath,
-            fullyQualifiedNamespace: this._context.config.host
-          })
+            fullyQualifiedNamespace: this._context.config.host,
+            identifier: this.identifier,
+          }),
         );
       },
       preInitialize: async () => {
@@ -506,11 +538,12 @@ export class StreamingReceiver extends MessageReceiver {
             error: err,
             errorSource: "processMessageCallback",
             entityPath: this.entityPath,
-            fullyQualifiedNamespace: this._context.config.host
-          })
+            fullyQualifiedNamespace: this._context.config.host,
+            identifier: this.identifier,
+          }),
         );
       },
-      forwardInternalErrors: userHandlers.forwardInternalErrors ?? false
+      forwardInternalErrors: userHandlers.forwardInternalErrors ?? false,
     };
 
     this._messageHandlers = () => messageHandlers;
@@ -523,10 +556,6 @@ export class StreamingReceiver extends MessageReceiver {
    */
   private async _subscribeImpl(caller: "detach" | "subscribe"): Promise<void> {
     try {
-      // this allows external callers (ie: ServiceBusReceiver) to prevent concurrent `subscribe` calls
-      // by not starting new receiving options while this one has started.
-      this._receiverHelper.resume();
-
       // we don't expect to ever get an error from retryForever but bugs
       // do happen.
       return await this._retryForeverFn({
@@ -535,23 +564,24 @@ export class StreamingReceiver extends MessageReceiver {
           operationType: RetryOperationType.receiverLink,
           abortSignal: this._subscribeOptions?.abortSignal,
           retryOptions: this._retryOptions,
-          operation: () => this._initAndAddCreditOperation(caller)
+          operation: () => this._initAndAddCreditOperation(caller),
         },
         onError: (err) =>
           this._messageHandlers().processError({
             error: err,
             errorSource: "receive",
             entityPath: this.entityPath,
-            fullyQualifiedNamespace: this._context.config.host
+            fullyQualifiedNamespace: this._context.config.host,
+            identifier: this.identifier,
           }),
         logPrefix: this.logPrefix,
-        logger
+        logger,
       });
-    } catch (err) {
+    } catch (err: any) {
       try {
         await this._receiverHelper.suspend();
-      } catch (err) {
-        logger.logError(err, `${this.logPrefix} receiver.suspend threw an error`);
+      } catch (error: any) {
+        logger.logError(error, `${this.logPrefix} receiver.suspend threw an error`);
       }
 
       throw err;
@@ -562,38 +592,45 @@ export class StreamingReceiver extends MessageReceiver {
    * Initializes the link and adds credits. If any of these operations fail any created link will
    * be closed.
    *
-   * @param caller The caller which dictates whether or not we create a new name for our created link.
-   * @param catchAndReportError A function and reports an error but does not throw it.
+   * @param caller - The caller which dictates whether or not we create a new name for our created link.
+   * @param catchAndReportError - A function and reports an error but does not throw it.
    */
-  private async _initAndAddCreditOperation(caller: "detach" | "subscribe") {
+  private async _initAndAddCreditOperation(caller: "detach" | "subscribe"): Promise<void> {
+    if (this._receiverHelper.isSuspended()) {
+      // user has suspended us while we were initializing
+      // the connection. Abort this attempt - if they attempt
+      // resubscribe we'll just reinitialize.
+      // This checks should happen before throwErrorIfConnectionClosed(); otherwise
+      // we won't be able to break out of the retry-for-ever loops when user suspend us.
+      throw new AbortError("Receiver was suspended during initialization.");
+    }
+
     throwErrorIfConnectionClosed(this._context);
 
     await this._messageHandlers().preInitialize();
 
     if (this._receiverHelper.isSuspended()) {
-      // user has suspended us while we were initializing
-      // the connection. Abort this attempt - if they attempt
-      // resubscribe we'll just reinitialize.
+      // Need to check again as user can suspend us in preInitialize()
       throw new AbortError("Receiver was suspended during initialization.");
     }
-
     await this._init(
       this._createReceiverOptions(caller === "detach", this._getHandlers()),
-      this._subscribeOptions?.abortSignal
+      this._subscribeOptions?.abortSignal,
     );
 
     try {
       await this._messageHandlers().postInitialize();
       this._receiverHelper.addCredit(this.maxConcurrentCalls);
-    } catch (err) {
+    } catch (err: any) {
       try {
         await this.closeLink();
-      } catch (err) {
+      } catch (error: any) {
         await this._messageHandlers().processError({
-          error: err,
+          error,
           errorSource: "receive",
           entityPath: this.entityPath,
-          fullyQualifiedNamespace: this._context.config.host
+          fullyQualifiedNamespace: this._context.config.host,
+          identifier: this.identifier,
         });
       }
       throw err;
@@ -612,7 +649,7 @@ export class StreamingReceiver extends MessageReceiver {
       // and we can exit early.
       if (this.wasClosedPermanently) {
         logger.verbose(
-          `${this.logPrefix} onDetached: link has been closed permanently, not reinitializing. `
+          `${this.logPrefix} onDetached: link has been closed permanently, not reinitializing. `,
         );
         return;
       }
@@ -627,7 +664,7 @@ export class StreamingReceiver extends MessageReceiver {
         // These should be ignored until the already running `onDetached` completes
         // its retry attempts or errors.
         logger.verbose(
-          `${this.logPrefix} onDetached: Call to detached on streaming receiver '${this.name}' is already in progress.`
+          `${this.logPrefix} onDetached: Call to detached on streaming receiver '${this.name}' is already in progress.`,
         );
         return;
       }
@@ -639,16 +676,16 @@ export class StreamingReceiver extends MessageReceiver {
         : receiverError;
       logger.logError(
         translatedError,
-        `${this.logPrefix} onDetached: Reinitializing receiver because of error`
+        `${this.logPrefix} onDetached: Reinitializing receiver because of error`,
       );
 
       // Clears the token renewal timer. Closes the link and its session if they are open.
       // Removes the link and its session if they are present in rhea's cache.
       await this.closeLink();
-    } catch (err) {
+    } catch (err: any) {
       logger.verbose(
         `${this.logPrefix} onDetached: Encountered an error when closing the previous link: `,
-        err
+        err,
       );
     }
 

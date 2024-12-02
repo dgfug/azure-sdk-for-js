@@ -1,14 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { DeliveryAnnotations, Message as RheaMessage, MessageAnnotations } from "rhea-promise";
 import { AmqpAnnotatedMessage, Constants } from "@azure/core-amqp";
-import { isDefined, isObjectWithProperties, objectHasProperty } from "./util/typeGuards";
-import { BodyTypes, defaultDataTransformer } from "./dataTransformer";
+import type { BodyTypes } from "./dataTransformer.js";
+import { defaultDataTransformer } from "./dataTransformer.js";
+import type { DeliveryAnnotations, MessageAnnotations, Message as RheaMessage } from "rhea-promise";
+import { types } from "rhea-promise";
+import { isDefined, isObjectWithProperties, objectHasProperty } from "@azure/core-util";
+import type { PENDING_PUBLISH_SEQ_NUM_SYMBOL } from "./util/constants.js";
+import { idempotentProducerAmqpPropertyNames } from "./util/constants.js";
+import isBuffer from "is-buffer";
 
 /**
  * Describes the delivery annotations.
- * @hidden
+ * @internal
  */
 export interface EventHubDeliveryAnnotations extends DeliveryAnnotations {
   /**
@@ -35,7 +40,7 @@ export interface EventHubDeliveryAnnotations extends DeliveryAnnotations {
 
 /**
  * Map containing message attributes that will be held in the message header.
- * @hidden
+ * @internal
  */
 export interface EventHubMessageAnnotations extends MessageAnnotations {
   /**
@@ -43,7 +48,7 @@ export interface EventHubMessageAnnotations extends MessageAnnotations {
    */
   "x-opt-partition-key"?: string | null;
   /**
-   * Annontation for the sequence number of the event.
+   * Annotation for the sequence number of the event.
    */
   "x-opt-sequence-number"?: number;
   /**
@@ -62,7 +67,7 @@ export interface EventHubMessageAnnotations extends MessageAnnotations {
 
 /**
  * Describes the structure of an event to be sent or received from the EventHub.
- * @hidden
+ * @internal
  */
 export interface EventDataInternal {
   /**
@@ -81,7 +86,7 @@ export interface EventDataInternal {
   /**
    * The offset of the event.
    */
-  offset?: number;
+  offset?: string;
   /**
    * The sequence number of the event.
    */
@@ -135,6 +140,16 @@ export interface EventDataInternal {
    * Returns the underlying raw amqp message.
    */
   getRawAmqpMessage(): AmqpAnnotatedMessage;
+  /**
+   * The pending publish sequence number, set while the event
+   * is being published with idempotent partitions enabled.
+   */
+  [PENDING_PUBLISH_SEQ_NUM_SYMBOL]?: number;
+  /**
+   * The sequence number the event was published with
+   * when idempotent partitions are enabled.
+   */
+  _publishedSequenceNumber?: number;
 }
 
 const messagePropertiesMap = {
@@ -150,18 +165,18 @@ const messagePropertiesMap = {
   creation_time: "creationTime",
   group_id: "groupId",
   group_sequence: "groupSequence",
-  reply_to_group_id: "replyToGroupId"
+  reply_to_group_id: "replyToGroupId",
 } as const;
 
 /**
  * Converts the AMQP message to an EventData.
  * @param msg - The AMQP message that needs to be converted to EventData.
  * @param skipParsingBodyAsJson - Boolean to skip running JSON.parse() on message body when body type is `content`.
- * @hidden
+ * @internal
  */
 export function fromRheaMessage(
   msg: RheaMessage,
-  skipParsingBodyAsJson: boolean
+  skipParsingBodyAsJson: boolean,
 ): EventDataInternal {
   const rawMessage = AmqpAnnotatedMessage.fromRheaMessage(msg);
   const { body, bodyType } = defaultDataTransformer.decode(msg.body, skipParsingBodyAsJson);
@@ -171,7 +186,7 @@ export function fromRheaMessage(
     body,
     getRawAmqpMessage() {
       return rawMessage;
-    }
+    },
   };
 
   if (msg.message_annotations) {
@@ -194,7 +209,7 @@ export function fromRheaMessage(
             data.systemProperties = {};
           }
           data.systemProperties[annotationKey] = convertDatesToNumbers(
-            msg.message_annotations[annotationKey]
+            msg.message_annotations[annotationKey],
           );
           break;
       }
@@ -208,7 +223,7 @@ export function fromRheaMessage(
     data.lastSequenceNumber = msg.delivery_annotations.last_enqueued_sequence_number;
     data.lastEnqueuedTime = new Date(msg.delivery_annotations.last_enqueued_time_utc as number);
     data.retrievalTime = new Date(
-      msg.delivery_annotations.runtime_info_retrieval_time_utc as number
+      msg.delivery_annotations.runtime_info_retrieval_time_utc as number,
     );
   }
 
@@ -221,7 +236,7 @@ export function fromRheaMessage(
     }
     if (msg[messageProperty] != null) {
       data.systemProperties[messagePropertiesMap[messageProperty]] = convertDatesToNumbers(
-        msg[messageProperty]
+        msg[messageProperty],
       );
     }
   }
@@ -247,13 +262,13 @@ export function fromRheaMessage(
  */
 export function toRheaMessage(
   data: EventData | AmqpAnnotatedMessage,
-  partitionKey?: string
+  partitionKey?: string,
 ): RheaMessage {
   let rheaMessage: RheaMessage;
   if (isAmqpAnnotatedMessage(data)) {
     rheaMessage = {
       ...AmqpAnnotatedMessage.toRheaMessage(data),
-      body: defaultDataTransformer.encode(data.body, data.bodyType ?? "data")
+      body: defaultDataTransformer.encode(data.body, data.bodyType ?? "data"),
     };
   } else {
     let bodyType: BodyTypes = "data";
@@ -266,10 +281,10 @@ export function toRheaMessage(
     }
 
     rheaMessage = {
-      body: defaultDataTransformer.encode(data.body, bodyType)
+      body: defaultDataTransformer.encode(data.body, bodyType),
     };
     // As per the AMQP 1.0 spec If the message-annotations or delivery-annotations section is omitted,
-    // it is equivalent to a message-annotations section containing anempty map of annotations.
+    // it is equivalent to a message-annotations section containing empty map of annotations.
     rheaMessage.message_annotations = {};
 
     if (data.properties) {
@@ -296,7 +311,7 @@ export function toRheaMessage(
         data.messageId.length > Constants.maxMessageIdLength
       ) {
         throw new Error(
-          `Length of 'messageId' property on the event cannot be greater than ${Constants.maxMessageIdLength} characters.`
+          `Length of 'messageId' property on the event cannot be greater than ${Constants.maxMessageIdLength} characters.`,
         );
       }
       rheaMessage.message_id = data.messageId;
@@ -359,9 +374,60 @@ export interface EventData {
 }
 
 /**
+ * Asserts that the provided data conforms to the `EventData` interface.
+ *
+ * This function performs runtime checks on the `data` object to ensure it matches the expected
+ * structure and types defined in the `EventData` interface. If any of the checks fail, it throws
+ * an error with a descriptive message indicating the mismatch.
+ *
+ * @param data - The data object to validate as `EventData`.
+ * @throws \{Error\} Throws an error if the data does not conform to the `EventData` interface.
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function assertIsEventData(data: any): asserts data is EventData {
+  if (data.contentType != null && typeof data.contentType !== "string") {
+    throw new Error(
+      `Invalid 'contentType': expected 'string' or 'undefined', but received '${typeof data.contentType}'.`,
+    );
+  }
+
+  if (
+    data.correlationId != null &&
+    typeof data.correlationId !== "string" &&
+    typeof data.correlationId !== "number" &&
+    !isBuffer(data.correlationId)
+  ) {
+    throw new Error(
+      `Invalid 'correlationId': expected 'string', 'number', 'Buffer', or 'undefined', but received '${typeof data.correlationId}'.`,
+    );
+  }
+
+  if (
+    data.messageId != null &&
+    typeof data.messageId !== "string" &&
+    typeof data.messageId !== "number" &&
+    !isBuffer(data.messageId)
+  ) {
+    throw new Error(
+      `Invalid 'messageId': expected 'string', 'number', 'Buffer', or 'undefined', but received '${typeof data.messageId}'.`,
+    );
+  }
+
+  if (
+    data.properties !== undefined &&
+    (typeof data.properties !== "object" || Array.isArray(data.properties))
+  ) {
+    const actualType = Array.isArray(data.properties) ? "array" : typeof data.properties;
+    throw new Error(
+      `Invalid 'properties': expected an object or 'undefined', but received '${actualType}'.`,
+    );
+  }
+}
+
+/**
  * The interface that describes the structure of the event received from Event Hub.
  * Use this as a reference when creating the `processEvents` function to process the events
- * recieved from an Event Hub when using the `EventHubConsumerClient`.
+ * received from an Event Hub when using the `EventHubConsumerClient`.
  */
 export interface ReceivedEventData {
   /**
@@ -386,7 +452,7 @@ export interface ReceivedEventData {
   /**
    * The offset of the event.
    */
-  offset: number;
+  offset: string;
   /**
    * The sequence number of the event.
    */
@@ -457,19 +523,65 @@ function convertDatesToNumbers<T = unknown>(thing: T): T {
     [0, 'foo', new Date(), { nested: new Date()}]
   */
   if (Array.isArray(thing)) {
-    return (thing.map(convertDatesToNumbers) as unknown) as T;
+    return thing.map(convertDatesToNumbers) as unknown as T;
   }
 
   /*
     Examples:
     { foo: new Date(), children: { nested: new Date() }}
   */
-  if (typeof thing === "object" && isDefined(thing)) {
-    thing = { ...thing };
-    for (const key of Object.keys(thing)) {
-      (thing as any)[key] = convertDatesToNumbers((thing as any)[key]);
+  if (typeof thing === "object" && isDefined<object>(thing)) {
+    const thingShallowCopy = { ...thing };
+    for (const key of Object.keys(thingShallowCopy)) {
+      (thingShallowCopy as any)[key] = convertDatesToNumbers((thingShallowCopy as any)[key]);
     }
+    return thingShallowCopy;
   }
 
   return thing;
+}
+
+/**
+ * @internal
+ */
+export interface PopulateIdempotentMessageAnnotationsParameters {
+  isIdempotentPublishingEnabled: boolean;
+  ownerLevel?: number;
+  producerGroupId?: number;
+  publishSequenceNumber?: number;
+}
+
+/**
+ * Populates a rhea message with idempotent producer properties.
+ * @internal
+ */
+export function populateIdempotentMessageAnnotations(
+  rheaMessage: RheaMessage,
+  {
+    isIdempotentPublishingEnabled,
+    ownerLevel,
+    producerGroupId,
+    publishSequenceNumber,
+  }: PopulateIdempotentMessageAnnotationsParameters,
+): void {
+  if (!isIdempotentPublishingEnabled) {
+    return;
+  }
+
+  const messageAnnotations = rheaMessage.message_annotations || {};
+  if (!rheaMessage.message_annotations) {
+    rheaMessage.message_annotations = messageAnnotations;
+  }
+
+  if (isDefined(ownerLevel)) {
+    messageAnnotations[idempotentProducerAmqpPropertyNames.epoch] = types.wrap_short(ownerLevel);
+  }
+  if (isDefined(producerGroupId)) {
+    messageAnnotations[idempotentProducerAmqpPropertyNames.producerId] =
+      types.wrap_long(producerGroupId);
+  }
+  if (isDefined(publishSequenceNumber)) {
+    messageAnnotations[idempotentProducerAmqpPropertyNames.producerSequenceNumber] =
+      types.wrap_int(publishSequenceNumber);
+  }
 }

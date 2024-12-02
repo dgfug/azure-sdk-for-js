@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Uses AAD credentials to authenticate with the CosmosClient.
  */
 
-const path = require("path");
 require("dotenv").config();
 
 const { UsernamePasswordCredential } = require("@azure/identity");

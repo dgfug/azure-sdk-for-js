@@ -1,79 +1,76 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import * as assert from "assert";
-import { createSandbox, SinonSandbox, SinonSpy } from "sinon";
-import { SecretClient } from "../../src";
-import { LATEST_API_VERSION } from "../../src/secretsModels";
-import { HttpClient, WebResourceLike, HttpOperationResponse, HttpHeaders } from "@azure/core-http";
+// Licensed under the MIT License.
+import type {
+  HttpClient,
+  PipelineRequest,
+  PipelineResponse,
+  SendRequest,
+} from "@azure/core-rest-pipeline";
+import { createHttpHeaders } from "@azure/core-rest-pipeline";
 import { ClientSecretCredential } from "@azure/identity";
-import { env } from "@azure-tools/test-recorder";
+import type { MockInstance } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SecretClient } from "../../src/index.js";
+import { LATEST_API_VERSION } from "../../src/secretsModels.js";
 
 describe("The Secrets client should set the serviceVersion", () => {
   const keyVaultUrl = `https://keyVaultName.vault.azure.net`;
 
   const mockHttpClient: HttpClient = {
-    async sendRequest(httpRequest: WebResourceLike): Promise<HttpOperationResponse> {
+    async sendRequest(httpRequest: PipelineRequest): Promise<PipelineResponse> {
       return {
         status: 200,
-        headers: new HttpHeaders(),
+        headers: createHttpHeaders(),
         request: httpRequest,
-        parsedBody: {
+        bodyAsText: JSON.stringify({
           id: `${keyVaultUrl}/secrets/secretName/id`,
-          attributes: {}
-        }
+          attributes: {},
+        }),
       };
-    }
+    },
   };
 
-  let sandbox: SinonSandbox;
-  let spy: SinonSpy<[WebResourceLike], Promise<HttpOperationResponse>>;
+  let spy: MockInstance<SendRequest>;
   let credential: ClientSecretCredential;
   beforeEach(async () => {
-    sandbox = createSandbox();
-    spy = sandbox.spy(mockHttpClient, "sendRequest");
+    spy = vi.spyOn(mockHttpClient, "sendRequest");
 
-    credential = await new ClientSecretCredential(
-      env.AZURE_TENANT_ID!,
-      env.AZURE_CLIENT_ID!,
-      env.AZURE_CLIENT_SECRET!
-    );
+    credential = new ClientSecretCredential("tenant", "client", "secret");
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
-  it("it should default to the latest API version", async function() {
+  it("it should default to the latest API version", async function () {
     const client = new SecretClient(keyVaultUrl, credential, {
-      httpClient: mockHttpClient
+      httpClient: mockHttpClient,
     });
     await client.setSecret("secretName", "value");
 
-    const calls = spy.getCalls();
-    assert.equal(
-      calls[0].args[0].url,
-      `https://keyVaultName.vault.azure.net/secrets/secretName?api-version=${LATEST_API_VERSION}`
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: `https://keyvaultname.vault.azure.net/secrets/secretName?api-version=${LATEST_API_VERSION}`,
+      }),
     );
   });
 
   // Adding this to the source would change the public API.
   type ApiVersions = "7.0" | "7.1" | "7.2";
 
-  it("it should allow us to specify an API version from a specific set of versions", async function() {
+  it("it should allow us to specify an API version from a specific set of versions", async function () {
     const versions: ApiVersions[] = ["7.0", "7.1", "7.2"];
     for (const serviceVersion in versions) {
       const client = new SecretClient(keyVaultUrl, credential, {
         serviceVersion: serviceVersion as ApiVersions,
-        httpClient: mockHttpClient
+        httpClient: mockHttpClient,
       });
       await client.setSecret("secretName", "value");
 
-      const calls = spy.getCalls();
-      const lastCall = calls[calls.length - 1];
-      assert.equal(
-        lastCall.args[0].url,
-        `https://keyVaultName.vault.azure.net/secrets/secretName?api-version=${serviceVersion}`
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: `https://keyvaultname.vault.azure.net/secrets/secretName?api-version=${serviceVersion}`,
+        }),
       );
     }
   });

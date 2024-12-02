@@ -6,30 +6,31 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { EdgeNodes } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CdnManagementClientContext } from "../cdnManagementClientContext";
+import { CdnManagementClient } from "../cdnManagementClient";
 import {
   EdgeNode,
   EdgeNodesListNextOptionalParams,
   EdgeNodesListOptionalParams,
   EdgeNodesListResponse,
-  EdgeNodesListNextResponse
+  EdgeNodesListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing EdgeNodes operations. */
 export class EdgeNodesImpl implements EdgeNodes {
-  private readonly client: CdnManagementClientContext;
+  private readonly client: CdnManagementClient;
 
   /**
    * Initialize a new instance of the class EdgeNodes class.
    * @param client Reference to the service client
    */
-  constructor(client: CdnManagementClientContext) {
+  constructor(client: CdnManagementClient) {
     this.client = client;
   }
 
@@ -38,7 +39,7 @@ export class EdgeNodesImpl implements EdgeNodes {
    * @param options The options parameters.
    */
   public list(
-    options?: EdgeNodesListOptionalParams
+    options?: EdgeNodesListOptionalParams,
   ): PagedAsyncIterableIterator<EdgeNode> {
     const iter = this.listPagingAll(options);
     return {
@@ -48,27 +49,39 @@ export class EdgeNodesImpl implements EdgeNodes {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: EdgeNodesListOptionalParams
+    options?: EdgeNodesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<EdgeNode[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: EdgeNodesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: EdgeNodesListOptionalParams
+    options?: EdgeNodesListOptionalParams,
   ): AsyncIterableIterator<EdgeNode> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -80,7 +93,7 @@ export class EdgeNodesImpl implements EdgeNodes {
    * @param options The options parameters.
    */
   private _list(
-    options?: EdgeNodesListOptionalParams
+    options?: EdgeNodesListOptionalParams,
   ): Promise<EdgeNodesListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -92,11 +105,11 @@ export class EdgeNodesImpl implements EdgeNodes {
    */
   private _listNext(
     nextLink: string,
-    options?: EdgeNodesListNextOptionalParams
+    options?: EdgeNodesListNextOptionalParams,
   ): Promise<EdgeNodesListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -108,30 +121,29 @@ const listOperationSpec: coreClient.OperationSpec = {
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.EdgenodeResult
+      bodyMapper: Mappers.EdgenodeResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.EdgenodeResult
+      bodyMapper: Mappers.EdgenodeResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.nextLink],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

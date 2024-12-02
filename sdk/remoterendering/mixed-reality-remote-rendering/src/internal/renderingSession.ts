@@ -1,15 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  RenderingServerSize,
-  SessionProperties,
-  KnownRenderingSessionStatus
-} from "../generated/index";
-import {
-  RemoteRenderingServiceError,
-  createRemoteRenderingServiceError
-} from "../remoteRenderingServiceError";
+import type { RenderingServerSize, SessionProperties } from "../generated/index";
+import { KnownRenderingSessionStatus } from "../generated/index";
+import type { RemoteRenderingServiceError } from "../remoteRenderingServiceError";
+import { createRemoteRenderingServiceError } from "../remoteRenderingServiceError";
 
 /** Properties available for a rendering session in any state */
 export interface RenderingSessionBase {
@@ -145,7 +140,7 @@ export type RenderingSession =
  * @internal
  */
 function renderingSessionPropertiesFromSessionProperties(
-  session: SessionProperties
+  session: SessionProperties,
 ): RenderingSessionProperties {
   return {
     arrInspectorPort: session.arrInspectorPort!,
@@ -153,7 +148,7 @@ function renderingSessionPropertiesFromSessionProperties(
     elapsedTimeInMinutes: session.elapsedTimeInMinutes!,
     host: session.host!,
     teraflops: session.teraflops!,
-    createdOn: session.createdOn!
+    createdOn: session.createdOn!,
   };
 }
 
@@ -161,7 +156,7 @@ function renderingSessionPropertiesFromSessionProperties(
  * @internal
  */
 function partialRenderingSessionPropertiesFromSessionProperties(
-  session: SessionProperties
+  session: SessionProperties,
 ): PartialRenderingSessionProperties {
   return {
     arrInspectorPort: session.arrInspectorPort,
@@ -169,7 +164,7 @@ function partialRenderingSessionPropertiesFromSessionProperties(
     elapsedTimeInMinutes: session.elapsedTimeInMinutes,
     host: session.host,
     teraflops: session.teraflops,
-    createdOn: session.createdOn
+    createdOn: session.createdOn,
   };
 }
 
@@ -178,44 +173,44 @@ function partialRenderingSessionPropertiesFromSessionProperties(
  * @internal
  */
 export function renderingSessionFromSessionProperties(
-  session: SessionProperties
+  session: SessionProperties,
 ): RenderingSession {
   const baseProperties: RenderingSessionBase = {
     sessionId: session.sessionId,
     size: session.size,
-    maxLeaseTimeInMinutes: session.maxLeaseTimeInMinutes!
+    maxLeaseTimeInMinutes: session.maxLeaseTimeInMinutes!,
   };
   switch (session.status) {
     case KnownRenderingSessionStatus.Ready:
       return {
         status: "Ready",
         ...baseProperties,
-        properties: renderingSessionPropertiesFromSessionProperties(session)
+        properties: renderingSessionPropertiesFromSessionProperties(session),
       };
     case KnownRenderingSessionStatus.Starting:
       return {
         status: "Starting",
         ...baseProperties,
-        partialProperties: partialRenderingSessionPropertiesFromSessionProperties(session)
+        partialProperties: partialRenderingSessionPropertiesFromSessionProperties(session),
       };
     case KnownRenderingSessionStatus.Error:
       return {
         status: "Error",
         ...baseProperties,
         error: createRemoteRenderingServiceError(session.error!),
-        partialProperties: partialRenderingSessionPropertiesFromSessionProperties(session)
+        partialProperties: partialRenderingSessionPropertiesFromSessionProperties(session),
       };
     case KnownRenderingSessionStatus.Expired:
       return {
         status: "Expired",
         ...baseProperties,
-        properties: renderingSessionPropertiesFromSessionProperties(session)
+        properties: renderingSessionPropertiesFromSessionProperties(session),
       };
     case KnownRenderingSessionStatus.Stopped:
       return {
         status: "Stopped",
         ...baseProperties,
-        partialProperties: partialRenderingSessionPropertiesFromSessionProperties(session)
+        partialProperties: partialRenderingSessionPropertiesFromSessionProperties(session),
       };
     default:
       throw new Error("Unrecognized RenderingSessionStatus returned by the service");

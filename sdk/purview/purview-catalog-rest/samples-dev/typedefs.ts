@@ -10,13 +10,11 @@
 
 import PurviewCatalog from "@azure-rest/purview-catalog";
 import { DefaultAzureCredential } from "@azure/identity";
-import dotenv from "dotenv";
-
-dotenv.config();
+import "dotenv/config";
 
 const endpoint = process.env["ENDPOINT"] || "";
 
-async function main() {
+async function main(): Promise<void> {
   console.log("== List entity typedefs sample ==");
   const client = PurviewCatalog(endpoint, new DefaultAzureCredential());
 
@@ -26,7 +24,11 @@ async function main() {
     throw dataSources;
   }
 
-  console.log(dataSources.body.entityDefs?.map((ds) => ds.name).join("\n"));
+  if (!dataSources.body.entityDefs) {
+    throw new Error("entityDefs is not defined");
+  }
+
+  console.log(dataSources.body.entityDefs.map((ds) => ds.name).join("\n"));
 }
 
 main().catch(console.error);

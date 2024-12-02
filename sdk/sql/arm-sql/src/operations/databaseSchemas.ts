@@ -6,13 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DatabaseSchemas } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   DatabaseSchema,
   DatabaseSchemasListByDatabaseNextOptionalParams,
@@ -20,19 +20,19 @@ import {
   DatabaseSchemasListByDatabaseResponse,
   DatabaseSchemasGetOptionalParams,
   DatabaseSchemasGetResponse,
-  DatabaseSchemasListByDatabaseNextResponse
+  DatabaseSchemasListByDatabaseNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DatabaseSchemas operations. */
 export class DatabaseSchemasImpl implements DatabaseSchemas {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class DatabaseSchemas class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -48,13 +48,13 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSchemasListByDatabaseOptionalParams
+    options?: DatabaseSchemasListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseSchema> {
     const iter = this.listByDatabasePagingAll(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     );
     return {
       next() {
@@ -63,14 +63,18 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByDatabasePagingPage(
           resourceGroupName,
           serverName,
           databaseName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -78,26 +82,35 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSchemasListByDatabaseOptionalParams
+    options?: DatabaseSchemasListByDatabaseOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DatabaseSchema[]> {
-    let result = await this._listByDatabase(
-      resourceGroupName,
-      serverName,
-      databaseName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DatabaseSchemasListByDatabaseResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByDatabase(
+        resourceGroupName,
+        serverName,
+        databaseName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByDatabaseNext(
         resourceGroupName,
         serverName,
         databaseName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -105,13 +118,13 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSchemasListByDatabaseOptionalParams
+    options?: DatabaseSchemasListByDatabaseOptionalParams,
   ): AsyncIterableIterator<DatabaseSchema> {
     for await (const page of this.listByDatabasePagingPage(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -129,11 +142,11 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseSchemasListByDatabaseOptionalParams
+    options?: DatabaseSchemasListByDatabaseOptionalParams,
   ): Promise<DatabaseSchemasListByDatabaseResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, options },
-      listByDatabaseOperationSpec
+      listByDatabaseOperationSpec,
     );
   }
 
@@ -151,11 +164,11 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
     serverName: string,
     databaseName: string,
     schemaName: string,
-    options?: DatabaseSchemasGetOptionalParams
+    options?: DatabaseSchemasGetOptionalParams,
   ): Promise<DatabaseSchemasGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, schemaName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -173,11 +186,11 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
     serverName: string,
     databaseName: string,
     nextLink: string,
-    options?: DatabaseSchemasListByDatabaseNextOptionalParams
+    options?: DatabaseSchemasListByDatabaseNextOptionalParams,
   ): Promise<DatabaseSchemasListByDatabaseNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, nextLink, options },
-      listByDatabaseNextOperationSpec
+      listByDatabaseNextOperationSpec,
     );
   }
 }
@@ -185,66 +198,63 @@ export class DatabaseSchemasImpl implements DatabaseSchemas {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByDatabaseOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/schemas",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/schemas",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseSchemaListResult
+      bodyMapper: Mappers.DatabaseSchemaListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2, Parameters.filter1],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.serverName,
-    Parameters.databaseName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/schemas/{schemaName}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.DatabaseSchema
-    },
-    default: {}
-  },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.filter1, Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.schemaName
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/schemas/{schemaName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.DatabaseSchema,
+    },
+    default: {},
+  },
+  queryParameters: [Parameters.apiVersion3],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.serverName,
+    Parameters.databaseName,
+    Parameters.schemaName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const listByDatabaseNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DatabaseSchemaListResult
+      bodyMapper: Mappers.DatabaseSchemaListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2, Parameters.filter1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

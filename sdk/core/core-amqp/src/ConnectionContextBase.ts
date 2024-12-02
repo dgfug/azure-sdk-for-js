@@ -1,13 +1,20 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Connection, ConnectionOptions, generate_uuid } from "rhea-promise";
-import { CbsClient } from "./cbs";
-import { ConnectionConfig } from "./connectionConfig/connectionConfig";
-
-import { Constants } from "./util/constants";
-import { getFrameworkInfo, getPlatformInfo } from "./util/runtimeInfo";
-import { isNode } from "./util/utils";
+import type { AwaitableSender, Receiver, Sender } from "rhea-promise";
+import {
+  Connection,
+  type ConnectionOptions,
+  type CreateAwaitableSenderOptions,
+  type CreateReceiverOptions,
+  type CreateSenderOptions,
+  generate_uuid,
+} from "rhea-promise";
+import { getFrameworkInfo, getPlatformInfo } from "./util/runtimeInfo.js";
+import { CbsClient } from "./cbs.js";
+import { ConnectionConfig } from "./connectionConfig/connectionConfig.js";
+import { Constants } from "./util/constants.js";
+import { isNodeLike } from "@azure/core-util";
 
 /**
  * Provides contextual information like the underlying amqp connection, cbs session, tokenProvider,
@@ -101,6 +108,53 @@ export interface CreateConnectionContextBaseParameters {
   operationTimeoutInMs?: number;
 }
 
+const maxListenerLimit = 1000;
+
+class CoreAmqpConnection extends Connection {
+  /**
+   * Creates an amqp sender link. Max listener limit on the sender is set to 1000 because the
+   * default value of 10 in NodeJS is too low.
+   * @param options - Optional parameters to create a sender link.
+   * @returns Promise<Sender>.
+   */
+  async createSender(options?: CreateSenderOptions): Promise<Sender> {
+    const sender = await super.createSender(options);
+    sender.setMaxListeners(maxListenerLimit);
+    return sender;
+  }
+
+  /**
+   * Creates an awaitable amqp sender. Max listener limit on the sender is set to 1000 because the
+   * default value of 10 in NodeJS is too low.
+   * @param options - Optional parameters to create an awaitable sender link.
+   * - If `onError` and `onSessionError` handlers are not provided then the `AwaitableSender` will
+   * clear the timer and reject the Promise for all the entries of inflight send operation in its
+   * `deliveryDispositionMap`.
+   * - If the user is handling the reconnection of sender link or the underlying connection in it's
+   * app, then the `onError` and `onSessionError` handlers must be provided by the user and (s)he
+   * shall be responsible of clearing the `deliveryDispositionMap` of inflight `send()` operation.
+   *
+   * @returns Promise<AwaitableSender>.
+   */
+  async createAwaitableSender(options?: CreateAwaitableSenderOptions): Promise<AwaitableSender> {
+    const sender = await super.createAwaitableSender(options);
+    sender.setMaxListeners(maxListenerLimit);
+    return sender;
+  }
+
+  /**
+   * Creates an amqp receiver link. Max listener limit on the sender is set to 1000 because the
+   * default value of 10 in NodeJS is too low.
+   * @param options - Optional parameters to create a receiver link.
+   * @returns Promise<Receiver>.
+   */
+  async createReceiver(options?: CreateReceiverOptions): Promise<Receiver> {
+    const receiver = await super.createReceiver(options);
+    receiver.setMaxListeners(maxListenerLimit);
+    return receiver;
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-redeclare -- renaming constant would be a breaking change.
 export const ConnectionContextBase = {
   /**
@@ -110,39 +164,39 @@ export const ConnectionContextBase = {
    */
   create(parameters: CreateConnectionContextBaseParameters): ConnectionContextBase {
     ConnectionConfig.validate(parameters.config, {
-      isEntityPathRequired: parameters.isEntityPathRequired || false
+      isEntityPathRequired: parameters.isEntityPathRequired || false,
     });
     const userAgent = parameters.connectionProperties.userAgent;
     if (userAgent.length > Constants.maxUserAgentLength) {
       throw new Error(
         `The user-agent string cannot be more than ${Constants.maxUserAgentLength} characters in length.` +
-          `The given user-agent string is: ${userAgent} with length: ${userAgent.length}`
+          `The given user-agent string is: ${userAgent} with length: ${userAgent.length}`,
       );
     }
 
     const connectionOptions: ConnectionOptions = {
-      transport: Constants.TLS,
+      transport: (parameters.config.useDevelopmentEmulator ? Constants.TCP : Constants.TLS) as any,
       host: parameters.config.host,
       hostname: parameters.config.amqpHostname ?? parameters.config.host,
       username: parameters.config.sharedAccessKeyName,
-      port: parameters.config.port ?? 5671,
+      port: parameters.config.port ?? (parameters.config.useDevelopmentEmulator ? 5672 : 5671),
       reconnect: false,
       properties: {
         product: parameters.connectionProperties.product,
         version: parameters.connectionProperties.version,
         "user-agent": userAgent,
         platform: getPlatformInfo(),
-        framework: getFrameworkInfo()
+        framework: getFrameworkInfo(),
       },
       idle_time_out: Constants.defaultConnectionIdleTimeoutInMs,
       operationTimeoutInSeconds: parameters.operationTimeoutInMs
         ? parameters.operationTimeoutInMs / 1000
-        : undefined
+        : undefined,
     };
 
     if (
       parameters.config.webSocket ||
-      (!isNode && typeof self !== "undefined" && (self as any).WebSocket)
+      (!isNodeLike && typeof self !== "undefined" && (self as any).WebSocket)
     ) {
       const socket = parameters.config.webSocket || (self as any).WebSocket;
       const host = parameters.config.host;
@@ -154,11 +208,11 @@ export const ConnectionContextBase = {
         webSocket: socket,
         url: `wss://${host}:${port}/${endpoint}`,
         protocol: ["AMQPWSB10"],
-        options: socketOptions
+        options: socketOptions,
       };
     }
 
-    const connection = new Connection(connectionOptions);
+    const connection = new CoreAmqpConnection(connectionOptions);
     const connectionLock = `${Constants.establishConnection}-${generate_uuid()}`;
     const connectionContextBase: ConnectionContextBase = {
       wasConnectionCloseCalled: false,
@@ -169,7 +223,7 @@ export const ConnectionContextBase = {
       cbsSession: new CbsClient(connection, connectionLock),
       config: parameters.config,
       refreshConnection() {
-        const newConnection = new Connection(connectionOptions);
+        const newConnection = new CoreAmqpConnection(connectionOptions);
         const newConnectionLock = `${Constants.establishConnection}-${generate_uuid()}`;
         this.wasConnectionCloseCalled = false;
         this.connectionLock = newConnectionLock;
@@ -177,9 +231,9 @@ export const ConnectionContextBase = {
         this.connection = newConnection;
         this.connectionId = newConnection.id;
         this.cbsSession = new CbsClient(newConnection, newConnectionLock);
-      }
+      },
     };
 
     return connectionContextBase;
-  }
+  },
 };

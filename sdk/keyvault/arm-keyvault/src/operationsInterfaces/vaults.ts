@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Vault,
   VaultsListByResourceGroupOptionalParams,
@@ -85,8 +84,8 @@ export interface Vaults {
     parameters: VaultCreateOrUpdateParameters,
     options?: VaultsCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<VaultsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VaultsCreateOrUpdateResponse>,
       VaultsCreateOrUpdateResponse
     >
   >;
@@ -174,7 +173,7 @@ export interface Vaults {
     vaultName: string,
     location: string,
     options?: VaultsPurgeDeletedOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Permanently deletes the specified vault. aka Purges the deleted Azure key vault.
    * @param vaultName The name of the soft-deleted vault.

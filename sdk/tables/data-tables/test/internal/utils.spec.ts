@@ -1,22 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { extractConnectionStringParts } from "../../src/utils/connectionString";
-import { Context } from "mocha";
-import { base64Encode, base64Decode } from "../../src/utils/bufferSerializer";
-import { isNode } from "@azure/test-utils";
-import { assert } from "chai";
-import { ConnectionString } from "../../src/utils/internalModels";
+import { base64Decode, base64Encode } from "../../src/utils/bufferSerializer.js";
+
+import type { ConnectionString } from "../../src/utils/internalModels.js";
+import { extractConnectionStringParts } from "../../src/utils/connectionString.js";
+import { isNodeLike } from "@azure/core-util";
+import { describe, it, assert } from "vitest";
 
 describe("Utility Helpers", () => {
   describe("extractConnectionStringParts", () => {
-    describe("Account Connection String", () => {
-      beforeEach(function(this: Context) {
-        if (!isNode) {
-          // Account connection string is not supported for Browsers
-          this.skip();
-        }
-      });
+    describe("Account Connection String", { skip: !isNodeLike }, () => {
       it("should handle connection string without TableEndpoint", () => {
         const validConnectionString =
           "DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=REDACTED;EndpointSuffix=core.windows.net";
@@ -25,7 +19,7 @@ describe("Utility Helpers", () => {
           accountName: "testaccount",
           accountKey: "REDACTED",
           kind: "AccountConnString",
-          url: "https://testaccount.table.core.windows.net"
+          url: "https://testaccount.table.core.windows.net",
         });
       });
 
@@ -37,7 +31,7 @@ describe("Utility Helpers", () => {
           accountName: "testaccount",
           accountKey: "REDACTED",
           kind: "AccountConnString",
-          url: "https://testaccount.table.core.windows.net"
+          url: "https://testaccount.table.core.windows.net",
         });
       });
 
@@ -49,7 +43,7 @@ describe("Utility Helpers", () => {
           accountName: "testaccount",
           accountKey: "REDACTED",
           kind: "AccountConnString",
-          url: "https://myAccount.table.core.windows.net"
+          url: "https://myAccount.table.core.windows.net",
         });
       });
 
@@ -73,7 +67,7 @@ describe("Utility Helpers", () => {
         accountName: "teststorageaccount",
         accountSas: "REDACTED",
         kind: "SASConnString",
-        url: "https://teststorageaccount.table.core.windows.net"
+        url: "https://teststorageaccount.table.core.windows.net",
       };
 
       it("should handle format 'protocol://accountName.table.endpointSuffix'", () => {
@@ -82,7 +76,7 @@ describe("Utility Helpers", () => {
         const connectionStringParts = extractConnectionStringParts(validSAS);
         assert.deepEqual(connectionStringParts, {
           ...expectedConenctionStringParts,
-          accountSas: "sv=2020-02-10&ss=bfqt"
+          accountSas: "sv=2020-02-10&ss=bfqt",
         });
       });
 
@@ -92,7 +86,7 @@ describe("Utility Helpers", () => {
         const connectionStringParts = extractConnectionStringParts(validIPSAS);
         assert.deepEqual(connectionStringParts, {
           ...expectedConenctionStringParts,
-          url: "https://127.0.0.1/teststorageaccount"
+          url: "https://127.0.0.1/teststorageaccount",
         });
       });
 
@@ -107,7 +101,7 @@ describe("Utility Helpers", () => {
           "BlobEndpoint=BlobEndpoint=https://testaccount.blob.core.windows.net/;QueueEndpoint=https://testaccount.queue.core.windows.net/;FileEndpoint=https://testaccount.file.core.windows.net/;TableEndpoint=https://testaccount.table.core.windows.net/";
         assert.throws(
           () => extractConnectionStringParts(invalidSAS),
-          /Invalid SharedAccessSignature/
+          /Invalid SharedAccessSignature/,
         );
       });
 

@@ -6,22 +6,27 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DataFlowDebugSession } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DataFactoryManagementClientContext } from "../dataFactoryManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { DataFactoryManagementClient } from "../dataFactoryManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   DataFlowDebugSessionInfo,
   DataFlowDebugSessionQueryByFactoryNextOptionalParams,
   DataFlowDebugSessionQueryByFactoryOptionalParams,
+  DataFlowDebugSessionQueryByFactoryResponse,
   CreateDataFlowDebugSessionRequest,
   DataFlowDebugSessionCreateOptionalParams,
   DataFlowDebugSessionCreateResponse,
-  DataFlowDebugSessionQueryByFactoryResponse,
   DataFlowDebugPackage,
   DataFlowDebugSessionAddDataFlowOptionalParams,
   DataFlowDebugSessionAddDataFlowResponse,
@@ -30,19 +35,19 @@ import {
   DataFlowDebugCommandRequest,
   DataFlowDebugSessionExecuteCommandOptionalParams,
   DataFlowDebugSessionExecuteCommandResponse,
-  DataFlowDebugSessionQueryByFactoryNextResponse
+  DataFlowDebugSessionQueryByFactoryNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DataFlowDebugSession operations. */
 export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
-  private readonly client: DataFactoryManagementClientContext;
+  private readonly client: DataFactoryManagementClient;
 
   /**
    * Initialize a new instance of the class DataFlowDebugSession class.
    * @param client Reference to the service client
    */
-  constructor(client: DataFactoryManagementClientContext) {
+  constructor(client: DataFactoryManagementClient) {
     this.client = client;
   }
 
@@ -55,12 +60,12 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
   public listQueryByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: DataFlowDebugSessionQueryByFactoryOptionalParams
+    options?: DataFlowDebugSessionQueryByFactoryOptionalParams,
   ): PagedAsyncIterableIterator<DataFlowDebugSessionInfo> {
     const iter = this.queryByFactoryPagingAll(
       resourceGroupName,
       factoryName,
-      options
+      options,
     );
     return {
       next() {
@@ -69,49 +74,62 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.queryByFactoryPagingPage(
           resourceGroupName,
           factoryName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *queryByFactoryPagingPage(
     resourceGroupName: string,
     factoryName: string,
-    options?: DataFlowDebugSessionQueryByFactoryOptionalParams
+    options?: DataFlowDebugSessionQueryByFactoryOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DataFlowDebugSessionInfo[]> {
-    let result = await this._queryByFactory(
-      resourceGroupName,
-      factoryName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DataFlowDebugSessionQueryByFactoryResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._queryByFactory(
+        resourceGroupName,
+        factoryName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._queryByFactoryNext(
         resourceGroupName,
         factoryName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *queryByFactoryPagingAll(
     resourceGroupName: string,
     factoryName: string,
-    options?: DataFlowDebugSessionQueryByFactoryOptionalParams
+    options?: DataFlowDebugSessionQueryByFactoryOptionalParams,
   ): AsyncIterableIterator<DataFlowDebugSessionInfo> {
     for await (const page of this.queryByFactoryPagingPage(
       resourceGroupName,
       factoryName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -128,30 +146,29 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
     resourceGroupName: string,
     factoryName: string,
     request: CreateDataFlowDebugSessionRequest,
-    options?: DataFlowDebugSessionCreateOptionalParams
+    options?: DataFlowDebugSessionCreateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DataFlowDebugSessionCreateResponse>,
+    SimplePollerLike<
+      OperationState<DataFlowDebugSessionCreateResponse>,
       DataFlowDebugSessionCreateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DataFlowDebugSessionCreateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -160,8 +177,8 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -169,20 +186,25 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, factoryName, request, options },
-      createOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, factoryName, request, options },
+      spec: createOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DataFlowDebugSessionCreateResponse,
+      OperationState<DataFlowDebugSessionCreateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -196,13 +218,13 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
     resourceGroupName: string,
     factoryName: string,
     request: CreateDataFlowDebugSessionRequest,
-    options?: DataFlowDebugSessionCreateOptionalParams
+    options?: DataFlowDebugSessionCreateOptionalParams,
   ): Promise<DataFlowDebugSessionCreateResponse> {
     const poller = await this.beginCreate(
       resourceGroupName,
       factoryName,
       request,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -216,11 +238,11 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
   private _queryByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: DataFlowDebugSessionQueryByFactoryOptionalParams
+    options?: DataFlowDebugSessionQueryByFactoryOptionalParams,
   ): Promise<DataFlowDebugSessionQueryByFactoryResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, options },
-      queryByFactoryOperationSpec
+      queryByFactoryOperationSpec,
     );
   }
 
@@ -235,11 +257,11 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
     resourceGroupName: string,
     factoryName: string,
     request: DataFlowDebugPackage,
-    options?: DataFlowDebugSessionAddDataFlowOptionalParams
+    options?: DataFlowDebugSessionAddDataFlowOptionalParams,
   ): Promise<DataFlowDebugSessionAddDataFlowResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, request, options },
-      addDataFlowOperationSpec
+      addDataFlowOperationSpec,
     );
   }
 
@@ -254,11 +276,11 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
     resourceGroupName: string,
     factoryName: string,
     request: DeleteDataFlowDebugSessionRequest,
-    options?: DataFlowDebugSessionDeleteOptionalParams
+    options?: DataFlowDebugSessionDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, request, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -273,30 +295,29 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
     resourceGroupName: string,
     factoryName: string,
     request: DataFlowDebugCommandRequest,
-    options?: DataFlowDebugSessionExecuteCommandOptionalParams
+    options?: DataFlowDebugSessionExecuteCommandOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DataFlowDebugSessionExecuteCommandResponse>,
+    SimplePollerLike<
+      OperationState<DataFlowDebugSessionExecuteCommandResponse>,
       DataFlowDebugSessionExecuteCommandResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DataFlowDebugSessionExecuteCommandResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -305,8 +326,8 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -314,20 +335,25 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, factoryName, request, options },
-      executeCommandOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, factoryName, request, options },
+      spec: executeCommandOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DataFlowDebugSessionExecuteCommandResponse,
+      OperationState<DataFlowDebugSessionExecuteCommandResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -341,13 +367,13 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
     resourceGroupName: string,
     factoryName: string,
     request: DataFlowDebugCommandRequest,
-    options?: DataFlowDebugSessionExecuteCommandOptionalParams
+    options?: DataFlowDebugSessionExecuteCommandOptionalParams,
   ): Promise<DataFlowDebugSessionExecuteCommandResponse> {
     const poller = await this.beginExecuteCommand(
       resourceGroupName,
       factoryName,
       request,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -363,11 +389,11 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
     resourceGroupName: string,
     factoryName: string,
     nextLink: string,
-    options?: DataFlowDebugSessionQueryByFactoryNextOptionalParams
+    options?: DataFlowDebugSessionQueryByFactoryNextOptionalParams,
   ): Promise<DataFlowDebugSessionQueryByFactoryNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, nextLink, options },
-      queryByFactoryNextOperationSpec
+      queryByFactoryNextOperationSpec,
     );
   }
 }
@@ -375,25 +401,24 @@ export class DataFlowDebugSessionImpl implements DataFlowDebugSession {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/createDataFlowDebugSession",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/createDataFlowDebugSession",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse
+      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse,
     },
     201: {
-      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse
+      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse,
     },
     202: {
-      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse
+      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse,
     },
     204: {
-      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse
+      bodyMapper: Mappers.CreateDataFlowDebugSessionResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.request,
   queryParameters: [Parameters.apiVersion],
@@ -401,45 +426,43 @@ const createOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const queryByFactoryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/queryDataFlowDebugSessions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/queryDataFlowDebugSessions",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.QueryDataFlowDebugSessionsResponse
+      bodyMapper: Mappers.QueryDataFlowDebugSessionsResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const addDataFlowOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/addDataFlowToDebugSession",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/addDataFlowToDebugSession",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.AddDataFlowToDebugSessionResponse
+      bodyMapper: Mappers.AddDataFlowToDebugSessionResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.request1,
   queryParameters: [Parameters.apiVersion],
@@ -447,21 +470,20 @@ const addDataFlowOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/deleteDataFlowDebugSession",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/deleteDataFlowDebugSession",
   httpMethod: "POST",
   responses: {
     200: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.request2,
   queryParameters: [Parameters.apiVersion],
@@ -469,32 +491,31 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const executeCommandOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/executeDataFlowDebugCommand",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/executeDataFlowDebugCommand",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.DataFlowDebugCommandResponse
+      bodyMapper: Mappers.DataFlowDebugCommandResponse,
     },
     201: {
-      bodyMapper: Mappers.DataFlowDebugCommandResponse
+      bodyMapper: Mappers.DataFlowDebugCommandResponse,
     },
     202: {
-      bodyMapper: Mappers.DataFlowDebugCommandResponse
+      bodyMapper: Mappers.DataFlowDebugCommandResponse,
     },
     204: {
-      bodyMapper: Mappers.DataFlowDebugCommandResponse
+      bodyMapper: Mappers.DataFlowDebugCommandResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.request3,
   queryParameters: [Parameters.apiVersion],
@@ -502,31 +523,30 @@ const executeCommandOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const queryByFactoryNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.QueryDataFlowDebugSessionsResponse
+      bodyMapper: Mappers.QueryDataFlowDebugSessionsResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -6,6 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
+import * as coreClient from "@azure/core-client";
+import {
+  PipelineRequest,
+  PipelineResponse,
+  SendRequest
+} from "@azure/core-rest-pipeline";
 import {
   ContainerRegistryImpl,
   ContainerRegistryBlobImpl,
@@ -16,11 +22,13 @@ import {
   ContainerRegistryBlob,
   Authentication
 } from "./operationsInterfaces";
-import { GeneratedClientContext } from "./generatedClientContext";
-import { GeneratedClientOptionalParams, ApiVersion20210701 } from "./models";
+import { ApiVersion20210701, GeneratedClientOptionalParams } from "./models";
 
 /** @internal */
-export class GeneratedClient extends GeneratedClientContext {
+export class GeneratedClient extends coreClient.ServiceClient {
+  url: string;
+  apiVersion: ApiVersion20210701;
+
   /**
    * Initializes a new instance of the GeneratedClient class.
    * @param url Registry login URL
@@ -32,10 +40,71 @@ export class GeneratedClient extends GeneratedClientContext {
     apiVersion: ApiVersion20210701,
     options?: GeneratedClientOptionalParams
   ) {
-    super(url, apiVersion, options);
+    if (url === undefined) {
+      throw new Error("'url' cannot be null");
+    }
+    if (apiVersion === undefined) {
+      throw new Error("'apiVersion' cannot be null");
+    }
+
+    // Initializing default values for options
+    if (!options) {
+      options = {};
+    }
+    const defaults: GeneratedClientOptionalParams = {
+      requestContentType: "application/json; charset=utf-8"
+    };
+
+    const packageDetails = `azsdk-js-container-registry/1.1.0-beta.4`;
+    const userAgentPrefix =
+      options.userAgentOptions && options.userAgentOptions.userAgentPrefix
+        ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
+        : `${packageDetails}`;
+
+    const optionsWithDefaults = {
+      ...defaults,
+      ...options,
+      userAgentOptions: {
+        userAgentPrefix
+      },
+      endpoint: options.endpoint ?? options.baseUri ?? "{url}"
+    };
+    super(optionsWithDefaults);
+    // Parameter assignments
+    this.url = url;
+    this.apiVersion = apiVersion;
     this.containerRegistry = new ContainerRegistryImpl(this);
     this.containerRegistryBlob = new ContainerRegistryBlobImpl(this);
     this.authentication = new AuthenticationImpl(this);
+    this.addCustomApiVersionPolicy(apiVersion);
+  }
+
+  /** A function that adds a policy that sets the api-version (or equivalent) to reflect the library version. */
+  private addCustomApiVersionPolicy(apiVersion?: string) {
+    if (!apiVersion) {
+      return;
+    }
+    const apiVersionPolicy = {
+      name: "CustomApiVersionPolicy",
+      async sendRequest(
+        request: PipelineRequest,
+        next: SendRequest
+      ): Promise<PipelineResponse> {
+        const param = request.url.split("?");
+        if (param.length > 1) {
+          const newParams = param[1].split("&").map((item) => {
+            if (item.indexOf("api-version") > -1) {
+              return "api-version=" + apiVersion;
+            } else {
+              return item;
+            }
+          });
+          request.url = param[0] + "?" + newParams.join("&");
+        }
+        return next(request);
+      }
+    };
+    this.pipeline.addPolicy(apiVersionPolicy);
   }
 
   containerRegistry: ContainerRegistry;

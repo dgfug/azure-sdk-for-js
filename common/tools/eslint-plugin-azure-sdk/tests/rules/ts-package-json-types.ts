@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-package-json-types rule.
- * @author Arpan Laha
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-package-json-types";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -80,15 +80,13 @@ const examplePackageGood = `{
     "eslint-detailed-reporter": "^0.8.0",
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-only-tests": "^2.3.0",
-    "eslint-plugin-promise": "^4.1.1",    
+    "eslint-plugin-promise": "^4.1.1",
     "https-proxy-agent": "^2.2.1",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^1.2.0",
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.5",
@@ -193,15 +191,13 @@ const examplePackageBad = `{
     "eslint-detailed-reporter": "^0.8.0",
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-only-tests": "^2.3.0",
-    "eslint-plugin-promise": "^4.1.1",    
+    "eslint-plugin-promise": "^4.1.1",
     "https-proxy-agent": "^2.2.1",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^1.2.0",
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.5",
@@ -243,41 +239,35 @@ const examplePackageBad = `{
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-package-json-types", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"types": "typings/index.d.ts"}',
-      filename: "index/package.json"
+      code: '{"types": "typings/service-bus.d.ts"}',
+      filename: "service-bus/package.json",
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: examplePackageGood,
-      filename: "service-bus/package.json"
+      filename: "service-bus/package.json",
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"types": "typings/index.ts"}',
-      filename: "service-bus/not_package.json"
-    }
+      filename: "not_package.json",
+    },
   ],
   invalid: [
     {
       code: '{"notTypes": "typings/index.d.ts"}',
-      filename: "index/package.json",
+      filename: "package.json",
       errors: [
         {
-          message: "types does not exist at the outermost level"
-        }
-      ]
+          message: "types does not exist at the outermost level",
+        },
+      ],
     },
     {
       // types is in a nested object
@@ -285,9 +275,9 @@ ruleTester.run("ts-package-json-types", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message: "types does not exist at the outermost level"
-        }
-      ]
+          message: "types does not exist at the outermost level",
+        },
+      ],
     },
     {
       // Incorrect node type for `types` key (object)
@@ -295,9 +285,9 @@ ruleTester.run("ts-package-json-types", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message: "types is not set to a string"
-        }
-      ]
+          message: "types is not set to a string",
+        },
+      ],
     },
     {
       // Incorrect node type for `types` key (regex)
@@ -305,9 +295,9 @@ ruleTester.run("ts-package-json-types", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message: "types is not set to a string"
-        }
-      ]
+          message: "types is not set to a string",
+        },
+      ],
     },
     {
       // only the fields we care about
@@ -315,9 +305,9 @@ ruleTester.run("ts-package-json-types", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message: "provided types path is not a TypeScript declaration file"
-        }
-      ]
+          message: "provided types path is not a TypeScript declaration file",
+        },
+      ],
     },
     {
       // example file with types set to "typings/index.ts"
@@ -325,20 +315,19 @@ ruleTester.run("ts-package-json-types", rule, {
       filename: "service-bus/package.json",
       errors: [
         {
-          message: "provided types path is not a TypeScript declaration file"
-        }
-      ]
+          message: "provided types path is not a TypeScript declaration file",
+        },
+      ],
     },
     // example file with typings set, but to a non-matching package name
     {
       code: examplePackageGood,
-      filename: "wrongpackage/package.json",
+      filename: "invalid/package.json",
       errors: [
         {
-          message:
-            "provided types file should be named 'wrongpackage.d.ts' after the package directory"
-        }
-      ]
-    }
-  ]
+          message: "provided types file should be named 'invalid.d.ts' after the package directory",
+        },
+      ],
+    },
+  ],
 });

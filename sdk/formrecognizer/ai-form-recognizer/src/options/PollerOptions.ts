@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PollOperationState } from "@azure/core-lro";
+import type { OperationOptions } from "@azure/core-client";
+import type { PollOperationState } from "@azure/core-lro";
 
 /**
  * Options for long-running operations (pollers) in the Form Recognizer clients.
  */
-export interface PollerOptions<TState extends PollOperationState<unknown>> {
+export interface PollerOptions<TState extends PollOperationState<unknown>>
+  extends OperationOptions {
   /**
    * The amount of time to wait (in milliseconds) between subsequent requests relating to the same operation.
    */

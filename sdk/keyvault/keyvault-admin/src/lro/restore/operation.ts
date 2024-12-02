@@ -1,26 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortSignalLike } from "@azure/abort-controller";
-import { KeyVaultClient } from "../../generated/keyVaultClient";
-import {
-  KeyVaultClientFullRestoreOperationOptionalParams,
-  KeyVaultClientRestoreStatusResponse,
-  RestoreOperation
-} from "../../generated/models";
-import { KeyVaultClientFullRestoreOperationResponse } from "../../generated/models";
-import {
-  KeyVaultAdminPollOperation,
-  KeyVaultAdminPollOperationState
-} from "../keyVaultAdminPoller";
-import { KeyVaultBeginRestoreOptions, KeyVaultRestoreResult } from "../../backupClientModels";
-import { createTraceFunction } from "../../tracingHelpers";
-import { OperationOptions } from "@azure/core-client";
+import type {
+  FullRestoreOperationOptionalParams,
+  FullRestoreOperationResponse,
+  RestoreOperation,
+  RestoreStatusResponse,
+} from "../../generated/models/index.js";
+import type { KeyVaultAdminPollOperationState } from "../keyVaultAdminPoller.js";
+import { KeyVaultAdminPollOperation } from "../keyVaultAdminPoller.js";
+import type {
+  KeyVaultBeginRestoreOptions,
+  KeyVaultRestoreResult,
+} from "../../backupClientModels.js";
 
-/**
- * @internal
- */
-const withTrace = createTraceFunction("Azure.KeyVault.Admin.KeyVaultRestorePoller");
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { KeyVaultClient } from "../../generated/keyVaultClient.js";
+import type { OperationOptions } from "@azure/core-client";
+import { tracingClient } from "../../tracing.js";
 
 /**
  * An interface representing the publicly available properties of the state of a restore Key Vault's poll operation.
@@ -41,7 +38,7 @@ export interface KeyVaultRestorePollOperationState
   /**
    * The SAS token.
    */
-  sasToken: string;
+  sasToken?: string;
   /**
    * The Folder name of the blob where the previous successful full backup was stored
    */
@@ -59,10 +56,10 @@ export class KeyVaultRestorePollOperation extends KeyVaultAdminPollOperation<
     public state: KeyVaultRestorePollOperationState,
     private vaultUrl: string,
     private client: KeyVaultClient,
-    private requestOptions: KeyVaultBeginRestoreOptions = {}
+    private requestOptions: KeyVaultBeginRestoreOptions = {},
   ) {
     super(state, {
-      cancelMessage: "Cancelling the restoration full Key Vault backup is not supported."
+      cancelMessage: "Cancelling the restoration full Key Vault backup is not supported.",
     });
   }
 
@@ -70,10 +67,10 @@ export class KeyVaultRestorePollOperation extends KeyVaultAdminPollOperation<
    * Tracing the fullRestore operation
    */
   private fullRestore(
-    options: KeyVaultClientFullRestoreOperationOptionalParams
-  ): Promise<KeyVaultClientFullRestoreOperationResponse> {
-    return withTrace("fullRestore", options, (updatedOptions) =>
-      this.client.fullRestoreOperation(this.vaultUrl, updatedOptions)
+    options: FullRestoreOperationOptionalParams,
+  ): Promise<FullRestoreOperationResponse> {
+    return tracingClient.withSpan("KeyVaultRestorePoller.fullRestore", options, (updatedOptions) =>
+      this.client.fullRestoreOperation(this.vaultUrl, updatedOptions),
     );
   }
 
@@ -82,10 +79,12 @@ export class KeyVaultRestorePollOperation extends KeyVaultAdminPollOperation<
    */
   private async restoreStatus(
     jobId: string,
-    options: OperationOptions
-  ): Promise<KeyVaultClientRestoreStatusResponse> {
-    return withTrace("restoreStatus", options, (updatedOptions) =>
-      this.client.restoreStatus(this.vaultUrl, jobId, updatedOptions)
+    options: OperationOptions,
+  ): Promise<RestoreStatusResponse> {
+    return tracingClient.withSpan(
+      "KeyVaultRestorePoller.restoreStatus",
+      options,
+      (updatedOptions) => this.client.restoreStatus(this.vaultUrl, jobId, updatedOptions),
     );
   }
 
@@ -96,7 +95,7 @@ export class KeyVaultRestorePollOperation extends KeyVaultAdminPollOperation<
     options: {
       abortSignal?: AbortSignalLike;
       fireProgress?: (state: KeyVaultRestorePollOperationState) => void;
-    } = {}
+    } = {},
   ): Promise<KeyVaultRestorePollOperation> {
     const state = this.state;
     const { folderUri, sasToken, folderName } = state;
@@ -112,9 +111,10 @@ export class KeyVaultRestorePollOperation extends KeyVaultAdminPollOperation<
           folderToRestore: folderName,
           sasTokenParameters: {
             storageResourceUri: folderUri,
-            token: sasToken
-          }
-        }
+            token: sasToken,
+            useManagedIdentity: sasToken === undefined,
+          },
+        },
       });
 
       this.mapState(serviceOperation);
@@ -135,7 +135,7 @@ export class KeyVaultRestorePollOperation extends KeyVaultAdminPollOperation<
 
     if (!startTime) {
       throw new Error(
-        `Missing "startTime" from the full restore operation. Restore did not start successfully.`
+        `Missing "startTime" from the full restore operation. Restore did not start successfully.`,
       );
     }
 
@@ -155,7 +155,7 @@ export class KeyVaultRestorePollOperation extends KeyVaultAdminPollOperation<
     if (state.isCompleted) {
       state.result = {
         startTime,
-        endTime
+        endTime,
       };
     }
   }

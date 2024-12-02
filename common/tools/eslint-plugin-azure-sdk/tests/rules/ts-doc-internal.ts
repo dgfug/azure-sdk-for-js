@@ -1,28 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-doc-internal rule.
- * @author Arpan Laha
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-doc-internal";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  },
-  settings: {
-    exported: []
-  }
-});
+const ruleTester = createRuleTester({ settings: { exported: [] } });
 
 ruleTester.run("ts-doc-internal", rule, {
   valid: [
@@ -34,7 +25,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * @internal
              */
             class ExampleClass {}`,
-      filename: "src/test.ts"
+      filename: "src/test.ts",
     },
     {
       code: `
@@ -43,7 +34,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * @hidden
              */
             class ExampleClass {}`,
-      filename: "src/test.ts"
+      filename: "src/test.ts",
     },
     // interface
     {
@@ -53,7 +44,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * @internal
              */
             interface ExampleInterface {}`,
-      filename: "src/test.ts"
+      filename: "src/test.ts",
     },
     {
       code: `
@@ -62,7 +53,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * @hidden
              */
             interface ExampleInterface {}`,
-      filename: "src/test.ts"
+      filename: "src/test.ts",
     },
     // function
     {
@@ -72,7 +63,7 @@ ruleTester.run("ts-doc-internal", rule, {
              * @internal
              */
             function ExampleFunction() {}`,
-      filename: "src/test.ts"
+      filename: "src/test.ts",
     },
     {
       code: `
@@ -81,8 +72,8 @@ ruleTester.run("ts-doc-internal", rule, {
              * @hidden
              */
             function ExampleFunction() {}`,
-      filename: "src/test.ts"
-    }
+      filename: "src/test.ts",
+    },
   ],
   invalid: [
     // class
@@ -95,9 +86,9 @@ ruleTester.run("ts-doc-internal", rule, {
       filename: "src/test.ts",
       errors: [
         {
-          message: "internal items with TSDoc comments should include an @internal or @hidden tag"
-        }
-      ]
+          message: "internal items with TSDoc comments should include an @internal or @hidden tag",
+        },
+      ],
     },
     // interface
     {
@@ -109,9 +100,9 @@ ruleTester.run("ts-doc-internal", rule, {
       filename: "src/test.ts",
       errors: [
         {
-          message: "internal items with TSDoc comments should include an @internal or @hidden tag"
-        }
-      ]
+          message: "internal items with TSDoc comments should include an @internal or @hidden tag",
+        },
+      ],
     },
     // function
     {
@@ -124,9 +115,9 @@ ruleTester.run("ts-doc-internal", rule, {
       filename: "src/test.ts",
       errors: [
         {
-          message: "internal items with TSDoc comments should include an @internal or @hidden tag"
-        }
-      ]
-    }
-  ]
+          message: "internal items with TSDoc comments should include an @internal or @hidden tag",
+        },
+      ],
+    },
+  ],
 });

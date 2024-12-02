@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   DiskEncryptionSet,
   DiskEncryptionSetsListByResourceGroupOptionalParams,
@@ -20,7 +20,7 @@ import {
   DiskEncryptionSetsUpdateResponse,
   DiskEncryptionSetsGetOptionalParams,
   DiskEncryptionSetsGetResponse,
-  DiskEncryptionSetsDeleteOptionalParams
+  DiskEncryptionSetsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -33,14 +33,14 @@ export interface DiskEncryptionSets {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: DiskEncryptionSetsListByResourceGroupOptionalParams
+    options?: DiskEncryptionSetsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<DiskEncryptionSet>;
   /**
    * Lists all the disk encryption sets under a subscription.
    * @param options The options parameters.
    */
   list(
-    options?: DiskEncryptionSetsListOptionalParams
+    options?: DiskEncryptionSetsListOptionalParams,
   ): PagedAsyncIterableIterator<DiskEncryptionSet>;
   /**
    * Lists all resources that are encrypted with this disk encryption set.
@@ -53,7 +53,7 @@ export interface DiskEncryptionSets {
   listAssociatedResources(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams
+    options?: DiskEncryptionSetsListAssociatedResourcesOptionalParams,
   ): PagedAsyncIterableIterator<string>;
   /**
    * Creates or updates a disk encryption set
@@ -69,10 +69,10 @@ export interface DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSet,
-    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams
+    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DiskEncryptionSetsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DiskEncryptionSetsCreateOrUpdateResponse>,
       DiskEncryptionSetsCreateOrUpdateResponse
     >
   >;
@@ -90,7 +90,7 @@ export interface DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSet,
-    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams
+    options?: DiskEncryptionSetsCreateOrUpdateOptionalParams,
   ): Promise<DiskEncryptionSetsCreateOrUpdateResponse>;
   /**
    * Updates (patches) a disk encryption set.
@@ -106,10 +106,10 @@ export interface DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSetUpdate,
-    options?: DiskEncryptionSetsUpdateOptionalParams
+    options?: DiskEncryptionSetsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DiskEncryptionSetsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DiskEncryptionSetsUpdateResponse>,
       DiskEncryptionSetsUpdateResponse
     >
   >;
@@ -127,7 +127,7 @@ export interface DiskEncryptionSets {
     resourceGroupName: string,
     diskEncryptionSetName: string,
     diskEncryptionSet: DiskEncryptionSetUpdate,
-    options?: DiskEncryptionSetsUpdateOptionalParams
+    options?: DiskEncryptionSetsUpdateOptionalParams,
   ): Promise<DiskEncryptionSetsUpdateResponse>;
   /**
    * Gets information about a disk encryption set.
@@ -140,7 +140,7 @@ export interface DiskEncryptionSets {
   get(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsGetOptionalParams
+    options?: DiskEncryptionSetsGetOptionalParams,
   ): Promise<DiskEncryptionSetsGetResponse>;
   /**
    * Deletes a disk encryption set.
@@ -153,8 +153,8 @@ export interface DiskEncryptionSets {
   beginDelete(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DiskEncryptionSetsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a disk encryption set.
    * @param resourceGroupName The name of the resource group.
@@ -166,6 +166,6 @@ export interface DiskEncryptionSets {
   beginDeleteAndWait(
     resourceGroupName: string,
     diskEncryptionSetName: string,
-    options?: DiskEncryptionSetsDeleteOptionalParams
+    options?: DiskEncryptionSetsDeleteOptionalParams,
   ): Promise<void>;
 }

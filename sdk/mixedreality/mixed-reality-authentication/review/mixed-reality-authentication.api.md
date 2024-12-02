@@ -6,9 +6,9 @@
 
 import { AccessToken } from '@azure/core-auth';
 import { AzureKeyCredential } from '@azure/core-auth';
-import { OperationOptions } from '@azure/core-http';
-import { PipelineOptions } from '@azure/core-http';
-import { TokenCredential } from '@azure/core-http';
+import type { CommonClientOptions } from '@azure/core-client';
+import type { OperationOptions } from '@azure/core-client';
+import type { TokenCredential } from '@azure/core-auth';
 
 export { AccessToken }
 
@@ -25,12 +25,11 @@ export class MixedRealityStsClient {
     readonly accountId: string;
     readonly endpointUrl: string;
     getToken(options?: GetTokenOptions): Promise<AccessToken>;
-    }
-
-// @public
-export interface MixedRealityStsClientOptions extends PipelineOptions {
-    customEndpointUrl?: string;
 }
 
+// @public
+export interface MixedRealityStsClientOptions extends CommonClientOptions {
+    customEndpointUrl?: string;
+}
 
 ```

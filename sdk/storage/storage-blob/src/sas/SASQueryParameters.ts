@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { SasIPRange, ipRangeToString } from "./SasIPRange";
+import type { SasIPRange } from "./SasIPRange";
+import { ipRangeToString } from "./SasIPRange";
 import { truncatedISO8061Date } from "../utils/utils.common";
-import { UserDelegationKey } from "../BlobServiceClient";
+import type { UserDelegationKey } from "../BlobServiceClient";
 
 /**
  * Protocols for generated SAS.
@@ -17,7 +18,7 @@ export enum SASProtocol {
   /**
    * Protocol that allows both HTTPS and HTTP
    */
-  HttpsAndHttp = "https,http"
+  HttpsAndHttp = "https,http",
 }
 
 /**
@@ -271,7 +272,7 @@ export class SASQueryParameters {
     if (this.ipRangeInner) {
       return {
         end: this.ipRangeInner.end,
-        start: this.ipRangeInner.start
+        start: this.ipRangeInner.start,
       };
     }
     return undefined;
@@ -321,7 +322,7 @@ export class SASQueryParameters {
     userDelegationKey?: UserDelegationKey,
     preauthorizedAgentObjectId?: string,
     correlationId?: string,
-    encryptionScope?: string
+    encryptionScope?: string,
   );
 
   /**
@@ -353,7 +354,7 @@ export class SASQueryParameters {
     userDelegationKey?: UserDelegationKey,
     preauthorizedAgentObjectId?: string,
     correlationId?: string,
-    encryptionScope?: string
+    encryptionScope?: string,
   ) {
     this.version = version;
     this.signature = signature;
@@ -448,7 +449,7 @@ export class SASQueryParameters {
       "rscl",
       "rsct",
       "saoid",
-      "scid"
+      "scid",
     ];
     const queries: string[] = [];
 
@@ -470,21 +471,21 @@ export class SASQueryParameters {
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.startsOn ? truncatedISO8061Date(this.startsOn, false) : undefined
+            this.startsOn ? truncatedISO8061Date(this.startsOn, false) : undefined,
           );
           break;
         case "se":
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.expiresOn ? truncatedISO8061Date(this.expiresOn, false) : undefined
+            this.expiresOn ? truncatedISO8061Date(this.expiresOn, false) : undefined,
           );
           break;
         case "sip":
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.ipRange ? ipRangeToString(this.ipRange) : undefined
+            this.ipRange ? ipRangeToString(this.ipRange) : undefined,
           );
           break;
         case "si":
@@ -503,14 +504,14 @@ export class SASQueryParameters {
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.signedStartsOn ? truncatedISO8061Date(this.signedStartsOn, false) : undefined
+            this.signedStartsOn ? truncatedISO8061Date(this.signedStartsOn, false) : undefined,
           );
           break;
         case "ske": // Signed key expiry time
           this.tryAppendQueryParameter(
             queries,
             param,
-            this.signedExpiresOn ? truncatedISO8061Date(this.signedExpiresOn, false) : undefined
+            this.signedExpiresOn ? truncatedISO8061Date(this.signedExpiresOn, false) : undefined,
           );
           break;
         case "sks": // Signed key service

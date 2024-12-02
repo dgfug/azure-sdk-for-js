@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type {
   PipelinePolicy,
   PipelineRequest,
+  PipelineResponse,
   SendRequest,
-  PipelineResponse
 } from "@azure/core-rest-pipeline";
 
 const AcceptHeaderName = "Accept";
 
-export type MetadataLevel = "none" | "minimal";
+type MetadataLevel = "none" | "minimal";
 const odataMetadataPolicy = "OdataMetadataPolicy";
 
 /**
@@ -23,6 +23,6 @@ export function createOdataMetadataPolicy(metadataLevel: MetadataLevel): Pipelin
     async sendRequest(request: PipelineRequest, next: SendRequest): Promise<PipelineResponse> {
       request.headers.set(AcceptHeaderName, `application/json;odata.metadata=${metadataLevel}`);
       return next(request);
-    }
+    },
   };
 }

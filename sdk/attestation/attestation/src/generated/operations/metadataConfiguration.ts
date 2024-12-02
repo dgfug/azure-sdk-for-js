@@ -6,25 +6,26 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { MetadataConfiguration } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import { MetadataConfiguration } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { GeneratedClientContext } from "../generatedClientContext";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { GeneratedClient } from "../generatedClient.js";
 import {
   MetadataConfigurationGetOptionalParams,
   MetadataConfigurationGetResponse
-} from "../models";
+} from "../models/index.js";
 
-/** Class representing a MetadataConfiguration. */
+/** Class containing MetadataConfiguration operations. */
 export class MetadataConfigurationImpl implements MetadataConfiguration {
-  private readonly client: GeneratedClientContext;
+  private readonly client: GeneratedClient;
 
   /**
    * Initialize a new instance of the class MetadataConfiguration class.
    * @param client Reference to the service client
    */
-  constructor(client: GeneratedClientContext) {
+  constructor(client: GeneratedClient) {
     this.client = client;
   }
 
@@ -32,10 +33,19 @@ export class MetadataConfigurationImpl implements MetadataConfiguration {
    * Retrieves metadata about the attestation signing keys in use by the attestation service
    * @param options The options parameters.
    */
-  get(
+  async get(
     options?: MetadataConfigurationGetOptionalParams
   ): Promise<MetadataConfigurationGetResponse> {
-    return this.client.sendOperationRequest({ options }, getOperationSpec);
+    return tracingClient.withSpan(
+      "GeneratedClient.get",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { options },
+          getOperationSpec
+        ) as Promise<MetadataConfigurationGetResponse>;
+      }
+    );
   }
 }
 // Operation Specifications

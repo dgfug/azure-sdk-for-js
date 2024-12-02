@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   BastionHost,
   BastionHostsListOptionalParams,
@@ -19,7 +19,7 @@ import {
   BastionHostsCreateOrUpdateResponse,
   TagsObject,
   BastionHostsUpdateTagsOptionalParams,
-  BastionHostsUpdateTagsResponse
+  BastionHostsUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface BastionHosts {
    * @param options The options parameters.
    */
   list(
-    options?: BastionHostsListOptionalParams
+    options?: BastionHostsListOptionalParams,
   ): PagedAsyncIterableIterator<BastionHost>;
   /**
    * Lists all Bastion Hosts in a resource group.
@@ -39,7 +39,7 @@ export interface BastionHosts {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: BastionHostsListByResourceGroupOptionalParams
+    options?: BastionHostsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<BastionHost>;
   /**
    * Deletes the specified Bastion Host.
@@ -50,8 +50,8 @@ export interface BastionHosts {
   beginDelete(
     resourceGroupName: string,
     bastionHostName: string,
-    options?: BastionHostsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: BastionHostsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified Bastion Host.
    * @param resourceGroupName The name of the resource group.
@@ -61,7 +61,7 @@ export interface BastionHosts {
   beginDeleteAndWait(
     resourceGroupName: string,
     bastionHostName: string,
-    options?: BastionHostsDeleteOptionalParams
+    options?: BastionHostsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified Bastion Host.
@@ -72,7 +72,7 @@ export interface BastionHosts {
   get(
     resourceGroupName: string,
     bastionHostName: string,
-    options?: BastionHostsGetOptionalParams
+    options?: BastionHostsGetOptionalParams,
   ): Promise<BastionHostsGetResponse>;
   /**
    * Creates or updates the specified Bastion Host.
@@ -85,10 +85,10 @@ export interface BastionHosts {
     resourceGroupName: string,
     bastionHostName: string,
     parameters: BastionHost,
-    options?: BastionHostsCreateOrUpdateOptionalParams
+    options?: BastionHostsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<BastionHostsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<BastionHostsCreateOrUpdateResponse>,
       BastionHostsCreateOrUpdateResponse
     >
   >;
@@ -103,7 +103,7 @@ export interface BastionHosts {
     resourceGroupName: string,
     bastionHostName: string,
     parameters: BastionHost,
-    options?: BastionHostsCreateOrUpdateOptionalParams
+    options?: BastionHostsCreateOrUpdateOptionalParams,
   ): Promise<BastionHostsCreateOrUpdateResponse>;
   /**
    * Updates Tags for BastionHost resource
@@ -116,10 +116,10 @@ export interface BastionHosts {
     resourceGroupName: string,
     bastionHostName: string,
     parameters: TagsObject,
-    options?: BastionHostsUpdateTagsOptionalParams
+    options?: BastionHostsUpdateTagsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<BastionHostsUpdateTagsResponse>,
+    SimplePollerLike<
+      OperationState<BastionHostsUpdateTagsResponse>,
       BastionHostsUpdateTagsResponse
     >
   >;
@@ -134,6 +134,6 @@ export interface BastionHosts {
     resourceGroupName: string,
     bastionHostName: string,
     parameters: TagsObject,
-    options?: BastionHostsUpdateTagsOptionalParams
+    options?: BastionHostsUpdateTagsOptionalParams,
   ): Promise<BastionHostsUpdateTagsResponse>;
 }

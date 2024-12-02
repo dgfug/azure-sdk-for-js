@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type {
+  KeyPhraseResult,
   TextDocumentBatchStatistics,
   TextDocumentInput,
-  KeyPhraseResult
 } from "./generated/models";
+import type { ExtractKeyPhrasesResult } from "./extractKeyPhrasesResult";
 import {
-  ExtractKeyPhrasesResult,
+  makeExtractKeyPhrasesErrorResult,
   makeExtractKeyPhrasesResult,
-  makeExtractKeyPhrasesErrorResult
 } from "./extractKeyPhrasesResult";
 import { combineSuccessfulAndErroneousDocumentsWithStatisticsAndModelVersion } from "./textAnalyticsResult";
 
@@ -36,12 +36,12 @@ export interface ExtractKeyPhrasesResultArray extends Array<ExtractKeyPhrasesRes
  */
 export function makeExtractKeyPhrasesResultArray(
   input: TextDocumentInput[],
-  response: KeyPhraseResult
+  response: KeyPhraseResult,
 ): ExtractKeyPhrasesResultArray {
   return combineSuccessfulAndErroneousDocumentsWithStatisticsAndModelVersion(
     input,
     response,
     makeExtractKeyPhrasesResult,
-    makeExtractKeyPhrasesErrorResult
+    makeExtractKeyPhrasesErrorResult,
   );
 }

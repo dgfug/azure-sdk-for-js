@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
 import { ResourceType } from "../../common";
-import { CosmosClient } from "../../CosmosClient";
-import { SqlQuerySpec } from "../../queryExecutionContext";
+import type { CosmosClient } from "../../CosmosClient";
+import type { SqlQuerySpec } from "../../queryExecutionContext";
 import { QueryIterator } from "../../queryIterator";
-import { FeedOptions } from "../../request";
-import { Resource } from "../Resource";
-import { OfferDefinition } from "./OfferDefinition";
+import type { FeedOptions } from "../../request";
+import type { Resource } from "../Resource";
+import type { OfferDefinition } from "./OfferDefinition";
 
 /**
  * Use to query or read all Offers.
@@ -21,7 +21,7 @@ export class Offers {
    */
   constructor(
     public readonly client: CosmosClient,
-    private readonly clientContext: ClientContext
+    private readonly clientContext: ClientContext,
   ) {}
 
   /**
@@ -35,14 +35,15 @@ export class Offers {
    */
   public query<T>(query: SqlQuerySpec, options?: FeedOptions): QueryIterator<T>;
   public query<T>(query: SqlQuerySpec, options?: FeedOptions): QueryIterator<T> {
-    return new QueryIterator(this.clientContext, query, options, (innerOptions) => {
+    return new QueryIterator(this.clientContext, query, options, (diagnosticNode, innerOptions) => {
       return this.clientContext.queryFeed<T>({
         path: "/offers",
         resourceType: ResourceType.offer,
         resourceId: "",
         resultFn: (result) => result.Offers,
         query,
-        options: innerOptions
+        options: innerOptions,
+        diagnosticNode,
       });
     });
   }

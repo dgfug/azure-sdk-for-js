@@ -1,26 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  ConnectionConfig,
-  createSasTokenProvider,
-  RetryOptions,
-  SasTokenProvider,
-  WebSocketOptions
-} from "@azure/core-amqp";
-import {
-  isNamedKeyCredential,
-  isSASCredential,
-  NamedKeyCredential,
-  SASCredential,
-  TokenCredential
-} from "@azure/core-auth";
-import { ConnectionContext } from "./connectionContext";
-import { UserAgentOptions } from "@azure/core-http";
-import {
-  parseServiceBusConnectionString,
-  ServiceBusConnectionStringProperties
-} from "./util/connectionStringUtils";
+import type { RetryOptions, SasTokenProvider, WebSocketOptions } from "@azure/core-amqp";
+import { ConnectionConfig, createSasTokenProvider } from "@azure/core-amqp";
+import type { NamedKeyCredential, SASCredential, TokenCredential } from "@azure/core-auth";
+import { isNamedKeyCredential, isSASCredential } from "@azure/core-auth";
+import { ConnectionContext } from "./connectionContext.js";
+import type { UserAgentPolicyOptions } from "@azure/core-rest-pipeline";
+import type { ServiceBusConnectionStringProperties } from "./util/connectionStringUtils.js";
+import { parseServiceBusConnectionString } from "./util/connectionStringUtils.js";
 
 /**
  * Describes the options that can be provided while creating the ServiceBusClient.
@@ -41,6 +29,19 @@ import {
  */
 export interface ServiceBusClientOptions {
   /**
+   * ID to identify this client. This can be used to correlate logs and exceptions.
+   */
+  identifier?: string;
+  /**
+   * A custom endpoint to use when connecting to the Service Bus service.
+   * This can be useful when your network does not allow connecting to the
+   * standard Azure Service Bus endpoint address, but does allow connecting
+   * through an intermediary.
+   *
+   * Example: "https://my.custom.endpoint:100/"
+   */
+  customEndpointAddress?: string;
+  /**
    * Retry policy options that determine the mode, number of retries, retry interval etc.
    */
   retryOptions?: RetryOptions;
@@ -51,7 +52,41 @@ export interface ServiceBusClientOptions {
   /**
    * Options for adding user agent details to outgoing requests.
    */
-  userAgentOptions?: UserAgentOptions;
+  userAgentOptions?: UserAgentPolicyOptions;
+}
+
+// TODO: extract parseEndpoint and setCustomEndpointAddress into core-amqp
+// ConnectionConfig so that it can be shared between Event Hubs and Service Bus
+/**
+ * Parses the host, hostname, and port from an endpoint.
+ * @param endpoint - And endpoint to parse.
+ * @internal
+ */
+export function parseEndpoint(endpoint: string): { host: string; hostname: string; port?: string } {
+  const hostMatch = endpoint.match(/.*:\/\/([^/]*)/);
+  if (!hostMatch) {
+    throw new TypeError(`Invalid endpoint missing host: ${endpoint}`);
+  }
+
+  const [, host] = hostMatch;
+  const [hostname, port] = host.split(":");
+
+  return { host, hostname, port };
+}
+/**
+ * Updates the provided ConnectionConfig to use the custom endpoint address.
+ * @param config - An existing connection configuration to be updated.
+ * @param customEndpointAddress - The custom endpoint address to use.
+ */
+function setCustomEndpointAddress(config: ConnectionConfig, customEndpointAddress: string): void {
+  // The amqpHostname should match the host prior to using the custom endpoint.
+  config.amqpHostname = config.host;
+  const { hostname, port } = parseEndpoint(customEndpointAddress);
+  // Since we specify the port separately, set host to the customEndpointAddress hostname.
+  config.host = hostname;
+  if (port) {
+    config.port = parseInt(port, 10);
+  }
 }
 
 /**
@@ -61,13 +96,17 @@ export interface ServiceBusClientOptions {
 export function createConnectionContext(
   connectionString: string,
   credential: SasTokenProvider | TokenCredential,
-  options: ServiceBusClientOptions
+  options: ServiceBusClientOptions,
 ): ConnectionContext {
   const config = ConnectionConfig.create(connectionString);
 
   config.webSocket = options?.webSocketOptions?.webSocket;
   config.webSocketEndpointPath = "$servicebus/websocket";
   config.webSocketConstructorOptions = options?.webSocketOptions?.webSocketConstructorOptions;
+
+  if (options?.customEndpointAddress) {
+    setCustomEndpointAddress(config, options.customEndpointAddress);
+  }
 
   return ConnectionContext.create(config, credential, options);
 }
@@ -77,7 +116,7 @@ export function createConnectionContext(
  */
 export function createConnectionContextForConnectionString(
   connectionString: string,
-  options: ServiceBusClientOptions = {}
+  options: ServiceBusClientOptions = {},
 ): ConnectionContext {
   const parsed = parseServiceBusConnectionString(connectionString) as Required<
     | Pick<ServiceBusConnectionStringProperties, "sharedAccessKey" | "sharedAccessKeyName">
@@ -94,7 +133,7 @@ export function createConnectionContextForConnectionString(
 export function createConnectionContextForCredential(
   credential: TokenCredential | NamedKeyCredential | SASCredential,
   host: string,
-  options: ServiceBusClientOptions = {}
+  options: ServiceBusClientOptions = {},
 ): ConnectionContext {
   if (typeof host !== "string") {
     throw new TypeError("`host` parameter is not a string");

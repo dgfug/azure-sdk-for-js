@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   InboundNatRule,
   InboundNatRulesListOptionalParams,
@@ -15,7 +15,7 @@ import {
   InboundNatRulesGetOptionalParams,
   InboundNatRulesGetResponse,
   InboundNatRulesCreateOrUpdateOptionalParams,
-  InboundNatRulesCreateOrUpdateResponse
+  InboundNatRulesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface InboundNatRules {
   list(
     resourceGroupName: string,
     loadBalancerName: string,
-    options?: InboundNatRulesListOptionalParams
+    options?: InboundNatRulesListOptionalParams,
   ): PagedAsyncIterableIterator<InboundNatRule>;
   /**
    * Deletes the specified load balancer inbound NAT rule.
@@ -43,8 +43,8 @@ export interface InboundNatRules {
     resourceGroupName: string,
     loadBalancerName: string,
     inboundNatRuleName: string,
-    options?: InboundNatRulesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: InboundNatRulesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified load balancer inbound NAT rule.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface InboundNatRules {
     resourceGroupName: string,
     loadBalancerName: string,
     inboundNatRuleName: string,
-    options?: InboundNatRulesDeleteOptionalParams
+    options?: InboundNatRulesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified load balancer inbound NAT rule.
@@ -69,7 +69,7 @@ export interface InboundNatRules {
     resourceGroupName: string,
     loadBalancerName: string,
     inboundNatRuleName: string,
-    options?: InboundNatRulesGetOptionalParams
+    options?: InboundNatRulesGetOptionalParams,
   ): Promise<InboundNatRulesGetResponse>;
   /**
    * Creates or updates a load balancer inbound NAT rule.
@@ -85,10 +85,10 @@ export interface InboundNatRules {
     loadBalancerName: string,
     inboundNatRuleName: string,
     inboundNatRuleParameters: InboundNatRule,
-    options?: InboundNatRulesCreateOrUpdateOptionalParams
+    options?: InboundNatRulesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<InboundNatRulesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<InboundNatRulesCreateOrUpdateResponse>,
       InboundNatRulesCreateOrUpdateResponse
     >
   >;
@@ -106,6 +106,6 @@ export interface InboundNatRules {
     loadBalancerName: string,
     inboundNatRuleName: string,
     inboundNatRuleParameters: InboundNatRule,
-    options?: InboundNatRulesCreateOrUpdateOptionalParams
+    options?: InboundNatRulesCreateOrUpdateOptionalParams,
   ): Promise<InboundNatRulesCreateOrUpdateResponse>;
 }

@@ -415,9 +415,15 @@ export const SASTokenParameter: coreClient.CompositeMapper = {
       },
       token: {
         serializedName: "token",
-        required: true,
         type: {
           name: "String"
+        }
+      },
+      useManagedIdentity: {
+        defaultValue: false,
+        serializedName: "useManagedIdentity",
+        type: {
+          name: "Boolean"
         }
       }
     }
@@ -611,6 +617,73 @@ export const SelectiveKeyRestoreOperation: coreClient.CompositeMapper = {
         nullable: true,
         type: {
           name: "UnixTime"
+        }
+      }
+    }
+  }
+};
+
+export const UpdateSettingRequest: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "UpdateSettingRequest",
+    modelProperties: {
+      value: {
+        serializedName: "value",
+        required: true,
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const Setting: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "Setting",
+    modelProperties: {
+      name: {
+        serializedName: "name",
+        required: true,
+        type: {
+          name: "String"
+        }
+      },
+      value: {
+        serializedName: "value",
+        required: true,
+        type: {
+          name: "String"
+        }
+      },
+      type: {
+        serializedName: "type",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const SettingsListResult: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SettingsListResult",
+    modelProperties: {
+      settings: {
+        serializedName: "settings",
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "Setting"
+            }
+          }
         }
       }
     }

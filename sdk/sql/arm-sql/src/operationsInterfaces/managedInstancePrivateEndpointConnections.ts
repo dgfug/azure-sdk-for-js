@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ManagedInstancePrivateEndpointConnection,
   ManagedInstancePrivateEndpointConnectionsListByManagedInstanceOptionalParams,
@@ -16,7 +15,7 @@ import {
   ManagedInstancePrivateEndpointConnectionsGetResponse,
   ManagedInstancePrivateEndpointConnectionsCreateOrUpdateOptionalParams,
   ManagedInstancePrivateEndpointConnectionsCreateOrUpdateResponse,
-  ManagedInstancePrivateEndpointConnectionsDeleteOptionalParams
+  ManagedInstancePrivateEndpointConnectionsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface ManagedInstancePrivateEndpointConnections {
   listByManagedInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstancePrivateEndpointConnectionsListByManagedInstanceOptionalParams
+    options?: ManagedInstancePrivateEndpointConnectionsListByManagedInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstancePrivateEndpointConnection>;
   /**
    * Gets a private endpoint connection.
@@ -46,7 +45,7 @@ export interface ManagedInstancePrivateEndpointConnections {
     resourceGroupName: string,
     managedInstanceName: string,
     privateEndpointConnectionName: string,
-    options?: ManagedInstancePrivateEndpointConnectionsGetOptionalParams
+    options?: ManagedInstancePrivateEndpointConnectionsGetOptionalParams,
   ): Promise<ManagedInstancePrivateEndpointConnectionsGetResponse>;
   /**
    * Approve or reject a private endpoint connection with a given name.
@@ -62,12 +61,10 @@ export interface ManagedInstancePrivateEndpointConnections {
     managedInstanceName: string,
     privateEndpointConnectionName: string,
     parameters: ManagedInstancePrivateEndpointConnection,
-    options?: ManagedInstancePrivateEndpointConnectionsCreateOrUpdateOptionalParams
+    options?: ManagedInstancePrivateEndpointConnectionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ManagedInstancePrivateEndpointConnectionsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ManagedInstancePrivateEndpointConnectionsCreateOrUpdateResponse>,
       ManagedInstancePrivateEndpointConnectionsCreateOrUpdateResponse
     >
   >;
@@ -85,7 +82,7 @@ export interface ManagedInstancePrivateEndpointConnections {
     managedInstanceName: string,
     privateEndpointConnectionName: string,
     parameters: ManagedInstancePrivateEndpointConnection,
-    options?: ManagedInstancePrivateEndpointConnectionsCreateOrUpdateOptionalParams
+    options?: ManagedInstancePrivateEndpointConnectionsCreateOrUpdateOptionalParams,
   ): Promise<ManagedInstancePrivateEndpointConnectionsCreateOrUpdateResponse>;
   /**
    * Deletes a private endpoint connection with a given name.
@@ -99,8 +96,8 @@ export interface ManagedInstancePrivateEndpointConnections {
     resourceGroupName: string,
     managedInstanceName: string,
     privateEndpointConnectionName: string,
-    options?: ManagedInstancePrivateEndpointConnectionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ManagedInstancePrivateEndpointConnectionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a private endpoint connection with a given name.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -113,6 +110,6 @@ export interface ManagedInstancePrivateEndpointConnections {
     resourceGroupName: string,
     managedInstanceName: string,
     privateEndpointConnectionName: string,
-    options?: ManagedInstancePrivateEndpointConnectionsDeleteOptionalParams
+    options?: ManagedInstancePrivateEndpointConnectionsDeleteOptionalParams,
   ): Promise<void>;
 }

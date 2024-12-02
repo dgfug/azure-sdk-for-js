@@ -6,32 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Usages } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { AzureQuotaExtensionAPIContext } from "../azureQuotaExtensionAPIContext";
+import { AzureQuotaExtensionAPI } from "../azureQuotaExtensionAPI";
 import {
   CurrentUsagesBase,
   UsagesListNextOptionalParams,
   UsagesListOptionalParams,
+  UsagesListResponse,
   UsagesGetOptionalParams,
   UsagesGetResponse,
-  UsagesListResponse,
-  UsagesListNextResponse
+  UsagesListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Usages operations. */
 export class UsagesImpl implements Usages {
-  private readonly client: AzureQuotaExtensionAPIContext;
+  private readonly client: AzureQuotaExtensionAPI;
 
   /**
    * Initialize a new instance of the class Usages class.
    * @param client Reference to the service client
    */
-  constructor(client: AzureQuotaExtensionAPIContext) {
+  constructor(client: AzureQuotaExtensionAPI) {
     this.client = client;
   }
 
@@ -46,7 +47,7 @@ export class UsagesImpl implements Usages {
    */
   public list(
     scope: string,
-    options?: UsagesListOptionalParams
+    options?: UsagesListOptionalParams,
   ): PagedAsyncIterableIterator<CurrentUsagesBase> {
     const iter = this.listPagingAll(scope, options);
     return {
@@ -56,29 +57,41 @@ export class UsagesImpl implements Usages {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(scope, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(scope, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     scope: string,
-    options?: UsagesListOptionalParams
+    options?: UsagesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<CurrentUsagesBase[]> {
-    let result = await this._list(scope, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: UsagesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(scope, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(scope, continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     scope: string,
-    options?: UsagesListOptionalParams
+    options?: UsagesListOptionalParams,
   ): AsyncIterableIterator<CurrentUsagesBase> {
     for await (const page of this.listPagingPage(scope, options)) {
       yield* page;
@@ -101,12 +114,9 @@ export class UsagesImpl implements Usages {
   get(
     resourceName: string,
     scope: string,
-    options?: UsagesGetOptionalParams
+    options?: UsagesGetOptionalParams,
   ): Promise<UsagesGetResponse> {
-    return this.client.sendOperationRequest(
-      { resourceName, scope, options },
-      getOperationSpec
-    );
+    return this.client.sendOperationRequest({ resourceName, scope, options }, getOperationSpec);
   }
 
   /**
@@ -118,14 +128,8 @@ export class UsagesImpl implements Usages {
    *              resource.
    * @param options The options parameters.
    */
-  private _list(
-    scope: string,
-    options?: UsagesListOptionalParams
-  ): Promise<UsagesListResponse> {
-    return this.client.sendOperationRequest(
-      { scope, options },
-      listOperationSpec
-    );
+  private _list(scope: string, options?: UsagesListOptionalParams): Promise<UsagesListResponse> {
+    return this.client.sendOperationRequest({ scope, options }, listOperationSpec);
   }
 
   /**
@@ -141,12 +145,9 @@ export class UsagesImpl implements Usages {
   private _listNext(
     scope: string,
     nextLink: string,
-    options?: UsagesListNextOptionalParams
+    options?: UsagesListNextOptionalParams,
   ): Promise<UsagesListNextResponse> {
-    return this.client.sendOperationRequest(
-      { scope, nextLink, options },
-      listNextOperationSpec
-    );
+    return this.client.sendOperationRequest({ scope, nextLink, options }, listNextOperationSpec);
   }
 }
 // Operation Specifications
@@ -158,16 +159,16 @@ const getOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.CurrentUsagesBase,
-      headersMapper: Mappers.UsagesGetHeaders
+      headersMapper: Mappers.UsagesGetHeaders,
     },
     default: {
-      bodyMapper: Mappers.ExceptionResponse
-    }
+      bodyMapper: Mappers.ExceptionResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
-  urlParameters: [Parameters.$host, Parameters.resourceName, Parameters.scope],
+  urlParameters: [Parameters.$host, Parameters.resourceName1, Parameters.scope],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
   path: "/{scope}/providers/Microsoft.Quota/usages",
@@ -175,16 +176,16 @@ const listOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.UsagesLimits,
-      headersMapper: Mappers.UsagesListHeaders
+      headersMapper: Mappers.UsagesListHeaders,
     },
     default: {
-      bodyMapper: Mappers.ExceptionResponse
-    }
+      bodyMapper: Mappers.ExceptionResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.scope],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
@@ -192,14 +193,13 @@ const listNextOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {
       bodyMapper: Mappers.UsagesLimits,
-      headersMapper: Mappers.UsagesListNextHeaders
+      headersMapper: Mappers.UsagesListNextHeaders,
     },
     default: {
-      bodyMapper: Mappers.ExceptionResponse
-    }
+      bodyMapper: Mappers.ExceptionResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [Parameters.$host, Parameters.scope, Parameters.nextLink],
+  urlParameters: [Parameters.$host, Parameters.nextLink, Parameters.scope],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -6,11 +6,11 @@
 
 import { AzureKeyCredential } from '@azure/core-auth';
 import { AzureSASCredential } from '@azure/core-auth';
-import { CommonClientOptions } from '@azure/core-client';
-import { KeyCredential } from '@azure/core-auth';
-import { OperationOptions } from '@azure/core-client';
-import { SASCredential } from '@azure/core-auth';
-import { TokenCredential } from '@azure/core-auth';
+import type { CommonClientOptions } from '@azure/core-client';
+import type { KeyCredential } from '@azure/core-auth';
+import type { OperationOptions } from '@azure/core-client';
+import type { SASCredential } from '@azure/core-auth';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export interface AcsChatEventBase {
@@ -120,12 +120,33 @@ export type AcsChatParticipantRemovedFromThreadWithUserEventData = AcsChatThread
 };
 
 // @public
+export type AcsChatThreadCreatedEventData = AcsChatThreadEventInThreadBase & {
+    createdByCommunicationIdentifier: CommunicationIdentifierModel;
+    properties: {
+        [propertyName: string]: any;
+    };
+    metadata: {
+        [propertyName: string]: string;
+    };
+    participants: AcsChatThreadParticipant[];
+};
+
+// @public
 export type AcsChatThreadCreatedWithUserEventData = AcsChatThreadEventBase & {
     createdByCommunicationIdentifier: CommunicationIdentifierModel;
     properties: {
         [propertyName: string]: any;
     };
+    metadata: {
+        [propertyName: string]: string;
+    };
     participants: AcsChatThreadParticipant[];
+};
+
+// @public
+export type AcsChatThreadDeletedEventData = AcsChatThreadEventInThreadBase & {
+    deletedByCommunicationIdentifier: CommunicationIdentifierModel;
+    deleteTime: string;
 };
 
 // @public
@@ -135,15 +156,39 @@ export type AcsChatThreadEventBase = AcsChatEventBase & {
 };
 
 // @public
+export type AcsChatThreadEventInThreadBase = AcsChatEventInThreadBase & {
+    createTime: string;
+    version: number;
+};
+
+// @public
 export interface AcsChatThreadParticipant {
     displayName: string;
+    metadata: {
+        [propertyName: string]: string;
+    };
     participantCommunicationIdentifier: CommunicationIdentifierModel;
 }
+
+// @public
+export type AcsChatThreadPropertiesUpdatedEventData = AcsChatThreadEventInThreadBase & {
+    editedByCommunicationIdentifier: CommunicationIdentifierModel;
+    editTime: string;
+    properties: {
+        [propertyName: string]: any;
+    };
+    metadata: {
+        [propertyName: string]: string;
+    };
+};
 
 // @public
 export type AcsChatThreadPropertiesUpdatedPerUserEventData = AcsChatThreadEventBase & {
     editedByCommunicationIdentifier: CommunicationIdentifierModel;
     editTime: string;
+    metadata: {
+        [propertyName: string]: string;
+    };
     properties: {
         [propertyName: string]: any;
     };
@@ -156,8 +201,140 @@ export type AcsChatThreadWithUserDeletedEventData = AcsChatThreadEventBase & {
 };
 
 // @public
+export interface AcsEmailDeliveryReportReceivedEventData {
+    deliveryAttemptTimestamp: string;
+    deliveryStatusDetails: AcsEmailDeliveryReportStatusDetails;
+    messageId: string;
+    recipient: string;
+    sender: string;
+    status: AcsEmailDeliveryReportStatus;
+}
+
+// @public
+export type AcsEmailDeliveryReportStatus = string;
+
+// @public
+export interface AcsEmailDeliveryReportStatusDetails {
+    statusMessage: string;
+}
+
+// @public
+export interface AcsEmailEngagementTrackingReportReceivedEventData {
+    engagement: AcsUserEngagement;
+    engagementContext: string;
+    messageId: string;
+    recipient: string;
+    sender: string;
+    userActionTimestamp: string;
+    userAgent: string;
+}
+
+// @public
+export interface AcsIncomingCallCustomContext {
+    sipHeaders: {
+        [propertyName: string]: string;
+    };
+    voipHeaders: {
+        [propertyName: string]: string;
+    };
+}
+
+// @public
+export interface AcsIncomingCallEventData {
+    callerDisplayName: string;
+    correlationId: string;
+    customContext: AcsIncomingCallCustomContext;
+    fromCommunicationIdentifier: CommunicationIdentifierModel;
+    incomingCallContext: string;
+    onBehalfOfCallee: CommunicationIdentifierModel;
+    serverCallId: string;
+    toCommunicationIdentifier: CommunicationIdentifierModel;
+}
+
+// @public
+export type AcsInteractiveReplyKind = string;
+
+// @public
+export interface AcsMessageButtonContent {
+    payload: string;
+    text: string;
+}
+
+// @public
+export interface AcsMessageChannelEventError {
+    channelCode: string;
+    channelMessage: string;
+}
+
+// @public
+export type AcsMessageChannelKind = string;
+
+// @public
+export interface AcsMessageContext {
+    from: string;
+    messageId: string;
+}
+
+// @public
+export type AcsMessageDeliveryStatus = string;
+
+// @public
+export type AcsMessageDeliveryStatusUpdatedEventData = AcsMessageEventData & {
+    messageId: string;
+    status: AcsMessageDeliveryStatus;
+    channelKind: AcsMessageChannelKind;
+};
+
+// @public
+export interface AcsMessageEventData {
+    error: AcsMessageChannelEventError;
+    from: string;
+    receivedTimestamp: string;
+    to: string;
+}
+
+// @public
+export interface AcsMessageInteractiveButtonReplyContent {
+    buttonId: string;
+    title: string;
+}
+
+// @public
+export interface AcsMessageInteractiveContent {
+    buttonReply: AcsMessageInteractiveButtonReplyContent;
+    listReply: AcsMessageInteractiveListReplyContent;
+    replyKind: AcsInteractiveReplyKind;
+}
+
+// @public
+export interface AcsMessageInteractiveListReplyContent {
+    description: string;
+    listItemId: string;
+    title: string;
+}
+
+// @public
+export interface AcsMessageMediaContent {
+    caption: string;
+    fileName: string;
+    mediaId: string;
+    mimeType: string;
+}
+
+// @public
+export type AcsMessageReceivedEventData = AcsMessageEventData & {
+    content: string;
+    channelKind: AcsMessageChannelKind;
+    mediaContent: AcsMessageMediaContent;
+    context: AcsMessageContext;
+    button: AcsMessageButtonContent;
+    interactiveContent: AcsMessageInteractiveContent;
+};
+
+// @public
 export interface AcsRecordingChunkInfo {
     contentLocation: string;
+    deleteLocation: string;
     documentId: string;
     endReason: string;
     index: number;
@@ -166,7 +343,10 @@ export interface AcsRecordingChunkInfo {
 
 // @public
 export interface AcsRecordingFileStatusUpdatedEventData {
+    recordingChannelType: RecordingChannelType;
+    recordingContentType: RecordingContentType;
     recordingDurationMs: number;
+    recordingFormatType: RecordingFormatType;
     recordingStartTime: string;
     recordingStorageInfo: AcsRecordingStorageInfo;
     sessionEndReason: string;
@@ -175,6 +355,261 @@ export interface AcsRecordingFileStatusUpdatedEventData {
 // @public
 export interface AcsRecordingStorageInfo {
     recordingChunks: AcsRecordingChunkInfo[];
+}
+
+// @public
+export interface AcsRouterChannelConfiguration {
+    capacityCostPerJob: number;
+    channelId: string;
+    maxNumberOfJobs: number;
+}
+
+// @public
+export interface AcsRouterCommunicationError {
+    code: string;
+    details: AcsRouterCommunicationError[];
+    innererror: AcsRouterCommunicationError;
+    message: string;
+    target: string;
+}
+
+// @public
+export interface AcsRouterEventData {
+    channelId: string;
+    channelReference: string;
+    jobId: string;
+}
+
+// @public
+export type AcsRouterJobCancelledEventData = AcsRouterJobEventData & {
+    note: string;
+    dispositionCode: string;
+};
+
+// @public
+export type AcsRouterJobClassificationFailedEventData = AcsRouterJobEventData & {
+    classificationPolicyId: string;
+    errors: AcsRouterCommunicationError[];
+};
+
+// @public
+export type AcsRouterJobClassifiedEventData = AcsRouterJobEventData & {
+    queueDetails: AcsRouterQueueDetails;
+    classificationPolicyId: string;
+    priority: number;
+    attachedWorkerSelectors: AcsRouterWorkerSelector[];
+};
+
+// @public
+export type AcsRouterJobClosedEventData = AcsRouterJobEventData & {
+    assignmentId: string;
+    workerId: string;
+    dispositionCode: string;
+};
+
+// @public
+export type AcsRouterJobCompletedEventData = AcsRouterJobEventData & {
+    assignmentId: string;
+    workerId: string;
+};
+
+// @public
+export type AcsRouterJobDeletedEventData = AcsRouterJobEventData & {};
+
+// @public
+export type AcsRouterJobEventData = AcsRouterEventData & {
+    queueId: string;
+    labels: {
+        [propertyName: string]: string;
+    };
+    tags: {
+        [propertyName: string]: string;
+    };
+};
+
+// @public
+export type AcsRouterJobExceptionTriggeredEventData = AcsRouterJobEventData & {
+    ruleKey: string;
+    exceptionRuleId: string;
+};
+
+// @public
+export type AcsRouterJobQueuedEventData = AcsRouterJobEventData & {
+    priority: number;
+    attachedWorkerSelectors: AcsRouterWorkerSelector[];
+    requestedWorkerSelectors: AcsRouterWorkerSelector[];
+};
+
+// @public
+export type AcsRouterJobReceivedEventData = AcsRouterJobEventData & {
+    jobStatus?: AcsRouterJobStatus;
+    classificationPolicyId?: string;
+    priority?: number;
+    requestedWorkerSelectors?: AcsRouterWorkerSelector[];
+    scheduledOn?: string;
+    unavailableForMatching: boolean;
+};
+
+// @public
+export type AcsRouterJobSchedulingFailedEventData = AcsRouterJobEventData & {
+    priority: number;
+    expiredAttachedWorkerSelectors: AcsRouterWorkerSelector[];
+    expiredRequestedWorkerSelectors: AcsRouterWorkerSelector[];
+    scheduledOn: string;
+    failureReason: string;
+};
+
+// @public
+export type AcsRouterJobStatus = string;
+
+// @public
+export type AcsRouterJobUnassignedEventData = AcsRouterJobEventData & {
+    assignmentId: string;
+    workerId: string;
+};
+
+// @public
+export type AcsRouterJobWaitingForActivationEventData = AcsRouterJobEventData & {
+    priority?: number;
+    expiredAttachedWorkerSelectors?: AcsRouterWorkerSelector[];
+    expiredRequestedWorkerSelectors?: AcsRouterWorkerSelector[];
+    scheduledOn?: string;
+    unavailableForMatching: boolean;
+};
+
+// @public
+export type AcsRouterJobWorkerSelectorsExpiredEventData = AcsRouterJobEventData & {
+    expiredRequestedWorkerSelectors: AcsRouterWorkerSelector[];
+    expiredAttachedWorkerSelectors: AcsRouterWorkerSelector[];
+};
+
+// @public
+export type AcsRouterLabelOperator = string;
+
+// @public
+export interface AcsRouterQueueDetails {
+    id: string;
+    labels: {
+        [propertyName: string]: string;
+    };
+    name: string;
+}
+
+// @public
+export type AcsRouterUpdatedWorkerProperty = string;
+
+// @public
+export type AcsRouterWorkerDeletedEventData = AcsRouterWorkerEventData & {};
+
+// @public
+export interface AcsRouterWorkerDeregisteredEventData {
+    workerId: string;
+}
+
+// @public
+export type AcsRouterWorkerEventData = AcsRouterEventData & {
+    workerId: string;
+};
+
+// @public
+export type AcsRouterWorkerOfferAcceptedEventData = AcsRouterWorkerEventData & {
+    queueId: string;
+    offerId: string;
+    assignmentId: string;
+    jobPriority: number;
+    workerLabels: {
+        [propertyName: string]: string;
+    };
+    workerTags: {
+        [propertyName: string]: string;
+    };
+    jobLabels: {
+        [propertyName: string]: string;
+    };
+    jobTags: {
+        [propertyName: string]: string;
+    };
+};
+
+// @public
+export type AcsRouterWorkerOfferDeclinedEventData = AcsRouterWorkerEventData & {
+    queueId: string;
+    offerId: string;
+};
+
+// @public
+export type AcsRouterWorkerOfferExpiredEventData = AcsRouterWorkerEventData & {
+    queueId: string;
+    offerId: string;
+};
+
+// @public
+export type AcsRouterWorkerOfferIssuedEventData = AcsRouterWorkerEventData & {
+    queueId: string;
+    offerId: string;
+    jobPriority: number;
+    workerLabels: {
+        [propertyName: string]: string;
+    };
+    offeredOn: string;
+    expiresOn: string;
+    workerTags: {
+        [propertyName: string]: string;
+    };
+    jobLabels: {
+        [propertyName: string]: string;
+    };
+    jobTags: {
+        [propertyName: string]: string;
+    };
+};
+
+// @public
+export type AcsRouterWorkerOfferRevokedEventData = AcsRouterWorkerEventData & {
+    queueId: string;
+    offerId: string;
+};
+
+// @public
+export interface AcsRouterWorkerRegisteredEventData {
+    channelConfigurations: AcsRouterChannelConfiguration[];
+    labels: {
+        [propertyName: string]: string;
+    };
+    queueAssignments: AcsRouterQueueDetails[];
+    tags: {
+        [propertyName: string]: string;
+    };
+    totalCapacity: number;
+    workerId: string;
+}
+
+// @public
+export interface AcsRouterWorkerSelector {
+    expirationTime: string;
+    key: string;
+    labelOperator: AcsRouterLabelOperator;
+    labelValue: any;
+    state: AcsRouterWorkerSelectorState;
+    ttlSeconds: number;
+}
+
+// @public
+export type AcsRouterWorkerSelectorState = string;
+
+// @public
+export interface AcsRouterWorkerUpdatedEventData {
+    channelConfigurations: AcsRouterChannelConfiguration[];
+    labels: {
+        [propertyName: string]: string;
+    };
+    queueAssignments: AcsRouterQueueDetails[];
+    tags: {
+        [propertyName: string]: string;
+    };
+    totalCapacity: number;
+    updatedWorkerProperties: AcsRouterUpdatedWorkerProperty[];
+    workerId: string;
 }
 
 // @public
@@ -212,6 +647,29 @@ export interface AcsUserDisconnectedEventData {
 }
 
 // @public
+export type AcsUserEngagement = string;
+
+// @public
+export interface ApiCenterApiDefinitionAddedEventData {
+    description: string;
+    specification: ApiCenterApiSpecification;
+    title: string;
+}
+
+// @public
+export interface ApiCenterApiDefinitionUpdatedEventData {
+    description: string;
+    specification: ApiCenterApiSpecification;
+    title: string;
+}
+
+// @public
+export interface ApiCenterApiSpecification {
+    name: string;
+    version: string;
+}
+
+// @public
 export interface ApiManagementApiCreatedEventData {
     resourceUri: string;
 }
@@ -238,6 +696,61 @@ export interface ApiManagementApiReleaseUpdatedEventData {
 
 // @public
 export interface ApiManagementApiUpdatedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayApiAddedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayApiRemovedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayCertificateAuthorityCreatedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayCertificateAuthorityDeletedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayCertificateAuthorityUpdatedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayCreatedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayDeletedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayHostnameConfigurationCreatedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayHostnameConfigurationDeletedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayHostnameConfigurationUpdatedEventData {
+    resourceUri: string;
+}
+
+// @public
+export interface ApiManagementGatewayUpdatedEventData {
     resourceUri: string;
 }
 
@@ -306,6 +819,19 @@ export interface AppConfigurationKeyValueModifiedEventData {
 }
 
 // @public
+export type AppConfigurationSnapshotCreatedEventData = AppConfigurationSnapshotEventData & {};
+
+// @public
+export interface AppConfigurationSnapshotEventData {
+    etag: string;
+    name: string;
+    syncToken: string;
+}
+
+// @public
+export type AppConfigurationSnapshotModifiedEventData = AppConfigurationSnapshotEventData & {};
+
+// @public
 export interface AppEventTypeDetail {
     action: AppAction;
 }
@@ -322,6 +848,72 @@ export interface AppServicePlanEventTypeDetail {
 
 // @public
 export type AsyncStatus = string;
+
+// @public
+export type AvsClusterCreatedEventData = AvsClusterEventData & {};
+
+// @public
+export type AvsClusterDeletedEventData = AvsClusterEventData & {};
+
+// @public
+export interface AvsClusterEventData {
+    addedHostNames: string[];
+    inMaintenanceHostNames: string[];
+    operationId: string;
+    removedHostNames: string[];
+}
+
+// @public
+export type AvsClusterFailedEventData = AvsClusterEventData & {
+    failureMessage: string;
+};
+
+// @public
+export type AvsClusterUpdatedEventData = AvsClusterEventData & {};
+
+// @public
+export type AvsClusterUpdatingEventData = AvsClusterEventData & {};
+
+// @public
+export interface AvsPrivateCloudEventData {
+    operationId: string;
+}
+
+// @public
+export type AvsPrivateCloudFailedEventData = AvsPrivateCloudEventData & {
+    failureMessage: string;
+};
+
+// @public
+export type AvsPrivateCloudUpdatedEventData = AvsPrivateCloudEventData & {};
+
+// @public
+export type AvsPrivateCloudUpdatingEventData = AvsPrivateCloudEventData & {};
+
+// @public
+export type AvsScriptExecutionCancelledEventData = AvsScriptExecutionEventData & {};
+
+// @public
+export interface AvsScriptExecutionEventData {
+    cmdletId: string;
+    operationId: string;
+    output: string[];
+}
+
+// @public
+export type AvsScriptExecutionFailedEventData = AvsScriptExecutionEventData & {
+    failureMessage: string;
+};
+
+// @public
+export type AvsScriptExecutionFinishedEventData = AvsScriptExecutionEventData & {
+    namedOutputs: {
+        [propertyName: string]: string;
+    };
+};
+
+// @public
+export type AvsScriptExecutionStartedEventData = AvsScriptExecutionEventData & {};
 
 export { AzureKeyCredential }
 
@@ -341,15 +933,25 @@ export interface CloudEvent<T> {
 }
 
 // @public
+export interface CloudEventSendOptions extends SendOptions {
+    channelName?: string;
+}
+
+// @public
 export type CommunicationCloudEnvironmentModel = string;
 
 // @public
 export interface CommunicationIdentifierModel {
     communicationUser?: CommunicationUserIdentifierModel;
+    kind?: CommunicationIdentifierModelKind;
+    microsoftTeamsApp?: MicrosoftTeamsAppIdentifierModel;
     microsoftTeamsUser?: MicrosoftTeamsUserIdentifierModel;
     phoneNumber?: PhoneNumberIdentifierModel;
     rawId: string;
 }
+
+// @public
+export type CommunicationIdentifierModelKind = string;
 
 // @public
 export interface CommunicationUserIdentifierModel {
@@ -359,7 +961,9 @@ export interface CommunicationUserIdentifierModel {
 // @public
 export interface ContainerRegistryArtifactEventData {
     action: string;
+    connectedRegistry: ContainerRegistryEventConnectedRegistry;
     id: string;
+    location: string;
     target: ContainerRegistryArtifactEventTarget;
     timestamp: string;
 }
@@ -387,10 +991,17 @@ export interface ContainerRegistryEventActor {
 }
 
 // @public
+export interface ContainerRegistryEventConnectedRegistry {
+    name: string;
+}
+
+// @public
 export interface ContainerRegistryEventData {
     action: string;
     actor: ContainerRegistryEventActor;
+    connectedRegistry: ContainerRegistryEventConnectedRegistry;
     id: string;
+    location: string;
     request: ContainerRegistryEventRequest;
     source: ContainerRegistryEventSource;
     target: ContainerRegistryEventTarget;
@@ -430,12 +1041,61 @@ export type ContainerRegistryImageDeletedEventData = ContainerRegistryEventData 
 export type ContainerRegistryImagePushedEventData = ContainerRegistryEventData & {};
 
 // @public
+export type ContainerServiceClusterSupportEndedEventData = ContainerServiceClusterSupportEventData & {};
+
+// @public
+export type ContainerServiceClusterSupportEndingEventData = ContainerServiceClusterSupportEventData & {};
+
+// @public
+export interface ContainerServiceClusterSupportEventData {
+    kubernetesVersion: string;
+}
+
+// @public
 export interface ContainerServiceNewKubernetesVersionAvailableEventData {
     latestPreviewKubernetesVersion: string;
     latestStableKubernetesVersion: string;
     latestSupportedKubernetesVersion: string;
     lowestMinorKubernetesVersion: string;
 }
+
+// @public
+export interface ContainerServiceNodePoolRollingEventData {
+    nodePoolName: string;
+}
+
+// @public
+export type ContainerServiceNodePoolRollingFailedEventData = ContainerServiceNodePoolRollingEventData & {};
+
+// @public
+export type ContainerServiceNodePoolRollingStartedEventData = ContainerServiceNodePoolRollingEventData & {};
+
+// @public
+export type ContainerServiceNodePoolRollingSucceededEventData = ContainerServiceNodePoolRollingEventData & {};
+
+// @public
+export interface DataBoxCopyCompletedEventData {
+    serialNumber: string;
+    stageName: DataBoxStageName;
+    stageTime: string;
+}
+
+// @public
+export interface DataBoxCopyStartedEventData {
+    serialNumber: string;
+    stageName: DataBoxStageName;
+    stageTime: string;
+}
+
+// @public
+export interface DataBoxOrderCompletedEventData {
+    serialNumber: string;
+    stageName: DataBoxStageName;
+    stageTime: string;
+}
+
+// @public
+export type DataBoxStageName = string;
 
 // @public
 export interface DeviceConnectionStateEvent {
@@ -526,11 +1186,50 @@ export interface EventGridEvent<T> {
 }
 
 // @public
+export type EventGridMqttClientCreatedOrUpdatedEventData = EventGridMqttClientEventData & {
+    state: EventGridMqttClientState;
+    createdOn: string;
+    updatedOn: string;
+    attributes: {
+        [propertyName: string]: string;
+    };
+};
+
+// @public
+export type EventGridMqttClientDeletedEventData = EventGridMqttClientEventData & {};
+
+// @public
+export type EventGridMqttClientDisconnectionReason = string;
+
+// @public
+export interface EventGridMqttClientEventData {
+    clientAuthenticationName: string;
+    clientName: string;
+    namespaceName: string;
+}
+
+// @public
+export type EventGridMqttClientSessionConnectedEventData = EventGridMqttClientEventData & {
+    clientSessionName: string;
+    sequenceNumber: number;
+};
+
+// @public
+export type EventGridMqttClientSessionDisconnectedEventData = EventGridMqttClientEventData & {
+    clientSessionName: string;
+    sequenceNumber: number;
+    disconnectionReason: EventGridMqttClientDisconnectionReason;
+};
+
+// @public
+export type EventGridMqttClientState = string;
+
+// @public
 export class EventGridPublisherClient<T extends InputSchema> {
     constructor(endpointUrl: string, inputSchema: T, credential: KeyCredential | SASCredential | TokenCredential, options?: EventGridPublisherClientOptions);
     readonly apiVersion: string;
     readonly endpointUrl: string;
-    send(events: InputSchemaToInputTypeMap[T][], options?: SendOptions): Promise<void>;
+    send(events: InputSchemaToInputTypeMap[T][], options?: InputSchemaToOptionsTypeMap[T]): Promise<void>;
 }
 
 // @public
@@ -540,7 +1239,7 @@ export type EventGridPublisherClientOptions = CommonClientOptions;
 export interface EventHubCaptureFileCreatedEventData {
     eventCount: number;
     fileType: string;
-    fileurl: string;
+    fileUrl: string;
     firstEnqueueTime: string;
     firstSequenceNumber: number;
     lastEnqueueTime: string;
@@ -558,6 +1257,63 @@ export interface GenerateSharedAccessSignatureOptions {
 }
 
 // @public
+export interface HealthcareDicomImageCreatedEventData {
+    imageSeriesInstanceUid: string;
+    imageSopInstanceUid: string;
+    imageStudyInstanceUid: string;
+    partitionName: string;
+    sequenceNumber: number;
+    serviceHostName: string;
+}
+
+// @public
+export interface HealthcareDicomImageDeletedEventData {
+    imageSeriesInstanceUid: string;
+    imageSopInstanceUid: string;
+    imageStudyInstanceUid: string;
+    partitionName: string;
+    sequenceNumber: number;
+    serviceHostName: string;
+}
+
+// @public
+export interface HealthcareDicomImageUpdatedEventData {
+    imageSeriesInstanceUid: string;
+    imageSopInstanceUid: string;
+    imageStudyInstanceUid: string;
+    partitionName: string;
+    sequenceNumber: number;
+    serviceHostName: string;
+}
+
+// @public
+export interface HealthcareFhirResourceCreatedEventData {
+    resourceFhirAccount: string;
+    resourceFhirId: string;
+    resourceType: HealthcareFhirResourceType;
+    resourceVersionId: number;
+}
+
+// @public
+export interface HealthcareFhirResourceDeletedEventData {
+    resourceFhirAccount: string;
+    resourceFhirId: string;
+    resourceType: HealthcareFhirResourceType;
+    resourceVersionId: number;
+}
+
+// @public
+export type HealthcareFhirResourceType = string;
+
+// @public
+export interface HealthcareFhirResourceUpdatedEventData {
+    resourceFhirAccount: string;
+    resourceFhirId: string;
+    resourceType: HealthcareFhirResourceType;
+    resourceVersionId: number;
+}
+
+// @public
 export type InputSchema = keyof InputSchemaToInputTypeMap;
 
 // @public
@@ -565,6 +1321,13 @@ export interface InputSchemaToInputTypeMap {
     CloudEvent: SendCloudEventInput<unknown>;
     Custom: Record<string, unknown>;
     EventGrid: SendEventGridEventInput<unknown>;
+}
+
+// @public
+export interface InputSchemaToOptionsTypeMap {
+    CloudEvent: CloudEventSendOptions;
+    Custom: SendOptions;
+    EventGrid: SendOptions;
 }
 
 // @public
@@ -699,6 +1462,117 @@ export interface KeyVaultSecretNewVersionCreatedEventData {
 }
 
 // @public
+export const enum KnownAcsEmailDeliveryReportStatus {
+    Bounced = "Bounced",
+    Delivered = "Delivered",
+    Failed = "Failed",
+    FilteredSpam = "FilteredSpam",
+    Quarantined = "Quarantined",
+    Suppressed = "Suppressed"
+}
+
+// @public
+export const enum KnownAcsInteractiveReplyKind {
+    ButtonReply = "buttonReply",
+    ListReply = "listReply",
+    Unknown = "unknown"
+}
+
+// @public
+export const enum KnownAcsMessageChannelKind {
+    Whatsapp = "whatsapp"
+}
+
+// @public
+export const enum KnownAcsMessageDeliveryStatus {
+    // (undocumented)
+    Delivered = "delivered",
+    // (undocumented)
+    Failed = "failed",
+    // (undocumented)
+    Read = "read",
+    // (undocumented)
+    Sent = "sent",
+    // (undocumented)
+    Unknown = "unknown",
+    // (undocumented)
+    Warning = "warning"
+}
+
+// @public
+export const enum KnownAcsRouterJobStatus {
+    // (undocumented)
+    Assigned = "Assigned",
+    // (undocumented)
+    Cancelled = "Cancelled",
+    // (undocumented)
+    ClassificationFailed = "ClassificationFailed",
+    // (undocumented)
+    Closed = "Closed",
+    // (undocumented)
+    Completed = "Completed",
+    // (undocumented)
+    Created = "Created",
+    // (undocumented)
+    PendingClassification = "PendingClassification",
+    // (undocumented)
+    PendingSchedule = "PendingSchedule",
+    // (undocumented)
+    Queued = "Queued",
+    // (undocumented)
+    Scheduled = "Scheduled",
+    // (undocumented)
+    ScheduleFailed = "ScheduleFailed",
+    // (undocumented)
+    WaitingForActivation = "WaitingForActivation"
+}
+
+// @public
+export const enum KnownAcsRouterLabelOperator {
+    // (undocumented)
+    Equal = "Equal",
+    // (undocumented)
+    Greater = "Greater",
+    // (undocumented)
+    GreaterThanOrEqual = "GreaterThanOrEqual",
+    // (undocumented)
+    Less = "Less",
+    // (undocumented)
+    LessThanOrEqual = "LessThanOrEqual",
+    NotEqual = "NotEqual"
+}
+
+// @public
+export const enum KnownAcsRouterUpdatedWorkerProperty {
+    // (undocumented)
+    AvailableForOffers = "AvailableForOffers",
+    // (undocumented)
+    ChannelConfigurations = "ChannelConfigurations",
+    // (undocumented)
+    Labels = "Labels",
+    // (undocumented)
+    QueueAssignments = "QueueAssignments",
+    // (undocumented)
+    Tags = "Tags",
+    // (undocumented)
+    TotalCapacity = "TotalCapacity"
+}
+
+// @public
+export const enum KnownAcsRouterWorkerSelectorState {
+    Active = "active",
+    Expired = "expired"
+}
+
+// @public
+export const enum KnownAcsUserEngagement {
+    // (undocumented)
+    Click = "click",
+    // (undocumented)
+    View = "view"
+}
+
+// @public
 export const enum KnownAppAction {
     ChangedAppSettings = "ChangedAppSettings",
     Completed = "Completed",
@@ -721,10 +1595,271 @@ export const enum KnownAsyncStatus {
 }
 
 // @public
+export const enum KnownCommunicationCloudEnvironmentModel {
+    // (undocumented)
+    Dod = "dod",
+    // (undocumented)
+    Gcch = "gcch",
+    // (undocumented)
+    Public = "public"
+}
+
+// @public
+export const enum KnownCommunicationIdentifierModelKind {
+    // (undocumented)
+    CommunicationUser = "communicationUser",
+    // (undocumented)
+    MicrosoftTeamsApp = "microsoftTeamsApp",
+    // (undocumented)
+    MicrosoftTeamsUser = "microsoftTeamsUser",
+    // (undocumented)
+    PhoneNumber = "phoneNumber",
+    // (undocumented)
+    Unknown = "unknown"
+}
+
+// @public
+export const enum KnownDataBoxStageName {
+    CopyCompleted = "CopyCompleted",
+    CopyStarted = "CopyStarted",
+    OrderCompleted = "OrderCompleted"
+}
+
+// @public
+export const enum KnownEventGridMqttClientDisconnectionReason {
+    ClientAuthenticationError = "ClientAuthenticationError",
+    ClientAuthorizationError = "ClientAuthorizationError",
+    ClientError = "ClientError",
+    ClientInitiatedDisconnect = "ClientInitiatedDisconnect",
+    ConnectionLost = "ConnectionLost",
+    IpForbidden = "IpForbidden",
+    QuotaExceeded = "QuotaExceeded",
+    ServerError = "ServerError",
+    ServerInitiatedDisconnect = "ServerInitiatedDisconnect",
+    SessionOverflow = "SessionOverflow",
+    SessionTakenOver = "SessionTakenOver"
+}
+
+// @public
+export const enum KnownEventGridMqttClientState {
+    // (undocumented)
+    Disabled = "Disabled",
+    // (undocumented)
+    Enabled = "Enabled"
+}
+
+// @public
+export const enum KnownHealthcareFhirResourceType {
+    Account = "Account",
+    ActivityDefinition = "ActivityDefinition",
+    AdverseEvent = "AdverseEvent",
+    AllergyIntolerance = "AllergyIntolerance",
+    Appointment = "Appointment",
+    AppointmentResponse = "AppointmentResponse",
+    AuditEvent = "AuditEvent",
+    Basic = "Basic",
+    Binary = "Binary",
+    BiologicallyDerivedProduct = "BiologicallyDerivedProduct",
+    BodySite = "BodySite",
+    BodyStructure = "BodyStructure",
+    Bundle = "Bundle",
+    CapabilityStatement = "CapabilityStatement",
+    CarePlan = "CarePlan",
+    CareTeam = "CareTeam",
+    CatalogEntry = "CatalogEntry",
+    ChargeItem = "ChargeItem",
+    ChargeItemDefinition = "ChargeItemDefinition",
+    Claim = "Claim",
+    ClaimResponse = "ClaimResponse",
+    ClinicalImpression = "ClinicalImpression",
+    CodeSystem = "CodeSystem",
+    Communication = "Communication",
+    CommunicationRequest = "CommunicationRequest",
+    CompartmentDefinition = "CompartmentDefinition",
+    Composition = "Composition",
+    ConceptMap = "ConceptMap",
+    Condition = "Condition",
+    Consent = "Consent",
+    Contract = "Contract",
+    Coverage = "Coverage",
+    CoverageEligibilityRequest = "CoverageEligibilityRequest",
+    CoverageEligibilityResponse = "CoverageEligibilityResponse",
+    DataElement = "DataElement",
+    DetectedIssue = "DetectedIssue",
+    Device = "Device",
+    DeviceComponent = "DeviceComponent",
+    DeviceDefinition = "DeviceDefinition",
+    DeviceMetric = "DeviceMetric",
+    DeviceRequest = "DeviceRequest",
+    DeviceUseStatement = "DeviceUseStatement",
+    DiagnosticReport = "DiagnosticReport",
+    DocumentManifest = "DocumentManifest",
+    DocumentReference = "DocumentReference",
+    DomainResource = "DomainResource",
+    EffectEvidenceSynthesis = "EffectEvidenceSynthesis",
+    EligibilityRequest = "EligibilityRequest",
+    EligibilityResponse = "EligibilityResponse",
+    Encounter = "Encounter",
+    Endpoint = "Endpoint",
+    EnrollmentRequest = "EnrollmentRequest",
+    EnrollmentResponse = "EnrollmentResponse",
+    EpisodeOfCare = "EpisodeOfCare",
+    EventDefinition = "EventDefinition",
+    Evidence = "Evidence",
+    EvidenceVariable = "EvidenceVariable",
+    ExampleScenario = "ExampleScenario",
+    ExpansionProfile = "ExpansionProfile",
+    ExplanationOfBenefit = "ExplanationOfBenefit",
+    FamilyMemberHistory = "FamilyMemberHistory",
+    Flag = "Flag",
+    Goal = "Goal",
+    GraphDefinition = "GraphDefinition",
+    Group = "Group",
+    GuidanceResponse = "GuidanceResponse",
+    HealthcareService = "HealthcareService",
+    ImagingManifest = "ImagingManifest",
+    ImagingStudy = "ImagingStudy",
+    Immunization = "Immunization",
+    ImmunizationEvaluation = "ImmunizationEvaluation",
+    ImmunizationRecommendation = "ImmunizationRecommendation",
+    ImplementationGuide = "ImplementationGuide",
+    InsurancePlan = "InsurancePlan",
+    Invoice = "Invoice",
+    Library = "Library",
+    Linkage = "Linkage",
+    List = "List",
+    Location = "Location",
+    Measure = "Measure",
+    MeasureReport = "MeasureReport",
+    Media = "Media",
+    Medication = "Medication",
+    MedicationAdministration = "MedicationAdministration",
+    MedicationDispense = "MedicationDispense",
+    MedicationKnowledge = "MedicationKnowledge",
+    MedicationRequest = "MedicationRequest",
+    MedicationStatement = "MedicationStatement",
+    MedicinalProduct = "MedicinalProduct",
+    MedicinalProductAuthorization = "MedicinalProductAuthorization",
+    MedicinalProductContraindication = "MedicinalProductContraindication",
+    MedicinalProductIndication = "MedicinalProductIndication",
+    MedicinalProductIngredient = "MedicinalProductIngredient",
+    MedicinalProductInteraction = "MedicinalProductInteraction",
+    MedicinalProductManufactured = "MedicinalProductManufactured",
+    MedicinalProductPackaged = "MedicinalProductPackaged",
+    MedicinalProductPharmaceutical = "MedicinalProductPharmaceutical",
+    MedicinalProductUndesirableEffect = "MedicinalProductUndesirableEffect",
+    MessageDefinition = "MessageDefinition",
+    MessageHeader = "MessageHeader",
+    MolecularSequence = "MolecularSequence",
+    NamingSystem = "NamingSystem",
+    NutritionOrder = "NutritionOrder",
+    Observation = "Observation",
+    ObservationDefinition = "ObservationDefinition",
+    OperationDefinition = "OperationDefinition",
+    OperationOutcome = "OperationOutcome",
+    Organization = "Organization",
+    OrganizationAffiliation = "OrganizationAffiliation",
+    Parameters = "Parameters",
+    Patient = "Patient",
+    PaymentNotice = "PaymentNotice",
+    PaymentReconciliation = "PaymentReconciliation",
+    Person = "Person",
+    PlanDefinition = "PlanDefinition",
+    Practitioner = "Practitioner",
+    PractitionerRole = "PractitionerRole",
+    Procedure = "Procedure",
+    ProcedureRequest = "ProcedureRequest",
+    ProcessRequest = "ProcessRequest",
+    ProcessResponse = "ProcessResponse",
+    Provenance = "Provenance",
+    Questionnaire = "Questionnaire",
+    QuestionnaireResponse = "QuestionnaireResponse",
+    ReferralRequest = "ReferralRequest",
+    RelatedPerson = "RelatedPerson",
+    RequestGroup = "RequestGroup",
+    ResearchDefinition = "ResearchDefinition",
+    ResearchElementDefinition = "ResearchElementDefinition",
+    ResearchStudy = "ResearchStudy",
+    ResearchSubject = "ResearchSubject",
+    Resource = "Resource",
+    RiskAssessment = "RiskAssessment",
+    RiskEvidenceSynthesis = "RiskEvidenceSynthesis",
+    Schedule = "Schedule",
+    SearchParameter = "SearchParameter",
+    Sequence = "Sequence",
+    ServiceDefinition = "ServiceDefinition",
+    ServiceRequest = "ServiceRequest",
+    Slot = "Slot",
+    Specimen = "Specimen",
+    SpecimenDefinition = "SpecimenDefinition",
+    StructureDefinition = "StructureDefinition",
+    StructureMap = "StructureMap",
+    Subscription = "Subscription",
+    Substance = "Substance",
+    SubstanceNucleicAcid = "SubstanceNucleicAcid",
+    SubstancePolymer = "SubstancePolymer",
+    SubstanceProtein = "SubstanceProtein",
+    SubstanceReferenceInformation = "SubstanceReferenceInformation",
+    SubstanceSourceMaterial = "SubstanceSourceMaterial",
+    SubstanceSpecification = "SubstanceSpecification",
+    SupplyDelivery = "SupplyDelivery",
+    SupplyRequest = "SupplyRequest",
+    Task = "Task",
+    TerminologyCapabilities = "TerminologyCapabilities",
+    TestReport = "TestReport",
+    TestScript = "TestScript",
+    ValueSet = "ValueSet",
+    VerificationResult = "VerificationResult",
+    VisionPrescription = "VisionPrescription"
+}
+
+// @public
+export const enum KnownRecordingChannelType {
+    // (undocumented)
+    Mixed = "Mixed",
+    // (undocumented)
+    Unmixed = "Unmixed"
+}
+
+// @public
+export const enum KnownRecordingContentType {
+    // (undocumented)
+    Audio = "Audio",
+    // (undocumented)
+    AudioVideo = "AudioVideo"
+}
+
+// @public
+export const enum KnownRecordingFormatType {
+    // (undocumented)
+    Mp3 = "Mp3",
+    // (undocumented)
+    Mp4 = "Mp4",
+    // (undocumented)
+    Wav = "Wav"
+}
+
+// @public
 export const enum KnownStampKind {
     AseV1 = "AseV1",
     AseV2 = "AseV2",
     Public = "Public"
+}
+
+// @public
+export const enum KnownStorageTaskAssignmentCompletedStatus {
+    // (undocumented)
+    Failed = "Failed",
+    // (undocumented)
+    Succeeded = "Succeeded"
+}
+
+// @public
+export const enum KnownStorageTaskCompletedStatus {
+    // (undocumented)
+    Failed = "Failed",
+    // (undocumented)
+    Succeeded = "Succeeded"
 }
 
 // @public
@@ -825,10 +1960,10 @@ export interface MediaJobError {
 }
 
 // @public
-export type MediaJobErrorCategory = "Service" | "Download" | "Upload" | "Configuration" | "Content";
+export type MediaJobErrorCategory = "Service" | "Download" | "Upload" | "Configuration" | "Content" | "Account";
 
 // @public
-export type MediaJobErrorCode = "ServiceError" | "ServiceTransientError" | "DownloadNotAccessible" | "DownloadTransientError" | "UploadNotAccessible" | "UploadTransientError" | "ConfigurationUnsupported" | "ContentMalformed" | "ContentUnsupported";
+export type MediaJobErrorCode = "ServiceError" | "ServiceTransientError" | "DownloadNotAccessible" | "DownloadTransientError" | "UploadNotAccessible" | "UploadTransientError" | "ConfigurationUnsupported" | "ContentMalformed" | "ContentUnsupported" | "IdentityUnsupported";
 
 // @public
 export interface MediaJobErrorDetail {
@@ -1027,6 +2162,12 @@ export interface MediaLiveEventTrackDiscontinuityDetectedEventData {
 }
 
 // @public
+export interface MicrosoftTeamsAppIdentifierModel {
+    appId: string;
+    cloud?: CommunicationCloudEnvironmentModel;
+}
+
+// @public
 export interface MicrosoftTeamsUserIdentifierModel {
     cloud?: CommunicationCloudEnvironmentModel;
     isAnonymous?: boolean;
@@ -1072,11 +2213,22 @@ export interface PolicyInsightsPolicyStateDeletedEventData {
 }
 
 // @public
+export type RecordingChannelType = string;
+
+// @public
+export type RecordingContentType = string;
+
+// @public
+export type RecordingFormatType = string;
+
+// @public
 export interface ResourceActionCancelEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1088,10 +2240,12 @@ export interface ResourceActionCancelEventData {
 
 // @public
 export interface ResourceActionFailureEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1103,10 +2257,12 @@ export interface ResourceActionFailureEventData {
 
 // @public
 export interface ResourceActionSuccessEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1117,11 +2273,22 @@ export interface ResourceActionSuccessEventData {
 }
 
 // @public
+export interface ResourceAuthorization {
+    action: string;
+    evidence: {
+        [propertyName: string]: string;
+    };
+    scope: string;
+}
+
+// @public
 export interface ResourceDeleteCancelEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1133,10 +2300,12 @@ export interface ResourceDeleteCancelEventData {
 
 // @public
 export interface ResourceDeleteFailureEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1148,10 +2317,12 @@ export interface ResourceDeleteFailureEventData {
 
 // @public
 export interface ResourceDeleteSuccessEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1162,11 +2333,72 @@ export interface ResourceDeleteSuccessEventData {
 }
 
 // @public
+export interface ResourceHttpRequest {
+    clientIpAddress: string;
+    clientRequestId: string;
+    method: string;
+    url: string;
+}
+
+// @public
+export type ResourceNotificationsHealthResourcesAnnotatedEventData = ResourceNotificationsResourceUpdatedEventData & {};
+
+// @public
+export type ResourceNotificationsHealthResourcesAvailabilityStatusChangedEventData = ResourceNotificationsResourceUpdatedEventData & {};
+
+// @public
+export interface ResourceNotificationsOperationalDetails {
+    resourceEventTime: string;
+}
+
+// @public
+export interface ResourceNotificationsResourceDeletedDetails {
+    id: string;
+    name: string;
+    type: string;
+}
+
+// @public
+export interface ResourceNotificationsResourceDeletedEventData {
+    operationalDetails: ResourceNotificationsOperationalDetails;
+    resourceDetails: ResourceNotificationsResourceDeletedDetails;
+}
+
+// @public
+export type ResourceNotificationsResourceManagementCreatedOrUpdatedEventData = ResourceNotificationsResourceUpdatedEventData & {};
+
+// @public
+export type ResourceNotificationsResourceManagementDeletedEventData = ResourceNotificationsResourceDeletedEventData & {};
+
+// @public
+export interface ResourceNotificationsResourceUpdatedDetails {
+    id: string;
+    location: string;
+    name: string;
+    properties: {
+        [propertyName: string]: any;
+    };
+    tags: {
+        [propertyName: string]: string;
+    };
+    type: string;
+}
+
+// @public
+export interface ResourceNotificationsResourceUpdatedEventData {
+    apiVersion: string;
+    operationalDetails: ResourceNotificationsOperationalDetails;
+    resourceDetails: ResourceNotificationsResourceUpdatedDetails;
+}
+
+// @public
 export interface ResourceWriteCancelEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1178,10 +2410,12 @@ export interface ResourceWriteCancelEventData {
 
 // @public
 export interface ResourceWriteFailureEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1193,10 +2427,12 @@ export interface ResourceWriteFailureEventData {
 
 // @public
 export interface ResourceWriteSuccessEventData {
-    authorization: string;
-    claims: string;
+    authorization: ResourceAuthorization;
+    claims: {
+        [propertyName: string]: string;
+    };
     correlationId: string;
-    httpRequest: string;
+    httpRequest: ResourceHttpRequest;
     operationName: string;
     resourceGroup: string;
     resourceProvider: string;
@@ -1271,19 +2507,23 @@ export interface StorageAsyncOperationInitiatedEventData {
 }
 
 // @public
+export type StorageBlobAccessTier = string;
+
+// @public
 export interface StorageBlobCreatedEventData {
-    api: string;
-    blobType: string;
-    clientRequestId: string;
-    contentLength: number;
-    contentOffset: number;
-    contentType: string;
-    eTag: string;
-    identity: string;
-    requestId: string;
-    sequencer: string;
-    storageDiagnostics: any;
-    url: string;
+    accessTier: StorageBlobAccessTier;
+    api?: string;
+    blobType?: string;
+    clientRequestId?: string;
+    contentLength?: number;
+    contentOffset?: number;
+    contentType?: string;
+    eTag?: string;
+    identity?: string;
+    requestId?: string;
+    sequencer?: string;
+    storageDiagnostics?: any;
+    url?: string;
 }
 
 // @public
@@ -1324,16 +2564,18 @@ export interface StorageBlobRenamedEventData {
 
 // @public
 export interface StorageBlobTierChangedEventData {
-    api: string;
-    blobType: string;
-    clientRequestId: string;
-    contentLength: number;
-    contentType: string;
-    identity: string;
-    requestId: string;
-    sequencer: string;
-    storageDiagnostics: any;
-    url: string;
+    accessTier: StorageBlobAccessTier;
+    api?: string;
+    blobType?: string;
+    clientRequestId?: string;
+    contentLength?: number;
+    contentType?: string;
+    identity?: string;
+    previousTier: StorageBlobAccessTier;
+    requestId?: string;
+    sequencer?: string;
+    storageDiagnostics?: any;
+    url?: string;
 }
 
 // @public
@@ -1353,7 +2595,7 @@ export interface StorageDirectoryDeletedEventData {
     api: string;
     clientRequestId: string;
     identity: string;
-    recursive: boolean;
+    recursive: string;
     requestId: string;
     sequencer: string;
     storageDiagnostics: any;
@@ -1384,7 +2626,44 @@ export interface StorageLifecyclePolicyCompletedEventData {
     deleteSummary: StorageLifecyclePolicyActionSummaryDetail;
     scheduleTime: string;
     tierToArchiveSummary: StorageLifecyclePolicyActionSummaryDetail;
+    tierToColdSummary: StorageLifecyclePolicyActionSummaryDetail;
     tierToCoolSummary: StorageLifecyclePolicyActionSummaryDetail;
+}
+
+// @public
+export interface StorageTaskAssignmentCompletedEventData {
+    completedOn: string;
+    status: StorageTaskAssignmentCompletedStatus;
+    summaryReportBlobUri: string;
+    taskExecutionId: string;
+    taskName: string;
+}
+
+// @public
+export type StorageTaskAssignmentCompletedStatus = string;
+
+// @public
+export interface StorageTaskAssignmentQueuedEventData {
+    queuedOn: string;
+    taskExecutionId: string;
+}
+
+// @public
+export interface StorageTaskCompletedEventData {
+    completedDateTime: string;
+    status: StorageTaskCompletedStatus;
+    summaryReportBlobUrl: string;
+    taskExecutionId: string;
+    taskName: string;
+}
+
+// @public
+export type StorageTaskCompletedStatus = string;
+
+// @public
+export interface StorageTaskQueuedEventData {
+    queuedDateTime: string;
+    taskExecutionId: string;
 }
 
 // @public
@@ -1400,12 +2679,25 @@ export interface SubscriptionValidationEventData {
 
 // @public
 export interface SystemEventNameToEventData {
+    "Microsoft.ApiCenter.ApiDefinitionAdded": ApiCenterApiDefinitionAddedEventData;
+    "Microsoft.ApiCenter.ApiDefinitionUpdated": ApiCenterApiDefinitionUpdatedEventData;
     "Microsoft.ApiManagement.APICreated": ApiManagementApiCreatedEventData;
     "Microsoft.ApiManagement.APIDeleted": ApiManagementApiDeletedEventData;
     "Microsoft.ApiManagement.APIReleaseCreated": ApiManagementApiReleaseCreatedEventData;
     "Microsoft.ApiManagement.APIReleaseDeleted": ApiManagementApiReleaseDeletedEventData;
     "Microsoft.ApiManagement.APIReleaseUpdated": ApiManagementApiReleaseUpdatedEventData;
     "Microsoft.ApiManagement.APIUpdated": ApiManagementApiUpdatedEventData;
+    "Microsoft.ApiManagement.GatewayAPIAdded": ApiManagementGatewayApiAddedEventData;
+    "Microsoft.ApiManagement.GatewayAPIRemoved": ApiManagementGatewayApiRemovedEventData;
+    "Microsoft.ApiManagement.GatewayCertificateAuthorityCreated": ApiManagementGatewayCertificateAuthorityCreatedEventData;
+    "Microsoft.ApiManagement.GatewayCertificateAuthorityDeleted": ApiManagementGatewayCertificateAuthorityDeletedEventData;
+    "Microsoft.ApiManagement.GatewayCertificateAuthorityUpdated": ApiManagementGatewayCertificateAuthorityUpdatedEventData;
+    "Microsoft.ApiManagement.GatewayCreated": ApiManagementGatewayCreatedEventData;
+    "Microsoft.ApiManagement.GatewayDeleted": ApiManagementGatewayDeletedEventData;
+    "Microsoft.ApiManagement.GatewayHostnameConfigurationCreated": ApiManagementGatewayHostnameConfigurationCreatedEventData;
+    "Microsoft.ApiManagement.GatewayHostnameConfigurationDeleted": ApiManagementGatewayHostnameConfigurationDeletedEventData;
+    "Microsoft.ApiManagement.GatewayHostnameConfigurationUpdated": ApiManagementGatewayHostnameConfigurationUpdatedEventData;
+    "Microsoft.ApiManagement.GatewayUpdated": ApiManagementGatewayUpdatedEventData;
     "Microsoft.ApiManagement.ProductCreated": ApiManagementProductCreatedEventData;
     "Microsoft.ApiManagement.ProductDeleted": ApiManagementProductDeletedEventData;
     "Microsoft.ApiManagement.ProductUpdated": ApiManagementProductUpdatedEventData;
@@ -1417,6 +2709,22 @@ export interface SystemEventNameToEventData {
     "Microsoft.ApiManagement.UserUpdated": ApiManagementUserUpdatedEventData;
     "Microsoft.AppConfiguration.KeyValueDeleted": AppConfigurationKeyValueDeletedEventData;
     "Microsoft.AppConfiguration.KeyValueModified": AppConfigurationKeyValueModifiedEventData;
+    "Microsoft.AppConfiguration.SnapshotCreated": AppConfigurationSnapshotCreatedEventData;
+    "Microsoft.AppConfiguration.SnapshotModified": AppConfigurationSnapshotModifiedEventData;
+    "Microsoft.AVS.ClusterCreated": AvsClusterCreatedEventData;
+    "Microsoft.AVS.ClusterDeleted": AvsClusterDeletedEventData;
+    "Microsoft.AVS.ClusterFailed": AvsClusterFailedEventData;
+    "Microsoft.AVS.ClusterUpdated": AvsClusterUpdatedEventData;
+    "Microsoft.AVS.ClusterUpdating": AvsClusterUpdatingEventData;
+    "Microsoft.AVS.PrivateCloudFailed": AvsPrivateCloudFailedEventData;
+    "Microsoft.AVS.PrivateCloudUpdated": AvsPrivateCloudUpdatedEventData;
+    "Microsoft.AVS.PrivateCloudUpdating": AvsPrivateCloudUpdatingEventData;
+    "Microsoft.AVS.ScriptExecutionCancelled": AvsScriptExecutionCancelledEventData;
+    "Microsoft.AVS.ScriptExecutionFailed": AvsScriptExecutionFailedEventData;
+    "Microsoft.AVS.ScriptExecutionFinished": AvsScriptExecutionFinishedEventData;
+    "Microsoft.AVS.ScriptExecutionStarted": AvsScriptExecutionStartedEventData;
+    "Microsoft.Communication.AdvancedMessageDeliveryStatusUpdated": AcsMessageDeliveryStatusUpdatedEventData;
+    "Microsoft.Communication.AdvancedMessageReceived": AcsMessageReceivedEventData;
     "Microsoft.Communication.ChatMessageDeleted": AcsChatMessageDeletedEventData;
     "Microsoft.Communication.ChatMessageDeletedInThread": AcsChatMessageDeletedInThreadEventData;
     "Microsoft.Communication.ChatMessageEdited": AcsChatMessageEditedEventData;
@@ -1425,12 +2733,40 @@ export interface SystemEventNameToEventData {
     "Microsoft.Communication.ChatMessageReceivedInThread": AcsChatMessageReceivedInThreadEventData;
     "Microsoft.Communication.ChatParticipantAddedToThreadWithUser": AcsChatParticipantAddedToThreadWithUserEventData;
     "Microsoft.Communication.ChatParticipantRemovedFromThreadWithUser": AcsChatParticipantRemovedFromThreadWithUserEventData;
+    "Microsoft.Communication.ChatThreadCreated": AcsChatThreadCreatedEventData;
     "Microsoft.Communication.ChatThreadCreatedWithUser": AcsChatThreadCreatedWithUserEventData;
+    "Microsoft.Communication.ChatThreadDeleted": AcsChatThreadDeletedEventData;
     "Microsoft.Communication.ChatThreadParticipantAdded": AcsChatParticipantAddedToThreadEventData;
     "Microsoft.Communication.ChatThreadParticipantRemoved": AcsChatParticipantRemovedFromThreadEventData;
+    "Microsoft.Communication.ChatThreadPropertiesUpdated": AcsChatThreadPropertiesUpdatedEventData;
     "Microsoft.Communication.ChatThreadPropertiesUpdatedPerUser": AcsChatThreadPropertiesUpdatedPerUserEventData;
     "Microsoft.Communication.ChatThreadWithUserDeleted": AcsChatThreadWithUserDeletedEventData;
+    "Microsoft.Communication.EmailDeliveryReportReceived": AcsEmailDeliveryReportReceivedEventData;
+    "Microsoft.Communication.EmailEngagementTrackingReportReceived": AcsEmailEngagementTrackingReportReceivedEventData;
+    "Microsoft.Communication.IncomingCall": AcsIncomingCallEventData;
     "Microsoft.Communication.RecordingFileStatusUpdated": AcsRecordingFileStatusUpdatedEventData;
+    "Microsoft.Communication.RouterJobCancelled": AcsRouterJobCancelledEventData;
+    "Microsoft.Communication.RouterJobClassificationFailed": AcsRouterJobClassificationFailedEventData;
+    "Microsoft.Communication.RouterJobClassified": AcsRouterJobClassifiedEventData;
+    "Microsoft.Communication.RouterJobClosed": AcsRouterJobClosedEventData;
+    "Microsoft.Communication.RouterJobCompleted": AcsRouterJobCompletedEventData;
+    "Microsoft.Communication.RouterJobDeleted": AcsRouterJobDeletedEventData;
+    "Microsoft.Communication.RouterJobExceptionTriggered": AcsRouterJobExceptionTriggeredEventData;
+    "Microsoft.Communication.RouterJobQueued": AcsRouterJobQueuedEventData;
+    "Microsoft.Communication.RouterJobReceived": AcsRouterJobReceivedEventData;
+    "Microsoft.Communication.RouterJobSchedulingFailed": AcsRouterJobSchedulingFailedEventData;
+    "Microsoft.Communication.RouterJobUnassigned": AcsRouterJobUnassignedEventData;
+    "Microsoft.Communication.RouterJobWaitingForActivation": AcsRouterJobWaitingForActivationEventData;
+    "Microsoft.Communication.RouterJobWorkerSelectorsExpire": AcsRouterJobWorkerSelectorsExpiredEventData;
+    "Microsoft.Communication.RouterWorkerDeleted": AcsRouterWorkerDeletedEventData;
+    "Microsoft.Communication.RouterWorkerDeregistered": AcsRouterWorkerDeregisteredEventData;
+    "Microsoft.Communication.RouterWorkerOfferAccepted": AcsRouterWorkerOfferAcceptedEventData;
+    "Microsoft.Communication.RouterWorkerOfferDeclined": AcsRouterWorkerOfferDeclinedEventData;
+    "Microsoft.Communication.RouterWorkerOfferExpired": AcsRouterWorkerOfferExpiredEventData;
+    "Microsoft.Communication.RouterWorkerOfferIssued": AcsRouterWorkerOfferIssuedEventData;
+    "Microsoft.Communication.RouterWorkerOfferRevoked": AcsRouterWorkerOfferRevokedEventData;
+    "Microsoft.Communication.RouterWorkerRegistered": AcsRouterWorkerRegisteredEventData;
+    "Microsoft.Communication.RouterWorkerUpdated": AcsRouterWorkerUpdatedEventData;
     "Microsoft.Communication.SMSDeliveryReportReceived": AcsSmsDeliveryReportReceivedEventData;
     "Microsoft.Communication.SMSReceived": AcsSmsReceivedEventData;
     "Microsoft.Communication.UserDisconnected": AcsUserDisconnectedEventData;
@@ -1438,15 +2774,33 @@ export interface SystemEventNameToEventData {
     "Microsoft.ContainerRegistry.ChartPushed": ContainerRegistryChartPushedEventData;
     "Microsoft.ContainerRegistry.ImageDeleted": ContainerRegistryImageDeletedEventData;
     "Microsoft.ContainerRegistry.ImagePushed": ContainerRegistryImagePushedEventData;
+    "Microsoft.ContainerService.ClusterSupportEnded": ContainerServiceClusterSupportEndedEventData;
+    "Microsoft.ContainerService.ClusterSupportEnding": ContainerServiceClusterSupportEndingEventData;
     "Microsoft.ContainerService.NewKubernetesVersionAvailable": ContainerServiceNewKubernetesVersionAvailableEventData;
+    "Microsoft.ContainerService.NodePoolRollingFailed": ContainerServiceNodePoolRollingFailedEventData;
+    "Microsoft.ContainerService.NodePoolRollingStarted": ContainerServiceNodePoolRollingStartedEventData;
+    "Microsoft.ContainerService.NodePoolRollingSucceeded": ContainerServiceNodePoolRollingSucceededEventData;
+    "Microsoft.DataBox.CopyCompleted": DataBoxCopyCompletedEventData;
+    "Microsoft.DataBox.CopyStarted": DataBoxCopyStartedEventData;
+    "Microsoft.DataBox.OrderCompleted": DataBoxOrderCompletedEventData;
     "Microsoft.Devices.DeviceConnected": IotHubDeviceConnectedEventData;
     "Microsoft.Devices.DeviceCreated": IotHubDeviceCreatedEventData;
     "Microsoft.Devices.DeviceDeleted": IotHubDeviceDeletedEventData;
     "Microsoft.Devices.DeviceDisconnected": IotHubDeviceDisconnectedEventData;
     "Microsoft.Devices.DeviceTelemetry": IotHubDeviceTelemetryEventData;
+    "Microsoft.EventGrid.MQTTClientCreatedOrUpdated": EventGridMqttClientCreatedOrUpdatedEventData;
+    "Microsoft.EventGrid.MQTTClientDeleted": EventGridMqttClientDeletedEventData;
+    "Microsoft.EventGrid.MQTTClientSessionConnected": EventGridMqttClientSessionConnectedEventData;
+    "Microsoft.EventGrid.MQTTClientSessionDisconnected": EventGridMqttClientSessionDisconnectedEventData;
     "Microsoft.EventGrid.SubscriptionDeletedEvent": SubscriptionDeletedEventData;
     "Microsoft.EventGrid.SubscriptionValidationEvent": SubscriptionValidationEventData;
     "Microsoft.EventHub.CaptureFileCreated": EventHubCaptureFileCreatedEventData;
+    "Microsoft.HealthcareApis.DicomImageCreated": HealthcareDicomImageCreatedEventData;
+    "Microsoft.HealthcareApis.DicomImageDeleted": HealthcareDicomImageDeletedEventData;
+    "Microsoft.HealthcareApis.DicomImageUpdated": HealthcareDicomImageUpdatedEventData;
+    "Microsoft.HealthcareApis.FhirDeletedCreated": HealthcareFhirResourceDeletedEventData;
+    "Microsoft.HealthcareApis.FhirResourceCreated": HealthcareFhirResourceCreatedEventData;
+    "Microsoft.HealthcareApis.FhirUpdatedCreated": HealthcareFhirResourceUpdatedEventData;
     "Microsoft.KeyVault.CertificateExpired": KeyVaultCertificateExpiredEventData;
     "Microsoft.KeyVault.CertificateNearExpiry": KeyVaultCertificateNearExpiryEventData;
     "Microsoft.KeyVault.CertificateNewVersionCreated": KeyVaultCertificateNewVersionCreatedEventData;
@@ -1493,6 +2847,10 @@ export interface SystemEventNameToEventData {
     "Microsoft.PolicyInsights.PolicyStateChanged ": PolicyInsightsPolicyStateChangedEventData;
     "Microsoft.PolicyInsights.PolicyStateCreated": PolicyInsightsPolicyStateCreatedEventData;
     "Microsoft.PolicyInsights.PolicyStateDeleted": PolicyInsightsPolicyStateDeletedEventData;
+    "Microsoft.ResourceNotifications.HealthResources.AvailabilityStatusChanged": ResourceNotificationsHealthResourcesAvailabilityStatusChangedEventData;
+    "Microsoft.ResourceNotifications.HealthResources.ResourceAnnotated": ResourceNotificationsHealthResourcesAnnotatedEventData;
+    "Microsoft.ResourceNotifications.Resources.CreatedOrUpdated": ResourceNotificationsResourceManagementCreatedOrUpdatedEventData;
+    "Microsoft.ResourceNotifications.Resources.Deleted": ResourceNotificationsResourceManagementDeletedEventData;
     "Microsoft.Resources.ResourceActionCancel": ResourceActionCancelEventData;
     "Microsoft.Resources.ResourceActionFailure": ResourceActionFailureEventData;
     "Microsoft.Resources.ResourceActionSuccess": ResourceActionSuccessEventData;
@@ -1514,6 +2872,10 @@ export interface SystemEventNameToEventData {
     "Microsoft.Storage.DirectoryDeleted": StorageDirectoryDeletedEventData;
     "Microsoft.Storage.DirectoryRenamed": StorageDirectoryRenamedEventData;
     "Microsoft.Storage.LifecyclePolicyCompleted": StorageLifecyclePolicyCompletedEventData;
+    "Microsoft.Storage.StorageTaskAssignmentCompleted": StorageTaskAssignmentCompletedEventData;
+    "Microsoft.Storage.StorageTaskAssignmentQueued": StorageTaskAssignmentQueuedEventData;
+    "Microsoft.Storage.StorageTaskCompleted": StorageTaskCompletedEventData;
+    "Microsoft.Storage.StorageTaskQueued": StorageTaskQueuedEventData;
     "Microsoft.Web.AppServicePlanUpdated": WebAppServicePlanUpdatedEventData;
     "Microsoft.Web.AppUpdated": WebAppUpdatedEventData;
     "Microsoft.Web.BackupOperationCompleted": WebBackupOperationCompletedEventData;
@@ -1681,7 +3043,6 @@ export interface WebSlotSwapWithPreviewStartedEventData {
     requestId: string;
     verb: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

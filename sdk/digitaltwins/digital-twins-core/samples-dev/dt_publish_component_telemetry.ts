@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Copyright (c) Microsoft.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 /**
  * @summary Simple example of how to publish a component telemetry message
@@ -29,12 +29,12 @@ async function main() {
   // Publish telemetry message
   const digitalTwinId = "<digital twin ID>"; //Digital twin ID must exist in your Azure Digital Twins instance
   const componentPath = "<component path>"; // Component must exist in your Azure Digital Twins instance
-  const telemetryPayload = '{"Telemetry1": 5}';
+  const telemetryPayload = { Telemetry1: 5 };
   const response = await serviceClient.publishComponentTelemetry(
     digitalTwinId,
     componentPath,
     telemetryPayload,
-    v4()
+    v4(),
   );
   console.log(`Publish Component Telemetry response:`);
   console.log(inspect(response));

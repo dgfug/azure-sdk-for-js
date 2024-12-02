@@ -1,22 +1,22 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions } from "@azure/core-http";
-import { CommunicationUserIdentifier } from "@azure/communication-common";
-import {
+import type {
   CommunicationAccessToken,
-  CommunicationIdentityClient,
   CommunicationIdentityClientOptions,
   CommunicationUserToken,
-  TokenScope
-} from "../../../src";
+  TokenScope,
+} from "../../../src/index.js";
+import { CommunicationIdentityClient } from "../../../src/index.js";
 import {
-  getTokenHttpClient,
-  createUserHttpClient,
-  revokeTokensHttpClient,
   createUserAndTokenHttpClient,
-  getTokenForTeamsUserHttpClient
-} from "./mockHttpClients";
+  createUserHttpClient,
+  getTokenForTeamsUserHttpClient,
+  getTokenHttpClient,
+  revokeTokensHttpClient,
+} from "./mockHttpClients.js";
+import type { CommunicationUserIdentifier } from "@azure/communication-common";
+import type { OperationOptions } from "@azure/core-client";
 
 export class TestCommunicationIdentityClient {
   private connectionString: string = "endpoint=https://contoso.spool.azure.local;accesskey=banana";
@@ -24,55 +24,64 @@ export class TestCommunicationIdentityClient {
   public async getTokenTest(
     user: CommunicationUserIdentifier,
     scopes: TokenScope[],
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<CommunicationAccessToken> {
     // casting is a workaround to enable min-max testing
     const client = new CommunicationIdentityClient(this.connectionString, {
-      httpClient: getTokenHttpClient
+      httpClient: getTokenHttpClient,
     } as CommunicationIdentityClientOptions);
     return client.getToken(user, scopes, options as any);
   }
 
   public async revokeTokensTest(
     user: CommunicationUserIdentifier,
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<void> {
     // casting is a workaround to enable min-max testing
     const client = new CommunicationIdentityClient(this.connectionString, {
-      httpClient: revokeTokensHttpClient
+      httpClient: revokeTokensHttpClient,
     } as CommunicationIdentityClientOptions);
     return client.revokeTokens(user, options as any);
   }
 
   public async createUserTest(
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<CommunicationUserIdentifier> {
     // casting is a workaround to enable min-max testing
     const client = new CommunicationIdentityClient(this.connectionString, {
-      httpClient: createUserHttpClient
+      httpClient: createUserHttpClient,
     } as CommunicationIdentityClientOptions);
     return client.createUser(options as any);
   }
 
   public async createUserAndTokenTest(
     scopes: TokenScope[],
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<CommunicationUserToken> {
     // casting is a workaround to enable min-max testing
     const client = new CommunicationIdentityClient(this.connectionString, {
-      httpClient: createUserAndTokenHttpClient
+      httpClient: createUserAndTokenHttpClient,
     } as CommunicationIdentityClientOptions);
     return client.createUserAndToken(scopes, options as any);
   }
 
   public async getTokenForTeamsUserTest(
     teamsToken: string,
-    options: OperationOptions = {}
+    clientId: string,
+    userObjectId: string,
   ): Promise<CommunicationAccessToken> {
     // casting is a workaround to enable min-max testing
     const client = new CommunicationIdentityClient(this.connectionString, {
-      httpClient: getTokenForTeamsUserHttpClient
+      httpClient: getTokenForTeamsUserHttpClient,
     } as CommunicationIdentityClientOptions);
-    return client.getTokenForTeamsUser(teamsToken, options as any);
+    return client.getTokenForTeamsUser({
+      teamsUserAadToken: teamsToken,
+      clientId: clientId,
+      userObjectId: userObjectId,
+    });
   }
 }

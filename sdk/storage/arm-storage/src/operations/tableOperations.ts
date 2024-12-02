@@ -6,38 +6,38 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { TableOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageManagementClientContext } from "../storageManagementClientContext";
+import { StorageManagementClient } from "../storageManagementClient";
 import {
   Table,
-  TableOperationsListNextOptionalParams,
-  TableOperationsListOptionalParams,
-  TableOperationsCreateOptionalParams,
-  TableOperationsCreateResponse,
-  TableOperationsUpdateOptionalParams,
-  TableOperationsUpdateResponse,
-  TableOperationsGetOptionalParams,
-  TableOperationsGetResponse,
-  TableOperationsDeleteOptionalParams,
-  TableOperationsListResponse,
-  TableOperationsListNextResponse
+  TableListNextOptionalParams,
+  TableListOptionalParams,
+  TableListResponse,
+  TableCreateOptionalParams,
+  TableCreateResponse,
+  TableUpdateOptionalParams,
+  TableUpdateResponse,
+  TableGetOptionalParams,
+  TableGetResponse,
+  TableDeleteOptionalParams,
+  TableListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a TableOperations. */
+/** Class containing TableOperations operations. */
 export class TableOperationsImpl implements TableOperations {
-  private readonly client: StorageManagementClientContext;
+  private readonly client: StorageManagementClient;
 
   /**
    * Initialize a new instance of the class TableOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageManagementClientContext) {
+  constructor(client: StorageManagementClient) {
     this.client = client;
   }
 
@@ -53,7 +53,7 @@ export class TableOperationsImpl implements TableOperations {
   public list(
     resourceGroupName: string,
     accountName: string,
-    options?: TableOperationsListOptionalParams
+    options?: TableListOptionalParams,
   ): PagedAsyncIterableIterator<Table> {
     const iter = this.listPagingAll(resourceGroupName, accountName, options);
     return {
@@ -63,41 +63,58 @@ export class TableOperationsImpl implements TableOperations {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, accountName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          accountName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     accountName: string,
-    options?: TableOperationsListOptionalParams
+    options?: TableListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Table[]> {
-    let result = await this._list(resourceGroupName, accountName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TableListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, accountName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         accountName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     accountName: string,
-    options?: TableOperationsListOptionalParams
+    options?: TableListOptionalParams,
   ): AsyncIterableIterator<Table> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       accountName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -119,11 +136,11 @@ export class TableOperationsImpl implements TableOperations {
     resourceGroupName: string,
     accountName: string,
     tableName: string,
-    options?: TableOperationsCreateOptionalParams
-  ): Promise<TableOperationsCreateResponse> {
+    options?: TableCreateOptionalParams,
+  ): Promise<TableCreateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, tableName, options },
-      createOperationSpec
+      createOperationSpec,
     );
   }
 
@@ -143,11 +160,11 @@ export class TableOperationsImpl implements TableOperations {
     resourceGroupName: string,
     accountName: string,
     tableName: string,
-    options?: TableOperationsUpdateOptionalParams
-  ): Promise<TableOperationsUpdateResponse> {
+    options?: TableUpdateOptionalParams,
+  ): Promise<TableUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, tableName, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -167,11 +184,11 @@ export class TableOperationsImpl implements TableOperations {
     resourceGroupName: string,
     accountName: string,
     tableName: string,
-    options?: TableOperationsGetOptionalParams
-  ): Promise<TableOperationsGetResponse> {
+    options?: TableGetOptionalParams,
+  ): Promise<TableGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, tableName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -191,11 +208,11 @@ export class TableOperationsImpl implements TableOperations {
     resourceGroupName: string,
     accountName: string,
     tableName: string,
-    options?: TableOperationsDeleteOptionalParams
+    options?: TableDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, tableName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -211,11 +228,11 @@ export class TableOperationsImpl implements TableOperations {
   private _list(
     resourceGroupName: string,
     accountName: string,
-    options?: TableOperationsListOptionalParams
-  ): Promise<TableOperationsListResponse> {
+    options?: TableListOptionalParams,
+  ): Promise<TableListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -233,11 +250,11 @@ export class TableOperationsImpl implements TableOperations {
     resourceGroupName: string,
     accountName: string,
     nextLink: string,
-    options?: TableOperationsListNextOptionalParams
-  ): Promise<TableOperationsListNextResponse> {
+    options?: TableListNextOptionalParams,
+  ): Promise<TableListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -245,136 +262,134 @@ export class TableOperationsImpl implements TableOperations {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.Table
+      bodyMapper: Mappers.Table,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
+  requestBody: Parameters.parameters13,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.tableName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.tableName,
   ],
-  headerParameters: [Parameters.accept],
-  serializer
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.Table
+      bodyMapper: Mappers.Table,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
+  requestBody: Parameters.parameters13,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.tableName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.tableName,
   ],
-  headerParameters: [Parameters.accept],
-  serializer
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.Table
+      bodyMapper: Mappers.Table,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.tableName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.tableName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables/{tableName}",
   httpMethod: "DELETE",
   responses: {
     204: {},
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.tableName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.tableName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/tableServices/default/tables",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListTableResource
+      bodyMapper: Mappers.ListTableResource,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1
+    Parameters.accountName,
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListTableResource
+      bodyMapper: Mappers.ListTableResource,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.nextLink
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

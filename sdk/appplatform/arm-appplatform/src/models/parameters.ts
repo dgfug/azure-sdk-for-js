@@ -14,18 +14,41 @@ import {
 import {
   ServiceResource as ServiceResourceMapper,
   RegenerateTestKeyRequestPayload as RegenerateTestKeyRequestPayloadMapper,
+  ApmReference as ApmReferenceMapper,
   NameAvailabilityParameters as NameAvailabilityParametersMapper,
+  ApmResource as ApmResourceMapper,
   ConfigServerResource as ConfigServerResourceMapper,
   ConfigServerSettings as ConfigServerSettingsMapper,
+  ConfigurationServiceResource as ConfigurationServiceResourceMapper,
+  ConfigurationServiceSettings as ConfigurationServiceSettingsMapper,
+  ApplicationLiveViewResource as ApplicationLiveViewResourceMapper,
+  DevToolPortalResource as DevToolPortalResourceMapper,
+  ContainerRegistryResource as ContainerRegistryResourceMapper,
+  ContainerRegistryProperties as ContainerRegistryPropertiesMapper,
+  BuildService as BuildServiceMapper,
+  Build as BuildMapper,
+  BuildpackBindingResource as BuildpackBindingResourceMapper,
+  BuilderResource as BuilderResourceMapper,
+  BuildServiceAgentPoolResource as BuildServiceAgentPoolResourceMapper,
   MonitoringSettingResource as MonitoringSettingResourceMapper,
   AppResource as AppResourceMapper,
+  ActiveDeploymentCollection as ActiveDeploymentCollectionMapper,
   CustomDomainValidatePayload as CustomDomainValidatePayloadMapper,
   BindingResource as BindingResourceMapper,
   StorageResource as StorageResourceMapper,
   CertificateResource as CertificateResourceMapper,
   CustomDomainResource as CustomDomainResourceMapper,
   DeploymentResource as DeploymentResourceMapper,
-  DiagnosticParameters as DiagnosticParametersMapper
+  RemoteDebuggingPayload as RemoteDebuggingPayloadMapper,
+  DiagnosticParameters as DiagnosticParametersMapper,
+  GatewayResource as GatewayResourceMapper,
+  GatewayRouteConfigResource as GatewayRouteConfigResourceMapper,
+  GatewayCustomDomainResource as GatewayCustomDomainResourceMapper,
+  ApiPortalResource as ApiPortalResourceMapper,
+  ApiPortalCustomDomainResource as ApiPortalCustomDomainResourceMapper,
+  ApplicationAcceleratorResource as ApplicationAcceleratorResourceMapper,
+  CustomizedAcceleratorResource as CustomizedAcceleratorResourceMapper,
+  CustomizedAcceleratorProperties as CustomizedAcceleratorPropertiesMapper
 } from "../models/mappers";
 
 export const accept: OperationParameter = {
@@ -55,7 +78,7 @@ export const $host: OperationURLParameter = {
 export const apiVersion: OperationQueryParameter = {
   parameterPath: "apiVersion",
   mapper: {
-    defaultValue: "2021-09-01-preview",
+    defaultValue: "2023-12-01",
     isConstant: true,
     serializedName: "api-version",
     type: {
@@ -89,6 +112,9 @@ export const resourceGroupName: OperationURLParameter = {
 export const serviceName: OperationURLParameter = {
   parameterPath: "serviceName",
   mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9-]*[a-z0-9]$")
+    },
     serializedName: "serviceName",
     required: true,
     type: {
@@ -119,6 +145,11 @@ export const regenerateTestKeyRequest: OperationParameter = {
   mapper: RegenerateTestKeyRequestPayloadMapper
 };
 
+export const apm: OperationParameter = {
+  parameterPath: "apm",
+  mapper: ApmReferenceMapper
+};
+
 export const availabilityParameters: OperationParameter = {
   parameterPath: "availabilityParameters",
   mapper: NameAvailabilityParametersMapper
@@ -147,6 +178,25 @@ export const nextLink: OperationURLParameter = {
   skipEncoding: true
 };
 
+export const apmName: OperationURLParameter = {
+  parameterPath: "apmName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9-]*[a-z0-9]$")
+    },
+    serializedName: "apmName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const apmResource: OperationParameter = {
+  parameterPath: "apmResource",
+  mapper: ApmResourceMapper
+};
+
 export const configServerResource: OperationParameter = {
   parameterPath: "configServerResource",
   mapper: ConfigServerResourceMapper
@@ -155,6 +205,216 @@ export const configServerResource: OperationParameter = {
 export const configServerSettings: OperationParameter = {
   parameterPath: "configServerSettings",
   mapper: ConfigServerSettingsMapper
+};
+
+export const configurationServiceName: OperationURLParameter = {
+  parameterPath: "configurationServiceName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9]*$")
+    },
+    serializedName: "configurationServiceName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const configurationServiceResource: OperationParameter = {
+  parameterPath: "configurationServiceResource",
+  mapper: ConfigurationServiceResourceMapper
+};
+
+export const settings: OperationParameter = {
+  parameterPath: "settings",
+  mapper: ConfigurationServiceSettingsMapper
+};
+
+export const serviceRegistryName: OperationURLParameter = {
+  parameterPath: "serviceRegistryName",
+  mapper: {
+    serializedName: "serviceRegistryName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const applicationLiveViewName: OperationURLParameter = {
+  parameterPath: "applicationLiveViewName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9]*$")
+    },
+    serializedName: "applicationLiveViewName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const applicationLiveViewResource: OperationParameter = {
+  parameterPath: "applicationLiveViewResource",
+  mapper: ApplicationLiveViewResourceMapper
+};
+
+export const devToolPortalName: OperationURLParameter = {
+  parameterPath: "devToolPortalName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9]*$")
+    },
+    serializedName: "devToolPortalName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const devToolPortalResource: OperationParameter = {
+  parameterPath: "devToolPortalResource",
+  mapper: DevToolPortalResourceMapper
+};
+
+export const containerRegistryName: OperationURLParameter = {
+  parameterPath: "containerRegistryName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9-]*[a-z0-9]$")
+    },
+    serializedName: "containerRegistryName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const containerRegistryResource: OperationParameter = {
+  parameterPath: "containerRegistryResource",
+  mapper: ContainerRegistryResourceMapper
+};
+
+export const containerRegistryProperties: OperationParameter = {
+  parameterPath: "containerRegistryProperties",
+  mapper: ContainerRegistryPropertiesMapper
+};
+
+export const buildServiceName: OperationURLParameter = {
+  parameterPath: "buildServiceName",
+  mapper: {
+    serializedName: "buildServiceName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const buildService: OperationParameter = {
+  parameterPath: "buildService",
+  mapper: BuildServiceMapper
+};
+
+export const buildName: OperationURLParameter = {
+  parameterPath: "buildName",
+  mapper: {
+    serializedName: "buildName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const build: OperationParameter = {
+  parameterPath: "build",
+  mapper: BuildMapper
+};
+
+export const buildResultName: OperationURLParameter = {
+  parameterPath: "buildResultName",
+  mapper: {
+    serializedName: "buildResultName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const buildpackName: OperationURLParameter = {
+  parameterPath: "buildpackName",
+  mapper: {
+    serializedName: "buildpackName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const stackName: OperationURLParameter = {
+  parameterPath: "stackName",
+  mapper: {
+    serializedName: "stackName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const builderName: OperationURLParameter = {
+  parameterPath: "builderName",
+  mapper: {
+    serializedName: "builderName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const buildpackBindingName: OperationURLParameter = {
+  parameterPath: "buildpackBindingName",
+  mapper: {
+    serializedName: "buildpackBindingName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const buildpackBinding: OperationParameter = {
+  parameterPath: "buildpackBinding",
+  mapper: BuildpackBindingResourceMapper
+};
+
+export const builderResource: OperationParameter = {
+  parameterPath: "builderResource",
+  mapper: BuilderResourceMapper
+};
+
+export const agentPoolName: OperationURLParameter = {
+  parameterPath: "agentPoolName",
+  mapper: {
+    serializedName: "agentPoolName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const agentPoolResource: OperationParameter = {
+  parameterPath: "agentPoolResource",
+  mapper: BuildServiceAgentPoolResourceMapper
 };
 
 export const monitoringSettingResource: OperationParameter = {
@@ -186,6 +446,11 @@ export const syncStatus: OperationQueryParameter = {
 export const appResource: OperationParameter = {
   parameterPath: "appResource",
   mapper: AppResourceMapper
+};
+
+export const activeDeploymentCollection: OperationParameter = {
+  parameterPath: "activeDeploymentCollection",
+  mapper: ActiveDeploymentCollectionMapper
 };
 
 export const validatePayload: OperationParameter = {
@@ -289,7 +554,140 @@ export const version: OperationQueryParameter = {
   collectionFormat: "Multi"
 };
 
+export const expand: OperationQueryParameter = {
+  parameterPath: ["options", "expand"],
+  mapper: {
+    serializedName: "$expand",
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const remoteDebuggingPayload: OperationParameter = {
+  parameterPath: ["options", "remoteDebuggingPayload"],
+  mapper: RemoteDebuggingPayloadMapper
+};
+
 export const diagnosticParameters: OperationParameter = {
   parameterPath: "diagnosticParameters",
   mapper: DiagnosticParametersMapper
+};
+
+export const gatewayName: OperationURLParameter = {
+  parameterPath: "gatewayName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9]*$")
+    },
+    serializedName: "gatewayName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const gatewayResource: OperationParameter = {
+  parameterPath: "gatewayResource",
+  mapper: GatewayResourceMapper
+};
+
+export const routeConfigName: OperationURLParameter = {
+  parameterPath: "routeConfigName",
+  mapper: {
+    serializedName: "routeConfigName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const gatewayRouteConfigResource: OperationParameter = {
+  parameterPath: "gatewayRouteConfigResource",
+  mapper: GatewayRouteConfigResourceMapper
+};
+
+export const gatewayCustomDomainResource: OperationParameter = {
+  parameterPath: "gatewayCustomDomainResource",
+  mapper: GatewayCustomDomainResourceMapper
+};
+
+export const apiPortalName: OperationURLParameter = {
+  parameterPath: "apiPortalName",
+  mapper: {
+    serializedName: "apiPortalName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const apiPortalResource: OperationParameter = {
+  parameterPath: "apiPortalResource",
+  mapper: ApiPortalResourceMapper
+};
+
+export const apiPortalCustomDomainResource: OperationParameter = {
+  parameterPath: "apiPortalCustomDomainResource",
+  mapper: ApiPortalCustomDomainResourceMapper
+};
+
+export const applicationAcceleratorName: OperationURLParameter = {
+  parameterPath: "applicationAcceleratorName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9-]*[a-z0-9]$")
+    },
+    serializedName: "applicationAcceleratorName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const applicationAcceleratorResource: OperationParameter = {
+  parameterPath: "applicationAcceleratorResource",
+  mapper: ApplicationAcceleratorResourceMapper
+};
+
+export const customizedAcceleratorName: OperationURLParameter = {
+  parameterPath: "customizedAcceleratorName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z0-9]([-a-z0-9]*[a-z0-9])$")
+    },
+    serializedName: "customizedAcceleratorName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
+};
+
+export const customizedAcceleratorResource: OperationParameter = {
+  parameterPath: "customizedAcceleratorResource",
+  mapper: CustomizedAcceleratorResourceMapper
+};
+
+export const properties: OperationParameter = {
+  parameterPath: "properties",
+  mapper: CustomizedAcceleratorPropertiesMapper
+};
+
+export const predefinedAcceleratorName: OperationURLParameter = {
+  parameterPath: "predefinedAcceleratorName",
+  mapper: {
+    constraints: {
+      Pattern: new RegExp("^[a-z][a-z0-9-]*[a-z0-9]$")
+    },
+    serializedName: "predefinedAcceleratorName",
+    required: true,
+    type: {
+      name: "String"
+    }
+  }
 };

@@ -6,6 +6,7 @@
  * @azsdk-weight 90
  */
 import { AppConfigurationClient } from "@azure/app-configuration";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
@@ -17,8 +18,10 @@ export async function main() {
   console.log("Running helloworldWithLabels sample");
 
   // Set the following environment variable or edit the value on the following line.
-  const connectionString = process.env["APPCONFIG_CONNECTION_STRING"] || "<connection string>";
-  const client = new AppConfigurationClient(connectionString);
+  const endpoint = process.env["AZ_CONFIG_ENDPOINT"] || "<endpoint>";
+
+  const credential = new DefaultAzureCredential();
+  const client = new AppConfigurationClient(endpoint, credential);
 
   const urlKey = "Samples:Endpoint:Url";
 
@@ -30,12 +33,12 @@ export async function main() {
   await client.addConfigurationSetting({
     key: urlKey,
     label: "beta",
-    value: "https://beta.example.com"
+    value: "https://beta.example.com",
   });
   await client.addConfigurationSetting({
     key: urlKey,
     label: "production",
-    value: "https://example.com"
+    value: "https://example.com",
   });
 
   const betaEndpoint = await client.getConfigurationSetting({ key: urlKey, label: "beta" });
@@ -43,7 +46,7 @@ export async function main() {
 
   const productionEndpoint = await client.getConfigurationSetting({
     key: urlKey,
-    label: "production"
+    label: "production",
   });
   console.log(`Endpoint with production label: ${productionEndpoint.value}`);
 
@@ -52,7 +55,7 @@ export async function main() {
 
 async function cleanupSampleValues(keys: string[], client: AppConfigurationClient) {
   const existingSettings = client.listConfigurationSettings({
-    keyFilter: keys.join(",")
+    keyFilter: keys.join(","),
   });
 
   for await (const setting of existingSettings) {

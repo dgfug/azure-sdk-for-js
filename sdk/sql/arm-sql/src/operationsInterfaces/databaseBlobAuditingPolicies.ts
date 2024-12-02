@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   DatabaseBlobAuditingPolicy,
@@ -14,7 +13,7 @@ import {
   DatabaseBlobAuditingPoliciesGetOptionalParams,
   DatabaseBlobAuditingPoliciesGetResponse,
   DatabaseBlobAuditingPoliciesCreateOrUpdateOptionalParams,
-  DatabaseBlobAuditingPoliciesCreateOrUpdateResponse
+  DatabaseBlobAuditingPoliciesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface DatabaseBlobAuditingPolicies {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseBlobAuditingPoliciesListByDatabaseOptionalParams
+    options?: DatabaseBlobAuditingPoliciesListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<DatabaseBlobAuditingPolicy>;
   /**
    * Gets a database's blob auditing policy.
@@ -46,7 +45,7 @@ export interface DatabaseBlobAuditingPolicies {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabaseBlobAuditingPoliciesGetOptionalParams
+    options?: DatabaseBlobAuditingPoliciesGetOptionalParams,
   ): Promise<DatabaseBlobAuditingPoliciesGetResponse>;
   /**
    * Creates or updates a database's blob auditing policy.
@@ -62,6 +61,6 @@ export interface DatabaseBlobAuditingPolicies {
     serverName: string,
     databaseName: string,
     parameters: DatabaseBlobAuditingPolicy,
-    options?: DatabaseBlobAuditingPoliciesCreateOrUpdateOptionalParams
+    options?: DatabaseBlobAuditingPoliciesCreateOrUpdateOptionalParams,
   ): Promise<DatabaseBlobAuditingPoliciesCreateOrUpdateResponse>;
 }

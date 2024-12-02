@@ -7,7 +7,7 @@
  */
 
 /// <reference lib="esnext.asynciterable" />
+export { getContinuationToken } from "./pagingHelper";
 export * from "./models";
 export { PurviewManagementClient } from "./purviewManagementClient";
-export { PurviewManagementClientContext } from "./purviewManagementClientContext";
 export * from "./operationsInterfaces";

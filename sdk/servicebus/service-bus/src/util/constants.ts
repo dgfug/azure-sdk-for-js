@@ -1,18 +1,25 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @internal
  */
 export const packageJsonInfo = {
   name: "@azure/service-bus",
-  version: "7.4.1"
+  version: "7.10.0",
 };
 
 /**
  * @internal
  */
 export const messageDispositionTimeout = 20000;
+
+/**
+ * The amount of time in milliseconds that a receiver
+ * will wait while draining credits before returning.
+ * @internal
+ */
+export const receiveDrainTimeoutInMs = 200;
 
 /**
  * @internal
@@ -359,5 +366,5 @@ export const HttpResponseCodes = {
   502: "BadGateway",
   503: "ServiceUnavailable",
   504: "GatewayTimeout",
-  505: "HttpVersionNotSupported"
+  505: "HttpVersionNotSupported",
 };

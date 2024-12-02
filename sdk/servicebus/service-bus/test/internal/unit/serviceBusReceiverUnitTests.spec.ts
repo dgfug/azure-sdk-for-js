@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { BatchingReceiver } from "../../../src/core/batchingReceiver";
-import { ServiceBusReceiverImpl } from "../../../src/receivers/receiver";
-import { assertThrows } from "../../public/utils/testUtils";
-import { createConnectionContextForTests, getPromiseResolverForTest } from "./unittestUtils";
-import chai from "chai";
-import { InternalMessageHandlers } from "../../../src/models";
-const assert = chai.assert;
+import type { BatchingReceiver } from "../../../src/core/batchingReceiver.js";
+import { ServiceBusReceiverImpl } from "../../../src/receivers/receiver.js";
+import { assertThrows } from "../../public/utils/testUtils.js";
+import { createConnectionContextForTests, getPromiseResolverForTest } from "./unittestUtils.js";
+import type { InternalMessageHandlers } from "../../../src/models.js";
+import { afterEach, beforeEach, describe, it } from "vitest";
+import { assert } from "../../public/utils/chai.js";
 
 describe("ServiceBusReceiver unit tests", () => {
   let receiver: ServiceBusReceiverImpl;
@@ -17,7 +17,8 @@ describe("ServiceBusReceiver unit tests", () => {
       createConnectionContextForTests(),
       "entityPath",
       "peekLock",
-      0
+      0,
+      false,
     );
   });
 
@@ -25,7 +26,7 @@ describe("ServiceBusReceiver unit tests", () => {
 
   const expectedError: Record<string, any> = {
     name: "Error",
-    message: 'The receiver for "entityPath" is already receiving messages.'
+    message: 'The receiver for "entityPath" is already receiving messages.',
   };
 
   it("isAlreadyReceiving (batching first, then streaming)", async () => {
@@ -34,22 +35,28 @@ describe("ServiceBusReceiver unit tests", () => {
     receiver["_batchingReceiver"] = {
       isOpen: () => true,
       isReceivingMessages: true,
-      close: async () => {}
+      close: async () => {
+        /* empty body */
+      },
     } as BatchingReceiver;
 
     assert.isTrue(receiver["_isReceivingMessages"](), "Batching receiver is receiving messages");
 
-    const subscribeFn = async () => {
+    const subscribeFn = async (): Promise<void> => {
       receiver.subscribe({
-        processError: async (_errArgs) => {},
-        processMessage: async (_msg) => {}
+        processError: async (_errArgs) => {
+          /* empty body */
+        },
+        processMessage: async (_msg) => {
+          /* empty body */
+        },
       });
     };
 
     await assertThrows(
       subscribeFn,
       expectedError,
-      "Trying to receive a separate way, in parallel, should throw"
+      "Trying to receive a separate way, in parallel, should throw",
     );
   });
 
@@ -62,8 +69,12 @@ describe("ServiceBusReceiver unit tests", () => {
       postInitialize: async () => {
         resolve();
       },
-      processError: async (_errArgs) => {},
-      processMessage: async (_msg) => {}
+      processError: async (_errArgs) => {
+        /* empty body */
+      },
+      processMessage: async (_msg) => {
+        /* empty body */
+      },
     } as InternalMessageHandlers);
 
     await subscriberInitializedPromise;
@@ -73,7 +84,7 @@ describe("ServiceBusReceiver unit tests", () => {
     await assertThrows(
       () => receiver.receiveMessages(1),
       expectedError,
-      "Trying to receive a separate way, in parallel, should throw"
+      "Trying to receive a separate way, in parallel, should throw",
     );
   });
 });

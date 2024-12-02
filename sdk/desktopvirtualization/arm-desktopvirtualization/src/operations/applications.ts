@@ -6,16 +6,18 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Applications } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DesktopVirtualizationAPIClientContext } from "../desktopVirtualizationAPIClientContext";
+import { DesktopVirtualizationAPIClient } from "../desktopVirtualizationAPIClient";
 import {
   Application,
   ApplicationsListNextOptionalParams,
   ApplicationsListOptionalParams,
+  ApplicationsListResponse,
   ApplicationsGetOptionalParams,
   ApplicationsGetResponse,
   ApplicationsCreateOrUpdateOptionalParams,
@@ -23,20 +25,19 @@ import {
   ApplicationsDeleteOptionalParams,
   ApplicationsUpdateOptionalParams,
   ApplicationsUpdateResponse,
-  ApplicationsListResponse,
-  ApplicationsListNextResponse
+  ApplicationsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Applications operations. */
 export class ApplicationsImpl implements Applications {
-  private readonly client: DesktopVirtualizationAPIClientContext;
+  private readonly client: DesktopVirtualizationAPIClient;
 
   /**
    * Initialize a new instance of the class Applications class.
    * @param client Reference to the service client
    */
-  constructor(client: DesktopVirtualizationAPIClientContext) {
+  constructor(client: DesktopVirtualizationAPIClient) {
     this.client = client;
   }
 
@@ -49,12 +50,12 @@ export class ApplicationsImpl implements Applications {
   public list(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: ApplicationsListOptionalParams
+    options?: ApplicationsListOptionalParams,
   ): PagedAsyncIterableIterator<Application> {
     const iter = this.listPagingAll(
       resourceGroupName,
       applicationGroupName,
-      options
+      options,
     );
     return {
       next() {
@@ -63,49 +64,62 @@ export class ApplicationsImpl implements Applications {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           applicationGroupName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: ApplicationsListOptionalParams
+    options?: ApplicationsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Application[]> {
-    let result = await this._list(
-      resourceGroupName,
-      applicationGroupName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ApplicationsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        applicationGroupName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         applicationGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: ApplicationsListOptionalParams
+    options?: ApplicationsListOptionalParams,
   ): AsyncIterableIterator<Application> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       applicationGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -122,11 +136,11 @@ export class ApplicationsImpl implements Applications {
     resourceGroupName: string,
     applicationGroupName: string,
     applicationName: string,
-    options?: ApplicationsGetOptionalParams
+    options?: ApplicationsGetOptionalParams,
   ): Promise<ApplicationsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, applicationName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -143,7 +157,7 @@ export class ApplicationsImpl implements Applications {
     applicationGroupName: string,
     applicationName: string,
     application: Application,
-    options?: ApplicationsCreateOrUpdateOptionalParams
+    options?: ApplicationsCreateOrUpdateOptionalParams,
   ): Promise<ApplicationsCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -151,9 +165,9 @@ export class ApplicationsImpl implements Applications {
         applicationGroupName,
         applicationName,
         application,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -168,11 +182,11 @@ export class ApplicationsImpl implements Applications {
     resourceGroupName: string,
     applicationGroupName: string,
     applicationName: string,
-    options?: ApplicationsDeleteOptionalParams
+    options?: ApplicationsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, applicationName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -187,11 +201,11 @@ export class ApplicationsImpl implements Applications {
     resourceGroupName: string,
     applicationGroupName: string,
     applicationName: string,
-    options?: ApplicationsUpdateOptionalParams
+    options?: ApplicationsUpdateOptionalParams,
   ): Promise<ApplicationsUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, applicationName, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -204,11 +218,11 @@ export class ApplicationsImpl implements Applications {
   private _list(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: ApplicationsListOptionalParams
+    options?: ApplicationsListOptionalParams,
   ): Promise<ApplicationsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -223,11 +237,11 @@ export class ApplicationsImpl implements Applications {
     resourceGroupName: string,
     applicationGroupName: string,
     nextLink: string,
-    options?: ApplicationsListNextOptionalParams
+    options?: ApplicationsListNextOptionalParams,
   ): Promise<ApplicationsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -235,16 +249,15 @@ export class ApplicationsImpl implements Applications {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.Application
+      bodyMapper: Mappers.Application,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -252,25 +265,24 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.applicationGroupName,
-    Parameters.applicationName
+    Parameters.applicationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.Application
+      bodyMapper: Mappers.Application,
     },
     201: {
-      bodyMapper: Mappers.Application
+      bodyMapper: Mappers.Application,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.application,
   queryParameters: [Parameters.apiVersion],
@@ -279,22 +291,21 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.applicationGroupName,
-    Parameters.applicationName
+    Parameters.applicationName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -302,22 +313,21 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.applicationGroupName,
-    Parameters.applicationName
+    Parameters.applicationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications/{applicationName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.Application
+      bodyMapper: Mappers.Application,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.application1,
   queryParameters: [Parameters.apiVersion],
@@ -326,53 +336,56 @@ const updateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.applicationGroupName,
-    Parameters.applicationName
+    Parameters.applicationName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}/applications",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationList
+      bodyMapper: Mappers.ApplicationList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.pageSize,
+    Parameters.isDescending,
+    Parameters.initialSkip,
+  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationList
+      bodyMapper: Mappers.ApplicationList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

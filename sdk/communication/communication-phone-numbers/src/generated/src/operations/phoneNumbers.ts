@@ -6,43 +6,345 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import * as coreHttp from "@azure/core-http";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { PhoneNumbersClientContext } from "../phoneNumbersClientContext";
-import { LROPoller, shouldDeserializeLRO } from "../lro";
+import { tracingClient } from "../tracing.js";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper.js";
+import { PhoneNumbers } from "../operationsInterfaces/index.js";
+import * as coreClient from "@azure/core-client";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { PhoneNumbersClient } from "../phoneNumbersClient.js";
+import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl.js";
 import {
+  PhoneNumberAreaCode,
+  PhoneNumbersListAreaCodesNextOptionalParams,
+  PhoneNumberType,
+  PhoneNumbersListAreaCodesOptionalParams,
+  PhoneNumbersListAreaCodesResponse,
+  PhoneNumberCountry,
+  PhoneNumbersListAvailableCountriesNextOptionalParams,
+  PhoneNumbersListAvailableCountriesOptionalParams,
+  PhoneNumbersListAvailableCountriesResponse,
+  PhoneNumberLocality,
+  PhoneNumbersListAvailableLocalitiesNextOptionalParams,
+  PhoneNumbersListAvailableLocalitiesOptionalParams,
+  PhoneNumbersListAvailableLocalitiesResponse,
+  PhoneNumberOffering,
+  PhoneNumbersListOfferingsNextOptionalParams,
+  PhoneNumbersListOfferingsOptionalParams,
+  PhoneNumbersListOfferingsResponse,
   PurchasedPhoneNumber,
   PhoneNumbersListPhoneNumbersNextOptionalParams,
   PhoneNumbersListPhoneNumbersOptionalParams,
-  PhoneNumberType,
+  PhoneNumbersListPhoneNumbersResponse,
   PhoneNumberAssignmentType,
   PhoneNumberCapabilities,
   PhoneNumbersSearchAvailablePhoneNumbersOptionalParams,
   PhoneNumbersSearchAvailablePhoneNumbersResponse,
+  PhoneNumbersGetSearchResultOptionalParams,
   PhoneNumbersGetSearchResultResponse,
   PhoneNumbersPurchasePhoneNumbersOptionalParams,
   PhoneNumbersPurchasePhoneNumbersResponse,
+  PhoneNumbersGetOperationOptionalParams,
   PhoneNumbersGetOperationResponse,
+  PhoneNumbersCancelOperationOptionalParams,
   PhoneNumbersUpdateCapabilitiesOptionalParams,
   PhoneNumbersUpdateCapabilitiesResponse,
+  PhoneNumbersGetByNumberOptionalParams,
   PhoneNumbersGetByNumberResponse,
+  PhoneNumbersReleasePhoneNumberOptionalParams,
   PhoneNumbersReleasePhoneNumberResponse,
-  PhoneNumbersListPhoneNumbersResponse,
-  PhoneNumbersListPhoneNumbersNextResponse
-} from "../models";
+  PhoneNumbersOperatorInformationSearchOptionalParams,
+  PhoneNumbersOperatorInformationSearchResponse,
+  PhoneNumbersListAreaCodesNextResponse,
+  PhoneNumbersListAvailableCountriesNextResponse,
+  PhoneNumbersListAvailableLocalitiesNextResponse,
+  PhoneNumbersListOfferingsNextResponse,
+  PhoneNumbersListPhoneNumbersNextResponse,
+} from "../models/index.js";
 
-/** Class representing a PhoneNumbers. */
-export class PhoneNumbers {
-  private readonly client: PhoneNumbersClientContext;
+/// <reference lib="esnext.asynciterable" />
+/** Class containing PhoneNumbers operations. */
+export class PhoneNumbersImpl implements PhoneNumbers {
+  private readonly client: PhoneNumbersClient;
 
   /**
    * Initialize a new instance of the class PhoneNumbers class.
    * @param client Reference to the service client
    */
-  constructor(client: PhoneNumbersClientContext) {
+  constructor(client: PhoneNumbersClient) {
     this.client = client;
+  }
+
+  /**
+   * Gets the list of available area codes.
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param phoneNumberType Filter by numberType, e.g. Geographic, TollFree.
+   * @param options The options parameters.
+   */
+  public listAreaCodes(
+    countryCode: string,
+    phoneNumberType: PhoneNumberType,
+    options?: PhoneNumbersListAreaCodesOptionalParams,
+  ): PagedAsyncIterableIterator<PhoneNumberAreaCode> {
+    const iter = this.listAreaCodesPagingAll(
+      countryCode,
+      phoneNumberType,
+      options,
+    );
+    return {
+      next() {
+        return iter.next();
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAreaCodesPagingPage(
+          countryCode,
+          phoneNumberType,
+          options,
+          settings,
+        );
+      },
+    };
+  }
+
+  private async *listAreaCodesPagingPage(
+    countryCode: string,
+    phoneNumberType: PhoneNumberType,
+    options?: PhoneNumbersListAreaCodesOptionalParams,
+    settings?: PageSettings,
+  ): AsyncIterableIterator<PhoneNumberAreaCode[]> {
+    let result: PhoneNumbersListAreaCodesResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAreaCodes(countryCode, phoneNumberType, options);
+      let page = result.areaCodes || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+    while (continuationToken) {
+      result = await this._listAreaCodesNext(
+        countryCode,
+        continuationToken,
+        options,
+      );
+      continuationToken = result.nextLink;
+      let page = result.areaCodes || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+  }
+
+  private async *listAreaCodesPagingAll(
+    countryCode: string,
+    phoneNumberType: PhoneNumberType,
+    options?: PhoneNumbersListAreaCodesOptionalParams,
+  ): AsyncIterableIterator<PhoneNumberAreaCode> {
+    for await (const page of this.listAreaCodesPagingPage(
+      countryCode,
+      phoneNumberType,
+      options,
+    )) {
+      yield* page;
+    }
+  }
+
+  /**
+   * Gets the list of supported countries.
+   * @param options The options parameters.
+   */
+  public listAvailableCountries(
+    options?: PhoneNumbersListAvailableCountriesOptionalParams,
+  ): PagedAsyncIterableIterator<PhoneNumberCountry> {
+    const iter = this.listAvailableCountriesPagingAll(options);
+    return {
+      next() {
+        return iter.next();
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAvailableCountriesPagingPage(options, settings);
+      },
+    };
+  }
+
+  private async *listAvailableCountriesPagingPage(
+    options?: PhoneNumbersListAvailableCountriesOptionalParams,
+    settings?: PageSettings,
+  ): AsyncIterableIterator<PhoneNumberCountry[]> {
+    let result: PhoneNumbersListAvailableCountriesResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAvailableCountries(options);
+      let page = result.countries || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+    while (continuationToken) {
+      result = await this._listAvailableCountriesNext(
+        continuationToken,
+        options,
+      );
+      continuationToken = result.nextLink;
+      let page = result.countries || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+  }
+
+  private async *listAvailableCountriesPagingAll(
+    options?: PhoneNumbersListAvailableCountriesOptionalParams,
+  ): AsyncIterableIterator<PhoneNumberCountry> {
+    for await (const page of this.listAvailableCountriesPagingPage(options)) {
+      yield* page;
+    }
+  }
+
+  /**
+   * Gets the list of cities or towns with available phone numbers.
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param options The options parameters.
+   */
+  public listAvailableLocalities(
+    countryCode: string,
+    options?: PhoneNumbersListAvailableLocalitiesOptionalParams,
+  ): PagedAsyncIterableIterator<PhoneNumberLocality> {
+    const iter = this.listAvailableLocalitiesPagingAll(countryCode, options);
+    return {
+      next() {
+        return iter.next();
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAvailableLocalitiesPagingPage(
+          countryCode,
+          options,
+          settings,
+        );
+      },
+    };
+  }
+
+  private async *listAvailableLocalitiesPagingPage(
+    countryCode: string,
+    options?: PhoneNumbersListAvailableLocalitiesOptionalParams,
+    settings?: PageSettings,
+  ): AsyncIterableIterator<PhoneNumberLocality[]> {
+    let result: PhoneNumbersListAvailableLocalitiesResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAvailableLocalities(countryCode, options);
+      let page = result.phoneNumberLocalities || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+    while (continuationToken) {
+      result = await this._listAvailableLocalitiesNext(
+        countryCode,
+        continuationToken,
+        options,
+      );
+      continuationToken = result.nextLink;
+      let page = result.phoneNumberLocalities || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+  }
+
+  private async *listAvailableLocalitiesPagingAll(
+    countryCode: string,
+    options?: PhoneNumbersListAvailableLocalitiesOptionalParams,
+  ): AsyncIterableIterator<PhoneNumberLocality> {
+    for await (const page of this.listAvailableLocalitiesPagingPage(
+      countryCode,
+      options,
+    )) {
+      yield* page;
+    }
+  }
+
+  /**
+   * List available offerings of capabilities with rates for the given country.
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param options The options parameters.
+   */
+  public listOfferings(
+    countryCode: string,
+    options?: PhoneNumbersListOfferingsOptionalParams,
+  ): PagedAsyncIterableIterator<PhoneNumberOffering> {
+    const iter = this.listOfferingsPagingAll(countryCode, options);
+    return {
+      next() {
+        return iter.next();
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listOfferingsPagingPage(countryCode, options, settings);
+      },
+    };
+  }
+
+  private async *listOfferingsPagingPage(
+    countryCode: string,
+    options?: PhoneNumbersListOfferingsOptionalParams,
+    settings?: PageSettings,
+  ): AsyncIterableIterator<PhoneNumberOffering[]> {
+    let result: PhoneNumbersListOfferingsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listOfferings(countryCode, options);
+      let page = result.phoneNumberOfferings || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+    while (continuationToken) {
+      result = await this._listOfferingsNext(
+        countryCode,
+        continuationToken,
+        options,
+      );
+      continuationToken = result.nextLink;
+      let page = result.phoneNumberOfferings || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
+  }
+
+  private async *listOfferingsPagingAll(
+    countryCode: string,
+    options?: PhoneNumbersListOfferingsOptionalParams,
+  ): AsyncIterableIterator<PhoneNumberOffering> {
+    for await (const page of this.listOfferingsPagingPage(
+      countryCode,
+      options,
+    )) {
+      yield* page;
+    }
   }
 
   /**
@@ -50,7 +352,7 @@ export class PhoneNumbers {
    * @param options The options parameters.
    */
   public listPhoneNumbers(
-    options?: PhoneNumbersListPhoneNumbersOptionalParams
+    options?: PhoneNumbersListPhoneNumbersOptionalParams,
   ): PagedAsyncIterableIterator<PurchasedPhoneNumber> {
     const iter = this.listPhoneNumbersPagingAll(options);
     return {
@@ -60,31 +362,127 @@ export class PhoneNumbers {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPhoneNumbersPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPhoneNumbersPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPhoneNumbersPagingPage(
-    options?: PhoneNumbersListPhoneNumbersOptionalParams
+    options?: PhoneNumbersListPhoneNumbersOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<PurchasedPhoneNumber[]> {
-    let result = await this._listPhoneNumbers(options);
-    yield result.phoneNumbers || [];
-    let continuationToken = result.nextLink;
+    let result: PhoneNumbersListPhoneNumbersResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listPhoneNumbers(options);
+      let page = result.phoneNumbers || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listPhoneNumbersNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.phoneNumbers || [];
+      let page = result.phoneNumbers || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPhoneNumbersPagingAll(
-    options?: PhoneNumbersListPhoneNumbersOptionalParams
+    options?: PhoneNumbersListPhoneNumbersOptionalParams,
   ): AsyncIterableIterator<PurchasedPhoneNumber> {
     for await (const page of this.listPhoneNumbersPagingPage(options)) {
       yield* page;
     }
+  }
+
+  /**
+   * Gets the list of available area codes.
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param phoneNumberType Filter by numberType, e.g. Geographic, TollFree.
+   * @param options The options parameters.
+   */
+  private async _listAreaCodes(
+    countryCode: string,
+    phoneNumberType: PhoneNumberType,
+    options?: PhoneNumbersListAreaCodesOptionalParams,
+  ): Promise<PhoneNumbersListAreaCodesResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listAreaCodes",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { countryCode, phoneNumberType, options },
+          listAreaCodesOperationSpec,
+        ) as Promise<PhoneNumbersListAreaCodesResponse>;
+      },
+    );
+  }
+
+  /**
+   * Gets the list of supported countries.
+   * @param options The options parameters.
+   */
+  private async _listAvailableCountries(
+    options?: PhoneNumbersListAvailableCountriesOptionalParams,
+  ): Promise<PhoneNumbersListAvailableCountriesResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listAvailableCountries",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { options },
+          listAvailableCountriesOperationSpec,
+        ) as Promise<PhoneNumbersListAvailableCountriesResponse>;
+      },
+    );
+  }
+
+  /**
+   * Gets the list of cities or towns with available phone numbers.
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param options The options parameters.
+   */
+  private async _listAvailableLocalities(
+    countryCode: string,
+    options?: PhoneNumbersListAvailableLocalitiesOptionalParams,
+  ): Promise<PhoneNumbersListAvailableLocalitiesResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listAvailableLocalities",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { countryCode, options },
+          listAvailableLocalitiesOperationSpec,
+        ) as Promise<PhoneNumbersListAvailableLocalitiesResponse>;
+      },
+    );
+  }
+
+  /**
+   * List available offerings of capabilities with rates for the given country.
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param options The options parameters.
+   */
+  private async _listOfferings(
+    countryCode: string,
+    options?: PhoneNumbersListOfferingsOptionalParams,
+  ): Promise<PhoneNumbersListOfferingsResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listOfferings",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { countryCode, options },
+          listOfferingsOperationSpec,
+        ) as Promise<PhoneNumbersListOfferingsResponse>;
+      },
+    );
   }
 
   /**
@@ -96,40 +494,109 @@ export class PhoneNumbers {
    * @param capabilities Capabilities of a phone number.
    * @param options The options parameters.
    */
-  async searchAvailablePhoneNumbers(
+  async beginSearchAvailablePhoneNumbers(
     countryCode: string,
     phoneNumberType: PhoneNumberType,
     assignmentType: PhoneNumberAssignmentType,
     capabilities: PhoneNumberCapabilities,
-    options?: PhoneNumbersSearchAvailablePhoneNumbersOptionalParams
-  ): Promise<LROPoller<PhoneNumbersSearchAvailablePhoneNumbersResponse>> {
-    const operationArguments: coreHttp.OperationArguments = {
+    options?: PhoneNumbersSearchAvailablePhoneNumbersOptionalParams,
+  ): Promise<
+    PollerLike<
+      PollOperationState<PhoneNumbersSearchAvailablePhoneNumbersResponse>,
+      PhoneNumbersSearchAvailablePhoneNumbersResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<PhoneNumbersSearchAvailablePhoneNumbersResponse> => {
+      return tracingClient.withSpan(
+        "PhoneNumbersClient.beginSearchAvailablePhoneNumbers",
+        options ?? {},
+        async () => {
+          return this.client.sendOperationRequest(
+            args,
+            spec,
+          ) as Promise<PhoneNumbersSearchAvailablePhoneNumbersResponse>;
+        },
+      );
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        countryCode,
+        phoneNumberType,
+        assignmentType,
+        capabilities,
+        options,
+      },
+      spec: searchAvailablePhoneNumbersOperationSpec,
+    });
+    const poller = new LroEngine(lro, {
+      resumeFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      lroResourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Search for available phone numbers to purchase.
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param phoneNumberType The type of phone numbers to search for, e.g. geographic, or tollFree.
+   * @param assignmentType The assignment type of the phone numbers to search for. A phone number can be
+   *                       assigned to a person, or to an application.
+   * @param capabilities Capabilities of a phone number.
+   * @param options The options parameters.
+   */
+  async beginSearchAvailablePhoneNumbersAndWait(
+    countryCode: string,
+    phoneNumberType: PhoneNumberType,
+    assignmentType: PhoneNumberAssignmentType,
+    capabilities: PhoneNumberCapabilities,
+    options?: PhoneNumbersSearchAvailablePhoneNumbersOptionalParams,
+  ): Promise<PhoneNumbersSearchAvailablePhoneNumbersResponse> {
+    const poller = await this.beginSearchAvailablePhoneNumbers(
       countryCode,
       phoneNumberType,
       assignmentType,
       capabilities,
-      options: this.getOperationOptions(options, "location")
-    };
-    const sendOperation = (
-      args: coreHttp.OperationArguments,
-      spec: coreHttp.OperationSpec
-    ) => {
-      return this.client.sendOperationRequest(args, spec) as Promise<
-        PhoneNumbersSearchAvailablePhoneNumbersResponse
-      >;
-    };
-
-    const initialOperationResult = await sendOperation(
-      operationArguments,
-      searchAvailablePhoneNumbersOperationSpec
+      options,
     );
-    return new LROPoller({
-      initialOperationArguments: operationArguments,
-      initialOperationSpec: searchAvailablePhoneNumbersOperationSpec,
-      initialOperationResult,
-      sendOperation,
-      finalStateVia: "location"
-    });
+    return poller.pollUntilDone();
   }
 
   /**
@@ -137,49 +604,103 @@ export class PhoneNumbers {
    * @param searchId The search Id.
    * @param options The options parameters.
    */
-  getSearchResult(
+  async getSearchResult(
     searchId: string,
-    options?: coreHttp.OperationOptions
+    options?: PhoneNumbersGetSearchResultOptionalParams,
   ): Promise<PhoneNumbersGetSearchResultResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      searchId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      getSearchResultOperationSpec
-    ) as Promise<PhoneNumbersGetSearchResultResponse>;
+    return tracingClient.withSpan(
+      "PhoneNumbersClient.getSearchResult",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { searchId, options },
+          getSearchResultOperationSpec,
+        ) as Promise<PhoneNumbersGetSearchResultResponse>;
+      },
+    );
   }
 
   /**
    * Purchases phone numbers.
    * @param options The options parameters.
    */
-  async purchasePhoneNumbers(
-    options?: PhoneNumbersPurchasePhoneNumbersOptionalParams
-  ): Promise<LROPoller<PhoneNumbersPurchasePhoneNumbersResponse>> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: this.getOperationOptions(options, "undefined")
+  async beginPurchasePhoneNumbers(
+    options?: PhoneNumbersPurchasePhoneNumbersOptionalParams,
+  ): Promise<
+    PollerLike<
+      PollOperationState<PhoneNumbersPurchasePhoneNumbersResponse>,
+      PhoneNumbersPurchasePhoneNumbersResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<PhoneNumbersPurchasePhoneNumbersResponse> => {
+      return tracingClient.withSpan(
+        "PhoneNumbersClient.beginPurchasePhoneNumbers",
+        options ?? {},
+        async () => {
+          return this.client.sendOperationRequest(
+            args,
+            spec,
+          ) as Promise<PhoneNumbersPurchasePhoneNumbersResponse>;
+        },
+      );
     };
-    const sendOperation = (
-      args: coreHttp.OperationArguments,
-      spec: coreHttp.OperationSpec
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
     ) => {
-      return this.client.sendOperationRequest(args, spec) as Promise<
-        PhoneNumbersPurchasePhoneNumbersResponse
-      >;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
     };
 
-    const initialOperationResult = await sendOperation(
-      operationArguments,
-      purchasePhoneNumbersOperationSpec
-    );
-    return new LROPoller({
-      initialOperationArguments: operationArguments,
-      initialOperationSpec: purchasePhoneNumbersOperationSpec,
-      initialOperationResult,
-      sendOperation
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { options },
+      spec: purchasePhoneNumbersOperationSpec,
     });
+    const poller = new LroEngine(lro, {
+      resumeFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Purchases phone numbers.
+   * @param options The options parameters.
+   */
+  async beginPurchasePhoneNumbersAndWait(
+    options?: PhoneNumbersPurchasePhoneNumbersOptionalParams,
+  ): Promise<PhoneNumbersPurchasePhoneNumbersResponse> {
+    const poller = await this.beginPurchasePhoneNumbers(options);
+    return poller.pollUntilDone();
   }
 
   /**
@@ -187,18 +708,20 @@ export class PhoneNumbers {
    * @param operationId The id of the operation
    * @param options The options parameters.
    */
-  getOperation(
+  async getOperation(
     operationId: string,
-    options?: coreHttp.OperationOptions
+    options?: PhoneNumbersGetOperationOptionalParams,
   ): Promise<PhoneNumbersGetOperationResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      operationId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      getOperationOperationSpec
-    ) as Promise<PhoneNumbersGetOperationResponse>;
+    return tracingClient.withSpan(
+      "PhoneNumbersClient.getOperation",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { operationId, options },
+          getOperationOperationSpec,
+        ) as Promise<PhoneNumbersGetOperationResponse>;
+      },
+    );
   }
 
   /**
@@ -206,18 +729,20 @@ export class PhoneNumbers {
    * @param operationId The id of the operation
    * @param options The options parameters.
    */
-  cancelOperation(
+  async cancelOperation(
     operationId: string,
-    options?: coreHttp.OperationOptions
-  ): Promise<coreHttp.RestResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      operationId,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      cancelOperationOperationSpec
-    ) as Promise<coreHttp.RestResponse>;
+    options?: PhoneNumbersCancelOperationOptionalParams,
+  ): Promise<void> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient.cancelOperation",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { operationId, options },
+          cancelOperationOperationSpec,
+        ) as Promise<void>;
+      },
+    );
   }
 
   /**
@@ -226,34 +751,88 @@ export class PhoneNumbers {
    *                    as %2B, e.g. +11234567890.
    * @param options The options parameters.
    */
-  async updateCapabilities(
+  async beginUpdateCapabilities(
     phoneNumber: string,
-    options?: PhoneNumbersUpdateCapabilitiesOptionalParams
-  ): Promise<LROPoller<PhoneNumbersUpdateCapabilitiesResponse>> {
-    const operationArguments: coreHttp.OperationArguments = {
-      phoneNumber,
-      options: this.getOperationOptions(options, "location")
+    options?: PhoneNumbersUpdateCapabilitiesOptionalParams,
+  ): Promise<
+    PollerLike<
+      PollOperationState<PhoneNumbersUpdateCapabilitiesResponse>,
+      PhoneNumbersUpdateCapabilitiesResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<PhoneNumbersUpdateCapabilitiesResponse> => {
+      return tracingClient.withSpan(
+        "PhoneNumbersClient.beginUpdateCapabilities",
+        options ?? {},
+        async () => {
+          return this.client.sendOperationRequest(
+            args,
+            spec,
+          ) as Promise<PhoneNumbersUpdateCapabilitiesResponse>;
+        },
+      );
     };
-    const sendOperation = (
-      args: coreHttp.OperationArguments,
-      spec: coreHttp.OperationSpec
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
     ) => {
-      return this.client.sendOperationRequest(args, spec) as Promise<
-        PhoneNumbersUpdateCapabilitiesResponse
-      >;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
     };
 
-    const initialOperationResult = await sendOperation(
-      operationArguments,
-      updateCapabilitiesOperationSpec
-    );
-    return new LROPoller({
-      initialOperationArguments: operationArguments,
-      initialOperationSpec: updateCapabilitiesOperationSpec,
-      initialOperationResult,
-      sendOperation,
-      finalStateVia: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { phoneNumber, options },
+      spec: updateCapabilitiesOperationSpec,
     });
+    const poller = new LroEngine(lro, {
+      resumeFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      lroResourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Updates the capabilities of a phone number.
+   * @param phoneNumber The phone number id in E.164 format. The leading plus can be either + or encoded
+   *                    as %2B, e.g. +11234567890.
+   * @param options The options parameters.
+   */
+  async beginUpdateCapabilitiesAndWait(
+    phoneNumber: string,
+    options?: PhoneNumbersUpdateCapabilitiesOptionalParams,
+  ): Promise<PhoneNumbersUpdateCapabilitiesResponse> {
+    const poller = await this.beginUpdateCapabilities(phoneNumber, options);
+    return poller.pollUntilDone();
   }
 
   /**
@@ -262,18 +841,20 @@ export class PhoneNumbers {
    *                    +11234567890.
    * @param options The options parameters.
    */
-  getByNumber(
+  async getByNumber(
     phoneNumber: string,
-    options?: coreHttp.OperationOptions
+    options?: PhoneNumbersGetByNumberOptionalParams,
   ): Promise<PhoneNumbersGetByNumberResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      phoneNumber,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      getByNumberOperationSpec
-    ) as Promise<PhoneNumbersGetByNumberResponse>;
+    return tracingClient.withSpan(
+      "PhoneNumbersClient.getByNumber",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { phoneNumber, options },
+          getByNumberOperationSpec,
+        ) as Promise<PhoneNumbersGetByNumberResponse>;
+      },
+    );
   }
 
   /**
@@ -281,49 +862,217 @@ export class PhoneNumbers {
    * @param phoneNumber Phone number to be released, e.g. +11234567890.
    * @param options The options parameters.
    */
-  async releasePhoneNumber(
+  async beginReleasePhoneNumber(
     phoneNumber: string,
-    options?: coreHttp.OperationOptions
-  ): Promise<LROPoller<PhoneNumbersReleasePhoneNumberResponse>> {
-    const operationArguments: coreHttp.OperationArguments = {
-      phoneNumber,
-      options: this.getOperationOptions(options, "undefined")
+    options?: PhoneNumbersReleasePhoneNumberOptionalParams,
+  ): Promise<
+    PollerLike<
+      PollOperationState<PhoneNumbersReleasePhoneNumberResponse>,
+      PhoneNumbersReleasePhoneNumberResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<PhoneNumbersReleasePhoneNumberResponse> => {
+      return tracingClient.withSpan(
+        "PhoneNumbersClient.beginReleasePhoneNumber",
+        options ?? {},
+        async () => {
+          return this.client.sendOperationRequest(
+            args,
+            spec,
+          ) as Promise<PhoneNumbersReleasePhoneNumberResponse>;
+        },
+      );
     };
-    const sendOperation = (
-      args: coreHttp.OperationArguments,
-      spec: coreHttp.OperationSpec
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
     ) => {
-      return this.client.sendOperationRequest(args, spec) as Promise<
-        PhoneNumbersReleasePhoneNumberResponse
-      >;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
     };
 
-    const initialOperationResult = await sendOperation(
-      operationArguments,
-      releasePhoneNumberOperationSpec
-    );
-    return new LROPoller({
-      initialOperationArguments: operationArguments,
-      initialOperationSpec: releasePhoneNumberOperationSpec,
-      initialOperationResult,
-      sendOperation
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { phoneNumber, options },
+      spec: releasePhoneNumberOperationSpec,
     });
+    const poller = new LroEngine(lro, {
+      resumeFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Releases a purchased phone number.
+   * @param phoneNumber Phone number to be released, e.g. +11234567890.
+   * @param options The options parameters.
+   */
+  async beginReleasePhoneNumberAndWait(
+    phoneNumber: string,
+    options?: PhoneNumbersReleasePhoneNumberOptionalParams,
+  ): Promise<PhoneNumbersReleasePhoneNumberResponse> {
+    const poller = await this.beginReleasePhoneNumber(phoneNumber, options);
+    return poller.pollUntilDone();
   }
 
   /**
    * Gets the list of all purchased phone numbers.
    * @param options The options parameters.
    */
-  private _listPhoneNumbers(
-    options?: PhoneNumbersListPhoneNumbersOptionalParams
+  private async _listPhoneNumbers(
+    options?: PhoneNumbersListPhoneNumbersOptionalParams,
   ): Promise<PhoneNumbersListPhoneNumbersResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      listPhoneNumbersOperationSpec
-    ) as Promise<PhoneNumbersListPhoneNumbersResponse>;
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listPhoneNumbers",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { options },
+          listPhoneNumbersOperationSpec,
+        ) as Promise<PhoneNumbersListPhoneNumbersResponse>;
+      },
+    );
+  }
+
+  /**
+   * Searches for number format and operator information for a given list of phone numbers.
+   * @param phoneNumbers Phone number(s) whose operator information is being requested
+   * @param options The options parameters.
+   */
+  async operatorInformationSearch(
+    phoneNumbers: string[],
+    options?: PhoneNumbersOperatorInformationSearchOptionalParams,
+  ): Promise<PhoneNumbersOperatorInformationSearchResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient.operatorInformationSearch",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { phoneNumbers, options },
+          operatorInformationSearchOperationSpec,
+        ) as Promise<PhoneNumbersOperatorInformationSearchResponse>;
+      },
+    );
+  }
+
+  /**
+   * ListAreaCodesNext
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param nextLink The nextLink from the previous successful call to the ListAreaCodes method.
+   * @param options The options parameters.
+   */
+  private async _listAreaCodesNext(
+    countryCode: string,
+    nextLink: string,
+    options?: PhoneNumbersListAreaCodesNextOptionalParams,
+  ): Promise<PhoneNumbersListAreaCodesNextResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listAreaCodesNext",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { countryCode, nextLink, options },
+          listAreaCodesNextOperationSpec,
+        ) as Promise<PhoneNumbersListAreaCodesNextResponse>;
+      },
+    );
+  }
+
+  /**
+   * ListAvailableCountriesNext
+   * @param nextLink The nextLink from the previous successful call to the ListAvailableCountries method.
+   * @param options The options parameters.
+   */
+  private async _listAvailableCountriesNext(
+    nextLink: string,
+    options?: PhoneNumbersListAvailableCountriesNextOptionalParams,
+  ): Promise<PhoneNumbersListAvailableCountriesNextResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listAvailableCountriesNext",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { nextLink, options },
+          listAvailableCountriesNextOperationSpec,
+        ) as Promise<PhoneNumbersListAvailableCountriesNextResponse>;
+      },
+    );
+  }
+
+  /**
+   * ListAvailableLocalitiesNext
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param nextLink The nextLink from the previous successful call to the ListAvailableLocalities
+   *                 method.
+   * @param options The options parameters.
+   */
+  private async _listAvailableLocalitiesNext(
+    countryCode: string,
+    nextLink: string,
+    options?: PhoneNumbersListAvailableLocalitiesNextOptionalParams,
+  ): Promise<PhoneNumbersListAvailableLocalitiesNextResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listAvailableLocalitiesNext",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { countryCode, nextLink, options },
+          listAvailableLocalitiesNextOperationSpec,
+        ) as Promise<PhoneNumbersListAvailableLocalitiesNextResponse>;
+      },
+    );
+  }
+
+  /**
+   * ListOfferingsNext
+   * @param countryCode The ISO 3166-2 country code, e.g. US.
+   * @param nextLink The nextLink from the previous successful call to the ListOfferings method.
+   * @param options The options parameters.
+   */
+  private async _listOfferingsNext(
+    countryCode: string,
+    nextLink: string,
+    options?: PhoneNumbersListOfferingsNextOptionalParams,
+  ): Promise<PhoneNumbersListOfferingsNextResponse> {
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listOfferingsNext",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { countryCode, nextLink, options },
+          listOfferingsNextOperationSpec,
+        ) as Promise<PhoneNumbersListOfferingsNextResponse>;
+      },
+    );
   }
 
   /**
@@ -331,58 +1080,135 @@ export class PhoneNumbers {
    * @param nextLink The nextLink from the previous successful call to the ListPhoneNumbers method.
    * @param options The options parameters.
    */
-  private _listPhoneNumbersNext(
+  private async _listPhoneNumbersNext(
     nextLink: string,
-    options?: PhoneNumbersListPhoneNumbersNextOptionalParams
+    options?: PhoneNumbersListPhoneNumbersNextOptionalParams,
   ): Promise<PhoneNumbersListPhoneNumbersNextResponse> {
-    const operationArguments: coreHttp.OperationArguments = {
-      nextLink,
-      options: coreHttp.operationOptionsToRequestOptionsBase(options || {})
-    };
-    return this.client.sendOperationRequest(
-      operationArguments,
-      listPhoneNumbersNextOperationSpec
-    ) as Promise<PhoneNumbersListPhoneNumbersNextResponse>;
-  }
-
-  private getOperationOptions<TOptions extends coreHttp.OperationOptions>(
-    options: TOptions | undefined,
-    finalStateVia?: string
-  ): coreHttp.RequestOptionsBase {
-    const operationOptions: coreHttp.OperationOptions = options || {};
-    operationOptions.requestOptions = {
-      ...operationOptions.requestOptions,
-      shouldDeserialize: shouldDeserializeLRO(finalStateVia)
-    };
-    return coreHttp.operationOptionsToRequestOptionsBase(operationOptions);
+    return tracingClient.withSpan(
+      "PhoneNumbersClient._listPhoneNumbersNext",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { nextLink, options },
+          listPhoneNumbersNextOperationSpec,
+        ) as Promise<PhoneNumbersListPhoneNumbersNextResponse>;
+      },
+    );
   }
 }
 // Operation Specifications
-const serializer = new coreHttp.Serializer(Mappers, /* isXml */ false);
+const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
-const searchAvailablePhoneNumbersOperationSpec: coreHttp.OperationSpec = {
+const listAreaCodesOperationSpec: coreClient.OperationSpec = {
+  path: "/availablePhoneNumbers/countries/{countryCode}/areaCodes",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.PhoneNumberAreaCodes,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  queryParameters: [
+    Parameters.phoneNumberType,
+    Parameters.skip,
+    Parameters.maxPageSize,
+    Parameters.assignmentType,
+    Parameters.locality,
+    Parameters.administrativeDivision,
+    Parameters.apiVersion,
+  ],
+  urlParameters: [Parameters.endpoint, Parameters.countryCode],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const listAvailableCountriesOperationSpec: coreClient.OperationSpec = {
+  path: "/availablePhoneNumbers/countries",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.PhoneNumberCountries,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  queryParameters: [
+    Parameters.skip,
+    Parameters.maxPageSize,
+    Parameters.apiVersion,
+  ],
+  urlParameters: [Parameters.endpoint],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const listAvailableLocalitiesOperationSpec: coreClient.OperationSpec = {
+  path: "/availablePhoneNumbers/countries/{countryCode}/localities",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.PhoneNumberLocalities,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  queryParameters: [
+    Parameters.skip,
+    Parameters.maxPageSize,
+    Parameters.administrativeDivision,
+    Parameters.apiVersion,
+  ],
+  urlParameters: [Parameters.endpoint, Parameters.countryCode],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const listOfferingsOperationSpec: coreClient.OperationSpec = {
+  path: "/availablePhoneNumbers/countries/{countryCode}/offerings",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.OfferingsResponse,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  queryParameters: [
+    Parameters.skip,
+    Parameters.maxPageSize,
+    Parameters.assignmentType,
+    Parameters.apiVersion,
+    Parameters.phoneNumberType1,
+  ],
+  urlParameters: [Parameters.endpoint, Parameters.countryCode],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const searchAvailablePhoneNumbersOperationSpec: coreClient.OperationSpec = {
   path: "/availablePhoneNumbers/countries/{countryCode}/:search",
   httpMethod: "POST",
   responses: {
     200: {
       bodyMapper: Mappers.PhoneNumberSearchResult,
-      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders,
     },
     201: {
       bodyMapper: Mappers.PhoneNumberSearchResult,
-      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders,
     },
     202: {
       bodyMapper: Mappers.PhoneNumberSearchResult,
-      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders,
     },
     204: {
       bodyMapper: Mappers.PhoneNumberSearchResult,
-      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersSearchAvailablePhoneNumbersHeaders,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   requestBody: {
     parameterPath: {
@@ -390,197 +1216,292 @@ const searchAvailablePhoneNumbersOperationSpec: coreHttp.OperationSpec = {
       assignmentType: ["assignmentType"],
       capabilities: ["capabilities"],
       areaCode: ["options", "areaCode"],
-      quantity: ["options", "quantity"]
+      quantity: ["options", "quantity"],
     },
-    mapper: { ...Mappers.PhoneNumberSearchRequest, required: true }
+    mapper: { ...Mappers.PhoneNumberSearchRequest, required: true },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.countryCode],
-  headerParameters: [Parameters.contentType, Parameters.accept],
+  headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
-const getSearchResultOperationSpec: coreHttp.OperationSpec = {
+const getSearchResultOperationSpec: coreClient.OperationSpec = {
   path: "/availablePhoneNumbers/searchResults/{searchId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PhoneNumberSearchResult
+      bodyMapper: Mappers.PhoneNumberSearchResult,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.searchId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const purchasePhoneNumbersOperationSpec: coreHttp.OperationSpec = {
+const purchasePhoneNumbersOperationSpec: coreClient.OperationSpec = {
   path: "/availablePhoneNumbers/:purchase",
   httpMethod: "POST",
   responses: {
     200: {
-      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders,
     },
     201: {
-      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders,
     },
     202: {
-      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders,
     },
     204: {
-      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders
+      headersMapper: Mappers.PhoneNumbersPurchasePhoneNumbersHeaders,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   requestBody: {
     parameterPath: { searchId: ["options", "searchId"] },
-    mapper: { ...Mappers.PhoneNumberPurchaseRequest, required: true }
+    mapper: { ...Mappers.PhoneNumberPurchaseRequest, required: true },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint],
-  headerParameters: [Parameters.contentType, Parameters.accept],
+  headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
-const getOperationOperationSpec: coreHttp.OperationSpec = {
+const getOperationOperationSpec: coreClient.OperationSpec = {
   path: "/phoneNumbers/operations/{operationId}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.PhoneNumberOperation,
-      headersMapper: Mappers.PhoneNumbersGetOperationHeaders
+      headersMapper: Mappers.PhoneNumbersGetOperationHeaders,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.operationId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const cancelOperationOperationSpec: coreHttp.OperationSpec = {
+const cancelOperationOperationSpec: coreClient.OperationSpec = {
   path: "/phoneNumbers/operations/{operationId}",
   httpMethod: "DELETE",
   responses: {
     204: {},
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.operationId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const updateCapabilitiesOperationSpec: coreHttp.OperationSpec = {
+const updateCapabilitiesOperationSpec: coreClient.OperationSpec = {
   path: "/phoneNumbers/{phoneNumber}/capabilities",
   httpMethod: "PATCH",
   responses: {
     200: {
       bodyMapper: Mappers.PurchasedPhoneNumber,
-      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders
+      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders,
     },
     201: {
       bodyMapper: Mappers.PurchasedPhoneNumber,
-      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders
+      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders,
     },
     202: {
       bodyMapper: Mappers.PurchasedPhoneNumber,
-      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders
+      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders,
     },
     204: {
       bodyMapper: Mappers.PurchasedPhoneNumber,
-      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders
+      headersMapper: Mappers.PhoneNumbersUpdateCapabilitiesHeaders,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   requestBody: {
     parameterPath: { calling: ["options", "calling"], sms: ["options", "sms"] },
-    mapper: Mappers.PhoneNumberCapabilitiesRequest
+    mapper: Mappers.PhoneNumberCapabilitiesRequest,
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.phoneNumber],
   headerParameters: [Parameters.accept, Parameters.contentType1],
   mediaType: "json",
-  serializer
+  serializer,
 };
-const getByNumberOperationSpec: coreHttp.OperationSpec = {
+const getByNumberOperationSpec: coreClient.OperationSpec = {
   path: "/phoneNumbers/{phoneNumber}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PurchasedPhoneNumber
+      bodyMapper: Mappers.PurchasedPhoneNumber,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.phoneNumber],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const releasePhoneNumberOperationSpec: coreHttp.OperationSpec = {
+const releasePhoneNumberOperationSpec: coreClient.OperationSpec = {
   path: "/phoneNumbers/{phoneNumber}",
   httpMethod: "DELETE",
   responses: {
     200: {
-      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders
+      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders,
     },
     201: {
-      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders
+      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders,
     },
     202: {
-      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders
+      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders,
     },
     204: {
-      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders
+      headersMapper: Mappers.PhoneNumbersReleasePhoneNumberHeaders,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.phoneNumber],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const listPhoneNumbersOperationSpec: coreHttp.OperationSpec = {
+const listPhoneNumbersOperationSpec: coreClient.OperationSpec = {
   path: "/phoneNumbers",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PurchasedPhoneNumbers
+      bodyMapper: Mappers.PurchasedPhoneNumbers,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.skip, Parameters.top],
+  queryParameters: [Parameters.skip, Parameters.apiVersion, Parameters.top],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const listPhoneNumbersNextOperationSpec: coreHttp.OperationSpec = {
+const operatorInformationSearchOperationSpec: coreClient.OperationSpec = {
+  path: "/operatorInformation/:search",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.OperatorInformationResult,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  requestBody: {
+    parameterPath: {
+      phoneNumbers: ["phoneNumbers"],
+      options: ["options", "options"],
+    },
+    mapper: { ...Mappers.OperatorInformationRequest, required: true },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [Parameters.endpoint],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const listAreaCodesNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PurchasedPhoneNumbers
+      bodyMapper: Mappers.PhoneNumberAreaCodes,
     },
     default: {
-      bodyMapper: Mappers.CommunicationErrorResponse
-    }
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.skip, Parameters.top],
+  urlParameters: [
+    Parameters.endpoint,
+    Parameters.countryCode,
+    Parameters.nextLink,
+  ],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const listAvailableCountriesNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.PhoneNumberCountries,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  urlParameters: [Parameters.endpoint, Parameters.nextLink],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const listAvailableLocalitiesNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.PhoneNumberLocalities,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  urlParameters: [
+    Parameters.endpoint,
+    Parameters.countryCode,
+    Parameters.nextLink,
+  ],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const listOfferingsNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.OfferingsResponse,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
+  urlParameters: [
+    Parameters.endpoint,
+    Parameters.countryCode,
+    Parameters.nextLink,
+  ],
+  headerParameters: [Parameters.accept, Parameters.acceptLanguage],
+  serializer,
+};
+const listPhoneNumbersNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.PurchasedPhoneNumbers,
+    },
+    default: {
+      bodyMapper: Mappers.CommunicationErrorResponse,
+    },
+  },
   urlParameters: [Parameters.endpoint, Parameters.nextLink],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -1,15 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { delay, record, Recorder } from "@azure-tools/test-recorder";
-import * as assert from "assert";
-import * as dotenv from "dotenv";
-import { Context } from "mocha";
+import { delay, Recorder } from "@azure-tools/test-recorder";
+import { assert } from "chai";
+import type { Context } from "mocha";
 
-import { DataLakeFileClient, DataLakeDirectoryClient, DataLakeFileSystemClient } from "../src";
-import { getDataLakeServiceClient, recorderEnvSetup } from "./utils";
-
-dotenv.config();
+import type { DataLakeFileClient, DataLakeDirectoryClient, DataLakeFileSystemClient } from "../src";
+import { getDataLakeServiceClient, getUniqueName, recorderEnvSetup, uriSanitizers } from "./utils";
 
 describe("LeaseClient from FileSystem", () => {
   let fileSystemName: string;
@@ -17,16 +14,24 @@ describe("LeaseClient from FileSystem", () => {
 
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    const serviceClient = getDataLakeServiceClient();
-    fileSystemName = recorder.getUniqueName("filesystem");
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
+    await recorder.addSanitizers(
+      {
+        uriSanitizers,
+        removeHeaderSanitizer: { headersForRemoval: ["x-ms-proposed-lease-id", "x-ms-lease-id"] },
+      },
+      ["record", "playback"],
+    );
+    const serviceClient = getDataLakeServiceClient(recorder);
+    fileSystemName = recorder.variable("filesystem", getUniqueName("filesystem"));
     fileSystemClient = serviceClient.getFileSystemClient(fileSystemName);
-    await fileSystemClient.create();
+    await fileSystemClient.createIfNotExists();
   });
 
-  afterEach(async function() {
-    await fileSystemClient.delete();
+  afterEach(async function () {
+    await fileSystemClient.deleteIfExists();
     await recorder.stop();
   });
 
@@ -149,19 +154,21 @@ describe("LeaseClient from File", () => {
   let fileClient: DataLakeFileClient;
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    const serviceClient = getDataLakeServiceClient();
-    fileSystemName = recorder.getUniqueName("filesystem");
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
+    await recorder.addSanitizers({ uriSanitizers }, ["record", "playback"]);
+    const serviceClient = getDataLakeServiceClient(recorder);
+    fileSystemName = recorder.variable("filesystem", getUniqueName("filesystem"));
     fileSystemClient = serviceClient.getFileSystemClient(fileSystemName);
-    await fileSystemClient.create();
-    fileName = recorder.getUniqueName("file");
+    await fileSystemClient.createIfNotExists();
+    fileName = recorder.variable("file", getUniqueName("file"));
     fileClient = fileSystemClient.getFileClient(fileName);
     await fileClient.create();
   });
 
-  afterEach(async function() {
-    await fileSystemClient.delete();
+  afterEach(async function () {
+    await fileSystemClient.deleteIfExists();
     await recorder.stop();
   });
 
@@ -272,19 +279,21 @@ describe("LeaseClient from Directory", () => {
   let directoryClient: DataLakeDirectoryClient;
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    const serviceClient = getDataLakeServiceClient();
-    fileSystemName = recorder.getUniqueName("filesystem");
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
+    await recorder.addSanitizers({ uriSanitizers }, ["record", "playback"]);
+    const serviceClient = getDataLakeServiceClient(recorder);
+    fileSystemName = recorder.variable("filesystem", getUniqueName("filesystem"));
     fileSystemClient = serviceClient.getFileSystemClient(fileSystemName);
-    await fileSystemClient.create();
-    directoryName = recorder.getUniqueName("dir");
+    await fileSystemClient.createIfNotExists();
+    directoryName = recorder.variable("dir", getUniqueName("dir"));
     directoryClient = fileSystemClient.getDirectoryClient(directoryName);
     await directoryClient.create();
   });
 
-  afterEach(async function() {
-    await fileSystemClient.delete();
+  afterEach(async function () {
+    await fileSystemClient.deleteIfExists();
     await recorder.stop();
   });
 
@@ -372,14 +381,14 @@ describe("LeaseClient from Directory", () => {
     assert.equal(result.leaseState, "leased");
     assert.equal(result.leaseStatus, "locked");
 
-    await leaseClient.breakLease(5);
+    await leaseClient.breakLease(15);
 
     const result2 = await directoryClient.getProperties();
     assert.ok(!result2.leaseDuration);
     assert.equal(result2.leaseState, "breaking");
     assert.equal(result2.leaseStatus, "locked");
 
-    await delay(5 * 1000);
+    await delay(15 * 1000);
 
     const result3 = await directoryClient.getProperties();
     assert.ok(!result3.leaseDuration);

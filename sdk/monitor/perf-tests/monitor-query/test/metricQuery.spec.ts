@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { PerfOptionDictionary, getEnvVar } from "@azure/test-utils-perf";
+// Licensed under the MIT License.
+import { PerfOptionDictionary, getEnvVar } from "@azure-tools/test-perf";
 import { AggregationType } from "@azure/monitor-query";
 import { MonitorQueryMetrics } from "./monitorQueryMetrics.spec";
 
@@ -20,7 +20,7 @@ export class MetricsQueryTest extends MonitorQueryMetrics<MonitorQueryTestOption
 
   async run(): Promise<void> {
     await this.client.queryResource(this.metricsUri, this.metricNames, {
-      aggregations: this.aggregations
+      aggregations: this.aggregations,
     });
   }
 }

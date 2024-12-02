@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
+import type { CosmosDiagnostics } from "../CosmosDiagnostics";
 import { Constants } from "../common";
-import { CosmosHeaders } from "../queryExecutionContext/CosmosHeaders";
-import { StatusCode, SubStatusCode } from "./StatusCodes";
+import type { CosmosHeaders } from "../queryExecutionContext/CosmosHeaders";
+import type { StatusCode, SubStatusCode } from "./StatusCodes";
 
 export class ResourceResponse<TResource> {
   constructor(
     public readonly resource: TResource | undefined,
     public readonly headers: CosmosHeaders,
     public readonly statusCode: StatusCode,
-    public readonly substatus?: SubStatusCode
+    public readonly diagnostics: CosmosDiagnostics,
+    public readonly substatus?: SubStatusCode,
   ) {}
   public get requestCharge(): number {
     return Number(this.headers[Constants.HttpHeaders.RequestCharge]) || 0;

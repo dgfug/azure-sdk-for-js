@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { Container, ContainerDefinition } from "../../../../src";
+// Licensed under the MIT License.
+import type { Container, ContainerDefinition } from "../../../../src";
 import { bulkInsertItems, getTestContainer, removeAllDatabases } from "../../common/TestHelpers";
-import snapshot from "snap-shot-it";
 import assert from "assert";
+import groupBySnapshot from "./groupBy.snapshot";
+import type { Context } from "mocha";
 
 const options = {
-  maxItemCount: 100
+  maxItemCount: 100,
 };
 
 const items = [
@@ -16,7 +17,7 @@ const items = [
     age: 11,
     gender: "M",
     team: "A",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "02",
@@ -24,7 +25,7 @@ const items = [
     age: 15,
     gender: "F",
     team: "C",
-    address: { city: "Chicago", state: "IL", zip: 60292 }
+    address: { city: "Chicago", state: "IL", zip: 60292 },
   },
   {
     id: "03",
@@ -32,7 +33,7 @@ const items = [
     age: 13,
     gender: "M",
     team: "A",
-    address: { city: "Chicago", state: "IL", zip: 60292 }
+    address: { city: "Chicago", state: "IL", zip: 60292 },
   },
   {
     id: "04",
@@ -40,7 +41,7 @@ const items = [
     age: 18,
     gender: "F",
     team: "D",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "05",
@@ -48,7 +49,7 @@ const items = [
     age: 17,
     gender: "M",
     team: "C",
-    address: { city: "Chicago", state: "IL", zip: 60292 }
+    address: { city: "Chicago", state: "IL", zip: 60292 },
   },
   {
     id: "06",
@@ -56,7 +57,7 @@ const items = [
     age: 16,
     gender: "M",
     team: "A",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "07",
@@ -64,7 +65,7 @@ const items = [
     age: 13,
     gender: "M",
     team: "B",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "08",
@@ -72,7 +73,7 @@ const items = [
     age: 12,
     gender: "M",
     team: "C",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "09",
@@ -80,7 +81,7 @@ const items = [
     age: 15,
     gender: "M",
     team: "D",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "10",
@@ -88,7 +89,7 @@ const items = [
     age: 18,
     gender: "F",
     team: "A",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "11",
@@ -96,7 +97,7 @@ const items = [
     age: 18,
     gender: "M",
     team: "D",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "12",
@@ -104,7 +105,7 @@ const items = [
     age: 17,
     gender: "F",
     team: "C",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "13",
@@ -112,7 +113,7 @@ const items = [
     age: 16,
     gender: "M",
     team: "A",
-    address: { city: "Orlando", state: "FL", zip: 32801 }
+    address: { city: "Orlando", state: "FL", zip: 32801 },
   },
   {
     id: "14",
@@ -120,7 +121,7 @@ const items = [
     age: 16,
     gender: "F",
     team: "B",
-    address: { city: "Chicago", state: "IL", zip: 60291 }
+    address: { city: "Chicago", state: "IL", zip: 60291 },
   },
   {
     id: "15",
@@ -128,7 +129,7 @@ const items = [
     age: 18,
     gender: "F",
     team: "D",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "16",
@@ -136,7 +137,7 @@ const items = [
     age: 17,
     gender: "M",
     team: "C",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "17",
@@ -144,7 +145,7 @@ const items = [
     age: 18,
     gender: "F",
     team: "C",
-    address: { city: "Chicago", state: "IL", zip: 60292 }
+    address: { city: "Chicago", state: "IL", zip: 60292 },
   },
   {
     id: "18",
@@ -152,7 +153,7 @@ const items = [
     age: 15,
     gender: "M",
     team: "C",
-    address: { city: "Seattle", state: "WA", zip: 98101 }
+    address: { city: "Seattle", state: "WA", zip: 98101 },
   },
   {
     id: "19",
@@ -160,7 +161,7 @@ const items = [
     age: 16,
     gender: "M",
     team: "A",
-    address: { city: "Orlando", state: "FL", zip: 32801 }
+    address: { city: "Orlando", state: "FL", zip: 32801 },
   },
   {
     id: "20",
@@ -168,7 +169,7 @@ const items = [
     age: 11,
     gender: "M",
     team: "C",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "21",
@@ -176,7 +177,7 @@ const items = [
     age: 14,
     gender: "M",
     team: "C",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "22",
@@ -184,7 +185,7 @@ const items = [
     age: 15,
     gender: "M",
     team: "B",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "23",
@@ -192,7 +193,7 @@ const items = [
     age: 14,
     gender: "M",
     team: "C",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "24",
@@ -200,7 +201,7 @@ const items = [
     age: 15,
     gender: "M",
     team: "A",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "25",
@@ -208,7 +209,7 @@ const items = [
     age: 11,
     gender: "F",
     team: "A",
-    address: { city: "Orlando", state: "FL", zip: 32801 }
+    address: { city: "Orlando", state: "FL", zip: 32801 },
   },
   {
     id: "26",
@@ -216,7 +217,7 @@ const items = [
     age: 11,
     gender: "F",
     team: "D",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "27",
@@ -224,7 +225,7 @@ const items = [
     age: 17,
     gender: "F",
     team: "B",
-    address: { city: "Seattle", state: "WA", zip: 98101 }
+    address: { city: "Seattle", state: "WA", zip: 98101 },
   },
   {
     id: "28",
@@ -232,7 +233,7 @@ const items = [
     age: 13,
     gender: "F",
     team: "C",
-    address: { city: "Chicago", state: "IL", zip: 60291 }
+    address: { city: "Chicago", state: "IL", zip: 60291 },
   },
   {
     id: "29",
@@ -240,7 +241,7 @@ const items = [
     age: 14,
     gender: "F",
     team: "B",
-    address: { city: "Chicago", state: "IL", zip: 60292 }
+    address: { city: "Chicago", state: "IL", zip: 60292 },
   },
   {
     id: "30",
@@ -248,7 +249,7 @@ const items = [
     age: 14,
     gender: "F",
     team: "B",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "31",
@@ -256,7 +257,7 @@ const items = [
     age: 13,
     gender: "M",
     team: "A",
-    address: { city: "Chicago", state: "IL", zip: 60292 }
+    address: { city: "Chicago", state: "IL", zip: 60292 },
   },
   {
     id: "32",
@@ -264,7 +265,7 @@ const items = [
     age: 11,
     gender: "M",
     team: "B",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "33",
@@ -272,7 +273,7 @@ const items = [
     age: 12,
     gender: "F",
     team: "C",
-    address: { city: "Chicago", state: "IL", zip: 60291 }
+    address: { city: "Chicago", state: "IL", zip: 60291 },
   },
   {
     id: "34",
@@ -280,7 +281,7 @@ const items = [
     age: 13,
     gender: "M",
     team: "D",
-    address: { city: "Chicago", state: "IL", zip: 60291 }
+    address: { city: "Chicago", state: "IL", zip: 60291 },
   },
   {
     id: "35",
@@ -288,7 +289,7 @@ const items = [
     age: 13,
     gender: "M",
     team: "D",
-    address: { city: "Seattle", state: "WA", zip: 98101 }
+    address: { city: "Seattle", state: "WA", zip: 98101 },
   },
   {
     id: "36",
@@ -296,7 +297,7 @@ const items = [
     age: 15,
     gender: "M",
     team: "D",
-    address: { city: "Chicago", state: "IL", zip: 60291 }
+    address: { city: "Chicago", state: "IL", zip: 60291 },
   },
   {
     id: "37",
@@ -304,7 +305,7 @@ const items = [
     age: 14,
     gender: "F",
     team: "A",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "38",
@@ -312,7 +313,7 @@ const items = [
     age: 11,
     gender: "M",
     team: "C",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "39",
@@ -320,7 +321,7 @@ const items = [
     age: 15,
     gender: "M",
     team: "B",
-    address: { city: "Orlando", state: "FL", zip: 32801 }
+    address: { city: "Orlando", state: "FL", zip: 32801 },
   },
   {
     id: "40",
@@ -328,7 +329,7 @@ const items = [
     age: 11,
     gender: "M",
     team: "B",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "41",
@@ -336,7 +337,7 @@ const items = [
     age: 12,
     gender: "M",
     team: "B",
-    address: { city: "Chicago", state: "IL", zip: 60291 }
+    address: { city: "Chicago", state: "IL", zip: 60291 },
   },
   {
     id: "42",
@@ -344,7 +345,7 @@ const items = [
     age: 17,
     gender: "F",
     team: "B",
-    address: { city: "Chicago", state: "IL", zip: 60291 }
+    address: { city: "Chicago", state: "IL", zip: 60291 },
   },
   {
     id: "43",
@@ -352,7 +353,7 @@ const items = [
     age: 12,
     gender: "F",
     team: "D",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "44",
@@ -360,7 +361,7 @@ const items = [
     age: 14,
     gender: "F",
     team: "A",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "45",
@@ -368,7 +369,7 @@ const items = [
     age: 17,
     gender: "F",
     team: "D",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "46",
@@ -376,7 +377,7 @@ const items = [
     age: 17,
     gender: "M",
     team: "B",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "47",
@@ -384,7 +385,7 @@ const items = [
     age: 18,
     gender: "M",
     team: "B",
-    address: { city: "Orlando", state: "FL", zip: 32801 }
+    address: { city: "Orlando", state: "FL", zip: 32801 },
   },
   {
     id: "48",
@@ -392,7 +393,7 @@ const items = [
     age: 15,
     gender: "F",
     team: "C",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "49",
@@ -400,7 +401,7 @@ const items = [
     age: 17,
     gender: "F",
     team: "A",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "50",
@@ -408,7 +409,7 @@ const items = [
     age: 17,
     gender: "M",
     team: "C",
-    address: { city: "Seattle", state: "WA", zip: 98101 }
+    address: { city: "Seattle", state: "WA", zip: 98101 },
   },
   {
     id: "51",
@@ -416,7 +417,7 @@ const items = [
     age: 11,
     gender: "F",
     team: "D",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "52",
@@ -424,7 +425,7 @@ const items = [
     age: 13,
     gender: "M",
     team: "A",
-    address: { city: "Orlando", state: "FL", zip: 32801 }
+    address: { city: "Orlando", state: "FL", zip: 32801 },
   },
   {
     id: "53",
@@ -432,7 +433,7 @@ const items = [
     age: 16,
     gender: "M",
     team: "D",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "54",
@@ -440,7 +441,7 @@ const items = [
     age: 12,
     gender: "F",
     team: "B",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "55",
@@ -448,7 +449,7 @@ const items = [
     age: 16,
     gender: "F",
     team: "A",
-    address: { city: "Seattle", state: "WA", zip: 98101 }
+    address: { city: "Seattle", state: "WA", zip: 98101 },
   },
   {
     id: "56",
@@ -456,7 +457,7 @@ const items = [
     age: 12,
     gender: "M",
     team: "B",
-    address: { city: "Chicago", state: "IL", zip: 60292 }
+    address: { city: "Chicago", state: "IL", zip: 60292 },
   },
   {
     id: "57",
@@ -464,7 +465,7 @@ const items = [
     age: 12,
     gender: "F",
     team: "B",
-    address: { city: "Seattle", state: "WA", zip: 98102 }
+    address: { city: "Seattle", state: "WA", zip: 98102 },
   },
   {
     id: "58",
@@ -472,7 +473,7 @@ const items = [
     age: 16,
     gender: "M",
     team: "C",
-    address: { city: "Orlando", state: "FL", zip: 32801 }
+    address: { city: "Orlando", state: "FL", zip: 32801 },
   },
   {
     id: "59",
@@ -480,7 +481,7 @@ const items = [
     age: 15,
     gender: "F",
     team: "A",
-    address: { city: "Seattle", state: "WA", zip: 98101 }
+    address: { city: "Seattle", state: "WA", zip: 98101 },
   },
   {
     id: "60",
@@ -488,7 +489,7 @@ const items = [
     age: 16,
     gender: "M",
     team: "D",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "61",
@@ -496,7 +497,7 @@ const items = [
     age: 17,
     gender: "F",
     team: "B",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
   },
   {
     id: "62",
@@ -504,7 +505,7 @@ const items = [
     age: 12,
     gender: "F",
     team: "C",
-    address: { city: "Atlanta", state: "GA", zip: 30302 }
+    address: { city: "Atlanta", state: "GA", zip: 30302 },
   },
   {
     id: "63",
@@ -512,7 +513,7 @@ const items = [
     age: 14,
     gender: "F",
     team: "B",
-    address: { city: "Orlando", state: "FL", zip: 32802 }
+    address: { city: "Orlando", state: "FL", zip: 32802 },
   },
   {
     id: "64",
@@ -520,21 +521,33 @@ const items = [
     age: 14,
     gender: "M",
     team: "C",
-    address: { city: "Atlanta", state: "GA", zip: 30301 }
-  }
+    address: { city: "Atlanta", state: "GA", zip: 30301 },
+  },
 ];
 
 describe("Cross partition GROUP BY", () => {
   const containerDefinition: ContainerDefinition = {
     id: "sample container",
     partitionKey: {
-      paths: ["/id"]
-    }
+      paths: ["/id"],
+    },
   };
 
   const containerOptions = { offerThroughput: 25100 };
 
   let container: Container;
+
+  let currentTestTitle: string;
+  let snapshotNumber: number;
+
+  const snapshot = (actual: unknown): void => {
+    assert.deepStrictEqual(actual, groupBySnapshot[`${currentTestTitle} ${snapshotNumber++}`]);
+  };
+
+  beforeEach(function (this: Context) {
+    currentTestTitle = this.currentTest.fullTitle();
+    snapshotNumber = 1;
+  });
 
   before(async () => {
     await removeAllDatabases();
@@ -542,7 +555,7 @@ describe("Cross partition GROUP BY", () => {
       "GROUP BY Query",
       undefined,
       containerDefinition,
-      containerOptions
+      containerOptions,
     );
     await bulkInsertItems(container, items);
   });
@@ -571,7 +584,7 @@ describe("Cross partition GROUP BY", () => {
   it("with multiple fields", async () => {
     const queryIterator = container.items.query(
       "SELECT c.age, c.name FROM c GROUP BY c.age, c.name",
-      options
+      options,
     );
 
     const result = await queryIterator.fetchAll();
@@ -581,7 +594,7 @@ describe("Cross partition GROUP BY", () => {
   it("with COUNT", async () => {
     const queryIterator = container.items.query(
       "SELECT c.age, COUNT(1) as count FROM c GROUP BY c.age",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort((a, b) => a.age - b.age));
@@ -590,7 +603,7 @@ describe("Cross partition GROUP BY", () => {
   it("with MIN", async () => {
     const queryIterator = container.items.query(
       "SELECT c.name, MIN(c.age) AS min_age FROM c GROUP BY c.name",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort((a, b) => a.name.localeCompare(b.name)));
@@ -599,7 +612,7 @@ describe("Cross partition GROUP BY", () => {
   it("with MAX", async () => {
     const queryIterator = container.items.query(
       "SELECT c.name, MAX(c.age) AS min_age FROM c GROUP BY c.name",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort((a, b) => a.name.localeCompare(b.name)));
@@ -608,7 +621,7 @@ describe("Cross partition GROUP BY", () => {
   it("with SUM", async () => {
     const queryIterator = container.items.query(
       "SELECT c.name, SUM(c.age) AS min_age FROM c GROUP BY c.name",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort((a, b) => a.name.localeCompare(b.name)));
@@ -617,33 +630,68 @@ describe("Cross partition GROUP BY", () => {
   it("with AVG", async () => {
     const queryIterator = container.items.query(
       "SELECT c.name, AVG(c.age) AS min_age FROM c GROUP BY c.name",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(
       result.resources.sort((a, b) => {
         return a.name.localeCompare(b.name);
-      })
+      }),
     );
   });
 
-  it("with multiple aggregates", async () => {
+  it.skip("with MakeList", async () => {
     const queryIterator = container.items.query(
-      "SELECT c.name, Count(1) AS count, Min(c.age) AS min_age, Max(c.age) AS max_age FROM c GROUP BY c.name",
-      options
+      "SELECT c.name, MakeList(c.age) AS ages FROM c GROUP BY c.name",
+      options,
     );
     const result = await queryIterator.fetchAll();
+    for (const item of result.resources) {
+      item.ages = item.ages.sort();
+    }
     snapshot(
       result.resources.sort((a, b) => {
         return a.name.localeCompare(b.name);
-      })
+      }),
+    );
+  });
+
+  it("with MakeSet", async () => {
+    const queryIterator = container.items.query(
+      "SELECT c.name, MakeSet(c.age) AS ages FROM c GROUP BY c.name",
+      options,
+    );
+    const result = await queryIterator.fetchAll();
+    for (const item of result.resources) {
+      item.ages = item.ages.sort();
+    }
+    snapshot(
+      result.resources.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      }),
+    );
+  });
+
+  it.skip("with multiple aggregates", async () => {
+    const queryIterator = container.items.query(
+      "SELECT c.name, Count(1) AS count, Min(c.age) AS min_age, Max(c.age) AS max_age, MakeList(c.age) as ages FROM c GROUP BY c.name",
+      options,
+    );
+    const result = await queryIterator.fetchAll();
+    for (const item of result.resources) {
+      item.ages = item.ages.sort();
+    }
+    snapshot(
+      result.resources.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      }),
     );
   });
 
   it("with VALUE with string", async () => {
     const queryIterator = container.items.query(
       "SELECT VALUE c.team FROM c GROUP BY c.team",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort());
@@ -652,7 +700,7 @@ describe("Cross partition GROUP BY", () => {
   it("with VALUE with number", async () => {
     const queryIterator = container.items.query(
       "SELECT VALUE c.age FROM c GROUP BY c.age",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort());
@@ -661,7 +709,7 @@ describe("Cross partition GROUP BY", () => {
   it("with VALUE and aggregate", async () => {
     const queryIterator = container.items.query(
       "SELECT VALUE AVG(c.age) FROM c GROUP BY c.team",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort());
@@ -678,7 +726,7 @@ describe("Cross partition GROUP BY", () => {
         SUM(c.doesNotExist) as undefined_sum
       FROM c
       GROUP BY c.age`,
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort((a, b) => a.age - b.age));
@@ -687,7 +735,7 @@ describe("Cross partition GROUP BY", () => {
   it("with missing aggregate field", async () => {
     const queryIterator = container.items.query(
       'SELECT AVG("asdf") as avg_asdf FROM c GROUP BY c.age',
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort((a, b) => a.age - b.age));
@@ -696,7 +744,7 @@ describe("Cross partition GROUP BY", () => {
   it("with missing GROUP BY projection", async () => {
     const queryIterator = container.items.query(
       "SELECT c.age, c.doesNotExist FROM c GROUP BY c.age, c.doesNotExist",
-      options
+      options,
     );
     const result = await queryIterator.fetchAll();
     snapshot(result.resources.sort((a, b) => a.age - b.age));
@@ -719,7 +767,7 @@ describe("Cross partition GROUP BY", () => {
   it("works with TOP", async () => {
     const queryIterator = container.items.query(
       "SELECT TOP 1 c.age FROM c GROUP BY c.age",
-      options
+      options,
     );
     const result = await queryIterator.fetchNext();
     assert(result.resources.length === 1);

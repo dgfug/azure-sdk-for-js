@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { BlobServices } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageManagementClientContext } from "../storageManagementClientContext";
+import { StorageManagementClient } from "../storageManagementClient";
 import {
   BlobServiceProperties,
   BlobServicesListOptionalParams,
@@ -20,19 +19,19 @@ import {
   BlobServicesSetServicePropertiesOptionalParams,
   BlobServicesSetServicePropertiesResponse,
   BlobServicesGetServicePropertiesOptionalParams,
-  BlobServicesGetServicePropertiesResponse
+  BlobServicesGetServicePropertiesResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a BlobServices. */
+/** Class containing BlobServices operations. */
 export class BlobServicesImpl implements BlobServices {
-  private readonly client: StorageManagementClientContext;
+  private readonly client: StorageManagementClient;
 
   /**
    * Initialize a new instance of the class BlobServices class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageManagementClientContext) {
+  constructor(client: StorageManagementClient) {
     this.client = client;
   }
 
@@ -48,7 +47,7 @@ export class BlobServicesImpl implements BlobServices {
   public list(
     resourceGroupName: string,
     accountName: string,
-    options?: BlobServicesListOptionalParams
+    options?: BlobServicesListOptionalParams,
   ): PagedAsyncIterableIterator<BlobServiceProperties> {
     const iter = this.listPagingAll(resourceGroupName, accountName, options);
     return {
@@ -58,30 +57,40 @@ export class BlobServicesImpl implements BlobServices {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, accountName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          accountName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     accountName: string,
-    options?: BlobServicesListOptionalParams
+    options?: BlobServicesListOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<BlobServiceProperties[]> {
-    let result = await this._list(resourceGroupName, accountName, options);
+    let result: BlobServicesListResponse;
+    result = await this._list(resourceGroupName, accountName, options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     accountName: string,
-    options?: BlobServicesListOptionalParams
+    options?: BlobServicesListOptionalParams,
   ): AsyncIterableIterator<BlobServiceProperties> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       accountName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -99,11 +108,11 @@ export class BlobServicesImpl implements BlobServices {
   private _list(
     resourceGroupName: string,
     accountName: string,
-    options?: BlobServicesListOptionalParams
+    options?: BlobServicesListOptionalParams,
   ): Promise<BlobServicesListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -123,11 +132,11 @@ export class BlobServicesImpl implements BlobServices {
     resourceGroupName: string,
     accountName: string,
     parameters: BlobServiceProperties,
-    options?: BlobServicesSetServicePropertiesOptionalParams
+    options?: BlobServicesSetServicePropertiesOptionalParams,
   ): Promise<BlobServicesSetServicePropertiesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, parameters, options },
-      setServicePropertiesOperationSpec
+      setServicePropertiesOperationSpec,
     );
   }
 
@@ -144,11 +153,11 @@ export class BlobServicesImpl implements BlobServices {
   getServiceProperties(
     resourceGroupName: string,
     accountName: string,
-    options?: BlobServicesGetServicePropertiesOptionalParams
+    options?: BlobServicesGetServicePropertiesOptionalParams,
   ): Promise<BlobServicesGetServicePropertiesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      getServicePropertiesOperationSpec
+      getServicePropertiesOperationSpec,
     );
   }
 }
@@ -156,63 +165,60 @@ export class BlobServicesImpl implements BlobServices {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.BlobServiceItems
-    }
+      bodyMapper: Mappers.BlobServiceItems,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1
+    Parameters.accountName,
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const setServicePropertiesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices/{BlobServicesName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices/{BlobServicesName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.BlobServiceProperties
-    }
+      bodyMapper: Mappers.BlobServiceProperties,
+    },
   },
-  requestBody: Parameters.parameters5,
+  requestBody: Parameters.parameters,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.blobServicesName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.blobServicesName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getServicePropertiesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices/{BlobServicesName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/blobServices/{BlobServicesName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.BlobServiceProperties
-    }
+      bodyMapper: Mappers.BlobServiceProperties,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.blobServicesName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.blobServicesName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

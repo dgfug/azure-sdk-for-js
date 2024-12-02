@@ -1,6 +1,6 @@
 # Release History
 
-## 1.1.1 (Unreleased)
+## 2.3.2 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,74 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 2.3.1 (2024-02-20)
+
+### Bugs Fixed
+
+- Renamed field `teamAppId` to `appId` in `SerializedMicrosoftTeamsAppIdentifier` to match the REST specification.
+
+## 2.3.0 (2023-09-27)
+
+### Features Added
+
+- Added support for a new communication identifier `MicrosoftTeamsAppIdentifier`.
+    - Added a type `MicrosoftTeamsAppKind`.
+    - Added a method `isMicrosoftTeamsAppIdentifier` to check if the identifier is `MicrosoftTeamsAppIdentifier`.
+    - Added a field `teamsAppId` to `MicrosoftTeamsAppIdentifier`.
+    - With this version, any rawId starting with `28:` will map to MicrosoftTeamsAppIdentifier. Previously it mapped to `UnknownIdentifier`.
+
+## 2.2.1 (2023-06-16)
+
+### Bugs Fixed
+
+- Bug fix for when running the policy, a query param is always being detected as the URLSearchParams object exists, even if it is empty.
+
+## 3.0.0-beta.1 (2023-03-27)
+
+### Features Added
+
+- Added support for a new communication identifier `MicrosoftBotIdentifier`.
+
+### Breaking Changes
+
+- Introduction of `MicrosoftBotIdentifier` is a breaking change. It will affect code that relied on using `UnknownIdentifier` with a rawID starting with `28:`
+
+## 2.2.0 (2022-11-03)
+
+### Features Added
+
+- Optimized the logic for deserializing types derived from the `CommunicationIdentifier`.
+
+### Bugs Fixed
+
+- Fixed the logic of `getIdentifierRawId` and `createIdentifierFromRawId` for `PhoneNumberIdentifier` to always maintain the original phone number string whether it included the leading `+` sign or not.
+
+### Other Changes
+
+- Updated to `@azure/core-tracing` 1.0.
+
+## 2.1.0 (2022-08-02)
+
+### Features Added
+
+- Added `getIdentifierRawId` and `createIdentifierFromRawId` to translate between a `CommunicationIdentifier` and its underlying canonical rawId representation. Developers can now use the rawId as an encoded format for identifiers to store in their databases or as stable keys in general.
+- Always include `rawId` when serializing identifiers to wire format.
+
+### Bugs Fixed
+
+- Made internal `CommunicationIdentifierSerializer` resilient to unknown additional response properties.
+
+## 2.0.0 (2022-03-08)
+
+### Features Added
+
+- Optimization added: When the proactive refreshing is enabled and the token refresher fails to provide a token that's not about to expire soon, the subsequent refresh attempts will be scheduled for when the token reaches half of its remaining lifetime until a token with long enough validity (>10 minutes) is obtained.
+
+### Breaking Changes
+
+- Migrated from using `@azure/core-http` to `@azure/core-rest-pipeline` for the handling of HTTP requests. See [Azure Core v1 vs v2](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-rest-pipeline/documentation/core2.md) for more on the difference and benefits of the move.
+  - `createCommunicationAccessKeyCredentialPolicy` and `createCommunicationAuthPolicy` newly return `PipelinePolicy` instead of `RequestPolicyFactory`.
 
 ## 1.1.0 (2021-07-22)
 

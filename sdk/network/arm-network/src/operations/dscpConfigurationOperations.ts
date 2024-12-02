@@ -6,42 +6,48 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DscpConfigurationOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   DscpConfiguration,
   DscpConfigurationListNextOptionalParams,
   DscpConfigurationListOptionalParams,
+  DscpConfigurationListResponse,
   DscpConfigurationListAllNextOptionalParams,
   DscpConfigurationListAllOptionalParams,
+  DscpConfigurationListAllResponse,
   DscpConfigurationCreateOrUpdateOptionalParams,
   DscpConfigurationCreateOrUpdateResponse,
   DscpConfigurationDeleteOptionalParams,
   DscpConfigurationGetOptionalParams,
   DscpConfigurationGetResponse,
-  DscpConfigurationListResponse,
-  DscpConfigurationListAllResponse,
   DscpConfigurationListNextResponse,
-  DscpConfigurationListAllNextResponse
+  DscpConfigurationListAllNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DscpConfigurationOperations operations. */
 export class DscpConfigurationOperationsImpl
-  implements DscpConfigurationOperations {
-  private readonly client: NetworkManagementClientContext;
+  implements DscpConfigurationOperations
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class DscpConfigurationOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -52,7 +58,7 @@ export class DscpConfigurationOperationsImpl
    */
   public list(
     resourceGroupName: string,
-    options?: DscpConfigurationListOptionalParams
+    options?: DscpConfigurationListOptionalParams,
   ): PagedAsyncIterableIterator<DscpConfiguration> {
     const iter = this.listPagingAll(resourceGroupName, options);
     return {
@@ -62,33 +68,45 @@ export class DscpConfigurationOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(resourceGroupName, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
-    options?: DscpConfigurationListOptionalParams
+    options?: DscpConfigurationListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DscpConfiguration[]> {
-    let result = await this._list(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DscpConfigurationListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
-    options?: DscpConfigurationListOptionalParams
+    options?: DscpConfigurationListOptionalParams,
   ): AsyncIterableIterator<DscpConfiguration> {
     for await (const page of this.listPagingPage(resourceGroupName, options)) {
       yield* page;
@@ -100,7 +118,7 @@ export class DscpConfigurationOperationsImpl
    * @param options The options parameters.
    */
   public listAll(
-    options?: DscpConfigurationListAllOptionalParams
+    options?: DscpConfigurationListAllOptionalParams,
   ): PagedAsyncIterableIterator<DscpConfiguration> {
     const iter = this.listAllPagingAll(options);
     return {
@@ -110,27 +128,39 @@ export class DscpConfigurationOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
+      },
     };
   }
 
   private async *listAllPagingPage(
-    options?: DscpConfigurationListAllOptionalParams
+    options?: DscpConfigurationListAllOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DscpConfiguration[]> {
-    let result = await this._listAll(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DscpConfigurationListAllResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAll(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listAllPagingAll(
-    options?: DscpConfigurationListAllOptionalParams
+    options?: DscpConfigurationListAllOptionalParams,
   ): AsyncIterableIterator<DscpConfiguration> {
     for await (const page of this.listAllPagingPage(options)) {
       yield* page;
@@ -148,30 +178,29 @@ export class DscpConfigurationOperationsImpl
     resourceGroupName: string,
     dscpConfigurationName: string,
     parameters: DscpConfiguration,
-    options?: DscpConfigurationCreateOrUpdateOptionalParams
+    options?: DscpConfigurationCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DscpConfigurationCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DscpConfigurationCreateOrUpdateResponse>,
       DscpConfigurationCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DscpConfigurationCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -180,8 +209,8 @@ export class DscpConfigurationOperationsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -189,21 +218,26 @@ export class DscpConfigurationOperationsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, dscpConfigurationName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, dscpConfigurationName, parameters, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DscpConfigurationCreateOrUpdateResponse,
+      OperationState<DscpConfigurationCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -217,13 +251,13 @@ export class DscpConfigurationOperationsImpl
     resourceGroupName: string,
     dscpConfigurationName: string,
     parameters: DscpConfiguration,
-    options?: DscpConfigurationCreateOrUpdateOptionalParams
+    options?: DscpConfigurationCreateOrUpdateOptionalParams,
   ): Promise<DscpConfigurationCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       dscpConfigurationName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -237,25 +271,24 @@ export class DscpConfigurationOperationsImpl
   async beginDelete(
     resourceGroupName: string,
     dscpConfigurationName: string,
-    options?: DscpConfigurationDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DscpConfigurationDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -264,8 +297,8 @@ export class DscpConfigurationOperationsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -273,21 +306,23 @@ export class DscpConfigurationOperationsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, dscpConfigurationName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, dscpConfigurationName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -299,12 +334,12 @@ export class DscpConfigurationOperationsImpl
   async beginDeleteAndWait(
     resourceGroupName: string,
     dscpConfigurationName: string,
-    options?: DscpConfigurationDeleteOptionalParams
+    options?: DscpConfigurationDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       dscpConfigurationName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -318,11 +353,11 @@ export class DscpConfigurationOperationsImpl
   get(
     resourceGroupName: string,
     dscpConfigurationName: string,
-    options?: DscpConfigurationGetOptionalParams
+    options?: DscpConfigurationGetOptionalParams,
   ): Promise<DscpConfigurationGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, dscpConfigurationName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -333,11 +368,11 @@ export class DscpConfigurationOperationsImpl
    */
   private _list(
     resourceGroupName: string,
-    options?: DscpConfigurationListOptionalParams
+    options?: DscpConfigurationListOptionalParams,
   ): Promise<DscpConfigurationListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -346,7 +381,7 @@ export class DscpConfigurationOperationsImpl
    * @param options The options parameters.
    */
   private _listAll(
-    options?: DscpConfigurationListAllOptionalParams
+    options?: DscpConfigurationListAllOptionalParams,
   ): Promise<DscpConfigurationListAllResponse> {
     return this.client.sendOperationRequest({ options }, listAllOperationSpec);
   }
@@ -360,11 +395,11 @@ export class DscpConfigurationOperationsImpl
   private _listNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: DscpConfigurationListNextOptionalParams
+    options?: DscpConfigurationListNextOptionalParams,
   ): Promise<DscpConfigurationListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -375,11 +410,11 @@ export class DscpConfigurationOperationsImpl
    */
   private _listAllNext(
     nextLink: string,
-    options?: DscpConfigurationListAllNextOptionalParams
+    options?: DscpConfigurationListAllNextOptionalParams,
   ): Promise<DscpConfigurationListAllNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listAllNextOperationSpec
+      listAllNextOperationSpec,
     );
   }
 }
@@ -387,41 +422,39 @@ export class DscpConfigurationOperationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations/{dscpConfigurationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations/{dscpConfigurationName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.DscpConfiguration
+      bodyMapper: Mappers.DscpConfiguration,
     },
     201: {
-      bodyMapper: Mappers.DscpConfiguration
+      bodyMapper: Mappers.DscpConfiguration,
     },
     202: {
-      bodyMapper: Mappers.DscpConfiguration
+      bodyMapper: Mappers.DscpConfiguration,
     },
     204: {
-      bodyMapper: Mappers.DscpConfiguration
+      bodyMapper: Mappers.DscpConfiguration,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters11,
+  requestBody: Parameters.parameters15,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.dscpConfigurationName
+    Parameters.dscpConfigurationName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations/{dscpConfigurationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations/{dscpConfigurationName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -429,117 +462,112 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.dscpConfigurationName
+    Parameters.dscpConfigurationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations/{dscpConfigurationName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations/{dscpConfigurationName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DscpConfiguration
+      bodyMapper: Mappers.DscpConfiguration,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.dscpConfigurationName
+    Parameters.dscpConfigurationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dscpConfigurations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DscpConfigurationListResult
+      bodyMapper: Mappers.DscpConfigurationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/dscpConfigurations",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/dscpConfigurations",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DscpConfigurationListResult
+      bodyMapper: Mappers.DscpConfigurationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DscpConfigurationListResult
+      bodyMapper: Mappers.DscpConfigurationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DscpConfigurationListResult
+      bodyMapper: Mappers.DscpConfigurationListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

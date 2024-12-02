@@ -25,7 +25,7 @@ import {
   LogAnalyticsGetWafLogAnalyticsMetricsResponse,
   WafRankingType,
   LogAnalyticsGetWafLogAnalyticsRankingsOptionalParams,
-  LogAnalyticsGetWafLogAnalyticsRankingsResponse
+  LogAnalyticsGetWafLogAnalyticsRankingsResponse,
 } from "../models";
 
 /** Interface representing a LogAnalytics. */
@@ -33,7 +33,8 @@ export interface LogAnalytics {
   /**
    * Get log report for AFD profile
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param metrics Array of LogMetric
    * @param dateTimeBegin
    * @param dateTimeEnd
@@ -51,12 +52,13 @@ export interface LogAnalytics {
     granularity: LogMetricsGranularity,
     customDomains: string[],
     protocols: string[],
-    options?: LogAnalyticsGetLogAnalyticsMetricsOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsMetricsOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsMetricsResponse>;
   /**
    * Get log analytics ranking report for AFD profile
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param rankings Array of LogRanking
    * @param metrics Array of LogRankingMetric
    * @param maxRanking
@@ -72,34 +74,37 @@ export interface LogAnalytics {
     maxRanking: number,
     dateTimeBegin: Date,
     dateTimeEnd: Date,
-    options?: LogAnalyticsGetLogAnalyticsRankingsOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsRankingsOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsRankingsResponse>;
   /**
    * Get all available location names for AFD log analytics report.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param options The options parameters.
    */
   getLogAnalyticsLocations(
     resourceGroupName: string,
     profileName: string,
-    options?: LogAnalyticsGetLogAnalyticsLocationsOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsLocationsOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsLocationsResponse>;
   /**
    * Get all endpoints and custom domains available for AFD log report
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param options The options parameters.
    */
   getLogAnalyticsResources(
     resourceGroupName: string,
     profileName: string,
-    options?: LogAnalyticsGetLogAnalyticsResourcesOptionalParams
+    options?: LogAnalyticsGetLogAnalyticsResourcesOptionalParams,
   ): Promise<LogAnalyticsGetLogAnalyticsResourcesResponse>;
   /**
    * Get Waf related log analytics report for AFD profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param metrics Array of WafMetric
    * @param dateTimeBegin
    * @param dateTimeEnd
@@ -113,12 +118,13 @@ export interface LogAnalytics {
     dateTimeBegin: Date,
     dateTimeEnd: Date,
     granularity: WafGranularity,
-    options?: LogAnalyticsGetWafLogAnalyticsMetricsOptionalParams
+    options?: LogAnalyticsGetWafLogAnalyticsMetricsOptionalParams,
   ): Promise<LogAnalyticsGetWafLogAnalyticsMetricsResponse>;
   /**
    * Get WAF log analytics charts for AFD profile
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium profile which
+   *                    is unique within the resource group. which is unique within the resource group.
    * @param metrics Array of WafMetric
    * @param dateTimeBegin
    * @param dateTimeEnd
@@ -134,6 +140,6 @@ export interface LogAnalytics {
     dateTimeEnd: Date,
     maxRanking: number,
     rankings: WafRankingType[],
-    options?: LogAnalyticsGetWafLogAnalyticsRankingsOptionalParams
+    options?: LogAnalyticsGetWafLogAnalyticsRankingsOptionalParams,
   ): Promise<LogAnalyticsGetWafLogAnalyticsRankingsResponse>;
 }

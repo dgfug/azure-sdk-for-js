@@ -4,49 +4,63 @@
 
 ```ts
 
-/// <reference types="node" />
-
-import { AbortSignalLike } from '@azure/abort-controller';
+import type { AbortSignalLike } from '@azure/abort-controller';
+import { AnonymousCredential } from '@azure/storage-blob';
+import { AnonymousCredentialPolicy } from '@azure/storage-blob';
 import { AzureLogger } from '@azure/logger';
-import { BaseRequestPolicy } from '@azure/core-http';
-import { BlobLeaseClient } from '@azure/storage-blob';
-import { BlobQueryArrowConfiguration } from '@azure/storage-blob';
-import { ContainerRenameResponse } from '@azure/storage-blob';
-import { ContainerUndeleteResponse } from '@azure/storage-blob';
-import * as coreHttp from '@azure/core-http';
+import { BaseRequestPolicy } from '@azure/storage-blob';
+import type { BlobLeaseClient } from '@azure/storage-blob';
+import type { BlobQueryArrowConfiguration } from '@azure/storage-blob';
+import type { ContainerRenameResponse } from '@azure/storage-blob';
+import type { ContainerUndeleteResponse } from '@azure/storage-blob';
+import * as coreClient from '@azure/core-client';
+import * as coreHttpCompat from '@azure/core-http-compat';
+import * as coreRestPipeline from '@azure/core-rest-pipeline';
+import { Credential as Credential_2 } from '@azure/storage-blob';
+import { CredentialPolicy } from '@azure/storage-blob';
 import { ServiceGetPropertiesResponse as DataLakeServiceGetPropertiesResponse } from '@azure/storage-blob';
 import { BlobServiceProperties as DataLakeServiceProperties } from '@azure/storage-blob';
-import { deserializationPolicy } from '@azure/core-http';
-import { HttpHeaders } from '@azure/core-http';
-import { HttpOperationResponse } from '@azure/core-http';
-import { HttpRequestBody } from '@azure/core-http';
-import { HttpResponse } from '@azure/core-http';
-import { HttpClient as IHttpClient } from '@azure/core-http';
-import { KeepAliveOptions } from '@azure/core-http';
+import { HttpHeadersLike as HttpHeaders } from '@azure/core-http-compat';
+import { CompatResponse as HttpOperationResponse } from '@azure/core-http-compat';
+import { RequestBodyType as HttpRequestBody } from '@azure/core-rest-pipeline';
+import { isPipelineLike } from '@azure/storage-blob';
+import type { KeepAliveOptions } from '@azure/core-http-compat';
 import { Lease } from '@azure/storage-blob';
 import { LeaseAccessConditions } from '@azure/storage-blob';
 import { LeaseOperationOptions } from '@azure/storage-blob';
 import { LeaseOperationResponse } from '@azure/storage-blob';
-import { ModifiedAccessConditions as ModifiedAccessConditions_2 } from '@azure/storage-blob';
-import { OperationTracingOptions } from '@azure/core-tracing';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { ProxyOptions } from '@azure/core-http';
-import { Readable } from 'stream';
-import { RequestPolicy } from '@azure/core-http';
-import { RequestPolicyFactory } from '@azure/core-http';
-import { RequestPolicyOptions } from '@azure/core-http';
-import { RestError } from '@azure/core-http';
-import { ServiceClientOptions } from '@azure/core-http';
-import { ServiceGetPropertiesOptions } from '@azure/storage-blob';
+import type { ModifiedAccessConditions as ModifiedAccessConditions_3 } from '@azure/storage-blob';
+import type { OperationTracingOptions } from '@azure/core-tracing';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import { Pipeline } from '@azure/storage-blob';
+import { PipelineLike } from '@azure/storage-blob';
+import { PipelineOptions } from '@azure/storage-blob';
+import type { ProxySettings } from '@azure/core-rest-pipeline';
+import type { Readable } from 'stream';
+import { RequestPolicy } from '@azure/core-http-compat';
+import { RequestPolicyFactory } from '@azure/core-http-compat';
+import { RequestPolicyOptionsLike as RequestPolicyOptions } from '@azure/core-http-compat';
+import { RestError } from '@azure/core-rest-pipeline';
+import { ServiceClientOptions } from '@azure/storage-blob';
+import type { ServiceGetPropertiesOptions } from '@azure/storage-blob';
 import { ServiceListContainersSegmentResponse } from '@azure/storage-blob';
-import { ServiceRenameContainerOptions } from '@azure/storage-blob';
-import { ServiceSetPropertiesOptions } from '@azure/storage-blob';
-import { ServiceSetPropertiesResponse } from '@azure/storage-blob';
-import { TokenCredential } from '@azure/core-http';
-import { TransferProgressEvent } from '@azure/core-http';
-import { UserAgentOptions } from '@azure/core-http';
+import type { ServiceRenameContainerOptions } from '@azure/storage-blob';
+import type { ServiceSetPropertiesOptions } from '@azure/storage-blob';
+import type { ServiceSetPropertiesResponse } from '@azure/storage-blob';
+import { StorageBrowserPolicy } from '@azure/storage-blob';
+import { StorageBrowserPolicyFactory } from '@azure/storage-blob';
+import { StorageRetryOptions } from '@azure/storage-blob';
+import { StorageRetryPolicy } from '@azure/storage-blob';
+import { StorageRetryPolicyFactory } from '@azure/storage-blob';
+import { StorageRetryPolicyType } from '@azure/storage-blob';
+import { StorageSharedKeyCredential } from '@azure/storage-blob';
+import { StorageSharedKeyCredentialPolicy } from '@azure/storage-blob';
+import type { TokenCredential } from '@azure/core-auth';
+import type { TransferProgressEvent } from '@azure/core-rest-pipeline';
+import type { UserAgentPolicyOptions } from '@azure/core-rest-pipeline';
 import { UserDelegationKeyModel } from '@azure/storage-blob';
-import { WebResource } from '@azure/core-http';
+import { WebResourceLike as WebResource } from '@azure/core-http-compat';
+import type { WithResponse } from '@azure/storage-blob';
 
 // @public
 export interface AccessControlChangeCounters {
@@ -118,6 +132,7 @@ export class AccountSASServices {
 
 // @public
 export interface AccountSASSignatureValues {
+    encryptionScope?: string;
     expiresOn: Date;
     ipRange?: SasIPRange;
     permissions: AccountSASPermissions;
@@ -128,15 +143,9 @@ export interface AccountSASSignatureValues {
     version?: string;
 }
 
-// @public
-export class AnonymousCredential extends Credential_2 {
-    create(nextPolicy: RequestPolicy, options: RequestPolicyOptions): AnonymousCredentialPolicy;
-}
+export { AnonymousCredential }
 
-// @public
-export class AnonymousCredentialPolicy extends CredentialPolicy {
-    constructor(nextPolicy: RequestPolicy, options: RequestPolicyOptions);
-}
+export { AnonymousCredentialPolicy }
 
 export { BaseRequestPolicy }
 
@@ -238,6 +247,7 @@ export interface CommonGenerateSasUrlOptions {
     contentEncoding?: string;
     contentLanguage?: string;
     contentType?: string;
+    encryptionScope?: string;
     expiresOn?: Date;
     identifier?: string;
     ipRange?: SasIPRange;
@@ -248,6 +258,7 @@ export interface CommonGenerateSasUrlOptions {
 
 // @public
 export interface CommonOptions {
+    // (undocumented)
     tracingOptions?: OperationTracingOptions;
 }
 
@@ -255,19 +266,15 @@ export interface CommonOptions {
 export type CopyStatusType = "pending" | "success" | "aborted" | "failed";
 
 // @public
-abstract class Credential_2 implements RequestPolicyFactory {
-    create(_nextPolicy: RequestPolicy, _options: RequestPolicyOptions): RequestPolicy;
+export interface CpkInfo {
+    encryptionAlgorithm?: EncryptionAlgorithmType;
+    encryptionKey?: string;
+    encryptionKeySha256?: string;
 }
+
 export { Credential_2 as Credential }
 
-// @public
-export abstract class CredentialPolicy extends BaseRequestPolicy {
-    sendRequest(request: WebResource): Promise<HttpOperationResponse>;
-    protected signRequest(request: WebResource): WebResource;
-}
-
-// @public
-export type CredentialPolicyCreator = (nextPolicy: RequestPolicy, options: RequestPolicyOptions) => CredentialPolicy;
+export { CredentialPolicy }
 
 // @public
 export class DataLakeAclChangeFailedError extends Error {
@@ -282,7 +289,10 @@ export class DataLakeDirectoryClient extends DataLakePathClient {
     create(options?: DirectoryCreateOptions): Promise<DirectoryCreateResponse>;
     createIfNotExists(resourceType: PathResourceTypeModel, options?: PathCreateIfNotExistsOptions): Promise<PathCreateIfNotExistsResponse>;
     createIfNotExists(options?: DirectoryCreateIfNotExistsOptions): Promise<DirectoryCreateIfNotExistsResponse>;
+    generateSasStringToSign(options: DirectoryGenerateSasUrlOptions): string;
     generateSasUrl(options: DirectoryGenerateSasUrlOptions): Promise<string>;
+    generateUserDelegationSasStringToSign(options: DirectoryGenerateSasUrlOptions, userDelegationKey: UserDelegationKey): string;
+    generateUserDelegationSasUrl(options: DirectoryGenerateSasUrlOptions, userDelegationKey: UserDelegationKey): Promise<string>;
     getFileClient(fileName: string): DataLakeFileClient;
     getSubdirectoryClient(subdirectoryName: string): DataLakeDirectoryClient;
 }
@@ -296,17 +306,20 @@ export class DataLakeFileClient extends DataLakePathClient {
     create(options?: FileCreateOptions): Promise<FileCreateResponse>;
     createIfNotExists(resourceType: PathResourceTypeModel, options?: PathCreateIfNotExistsOptions): Promise<PathCreateIfNotExistsResponse>;
     createIfNotExists(options?: FileCreateIfNotExistsOptions): Promise<FileCreateIfNotExistsResponse>;
-    flush(position: number, options?: FileFlushOptions): Promise<PathFlushDataResponse>;
+    flush(position: number, options?: FileFlushOptions): Promise<FileFlushResponse>;
+    generateSasStringToSign(options: FileGenerateSasUrlOptions): string;
     generateSasUrl(options: FileGenerateSasUrlOptions): Promise<string>;
+    generateUserDelegationSasStringToSign(options: FileGenerateSasUrlOptions, userDelegationKey: UserDelegationKey): string;
+    generateUserDelegationSasUrl(options: FileGenerateSasUrlOptions, userDelegationKey: UserDelegationKey): Promise<string>;
     query(query: string, options?: FileQueryOptions): Promise<FileReadResponse>;
     read(offset?: number, count?: number, options?: FileReadOptions): Promise<FileReadResponse>;
     readToBuffer(buffer: Buffer, offset?: number, count?: number, options?: FileReadToBufferOptions): Promise<Buffer>;
     readToBuffer(offset?: number, count?: number, options?: FileReadToBufferOptions): Promise<Buffer>;
     readToFile(filePath: string, offset?: number, count?: number, options?: FileReadOptions): Promise<FileReadResponse>;
     setExpiry(mode: FileExpiryMode, options?: FileSetExpiryOptions): Promise<FileSetExpiryResponse>;
-    upload(data: Buffer | Blob | ArrayBuffer | ArrayBufferView, options?: FileParallelUploadOptions): Promise<PathFlushDataResponse>;
-    uploadFile(filePath: string, options?: FileParallelUploadOptions): Promise<PathFlushDataResponse>;
-    uploadStream(stream: Readable, options?: FileParallelUploadOptions): Promise<PathFlushDataResponse>;
+    upload(data: Buffer | Blob | ArrayBuffer | ArrayBufferView, options?: FileParallelUploadOptions): Promise<FileUploadResponse>;
+    uploadFile(filePath: string, options?: FileParallelUploadOptions): Promise<FileUploadResponse>;
+    uploadStream(stream: Readable, options?: FileParallelUploadOptions): Promise<FileUploadResponse>;
 }
 
 // Warning: (ae-forgotten-export) The symbol "StorageClient" needs to be exported by the entry point index.d.ts
@@ -320,7 +333,10 @@ export class DataLakeFileSystemClient extends StorageClient {
     delete(options?: FileSystemDeleteOptions): Promise<FileSystemDeleteResponse>;
     deleteIfExists(options?: FileSystemDeleteOptions): Promise<FileSystemDeleteIfExistsResponse>;
     exists(options?: FileSystemExistsOptions): Promise<boolean>;
+    generateSasStringToSign(options: FileSystemGenerateSasUrlOptions): string;
     generateSasUrl(options: FileSystemGenerateSasUrlOptions): Promise<string>;
+    generateUserDelegationSasStringToSign(options: FileSystemGenerateSasUrlOptions, userDelegationKey: UserDelegationKey): string;
+    generateUserDelegationSasUrl(options: FileSystemGenerateSasUrlOptions, userDelegationKey: UserDelegationKey): Promise<string>;
     getAccessPolicy(options?: FileSystemGetAccessPolicyOptions): Promise<FileSystemGetAccessPolicyResponse>;
     getDataLakeLeaseClient(proposeLeaseId?: string): DataLakeLeaseClient;
     getDirectoryClient(directoryName: string): DataLakeDirectoryClient;
@@ -374,7 +390,7 @@ export class DataLakePathClient extends StorageClient {
     setAccessControlRecursive(acl: PathAccessControlItem[], options?: PathChangeAccessControlRecursiveOptions): Promise<PathChangeAccessControlRecursiveResponse>;
     setHttpHeaders(httpHeaders: PathHttpHeaders, options?: PathSetHttpHeadersOptions): Promise<PathSetHttpHeadersResponse>;
     setMetadata(metadata?: Metadata, options?: PathSetMetadataOptions): Promise<PathSetMetadataResponse>;
-    setPermissions(permissions: PathPermissions, options?: PathSetPermissionsOptions): Promise<PathSetAccessControlResponse>;
+    setPermissions(permissions: PathPermissions, options?: PathSetPermissionsOptions): Promise<PathSetPermissionsResponse>;
     toDirectoryClient(): DataLakeDirectoryClient;
     toFileClient(): DataLakeFileClient;
     updateAccessControlRecursive(acl: PathAccessControlItem[], options?: PathChangeAccessControlRecursiveOptions): Promise<PathChangeAccessControlRecursiveResponse>;
@@ -409,6 +425,7 @@ export interface DataLakeSASSignatureValues {
     contentType?: string;
     correlationId?: string;
     directoryDepth?: number;
+    encryptionScope?: string;
     expiresOn?: Date;
     fileSystemName: string;
     identifier?: string;
@@ -429,6 +446,7 @@ export class DataLakeServiceClient extends StorageClient {
     constructor(url: string, pipeline: Pipeline);
     static fromConnectionString(connectionString: string, options?: StoragePipelineOptions): DataLakeServiceClient;
     generateAccountSasUrl(expiresOn?: Date, permissions?: AccountSASPermissions, resourceTypes?: string, options?: ServiceGenerateAccountSasUrlOptions): string;
+    generateSasStringToSign(expiresOn?: Date, permissions?: AccountSASPermissions, resourceTypes?: string, options?: ServiceGenerateAccountSasUrlOptions): string;
     getFileSystemClient(fileSystemName: string): DataLakeFileSystemClient;
     getProperties(options?: ServiceGetPropertiesOptions): Promise<DataLakeServiceGetPropertiesResponse>;
     getUserDelegationKey(startsOn: Date, expiresOn: Date, options?: ServiceGetUserDelegationKeyOptions): Promise<ServiceGetUserDelegationKeyResponse>;
@@ -461,8 +479,6 @@ export interface DeletedPathList {
     // (undocumented)
     pathItems?: DeletedPath[];
 }
-
-export { deserializationPolicy }
 
 // @public (undocumented)
 export interface DirectoryCreateIfNotExistsOptions extends PathCreateIfNotExistsOptions {
@@ -501,24 +517,29 @@ export class DirectorySASPermissions {
     write: boolean;
 }
 
+// @public
+export type EncryptionAlgorithmType = string;
+
 // @public (undocumented)
 export interface FileAppendOptions extends CommonOptions {
     // (undocumented)
     abortSignal?: AbortSignalLike;
     // (undocumented)
     conditions?: LeaseAccessConditions;
+    customerProvidedKey?: CpkInfo;
+    flush?: boolean;
+    // Warning: (ae-forgotten-export) The symbol "LeaseAction" needs to be exported by the entry point index.d.ts
+    leaseAction?: LeaseAction;
+    leaseDurationInSeconds?: number;
     // (undocumented)
     onProgress?: (progress: TransferProgressEvent) => void;
+    proposedLeaseId?: string;
     // (undocumented)
     transactionalContentMD5?: Uint8Array;
 }
 
-// @public
-export type FileAppendResponse = PathAppendDataHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: PathAppendDataHeaders;
-    };
-};
+// @public (undocumented)
+export type FileAppendResponse = WithResponse<PathAppendDataHeaders, PathAppendDataHeaders>;
 
 // @public (undocumented)
 export interface FileCreateIfNotExistsOptions extends PathCreateIfNotExistsOptions {
@@ -547,11 +568,18 @@ export interface FileFlushOptions extends CommonOptions {
     close?: boolean;
     // (undocumented)
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
+    leaseAction?: LeaseAction;
+    leaseDurationInSeconds?: number;
     // (undocumented)
     pathHttpHeaders?: PathHttpHeaders;
+    proposedLeaseId?: string;
     // (undocumented)
     retainUncommittedData?: boolean;
 }
+
+// @public (undocumented)
+export type FileFlushResponse = WithResponse<PathFlushDataHeaders, PathFlushDataHeaders>;
 
 // @public
 export interface FileGenerateSasUrlOptions extends CommonGenerateSasUrlOptions {
@@ -564,6 +592,8 @@ export interface FileParallelUploadOptions extends CommonOptions {
     chunkSize?: number;
     close?: boolean;
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
+    encryptionContext?: string;
     maxConcurrency?: number;
     metadata?: Metadata;
     onProgress?: (progress: TransferProgressEvent) => void;
@@ -604,6 +634,7 @@ export interface FileQueryJsonTextConfiguration {
 export interface FileQueryOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
     inputTextConfiguration?: FileQueryJsonTextConfiguration | FileQueryCsvTextConfiguration | FileQueryParquetConfiguration;
     onError?: (error: FileQueryError) => void;
     onProgress?: (progress: TransferProgressEvent) => void;
@@ -619,6 +650,7 @@ export interface FileQueryParquetConfiguration {
 export interface FileReadHeaders {
     // (undocumented)
     acceptRanges?: string;
+    acl: PathAccessControlItem[];
     // (undocumented)
     cacheControl?: string;
     // (undocumented)
@@ -651,14 +683,18 @@ export interface FileReadHeaders {
     copyStatus?: CopyStatusType;
     // (undocumented)
     copyStatusDescription?: string;
+    createdOn?: Date;
     // (undocumented)
     date?: Date;
+    encryptionContext?: string;
     // (undocumented)
     encryptionKeySha256?: string;
     // (undocumented)
     etag?: string;
     // (undocumented)
     fileContentMD5?: Uint8Array;
+    // (undocumented)
+    group?: string;
     // (undocumented)
     isServerEncrypted?: boolean;
     // (undocumented)
@@ -672,6 +708,10 @@ export interface FileReadHeaders {
     // (undocumented)
     metadata?: Metadata;
     // (undocumented)
+    owner?: string;
+    // (undocumented)
+    permissions?: PathPermissions;
+    // (undocumented)
     requestId?: string;
     // (undocumented)
     version?: string;
@@ -683,6 +723,7 @@ export interface FileReadOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     // (undocumented)
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
     // (undocumented)
     maxRetryRequests?: number;
     // (undocumented)
@@ -694,13 +735,10 @@ export interface FileReadOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type FileReadResponse = FileReadHeaders & {
+export type FileReadResponse = WithResponse<FileReadHeaders & {
     contentAsBlob?: Promise<Blob>;
     readableStreamBody?: NodeJS.ReadableStream;
-    _response: HttpResponse & {
-        parsedHeaders: FileReadHeaders;
-    };
-};
+}, FileReadHeaders>;
 
 // @public
 export interface FileReadToBufferOptions extends CommonOptions {
@@ -708,6 +746,7 @@ export interface FileReadToBufferOptions extends CommonOptions {
     chunkSize?: number;
     concurrency?: number;
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
     maxRetryRequestsPerChunk?: number;
     onProgress?: (progress: TransferProgressEvent) => void;
 }
@@ -730,12 +769,8 @@ export interface FileSetExpiryOptions extends CommonOptions {
     timeToExpireInMs?: number;
 }
 
-// @public
-export type FileSetExpiryResponse = FileSetExpiryHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: FileSetExpiryHeaders;
-    };
-};
+// @public (undocumented)
+export type FileSetExpiryResponse = WithResponse<FileSetExpiryHeaders, FileSetExpiryHeaders>;
 
 // @public (undocumented)
 export interface FileSystemCreateHeaders {
@@ -764,16 +799,13 @@ export interface FileSystemCreateOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     // (undocumented)
     access?: PublicAccessType;
+    fileSystemEncryptionScope?: FileSystemEncryptionScope;
     // (undocumented)
     metadata?: Metadata;
 }
 
 // @public (undocumented)
-export type FileSystemCreateResponse = FileSystemCreateHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileSystemCreateHeaders;
-    };
-};
+export type FileSystemCreateResponse = WithResponse<FileSystemCreateHeaders, FileSystemCreateHeaders>;
 
 // @public (undocumented)
 export interface FileSystemDeleteHeaders {
@@ -801,11 +833,13 @@ export interface FileSystemDeleteOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type FileSystemDeleteResponse = FileSystemDeleteHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileSystemDeleteHeaders;
-    };
-};
+export type FileSystemDeleteResponse = WithResponse<FileSystemDeleteHeaders, FileSystemDeleteHeaders>;
+
+// @public
+export interface FileSystemEncryptionScope {
+    defaultEncryptionScope?: string;
+    preventEncryptionScopeOverride?: boolean;
+}
 
 // @public
 export interface FileSystemExistsOptions extends CommonOptions {
@@ -844,15 +878,9 @@ export interface FileSystemGetAccessPolicyOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type FileSystemGetAccessPolicyResponse = {
+export type FileSystemGetAccessPolicyResponse = WithResponse<{
     signedIdentifiers: SignedIdentifier<AccessPolicy>[];
-} & FileSystemGetAccessPolicyHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileSystemGetAccessPolicyHeaders;
-        bodyAsText: string;
-        parsedBody: SignedIdentifier<RawAccessPolicy>[];
-    };
-};
+} & FileSystemGetAccessPolicyHeaders, FileSystemGetAccessPolicyHeaders, SignedIdentifier<RawAccessPolicy>[]>;
 
 // @public (undocumented)
 export interface FileSystemGetPropertiesHeaders {
@@ -860,6 +888,7 @@ export interface FileSystemGetPropertiesHeaders {
     clientRequestId?: string;
     // (undocumented)
     date?: Date;
+    defaultEncryptionScope?: string;
     // (undocumented)
     etag?: string;
     // (undocumented)
@@ -893,11 +922,7 @@ export interface FileSystemGetPropertiesOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type FileSystemGetPropertiesResponse = FileSystemGetPropertiesHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileSystemGetPropertiesHeaders;
-    };
-};
+export type FileSystemGetPropertiesResponse = WithResponse<FileSystemGetPropertiesHeaders, FileSystemGetPropertiesHeaders>;
 
 // @public (undocumented)
 export interface FileSystemItem {
@@ -924,14 +949,9 @@ export interface FileSystemListBlobHierarchySegmentHeaders {
 }
 
 // @public (undocumented)
-export type FileSystemListDeletedPathsResponse = DeletedPathList & FileSystemListBlobHierarchySegmentHeaders & ListBlobsHierarchySegmentResponse & {
-    _response: HttpResponse & {
-        bodyAsText: string;
-        parsedBody: ListBlobsHierarchySegmentResponse;
-        parsedHeaders: FileSystemListBlobHierarchySegmentHeaders;
-    };
+export type FileSystemListDeletedPathsResponse = WithResponse<DeletedPathList & FileSystemListBlobHierarchySegmentHeaders & ListBlobsHierarchySegmentResponse & {
     continuation?: string;
-};
+}, FileSystemListBlobHierarchySegmentHeaders, ListBlobsHierarchySegmentResponse>;
 
 // @public
 export interface FileSystemListPathsHeaders {
@@ -945,16 +965,12 @@ export interface FileSystemListPathsHeaders {
 }
 
 // @public (undocumented)
-export type FileSystemListPathsResponse = PathList & FileSystemListPathsHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileSystemListPathsHeaders;
-        bodyAsText: string;
-        parsedBody: PathListModel;
-    };
-};
+export type FileSystemListPathsResponse = WithResponse<PathList & FileSystemListPathsHeaders, FileSystemListPathsHeaders, PathListModel>;
 
 // @public (undocumented)
 export interface FileSystemProperties {
+    // (undocumented)
+    defaultEncryptionScope?: string;
     // (undocumented)
     deletedOn?: Date;
     // (undocumented)
@@ -1021,11 +1037,7 @@ export interface FileSystemSetAccessPolicyOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type FileSystemSetAccessPolicyResponse = FileSystemSetAccessPolicyHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileSystemSetAccessPolicyHeaders;
-    };
-};
+export type FileSystemSetAccessPolicyResponse = WithResponse<FileSystemSetAccessPolicyHeaders, FileSystemSetAccessPolicyHeaders>;
 
 // @public (undocumented)
 export interface FileSystemSetMetadataHeaders {
@@ -1052,11 +1064,7 @@ export interface FileSystemSetMetadataOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type FileSystemSetMetadataResponse = FileSystemSetMetadataHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: FileSystemSetMetadataHeaders;
-    };
-};
+export type FileSystemSetMetadataResponse = WithResponse<FileSystemSetMetadataHeaders, FileSystemSetMetadataHeaders>;
 
 // @public (undocumented)
 export interface FileSystemUndeletePathOption extends CommonOptions {
@@ -1065,15 +1073,15 @@ export interface FileSystemUndeletePathOption extends CommonOptions {
 }
 
 // @public (undocumented)
-export type FileSystemUndeletePathResponse = PathUndeleteHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: PathUndeleteHeaders;
-    };
+export type FileSystemUndeletePathResponse = WithResponse<PathUndeleteHeaders & {
     pathClient: DataLakePathClient;
-};
+}, PathUndeleteHeaders>;
 
 // @public
 export type FileSystemUndeleteResponse = ContainerUndeleteResponse;
+
+// @public (undocumented)
+export type FileUploadResponse = WithResponse<PathFlushDataHeaders, PathFlushDataHeaders>;
 
 // @public
 export function generateAccountSASQueryParameters(accountSASSignatureValues: AccountSASSignatureValues, sharedKeyCredential: StorageSharedKeyCredential): SASQueryParameters;
@@ -1084,13 +1092,16 @@ export function generateDataLakeSASQueryParameters(dataLakeSASSignatureValues: D
 // @public
 export function generateDataLakeSASQueryParameters(dataLakeSASSignatureValues: DataLakeSASSignatureValues, userDelegationKey: UserDelegationKey, accountName: string): SASQueryParameters;
 
+// @public
+export function getDataLakeServiceAccountAudience(storageAccountName: string): string;
+
 export { HttpHeaders }
 
 export { HttpOperationResponse }
 
 export { HttpRequestBody }
 
-export { IHttpClient }
+export { isPipelineLike }
 
 export { Lease }
 
@@ -1177,15 +1188,6 @@ export interface ListPathsSegmentOptions extends ListPathsOptions {
 }
 
 // @public
-export type ListPathsSegmentResponse = FileSystemListPathsHeaders & PathListModel & {
-    _response: coreHttp.HttpResponse & {
-        bodyAsText: string;
-        parsedBody: PathListModel;
-        parsedHeaders: FileSystemListPathsHeaders;
-    };
-};
-
-// @public
 export const logger: AzureLogger;
 
 // @public
@@ -1195,7 +1197,7 @@ export interface Metadata {
 }
 
 // @public (undocumented)
-export type ModifiedAccessConditions = Omit<ModifiedAccessConditions_2, "ifTags">;
+export type ModifiedAccessConditions = Omit<ModifiedAccessConditions_3, "ifTags">;
 
 // @public
 export function newPipeline(credential?: StorageSharedKeyCredential | AnonymousCredential | TokenCredential, pipelineOptions?: StoragePipelineOptions): Pipeline;
@@ -1204,8 +1206,12 @@ export function newPipeline(credential?: StorageSharedKeyCredential | AnonymousC
 export interface Path {
     // (undocumented)
     contentLength?: number;
+    createdOn?: Date;
+    encryptionContext?: string;
+    encryptionScope?: string;
     // (undocumented)
     etag?: string;
+    expiresOn?: Date;
     // (undocumented)
     group?: string;
     // (undocumented)
@@ -1222,7 +1228,6 @@ export interface Path {
 
 // @public (undocumented)
 export interface PathAccessControl {
-    // (undocumented)
     acl: PathAccessControlItem[];
     // (undocumented)
     group?: string;
@@ -1245,8 +1250,10 @@ export interface PathAppendDataHeaders {
     clientRequestId?: string;
     contentMD5?: Uint8Array;
     date?: Date;
+    encryptionKeySha256?: string;
     etag?: string;
     isServerEncrypted?: boolean;
+    leaseRenewed?: boolean;
     requestId?: string;
     version?: string;
     xMsContentCrc64?: Uint8Array;
@@ -1273,8 +1280,10 @@ export interface PathCreateHeaders {
     contentLength?: number;
     continuation?: string;
     date?: Date;
+    encryptionKeySha256?: string;
     errorCode?: string;
     etag?: string;
+    isServerEncrypted?: boolean;
     lastModified?: Date;
     requestId?: string;
     version?: string;
@@ -1298,12 +1307,20 @@ export interface PathCreateHttpHeaders {
 export interface PathCreateIfNotExistsOptions extends CommonOptions {
     // (undocumented)
     abortSignal?: AbortSignalLike;
+    acl?: PathAccessControlItem[];
+    customerProvidedKey?: CpkInfo;
+    encryptionContext?: string;
+    expiresOn?: number | Date;
+    group?: string;
+    leaseDuration?: number;
     // (undocumented)
     metadata?: Metadata;
+    owner?: string;
     // (undocumented)
     pathHttpHeaders?: PathCreateHttpHeaders;
     // (undocumented)
     permissions?: string;
+    proposedLeaseId?: string;
     // (undocumented)
     umask?: string;
 }
@@ -1317,24 +1334,28 @@ export interface PathCreateIfNotExistsResponse extends PathCreateResponse {
 export interface PathCreateOptions extends CommonOptions {
     // (undocumented)
     abortSignal?: AbortSignalLike;
+    acl?: PathAccessControlItem[];
     // (undocumented)
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
+    encryptionContext?: string;
+    expiresOn?: number | Date;
+    group?: string;
+    leaseDuration?: number;
     // (undocumented)
     metadata?: Metadata;
+    owner?: string;
     // (undocumented)
     pathHttpHeaders?: PathCreateHttpHeaders;
     // (undocumented)
     permissions?: string;
+    proposedLeaseId?: string;
     // (undocumented)
     umask?: string;
 }
 
-// @public
-export type PathCreateResponse = PathCreateHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: PathCreateHeaders;
-    };
-};
+// @public (undocumented)
+export type PathCreateResponse = WithResponse<PathCreateHeaders, PathCreateHeaders>;
 
 // @public
 export interface PathDeleteHeaders {
@@ -1359,16 +1380,13 @@ export interface PathDeleteOptions extends CommonOptions {
     conditions?: DataLakeRequestConditions;
 }
 
-// @public
-export type PathDeleteResponse = PathDeleteHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: PathDeleteHeaders;
-    };
-};
+// @public (undocumented)
+export type PathDeleteResponse = WithResponse<PathDeleteHeaders, PathDeleteHeaders>;
 
 // @public
 export interface PathExistsOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
+    customerProvidedKey?: CpkInfo;
 }
 
 // @public
@@ -1376,20 +1394,14 @@ export interface PathFlushDataHeaders {
     clientRequestId?: string;
     contentLength?: number;
     date?: Date;
+    encryptionKeySha256?: string;
     etag?: string;
+    isServerEncrypted?: boolean;
     lastModified?: Date;
+    leaseRenewed?: boolean;
     requestId?: string;
     version?: string;
 }
-
-// @public
-type PathFlushDataResponse = PathFlushDataHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: PathFlushDataHeaders;
-    };
-};
-export { PathFlushDataResponse as FileFlushResponse }
-export { PathFlushDataResponse as FileUploadResponse }
 
 // @public (undocumented)
 export interface PathGetAccessControlHeaders {
@@ -1420,11 +1432,7 @@ export interface PathGetAccessControlOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type PathGetAccessControlResponse = PathAccessControl & PathGetAccessControlHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: PathGetPropertiesHeadersModel;
-    };
-};
+export type PathGetAccessControlResponse = WithResponse<PathAccessControl & PathGetAccessControlHeaders, PathGetPropertiesHeadersModel>;
 
 // @public
 export enum PathGetPropertiesAction {
@@ -1447,6 +1455,7 @@ export interface PathGetPropertiesHeaders {
     accessTierChangedOn?: Date;
     // (undocumented)
     accessTierInferred?: boolean;
+    acl: PathAccessControlItem[];
     // (undocumented)
     archiveStatus?: string;
     // (undocumented)
@@ -1483,11 +1492,15 @@ export interface PathGetPropertiesHeaders {
     date?: Date;
     // (undocumented)
     destinationSnapshot?: string;
+    encryptionContext?: string;
     // (undocumented)
     encryptionKeySha256?: string;
+    encryptionScope?: string;
     // (undocumented)
     etag?: string;
     expiresOn?: Date;
+    // (undocumented)
+    group?: string;
     // (undocumented)
     isIncrementalCopy?: boolean;
     // (undocumented)
@@ -1502,6 +1515,10 @@ export interface PathGetPropertiesHeaders {
     leaseStatus?: LeaseStatusType;
     // (undocumented)
     metadata?: Metadata;
+    // (undocumented)
+    owner?: string;
+    // (undocumented)
+    permissions?: PathPermissions;
     // (undocumented)
     requestId?: string;
     // (undocumented)
@@ -1542,14 +1559,11 @@ export interface PathGetPropertiesOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     // (undocumented)
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
 }
 
 // @public (undocumented)
-export type PathGetPropertiesResponse = PathGetPropertiesHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: PathGetPropertiesHeaders;
-    };
-};
+export type PathGetPropertiesResponse = WithResponse<PathGetPropertiesHeaders, PathGetPropertiesHeaders>;
 
 // @public (undocumented)
 export interface PathHttpHeaders {
@@ -1584,7 +1598,14 @@ export interface PathModel {
     // (undocumented)
     contentLength?: number;
     // (undocumented)
+    creationTime?: string;
+    // (undocumented)
+    encryptionContext?: string;
+    encryptionScope?: string;
+    // (undocumented)
     etag?: string;
+    // (undocumented)
+    expiryTime?: string;
     // (undocumented)
     group?: string;
     // (undocumented)
@@ -1610,11 +1631,7 @@ export interface PathMoveOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type PathMoveResponse = PathRemoveHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: PathRemoveHeaders;
-    };
-};
+export type PathMoveResponse = WithResponse<PathRemoveHeaders, PathRemoveHeaders>;
 
 // @public (undocumented)
 export interface PathPermissions {
@@ -1690,14 +1707,8 @@ export interface PathSetAccessControlOptions extends CommonOptions {
     owner?: string;
 }
 
-// @public
-type PathSetAccessControlResponse = PathSetAccessControlHeaders & {
-    _response: coreHttp.HttpResponse & {
-        parsedHeaders: PathSetAccessControlHeaders;
-    };
-};
-export { PathSetAccessControlResponse }
-export { PathSetAccessControlResponse as PathSetPermissionsResponse }
+// @public (undocumented)
+export type PathSetAccessControlResponse = WithResponse<PathSetAccessControlHeaders, PathSetAccessControlHeaders>;
 
 // @public (undocumented)
 export interface PathSetHttpHeadersHeaders {
@@ -1724,11 +1735,7 @@ export interface PathSetHttpHeadersOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type PathSetHttpHeadersResponse = PathSetHttpHeadersHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: PathSetHttpHeadersHeaders;
-    };
-};
+export type PathSetHttpHeadersResponse = WithResponse<PathSetHttpHeadersHeaders, PathSetHttpHeadersHeaders>;
 
 // @public (undocumented)
 export interface PathSetMetadataHeaders {
@@ -1756,14 +1763,11 @@ export interface PathSetMetadataOptions extends CommonOptions {
     abortSignal?: AbortSignalLike;
     // (undocumented)
     conditions?: DataLakeRequestConditions;
+    customerProvidedKey?: CpkInfo;
 }
 
 // @public (undocumented)
-export type PathSetMetadataResponse = PathSetMetadataHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: PathSetMetadataHeaders;
-    };
-};
+export type PathSetMetadataResponse = WithResponse<PathSetMetadataHeaders, PathSetMetadataHeaders>;
 
 // @public (undocumented)
 export interface PathSetPermissionsOptions extends CommonOptions {
@@ -1776,6 +1780,9 @@ export interface PathSetPermissionsOptions extends CommonOptions {
     // (undocumented)
     owner?: string;
 }
+
+// @public (undocumented)
+export type PathSetPermissionsResponse = WithResponse<PathSetAccessControlHeaders, PathSetAccessControlHeaders>;
 
 // @public
 export interface PathUndeleteHeaders {
@@ -1807,18 +1814,11 @@ export interface PathUpdateHeaders {
     xMsContinuation?: string;
 }
 
-// @public
-export class Pipeline {
-    constructor(factories: RequestPolicyFactory[], options?: PipelineOptions);
-    readonly factories: RequestPolicyFactory[];
-    readonly options: PipelineOptions;
-    toServiceClientOptions(): ServiceClientOptions;
-}
+export { Pipeline }
 
-// @public
-export interface PipelineOptions {
-    httpClient?: IHttpClient;
-}
+export { PipelineLike }
+
+export { PipelineOptions }
 
 // @public (undocumented)
 export type PublicAccessType = "filesystem" | "file";
@@ -1840,6 +1840,7 @@ export interface RemovePathAccessControlItem {
     entityId?: string;
 }
 
+export { RequestPolicy as IHttpClient }
 export { RequestPolicy }
 
 export { RequestPolicyFactory }
@@ -1872,7 +1873,7 @@ export enum SASProtocol {
 
 // @public
 export class SASQueryParameters {
-    constructor(version: string, signature: string, permissions?: string, services?: string, resourceTypes?: string, protocol?: SASProtocol, startsOn?: Date, expiresOn?: Date, ipRange?: SasIPRange, identifier?: string, resource?: string, cacheControl?: string, contentDisposition?: string, contentEncoding?: string, contentLanguage?: string, contentType?: string, userDelegationKey?: UserDelegationKey, directoryDepth?: number, preauthorizedAgentObjectId?: string, agentObjectId?: string, correlationId?: string);
+    constructor(version: string, signature: string, permissions?: string, services?: string, resourceTypes?: string, protocol?: SASProtocol, startsOn?: Date, expiresOn?: Date, ipRange?: SasIPRange, identifier?: string, resource?: string, cacheControl?: string, contentDisposition?: string, contentEncoding?: string, contentLanguage?: string, contentType?: string, userDelegationKey?: UserDelegationKey, directoryDepth?: number, preauthorizedAgentObjectId?: string, agentObjectId?: string, correlationId?: string, encryptionScope?: string);
     constructor(version: string, signature: string, options?: SASQueryParametersOptions);
     readonly agentObjectId?: string;
     readonly cacheControl?: string;
@@ -1882,6 +1883,7 @@ export class SASQueryParameters {
     readonly contentType?: string;
     readonly correlationId?: string;
     readonly directoryDepth?: number;
+    readonly encryptionScope?: string;
     readonly expiresOn?: Date;
     readonly identifier?: string;
     get ipRange(): SasIPRange | undefined;
@@ -1907,6 +1909,7 @@ export interface SASQueryParametersOptions {
     contentType?: string;
     correlationId?: string;
     directoryDepth?: number;
+    encryptionScope?: string;
     expiresOn?: Date;
     identifier?: string;
     ipRange?: SasIPRange;
@@ -1920,8 +1923,11 @@ export interface SASQueryParametersOptions {
     userDelegationKey?: UserDelegationKey;
 }
 
+export { ServiceClientOptions }
+
 // @public
 export interface ServiceGenerateAccountSasUrlOptions {
+    encryptionScope?: string;
     ipRange?: SasIPRange;
     protocol?: SASProtocol;
     startsOn?: Date;
@@ -1947,13 +1953,7 @@ export interface ServiceGetUserDelegationKeyOptions extends CommonOptions {
 }
 
 // @public (undocumented)
-export type ServiceGetUserDelegationKeyResponse = UserDelegationKey & ServiceGetUserDelegationKeyHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: ServiceGetUserDelegationKeyHeaders;
-        bodyAsText: string;
-        parsedBody: UserDelegationKeyModel;
-    };
-};
+export type ServiceGetUserDelegationKeyResponse = WithResponse<UserDelegationKey & ServiceGetUserDelegationKeyHeaders, ServiceGetUserDelegationKeyHeaders, UserDelegationKeyModel>;
 
 export { ServiceListContainersSegmentResponse }
 
@@ -1979,13 +1979,7 @@ export interface ServiceListFileSystemsSegmentHeaders {
 }
 
 // @public (undocumented)
-export type ServiceListFileSystemsSegmentResponse = ListFileSystemsSegmentResponse & ServiceListFileSystemsSegmentHeaders & {
-    _response: HttpResponse & {
-        parsedHeaders: ServiceListFileSystemsSegmentHeaders;
-        bodyAsText: string;
-        parsedBody: ListFileSystemsSegmentResponse;
-    };
-};
+export type ServiceListFileSystemsSegmentResponse = WithResponse<ListFileSystemsSegmentResponse & ServiceListFileSystemsSegmentHeaders, ServiceListFileSystemsSegmentHeaders, ListFileSystemsSegmentResponse>;
 
 // @public
 export type ServiceRenameFileSystemOptions = ServiceRenameContainerOptions;
@@ -2005,72 +1999,39 @@ export interface SignedIdentifier<T> {
     id: string;
 }
 
+export { StorageBrowserPolicy }
+
+export { StorageBrowserPolicyFactory }
+
 // @public
-export class StorageBrowserPolicy extends BaseRequestPolicy {
-    constructor(nextPolicy: RequestPolicy, options: RequestPolicyOptions);
-    sendRequest(request: WebResource): Promise<HttpOperationResponse>;
+export enum StorageDataLakeAudience {
+    StorageOAuthScopes = "https://storage.azure.com/.default"
 }
 
 // @public
-export class StorageBrowserPolicyFactory implements RequestPolicyFactory {
-    create(nextPolicy: RequestPolicy, options: RequestPolicyOptions): StorageBrowserPolicy;
-}
-
-// @public (undocumented)
 export const StorageOAuthScopes: string | string[];
 
 // @public
 export interface StoragePipelineOptions {
-    httpClient?: IHttpClient;
+    audience?: string;
+    httpClient?: RequestPolicy;
     keepAliveOptions?: KeepAliveOptions;
-    proxyOptions?: ProxyOptions;
+    proxyOptions?: ProxySettings;
     retryOptions?: StorageRetryOptions;
-    userAgentOptions?: UserAgentOptions;
+    userAgentOptions?: UserAgentPolicyOptions;
 }
 
-// @public
-export interface StorageRetryOptions {
-    readonly maxRetryDelayInMs?: number;
-    readonly maxTries?: number;
-    readonly retryDelayInMs?: number;
-    readonly retryPolicyType?: StorageRetryPolicyType;
-    readonly secondaryHost?: string;
-    readonly tryTimeoutInMs?: number;
-}
+export { StorageRetryOptions }
 
-// @public
-export class StorageRetryPolicy extends BaseRequestPolicy {
-    constructor(nextPolicy: RequestPolicy, options: RequestPolicyOptions, retryOptions?: StorageRetryOptions);
-    protected attemptSendRequest(request: WebResource, secondaryHas404: boolean, attempt: number): Promise<HttpOperationResponse>;
-    sendRequest(request: WebResource): Promise<HttpOperationResponse>;
-    protected shouldRetry(isPrimaryRetry: boolean, attempt: number, response?: HttpOperationResponse, err?: RestError): boolean;
-}
+export { StorageRetryPolicy }
 
-// @public
-export class StorageRetryPolicyFactory implements RequestPolicyFactory {
-    constructor(retryOptions?: StorageRetryOptions);
-    create(nextPolicy: RequestPolicy, options: RequestPolicyOptions): StorageRetryPolicy;
-}
+export { StorageRetryPolicyFactory }
 
-// @public
-export enum StorageRetryPolicyType {
-    EXPONENTIAL = 0,
-    FIXED = 1
-}
+export { StorageRetryPolicyType }
 
-// @public
-export class StorageSharedKeyCredential extends Credential_2 {
-    constructor(accountName: string, accountKey: string);
-    readonly accountName: string;
-    computeHMACSHA256(stringToSign: string): string;
-    create(nextPolicy: RequestPolicy, options: RequestPolicyOptions): StorageSharedKeyCredentialPolicy;
-}
+export { StorageSharedKeyCredential }
 
-// @public
-export class StorageSharedKeyCredentialPolicy extends CredentialPolicy {
-    constructor(nextPolicy: RequestPolicy, options: RequestPolicyOptions, factory: StorageSharedKeyCredential);
-    protected signRequest(request: WebResource): WebResource;
-}
+export { StorageSharedKeyCredentialPolicy }
 
 // @public (undocumented)
 export const ToBlobEndpointHostMappings: string[][];

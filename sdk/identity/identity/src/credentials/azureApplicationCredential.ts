@@ -1,41 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+import {
+  createDefaultManagedIdentityCredential,
+  createEnvironmentCredential,
+} from "./defaultAzureCredential.js";
 
-import { TokenCredential } from "@azure/core-auth";
-import { TokenCredentialOptions } from "../tokenCredentialOptions";
-import { ChainedTokenCredential } from "./chainedTokenCredential";
-import { EnvironmentCredential } from "./environmentCredential";
-import { CredentialPersistenceOptions } from "./credentialPersistenceOptions";
-import { DefaultManagedIdentityCredential } from "./defaultAzureCredential";
-
-/**
- * Provides options to configure the {@link AzureApplicationCredential} class.
- */
-export interface AzureApplicationCredentialOptions
-  extends TokenCredentialOptions,
-    CredentialPersistenceOptions {
-  /**
-   * Optionally pass in a user assigned client ID to be used by the {@link ManagedIdentityCredential}.
-   * This client ID can also be passed through to the {@link ManagedIdentityCredential} through the environment variable: AZURE_CLIENT_ID.
-   */
-  managedIdentityClientId?: string;
-}
-
-/**
- * The type of a class that implements TokenCredential and accepts
- * `ApplicationCredentialOptions`.
- */
-interface AzureApplicationCredentialConstructor {
-  new (options?: AzureApplicationCredentialOptions): TokenCredential;
-}
-
-export const AzureApplicationCredentials: AzureApplicationCredentialConstructor[] = [
-  EnvironmentCredential,
-  DefaultManagedIdentityCredential
-];
+import type { AzureApplicationCredentialOptions } from "./azureApplicationCredentialOptions.js";
+import { ChainedTokenCredential } from "./chainedTokenCredential.js";
 
 /**
  * Provides a default {@link ChainedTokenCredential} configuration that should
@@ -57,8 +29,10 @@ export class AzureApplicationCredential extends ChainedTokenCredential {
    * @param options - Optional parameters. See {@link AzureApplicationCredentialOptions}.
    */
   constructor(options?: AzureApplicationCredentialOptions) {
-    super(...AzureApplicationCredentials.map((ctor) => new ctor(options)));
-    this.UnavailableMessage =
-      "ApplicationCredential => failed to retrieve a token from the included credentials. To troubleshoot, visit https://aka.ms/azsdk/js/identity/applicationcredential/troubleshoot.";
+    const credentialFunctions = [
+      createEnvironmentCredential,
+      createDefaultManagedIdentityCredential,
+    ];
+    super(...credentialFunctions.map((createCredentialFn) => createCredentialFn(options)));
   }
 }

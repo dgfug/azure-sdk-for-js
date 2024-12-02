@@ -1,105 +1,67 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AppConfigurationClient, AppConfigurationClientOptions } from "../../../src";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import {
+import type {
+  AppConfigurationClientOptions,
+  ListSnapshotsPage,
+  ConfigurationSnapshot,
+  SettingLabel,
+  ListLabelsPage,
+} from "../../../src/index.js";
+import { AppConfigurationClient } from "../../../src/index.js";
+import type {
   ConfigurationSetting,
   ListConfigurationSettingPage,
-  ListRevisionsPage
-} from "../../../src";
-import {
-  env,
-  isPlaybackMode,
-  RecorderEnvironmentSetup,
-  record,
-  Recorder
-} from "@azure-tools/test-recorder";
-import * as assert from "assert";
-
-// allow loading from a .env file as an alternative to defining the variable
-// in the environment
-import * as dotenv from "dotenv";
-
-import { DefaultAzureCredential, TokenCredential } from "@azure/identity";
-dotenv.config();
-
-let connectionStringNotPresentWarning = false;
-let tokenCredentialsNotPresentWarning = false;
+  ListRevisionsPage,
+} from "../../../src/index.js";
+import type { RecorderStartOptions, VitestTestContext } from "@azure-tools/test-recorder";
+import { Recorder, isPlaybackMode, assertEnvironmentVariable } from "@azure-tools/test-recorder";
+import type { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import type { RestError } from "@azure/core-rest-pipeline";
+import type { TokenCredential } from "@azure/identity";
+import { createTestCredential } from "@azure-tools/test-credential";
+import { assert } from "vitest";
 
 export interface CredsAndEndpoint {
   credential: TokenCredential;
   endpoint: string;
 }
 
-export function startRecorder(that: Mocha.Context): Recorder {
-  const recorderEnvSetup: RecorderEnvironmentSetup = {
-    replaceableVariables: {
-      APPCONFIG_CONNECTION_STRING:
-        "Endpoint=https://myappconfig.azconfig.io;Id=123456;Secret=123456",
+export async function startRecorder(context: VitestTestContext): Promise<Recorder> {
+  const recorderStartOptions: RecorderStartOptions = {
+    envSetupForPlayback: {
       AZ_CONFIG_ENDPOINT: "https://myappconfig.azconfig.io",
-      AZURE_CLIENT_ID: "azure_client_id",
-      AZURE_CLIENT_SECRET: "azure_client_secret",
-      AZURE_TENANT_ID: "azuretenantid"
     },
-    customizationsOnRecordings: [],
-    queryParametersToSkip: []
+    removeCentralSanitizers: [
+      "AZSDK3447", // .key in the body is not a secret for key-value App Config pair
+      "AZSDK3490", // etag value in If-Match header is not a secret and is needed for etag test
+      "AZSDK2030", // operation-location header is not a secret and is needed for long running operation tests
+      "AZSDK3493", // .name in the body is not a secret
+      "AZSDK2021", // x-ms-client-request-id for custom client ID test
+    ],
   };
 
-  return record(that, recorderEnvSetup);
+  const recorder = new Recorder(context);
+  await recorder.start(recorderStartOptions);
+  return recorder;
 }
 
-export function getTokenAuthenticationCredential(): CredsAndEndpoint | undefined {
-  const requiredEnvironmentVariables = [
-    "AZ_CONFIG_ENDPOINT",
-    "AZURE_CLIENT_ID",
-    "AZURE_TENANT_ID",
-    "AZURE_CLIENT_SECRET"
-  ];
-
-  for (const name of requiredEnvironmentVariables) {
-    const value = env[name];
-
-    if (value == null) {
-      if (tokenCredentialsNotPresentWarning) {
-        tokenCredentialsNotPresentWarning = true;
-        console.log("Functional tests not running - set client identity variables to activate");
-      }
-
-      return undefined;
-    }
-  }
-
-  return {
-    credential: new DefaultAzureCredential(),
-    endpoint: env["AZ_CONFIG_ENDPOINT"]!
-  };
-}
-
-export function createAppConfigurationClientForTests<
-  Options extends AppConfigurationClientOptions = AppConfigurationClientOptions
->(options?: Options): AppConfigurationClient | undefined {
-  const connectionString = env["APPCONFIG_CONNECTION_STRING"];
-
-  if (connectionString == null) {
-    if (!connectionStringNotPresentWarning) {
-      connectionStringNotPresentWarning = true;
-      console.log(
-        "Functional tests not running - set APPCONFIG_CONNECTION_STRING to a valid AppConfig connection string to activate"
-      );
-    }
-    return undefined;
-  }
-
-  return new AppConfigurationClient(connectionString, options);
+export function createAppConfigurationClientForTests(
+  options?: AppConfigurationClientOptions & {
+    testCredential?: TokenCredential;
+  },
+): AppConfigurationClient {
+  const endpoint = assertEnvironmentVariable("AZ_CONFIG_ENDPOINT");
+  const credential = options?.testCredential ?? createTestCredential();
+  return new AppConfigurationClient(endpoint, credential, options);
 }
 
 export async function deleteKeyCompletely(
   keys: string[],
-  client: AppConfigurationClient
+  client: AppConfigurationClient,
 ): Promise<void> {
   const settingsIterator = client.listConfigurationSettings({
-    keyFilter: keys.join(",")
+    keyFilter: keys.join(","),
   });
 
   for await (const setting of settingsIterator) {
@@ -111,12 +73,22 @@ export async function deleteKeyCompletely(
   }
 }
 
+export async function deleteEverySetting(): Promise<void> {
+  const client = createAppConfigurationClientForTests();
+  const settingsList = client.listConfigurationSettings({});
+
+  for await (const setting of settingsList) {
+    await client.setReadOnly({ key: setting.key, label: setting.label }, false);
+    await client.deleteConfigurationSetting({ key: setting.key, label: setting.label });
+  }
+}
+
 export async function toSortedArray(
   pagedIterator: PagedAsyncIterableIterator<
     ConfigurationSetting,
     ListConfigurationSettingPage | ListRevisionsPage
   >,
-  compareFn?: (a: ConfigurationSetting, b: ConfigurationSetting) => number
+  compareFn?: (a: ConfigurationSetting, b: ConfigurationSetting) => number,
 ): Promise<ConfigurationSetting[]> {
   const settings: ConfigurationSetting[] = [];
 
@@ -136,39 +108,111 @@ export async function toSortedArray(
   settings.sort((a, b) =>
     compareFn
       ? compareFn(a, b)
-      : `${a.key}-${a.label}-${a.value}`.localeCompare(`${b.key}-${b.label}-${b.value}`)
+      : `${a.key}-${a.label}-${a.value}-${a.tags}`.localeCompare(
+          `${b.key}-${b.label}-${b.value}-${b.tags}`,
+        ),
   );
 
   return settings;
 }
 
+export async function toSortedSnapshotArray(
+  pagedIterator: PagedAsyncIterableIterator<ConfigurationSnapshot, ListSnapshotsPage>,
+  compareFn?: (a: ConfigurationSnapshot, b: ConfigurationSnapshot) => number,
+): Promise<ConfigurationSnapshot[]> {
+  const snapshots: ConfigurationSnapshot[] = [];
+
+  for await (const snapshot of pagedIterator) {
+    snapshots.push(snapshot);
+  }
+
+  let snapshotsViaPageIterator: ConfigurationSnapshot[] = [];
+
+  for await (const page of pagedIterator.byPage()) {
+    snapshotsViaPageIterator = snapshotsViaPageIterator.concat(page.items);
+  }
+
+  // just a sanity-check
+  assert.deepEqual(snapshots, snapshotsViaPageIterator);
+
+  snapshots.sort((a, b) =>
+    compareFn
+      ? compareFn(a, b)
+      : `${a.name}-${a.itemCount}-${a.status}`.localeCompare(
+          `${b.name}-${b.itemCount}-${b.status}`,
+        ),
+  );
+  return snapshots;
+}
+
+export async function toSortedLabelsArray(
+  pagedIterator: PagedAsyncIterableIterator<SettingLabel, ListLabelsPage, PageSettings>,
+  compareFn?: (a: SettingLabel, b: SettingLabel) => number,
+): Promise<SettingLabel[]> {
+  const labels: SettingLabel[] = [];
+
+  for await (const label of pagedIterator) {
+    labels.push(label);
+  }
+
+  let labelsViaPageIterator: SettingLabel[] = [];
+
+  for await (const page of pagedIterator.byPage()) {
+    labelsViaPageIterator = labelsViaPageIterator.concat(page.items);
+  }
+
+  // just a sanity-check
+  assert.deepEqual(labels, labelsViaPageIterator);
+
+  labels.sort((a, b) => (compareFn ? compareFn(a, b) : `${a.name}`.localeCompare(`${b.name}`)));
+
+  return labels;
+}
+
 export function assertEqualSettings(
   expected: Pick<ConfigurationSetting, "key" | "value" | "label" | "isReadOnly">[],
-  actual: ConfigurationSetting[]
+  actual: ConfigurationSetting[],
 ): void {
   actual = actual.map((setting) => {
     return {
       key: setting.key,
-      label: setting.label,
+      label: setting.label || undefined,
       value: setting.value,
-      isReadOnly: setting.isReadOnly
+      isReadOnly: setting.isReadOnly,
     };
   });
 
   assert.deepEqual(expected, actual);
 }
 
+export function assertTags(
+  expected: Pick<ConfigurationSetting, "tags">[],
+  actual: ConfigurationSetting[],
+): void {
+  const tagsList = actual.map((setting) => {
+    return {
+      tags: setting.tags,
+    };
+  });
+  assert.deepEqual(expected, tagsList);
+}
+
 export async function assertThrowsRestError(
   testFunction: () => Promise<any>,
   expectedStatusCode: number,
-  message: string = ""
+  message: string = "",
 ): Promise<Error> {
   try {
     await testFunction();
     assert.fail(`${message}: No error thrown`);
-  } catch (err) {
+  } catch (err: any) {
+    console.log("running into ", JSON.stringify(err));
+    if (!(err instanceof Error)) {
+      throw new Error("Error is not recognized");
+    }
     if (err.name === "RestError") {
-      assert.equal(expectedStatusCode, err.statusCode, message);
+      const restError = err as RestError;
+      assert.equal(expectedStatusCode, restError.statusCode, message);
       return err;
     }
 
@@ -180,12 +224,15 @@ export async function assertThrowsRestError(
 
 export async function assertThrowsAbortError(
   testFunction: () => Promise<any>,
-  message = ""
+  message = "",
 ): Promise<Error> {
   try {
     await testFunction();
     assert.fail(`${message}: No error thrown`);
-  } catch (e) {
+  } catch (e: any) {
+    if (!(e instanceof Error)) {
+      throw new Error("Error is not recognized");
+    }
     if (isPlaybackMode() && (e.name === "FetchError" || e.name === "AbortError")) {
       return e;
     } else {
@@ -193,4 +240,24 @@ export async function assertThrowsAbortError(
       return e;
     }
   }
+}
+
+/**
+ * Assert 2 snapshots with name, retentionPeriod and filters are equal
+ */
+export function assertEqualSnapshot(
+  snapshot1: ConfigurationSnapshot,
+  snapshot2: ConfigurationSnapshot,
+): void {
+  assert.equal(snapshot1.name, snapshot2.name, "Unexpected name in result from getSnapshot().");
+  assert.equal(
+    snapshot1.retentionPeriodInSeconds,
+    snapshot2.retentionPeriodInSeconds,
+    "Unexpected retentionPeriod in result from getSnapshot().",
+  );
+  assert.deepEqual(
+    snapshot1.filters,
+    snapshot2.filters,
+    "Unexpected filters in result from getSnapshot().",
+  );
 }

@@ -6,7 +6,7 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   DdosCustomPoliciesDeleteOptionalParams,
   DdosCustomPoliciesGetOptionalParams,
@@ -16,7 +16,7 @@ import {
   DdosCustomPoliciesCreateOrUpdateResponse,
   TagsObject,
   DdosCustomPoliciesUpdateTagsOptionalParams,
-  DdosCustomPoliciesUpdateTagsResponse
+  DdosCustomPoliciesUpdateTagsResponse,
 } from "../models";
 
 /** Interface representing a DdosCustomPolicies. */
@@ -30,8 +30,8 @@ export interface DdosCustomPolicies {
   beginDelete(
     resourceGroupName: string,
     ddosCustomPolicyName: string,
-    options?: DdosCustomPoliciesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DdosCustomPoliciesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified DDoS custom policy.
    * @param resourceGroupName The name of the resource group.
@@ -41,7 +41,7 @@ export interface DdosCustomPolicies {
   beginDeleteAndWait(
     resourceGroupName: string,
     ddosCustomPolicyName: string,
-    options?: DdosCustomPoliciesDeleteOptionalParams
+    options?: DdosCustomPoliciesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets information about the specified DDoS custom policy.
@@ -52,7 +52,7 @@ export interface DdosCustomPolicies {
   get(
     resourceGroupName: string,
     ddosCustomPolicyName: string,
-    options?: DdosCustomPoliciesGetOptionalParams
+    options?: DdosCustomPoliciesGetOptionalParams,
   ): Promise<DdosCustomPoliciesGetResponse>;
   /**
    * Creates or updates a DDoS custom policy.
@@ -65,10 +65,10 @@ export interface DdosCustomPolicies {
     resourceGroupName: string,
     ddosCustomPolicyName: string,
     parameters: DdosCustomPolicy,
-    options?: DdosCustomPoliciesCreateOrUpdateOptionalParams
+    options?: DdosCustomPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DdosCustomPoliciesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DdosCustomPoliciesCreateOrUpdateResponse>,
       DdosCustomPoliciesCreateOrUpdateResponse
     >
   >;
@@ -83,7 +83,7 @@ export interface DdosCustomPolicies {
     resourceGroupName: string,
     ddosCustomPolicyName: string,
     parameters: DdosCustomPolicy,
-    options?: DdosCustomPoliciesCreateOrUpdateOptionalParams
+    options?: DdosCustomPoliciesCreateOrUpdateOptionalParams,
   ): Promise<DdosCustomPoliciesCreateOrUpdateResponse>;
   /**
    * Update a DDoS custom policy tags.
@@ -96,6 +96,6 @@ export interface DdosCustomPolicies {
     resourceGroupName: string,
     ddosCustomPolicyName: string,
     parameters: TagsObject,
-    options?: DdosCustomPoliciesUpdateTagsOptionalParams
+    options?: DdosCustomPoliciesUpdateTagsOptionalParams,
   ): Promise<DdosCustomPoliciesUpdateTagsResponse>;
 }

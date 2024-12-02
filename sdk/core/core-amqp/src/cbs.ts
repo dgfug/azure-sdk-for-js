@@ -1,23 +1,24 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenType } from "./auth/token";
-import {
-  Message as RheaMessage,
+import type { AbortSignalLike } from "@azure/abort-controller";
+import { AbortError } from "@azure/abort-controller";
+import type {
   Connection,
   EventContext,
-  ReceiverEvents,
   ReceiverOptions,
-  SenderEvents,
+  Message as RheaMessage,
   SenderOptions,
-  generate_uuid
 } from "rhea-promise";
-import { AbortError, AbortSignalLike } from "@azure/abort-controller";
-import { Constants } from "./util/constants";
-import { logErrorStackTrace, logger } from "./log";
-import { StandardAbortMessage, translate } from "./errors";
-import { defaultCancellableLock } from "./util/utils";
-import { RequestResponseLink } from "./requestResponseLink";
+import { ReceiverEvents, SenderEvents, generate_uuid } from "rhea-promise";
+import { logErrorStackTrace, logger } from "./log.js";
+import { Constants } from "./util/constants.js";
+import { RequestResponseLink } from "./requestResponseLink.js";
+import { StandardAbortMessage } from "./util/constants.js";
+import type { TokenType } from "./auth/token.js";
+import { defaultCancellableLock } from "./util/utils.js";
+import { isError } from "@azure/core-util";
+import { translate } from "./errors.js";
 
 /**
  * Describes the CBS Response.
@@ -92,14 +93,14 @@ export class CbsClient {
           () => {
             return this.connection.open({ abortSignal });
           },
-          { abortSignal: abortSignal, timeoutInMs: timeoutInMs }
+          { abortSignal: abortSignal, timeoutInMs: timeoutInMs },
         );
       }
 
       if (!this.isOpen()) {
         const rxOpt: ReceiverOptions = {
           source: {
-            address: this.endpoint
+            address: this.endpoint,
           },
           name: this.replyTo,
           onSessionError: (context: EventContext) => {
@@ -108,20 +109,20 @@ export class CbsClient {
             logger.verbose(
               "[%s] An error occurred on the session for request/response links " + "for $cbs: %O",
               id,
-              ehError
+              ehError,
             );
-          }
+          },
         };
         const srOpt: SenderOptions = { target: { address: this.endpoint } };
         logger.verbose(
           "[%s] Creating sender/receiver links on a session for $cbs endpoint.",
-          this.connection.id
+          this.connection.id,
         );
         this._cbsSenderReceiverLink = await RequestResponseLink.create(
           this.connection,
           srOpt,
           rxOpt,
-          { abortSignal }
+          { abortSignal },
         );
         this._cbsSenderReceiverLink.sender.on(SenderEvents.senderError, (context: EventContext) => {
           const id = context.connection.options.id;
@@ -134,14 +135,14 @@ export class CbsClient {
             const id = context.connection.options.id;
             const ehError = translate(context.receiver!.error!);
             logger.verbose("[%s] An error occurred on the cbs receiver link.. %O", id, ehError);
-          }
+          },
         );
         logger.verbose(
           "[%s] Successfully created the cbs sender '%s' and receiver '%s' " +
             "links over cbs session.",
           this.connection.id,
           this._cbsSenderReceiverLink.sender.name,
-          this._cbsSenderReceiverLink.receiver.name
+          this._cbsSenderReceiverLink.receiver.name,
         );
       } else {
         logger.verbose(
@@ -149,7 +150,7 @@ export class CbsClient {
             "and receiver '%s' links over cbs session.",
           this.connection.id,
           this._cbsSenderReceiverLink!.sender.name,
-          this._cbsSenderReceiverLink!.receiver.name
+          this._cbsSenderReceiverLink!.receiver.name,
         );
       }
     } catch (err) {
@@ -157,7 +158,7 @@ export class CbsClient {
       logger.warning(
         "[%s] An error occurred while establishing the cbs links: %s",
         this.connection.id,
-        `${translatedError?.name}: ${translatedError?.message}`
+        `${translatedError?.name}: ${translatedError?.message}`,
       );
       logErrorStackTrace(translatedError);
       throw translatedError;
@@ -203,7 +204,7 @@ export class CbsClient {
     audience: string,
     token: string,
     tokenType: TokenType,
-    options: { abortSignal?: AbortSignalLike; timeoutInMs?: number } = {}
+    options: { abortSignal?: AbortSignalLike; timeoutInMs?: number } = {},
   ): Promise<CbsResponse> {
     const { abortSignal, timeoutInMs } = options;
     try {
@@ -223,13 +224,13 @@ export class CbsClient {
         application_properties: {
           operation: Constants.operationPutToken,
           name: audience,
-          type: tokenType
-        }
+          type: tokenType,
+        },
       };
       const responseMessage = await this._cbsSenderReceiverLink.sendRequest(request, {
         abortSignal,
         timeoutInMs,
-        requestName: "negotiateClaim"
+        requestName: "negotiateClaim",
       });
       logger.verbose("[%s] The CBS response is: %O", this.connection.id, responseMessage);
       return this._fromRheaMessageResponse(responseMessage);
@@ -237,7 +238,7 @@ export class CbsClient {
       logger.warning(
         "[%s] An error occurred while negotiating the cbs claim: %s",
         this.connection.id,
-        `${err?.name}: ${err?.message}`
+        isError(err) ? `${err.name}: ${err.message}` : String(err),
       );
       logErrorStackTrace(err);
       throw err;
@@ -258,8 +259,9 @@ export class CbsClient {
         logger.verbose("[%s] Successfully closed the cbs session.", this.connection.id);
       }
     } catch (err) {
-      const msg = `An error occurred while closing the cbs link: ${err.stack ||
-        JSON.stringify(err)}.`;
+      const msg = `An error occurred while closing the cbs link: ${
+        isError(err) && err.stack ? err.stack : JSON.stringify(err)
+      }.`;
       logger.verbose("[%s] %s", this.connection.id, msg);
       throw new Error(msg);
     }
@@ -278,8 +280,9 @@ export class CbsClient {
         logger.verbose("[%s] Successfully removed the cbs session.", this.connection.id);
       }
     } catch (err) {
-      const msg = `An error occurred while removing the cbs link: ${err.stack ||
-        JSON.stringify(err)}.`;
+      const msg = `An error occurred while removing the cbs link: ${
+        isError(err) && err.stack ? err.stack : JSON.stringify(err)
+      }.`;
       logger.verbose("[%s] %s", this.connection.id, msg);
       throw new Error(msg);
     }
@@ -299,7 +302,7 @@ export class CbsClient {
       statusCode: msg.application_properties ? msg.application_properties["status-code"] : "",
       statusDescription: msg.application_properties
         ? msg.application_properties["status-description"]
-        : ""
+        : "",
     };
     logger.verbose("[%s] The deserialized CBS response is: %o", this.connection.id, cbsResponse);
     return cbsResponse;

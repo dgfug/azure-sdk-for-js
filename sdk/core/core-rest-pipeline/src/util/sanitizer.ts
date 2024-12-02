@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { isObject, UnknownObject } from "./helpers";
-import { URL } from "./url";
+import { type UnknownObject, isObject } from "@azure/core-util";
 
 /**
  * @internal
@@ -25,6 +24,7 @@ export interface SanitizerOptions {
 
 const RedactedString = "REDACTED";
 
+// Make sure this list is up-to-date with the one under core/logger/Readme#Keyconcepts
 const defaultAllowedHeaderNames = [
   "x-ms-client-request-id",
   "x-ms-return-client-request-id",
@@ -65,7 +65,8 @@ const defaultAllowedHeaderNames = [
   "Retry-After",
   "Server",
   "Transfer-Encoding",
-  "User-Agent"
+  "User-Agent",
+  "WWW-Authenticate",
 ];
 
 const defaultAllowedQueryParameters: string[] = ["api-version"];
@@ -79,7 +80,7 @@ export class Sanitizer {
 
   constructor({
     additionalAllowedHeaderNames: allowedHeaderNames = [],
-    additionalAllowedQueryParameters: allowedQueryParameters = []
+    additionalAllowedQueryParameters: allowedQueryParameters = [],
   }: SanitizerOptions = {}) {
     allowedHeaderNames = defaultAllowedHeaderNames.concat(allowedHeaderNames);
     allowedQueryParameters = defaultAllowedQueryParameters.concat(allowedQueryParameters);
@@ -98,7 +99,7 @@ export class Sanitizer {
           return {
             ...value,
             name: value.name,
-            message: value.message
+            message: value.message,
           };
         }
 
@@ -127,8 +128,28 @@ export class Sanitizer {
 
         return value;
       },
-      2
+      2,
     );
+  }
+
+  public sanitizeUrl(value: string): string {
+    if (typeof value !== "string" || value === null || value === "") {
+      return value;
+    }
+
+    const url = new URL(value);
+
+    if (!url.search) {
+      return value;
+    }
+
+    for (const [key] of url.searchParams) {
+      if (!this.allowedQueryParameters.has(key.toLowerCase())) {
+        url.searchParams.set(key, RedactedString);
+      }
+    }
+
+    return url.toString();
   }
 
   private sanitizeHeaders(obj: UnknownObject): UnknownObject {
@@ -159,25 +180,5 @@ export class Sanitizer {
     }
 
     return sanitized;
-  }
-
-  private sanitizeUrl(value: string): string {
-    if (typeof value !== "string" || value === null) {
-      return value;
-    }
-
-    const url = new URL(value);
-
-    if (!url.search) {
-      return value;
-    }
-
-    for (const [key] of url.searchParams) {
-      if (!this.allowedQueryParameters.has(key.toLowerCase())) {
-        url.searchParams.set(key, RedactedString);
-      }
-    }
-
-    return url.toString();
   }
 }

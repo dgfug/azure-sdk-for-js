@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RawHttpHeaders } from "@azure/core-rest-pipeline";
+import type { RawHttpHeaders } from "@azure/core-rest-pipeline";
 
 /**
  * @internal
@@ -13,6 +13,6 @@ export function getBaseTransactionHeaders(transactionGuid: string): RawHttpHeade
     "x-ms-version": "2019-02-02",
     DataServiceVersion: "3.0;",
     MaxDataServiceVersion: "3.0;NetFx",
-    "Content-Type": `multipart/mixed; boundary=batch_${transactionGuid}`
+    "Content-Type": `multipart/mixed; boundary=batch_${transactionGuid}`,
   };
 }

@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how the ServiceBusAdministrationClient can be used to manage the resources of a service bus namespace.
@@ -11,19 +11,21 @@
  */
 
 import { ServiceBusAdministrationClient } from "@azure/service-bus";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
 
 export async function main() {
   // You can also use AAD credentials from `@azure/identity` along with the host url
   // instead of the connection string for authentication.
-  const serviceBusAdministrationClient = new ServiceBusAdministrationClient(connectionString);
+  const credential = new DefaultAzureCredential();
+  const serviceBusAdministrationClient = new ServiceBusAdministrationClient(fqdn, credential);
 
   // Similarly, you can create topics and subscriptions as well.
   const createQueueResponse = await serviceBusAdministrationClient.createQueue(queueName);
@@ -36,9 +38,8 @@ export async function main() {
   const updateQueueResponse = await serviceBusAdministrationClient.updateQueue(getQueueResponse);
   console.log("(Updated)max delivery count = ", updateQueueResponse.maxDeliveryCount);
 
-  const queueRuntimeProperties = await serviceBusAdministrationClient.getQueueRuntimeProperties(
-    queueName
-  );
+  const queueRuntimeProperties =
+    await serviceBusAdministrationClient.getQueueRuntimeProperties(queueName);
   console.log("Number of messages in the queue = ", queueRuntimeProperties.totalMessageCount);
 
   const namespaceInfo = await serviceBusAdministrationClient.getNamespaceProperties();

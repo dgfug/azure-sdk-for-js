@@ -5,9 +5,9 @@
 ## Configuration
 
 ```yaml
-require: "https://github.com/Azure/azure-rest-api-specs/blob/b6f4a619bd310870334edd79eaec2d4bfeabdbbe/specification/eventgrid/data-plane/readme.md"
+require: "https://github.com/Azure/azure-rest-api-specs/blob/012021c786c360e0c34faf7af888c7fd7dbe2df5/specification/eventgrid/data-plane/readme.md"
 package-name: "@azure/eventgrid"
-package-version: "4.5.1"
+package-version: "5.8.1"
 title: GeneratedClient
 description: EventGrid Client
 generate-metadata: false
@@ -35,18 +35,6 @@ directive:
     where: $["x-ms-parameterized-host"]
     transform: >
       $.useSchemePrefix = false;
-```
-
-### Mark a discriminator property as "required"
-
-Newer versions of AutoRest complain during validation about the discriminator property being required
-
-```yaml
-directive:
-  - from: swagger-document
-    where: $.definitions.MediaJobOutput
-    transform: >
-      $.required.push("@odata.type");
 ```
 
 ### Use the "EventData" suffix on the Azure Resource Manager Event types, instead of just "Data"
@@ -125,4 +113,46 @@ directive:
           }
         }
       }
+```
+
+### Don't use x-ms-client-name for EventHub Event.
+
+The wire format for the event uses camel cassing and the `x-ms-client-name` attribute was added to the API Specification (in Azure/azure-rest-api-specs#17565) to work around an issue without introducing a breaking
+change. For JavaScript, we want to generate types that match the format of the wire events, so remove `x-ms-client-name`.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.EventHubCaptureFileCreatedEventData
+    transform: >
+      delete $.properties.fileUrl["x-ms-client-name"]
+```
+
+### Don't use x-ms-client-name for Fhir Events.
+
+For JavaScript, we want to generate types that match the format of the wire events, so remove `x-ms-client-name`.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.HealthcareFhirResourceCreatedEventData
+    transform: >
+      delete $.properties.resourceType["x-ms-client-name"];
+      delete $.properties.resourceFhirAccount["x-ms-client-name"];
+      delete $.properties.resourceFhirId["x-ms-client-name"];
+      delete $.properties.resourceVersionId["x-ms-client-name"];
+  - from: swagger-document
+    where: $.definitions.HealthcareFhirResourceUpdatedEventData
+    transform: >
+      delete $.properties.resourceType["x-ms-client-name"];
+      delete $.properties.resourceFhirAccount["x-ms-client-name"];
+      delete $.properties.resourceFhirId["x-ms-client-name"];
+      delete $.properties.resourceVersionId["x-ms-client-name"];
+  - from: swagger-document
+    where: $.definitions.HealthcareFhirResourceDeletedEventData
+    transform: >
+      delete $.properties.resourceType["x-ms-client-name"];
+      delete $.properties.resourceFhirAccount["x-ms-client-name"];
+      delete $.properties.resourceFhirId["x-ms-client-name"];
+      delete $.properties.resourceVersionId["x-ms-client-name"];
 ```

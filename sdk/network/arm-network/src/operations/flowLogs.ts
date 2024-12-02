@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { FlowLogs } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   FlowLog,
   FlowLogsListNextOptionalParams,
   FlowLogsListOptionalParams,
+  FlowLogsListResponse,
   FlowLogsCreateOrUpdateOptionalParams,
   FlowLogsCreateOrUpdateResponse,
   TagsObject,
@@ -26,20 +32,19 @@ import {
   FlowLogsGetOptionalParams,
   FlowLogsGetResponse,
   FlowLogsDeleteOptionalParams,
-  FlowLogsListResponse,
-  FlowLogsListNextResponse
+  FlowLogsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing FlowLogs operations. */
 export class FlowLogsImpl implements FlowLogs {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class FlowLogs class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -52,12 +57,12 @@ export class FlowLogsImpl implements FlowLogs {
   public list(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: FlowLogsListOptionalParams
+    options?: FlowLogsListOptionalParams,
   ): PagedAsyncIterableIterator<FlowLog> {
     const iter = this.listPagingAll(
       resourceGroupName,
       networkWatcherName,
-      options
+      options,
     );
     return {
       next() {
@@ -66,49 +71,58 @@ export class FlowLogsImpl implements FlowLogs {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           networkWatcherName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: FlowLogsListOptionalParams
+    options?: FlowLogsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<FlowLog[]> {
-    let result = await this._list(
-      resourceGroupName,
-      networkWatcherName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: FlowLogsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, networkWatcherName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         networkWatcherName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: FlowLogsListOptionalParams
+    options?: FlowLogsListOptionalParams,
   ): AsyncIterableIterator<FlowLog> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       networkWatcherName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -127,30 +141,29 @@ export class FlowLogsImpl implements FlowLogs {
     networkWatcherName: string,
     flowLogName: string,
     parameters: FlowLog,
-    options?: FlowLogsCreateOrUpdateOptionalParams
+    options?: FlowLogsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<FlowLogsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<FlowLogsCreateOrUpdateResponse>,
       FlowLogsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<FlowLogsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -159,8 +172,8 @@ export class FlowLogsImpl implements FlowLogs {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -168,27 +181,32 @@ export class FlowLogsImpl implements FlowLogs {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         networkWatcherName,
         flowLogName,
         parameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      FlowLogsCreateOrUpdateResponse,
+      OperationState<FlowLogsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -204,14 +222,14 @@ export class FlowLogsImpl implements FlowLogs {
     networkWatcherName: string,
     flowLogName: string,
     parameters: FlowLog,
-    options?: FlowLogsCreateOrUpdateOptionalParams
+    options?: FlowLogsCreateOrUpdateOptionalParams,
   ): Promise<FlowLogsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       networkWatcherName,
       flowLogName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -229,7 +247,7 @@ export class FlowLogsImpl implements FlowLogs {
     networkWatcherName: string,
     flowLogName: string,
     parameters: TagsObject,
-    options?: FlowLogsUpdateTagsOptionalParams
+    options?: FlowLogsUpdateTagsOptionalParams,
   ): Promise<FlowLogsUpdateTagsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -237,9 +255,9 @@ export class FlowLogsImpl implements FlowLogs {
         networkWatcherName,
         flowLogName,
         parameters,
-        options
+        options,
       },
-      updateTagsOperationSpec
+      updateTagsOperationSpec,
     );
   }
 
@@ -254,11 +272,11 @@ export class FlowLogsImpl implements FlowLogs {
     resourceGroupName: string,
     networkWatcherName: string,
     flowLogName: string,
-    options?: FlowLogsGetOptionalParams
+    options?: FlowLogsGetOptionalParams,
   ): Promise<FlowLogsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkWatcherName, flowLogName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -273,25 +291,24 @@ export class FlowLogsImpl implements FlowLogs {
     resourceGroupName: string,
     networkWatcherName: string,
     flowLogName: string,
-    options?: FlowLogsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: FlowLogsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -300,8 +317,8 @@ export class FlowLogsImpl implements FlowLogs {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -309,21 +326,23 @@ export class FlowLogsImpl implements FlowLogs {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, flowLogName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, flowLogName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -337,13 +356,13 @@ export class FlowLogsImpl implements FlowLogs {
     resourceGroupName: string,
     networkWatcherName: string,
     flowLogName: string,
-    options?: FlowLogsDeleteOptionalParams
+    options?: FlowLogsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       networkWatcherName,
       flowLogName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -357,11 +376,11 @@ export class FlowLogsImpl implements FlowLogs {
   private _list(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: FlowLogsListOptionalParams
+    options?: FlowLogsListOptionalParams,
   ): Promise<FlowLogsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkWatcherName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -376,11 +395,11 @@ export class FlowLogsImpl implements FlowLogs {
     resourceGroupName: string,
     networkWatcherName: string,
     nextLink: string,
-    options?: FlowLogsListNextOptionalParams
+    options?: FlowLogsListNextOptionalParams,
   ): Promise<FlowLogsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkWatcherName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -388,50 +407,48 @@ export class FlowLogsImpl implements FlowLogs {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.FlowLog
+      bodyMapper: Mappers.FlowLog,
     },
     201: {
-      bodyMapper: Mappers.FlowLog
+      bodyMapper: Mappers.FlowLog,
     },
     202: {
-      bodyMapper: Mappers.FlowLog
+      bodyMapper: Mappers.FlowLog,
     },
     204: {
-      bodyMapper: Mappers.FlowLog
+      bodyMapper: Mappers.FlowLog,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters47,
+  requestBody: Parameters.parameters62,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.networkWatcherName,
-    Parameters.flowLogName
+    Parameters.flowLogName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateTagsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.FlowLog
+      bodyMapper: Mappers.FlowLog,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.parameters1,
   queryParameters: [Parameters.apiVersion],
@@ -440,23 +457,22 @@ const updateTagsOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.networkWatcherName,
-    Parameters.flowLogName
+    Parameters.flowLogName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FlowLog
+      bodyMapper: Mappers.FlowLog,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -464,14 +480,13 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.networkWatcherName,
-    Parameters.flowLogName
+    Parameters.flowLogName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs/{flowLogName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -479,8 +494,8 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -488,52 +503,50 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.networkWatcherName,
-    Parameters.flowLogName
+    Parameters.flowLogName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/flowLogs",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FlowLogListResult
+      bodyMapper: Mappers.FlowLogListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.FlowLogListResult
+      bodyMapper: Mappers.FlowLogListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

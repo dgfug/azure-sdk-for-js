@@ -6,23 +6,31 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DiskAccesses } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ComputeManagementClient } from "../computeManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   DiskAccess,
   DiskAccessesListByResourceGroupNextOptionalParams,
   DiskAccessesListByResourceGroupOptionalParams,
+  DiskAccessesListByResourceGroupResponse,
   DiskAccessesListNextOptionalParams,
   DiskAccessesListOptionalParams,
+  DiskAccessesListResponse,
   PrivateEndpointConnection,
   DiskAccessesListPrivateEndpointConnectionsNextOptionalParams,
   DiskAccessesListPrivateEndpointConnectionsOptionalParams,
+  DiskAccessesListPrivateEndpointConnectionsResponse,
   DiskAccessesCreateOrUpdateOptionalParams,
   DiskAccessesCreateOrUpdateResponse,
   DiskAccessUpdate,
@@ -31,8 +39,6 @@ import {
   DiskAccessesGetOptionalParams,
   DiskAccessesGetResponse,
   DiskAccessesDeleteOptionalParams,
-  DiskAccessesListByResourceGroupResponse,
-  DiskAccessesListResponse,
   DiskAccessesGetPrivateLinkResourcesOptionalParams,
   DiskAccessesGetPrivateLinkResourcesResponse,
   DiskAccessesUpdateAPrivateEndpointConnectionOptionalParams,
@@ -40,22 +46,21 @@ import {
   DiskAccessesGetAPrivateEndpointConnectionOptionalParams,
   DiskAccessesGetAPrivateEndpointConnectionResponse,
   DiskAccessesDeleteAPrivateEndpointConnectionOptionalParams,
-  DiskAccessesListPrivateEndpointConnectionsResponse,
   DiskAccessesListByResourceGroupNextResponse,
   DiskAccessesListNextResponse,
-  DiskAccessesListPrivateEndpointConnectionsNextResponse
+  DiskAccessesListPrivateEndpointConnectionsNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DiskAccesses operations. */
 export class DiskAccessesImpl implements DiskAccesses {
-  private readonly client: ComputeManagementClientContext;
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class DiskAccesses class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -66,7 +71,7 @@ export class DiskAccessesImpl implements DiskAccesses {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: DiskAccessesListByResourceGroupOptionalParams
+    options?: DiskAccessesListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<DiskAccess> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -76,37 +81,53 @@ export class DiskAccessesImpl implements DiskAccesses {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: DiskAccessesListByResourceGroupOptionalParams
+    options?: DiskAccessesListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DiskAccess[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DiskAccessesListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: DiskAccessesListByResourceGroupOptionalParams
+    options?: DiskAccessesListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<DiskAccess> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -117,7 +138,7 @@ export class DiskAccessesImpl implements DiskAccesses {
    * @param options The options parameters.
    */
   public list(
-    options?: DiskAccessesListOptionalParams
+    options?: DiskAccessesListOptionalParams,
   ): PagedAsyncIterableIterator<DiskAccess> {
     const iter = this.listPagingAll(options);
     return {
@@ -127,27 +148,39 @@ export class DiskAccessesImpl implements DiskAccesses {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: DiskAccessesListOptionalParams
+    options?: DiskAccessesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DiskAccess[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DiskAccessesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: DiskAccessesListOptionalParams
+    options?: DiskAccessesListOptionalParams,
   ): AsyncIterableIterator<DiskAccess> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -165,12 +198,12 @@ export class DiskAccessesImpl implements DiskAccesses {
   public listPrivateEndpointConnections(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams
+    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams,
   ): PagedAsyncIterableIterator<PrivateEndpointConnection> {
     const iter = this.listPrivateEndpointConnectionsPagingAll(
       resourceGroupName,
       diskAccessName,
-      options
+      options,
     );
     return {
       next() {
@@ -179,49 +212,62 @@ export class DiskAccessesImpl implements DiskAccesses {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPrivateEndpointConnectionsPagingPage(
           resourceGroupName,
           diskAccessName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPrivateEndpointConnectionsPagingPage(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams
+    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<PrivateEndpointConnection[]> {
-    let result = await this._listPrivateEndpointConnections(
-      resourceGroupName,
-      diskAccessName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DiskAccessesListPrivateEndpointConnectionsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listPrivateEndpointConnections(
+        resourceGroupName,
+        diskAccessName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listPrivateEndpointConnectionsNext(
         resourceGroupName,
         diskAccessName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPrivateEndpointConnectionsPagingAll(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams
+    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams,
   ): AsyncIterableIterator<PrivateEndpointConnection> {
     for await (const page of this.listPrivateEndpointConnectionsPagingPage(
       resourceGroupName,
       diskAccessName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -240,30 +286,29 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     diskAccess: DiskAccess,
-    options?: DiskAccessesCreateOrUpdateOptionalParams
+    options?: DiskAccessesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DiskAccessesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DiskAccessesCreateOrUpdateResponse>,
       DiskAccessesCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DiskAccessesCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -272,8 +317,8 @@ export class DiskAccessesImpl implements DiskAccesses {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -281,20 +326,25 @@ export class DiskAccessesImpl implements DiskAccesses {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, diskAccessName, diskAccess, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, diskAccessName, diskAccess, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DiskAccessesCreateOrUpdateResponse,
+      OperationState<DiskAccessesCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -310,13 +360,13 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     diskAccess: DiskAccess,
-    options?: DiskAccessesCreateOrUpdateOptionalParams
+    options?: DiskAccessesCreateOrUpdateOptionalParams,
   ): Promise<DiskAccessesCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       diskAccessName,
       diskAccess,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -334,30 +384,29 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     diskAccess: DiskAccessUpdate,
-    options?: DiskAccessesUpdateOptionalParams
+    options?: DiskAccessesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DiskAccessesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DiskAccessesUpdateResponse>,
       DiskAccessesUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DiskAccessesUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -366,8 +415,8 @@ export class DiskAccessesImpl implements DiskAccesses {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -375,20 +424,25 @@ export class DiskAccessesImpl implements DiskAccesses {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, diskAccessName, diskAccess, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, diskAccessName, diskAccess, options },
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DiskAccessesUpdateResponse,
+      OperationState<DiskAccessesUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -404,13 +458,13 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     diskAccess: DiskAccessUpdate,
-    options?: DiskAccessesUpdateOptionalParams
+    options?: DiskAccessesUpdateOptionalParams,
   ): Promise<DiskAccessesUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       diskAccessName,
       diskAccess,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -426,11 +480,11 @@ export class DiskAccessesImpl implements DiskAccesses {
   get(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesGetOptionalParams
+    options?: DiskAccessesGetOptionalParams,
   ): Promise<DiskAccessesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, diskAccessName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -445,25 +499,24 @@ export class DiskAccessesImpl implements DiskAccesses {
   async beginDelete(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DiskAccessesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -472,8 +525,8 @@ export class DiskAccessesImpl implements DiskAccesses {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -481,20 +534,22 @@ export class DiskAccessesImpl implements DiskAccesses {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, diskAccessName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, diskAccessName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -508,12 +563,12 @@ export class DiskAccessesImpl implements DiskAccesses {
   async beginDeleteAndWait(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesDeleteOptionalParams
+    options?: DiskAccessesDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       diskAccessName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -525,11 +580,11 @@ export class DiskAccessesImpl implements DiskAccesses {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: DiskAccessesListByResourceGroupOptionalParams
+    options?: DiskAccessesListByResourceGroupOptionalParams,
   ): Promise<DiskAccessesListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -538,7 +593,7 @@ export class DiskAccessesImpl implements DiskAccesses {
    * @param options The options parameters.
    */
   private _list(
-    options?: DiskAccessesListOptionalParams
+    options?: DiskAccessesListOptionalParams,
   ): Promise<DiskAccessesListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -554,11 +609,11 @@ export class DiskAccessesImpl implements DiskAccesses {
   getPrivateLinkResources(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesGetPrivateLinkResourcesOptionalParams
+    options?: DiskAccessesGetPrivateLinkResourcesOptionalParams,
   ): Promise<DiskAccessesGetPrivateLinkResourcesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, diskAccessName, options },
-      getPrivateLinkResourcesOperationSpec
+      getPrivateLinkResourcesOperationSpec,
     );
   }
 
@@ -579,30 +634,29 @@ export class DiskAccessesImpl implements DiskAccesses {
     diskAccessName: string,
     privateEndpointConnectionName: string,
     privateEndpointConnection: PrivateEndpointConnection,
-    options?: DiskAccessesUpdateAPrivateEndpointConnectionOptionalParams
+    options?: DiskAccessesUpdateAPrivateEndpointConnectionOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DiskAccessesUpdateAPrivateEndpointConnectionResponse>,
+    SimplePollerLike<
+      OperationState<DiskAccessesUpdateAPrivateEndpointConnectionResponse>,
       DiskAccessesUpdateAPrivateEndpointConnectionResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<DiskAccessesUpdateAPrivateEndpointConnectionResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -611,8 +665,8 @@ export class DiskAccessesImpl implements DiskAccesses {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -620,26 +674,31 @@ export class DiskAccessesImpl implements DiskAccesses {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         diskAccessName,
         privateEndpointConnectionName,
         privateEndpointConnection,
-        options
+        options,
       },
-      updateAPrivateEndpointConnectionOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: updateAPrivateEndpointConnectionOperationSpec,
     });
+    const poller = await createHttpPoller<
+      DiskAccessesUpdateAPrivateEndpointConnectionResponse,
+      OperationState<DiskAccessesUpdateAPrivateEndpointConnectionResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -659,14 +718,14 @@ export class DiskAccessesImpl implements DiskAccesses {
     diskAccessName: string,
     privateEndpointConnectionName: string,
     privateEndpointConnection: PrivateEndpointConnection,
-    options?: DiskAccessesUpdateAPrivateEndpointConnectionOptionalParams
+    options?: DiskAccessesUpdateAPrivateEndpointConnectionOptionalParams,
   ): Promise<DiskAccessesUpdateAPrivateEndpointConnectionResponse> {
     const poller = await this.beginUpdateAPrivateEndpointConnection(
       resourceGroupName,
       diskAccessName,
       privateEndpointConnectionName,
       privateEndpointConnection,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -684,16 +743,16 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     privateEndpointConnectionName: string,
-    options?: DiskAccessesGetAPrivateEndpointConnectionOptionalParams
+    options?: DiskAccessesGetAPrivateEndpointConnectionOptionalParams,
   ): Promise<DiskAccessesGetAPrivateEndpointConnectionResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         diskAccessName,
         privateEndpointConnectionName,
-        options
+        options,
       },
-      getAPrivateEndpointConnectionOperationSpec
+      getAPrivateEndpointConnectionOperationSpec,
     );
   }
 
@@ -710,25 +769,24 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     privateEndpointConnectionName: string,
-    options?: DiskAccessesDeleteAPrivateEndpointConnectionOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DiskAccessesDeleteAPrivateEndpointConnectionOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -737,8 +795,8 @@ export class DiskAccessesImpl implements DiskAccesses {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -746,25 +804,27 @@ export class DiskAccessesImpl implements DiskAccesses {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         diskAccessName,
         privateEndpointConnectionName,
-        options
+        options,
       },
-      deleteAPrivateEndpointConnectionOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: deleteAPrivateEndpointConnectionOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -780,13 +840,13 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     privateEndpointConnectionName: string,
-    options?: DiskAccessesDeleteAPrivateEndpointConnectionOptionalParams
+    options?: DiskAccessesDeleteAPrivateEndpointConnectionOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDeleteAPrivateEndpointConnection(
       resourceGroupName,
       diskAccessName,
       privateEndpointConnectionName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -802,11 +862,11 @@ export class DiskAccessesImpl implements DiskAccesses {
   private _listPrivateEndpointConnections(
     resourceGroupName: string,
     diskAccessName: string,
-    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams
+    options?: DiskAccessesListPrivateEndpointConnectionsOptionalParams,
   ): Promise<DiskAccessesListPrivateEndpointConnectionsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, diskAccessName, options },
-      listPrivateEndpointConnectionsOperationSpec
+      listPrivateEndpointConnectionsOperationSpec,
     );
   }
 
@@ -819,11 +879,11 @@ export class DiskAccessesImpl implements DiskAccesses {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: DiskAccessesListByResourceGroupNextOptionalParams
+    options?: DiskAccessesListByResourceGroupNextOptionalParams,
   ): Promise<DiskAccessesListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
@@ -834,11 +894,11 @@ export class DiskAccessesImpl implements DiskAccesses {
    */
   private _listNext(
     nextLink: string,
-    options?: DiskAccessesListNextOptionalParams
+    options?: DiskAccessesListNextOptionalParams,
   ): Promise<DiskAccessesListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -856,11 +916,11 @@ export class DiskAccessesImpl implements DiskAccesses {
     resourceGroupName: string,
     diskAccessName: string,
     nextLink: string,
-    options?: DiskAccessesListPrivateEndpointConnectionsNextOptionalParams
+    options?: DiskAccessesListPrivateEndpointConnectionsNextOptionalParams,
   ): Promise<DiskAccessesListPrivateEndpointConnectionsNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, diskAccessName, nextLink, options },
-      listPrivateEndpointConnectionsNextOperationSpec
+      listPrivateEndpointConnectionsNextOperationSpec,
     );
   }
 }
@@ -868,96 +928,92 @@ export class DiskAccessesImpl implements DiskAccesses {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     201: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     202: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     204: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.diskAccess,
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskAccessName
+    Parameters.resourceGroupName,
+    Parameters.diskAccessName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     201: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     202: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     204: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.diskAccess1,
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskAccessName
+    Parameters.resourceGroupName,
+    Parameters.diskAccessName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskAccess
+      bodyMapper: Mappers.DiskAccess,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskAccessName
+    Parameters.resourceGroupName,
+    Parameters.diskAccessName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -965,239 +1021,232 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskAccessName
+    Parameters.resourceGroupName,
+    Parameters.diskAccessName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskAccessList
+      bodyMapper: Mappers.DiskAccessList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
+    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/diskAccesses",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/diskAccesses",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskAccessList
+      bodyMapper: Mappers.DiskAccessList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getPrivateLinkResourcesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateLinkResources",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateLinkResources",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateLinkResourceListResult
-    }
+      bodyMapper: Mappers.PrivateLinkResourceListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskAccessName
+    Parameters.resourceGroupName,
+    Parameters.diskAccessName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const updateAPrivateEndpointConnectionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections/{privateEndpointConnectionName}",
-  httpMethod: "PUT",
-  responses: {
-    200: {
-      bodyMapper: Mappers.PrivateEndpointConnection
+const updateAPrivateEndpointConnectionOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections/{privateEndpointConnectionName}",
+    httpMethod: "PUT",
+    responses: {
+      200: {
+        bodyMapper: Mappers.PrivateEndpointConnection,
+      },
+      201: {
+        bodyMapper: Mappers.PrivateEndpointConnection,
+      },
+      202: {
+        bodyMapper: Mappers.PrivateEndpointConnection,
+      },
+      204: {
+        bodyMapper: Mappers.PrivateEndpointConnection,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
     },
-    201: {
-      bodyMapper: Mappers.PrivateEndpointConnection
-    },
-    202: {
-      bodyMapper: Mappers.PrivateEndpointConnection
-    },
-    204: {
-      bodyMapper: Mappers.PrivateEndpointConnection
-    },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  requestBody: Parameters.privateEndpointConnection,
-  queryParameters: [Parameters.apiVersion1],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId,
-    Parameters.diskAccessName,
-    Parameters.privateEndpointConnectionName
-  ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
-};
+    requestBody: Parameters.privateEndpointConnection,
+    queryParameters: [Parameters.apiVersion1],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.subscriptionId,
+      Parameters.resourceGroupName,
+      Parameters.diskAccessName,
+      Parameters.privateEndpointConnectionName,
+    ],
+    headerParameters: [Parameters.accept, Parameters.contentType],
+    mediaType: "json",
+    serializer,
+  };
 const getAPrivateEndpointConnectionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections/{privateEndpointConnectionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections/{privateEndpointConnectionName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateEndpointConnection
+      bodyMapper: Mappers.PrivateEndpointConnection,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.diskAccessName,
-    Parameters.privateEndpointConnectionName
+    Parameters.privateEndpointConnectionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const deleteAPrivateEndpointConnectionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections/{privateEndpointConnectionName}",
-  httpMethod: "DELETE",
-  responses: {
-    200: {},
-    201: {},
-    202: {},
-    204: {},
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion1],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId,
-    Parameters.diskAccessName,
-    Parameters.privateEndpointConnectionName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
+const deleteAPrivateEndpointConnectionOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections/{privateEndpointConnectionName}",
+    httpMethod: "DELETE",
+    responses: {
+      200: {},
+      201: {},
+      202: {},
+      204: {},
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
+    },
+    queryParameters: [Parameters.apiVersion1],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.subscriptionId,
+      Parameters.resourceGroupName,
+      Parameters.diskAccessName,
+      Parameters.privateEndpointConnectionName,
+    ],
+    headerParameters: [Parameters.accept],
+    serializer,
+  };
 const listPrivateEndpointConnectionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}/privateEndpointConnections",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PrivateEndpointConnectionListResult
+      bodyMapper: Mappers.PrivateEndpointConnectionListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.diskAccessName
+    Parameters.resourceGroupName,
+    Parameters.diskAccessName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskAccessList
+      bodyMapper: Mappers.DiskAccessList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DiskAccessList
+      bodyMapper: Mappers.DiskAccessList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion1],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.nextLink
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listPrivateEndpointConnectionsNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.PrivateEndpointConnectionListResult
+      bodyMapper: Mappers.CloudError,
     },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
   },
-  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.diskAccessName
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
+const listPrivateEndpointConnectionsNextOperationSpec: coreClient.OperationSpec =
+  {
+    path: "{nextLink}",
+    httpMethod: "GET",
+    responses: {
+      200: {
+        bodyMapper: Mappers.PrivateEndpointConnectionListResult,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
+    },
+    urlParameters: [
+      Parameters.$host,
+      Parameters.subscriptionId,
+      Parameters.nextLink,
+      Parameters.resourceGroupName,
+      Parameters.diskAccessName,
+    ],
+    headerParameters: [Parameters.accept],
+    serializer,
+  };

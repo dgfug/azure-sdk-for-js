@@ -1,99 +1,264 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredential } from "@azure/core-auth";
+import type {
+  DefaultAzureCredentialClientIdOptions,
+  DefaultAzureCredentialOptions,
+  DefaultAzureCredentialResourceIdOptions,
+} from "./defaultAzureCredentialOptions.js";
+import type {
+  ManagedIdentityCredentialClientIdOptions,
+  ManagedIdentityCredentialResourceIdOptions,
+} from "./managedIdentityCredential/index.js";
+import { ManagedIdentityCredential } from "./managedIdentityCredential/index.js";
 
-import { TokenCredentialOptions } from "../tokenCredentialOptions";
+import { AzureCliCredential } from "./azureCliCredential.js";
+import { AzureDeveloperCliCredential } from "./azureDeveloperCliCredential.js";
+import { AzurePowerShellCredential } from "./azurePowerShellCredential.js";
+import { ChainedTokenCredential } from "./chainedTokenCredential.js";
+import { EnvironmentCredential } from "./environmentCredential.js";
+import type { TokenCredential } from "@azure/core-auth";
+import { WorkloadIdentityCredential } from "./workloadIdentityCredential.js";
+import type { WorkloadIdentityCredentialOptions } from "./workloadIdentityCredentialOptions.js";
+import { credentialLogger } from "../util/logging.js";
 
-import { ChainedTokenCredential } from "./chainedTokenCredential";
-
-import { AzureCliCredential } from "./azureCliCredential";
-import { AzurePowerShellCredential } from "./azurePowerShellCredential";
-import { EnvironmentCredential } from "./environmentCredential";
-import { ManagedIdentityCredential } from "./managedIdentityCredential";
-import { VisualStudioCodeCredential } from "./visualStudioCodeCredential";
-
-/**
- * Provides options to configure the {@link DefaultAzureCredential} class.
- */
-export interface DefaultAzureCredentialOptions extends TokenCredentialOptions {
-  /**
-   * Optionally pass in a Tenant ID to be used as part of the credential.
-   * By default it may use a generic tenant ID depending on the underlying credential.
-   */
-  tenantId?: string;
-  /**
-   * Optionally pass in a user assigned client ID to be used by the {@link ManagedIdentityCredential}.
-   * This client ID can also be passed through to the {@link ManagedIdentityCredential} through the environment variable: AZURE_CLIENT_ID.
-   */
-  managedIdentityClientId?: string;
-}
+const logger = credentialLogger("DefaultAzureCredential");
 
 /**
- * The type of a class that implements TokenCredential and accepts
- * `DefaultAzureCredentialOptions`.
- */
-interface DefaultCredentialConstructor {
-  new (options?: DefaultAzureCredentialOptions): TokenCredential;
-}
-
-/**
- * A shim around ManagedIdentityCredential that adapts it to accept
- * `DefaultAzureCredentialOptions`.
+ * Creates a {@link ManagedIdentityCredential} from the provided options.
+ * @param options - Options to configure the credential.
  *
  * @internal
  */
-export class DefaultManagedIdentityCredential extends ManagedIdentityCredential {
-  constructor(options?: DefaultAzureCredentialOptions) {
-    const managedIdentityClientId = options?.managedIdentityClientId ?? process.env.AZURE_CLIENT_ID;
-    if (managedIdentityClientId !== undefined) {
-      super(managedIdentityClientId, options);
-    } else {
-      super(options);
-    }
+export function createDefaultManagedIdentityCredential(
+  options:
+    | DefaultAzureCredentialOptions
+    | DefaultAzureCredentialResourceIdOptions
+    | DefaultAzureCredentialClientIdOptions = {},
+): TokenCredential {
+  options.retryOptions ??= {
+    maxRetries: 5,
+    retryDelayInMs: 800,
+  };
+  const managedIdentityClientId =
+    (options as DefaultAzureCredentialClientIdOptions)?.managedIdentityClientId ??
+    process.env.AZURE_CLIENT_ID;
+  const workloadIdentityClientId =
+    (options as DefaultAzureCredentialClientIdOptions)?.workloadIdentityClientId ??
+    managedIdentityClientId;
+  const managedResourceId = (options as DefaultAzureCredentialResourceIdOptions)
+    ?.managedIdentityResourceId;
+  const workloadFile = process.env.AZURE_FEDERATED_TOKEN_FILE;
+  const tenantId = options?.tenantId ?? process.env.AZURE_TENANT_ID;
+  if (managedResourceId) {
+    const managedIdentityResourceIdOptions: ManagedIdentityCredentialResourceIdOptions = {
+      ...options,
+      resourceId: managedResourceId,
+    };
+    return new ManagedIdentityCredential(managedIdentityResourceIdOptions);
+  }
+
+  if (workloadFile && workloadIdentityClientId) {
+    const workloadIdentityCredentialOptions: DefaultAzureCredentialOptions = {
+      ...options,
+      tenantId: tenantId,
+    };
+
+    return new ManagedIdentityCredential(
+      workloadIdentityClientId,
+      workloadIdentityCredentialOptions,
+    );
+  }
+
+  if (managedIdentityClientId) {
+    const managedIdentityClientOptions: ManagedIdentityCredentialClientIdOptions = {
+      ...options,
+      clientId: managedIdentityClientId,
+    };
+
+    return new ManagedIdentityCredential(managedIdentityClientOptions);
+  }
+
+  // We may be able to return a UnavailableCredential here, but that may be a breaking change
+  return new ManagedIdentityCredential(options);
+}
+
+/**
+ * Creates a {@link WorkloadIdentityCredential} from the provided options.
+ * @param options - Options to configure the credential.
+ *
+ * @internal
+ */
+function createDefaultWorkloadIdentityCredential(
+  options?: DefaultAzureCredentialOptions | DefaultAzureCredentialClientIdOptions,
+): TokenCredential {
+  const managedIdentityClientId =
+    (options as DefaultAzureCredentialClientIdOptions)?.managedIdentityClientId ??
+    process.env.AZURE_CLIENT_ID;
+  const workloadIdentityClientId =
+    (options as DefaultAzureCredentialClientIdOptions)?.workloadIdentityClientId ??
+    managedIdentityClientId;
+  const workloadFile = process.env.AZURE_FEDERATED_TOKEN_FILE;
+  const tenantId = options?.tenantId ?? process.env.AZURE_TENANT_ID;
+  if (workloadFile && workloadIdentityClientId) {
+    const workloadIdentityCredentialOptions: WorkloadIdentityCredentialOptions = {
+      ...options,
+      tenantId,
+      clientId: workloadIdentityClientId,
+      tokenFilePath: workloadFile,
+    };
+    return new WorkloadIdentityCredential(workloadIdentityCredentialOptions);
+  }
+  if (tenantId) {
+    const workloadIdentityClientTenantOptions: WorkloadIdentityCredentialOptions = {
+      ...options,
+      tenantId,
+    };
+    return new WorkloadIdentityCredential(workloadIdentityClientTenantOptions);
+  }
+
+  // We may be able to return a UnavailableCredential here, but that may be a breaking change
+  return new WorkloadIdentityCredential(options);
+}
+
+/**
+ * Creates a {@link AzureDeveloperCliCredential} from the provided options.
+ * @param options - Options to configure the credential.
+ *
+ * @internal
+ */
+function createDefaultAzureDeveloperCliCredential(
+  options: DefaultAzureCredentialOptions = {},
+): TokenCredential {
+  const processTimeoutInMs = options.processTimeoutInMs;
+  return new AzureDeveloperCliCredential({ processTimeoutInMs, ...options });
+}
+
+/**
+ * Creates a {@link AzureCliCredential} from the provided options.
+ * @param options - Options to configure the credential.
+ *
+ * @internal
+ */
+function createDefaultAzureCliCredential(
+  options: DefaultAzureCredentialOptions = {},
+): TokenCredential {
+  const processTimeoutInMs = options.processTimeoutInMs;
+  return new AzureCliCredential({ processTimeoutInMs, ...options });
+}
+
+/**
+ * Creates a {@link AzurePowerShellCredential} from the provided options.
+ * @param options - Options to configure the credential.
+ *
+ * @internal
+ */
+function createDefaultAzurePowershellCredential(
+  options: DefaultAzureCredentialOptions = {},
+): TokenCredential {
+  const processTimeoutInMs = options.processTimeoutInMs;
+  return new AzurePowerShellCredential({ processTimeoutInMs, ...options });
+}
+
+/**
+ * Creates an {@link EnvironmentCredential} from the provided options.
+ * @param options - Options to configure the credential.
+ *
+ * @internal
+ */
+export function createEnvironmentCredential(
+  options: DefaultAzureCredentialOptions = {},
+): TokenCredential {
+  return new EnvironmentCredential(options);
+}
+
+/**
+ * A no-op credential that logs the reason it was skipped if getToken is called.
+ * @internal
+ */
+export class UnavailableDefaultCredential implements TokenCredential {
+  credentialUnavailableErrorMessage: string;
+  credentialName: string;
+
+  constructor(credentialName: string, message: string) {
+    this.credentialName = credentialName;
+    this.credentialUnavailableErrorMessage = message;
+  }
+
+  getToken(): Promise<null> {
+    logger.getToken.info(
+      `Skipping ${this.credentialName}, reason: ${this.credentialUnavailableErrorMessage}`,
+    );
+    return Promise.resolve(null);
   }
 }
 
-export const defaultCredentials: DefaultCredentialConstructor[] = [
-  EnvironmentCredential,
-  DefaultManagedIdentityCredential,
-  VisualStudioCodeCredential,
-  AzureCliCredential,
-  AzurePowerShellCredential
-];
-
 /**
- * Provides a default {@link ChainedTokenCredential} configuration that should
- * work for most applications that use the Azure SDK.
+ * Provides a default {@link ChainedTokenCredential} configuration that works for most
+ * applications that use Azure SDK client libraries. For more information, see
+ * [DefaultAzureCredential overview](https://aka.ms/azsdk/js/identity/credential-chains#use-defaultazurecredential-for-flexibility).
+ *
+ * The following credential types will be tried, in order:
+ *
+ * - {@link EnvironmentCredential}
+ * - {@link WorkloadIdentityCredential}
+ * - {@link ManagedIdentityCredential}
+ * - {@link AzureCliCredential}
+ * - {@link AzurePowerShellCredential}
+ * - {@link AzureDeveloperCliCredential}
+ *
+ * Consult the documentation of these credential types for more information
+ * on how they attempt authentication.
  */
 export class DefaultAzureCredential extends ChainedTokenCredential {
   /**
-   * Creates an instance of the DefaultAzureCredential class.
+   * Creates an instance of the DefaultAzureCredential class with {@link DefaultAzureCredentialClientIdOptions}.
    *
-   * This credential provides a default {@link ChainedTokenCredential} configuration that should
-   * work for most applications that use the Azure SDK.
+   * @param options - Optional parameters. See {@link DefaultAzureCredentialClientIdOptions}.
+   */
+  constructor(options?: DefaultAzureCredentialClientIdOptions);
+
+  /**
+   * Creates an instance of the DefaultAzureCredential class with {@link DefaultAzureCredentialResourceIdOptions}.
    *
-   * The following credential types will be tried, in order:
-   *
-   * - {@link EnvironmentCredential}
-   * - {@link ManagedIdentityCredential}
-   * - {@link VisualStudioCodeCredential}
-   * - {@link AzureCliCredential}
-   * - {@link AzurePowerShellCredential}
-   *
-   * Consult the documentation of these credential types for more information
-   * on how they attempt authentication.
-   *
-   * **Note**: `VisualStudioCodeCredential` is provided by a plugin package:
-   * `@azure/identity-vscode`. If this package is not installed and registered
-   * using the plugin API (`useIdentityPlugin`), then authentication using
-   * `VisualStudioCodeCredential` will not be available.
+   * @param options - Optional parameters. See {@link DefaultAzureCredentialResourceIdOptions}.
+   */
+  constructor(options?: DefaultAzureCredentialResourceIdOptions);
+
+  /**
+   * Creates an instance of the DefaultAzureCredential class with {@link DefaultAzureCredentialOptions}.
    *
    * @param options - Optional parameters. See {@link DefaultAzureCredentialOptions}.
    */
+  constructor(options?: DefaultAzureCredentialOptions);
+
   constructor(options?: DefaultAzureCredentialOptions) {
-    super(...defaultCredentials.map((ctor) => new ctor(options)));
-    this.UnavailableMessage =
-      "DefaultAzureCredential => failed to retrieve a token from the included credentials. To troubleshoot, visit https://aka.ms/azsdk/js/identity/defaultazurecredential/troubleshoot.";
+    const credentialFunctions = [
+      createEnvironmentCredential,
+      createDefaultWorkloadIdentityCredential,
+      createDefaultManagedIdentityCredential,
+      createDefaultAzureCliCredential,
+      createDefaultAzurePowershellCredential,
+      createDefaultAzureDeveloperCliCredential,
+    ];
+
+    // DefaultCredential constructors should not throw, instead throwing on getToken() which is handled by ChainedTokenCredential.
+
+    // When adding new credentials to the default chain, consider:
+    // 1. Making the constructor parameters required and explicit
+    // 2. Validating any required parameters in the factory function
+    // 3. Returning a UnavailableDefaultCredential from the factory function if a credential is unavailable for any reason
+    const credentials: TokenCredential[] = credentialFunctions.map((createCredentialFn) => {
+      try {
+        return createCredentialFn(options);
+      } catch (err: any) {
+        logger.warning(
+          `Skipped ${createCredentialFn.name} because of an error creating the credential: ${err}`,
+        );
+        return new UnavailableDefaultCredential(createCredentialFn.name, err.message);
+      }
+    });
+
+    super(...credentials);
   }
 }

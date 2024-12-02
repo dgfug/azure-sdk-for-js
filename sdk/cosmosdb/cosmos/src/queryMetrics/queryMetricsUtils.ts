@@ -1,13 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import { TimeSpan } from "./timeSpan";
 
 /**
  * @hidden
  */
-export function parseDelimitedString(
-  delimitedString: string
-): {
+export function parseDelimitedString(delimitedString: string): {
   [key: string]: any;
 } {
   if (delimitedString == null) {
@@ -38,7 +36,7 @@ export function parseDelimitedString(
  */
 export function timeSpanFromMetrics(
   metrics: { [key: string]: any } /* TODO: any */,
-  key: string
+  key: string,
 ): TimeSpan {
   if (key in metrics) {
     return TimeSpan.fromMilliseconds(metrics[key]);

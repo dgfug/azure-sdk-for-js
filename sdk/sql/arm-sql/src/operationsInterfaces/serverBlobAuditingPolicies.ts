@@ -6,16 +6,15 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServerBlobAuditingPolicy,
   ServerBlobAuditingPoliciesListByServerOptionalParams,
   ServerBlobAuditingPoliciesGetOptionalParams,
   ServerBlobAuditingPoliciesGetResponse,
   ServerBlobAuditingPoliciesCreateOrUpdateOptionalParams,
-  ServerBlobAuditingPoliciesCreateOrUpdateResponse
+  ServerBlobAuditingPoliciesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -31,7 +30,7 @@ export interface ServerBlobAuditingPolicies {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerBlobAuditingPoliciesListByServerOptionalParams
+    options?: ServerBlobAuditingPoliciesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerBlobAuditingPolicy>;
   /**
    * Gets a server's blob auditing policy.
@@ -43,7 +42,7 @@ export interface ServerBlobAuditingPolicies {
   get(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerBlobAuditingPoliciesGetOptionalParams
+    options?: ServerBlobAuditingPoliciesGetOptionalParams,
   ): Promise<ServerBlobAuditingPoliciesGetResponse>;
   /**
    * Creates or updates a server's blob auditing policy.
@@ -57,10 +56,10 @@ export interface ServerBlobAuditingPolicies {
     resourceGroupName: string,
     serverName: string,
     parameters: ServerBlobAuditingPolicy,
-    options?: ServerBlobAuditingPoliciesCreateOrUpdateOptionalParams
+    options?: ServerBlobAuditingPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ServerBlobAuditingPoliciesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ServerBlobAuditingPoliciesCreateOrUpdateResponse>,
       ServerBlobAuditingPoliciesCreateOrUpdateResponse
     >
   >;
@@ -76,6 +75,6 @@ export interface ServerBlobAuditingPolicies {
     resourceGroupName: string,
     serverName: string,
     parameters: ServerBlobAuditingPolicy,
-    options?: ServerBlobAuditingPoliciesCreateOrUpdateOptionalParams
+    options?: ServerBlobAuditingPoliciesCreateOrUpdateOptionalParams,
   ): Promise<ServerBlobAuditingPoliciesCreateOrUpdateResponse>;
 }

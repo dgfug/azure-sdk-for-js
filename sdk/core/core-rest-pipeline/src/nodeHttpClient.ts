@@ -1,34 +1,47 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as http from "http";
-import * as https from "https";
-import * as zlib from "zlib";
-import { Transform } from "stream";
-import { AbortController, AbortError } from "@azure/abort-controller";
-import {
+import * as http from "node:http";
+import * as https from "node:https";
+import * as zlib from "node:zlib";
+import { Transform } from "node:stream";
+import { AbortError } from "@azure/abort-controller";
+import type {
   HttpClient,
+  HttpHeaders,
   PipelineRequest,
   PipelineResponse,
+  RequestBodyType,
+  TlsSettings,
   TransferProgressEvent,
-  HttpHeaders,
-  RequestBodyType
-} from "./interfaces";
-import { createHttpHeaders } from "./httpHeaders";
-import { RestError } from "./restError";
-import { URL } from "./util/url";
-import { IncomingMessage } from "http";
-import { logger } from "./log";
+} from "./interfaces.js";
+import { createHttpHeaders } from "./httpHeaders.js";
+import { RestError } from "./restError.js";
+import type { IncomingMessage } from "node:http";
+import { logger } from "./log.js";
+
+const DEFAULT_TLS_SETTINGS = {};
 
 function isReadableStream(body: any): body is NodeJS.ReadableStream {
   return body && typeof body.pipe === "function";
 }
 
 function isStreamComplete(stream: NodeJS.ReadableStream): Promise<void> {
+  if (stream.readable === false) {
+    return Promise.resolve();
+  }
+
   return new Promise((resolve) => {
-    stream.on("close", resolve);
-    stream.on("end", resolve);
-    stream.on("error", resolve);
+    const handler = (): void => {
+      resolve();
+      stream.removeListener("close", handler);
+      stream.removeListener("end", handler);
+      stream.removeListener("error", handler);
+    };
+
+    stream.on("close", handler);
+    stream.on("end", handler);
+    stream.on("error", handler);
   });
 }
 
@@ -40,14 +53,14 @@ class ReportTransform extends Transform {
   private loadedBytes = 0;
   private progressCallback: (progress: TransferProgressEvent) => void;
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   _transform(chunk: string | Buffer, _encoding: string, callback: Function): void {
     this.push(chunk);
     this.loadedBytes += chunk.length;
     try {
       this.progressCallback({ loadedBytes: this.loadedBytes });
       callback();
-    } catch (e) {
+    } catch (e: any) {
       callback(e);
     }
   }
@@ -63,8 +76,8 @@ class ReportTransform extends Transform {
  * @internal
  */
 class NodeHttpClient implements HttpClient {
-  private httpsKeepAliveAgent?: https.Agent;
-  private httpKeepAliveAgent?: http.Agent;
+  private cachedHttpAgent?: http.Agent;
+  private cachedHttpsAgents: WeakMap<TlsSettings, https.Agent> = new WeakMap();
 
   /**
    * Makes a request over an underlying transport layer and returns the response.
@@ -95,8 +108,8 @@ class NodeHttpClient implements HttpClient {
     const acceptEncoding = request.headers.get("Accept-Encoding");
     const shouldDecompress =
       acceptEncoding?.includes("gzip") || acceptEncoding?.includes("deflate");
-    let body = request.body;
 
+    let body = typeof request.body === "function" ? request.body() : request.body;
     if (body && !request.headers.has("Content-Length")) {
       const bodyLength = getBodyLength(body);
       if (bodyLength !== null) {
@@ -129,13 +142,15 @@ class NodeHttpClient implements HttpClient {
       const response: PipelineResponse = {
         status,
         headers,
-        request
+        request,
       };
 
       // Responses to HEAD must not have a body.
       // If they do return a body, that body must be ignored.
       if (request.method === "HEAD") {
-        res.destroy();
+        // call resume() and not destroy() to avoid closing the socket
+        // and losing keep alive
+        res.resume();
         return response;
       }
 
@@ -167,13 +182,12 @@ class NodeHttpClient implements HttpClient {
       if (request.abortSignal && abortListener) {
         let uploadStreamDone = Promise.resolve();
         if (isReadableStream(body)) {
-          uploadStreamDone = isStreamComplete(body as NodeJS.ReadableStream);
+          uploadStreamDone = isStreamComplete(body);
         }
         let downloadStreamDone = Promise.resolve();
         if (isReadableStream(responseStream)) {
           downloadStreamDone = isStreamComplete(responseStream);
         }
-
         Promise.all([uploadStreamDone, downloadStreamDone])
           .then(() => {
             // eslint-disable-next-line promise/always-return
@@ -191,7 +205,7 @@ class NodeHttpClient implements HttpClient {
   private makeRequest(
     request: PipelineRequest,
     abortController: AbortController,
-    body?: RequestBodyType
+    body?: RequestBodyType,
   ): Promise<http.IncomingMessage> {
     const url = new URL(request.url);
 
@@ -208,7 +222,7 @@ class NodeHttpClient implements HttpClient {
       path: `${url.pathname}${url.search}`,
       port: url.port,
       method: request.method,
-      headers: request.headers.toJSON({ preserveCase: true })
+      headers: request.headers.toJSON({ preserveCase: true }),
     };
 
     return new Promise<http.IncomingMessage>((resolve, reject) => {
@@ -216,7 +230,7 @@ class NodeHttpClient implements HttpClient {
 
       req.once("error", (err: Error & { code?: string }) => {
         reject(
-          new RestError(err.message, { code: err.code ?? RestError.REQUEST_SEND_ERROR, request })
+          new RestError(err.message, { code: err.code ?? RestError.REQUEST_SEND_ERROR, request }),
         );
       });
 
@@ -244,28 +258,48 @@ class NodeHttpClient implements HttpClient {
   }
 
   private getOrCreateAgent(request: PipelineRequest, isInsecure: boolean): http.Agent {
-    if (!request.disableKeepAlive) {
-      if (isInsecure) {
-        if (!this.httpKeepAliveAgent) {
-          this.httpKeepAliveAgent = new http.Agent({
-            keepAlive: true
-          });
-        }
+    const disableKeepAlive = request.disableKeepAlive;
 
-        return this.httpKeepAliveAgent;
-      } else {
-        if (!this.httpsKeepAliveAgent) {
-          this.httpsKeepAliveAgent = new https.Agent({
-            keepAlive: true
-          });
-        }
-
-        return this.httpsKeepAliveAgent;
+    // Handle Insecure requests first
+    if (isInsecure) {
+      if (disableKeepAlive) {
+        // keepAlive:false is the default so we don't need a custom Agent
+        return http.globalAgent;
       }
-    } else if (isInsecure) {
-      return http.globalAgent;
+
+      if (!this.cachedHttpAgent) {
+        // If there is no cached agent create a new one and cache it.
+        this.cachedHttpAgent = new http.Agent({ keepAlive: true });
+      }
+      return this.cachedHttpAgent;
     } else {
-      return https.globalAgent;
+      if (disableKeepAlive && !request.tlsSettings) {
+        // When there are no tlsSettings and keepAlive is false
+        // we don't need a custom agent
+        return https.globalAgent;
+      }
+
+      // We use the tlsSettings to index cached clients
+      const tlsSettings = request.tlsSettings ?? DEFAULT_TLS_SETTINGS;
+
+      // Get the cached agent or create a new one with the
+      // provided values for keepAlive and tlsSettings
+      let agent = this.cachedHttpsAgents.get(tlsSettings);
+
+      if (agent && agent.options.keepAlive === !disableKeepAlive) {
+        return agent;
+      }
+
+      logger.info("No cached TLS Agent exist, creating a new Agent");
+      agent = new https.Agent({
+        // keepAlive is true if disableKeepAlive is false.
+        keepAlive: !disableKeepAlive,
+        // Since we are spreading, if no tslSettings were provided, nothing is added to the agent options.
+        ...tlsSettings,
+      });
+
+      this.cachedHttpsAgents.set(tlsSettings, agent);
+      return agent;
     }
   }
 }
@@ -287,7 +321,7 @@ function getResponseHeaders(res: IncomingMessage): HttpHeaders {
 
 function getDecodedResponseStream(
   stream: IncomingMessage,
-  headers: HttpHeaders
+  headers: HttpHeaders,
 ): NodeJS.ReadableStream {
   const contentEncoding = headers.get("Content-Encoding");
   if (contentEncoding === "gzip") {
@@ -323,8 +357,8 @@ function streamToText(stream: NodeJS.ReadableStream): Promise<string> {
       } else {
         reject(
           new RestError(`Error reading response as text: ${e.message}`, {
-            code: RestError.PARSE_ERROR
-          })
+            code: RestError.PARSE_ERROR,
+          }),
         );
       }
     });

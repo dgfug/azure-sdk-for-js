@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   DomainTopic,
   DomainTopicsListByDomainOptionalParams,
@@ -15,7 +15,7 @@ import {
   DomainTopicsGetResponse,
   DomainTopicsCreateOrUpdateOptionalParams,
   DomainTopicsCreateOrUpdateResponse,
-  DomainTopicsDeleteOptionalParams
+  DomainTopicsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface DomainTopics {
   listByDomain(
     resourceGroupName: string,
     domainName: string,
-    options?: DomainTopicsListByDomainOptionalParams
+    options?: DomainTopicsListByDomainOptionalParams,
   ): PagedAsyncIterableIterator<DomainTopic>;
   /**
    * Get properties of a domain topic.
@@ -43,7 +43,7 @@ export interface DomainTopics {
     resourceGroupName: string,
     domainName: string,
     domainTopicName: string,
-    options?: DomainTopicsGetOptionalParams
+    options?: DomainTopicsGetOptionalParams,
   ): Promise<DomainTopicsGetResponse>;
   /**
    * Asynchronously creates or updates a new domain topic with the specified parameters.
@@ -56,10 +56,10 @@ export interface DomainTopics {
     resourceGroupName: string,
     domainName: string,
     domainTopicName: string,
-    options?: DomainTopicsCreateOrUpdateOptionalParams
+    options?: DomainTopicsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DomainTopicsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DomainTopicsCreateOrUpdateResponse>,
       DomainTopicsCreateOrUpdateResponse
     >
   >;
@@ -74,7 +74,7 @@ export interface DomainTopics {
     resourceGroupName: string,
     domainName: string,
     domainTopicName: string,
-    options?: DomainTopicsCreateOrUpdateOptionalParams
+    options?: DomainTopicsCreateOrUpdateOptionalParams,
   ): Promise<DomainTopicsCreateOrUpdateResponse>;
   /**
    * Delete existing domain topic.
@@ -87,8 +87,8 @@ export interface DomainTopics {
     resourceGroupName: string,
     domainName: string,
     domainTopicName: string,
-    options?: DomainTopicsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DomainTopicsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete existing domain topic.
    * @param resourceGroupName The name of the resource group within the user's subscription.
@@ -100,6 +100,6 @@ export interface DomainTopics {
     resourceGroupName: string,
     domainName: string,
     domainTopicName: string,
-    options?: DomainTopicsDeleteOptionalParams
+    options?: DomainTopicsDeleteOptionalParams,
   ): Promise<void>;
 }

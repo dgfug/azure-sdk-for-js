@@ -6,14 +6,19 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { NamedValue } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ApiManagementClient } from "../apiManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   NamedValueContract,
   NamedValueListByServiceNextOptionalParams,
@@ -40,19 +45,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing NamedValue operations. */
 export class NamedValueImpl implements NamedValue {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class NamedValue class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists a collection of named values defined within a service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -73,11 +78,15 @@ export class NamedValueImpl implements NamedValue {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -86,15 +95,22 @@ export class NamedValueImpl implements NamedValue {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: NamedValueListByServiceOptionalParams
+    options?: NamedValueListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<NamedValueContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: NamedValueListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -103,7 +119,9 @@ export class NamedValueImpl implements NamedValue {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -123,7 +141,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Lists a collection of named values defined within a service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -140,7 +158,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Gets the entity state (Etag) version of the named value specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param options The options parameters.
@@ -159,7 +177,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Gets the details of the named value specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param options The options parameters.
@@ -178,7 +196,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Creates or updates named value.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param parameters Create parameters.
@@ -191,8 +209,8 @@ export class NamedValueImpl implements NamedValue {
     parameters: NamedValueCreateContract,
     options?: NamedValueCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<NamedValueCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<NamedValueCreateOrUpdateResponse>,
       NamedValueCreateOrUpdateResponse
     >
   > {
@@ -202,7 +220,7 @@ export class NamedValueImpl implements NamedValue {
     ): Promise<NamedValueCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -235,21 +253,32 @@ export class NamedValueImpl implements NamedValue {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, namedValueId, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serviceName,
+        namedValueId,
+        parameters,
+        options
+      },
+      spec: createOrUpdateOperationSpec
     });
+    const poller = await createHttpPoller<
+      NamedValueCreateOrUpdateResponse,
+      OperationState<NamedValueCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Creates or updates named value.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param parameters Create parameters.
@@ -274,7 +303,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Updates the specific named value.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -290,8 +319,8 @@ export class NamedValueImpl implements NamedValue {
     parameters: NamedValueUpdateParameters,
     options?: NamedValueUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<NamedValueUpdateResponse>,
+    SimplePollerLike<
+      OperationState<NamedValueUpdateResponse>,
       NamedValueUpdateResponse
     >
   > {
@@ -301,7 +330,7 @@ export class NamedValueImpl implements NamedValue {
     ): Promise<NamedValueUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -334,9 +363,9 @@ export class NamedValueImpl implements NamedValue {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         namedValueId,
@@ -344,18 +373,23 @@ export class NamedValueImpl implements NamedValue {
         parameters,
         options
       },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+      spec: updateOperationSpec
     });
+    const poller = await createHttpPoller<
+      NamedValueUpdateResponse,
+      OperationState<NamedValueUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Updates the specific named value.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -384,7 +418,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Deletes specific named value from the API Management service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -406,7 +440,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Gets the secret of the named value specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param options The options parameters.
@@ -425,7 +459,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * Refresh the secret of the named value specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param options The options parameters.
@@ -436,8 +470,8 @@ export class NamedValueImpl implements NamedValue {
     namedValueId: string,
     options?: NamedValueRefreshSecretOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<NamedValueRefreshSecretResponse>,
+    SimplePollerLike<
+      OperationState<NamedValueRefreshSecretResponse>,
       NamedValueRefreshSecretResponse
     >
   > {
@@ -447,7 +481,7 @@ export class NamedValueImpl implements NamedValue {
     ): Promise<NamedValueRefreshSecretResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -480,21 +514,26 @@ export class NamedValueImpl implements NamedValue {
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serviceName, namedValueId, options },
-      refreshSecretOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, serviceName, namedValueId, options },
+      spec: refreshSecretOperationSpec
     });
+    const poller = await createHttpPoller<
+      NamedValueRefreshSecretResponse,
+      OperationState<NamedValueRefreshSecretResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location"
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Refresh the secret of the named value specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param namedValueId Identifier of the NamedValue.
    * @param options The options parameters.
@@ -516,7 +555,7 @@ export class NamedValueImpl implements NamedValue {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -636,7 +675,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters42,
+  requestBody: Parameters.parameters53,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -678,7 +717,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters43,
+  requestBody: Parameters.parameters54,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -788,13 +827,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion,
-    Parameters.isKeyVaultRefreshFailed
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

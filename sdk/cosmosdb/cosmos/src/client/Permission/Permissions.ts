@@ -1,16 +1,18 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
 import { getIdFromLink, getPathFromLink, isResourceValid, ResourceType } from "../../common";
-import { SqlQuerySpec } from "../../queryExecutionContext";
+import type { SqlQuerySpec } from "../../queryExecutionContext";
 import { QueryIterator } from "../../queryIterator";
-import { FeedOptions, RequestOptions } from "../../request";
-import { Resource } from "../Resource";
-import { User } from "../User";
+import type { FeedOptions, RequestOptions } from "../../request";
+import type { Resource } from "../Resource";
+import type { User } from "../User";
 import { Permission } from "./Permission";
-import { PermissionBody } from "./PermissionBody";
-import { PermissionDefinition } from "./PermissionDefinition";
+import type { PermissionBody } from "./PermissionBody";
+import type { PermissionDefinition } from "./PermissionDefinition";
 import { PermissionResponse } from "./PermissionResponse";
+import { getEmptyCosmosDiagnostics, withDiagnostics } from "../../utils/diagnostics";
 
 /**
  * Use to create, replace, query, and read all Permissions.
@@ -22,7 +24,10 @@ export class Permissions {
    * @hidden
    * @param user - The parent {@link User}.
    */
-  constructor(public readonly user: User, private readonly clientContext: ClientContext) {}
+  constructor(
+    public readonly user: User,
+    private readonly clientContext: ClientContext,
+  ) {}
 
   /**
    * Query all permissions.
@@ -38,14 +43,15 @@ export class Permissions {
     const path = getPathFromLink(this.user.url, ResourceType.permission);
     const id = getIdFromLink(this.user.url);
 
-    return new QueryIterator(this.clientContext, query, options, (innerOptions) => {
+    return new QueryIterator(this.clientContext, query, options, (diagnosticNode, innerOptions) => {
       return this.clientContext.queryFeed({
         path,
         resourceType: ResourceType.permission,
         resourceId: id,
         resultFn: (result) => result.Permissions,
         query,
-        options: innerOptions
+        options: innerOptions,
+        diagnosticNode,
       });
     });
   }
@@ -70,25 +76,34 @@ export class Permissions {
    */
   public async create(
     body: PermissionDefinition,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<PermissionResponse> {
-    const err = {};
-    if (!isResourceValid(body, err)) {
-      throw err;
-    }
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      const err = {};
+      if (!isResourceValid(body, err)) {
+        throw err;
+      }
 
-    const path = getPathFromLink(this.user.url, ResourceType.permission);
-    const id = getIdFromLink(this.user.url);
+      const path = getPathFromLink(this.user.url, ResourceType.permission);
+      const id = getIdFromLink(this.user.url);
 
-    const response = await this.clientContext.create<PermissionDefinition, PermissionBody>({
-      body,
-      path,
-      resourceType: ResourceType.permission,
-      resourceId: id,
-      options
-    });
-    const ref = new Permission(this.user, response.result.id, this.clientContext);
-    return new PermissionResponse(response.result, response.headers, response.code, ref);
+      const response = await this.clientContext.create<PermissionDefinition, PermissionBody>({
+        body,
+        path,
+        resourceType: ResourceType.permission,
+        resourceId: id,
+        diagnosticNode,
+        options,
+      });
+      const ref = new Permission(this.user, response.result.id, this.clientContext);
+      return new PermissionResponse(
+        response.result,
+        response.headers,
+        response.code,
+        ref,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 
   /**
@@ -99,24 +114,33 @@ export class Permissions {
    */
   public async upsert(
     body: PermissionDefinition,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<PermissionResponse> {
-    const err = {};
-    if (!isResourceValid(body, err)) {
-      throw err;
-    }
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      const err = {};
+      if (!isResourceValid(body, err)) {
+        throw err;
+      }
 
-    const path = getPathFromLink(this.user.url, ResourceType.permission);
-    const id = getIdFromLink(this.user.url);
+      const path = getPathFromLink(this.user.url, ResourceType.permission);
+      const id = getIdFromLink(this.user.url);
 
-    const response = await this.clientContext.upsert<PermissionDefinition, PermissionBody>({
-      body,
-      path,
-      resourceType: ResourceType.permission,
-      resourceId: id,
-      options
-    });
-    const ref = new Permission(this.user, response.result.id, this.clientContext);
-    return new PermissionResponse(response.result, response.headers, response.code, ref);
+      const response = await this.clientContext.upsert<PermissionDefinition, PermissionBody>({
+        body,
+        path,
+        resourceType: ResourceType.permission,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      const ref = new Permission(this.user, response.result.id, this.clientContext);
+      return new PermissionResponse(
+        response.result,
+        response.headers,
+        response.code,
+        ref,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 }

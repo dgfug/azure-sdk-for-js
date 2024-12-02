@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /**
  * Enum for trigger operation values.
  * specifies the operations on which a trigger should be executed.
@@ -14,5 +14,5 @@ export enum TriggerOperation {
   /** Delete operations only. */
   Delete = "delete",
   /** Replace operations only. */
-  Replace = "replace"
+  Replace = "replace",
 }

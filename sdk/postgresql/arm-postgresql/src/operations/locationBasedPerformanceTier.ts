@@ -6,12 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { LocationBasedPerformanceTier } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { PostgreSQLManagementClientContext } from "../postgreSQLManagementClientContext";
+import { PostgreSQLManagementClient } from "../postgreSQLManagementClient";
 import {
   PerformanceTierProperties,
   LocationBasedPerformanceTierListOptionalParams,
@@ -22,13 +22,13 @@ import {
 /** Class containing LocationBasedPerformanceTier operations. */
 export class LocationBasedPerformanceTierImpl
   implements LocationBasedPerformanceTier {
-  private readonly client: PostgreSQLManagementClientContext;
+  private readonly client: PostgreSQLManagementClient;
 
   /**
    * Initialize a new instance of the class LocationBasedPerformanceTier class.
    * @param client Reference to the service client
    */
-  constructor(client: PostgreSQLManagementClientContext) {
+  constructor(client: PostgreSQLManagementClient) {
     this.client = client;
   }
 
@@ -49,17 +49,22 @@ export class LocationBasedPerformanceTierImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(locationName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(locationName, options, settings);
       }
     };
   }
 
   private async *listPagingPage(
     locationName: string,
-    options?: LocationBasedPerformanceTierListOptionalParams
+    options?: LocationBasedPerformanceTierListOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<PerformanceTierProperties[]> {
-    let result = await this._list(locationName, options);
+    let result: LocationBasedPerformanceTierListResponse;
+    result = await this._list(locationName, options);
     yield result.value || [];
   }
 

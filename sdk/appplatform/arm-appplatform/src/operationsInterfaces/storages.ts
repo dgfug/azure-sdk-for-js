@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   StorageResource,
   StoragesListOptionalParams,
@@ -22,7 +22,7 @@ import {
 /** Interface representing a Storages. */
 export interface Storages {
   /**
-   * List all the storages of one Azure Spring Cloud instance.
+   * List all the storages of one Azure Spring Apps resource.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
    *                          this value from the Azure Resource Manager API or the portal.
    * @param serviceName The name of the Service resource.
@@ -63,8 +63,8 @@ export interface Storages {
     storageResource: StorageResource,
     options?: StoragesCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<StoragesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<StoragesCreateOrUpdateResponse>,
       StoragesCreateOrUpdateResponse
     >
   >;
@@ -97,7 +97,7 @@ export interface Storages {
     serviceName: string,
     storageName: string,
     options?: StoragesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete the storage resource.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain

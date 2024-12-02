@@ -20,7 +20,7 @@ override-client-name: GeneratedClient
 disable-async-iterators: true
 hide-clients: true
 api-version-parameter: choice
-package-version: 1.0.0-beta.7
+package-version: 1.1.1
 ```
 
 ## Customizations for Track 2 Generator
@@ -86,4 +86,137 @@ directive:
     where: $.parameters.ApiVersionParameter
     transform: >
       $.required = true
+```
+
+### Take stream as manifest body
+
+```yaml
+directive:
+  from: swagger-document
+  where: $.parameters.ManifestBody
+  transform: >
+    $.schema = {
+        "type": "string",
+        "format": "binary"
+      }
+```
+
+# Add content-type parameter
+
+```yaml
+directive:
+  from: swagger-document
+  where: $.paths["/v2/{name}/manifests/{reference}"].put
+  transform: >
+    $.parameters.push({
+        "name": "Content-Type",
+        "in": "header",
+        "type": "string",
+        "description": "The manifest's Content-Type."
+    });
+    delete $.responses["201"].schema;
+```
+
+# Change NextLink client name to nextLink
+
+```yaml
+directive:
+  from: swagger-document
+  where: $.parameters.NextLink
+  transform: >
+    $["x-ms-client-name"] = "nextLink"
+```
+
+# Updates to OciManifest
+
+```yaml
+directive:
+  from: swagger-document
+  where: $.definitions.OCIManifest
+  transform: >
+    delete $["allOf"];
+    $.properties["schemaVersion"] = {
+          "type": "integer",
+          "description": "Schema version"
+        };
+```
+
+# Add escaping to second and third periods of property names
+
+to work around a code generator bug where only the first period is escaped.
+This should be removed when the code gen bug is fixed.
+
+```yaml
+directive:
+  from: swagger-document
+  where: $.definitions.Annotations
+  transform: >
+    $.properties = Object.keys($.properties).reduce((acc, key) => {
+      const newKey = key.replace("org.opencontainers.image.", "org.opencontainers\\.image\\.");
+      acc[newKey] = $.properties[key];
+      return acc;
+    }, {});
+```
+
+# Changes to getManifest definition
+
+Since:
+
+- We need to expose the Docker-Content-Digest header
+- We need the manifest body as text to calculate the digest
+
+```yaml
+directive:
+  from: swagger-document
+  where: $.paths["/v2/{name}/manifests/{reference}"].get.responses["200"]
+  transform: >
+    $.schema = {
+      type: "string",
+      format: "file"
+    };
+    $.headers = {
+      "Docker-Content-Digest": {
+        "type": "string",
+        "description": "Identifies the docker upload uuid for the current request."
+      },
+      "Content-Type": {
+        "type": "string",
+        "description": "Content type of the uploaded media",
+        "x-ms-client-name": "MediaType"
+      }
+    };
+```
+# Remove security definitions
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.
+    transform: >
+      delete $["securityDefinitions"];
+      delete $["security"];
+```
+
+# Make `deleteBlob` succeed on 404
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.paths["/v2/{name}/blobs/{digest}"]["delete"]
+    transform: >
+      $.responses["404"] = {
+        "description": "The blob to be deleted does not exist"
+      };
+```
+
+# Remove stream response from `deleteBlob`
+
+We don't care about the stream that is returned and we don't want to clean it up
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.paths["/v2/{name}/blobs/{digest}"]["delete"]
+    transform: >
+      delete $.responses["202"].schema;
 ```

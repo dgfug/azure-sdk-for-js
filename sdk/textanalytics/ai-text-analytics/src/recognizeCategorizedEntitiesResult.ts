@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type { TextAnalyticsErrorResult, TextAnalyticsSuccessResult } from "./textAnalyticsResult";
 import {
+  makeTextAnalyticsErrorResult,
   makeTextAnalyticsSuccessResult,
-  TextAnalyticsSuccessResult,
-  TextAnalyticsErrorResult,
-  makeTextAnalyticsErrorResult
 } from "./textAnalyticsResult";
-import { Entity, TextAnalyticsError, DocumentEntities } from "./generated/models";
+import type { DocumentEntities, Entity, TextAnalyticsError } from "./generated/models";
 
 /**
  * An entity from text analysis with information about its categorical
@@ -42,12 +41,12 @@ export type RecognizeCategorizedEntitiesErrorResult = TextAnalyticsErrorResult;
  * @internal
  */
 export function makeRecognizeCategorizedEntitiesResult(
-  result: DocumentEntities
+  result: DocumentEntities,
 ): RecognizeCategorizedEntitiesSuccessResult {
   const { entities, statistics, warnings, id } = result;
   return {
     ...makeTextAnalyticsSuccessResult(id, warnings, statistics),
-    entities
+    entities,
   };
 }
 
@@ -56,7 +55,7 @@ export function makeRecognizeCategorizedEntitiesResult(
  */
 export function makeRecognizeCategorizedEntitiesErrorResult(
   id: string,
-  error: TextAnalyticsError
+  error: TextAnalyticsError,
 ): RecognizeCategorizedEntitiesErrorResult {
   return makeTextAnalyticsErrorResult(id, error);
 }

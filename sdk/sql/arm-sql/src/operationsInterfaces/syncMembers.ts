@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   SyncMember,
   SyncMembersListBySyncGroupOptionalParams,
@@ -21,7 +20,7 @@ import {
   SyncMembersDeleteOptionalParams,
   SyncMembersUpdateOptionalParams,
   SyncMembersUpdateResponse,
-  SyncMembersRefreshMemberSchemaOptionalParams
+  SyncMembersRefreshMemberSchemaOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -41,7 +40,7 @@ export interface SyncMembers {
     serverName: string,
     databaseName: string,
     syncGroupName: string,
-    options?: SyncMembersListBySyncGroupOptionalParams
+    options?: SyncMembersListBySyncGroupOptionalParams,
   ): PagedAsyncIterableIterator<SyncMember>;
   /**
    * Gets a sync member database schema.
@@ -59,7 +58,7 @@ export interface SyncMembers {
     databaseName: string,
     syncGroupName: string,
     syncMemberName: string,
-    options?: SyncMembersListMemberSchemasOptionalParams
+    options?: SyncMembersListMemberSchemasOptionalParams,
   ): PagedAsyncIterableIterator<SyncFullSchemaProperties>;
   /**
    * Gets a sync member.
@@ -77,7 +76,7 @@ export interface SyncMembers {
     databaseName: string,
     syncGroupName: string,
     syncMemberName: string,
-    options?: SyncMembersGetOptionalParams
+    options?: SyncMembersGetOptionalParams,
   ): Promise<SyncMembersGetResponse>;
   /**
    * Creates or updates a sync member.
@@ -97,10 +96,10 @@ export interface SyncMembers {
     syncGroupName: string,
     syncMemberName: string,
     parameters: SyncMember,
-    options?: SyncMembersCreateOrUpdateOptionalParams
+    options?: SyncMembersCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SyncMembersCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SyncMembersCreateOrUpdateResponse>,
       SyncMembersCreateOrUpdateResponse
     >
   >;
@@ -122,7 +121,7 @@ export interface SyncMembers {
     syncGroupName: string,
     syncMemberName: string,
     parameters: SyncMember,
-    options?: SyncMembersCreateOrUpdateOptionalParams
+    options?: SyncMembersCreateOrUpdateOptionalParams,
   ): Promise<SyncMembersCreateOrUpdateResponse>;
   /**
    * Deletes a sync member.
@@ -140,8 +139,8 @@ export interface SyncMembers {
     databaseName: string,
     syncGroupName: string,
     syncMemberName: string,
-    options?: SyncMembersDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SyncMembersDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a sync member.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -158,7 +157,7 @@ export interface SyncMembers {
     databaseName: string,
     syncGroupName: string,
     syncMemberName: string,
-    options?: SyncMembersDeleteOptionalParams
+    options?: SyncMembersDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Updates an existing sync member.
@@ -178,10 +177,10 @@ export interface SyncMembers {
     syncGroupName: string,
     syncMemberName: string,
     parameters: SyncMember,
-    options?: SyncMembersUpdateOptionalParams
+    options?: SyncMembersUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SyncMembersUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SyncMembersUpdateResponse>,
       SyncMembersUpdateResponse
     >
   >;
@@ -203,7 +202,7 @@ export interface SyncMembers {
     syncGroupName: string,
     syncMemberName: string,
     parameters: SyncMember,
-    options?: SyncMembersUpdateOptionalParams
+    options?: SyncMembersUpdateOptionalParams,
   ): Promise<SyncMembersUpdateResponse>;
   /**
    * Refreshes a sync member database schema.
@@ -221,8 +220,8 @@ export interface SyncMembers {
     databaseName: string,
     syncGroupName: string,
     syncMemberName: string,
-    options?: SyncMembersRefreshMemberSchemaOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SyncMembersRefreshMemberSchemaOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Refreshes a sync member database schema.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -239,6 +238,6 @@ export interface SyncMembers {
     databaseName: string,
     syncGroupName: string,
     syncMemberName: string,
-    options?: SyncMembersRefreshMemberSchemaOptionalParams
+    options?: SyncMembersRefreshMemberSchemaOptionalParams,
   ): Promise<void>;
 }

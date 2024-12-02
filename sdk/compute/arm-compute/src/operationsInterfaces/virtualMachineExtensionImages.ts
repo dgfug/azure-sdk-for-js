@@ -12,7 +12,7 @@ import {
   VirtualMachineExtensionImagesListTypesOptionalParams,
   VirtualMachineExtensionImagesListTypesResponse,
   VirtualMachineExtensionImagesListVersionsOptionalParams,
-  VirtualMachineExtensionImagesListVersionsResponse
+  VirtualMachineExtensionImagesListVersionsResponse,
 } from "../models";
 
 /** Interface representing a VirtualMachineExtensionImages. */
@@ -21,16 +21,16 @@ export interface VirtualMachineExtensionImages {
    * Gets a virtual machine extension image.
    * @param location The name of a supported Azure region.
    * @param publisherName
-   * @param version
    * @param typeParam
+   * @param version
    * @param options The options parameters.
    */
   get(
     location: string,
     publisherName: string,
-    version: string,
     typeParam: string,
-    options?: VirtualMachineExtensionImagesGetOptionalParams
+    version: string,
+    options?: VirtualMachineExtensionImagesGetOptionalParams,
   ): Promise<VirtualMachineExtensionImagesGetResponse>;
   /**
    * Gets a list of virtual machine extension image types.
@@ -41,7 +41,7 @@ export interface VirtualMachineExtensionImages {
   listTypes(
     location: string,
     publisherName: string,
-    options?: VirtualMachineExtensionImagesListTypesOptionalParams
+    options?: VirtualMachineExtensionImagesListTypesOptionalParams,
   ): Promise<VirtualMachineExtensionImagesListTypesResponse>;
   /**
    * Gets a list of virtual machine extension image versions.
@@ -54,6 +54,6 @@ export interface VirtualMachineExtensionImages {
     location: string,
     publisherName: string,
     typeParam: string,
-    options?: VirtualMachineExtensionImagesListVersionsOptionalParams
+    options?: VirtualMachineExtensionImagesListVersionsOptionalParams,
   ): Promise<VirtualMachineExtensionImagesListVersionsResponse>;
 }

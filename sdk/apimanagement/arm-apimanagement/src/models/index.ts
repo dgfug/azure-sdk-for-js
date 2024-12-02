@@ -83,6 +83,10 @@ export interface AuthenticationSettingsContract {
   oAuth2?: OAuth2AuthenticationSettingsContract;
   /** OpenID Connect Authentication Settings */
   openid?: OpenIdAuthenticationSettingsContract;
+  /** Collection of OAuth2 authentication settings included into this API. */
+  oAuth2AuthenticationSettings?: OAuth2AuthenticationSettingsContract[];
+  /** Collection of Open ID Connect authentication settings included into this API. */
+  openidAuthenticationSettings?: OpenIdAuthenticationSettingsContract[];
 }
 
 /** API OAuth2 Authentication settings details. */
@@ -237,6 +241,8 @@ export interface ApiCreateOrUpdateParameter {
    *  * `graphql` creates GraphQL API.
    */
   soapApiType?: SoapApiType;
+  /** Strategy of translating required query parameters to template ones. By default has value 'template'. Possible values: 'template', 'query' */
+  translateRequiredQueryParametersConduct?: TranslateRequiredQueryParametersConduct;
 }
 
 /** Criteria to limit import of WSDL to a subset of the document. */
@@ -508,6 +514,32 @@ export interface TagCollection {
   count?: number;
   /** Next page link if any. */
   nextLink?: string;
+}
+
+/** Paged Resolver list representation. */
+export interface ResolverCollection {
+  /**
+   * Page values.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly value?: ResolverContract[];
+  /** Total record count number across all pages. */
+  count?: number;
+  /**
+   * Next page link if any.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** GraphQL API Resolver Update Contract details. */
+export interface ResolverUpdateContract {
+  /** Resolver Name. */
+  displayName?: string;
+  /** Path is type/field being resolved. */
+  path?: string;
+  /** Description of the resolver. May include HTML formatting tags. */
+  description?: string;
 }
 
 /** Paged Products list representation. */
@@ -783,6 +815,32 @@ export interface OperationTagResourceContractProperties {
   readonly urlTemplate?: string;
 }
 
+/** Wiki documentation details. */
+export interface WikiDocumentationContract {
+  /** Documentation Identifier */
+  documentationId?: string;
+}
+
+/** Wiki update contract details. */
+export interface WikiUpdateContract {
+  /** Collection wiki documents included into this wiki. */
+  documents?: WikiDocumentationContract[];
+}
+
+/** Paged Wiki list representation. */
+export interface WikiCollection {
+  /**
+   * Page values.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly value?: WikiContract[];
+  /**
+   * Next page link if any.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
 /** API Export result. */
 export interface ApiExportResult {
   /** ResourceId of the API which was exported. */
@@ -885,6 +943,76 @@ export interface AuthorizationServerSecretsContract {
   resourceOwnerPassword?: string;
 }
 
+/** Paged Authorization Provider list representation. */
+export interface AuthorizationProviderCollection {
+  /** Page values. */
+  value?: AuthorizationProviderContract[];
+  /** Next page link if any. */
+  nextLink?: string;
+}
+
+/** OAuth2 settings details */
+export interface AuthorizationProviderOAuth2Settings {
+  /** Redirect URL to be set in the OAuth application. */
+  redirectUrl?: string;
+  /** OAuth2 settings */
+  grantTypes?: AuthorizationProviderOAuth2GrantTypes;
+}
+
+/** Authorization Provider oauth2 grant types settings */
+export interface AuthorizationProviderOAuth2GrantTypes {
+  /** OAuth2 authorization code grant parameters */
+  authorizationCode?: { [propertyName: string]: string };
+  /** OAuth2 client credential grant parameters */
+  clientCredentials?: { [propertyName: string]: string };
+}
+
+/** Paged Authorization list representation. */
+export interface AuthorizationCollection {
+  /** Page values. */
+  value?: AuthorizationContract[];
+  /** Total record count number across all pages. */
+  count?: number;
+  /** Next page link if any. */
+  nextLink?: string;
+}
+
+/** Authorization error details. */
+export interface AuthorizationError {
+  /** Error code */
+  code?: string;
+  /** Error message */
+  message?: string;
+}
+
+/** Authorization login request contract. */
+export interface AuthorizationLoginRequestContract {
+  /** The redirect URL after login has completed. */
+  postLoginRedirectUrl?: string;
+}
+
+/** Authorization login response contract. */
+export interface AuthorizationLoginResponseContract {
+  /** The login link */
+  loginLink?: string;
+}
+
+/** Authorization confirm consent code request contract. */
+export interface AuthorizationConfirmConsentCodeRequestContract {
+  /** The consent code from the authorization server after authorizing and consenting. */
+  consentCode?: string;
+}
+
+/** Paged Authorization Access Policy list representation. */
+export interface AuthorizationAccessPolicyCollection {
+  /** Page values. */
+  value?: AuthorizationAccessPolicyContract[];
+  /** Total record count number across all pages. */
+  count?: number;
+  /** Next page link if any. */
+  nextLink?: string;
+}
+
 /** Paged Backend list representation. */
 export interface BackendCollection {
   /** Backend values. */
@@ -901,13 +1029,13 @@ export interface BackendBaseParameters {
   title?: string;
   /** Backend Description. */
   description?: string;
-  /** Management Uri of the Resource in External System. This url can be the Arm Resource Id of Logic Apps, Function Apps or API Apps. */
+  /** Management Uri of the Resource in External System. This URL can be the Arm Resource Id of Logic Apps, Function Apps or API Apps. */
   resourceId?: string;
   /** Backend Properties contract */
   properties?: BackendProperties;
   /** Backend Credentials Contract Properties */
   credentials?: BackendCredentialsContract;
-  /** Backend Proxy Contract Properties */
+  /** Backend gateway Contract Properties */
   proxy?: BackendProxyContract;
   /** Backend TLS Properties */
   tls?: BackendTlsProperties;
@@ -989,13 +1117,13 @@ export interface BackendUpdateParameters {
   title?: string;
   /** Backend Description. */
   description?: string;
-  /** Management Uri of the Resource in External System. This url can be the Arm Resource Id of Logic Apps, Function Apps or API Apps. */
+  /** Management Uri of the Resource in External System. This URL can be the Arm Resource Id of Logic Apps, Function Apps or API Apps. */
   resourceId?: string;
   /** Backend Properties contract */
   properties?: BackendProperties;
   /** Backend Credentials Contract Properties */
   credentials?: BackendCredentialsContract;
-  /** Backend Proxy Contract Properties */
+  /** Backend gateway Contract Properties */
   proxy?: BackendProxyContract;
   /** Backend TLS Properties */
   tls?: BackendTlsProperties;
@@ -1054,7 +1182,7 @@ export interface KeyVaultLastAccessStatusContractProperties {
 export interface KeyVaultContractCreateProperties {
   /** Key vault secret identifier for fetching secret. Providing a versioned secret will prevent auto-refresh. This requires API Management service to be configured with aka.ms/apimmsi */
   secretIdentifier?: string;
-  /** SystemAssignedIdentity or UserAssignedIdentity Client Id which will be used to access key vault secret. */
+  /** Null for SystemAssignedIdentity or Client Id for UserAssignedIdentity , which will be used to access key vault secret. */
   identityClientId?: string;
 }
 
@@ -1435,12 +1563,19 @@ export interface ApiManagementServiceBaseProperties {
   virtualNetworkConfiguration?: VirtualNetworkConfiguration;
   /** Additional datacenter locations of the API Management service. */
   additionalLocations?: AdditionalLocation[];
-  /** Custom properties of the API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168` will disable the cipher TLS_RSA_WITH_3DES_EDE_CBC_SHA for all TLS(1.0, 1.1 and 1.2).</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11` can be used to disable just TLS 1.1.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10` can be used to disable TLS 1.0 on an API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11` can be used to disable just TLS 1.1 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10` can be used to disable TLS 1.0 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2` can be used to enable HTTP2 protocol on an API Management service.</br>Not specifying any of these properties on PATCH operation will reset omitted properties' values to their defaults. For all the settings except Http2 the default value is `True` if the service was created on or before April 1st 2018 and `False` otherwise. Http2 setting's default value is `False`.</br></br>You can disable any of next ciphers by using settings `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.[cipher_name]`: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_GCM_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA. For example, `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256`:`false`. The default value is `true` for them.  Note: next ciphers can't be disabled since they are required by Azure CloudService internal components: TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_RSA_WITH_AES_256_GCM_SHA384 */
+  /** Custom properties of the API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168` will disable the cipher TLS_RSA_WITH_3DES_EDE_CBC_SHA for all TLS(1.0, 1.1 and 1.2).</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11` can be used to disable just TLS 1.1.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10` can be used to disable TLS 1.0 on an API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11` can be used to disable just TLS 1.1 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10` can be used to disable TLS 1.0 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2` can be used to enable HTTP2 protocol on an API Management service.</br>Not specifying any of these properties on PATCH operation will reset omitted properties' values to their defaults. For all the settings except Http2 the default value is `True` if the service was created on or before April 1, 2018 and `False` otherwise. Http2 setting's default value is `False`.</br></br>You can disable any of the following ciphers by using settings `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.[cipher_name]`: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_GCM_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA. For example, `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256`:`false`. The default value is `true` for them.</br> Note: The following ciphers can't be disabled since they are required by internal platform components: TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 */
   customProperties?: { [propertyName: string]: string };
   /** List of Certificates that need to be installed in the API Management service. Max supported certificates that can be installed is 10. */
   certificates?: CertificateConfiguration[];
   /** Property only meant to be used for Consumption SKU Service. This enforces a client certificate to be presented on each request to the gateway. This also enables the ability to authenticate the certificate in the policy on the gateway. */
   enableClientCertificate?: boolean;
+  /** Property can be used to enable NAT Gateway for this API Management service. */
+  natGatewayState?: NatGatewayState;
+  /**
+   * Outbound public IPV4 address prefixes associated with NAT Gateway deployed service. Available only for Premium SKU on stv2 platform.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outboundPublicIPAddresses?: string[];
   /** Property only valid for an Api Management service deployed in multiple locations. This can be used to disable the gateway in master region. */
   disableGateway?: boolean;
   /** The type of VPN in which API Management service needs to be configured in. None (Default Value) means the API Management service is not part of any Virtual Network, External means the API Management deployment is set up inside a Virtual Network having an Internet Facing Endpoint, and Internal means that API Management deployment is setup inside a Virtual Network having an Intranet Facing Endpoint only. */
@@ -1472,7 +1607,7 @@ export interface HostnameConfiguration {
   encodedCertificate?: string;
   /** Certificate Password. */
   certificatePassword?: string;
-  /** Specify true to setup the certificate associated with this Hostname as the Default SSL Certificate. If a client does not send the SNI header, then this will be the certificate that will be challenged. The property is useful if a service has multiple custom hostname enabled and it needs to decide on the default ssl certificate. The setting only applied to Proxy Hostname Type. */
+  /** Specify true to setup the certificate associated with this Hostname as the Default SSL Certificate. If a client does not send the SNI header, then this will be the certificate that will be challenged. The property is useful if a service has multiple custom hostname enabled and it needs to decide on the default ssl certificate. The setting only applied to gateway Hostname Type. */
   defaultSslBinding?: boolean;
   /** Specify true to always negotiate client certificate on the hostname. Default Value is false. */
   negotiateClientCertificate?: boolean;
@@ -1537,6 +1672,13 @@ export interface AdditionalLocation {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly gatewayRegionalUrl?: string;
+  /** Property can be used to enable NAT Gateway for this API Management service. */
+  natGatewayState?: NatGatewayState;
+  /**
+   * Outbound public IPV4 address prefixes associated with NAT Gateway deployed service. Available only for Premium SKU on stv2 platform.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outboundPublicIPAddresses?: string[];
   /** Property only valid for an Api Management service deployed in multiple locations. This can be used to disable the gateway in this additional location. */
   disableGateway?: boolean;
   /**
@@ -1958,6 +2100,8 @@ export interface IdentityProviderBaseParameters {
   profileEditingPolicyName?: string;
   /** Password Reset Policy Name. Only applies to AAD B2C Identity Provider. */
   passwordResetPolicyName?: string;
+  /** The client library to be used in the developer portal. Only applies to AAD and AAD B2C Identity Provider. */
+  clientLibrary?: string;
 }
 
 /** Parameters supplied to update Identity Provider */
@@ -1978,6 +2122,8 @@ export interface IdentityProviderUpdateParameters {
   profileEditingPolicyName?: string;
   /** Password Reset Policy Name. Only applies to AAD B2C Identity Provider. */
   passwordResetPolicyName?: string;
+  /** The client library to be used in the developer portal. Only applies to AAD and AAD B2C Identity Provider. */
+  clientLibrary?: string;
   /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
   clientId?: string;
   /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. */
@@ -2150,6 +2296,10 @@ export interface OpenidConnectProviderUpdateContract {
   clientId?: string;
   /** Client Secret of developer console which is the client application. */
   clientSecret?: string;
+  /** If true, the Open ID Connect provider may be used in the developer portal test console. True by default if no value is provided. */
+  useInTestConsole?: boolean;
+  /** If true, the Open ID Connect provider will be used in the API documentation in the developer portal. False by default if no value is provided. */
+  useInApiDocumentation?: boolean;
 }
 
 /** Collection of Outbound Environment Endpoints */
@@ -2187,12 +2337,88 @@ export interface EndpointDetail {
   region?: string;
 }
 
-/** Descriptions of APIM policies. */
+/** Descriptions of API Management policies. */
 export interface PolicyDescriptionCollection {
-  /** Descriptions of APIM policies. */
+  /** Descriptions of API Management policies. */
   value?: PolicyDescriptionContract[];
   /** Total record count number. */
   count?: number;
+}
+
+/** The response of the get policy fragments operation. */
+export interface PolicyFragmentCollection {
+  /** Policy fragment contract value. */
+  value?: PolicyFragmentContract[];
+  /** Total record count number. */
+  count?: number;
+  /** Next page link if any. */
+  nextLink?: string;
+}
+
+/** A collection of resources. */
+export interface ResourceCollection {
+  /** A collection of resources. */
+  value?: ResourceCollectionValueItem[];
+  /** Total record count number. */
+  count?: number;
+  /** Next page link if any. */
+  nextLink?: string;
+}
+
+/** The collection of the developer portal configurations. */
+export interface PortalConfigCollection {
+  /** The developer portal configurations. */
+  value?: PortalConfigContract[];
+  /**
+   * Next page link if any.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+export interface PortalConfigPropertiesSignin {
+  /** Redirect anonymous users to the sign-in page. */
+  require?: boolean;
+}
+
+export interface PortalConfigPropertiesSignup {
+  /** Terms of service settings. */
+  termsOfService?: PortalConfigTermsOfServiceProperties;
+}
+
+/** Terms of service contract properties. */
+export interface PortalConfigTermsOfServiceProperties {
+  /** A terms of service text. */
+  text?: string;
+  /** Ask user for consent to the terms of service. */
+  requireConsent?: boolean;
+}
+
+export interface PortalConfigDelegationProperties {
+  /** Enable or disable delegation for user registration. */
+  delegateRegistration?: boolean;
+  /** Enable or disable delegation for product subscriptions. */
+  delegateSubscription?: boolean;
+  /** A delegation endpoint URL. */
+  delegationUrl?: string;
+  /** A base64-encoded validation key to ensure requests originate from Azure API Management service. */
+  validationKey?: string;
+}
+
+/** The developer portal Cross-Origin Resource Sharing (CORS) settings. */
+export interface PortalConfigCorsProperties {
+  /** Allowed origins, e.g. `https://trusted.com`. */
+  allowedOrigins?: string[];
+}
+
+/** The developer portal Content Security Policy (CSP) settings. */
+export interface PortalConfigCspProperties {
+  /** The mode of the developer portal Content Security Policy (CSP). */
+  mode?: PortalSettingsCspMode;
+  /** The URLs used by the browser to report CSP violations. */
+  reportUri?: string[];
+  /** Allowed sources, e.g. `*.trusted.com`, `trusted.com`, `https://`. */
+  allowedSources?: string[];
 }
 
 /** Paged list of portal revisions. */
@@ -2209,9 +2435,9 @@ export interface PortalRevisionCollection {
   readonly nextLink?: string;
 }
 
-/** Descriptions of APIM policies. */
+/** Descriptions of API Management policies. */
 export interface PortalSettingsCollection {
-  /** Descriptions of APIM policies. */
+  /** Descriptions of API Management policies. */
   value?: PortalSettingsContract[];
   /** Total record count number. */
   count?: number;
@@ -2426,7 +2652,7 @@ export interface ReportRecordContract {
   callCountSuccess?: number;
   /** Number of calls blocked due to invalid credentials. This includes calls returning HttpStatusCode.Unauthorized and HttpStatusCode.Forbidden and HttpStatusCode.TooManyRequests */
   callCountBlocked?: number;
-  /** Number of calls failed due to proxy or backend errors. This includes calls returning HttpStatusCode.BadRequest(400) and any Code between HttpStatusCode.InternalServerError (500) and 600 */
+  /** Number of calls failed due to gateway or backend errors. This includes calls returning HttpStatusCode.BadRequest(400) and any Code between HttpStatusCode.InternalServerError (500) and 600 */
   callCountFailed?: number;
   /** Number of other calls. */
   callCountOther?: number;
@@ -2504,6 +2730,22 @@ export interface RequestReportRecordContract {
   requestId?: string;
   /** The size of this request.. */
   requestSize?: number;
+}
+
+/** The response of the list schema operation. */
+export interface GlobalSchemaCollection {
+  /**
+   * Global Schema Contract value.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly value?: GlobalSchemaContract[];
+  /** Total record count number. */
+  count?: number;
+  /**
+   * Next page link if any.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
 }
 
 /** Paged AccessInformation list representation. */
@@ -2927,6 +3169,28 @@ export interface UserTokenResult {
   value?: string;
 }
 
+/** Paged Documentation list representation. */
+export interface DocumentationCollection {
+  /**
+   * Page values.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly value?: DocumentationContract[];
+  /**
+   * Next page link if any.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nextLink?: string;
+}
+
+/** Documentation update contract details. */
+export interface DocumentationUpdateContract {
+  /** documentation title. */
+  title?: string;
+  /** Markdown documentation content. */
+  content?: string;
+}
+
 /** Object used to create an API Revision or Version based on an existing API Revision */
 export interface ApiRevisionInfoContract {
   /** Resource identifier of API to be used to create the revision from. */
@@ -2947,8 +3211,18 @@ export interface QuotaCounterValueContract {
   kbTransferred?: number;
 }
 
+/** Log of the entity being created, updated or deleted. */
+export interface ResolverResultLogItemContract {
+  /** The type of entity contract. */
+  objectType?: string;
+  /** Action like create/update/delete. */
+  action?: string;
+  /** Identifier of the entity being created/updated/deleted. */
+  objectKey?: string;
+}
+
 /** API Entity Properties */
-export type ApiContractProperties = ApiEntityBaseContract & {
+export interface ApiContractProperties extends ApiEntityBaseContract {
   /** API identifier of the source API. */
   sourceApiId?: string;
   /** API name. Must be 1 to 300 characters long. */
@@ -2961,10 +3235,10 @@ export type ApiContractProperties = ApiEntityBaseContract & {
   protocols?: Protocol[];
   /** Version set details */
   apiVersionSet?: ApiVersionSetContractDetails;
-};
+}
 
 /** API update contract properties. */
-export type ApiContractUpdateProperties = ApiEntityBaseContract & {
+export interface ApiContractUpdateProperties extends ApiEntityBaseContract {
   /** API name. */
   displayName?: string;
   /** Absolute URL of the backend service implementing this API. */
@@ -2973,10 +3247,11 @@ export type ApiContractUpdateProperties = ApiEntityBaseContract & {
   path?: string;
   /** Describes on which protocols the operations in this API can be invoked. */
   protocols?: Protocol[];
-};
+}
 
 /** API contract properties for the Tag Resources. */
-export type ApiTagResourceContractProperties = ApiEntityBaseContract & {
+export interface ApiTagResourceContractProperties
+  extends ApiEntityBaseContract {
   /** API identifier in the form /apis/{apiId}. */
   id?: string;
   /** API name. */
@@ -2987,700 +3262,13 @@ export type ApiTagResourceContractProperties = ApiEntityBaseContract & {
   path?: string;
   /** Describes on which protocols the operations in this API can be invoked. */
   protocols?: Protocol[];
-};
+}
 
-/** API details. */
-export type ApiContract = Resource & {
-  /** Description of the API. May include HTML formatting tags. */
-  description?: string;
-  /** Collection of authentication settings included into this API. */
-  authenticationSettings?: AuthenticationSettingsContract;
-  /** Protocols over which API is made available. */
-  subscriptionKeyParameterNames?: SubscriptionKeyParameterNamesContract;
-  /** Type of API. */
-  apiType?: ApiType;
-  /** Describes the revision of the API. If no value is provided, default revision 1 is created */
-  apiRevision?: string;
-  /** Indicates the version identifier of the API if the API is versioned */
-  apiVersion?: string;
-  /** Indicates if API revision is current api revision. */
-  isCurrent?: boolean;
-  /**
-   * Indicates if API revision is accessible via the gateway.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly isOnline?: boolean;
-  /** Description of the API Revision. */
-  apiRevisionDescription?: string;
-  /** Description of the API Version. */
-  apiVersionDescription?: string;
-  /** A resource identifier for the related ApiVersionSet. */
-  apiVersionSetId?: string;
-  /** Specifies whether an API or Product subscription is required for accessing the API. */
-  subscriptionRequired?: boolean;
-  /**  A URL to the Terms of Service for the API. MUST be in the format of a URL. */
-  termsOfServiceUrl?: string;
-  /** Contact information for the API. */
-  contact?: ApiContactInformation;
-  /** License information for the API. */
-  license?: ApiLicenseInformation;
-  /** API identifier of the source API. */
-  sourceApiId?: string;
-  /** API name. Must be 1 to 300 characters long. */
-  displayName?: string;
-  /** Absolute URL of the backend service implementing this API. Cannot be more than 2000 characters long. */
-  serviceUrl?: string;
-  /** Relative URL uniquely identifying this API and all of its resource paths within the API Management service instance. It is appended to the API endpoint base URL specified during the service instance creation to form a public URL for this API. */
-  path?: string;
-  /** Describes on which protocols the operations in this API can be invoked. */
-  protocols?: Protocol[];
-  /** Version set details */
-  apiVersionSet?: ApiVersionSetContractDetails;
-};
-
-/** ApiRelease details. */
-export type ApiReleaseContract = Resource & {
-  /** Identifier of the API the release belongs to. */
-  apiId?: string;
-  /**
-   * The time the API was released. The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly createdDateTime?: Date;
-  /**
-   * The time the API release was updated.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly updatedDateTime?: Date;
-  /** Release Notes */
-  notes?: string;
-};
-
-/** API Operation details. */
-export type OperationContract = Resource & {
-  /** Collection of URL template parameters. */
-  templateParameters?: ParameterContract[];
-  /** Description of the operation. May include HTML formatting tags. */
-  description?: string;
-  /** An entity containing request details. */
-  request?: RequestContract;
-  /** Array of Operation responses. */
-  responses?: ResponseContract[];
-  /** Operation Policies */
-  policies?: string;
-  /** Operation Name. */
-  displayName?: string;
-  /** A Valid HTTP Operation Method. Typical Http Methods like GET, PUT, POST but not limited by only them. */
-  method?: string;
-  /** Relative URL template identifying the target resource for this operation. May include parameters. Example: /customers/{cid}/orders/{oid}/?date={date} */
-  urlTemplate?: string;
-};
-
-/** Policy Contract details. */
-export type PolicyContract = Resource & {
-  /** Contents of the Policy as defined by the format. */
-  value?: string;
-  /** Format of the policyContent. */
-  format?: PolicyContentFormat;
-};
-
-/** Tag Contract details. */
-export type TagContract = Resource & {
-  /** Tag name. */
-  displayName?: string;
-};
-
-/** Product details. */
-export type ProductContract = Resource & {
-  /** Product description. May include HTML formatting tags. */
-  description?: string;
-  /** Product terms of use. Developers trying to subscribe to the product will be presented and required to accept these terms before they can complete the subscription process. */
-  terms?: string;
-  /** Whether a product subscription is required for accessing APIs included in this product. If true, the product is referred to as "protected" and a valid subscription key is required for a request to an API included in the product to succeed. If false, the product is referred to as "open" and requests to an API included in the product can be made without a subscription key. If property is omitted when creating a new product it's value is assumed to be true. */
-  subscriptionRequired?: boolean;
-  /** whether subscription approval is required. If false, new subscriptions will be approved automatically enabling developers to call the product’s APIs immediately after subscribing. If true, administrators must manually approve the subscription before the developer can any of the product’s APIs. Can be present only if subscriptionRequired property is present and has a value of false. */
-  approvalRequired?: boolean;
-  /** Whether the number of subscriptions a user can have to this product at the same time. Set to null or omit to allow unlimited per user subscriptions. Can be present only if subscriptionRequired property is present and has a value of false. */
-  subscriptionsLimit?: number;
-  /** whether product is published or not. Published products are discoverable by users of developer portal. Non published products are visible only to administrators. Default state of Product is notPublished. */
-  state?: ProductState;
-  /** Product name. */
-  displayName?: string;
-};
-
-/** Schema Contract details. */
-export type SchemaContract = Resource & {
-  /** Must be a valid a media type used in a Content-Type header as defined in the RFC 2616. Media type of the schema document (e.g. application/json, application/xml). </br> - `Swagger` Schema use `application/vnd.ms-azure-apim.swagger.definitions+json` </br> - `WSDL` Schema use `application/vnd.ms-azure-apim.xsd+xml` </br> - `OpenApi` Schema use `application/vnd.oai.openapi.components+json` </br> - `WADL Schema` use `application/vnd.ms-azure-apim.wadl.grammars+xml`. */
-  contentType?: string;
-  /** Json escaped string defining the document representing the Schema. Used for schemas other than Swagger/OpenAPI. */
-  value?: string;
-  /** Types definitions. Used for OpenAPI v2 (Swagger) schemas only, null otherwise. */
-  definitions?: Record<string, unknown>;
-  /** Types definitions. Used for OpenAPI v3 schemas only, null otherwise. */
-  components?: Record<string, unknown>;
-};
-
-/** Diagnostic details. */
-export type DiagnosticContract = Resource & {
-  /** Specifies for what type of messages sampling settings should not apply. */
-  alwaysLog?: AlwaysLog;
-  /** Resource Id of a target logger. */
-  loggerId?: string;
-  /** Sampling settings for Diagnostic. */
-  sampling?: SamplingSettings;
-  /** Diagnostic settings for incoming/outgoing HTTP messages to the Gateway. */
-  frontend?: PipelineDiagnosticSettings;
-  /** Diagnostic settings for incoming/outgoing HTTP messages to the Backend */
-  backend?: PipelineDiagnosticSettings;
-  /** Log the ClientIP. Default is false. */
-  logClientIp?: boolean;
-  /** Sets correlation protocol to use for Application Insights diagnostics. */
-  httpCorrelationProtocol?: HttpCorrelationProtocol;
-  /** The verbosity level applied to traces emitted by trace policies. */
-  verbosity?: Verbosity;
-  /** The format of the Operation Name for Application Insights telemetries. Default is Name. */
-  operationNameFormat?: OperationNameFormat;
-};
-
-/** Issue Contract details. */
-export type IssueContract = Resource & {
-  /** Date and time when the issue was created. */
-  createdDate?: Date;
-  /** Status of the issue. */
-  state?: State;
-  /** A resource identifier for the API the issue was created for. */
-  apiId?: string;
-  /** The issue title. */
-  title?: string;
-  /** Text describing the issue. */
-  description?: string;
-  /** A resource identifier for the user created the issue. */
-  userId?: string;
-};
-
-/** Issue Comment Contract details. */
-export type IssueCommentContract = Resource & {
-  /** Comment text. */
-  text?: string;
-  /** Date and time when the comment was created. */
-  createdDate?: Date;
-  /** A resource identifier for the user who left the comment. */
-  userId?: string;
-};
-
-/** Issue Attachment Contract details. */
-export type IssueAttachmentContract = Resource & {
-  /** Filename by which the binary data will be saved. */
-  title?: string;
-  /** Either 'link' if content is provided via an HTTP link or the MIME type of the Base64-encoded binary data provided in the 'content' property. */
-  contentFormat?: string;
-  /** An HTTP link or Base64-encoded binary data. */
-  content?: string;
-};
-
-/** Contract details. */
-export type TagDescriptionContract = Resource & {
-  /** Description of the Tag. */
-  description?: string;
-  /** Absolute URL of external resources describing the tag. */
-  externalDocsUrl?: string;
-  /** Description of the external resources describing the tag. */
-  externalDocsDescription?: string;
-  /** Identifier of the tag in the form of /tags/{tagId} */
-  tagId?: string;
-  /** Tag name. */
-  displayName?: string;
-};
-
-/** API Version Set Contract details. */
-export type ApiVersionSetContract = Resource & {
-  /** Description of API Version Set. */
-  description?: string;
-  /** Name of query parameter that indicates the API Version if versioningScheme is set to `query`. */
-  versionQueryName?: string;
-  /** Name of HTTP header parameter that indicates the API Version if versioningScheme is set to `header`. */
-  versionHeaderName?: string;
-  /** Name of API Version Set */
-  displayName?: string;
-  /** An value that determines where the API Version identifier will be located in a HTTP request. */
-  versioningScheme?: VersioningScheme;
-};
-
-/** External OAuth authorization server settings. */
-export type AuthorizationServerContract = Resource & {
-  /** Description of the authorization server. Can contain HTML formatting tags. */
-  description?: string;
-  /** HTTP verbs supported by the authorization endpoint. GET must be always present. POST is optional. */
-  authorizationMethods?: AuthorizationMethod[];
-  /** Method of authentication supported by the token endpoint of this authorization server. Possible values are Basic and/or Body. When Body is specified, client credentials and other parameters are passed within the request body in the application/x-www-form-urlencoded format. */
-  clientAuthenticationMethod?: ClientAuthenticationMethod[];
-  /** Additional parameters required by the token endpoint of this authorization server represented as an array of JSON objects with name and value string properties, i.e. {"name" : "name value", "value": "a value"}. */
-  tokenBodyParameters?: TokenBodyParameterContract[];
-  /** OAuth token endpoint. Contains absolute URI to entity being referenced. */
-  tokenEndpoint?: string;
-  /** If true, authorization server will include state parameter from the authorization request to its response. Client may use state parameter to raise protocol security. */
-  supportState?: boolean;
-  /** Access token scope that is going to be requested by default. Can be overridden at the API level. Should be provided in the form of a string containing space-delimited values. */
-  defaultScope?: string;
-  /** Specifies the mechanism by which access token is passed to the API. */
-  bearerTokenSendingMethods?: BearerTokenSendingMethod[];
-  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner username. */
-  resourceOwnerUsername?: string;
-  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner password. */
-  resourceOwnerPassword?: string;
-  /** User-friendly authorization server name. */
-  displayName?: string;
-  /** Optional reference to a page where client or app registration for this authorization server is performed. Contains absolute URL to entity being referenced. */
-  clientRegistrationEndpoint?: string;
-  /** OAuth authorization endpoint. See http://tools.ietf.org/html/rfc6749#section-3.2. */
-  authorizationEndpoint?: string;
-  /** Form of an authorization grant, which the client uses to request the access token. */
-  grantTypes?: GrantType[];
-  /** Client or app id registered with this authorization server. */
-  clientId?: string;
-  /** Client or app secret registered with this authorization server. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  clientSecret?: string;
-};
-
-/** External OAuth authorization server settings. */
-export type AuthorizationServerUpdateContract = Resource & {
-  /** Description of the authorization server. Can contain HTML formatting tags. */
-  description?: string;
-  /** HTTP verbs supported by the authorization endpoint. GET must be always present. POST is optional. */
-  authorizationMethods?: AuthorizationMethod[];
-  /** Method of authentication supported by the token endpoint of this authorization server. Possible values are Basic and/or Body. When Body is specified, client credentials and other parameters are passed within the request body in the application/x-www-form-urlencoded format. */
-  clientAuthenticationMethod?: ClientAuthenticationMethod[];
-  /** Additional parameters required by the token endpoint of this authorization server represented as an array of JSON objects with name and value string properties, i.e. {"name" : "name value", "value": "a value"}. */
-  tokenBodyParameters?: TokenBodyParameterContract[];
-  /** OAuth token endpoint. Contains absolute URI to entity being referenced. */
-  tokenEndpoint?: string;
-  /** If true, authorization server will include state parameter from the authorization request to its response. Client may use state parameter to raise protocol security. */
-  supportState?: boolean;
-  /** Access token scope that is going to be requested by default. Can be overridden at the API level. Should be provided in the form of a string containing space-delimited values. */
-  defaultScope?: string;
-  /** Specifies the mechanism by which access token is passed to the API. */
-  bearerTokenSendingMethods?: BearerTokenSendingMethod[];
-  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner username. */
-  resourceOwnerUsername?: string;
-  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner password. */
-  resourceOwnerPassword?: string;
-  /** User-friendly authorization server name. */
-  displayName?: string;
-  /** Optional reference to a page where client or app registration for this authorization server is performed. Contains absolute URL to entity being referenced. */
-  clientRegistrationEndpoint?: string;
-  /** OAuth authorization endpoint. See http://tools.ietf.org/html/rfc6749#section-3.2. */
-  authorizationEndpoint?: string;
-  /** Form of an authorization grant, which the client uses to request the access token. */
-  grantTypes?: GrantType[];
-  /** Client or app id registered with this authorization server. */
-  clientId?: string;
-  /** Client or app secret registered with this authorization server. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  clientSecret?: string;
-};
-
-/** Backend details. */
-export type BackendContract = Resource & {
-  /** Backend Title. */
-  title?: string;
-  /** Backend Description. */
-  description?: string;
-  /** Management Uri of the Resource in External System. This url can be the Arm Resource Id of Logic Apps, Function Apps or API Apps. */
-  resourceId?: string;
-  /** Backend Properties contract */
-  properties?: BackendProperties;
-  /** Backend Credentials Contract Properties */
-  credentials?: BackendCredentialsContract;
-  /** Backend Proxy Contract Properties */
-  proxy?: BackendProxyContract;
-  /** Backend TLS Properties */
-  tls?: BackendTlsProperties;
-  /** Runtime Url of the Backend. */
-  url?: string;
-  /** Backend communication protocol. */
-  protocol?: BackendProtocol;
-};
-
-/** Reconnect request parameters. */
-export type BackendReconnectContract = Resource & {
-  /** Duration in ISO8601 format after which reconnect will be initiated. Minimum duration of the Reconnect is PT2M. */
-  after?: string;
-};
-
-/** Cache details. */
-export type CacheContract = Resource & {
-  /** Cache description */
-  description?: string;
-  /** Runtime connection string to cache */
-  connectionString?: string;
-  /** Location identifier to use cache from (should be either 'default' or valid Azure region identifier) */
-  useFromLocation?: string;
-  /** Original uri of entity in external system cache points to */
-  resourceId?: string;
-};
-
-/** Certificate details. */
-export type CertificateContract = Resource & {
-  /** Subject attribute of the certificate. */
-  subject?: string;
-  /** Thumbprint of the certificate. */
-  thumbprint?: string;
-  /**
-   * Expiration date of the certificate. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  expirationDate?: Date;
-  /** KeyVault location details of the certificate. */
-  keyVault?: KeyVaultContractProperties;
-};
-
-/** Content type contract details. */
-export type ContentTypeContract = Resource & {
-  /** Content type identifier */
-  idPropertiesId?: string;
-  /** Content type name. Must be 1 to 250 characters long. */
-  namePropertiesName?: string;
-  /** Content type description. */
-  description?: string;
-  /** Content type schema. */
-  schema?: Record<string, unknown>;
-  /** Content type version. */
-  version?: string;
-};
-
-/** Content type contract details. */
-export type ContentItemContract = Resource & {
-  /** Properties of the content item. */
-  properties?: { [propertyName: string]: Record<string, unknown> };
-};
-
-/** Deleted API Management Service information. */
-export type DeletedServiceContract = Resource & {
-  /**
-   * API Management Service Master Location.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly location?: string;
-  /** Fully-qualified API Management Service Resource ID */
-  serviceId?: string;
-  /** UTC Date and Time when the service will be automatically purged. The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard. */
-  scheduledPurgeDate?: Date;
-  /** UTC Timestamp when the service was soft-deleted. The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard. */
-  deletionDate?: Date;
-};
-
-/** Email Template details. */
-export type EmailTemplateContract = Resource & {
-  /** Subject of the Template. */
-  subject?: string;
-  /** Email Template Body. This should be a valid XDocument */
-  body?: string;
-  /** Title of the Template. */
-  title?: string;
-  /** Description of the Email Template. */
-  description?: string;
-  /**
-   * Whether the template is the default template provided by API Management or has been edited.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly isDefault?: boolean;
-  /** Email Template Parameter values. */
-  parameters?: EmailTemplateParametersContractProperties[];
-};
-
-/** Gateway details. */
-export type GatewayContract = Resource & {
-  /** Gateway location. */
-  locationData?: ResourceLocationDataContract;
-  /** Gateway description */
-  description?: string;
-};
-
-/** Gateway hostname configuration details. */
-export type GatewayHostnameConfigurationContract = Resource & {
-  /** Hostname value. Supports valid domain name, partial or full wildcard */
-  hostname?: string;
-  /** Identifier of Certificate entity that will be used for TLS connection establishment */
-  certificateId?: string;
-  /** Determines whether gateway requests client certificate */
-  negotiateClientCertificate?: boolean;
-  /** Specifies if TLS 1.0 is supported */
-  tls10Enabled?: boolean;
-  /** Specifies if TLS 1.1 is supported */
-  tls11Enabled?: boolean;
-  /** Specifies if HTTP/2.0 is supported */
-  http2Enabled?: boolean;
-};
-
-/** Association entity details. */
-export type AssociationContract = Resource & {
-  /** Provisioning state. */
-  provisioningState?: "created";
-};
-
-/** Gateway certificate authority details. */
-export type GatewayCertificateAuthorityContract = Resource & {
-  /** Determines whether certificate authority is trusted. */
-  isTrusted?: boolean;
-};
-
-/** Contract details. */
-export type GroupContract = Resource & {
-  /** Group name. */
-  displayName?: string;
-  /** Group description. Can contain HTML formatting tags. */
-  description?: string;
-  /**
-   * true if the group is one of the three system groups (Administrators, Developers, or Guests); otherwise false.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly builtIn?: boolean;
-  /** Group type. */
-  typePropertiesType?: GroupType;
-  /** For external groups, this property contains the id of the group from the external identity provider, e.g. for Azure Active Directory `aad://<tenant>.onmicrosoft.com/groups/<group object id>`; otherwise the value is null. */
-  externalId?: string;
-};
-
-/** User details. */
-export type UserContract = Resource & {
-  /** Account state. Specifies whether the user is active or not. Blocked users are unable to sign into the developer portal or call any APIs of subscribed products. Default state is Active. */
-  state?: UserState;
-  /** Optional note about a user set by the administrator. */
-  note?: string;
-  /** Collection of user identities. */
-  identities?: UserIdentityContract[];
-  /** First name. */
-  firstName?: string;
-  /** Last name. */
-  lastName?: string;
-  /** Email address. */
-  email?: string;
-  /**
-   * Date of user registration. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  registrationDate?: Date;
-  /**
-   * Collection of groups user is part of.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly groups?: GroupContractProperties[];
-};
-
-/** Identity Provider details. */
-export type IdentityProviderContract = Resource & {
-  /** Identity Provider Type identifier. */
-  typePropertiesType?: IdentityProviderType;
-  /** The TenantId to use instead of Common when logging into Active Directory */
-  signinTenant?: string;
-  /** List of Allowed Tenants when configuring Azure Active Directory login. */
-  allowedTenants?: string[];
-  /** OpenID Connect discovery endpoint hostname for AAD or AAD B2C. */
-  authority?: string;
-  /** Signup Policy Name. Only applies to AAD B2C Identity Provider. */
-  signupPolicyName?: string;
-  /** Signin Policy Name. Only applies to AAD B2C Identity Provider. */
-  signinPolicyName?: string;
-  /** Profile Editing Policy Name. Only applies to AAD B2C Identity Provider. */
-  profileEditingPolicyName?: string;
-  /** Password Reset Policy Name. Only applies to AAD B2C Identity Provider. */
-  passwordResetPolicyName?: string;
-  /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
-  clientId?: string;
-  /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  clientSecret?: string;
-};
-
-/** Identity Provider details. */
-export type IdentityProviderCreateContract = Resource & {
-  /** Identity Provider Type identifier. */
-  typePropertiesType?: IdentityProviderType;
-  /** The TenantId to use instead of Common when logging into Active Directory */
-  signinTenant?: string;
-  /** List of Allowed Tenants when configuring Azure Active Directory login. */
-  allowedTenants?: string[];
-  /** OpenID Connect discovery endpoint hostname for AAD or AAD B2C. */
-  authority?: string;
-  /** Signup Policy Name. Only applies to AAD B2C Identity Provider. */
-  signupPolicyName?: string;
-  /** Signin Policy Name. Only applies to AAD B2C Identity Provider. */
-  signinPolicyName?: string;
-  /** Profile Editing Policy Name. Only applies to AAD B2C Identity Provider. */
-  profileEditingPolicyName?: string;
-  /** Password Reset Policy Name. Only applies to AAD B2C Identity Provider. */
-  passwordResetPolicyName?: string;
-  /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
-  clientId?: string;
-  /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  clientSecret?: string;
-};
-
-/** Logger details. */
-export type LoggerContract = Resource & {
-  /** Logger type. */
-  loggerType?: LoggerType;
-  /** Logger description. */
-  description?: string;
-  /**
-   * The name and SendRule connection string of the event hub for azureEventHub logger.
-   * Instrumentation key for applicationInsights logger.
-   */
-  credentials?: { [propertyName: string]: string };
-  /** Whether records are buffered in the logger before publishing. Default is assumed to be true. */
-  isBuffered?: boolean;
-  /** Azure Resource Id of a log target (either Azure Event Hub resource or Azure Application Insights resource). */
-  resourceId?: string;
-};
-
-/** NamedValue details. */
-export type NamedValueContract = Resource & {
-  /** Optional tags that when provided can be used to filter the NamedValue list. */
-  tags?: string[];
-  /** Determines whether the value is a secret and should be encrypted or not. Default value is false. */
-  secret?: boolean;
-  /** Unique name of NamedValue. It may contain only letters, digits, period, dash, and underscore characters. */
-  displayName?: string;
-  /** Value of the NamedValue. Can contain policy expressions. It may not be empty or consist only of whitespace. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  value?: string;
-  /** KeyVault location details of the namedValue. */
-  keyVault?: KeyVaultContractProperties;
-};
-
-/** NamedValue details. */
-export type NamedValueCreateContract = Resource & {
-  /** Optional tags that when provided can be used to filter the NamedValue list. */
-  tags?: string[];
-  /** Determines whether the value is a secret and should be encrypted or not. Default value is false. */
-  secret?: boolean;
-  /** Unique name of NamedValue. It may contain only letters, digits, period, dash, and underscore characters. */
-  displayName?: string;
-  /** Value of the NamedValue. Can contain policy expressions. It may not be empty or consist only of whitespace. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  value?: string;
-  /** KeyVault location details of the namedValue. */
-  keyVault?: KeyVaultContractCreateProperties;
-};
-
-/** Notification details. */
-export type NotificationContract = Resource & {
-  /** Title of the Notification. */
-  title?: string;
-  /** Description of the Notification. */
-  description?: string;
-  /** Recipient Parameter values. */
-  recipients?: RecipientsContractProperties;
-};
-
-/** Recipient User details. */
-export type RecipientUserContract = Resource & {
-  /** API Management UserId subscribed to notification. */
-  userId?: string;
-};
-
-/** Recipient Email details. */
-export type RecipientEmailContract = Resource & {
-  /** User Email subscribed to notification. */
-  email?: string;
-};
-
-/** OpenId Connect Provider details. */
-export type OpenidConnectProviderContract = Resource & {
-  /** User-friendly OpenID Connect Provider name. */
-  displayName?: string;
-  /** User-friendly description of OpenID Connect Provider. */
-  description?: string;
-  /** Metadata endpoint URI. */
-  metadataEndpoint?: string;
-  /** Client ID of developer console which is the client application. */
-  clientId?: string;
-  /** Client Secret of developer console which is the client application. */
-  clientSecret?: string;
-};
-
-/** Policy description details. */
-export type PolicyDescriptionContract = Resource & {
-  /**
-   * Policy description.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly description?: string;
-  /**
-   * Binary OR value of the Snippet scope.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly scope?: number;
-};
-
-/** Portal Revision's contract details. */
-export type PortalRevisionContract = Resource & {
-  /** Portal revision description. */
-  description?: string;
-  /**
-   * Portal revision publishing status details.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly statusDetails?: string;
-  /**
-   * Status of the portal's revision.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly status?: PortalRevisionStatus;
-  /** Indicates if the portal's revision is public. */
-  isCurrent?: boolean;
-  /**
-   * Portal's revision creation date and time.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly createdDateTime?: Date;
-  /**
-   * Last updated date and time.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly updatedDateTime?: Date;
-};
-
-/** Portal Settings for the Developer Portal. */
-export type PortalSettingsContract = Resource & {
-  /** A delegation Url. */
-  url?: string;
-  /** A base64-encoded validation key to validate, that a request is coming from Azure API Management. */
-  validationKey?: string;
-  /** Subscriptions delegation settings. */
-  subscriptions?: SubscriptionsDelegationSettingsProperties;
-  /** User registration delegation settings. */
-  userRegistration?: RegistrationDelegationSettingsProperties;
-  /** Redirect Anonymous users to the Sign-In page. */
-  enabled?: boolean;
-  /** Terms of service contract properties. */
-  termsOfService?: TermsOfServiceProperties;
-};
-
-/** Sign-In settings for the Developer Portal. */
-export type PortalSigninSettings = Resource & {
-  /** Redirect Anonymous users to the Sign-In page. */
-  enabled?: boolean;
-};
-
-/** Sign-Up settings for a developer portal. */
-export type PortalSignupSettings = Resource & {
-  /** Allow users to sign up on a developer portal. */
-  enabled?: boolean;
-  /** Terms of service contract properties. */
-  termsOfService?: TermsOfServiceProperties;
-};
-
-/** Delegation settings for a developer portal. */
-export type PortalDelegationSettings = Resource & {
-  /** A delegation Url. */
-  url?: string;
-  /** A base64-encoded validation key to validate, that a request is coming from Azure API Management. */
-  validationKey?: string;
-  /** Subscriptions delegation settings. */
-  subscriptions?: SubscriptionsDelegationSettingsProperties;
-  /** User registration delegation settings. */
-  userRegistration?: RegistrationDelegationSettingsProperties;
-};
+/** The resource model definition for a Azure Resource Manager proxy resource. It will not have tags and a location */
+export interface ProxyResource extends Resource {}
 
 /** The Private Endpoint Connection resource. */
-export type PrivateEndpointConnection = Resource & {
+export interface PrivateEndpointConnection extends Resource {
   /** The resource of private end point. */
   privateEndpoint?: PrivateEndpoint;
   /** A collection of information about the state of the connection between service consumer and provider. */
@@ -3690,10 +3278,10 @@ export type PrivateEndpointConnection = Resource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly provisioningState?: PrivateEndpointConnectionProvisioningState;
-};
+}
 
 /** A private link resource */
-export type PrivateLinkResource = Resource & {
+export interface PrivateLinkResource extends Resource {
   /**
    * The private link resource group id.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -3706,211 +3294,108 @@ export type PrivateLinkResource = Resource & {
   readonly requiredMembers?: string[];
   /** The private link resource Private link DNS zone name. */
   requiredZoneNames?: string[];
-};
-
-/** Subscription details. */
-export type SubscriptionContract = Resource & {
-  /** The user resource identifier of the subscription owner. The value is a valid relative URL in the format of /users/{userId} where {userId} is a user identifier. */
-  ownerId?: string;
-  /** Scope like /products/{productId} or /apis or /apis/{apiId}. */
-  scope?: string;
-  /** The name of the subscription, or null if the subscription has no name. */
-  displayName?: string;
-  /** Subscription state. Possible states are * active – the subscription is active, * suspended – the subscription is blocked, and the subscriber cannot call any APIs of the product, * submitted – the subscription request has been made by the developer, but has not yet been approved or rejected, * rejected – the subscription request has been denied by an administrator, * cancelled – the subscription has been cancelled by the developer or administrator, * expired – the subscription reached its expiration date and was deactivated. */
-  state?: SubscriptionState;
-  /**
-   * Subscription creation date. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly createdDate?: Date;
-  /**
-   * Subscription activation date. The setting is for audit purposes only and the subscription is not automatically activated. The subscription lifecycle can be managed by using the `state` property. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  startDate?: Date;
-  /**
-   * Subscription expiration date. The setting is for audit purposes only and the subscription is not automatically expired. The subscription lifecycle can be managed by using the `state` property. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  expirationDate?: Date;
-  /**
-   * Date when subscription was cancelled or expired. The setting is for audit purposes only and the subscription is not automatically cancelled. The subscription lifecycle can be managed by using the `state` property. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  endDate?: Date;
-  /**
-   * Upcoming subscription expiration notification date. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  notificationDate?: Date;
-  /** Subscription primary key. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  primaryKey?: string;
-  /** Subscription secondary key. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
-  secondaryKey?: string;
-  /** Optional subscription comment added by an administrator when the state is changed to the 'rejected'. */
-  stateComment?: string;
-  /** Determines whether tracing is enabled */
-  allowTracing?: boolean;
-};
-
-/** Tenant Settings. */
-export type TenantSettingsContract = Resource & {
-  /** Tenant settings */
-  settings?: { [propertyName: string]: string };
-};
-
-/** Tenant Settings. */
-export type AccessInformationContract = Resource & {
-  /** Access Information type ('access' or 'gitAccess') */
-  idPropertiesId?: string;
-  /** Principal (User) Identifier. */
-  principalId?: string;
-  /** Determines whether direct access is enabled. */
-  enabled?: boolean;
-};
-
-/** Long Running Git Operation Results. */
-export type OperationResultContract = Resource & {
-  /** Operation result identifier. */
-  idPropertiesId?: string;
-  /** Status of an async operation. */
-  status?: AsyncOperationStatus;
-  /**
-   * Start time of an async operation. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  started?: Date;
-  /**
-   * Last update time of an async operation. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  updated?: Date;
-  /** Optional result info. */
-  resultInfo?: string;
-  /** Error Body Contract */
-  error?: ErrorResponseBody;
-  /**
-   * This property if only provided as part of the TenantConfiguration_Validate operation. It contains the log the entities which will be updated/created/deleted as part of the TenantConfiguration_Deploy operation.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly actionLog?: OperationResultLogItemContract[];
-};
-
-/** Result of Tenant Configuration Sync State. */
-export type TenantConfigurationSyncStateContract = Resource & {
-  /** The name of Git branch. */
-  branch?: string;
-  /** The latest commit Id. */
-  commitId?: string;
-  /** value indicating if last sync was save (true) or deploy (false) operation. */
-  isExport?: boolean;
-  /** value indicating if last synchronization was later than the configuration change. */
-  isSynced?: boolean;
-  /** value indicating whether Git configuration access is enabled. */
-  isGitEnabled?: boolean;
-  /**
-   * The date of the latest synchronization. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  syncDate?: Date;
-  /**
-   * The date of the latest configuration change. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
-   *
-   */
-  configurationChangeDate?: Date;
-  /** Most recent tenant configuration operation identifier */
-  lastOperationId?: string;
-};
+}
 
 /** Operation Contract Properties */
-export type OperationContractProperties = OperationEntityBaseContract & {
+export interface OperationContractProperties
+  extends OperationEntityBaseContract {
   /** Operation Name. */
   displayName: string;
   /** A Valid HTTP Operation Method. Typical Http Methods like GET, PUT, POST but not limited by only them. */
   method: string;
   /** Relative URL template identifying the target resource for this operation. May include parameters. Example: /customers/{cid}/orders/{oid}/?date={date} */
   urlTemplate: string;
-};
+}
 
 /** Operation Update Contract Properties. */
-export type OperationUpdateContractProperties = OperationEntityBaseContract & {
+export interface OperationUpdateContractProperties
+  extends OperationEntityBaseContract {
   /** Operation Name. */
   displayName?: string;
   /** A Valid HTTP Operation Method. Typical Http Methods like GET, PUT, POST but not limited by only them. */
   method?: string;
   /** Relative URL template identifying the target resource for this operation. May include parameters. Example: /customers/{cid}/orders/{oid}/?date={date} */
   urlTemplate?: string;
-};
+}
 
 /** Product profile. */
-export type ProductContractProperties = ProductEntityBaseParameters & {
+export interface ProductContractProperties extends ProductEntityBaseParameters {
   /** Product name. */
   displayName: string;
-};
+}
 
 /** Product profile. */
-export type ProductTagResourceContractProperties = ProductEntityBaseParameters & {
+export interface ProductTagResourceContractProperties
+  extends ProductEntityBaseParameters {
   /** Identifier of the product in the form of /products/{productId} */
   id?: string;
   /** Product name. */
   name: string;
-};
+}
 
 /** Parameters supplied to the Update Product operation. */
-export type ProductUpdateProperties = ProductEntityBaseParameters & {
+export interface ProductUpdateProperties extends ProductEntityBaseParameters {
   /** Product name. */
   displayName?: string;
-};
+}
 
 /** Issue contract Properties. */
-export type IssueContractProperties = IssueContractBaseProperties & {
+export interface IssueContractProperties extends IssueContractBaseProperties {
   /** The issue title. */
   title: string;
   /** Text describing the issue. */
   description: string;
   /** A resource identifier for the user created the issue. */
   userId: string;
-};
+}
 
 /** Issue contract Update Properties. */
-export type IssueUpdateContractProperties = IssueContractBaseProperties & {
+export interface IssueUpdateContractProperties
+  extends IssueContractBaseProperties {
   /** The issue title. */
   title?: string;
   /** Text describing the issue. */
   description?: string;
   /** A resource identifier for the user created the issue. */
   userId?: string;
-};
+}
 
 /** TagDescription contract Properties. */
-export type TagDescriptionContractProperties = TagDescriptionBaseProperties & {
+export interface TagDescriptionContractProperties
+  extends TagDescriptionBaseProperties {
   /** Identifier of the tag in the form of /tags/{tagId} */
   tagId?: string;
   /** Tag name. */
   displayName?: string;
-};
+}
 
 /** Properties of an API Version Set. */
-export type ApiVersionSetContractProperties = ApiVersionSetEntityBase & {
+export interface ApiVersionSetContractProperties
+  extends ApiVersionSetEntityBase {
   /** Name of API Version Set */
   displayName: string;
   /** An value that determines where the API Version identifier will be located in a HTTP request. */
   versioningScheme: VersioningScheme;
-};
+}
 
 /** Properties used to create or update an API Version Set. */
-export type ApiVersionSetUpdateParametersProperties = ApiVersionSetEntityBase & {
+export interface ApiVersionSetUpdateParametersProperties
+  extends ApiVersionSetEntityBase {
   /** Name of API Version Set */
   displayName?: string;
   /** An value that determines where the API Version identifier will be located in a HTTP request. */
   versioningScheme?: VersioningScheme;
-};
+}
 
 /** External OAuth authorization server settings Properties. */
-export type AuthorizationServerContractProperties = AuthorizationServerContractBaseProperties & {
+export interface AuthorizationServerContractProperties
+  extends AuthorizationServerContractBaseProperties {
   /** User-friendly authorization server name. */
   displayName: string;
+  /** If true, the authorization server may be used in the developer portal test console. True by default if no value is provided. */
+  useInTestConsole?: boolean;
+  /** If true, the authorization server will be used in the API documentation in the developer portal. False by default if no value is provided. */
+  useInApiDocumentation?: boolean;
   /** Optional reference to a page where client or app registration for this authorization server is performed. Contains absolute URL to entity being referenced. */
   clientRegistrationEndpoint: string;
   /** OAuth authorization endpoint. See http://tools.ietf.org/html/rfc6749#section-3.2. */
@@ -3921,12 +3406,17 @@ export type AuthorizationServerContractProperties = AuthorizationServerContractB
   clientId: string;
   /** Client or app secret registered with this authorization server. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
   clientSecret?: string;
-};
+}
 
 /** External OAuth authorization server Update settings contract. */
-export type AuthorizationServerUpdateContractProperties = AuthorizationServerContractBaseProperties & {
+export interface AuthorizationServerUpdateContractProperties
+  extends AuthorizationServerContractBaseProperties {
   /** User-friendly authorization server name. */
   displayName?: string;
+  /** If true, the authorization server may be used in the developer portal test console. True by default if no value is provided. */
+  useInTestConsole?: boolean;
+  /** If true, the authorization server will be used in the API documentation in the developer portal. False by default if no value is provided. */
+  useInApiDocumentation?: boolean;
   /** Optional reference to a page where client or app registration for this authorization server is performed. Contains absolute URL to entity being referenced. */
   clientRegistrationEndpoint?: string;
   /** OAuth authorization endpoint. See http://tools.ietf.org/html/rfc6749#section-3.2. */
@@ -3937,48 +3427,52 @@ export type AuthorizationServerUpdateContractProperties = AuthorizationServerCon
   clientId?: string;
   /** Client or app secret registered with this authorization server. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
   clientSecret?: string;
-};
+}
 
 /** Parameters supplied to the Create Backend operation. */
-export type BackendContractProperties = BackendBaseParameters & {
+export interface BackendContractProperties extends BackendBaseParameters {
   /** Runtime Url of the Backend. */
   url: string;
   /** Backend communication protocol. */
   protocol: BackendProtocol;
-};
+}
 
 /** Parameters supplied to the Update Backend operation. */
-export type BackendUpdateParameterProperties = BackendBaseParameters & {
+export interface BackendUpdateParameterProperties
+  extends BackendBaseParameters {
   /** Runtime Url of the Backend. */
   url?: string;
   /** Backend communication protocol. */
   protocol?: BackendProtocol;
-};
+}
 
 /** KeyVault contract details. */
-export type KeyVaultContractProperties = KeyVaultContractCreateProperties & {
+export interface KeyVaultContractProperties
+  extends KeyVaultContractCreateProperties {
   /** Last time sync and refresh status of secret from key vault. */
   lastStatus?: KeyVaultLastAccessStatusContractProperties;
-};
+}
 
 /** Properties of an API Management service resource description. */
-export type ApiManagementServiceProperties = ApiManagementServiceBaseProperties & {
+export interface ApiManagementServiceProperties
+  extends ApiManagementServiceBaseProperties {
   /** Publisher email. */
   publisherEmail: string;
   /** Publisher name. */
   publisherName: string;
-};
+}
 
 /** Properties of an API Management service resource description. */
-export type ApiManagementServiceUpdateProperties = ApiManagementServiceBaseProperties & {
+export interface ApiManagementServiceUpdateProperties
+  extends ApiManagementServiceBaseProperties {
   /** Publisher email. */
   publisherEmail?: string;
   /** Publisher name. */
   publisherName?: string;
-};
+}
 
 /** A single API Management service resource in List or Get response. */
-export type ApiManagementServiceResource = ApimResource & {
+export interface ApiManagementServiceResource extends ApimResource {
   /** SKU properties of the API Management service. */
   sku: ApiManagementServiceSkuProperties;
   /** Managed service identity of the Api Management service. */
@@ -4064,12 +3558,19 @@ export type ApiManagementServiceResource = ApimResource & {
   virtualNetworkConfiguration?: VirtualNetworkConfiguration;
   /** Additional datacenter locations of the API Management service. */
   additionalLocations?: AdditionalLocation[];
-  /** Custom properties of the API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168` will disable the cipher TLS_RSA_WITH_3DES_EDE_CBC_SHA for all TLS(1.0, 1.1 and 1.2).</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11` can be used to disable just TLS 1.1.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10` can be used to disable TLS 1.0 on an API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11` can be used to disable just TLS 1.1 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10` can be used to disable TLS 1.0 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2` can be used to enable HTTP2 protocol on an API Management service.</br>Not specifying any of these properties on PATCH operation will reset omitted properties' values to their defaults. For all the settings except Http2 the default value is `True` if the service was created on or before April 1st 2018 and `False` otherwise. Http2 setting's default value is `False`.</br></br>You can disable any of next ciphers by using settings `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.[cipher_name]`: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_GCM_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA. For example, `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256`:`false`. The default value is `true` for them.  Note: next ciphers can't be disabled since they are required by Azure CloudService internal components: TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_RSA_WITH_AES_256_GCM_SHA384 */
+  /** Custom properties of the API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168` will disable the cipher TLS_RSA_WITH_3DES_EDE_CBC_SHA for all TLS(1.0, 1.1 and 1.2).</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11` can be used to disable just TLS 1.1.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10` can be used to disable TLS 1.0 on an API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11` can be used to disable just TLS 1.1 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10` can be used to disable TLS 1.0 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2` can be used to enable HTTP2 protocol on an API Management service.</br>Not specifying any of these properties on PATCH operation will reset omitted properties' values to their defaults. For all the settings except Http2 the default value is `True` if the service was created on or before April 1, 2018 and `False` otherwise. Http2 setting's default value is `False`.</br></br>You can disable any of the following ciphers by using settings `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.[cipher_name]`: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_GCM_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA. For example, `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256`:`false`. The default value is `true` for them.</br> Note: The following ciphers can't be disabled since they are required by internal platform components: TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 */
   customProperties?: { [propertyName: string]: string };
   /** List of Certificates that need to be installed in the API Management service. Max supported certificates that can be installed is 10. */
   certificates?: CertificateConfiguration[];
   /** Property only meant to be used for Consumption SKU Service. This enforces a client certificate to be presented on each request to the gateway. This also enables the ability to authenticate the certificate in the policy on the gateway. */
   enableClientCertificate?: boolean;
+  /** Property can be used to enable NAT Gateway for this API Management service. */
+  natGatewayState?: NatGatewayState;
+  /**
+   * Outbound public IPV4 address prefixes associated with NAT Gateway deployed service. Available only for Premium SKU on stv2 platform.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outboundPublicIPAddresses?: string[];
   /** Property only valid for an Api Management service deployed in multiple locations. This can be used to disable the gateway in master region. */
   disableGateway?: boolean;
   /** The type of VPN in which API Management service needs to be configured in. None (Default Value) means the API Management service is not part of any Virtual Network, External means the API Management deployment is set up inside a Virtual Network having an Internet Facing Endpoint, and Internal means that API Management deployment is setup inside a Virtual Network having an Intranet Facing Endpoint only. */
@@ -4089,10 +3590,10 @@ export type ApiManagementServiceResource = ApimResource & {
   publisherEmail: string;
   /** Publisher name. */
   publisherName: string;
-};
+}
 
 /** Parameter supplied to Update Api Management Service. */
-export type ApiManagementServiceUpdateParameters = ApimResource & {
+export interface ApiManagementServiceUpdateParameters extends ApimResource {
   /** SKU properties of the API Management service. */
   sku?: ApiManagementServiceSkuProperties;
   /** Managed service identity of the Api Management service. */
@@ -4171,12 +3672,19 @@ export type ApiManagementServiceUpdateParameters = ApimResource & {
   virtualNetworkConfiguration?: VirtualNetworkConfiguration;
   /** Additional datacenter locations of the API Management service. */
   additionalLocations?: AdditionalLocation[];
-  /** Custom properties of the API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168` will disable the cipher TLS_RSA_WITH_3DES_EDE_CBC_SHA for all TLS(1.0, 1.1 and 1.2).</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11` can be used to disable just TLS 1.1.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10` can be used to disable TLS 1.0 on an API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11` can be used to disable just TLS 1.1 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10` can be used to disable TLS 1.0 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2` can be used to enable HTTP2 protocol on an API Management service.</br>Not specifying any of these properties on PATCH operation will reset omitted properties' values to their defaults. For all the settings except Http2 the default value is `True` if the service was created on or before April 1st 2018 and `False` otherwise. Http2 setting's default value is `False`.</br></br>You can disable any of next ciphers by using settings `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.[cipher_name]`: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_GCM_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA. For example, `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256`:`false`. The default value is `true` for them.  Note: next ciphers can't be disabled since they are required by Azure CloudService internal components: TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_RSA_WITH_AES_256_GCM_SHA384 */
+  /** Custom properties of the API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168` will disable the cipher TLS_RSA_WITH_3DES_EDE_CBC_SHA for all TLS(1.0, 1.1 and 1.2).</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11` can be used to disable just TLS 1.1.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10` can be used to disable TLS 1.0 on an API Management service.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11` can be used to disable just TLS 1.1 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10` can be used to disable TLS 1.0 for communications with backends.</br>Setting `Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2` can be used to enable HTTP2 protocol on an API Management service.</br>Not specifying any of these properties on PATCH operation will reset omitted properties' values to their defaults. For all the settings except Http2 the default value is `True` if the service was created on or before April 1, 2018 and `False` otherwise. Http2 setting's default value is `False`.</br></br>You can disable any of the following ciphers by using settings `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.[cipher_name]`: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_GCM_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA256, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA. For example, `Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TLS_RSA_WITH_AES_128_CBC_SHA256`:`false`. The default value is `true` for them.</br> Note: The following ciphers can't be disabled since they are required by internal platform components: TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 */
   customProperties?: { [propertyName: string]: string };
   /** List of Certificates that need to be installed in the API Management service. Max supported certificates that can be installed is 10. */
   certificates?: CertificateConfiguration[];
   /** Property only meant to be used for Consumption SKU Service. This enforces a client certificate to be presented on each request to the gateway. This also enables the ability to authenticate the certificate in the policy on the gateway. */
   enableClientCertificate?: boolean;
+  /** Property can be used to enable NAT Gateway for this API Management service. */
+  natGatewayState?: NatGatewayState;
+  /**
+   * Outbound public IPV4 address prefixes associated with NAT Gateway deployed service. Available only for Premium SKU on stv2 platform.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly outboundPublicIPAddresses?: string[];
   /** Property only valid for an Api Management service deployed in multiple locations. This can be used to disable the gateway in master region. */
   disableGateway?: boolean;
   /** The type of VPN in which API Management service needs to be configured in. None (Default Value) means the API Management service is not part of any Virtual Network, External means the API Management deployment is set up inside a Virtual Network having an Internet Facing Endpoint, and Internal means that API Management deployment is setup inside a Virtual Network having an Intranet Facing Endpoint only. */
@@ -4196,10 +3704,10 @@ export type ApiManagementServiceUpdateParameters = ApimResource & {
   publisherEmail?: string;
   /** Publisher name. */
   publisherName?: string;
-};
+}
 
 /** User profile. */
-export type UserContractProperties = UserEntityBaseParameters & {
+export interface UserContractProperties extends UserEntityBaseParameters {
   /** First name. */
   firstName?: string;
   /** Last name. */
@@ -4216,10 +3724,11 @@ export type UserContractProperties = UserEntityBaseParameters & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly groups?: GroupContractProperties[];
-};
+}
 
 /** Parameters supplied to the Create User operation. */
-export type UserCreateParameterProperties = UserEntityBaseParameters & {
+export interface UserCreateParameterProperties
+  extends UserEntityBaseParameters {
   /** Email address. Must not be empty and must be unique within the service instance. */
   email: string;
   /** First name. */
@@ -4232,10 +3741,11 @@ export type UserCreateParameterProperties = UserEntityBaseParameters & {
   appType?: AppType;
   /** Determines the type of confirmation e-mail that will be sent to the newly created user. */
   confirmation?: Confirmation;
-};
+}
 
 /** Parameters supplied to the Update User operation. */
-export type UserUpdateParametersProperties = UserEntityBaseParameters & {
+export interface UserUpdateParametersProperties
+  extends UserEntityBaseParameters {
   /** Email address. Must not be empty and must be unique within the service instance. */
   email?: string;
   /** User Password. */
@@ -4244,64 +3754,70 @@ export type UserUpdateParametersProperties = UserEntityBaseParameters & {
   firstName?: string;
   /** Last name. */
   lastName?: string;
-};
+}
 
 /** The external Identity Providers like Facebook, Google, Microsoft, Twitter or Azure Active Directory which can be used to enable access to the API Management service developer portal for all users. */
-export type IdentityProviderContractProperties = IdentityProviderBaseParameters & {
+export interface IdentityProviderContractProperties
+  extends IdentityProviderBaseParameters {
   /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
   clientId: string;
   /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
   clientSecret?: string;
-};
+}
 
 /** The external Identity Providers like Facebook, Google, Microsoft, Twitter or Azure Active Directory which can be used to enable access to the API Management service developer portal for all users. */
-export type IdentityProviderCreateContractProperties = IdentityProviderBaseParameters & {
+export interface IdentityProviderCreateContractProperties
+  extends IdentityProviderBaseParameters {
   /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
   clientId: string;
   /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
   clientSecret: string;
-};
+}
 
 /** Parameters supplied to the Update Identity Provider operation. */
-export type IdentityProviderUpdateProperties = IdentityProviderBaseParameters & {
+export interface IdentityProviderUpdateProperties
+  extends IdentityProviderBaseParameters {
   /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
   clientId?: string;
   /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. */
   clientSecret?: string;
-};
+}
 
 /** NamedValue Contract properties. */
-export type NamedValueContractProperties = NamedValueEntityBaseParameters & {
+export interface NamedValueContractProperties
+  extends NamedValueEntityBaseParameters {
   /** Unique name of NamedValue. It may contain only letters, digits, period, dash, and underscore characters. */
   displayName: string;
   /** Value of the NamedValue. Can contain policy expressions. It may not be empty or consist only of whitespace. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
   value?: string;
   /** KeyVault location details of the namedValue. */
   keyVault?: KeyVaultContractProperties;
-};
+}
 
 /** NamedValue Contract properties. */
-export type NamedValueCreateContractProperties = NamedValueEntityBaseParameters & {
+export interface NamedValueCreateContractProperties
+  extends NamedValueEntityBaseParameters {
   /** Unique name of NamedValue. It may contain only letters, digits, period, dash, and underscore characters. */
   displayName: string;
   /** Value of the NamedValue. Can contain policy expressions. It may not be empty or consist only of whitespace. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
   value?: string;
   /** KeyVault location details of the namedValue. */
   keyVault?: KeyVaultContractCreateProperties;
-};
+}
 
 /** NamedValue Contract properties. */
-export type NamedValueUpdateParameterProperties = NamedValueEntityBaseParameters & {
+export interface NamedValueUpdateParameterProperties
+  extends NamedValueEntityBaseParameters {
   /** Unique name of NamedValue. It may contain only letters, digits, period, dash, and underscore characters. */
   displayName?: string;
   /** Value of the NamedValue. Can contain policy expressions. It may not be empty or consist only of whitespace. */
   value?: string;
   /** KeyVault location details of the namedValue. */
   keyVault?: KeyVaultContractCreateProperties;
-};
+}
 
 /** API Create or Update Properties. */
-export type ApiCreateOrUpdateProperties = ApiContractProperties & {
+export interface ApiCreateOrUpdateProperties extends ApiContractProperties {
   /** Content value when Importing an API. */
   value?: string;
   /** Format of the Content in which the API is getting imported. */
@@ -4316,7 +3832,953 @@ export type ApiCreateOrUpdateProperties = ApiContractProperties & {
    *  * `graphql` creates GraphQL API.
    */
   soapApiType?: SoapApiType;
-};
+  /** Strategy of translating required query parameters to template ones. By default has value 'template'. Possible values: 'template', 'query' */
+  translateRequiredQueryParametersConduct?: TranslateRequiredQueryParametersConduct;
+}
+
+/** API details. */
+export interface ApiContract extends ProxyResource {
+  /** Description of the API. May include HTML formatting tags. */
+  description?: string;
+  /** Collection of authentication settings included into this API. */
+  authenticationSettings?: AuthenticationSettingsContract;
+  /** Protocols over which API is made available. */
+  subscriptionKeyParameterNames?: SubscriptionKeyParameterNamesContract;
+  /** Type of API. */
+  apiType?: ApiType;
+  /** Describes the revision of the API. If no value is provided, default revision 1 is created */
+  apiRevision?: string;
+  /** Indicates the version identifier of the API if the API is versioned */
+  apiVersion?: string;
+  /** Indicates if API revision is current api revision. */
+  isCurrent?: boolean;
+  /**
+   * Indicates if API revision is accessible via the gateway.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly isOnline?: boolean;
+  /** Description of the API Revision. */
+  apiRevisionDescription?: string;
+  /** Description of the API Version. */
+  apiVersionDescription?: string;
+  /** A resource identifier for the related ApiVersionSet. */
+  apiVersionSetId?: string;
+  /** Specifies whether an API or Product subscription is required for accessing the API. */
+  subscriptionRequired?: boolean;
+  /**  A URL to the Terms of Service for the API. MUST be in the format of a URL. */
+  termsOfServiceUrl?: string;
+  /** Contact information for the API. */
+  contact?: ApiContactInformation;
+  /** License information for the API. */
+  license?: ApiLicenseInformation;
+  /** API identifier of the source API. */
+  sourceApiId?: string;
+  /** API name. Must be 1 to 300 characters long. */
+  displayName?: string;
+  /** Absolute URL of the backend service implementing this API. Cannot be more than 2000 characters long. */
+  serviceUrl?: string;
+  /** Relative URL uniquely identifying this API and all of its resource paths within the API Management service instance. It is appended to the API endpoint base URL specified during the service instance creation to form a public URL for this API. */
+  path?: string;
+  /** Describes on which protocols the operations in this API can be invoked. */
+  protocols?: Protocol[];
+  /** Version set details */
+  apiVersionSet?: ApiVersionSetContractDetails;
+}
+
+/** ApiRelease details. */
+export interface ApiReleaseContract extends ProxyResource {
+  /** Identifier of the API the release belongs to. */
+  apiId?: string;
+  /**
+   * The time the API was released. The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdDateTime?: Date;
+  /**
+   * The time the API release was updated.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly updatedDateTime?: Date;
+  /** Release Notes */
+  notes?: string;
+}
+
+/** API Operation details. */
+export interface OperationContract extends ProxyResource {
+  /** Collection of URL template parameters. */
+  templateParameters?: ParameterContract[];
+  /** Description of the operation. May include HTML formatting tags. */
+  description?: string;
+  /** An entity containing request details. */
+  request?: RequestContract;
+  /** Array of Operation responses. */
+  responses?: ResponseContract[];
+  /** Operation Policies */
+  policies?: string;
+  /** Operation Name. */
+  displayName?: string;
+  /** A Valid HTTP Operation Method. Typical Http Methods like GET, PUT, POST but not limited by only them. */
+  method?: string;
+  /** Relative URL template identifying the target resource for this operation. May include parameters. Example: /customers/{cid}/orders/{oid}/?date={date} */
+  urlTemplate?: string;
+}
+
+/** Policy Contract details. */
+export interface PolicyContract extends ProxyResource {
+  /** Contents of the Policy as defined by the format. */
+  value?: string;
+  /** Format of the policyContent. */
+  format?: PolicyContentFormat;
+}
+
+/** Tag Contract details. */
+export interface TagContract extends ProxyResource {
+  /** Tag name. */
+  displayName?: string;
+}
+
+/** GraphQL API Resolver details. */
+export interface ResolverContract extends ProxyResource {
+  /** Resolver Name. */
+  displayName?: string;
+  /** Path is type/field being resolved. */
+  path?: string;
+  /** Description of the resolver. May include HTML formatting tags. */
+  description?: string;
+}
+
+/** Product details. */
+export interface ProductContract extends ProxyResource {
+  /** Product description. May include HTML formatting tags. */
+  description?: string;
+  /** Product terms of use. Developers trying to subscribe to the product will be presented and required to accept these terms before they can complete the subscription process. */
+  terms?: string;
+  /** Whether a product subscription is required for accessing APIs included in this product. If true, the product is referred to as "protected" and a valid subscription key is required for a request to an API included in the product to succeed. If false, the product is referred to as "open" and requests to an API included in the product can be made without a subscription key. If property is omitted when creating a new product it's value is assumed to be true. */
+  subscriptionRequired?: boolean;
+  /** whether subscription approval is required. If false, new subscriptions will be approved automatically enabling developers to call the product’s APIs immediately after subscribing. If true, administrators must manually approve the subscription before the developer can any of the product’s APIs. Can be present only if subscriptionRequired property is present and has a value of false. */
+  approvalRequired?: boolean;
+  /** Whether the number of subscriptions a user can have to this product at the same time. Set to null or omit to allow unlimited per user subscriptions. Can be present only if subscriptionRequired property is present and has a value of false. */
+  subscriptionsLimit?: number;
+  /** whether product is published or not. Published products are discoverable by users of developer portal. Non published products are visible only to administrators. Default state of Product is notPublished. */
+  state?: ProductState;
+  /** Product name. */
+  displayName?: string;
+}
+
+/** API Schema Contract details. */
+export interface SchemaContract extends ProxyResource {
+  /** Must be a valid a media type used in a Content-Type header as defined in the RFC 2616. Media type of the schema document (e.g. application/json, application/xml). </br> - `Swagger` Schema use `application/vnd.ms-azure-apim.swagger.definitions+json` </br> - `WSDL` Schema use `application/vnd.ms-azure-apim.xsd+xml` </br> - `OpenApi` Schema use `application/vnd.oai.openapi.components+json` </br> - `WADL Schema` use `application/vnd.ms-azure-apim.wadl.grammars+xml`. */
+  contentType?: string;
+  /** Json escaped string defining the document representing the Schema. Used for schemas other than Swagger/OpenAPI. */
+  value?: string;
+  /** Types definitions. Used for Swagger/OpenAPI v1 schemas only, null otherwise. */
+  definitions?: Record<string, unknown>;
+  /** Types definitions. Used for Swagger/OpenAPI v2/v3 schemas only, null otherwise. */
+  components?: Record<string, unknown>;
+}
+
+/** Diagnostic details. */
+export interface DiagnosticContract extends ProxyResource {
+  /** Specifies for what type of messages sampling settings should not apply. */
+  alwaysLog?: AlwaysLog;
+  /** Resource Id of a target logger. */
+  loggerId?: string;
+  /** Sampling settings for Diagnostic. */
+  sampling?: SamplingSettings;
+  /** Diagnostic settings for incoming/outgoing HTTP messages to the Gateway. */
+  frontend?: PipelineDiagnosticSettings;
+  /** Diagnostic settings for incoming/outgoing HTTP messages to the Backend */
+  backend?: PipelineDiagnosticSettings;
+  /** Log the ClientIP. Default is false. */
+  logClientIp?: boolean;
+  /** Sets correlation protocol to use for Application Insights diagnostics. */
+  httpCorrelationProtocol?: HttpCorrelationProtocol;
+  /** The verbosity level applied to traces emitted by trace policies. */
+  verbosity?: Verbosity;
+  /** The format of the Operation Name for Application Insights telemetries. Default is Name. */
+  operationNameFormat?: OperationNameFormat;
+  /** Emit custom metrics via emit-metric policy. Applicable only to Application Insights diagnostic settings. */
+  metrics?: boolean;
+}
+
+/** Issue Contract details. */
+export interface IssueContract extends ProxyResource {
+  /** Date and time when the issue was created. */
+  createdDate?: Date;
+  /** Status of the issue. */
+  state?: State;
+  /** A resource identifier for the API the issue was created for. */
+  apiId?: string;
+  /** The issue title. */
+  title?: string;
+  /** Text describing the issue. */
+  description?: string;
+  /** A resource identifier for the user created the issue. */
+  userId?: string;
+}
+
+/** Issue Comment Contract details. */
+export interface IssueCommentContract extends ProxyResource {
+  /** Comment text. */
+  text?: string;
+  /** Date and time when the comment was created. */
+  createdDate?: Date;
+  /** A resource identifier for the user who left the comment. */
+  userId?: string;
+}
+
+/** Issue Attachment Contract details. */
+export interface IssueAttachmentContract extends ProxyResource {
+  /** Filename by which the binary data will be saved. */
+  title?: string;
+  /** Either 'link' if content is provided via an HTTP link or the MIME type of the Base64-encoded binary data provided in the 'content' property. */
+  contentFormat?: string;
+  /** An HTTP link or Base64-encoded binary data. */
+  content?: string;
+}
+
+/** Contract details. */
+export interface TagDescriptionContract extends ProxyResource {
+  /** Description of the Tag. */
+  description?: string;
+  /** Absolute URL of external resources describing the tag. */
+  externalDocsUrl?: string;
+  /** Description of the external resources describing the tag. */
+  externalDocsDescription?: string;
+  /** Identifier of the tag in the form of /tags/{tagId} */
+  tagId?: string;
+  /** Tag name. */
+  displayName?: string;
+}
+
+/** Wiki properties */
+export interface WikiContract extends ProxyResource {
+  /** Collection wiki documents included into this wiki. */
+  documents?: WikiDocumentationContract[];
+}
+
+/** API Version Set Contract details. */
+export interface ApiVersionSetContract extends ProxyResource {
+  /** Description of API Version Set. */
+  description?: string;
+  /** Name of query parameter that indicates the API Version if versioningScheme is set to `query`. */
+  versionQueryName?: string;
+  /** Name of HTTP header parameter that indicates the API Version if versioningScheme is set to `header`. */
+  versionHeaderName?: string;
+  /** Name of API Version Set */
+  displayName?: string;
+  /** An value that determines where the API Version identifier will be located in a HTTP request. */
+  versioningScheme?: VersioningScheme;
+}
+
+/** External OAuth authorization server settings. */
+export interface AuthorizationServerContract extends ProxyResource {
+  /** Description of the authorization server. Can contain HTML formatting tags. */
+  description?: string;
+  /** HTTP verbs supported by the authorization endpoint. GET must be always present. POST is optional. */
+  authorizationMethods?: AuthorizationMethod[];
+  /** Method of authentication supported by the token endpoint of this authorization server. Possible values are Basic and/or Body. When Body is specified, client credentials and other parameters are passed within the request body in the application/x-www-form-urlencoded format. */
+  clientAuthenticationMethod?: ClientAuthenticationMethod[];
+  /** Additional parameters required by the token endpoint of this authorization server represented as an array of JSON objects with name and value string properties, i.e. {"name" : "name value", "value": "a value"}. */
+  tokenBodyParameters?: TokenBodyParameterContract[];
+  /** OAuth token endpoint. Contains absolute URI to entity being referenced. */
+  tokenEndpoint?: string;
+  /** If true, authorization server will include state parameter from the authorization request to its response. Client may use state parameter to raise protocol security. */
+  supportState?: boolean;
+  /** Access token scope that is going to be requested by default. Can be overridden at the API level. Should be provided in the form of a string containing space-delimited values. */
+  defaultScope?: string;
+  /** Specifies the mechanism by which access token is passed to the API. */
+  bearerTokenSendingMethods?: BearerTokenSendingMethod[];
+  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner username. */
+  resourceOwnerUsername?: string;
+  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner password. */
+  resourceOwnerPassword?: string;
+  /** User-friendly authorization server name. */
+  displayName?: string;
+  /** If true, the authorization server may be used in the developer portal test console. True by default if no value is provided. */
+  useInTestConsole?: boolean;
+  /** If true, the authorization server will be used in the API documentation in the developer portal. False by default if no value is provided. */
+  useInApiDocumentation?: boolean;
+  /** Optional reference to a page where client or app registration for this authorization server is performed. Contains absolute URL to entity being referenced. */
+  clientRegistrationEndpoint?: string;
+  /** OAuth authorization endpoint. See http://tools.ietf.org/html/rfc6749#section-3.2. */
+  authorizationEndpoint?: string;
+  /** Form of an authorization grant, which the client uses to request the access token. */
+  grantTypes?: GrantType[];
+  /** Client or app id registered with this authorization server. */
+  clientId?: string;
+  /** Client or app secret registered with this authorization server. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  clientSecret?: string;
+}
+
+/** External OAuth authorization server settings. */
+export interface AuthorizationServerUpdateContract extends ProxyResource {
+  /** Description of the authorization server. Can contain HTML formatting tags. */
+  description?: string;
+  /** HTTP verbs supported by the authorization endpoint. GET must be always present. POST is optional. */
+  authorizationMethods?: AuthorizationMethod[];
+  /** Method of authentication supported by the token endpoint of this authorization server. Possible values are Basic and/or Body. When Body is specified, client credentials and other parameters are passed within the request body in the application/x-www-form-urlencoded format. */
+  clientAuthenticationMethod?: ClientAuthenticationMethod[];
+  /** Additional parameters required by the token endpoint of this authorization server represented as an array of JSON objects with name and value string properties, i.e. {"name" : "name value", "value": "a value"}. */
+  tokenBodyParameters?: TokenBodyParameterContract[];
+  /** OAuth token endpoint. Contains absolute URI to entity being referenced. */
+  tokenEndpoint?: string;
+  /** If true, authorization server will include state parameter from the authorization request to its response. Client may use state parameter to raise protocol security. */
+  supportState?: boolean;
+  /** Access token scope that is going to be requested by default. Can be overridden at the API level. Should be provided in the form of a string containing space-delimited values. */
+  defaultScope?: string;
+  /** Specifies the mechanism by which access token is passed to the API. */
+  bearerTokenSendingMethods?: BearerTokenSendingMethod[];
+  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner username. */
+  resourceOwnerUsername?: string;
+  /** Can be optionally specified when resource owner password grant type is supported by this authorization server. Default resource owner password. */
+  resourceOwnerPassword?: string;
+  /** User-friendly authorization server name. */
+  displayName?: string;
+  /** If true, the authorization server may be used in the developer portal test console. True by default if no value is provided. */
+  useInTestConsole?: boolean;
+  /** If true, the authorization server will be used in the API documentation in the developer portal. False by default if no value is provided. */
+  useInApiDocumentation?: boolean;
+  /** Optional reference to a page where client or app registration for this authorization server is performed. Contains absolute URL to entity being referenced. */
+  clientRegistrationEndpoint?: string;
+  /** OAuth authorization endpoint. See http://tools.ietf.org/html/rfc6749#section-3.2. */
+  authorizationEndpoint?: string;
+  /** Form of an authorization grant, which the client uses to request the access token. */
+  grantTypes?: GrantType[];
+  /** Client or app id registered with this authorization server. */
+  clientId?: string;
+  /** Client or app secret registered with this authorization server. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  clientSecret?: string;
+}
+
+/** Authorization Provider contract. */
+export interface AuthorizationProviderContract extends ProxyResource {
+  /** Authorization Provider name. Must be 1 to 300 characters long. */
+  displayName?: string;
+  /** Identity provider name. Must be 1 to 300 characters long. */
+  identityProvider?: string;
+  /** OAuth2 settings */
+  oauth2?: AuthorizationProviderOAuth2Settings;
+}
+
+/** Authorization contract. */
+export interface AuthorizationContract extends ProxyResource {
+  /** Authorization type options */
+  authorizationType?: AuthorizationType;
+  /** OAuth2 grant type options */
+  oAuth2GrantType?: OAuth2GrantType;
+  /** Authorization parameters */
+  parameters?: { [propertyName: string]: string };
+  /** Authorization error details. */
+  error?: AuthorizationError;
+  /** Status of the Authorization */
+  status?: string;
+}
+
+/** Authorization access policy contract. */
+export interface AuthorizationAccessPolicyContract extends ProxyResource {
+  /** The Tenant Id */
+  tenantId?: string;
+  /** The Object Id */
+  objectId?: string;
+}
+
+/** Backend details. */
+export interface BackendContract extends ProxyResource {
+  /** Backend Title. */
+  title?: string;
+  /** Backend Description. */
+  description?: string;
+  /** Management Uri of the Resource in External System. This URL can be the Arm Resource Id of Logic Apps, Function Apps or API Apps. */
+  resourceId?: string;
+  /** Backend Properties contract */
+  properties?: BackendProperties;
+  /** Backend Credentials Contract Properties */
+  credentials?: BackendCredentialsContract;
+  /** Backend gateway Contract Properties */
+  proxy?: BackendProxyContract;
+  /** Backend TLS Properties */
+  tls?: BackendTlsProperties;
+  /** Runtime Url of the Backend. */
+  url?: string;
+  /** Backend communication protocol. */
+  protocol?: BackendProtocol;
+}
+
+/** Reconnect request parameters. */
+export interface BackendReconnectContract extends ProxyResource {
+  /** Duration in ISO8601 format after which reconnect will be initiated. Minimum duration of the Reconnect is PT2M. */
+  after?: string;
+}
+
+/** Cache details. */
+export interface CacheContract extends ProxyResource {
+  /** Cache description */
+  description?: string;
+  /** Runtime connection string to cache */
+  connectionString?: string;
+  /** Location identifier to use cache from (should be either 'default' or valid Azure region identifier) */
+  useFromLocation?: string;
+  /** Original uri of entity in external system cache points to */
+  resourceId?: string;
+}
+
+/** Certificate details. */
+export interface CertificateContract extends ProxyResource {
+  /** Subject attribute of the certificate. */
+  subject?: string;
+  /** Thumbprint of the certificate. */
+  thumbprint?: string;
+  /**
+   * Expiration date of the certificate. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  expirationDate?: Date;
+  /** KeyVault location details of the certificate. */
+  keyVault?: KeyVaultContractProperties;
+}
+
+/** Content type contract details. */
+export interface ContentTypeContract extends ProxyResource {
+  /** Content type identifier */
+  idPropertiesId?: string;
+  /** Content type name. Must be 1 to 250 characters long. */
+  namePropertiesName?: string;
+  /** Content type description. */
+  description?: string;
+  /** Content type schema. */
+  schema?: Record<string, unknown>;
+  /** Content type version. */
+  version?: string;
+}
+
+/** Content type contract details. */
+export interface ContentItemContract extends ProxyResource {
+  /** Properties of the content item. */
+  properties?: { [propertyName: string]: any };
+}
+
+/** Deleted API Management Service information. */
+export interface DeletedServiceContract extends ProxyResource {
+  /**
+   * API Management Service Master Location.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly location?: string;
+  /** Fully-qualified API Management Service Resource ID */
+  serviceId?: string;
+  /** UTC Date and Time when the service will be automatically purged. The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard. */
+  scheduledPurgeDate?: Date;
+  /** UTC Timestamp when the service was soft-deleted. The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard. */
+  deletionDate?: Date;
+}
+
+/** Email Template details. */
+export interface EmailTemplateContract extends ProxyResource {
+  /** Subject of the Template. */
+  subject?: string;
+  /** Email Template Body. This should be a valid XDocument */
+  body?: string;
+  /** Title of the Template. */
+  title?: string;
+  /** Description of the Email Template. */
+  description?: string;
+  /**
+   * Whether the template is the default template provided by API Management or has been edited.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly isDefault?: boolean;
+  /** Email Template Parameter values. */
+  parameters?: EmailTemplateParametersContractProperties[];
+}
+
+/** Gateway details. */
+export interface GatewayContract extends ProxyResource {
+  /** Gateway location. */
+  locationData?: ResourceLocationDataContract;
+  /** Gateway description */
+  description?: string;
+}
+
+/** Gateway hostname configuration details. */
+export interface GatewayHostnameConfigurationContract extends ProxyResource {
+  /** Hostname value. Supports valid domain name, partial or full wildcard */
+  hostname?: string;
+  /** Identifier of Certificate entity that will be used for TLS connection establishment */
+  certificateId?: string;
+  /** Determines whether gateway requests client certificate */
+  negotiateClientCertificate?: boolean;
+  /** Specifies if TLS 1.0 is supported */
+  tls10Enabled?: boolean;
+  /** Specifies if TLS 1.1 is supported */
+  tls11Enabled?: boolean;
+  /** Specifies if HTTP/2.0 is supported */
+  http2Enabled?: boolean;
+}
+
+/** Association entity details. */
+export interface AssociationContract extends ProxyResource {
+  /** Provisioning state. */
+  provisioningState?: "created";
+}
+
+/** Gateway certificate authority details. */
+export interface GatewayCertificateAuthorityContract extends ProxyResource {
+  /** Determines whether certificate authority is trusted. */
+  isTrusted?: boolean;
+}
+
+/** Contract details. */
+export interface GroupContract extends ProxyResource {
+  /** Group name. */
+  displayName?: string;
+  /** Group description. Can contain HTML formatting tags. */
+  description?: string;
+  /**
+   * true if the group is one of the three system groups (Administrators, Developers, or Guests); otherwise false.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly builtIn?: boolean;
+  /** Group type. */
+  typePropertiesType?: GroupType;
+  /** For external groups, this property contains the id of the group from the external identity provider, e.g. for Azure Active Directory `aad://<tenant>.onmicrosoft.com/groups/<group object id>`; otherwise the value is null. */
+  externalId?: string;
+}
+
+/** User details. */
+export interface UserContract extends ProxyResource {
+  /** Account state. Specifies whether the user is active or not. Blocked users are unable to sign into the developer portal or call any APIs of subscribed products. Default state is Active. */
+  state?: UserState;
+  /** Optional note about a user set by the administrator. */
+  note?: string;
+  /** Collection of user identities. */
+  identities?: UserIdentityContract[];
+  /** First name. */
+  firstName?: string;
+  /** Last name. */
+  lastName?: string;
+  /** Email address. */
+  email?: string;
+  /**
+   * Date of user registration. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  registrationDate?: Date;
+  /**
+   * Collection of groups user is part of.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly groups?: GroupContractProperties[];
+}
+
+/** Identity Provider details. */
+export interface IdentityProviderContract extends ProxyResource {
+  /** Identity Provider Type identifier. */
+  typePropertiesType?: IdentityProviderType;
+  /** The TenantId to use instead of Common when logging into Active Directory */
+  signinTenant?: string;
+  /** List of Allowed Tenants when configuring Azure Active Directory login. */
+  allowedTenants?: string[];
+  /** OpenID Connect discovery endpoint hostname for AAD or AAD B2C. */
+  authority?: string;
+  /** Signup Policy Name. Only applies to AAD B2C Identity Provider. */
+  signupPolicyName?: string;
+  /** Signin Policy Name. Only applies to AAD B2C Identity Provider. */
+  signinPolicyName?: string;
+  /** Profile Editing Policy Name. Only applies to AAD B2C Identity Provider. */
+  profileEditingPolicyName?: string;
+  /** Password Reset Policy Name. Only applies to AAD B2C Identity Provider. */
+  passwordResetPolicyName?: string;
+  /** The client library to be used in the developer portal. Only applies to AAD and AAD B2C Identity Provider. */
+  clientLibrary?: string;
+  /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
+  clientId?: string;
+  /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  clientSecret?: string;
+}
+
+/** Identity Provider details. */
+export interface IdentityProviderCreateContract extends ProxyResource {
+  /** Identity Provider Type identifier. */
+  typePropertiesType?: IdentityProviderType;
+  /** The TenantId to use instead of Common when logging into Active Directory */
+  signinTenant?: string;
+  /** List of Allowed Tenants when configuring Azure Active Directory login. */
+  allowedTenants?: string[];
+  /** OpenID Connect discovery endpoint hostname for AAD or AAD B2C. */
+  authority?: string;
+  /** Signup Policy Name. Only applies to AAD B2C Identity Provider. */
+  signupPolicyName?: string;
+  /** Signin Policy Name. Only applies to AAD B2C Identity Provider. */
+  signinPolicyName?: string;
+  /** Profile Editing Policy Name. Only applies to AAD B2C Identity Provider. */
+  profileEditingPolicyName?: string;
+  /** Password Reset Policy Name. Only applies to AAD B2C Identity Provider. */
+  passwordResetPolicyName?: string;
+  /** The client library to be used in the developer portal. Only applies to AAD and AAD B2C Identity Provider. */
+  clientLibrary?: string;
+  /** Client Id of the Application in the external Identity Provider. It is App ID for Facebook login, Client ID for Google login, App ID for Microsoft. */
+  clientId?: string;
+  /** Client secret of the Application in external Identity Provider, used to authenticate login request. For example, it is App Secret for Facebook login, API Key for Google login, Public Key for Microsoft. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  clientSecret?: string;
+}
+
+/** Logger details. */
+export interface LoggerContract extends ProxyResource {
+  /** Logger type. */
+  loggerType?: LoggerType;
+  /** Logger description. */
+  description?: string;
+  /**
+   * The name and SendRule connection string of the event hub for azureEventHub logger.
+   * Instrumentation key for applicationInsights logger.
+   */
+  credentials?: { [propertyName: string]: string };
+  /** Whether records are buffered in the logger before publishing. Default is assumed to be true. */
+  isBuffered?: boolean;
+  /** Azure Resource Id of a log target (either Azure Event Hub resource or Azure Application Insights resource). */
+  resourceId?: string;
+}
+
+/** NamedValue details. */
+export interface NamedValueContract extends ProxyResource {
+  /** Optional tags that when provided can be used to filter the NamedValue list. */
+  tags?: string[];
+  /** Determines whether the value is a secret and should be encrypted or not. Default value is false. */
+  secret?: boolean;
+  /** Unique name of NamedValue. It may contain only letters, digits, period, dash, and underscore characters. */
+  displayName?: string;
+  /** Value of the NamedValue. Can contain policy expressions. It may not be empty or consist only of whitespace. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  value?: string;
+  /** KeyVault location details of the namedValue. */
+  keyVault?: KeyVaultContractProperties;
+}
+
+/** NamedValue details. */
+export interface NamedValueCreateContract extends ProxyResource {
+  /** Optional tags that when provided can be used to filter the NamedValue list. */
+  tags?: string[];
+  /** Determines whether the value is a secret and should be encrypted or not. Default value is false. */
+  secret?: boolean;
+  /** Unique name of NamedValue. It may contain only letters, digits, period, dash, and underscore characters. */
+  displayName?: string;
+  /** Value of the NamedValue. Can contain policy expressions. It may not be empty or consist only of whitespace. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  value?: string;
+  /** KeyVault location details of the namedValue. */
+  keyVault?: KeyVaultContractCreateProperties;
+}
+
+/** Notification details. */
+export interface NotificationContract extends ProxyResource {
+  /** Title of the Notification. */
+  title?: string;
+  /** Description of the Notification. */
+  description?: string;
+  /** Recipient Parameter values. */
+  recipients?: RecipientsContractProperties;
+}
+
+/** Recipient User details. */
+export interface RecipientUserContract extends ProxyResource {
+  /** API Management UserId subscribed to notification. */
+  userId?: string;
+}
+
+/** Recipient Email details. */
+export interface RecipientEmailContract extends ProxyResource {
+  /** User Email subscribed to notification. */
+  email?: string;
+}
+
+/** OpenId Connect Provider details. */
+export interface OpenidConnectProviderContract extends ProxyResource {
+  /** User-friendly OpenID Connect Provider name. */
+  displayName?: string;
+  /** User-friendly description of OpenID Connect Provider. */
+  description?: string;
+  /** Metadata endpoint URI. */
+  metadataEndpoint?: string;
+  /** Client ID of developer console which is the client application. */
+  clientId?: string;
+  /** Client Secret of developer console which is the client application. */
+  clientSecret?: string;
+  /** If true, the Open ID Connect provider may be used in the developer portal test console. True by default if no value is provided. */
+  useInTestConsole?: boolean;
+  /** If true, the Open ID Connect provider will be used in the API documentation in the developer portal. False by default if no value is provided. */
+  useInApiDocumentation?: boolean;
+}
+
+/** Policy description details. */
+export interface PolicyDescriptionContract extends ProxyResource {
+  /**
+   * Policy description.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly description?: string;
+  /**
+   * Binary OR value of the Snippet scope.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly scope?: number;
+}
+
+/** Policy fragment contract details. */
+export interface PolicyFragmentContract extends ProxyResource {
+  /** Contents of the policy fragment. */
+  value?: string;
+  /** Policy fragment description. */
+  description?: string;
+  /** Format of the policy fragment content. */
+  format?: PolicyFragmentContentFormat;
+}
+
+export interface ResourceCollectionValueItem extends ProxyResource {}
+
+/** The developer portal configuration contract. */
+export interface PortalConfigContract extends ProxyResource {
+  /** Enable or disable Basic authentication method. */
+  enableBasicAuth?: boolean;
+  signin?: PortalConfigPropertiesSignin;
+  signup?: PortalConfigPropertiesSignup;
+  /** The developer portal delegation settings. */
+  delegation?: PortalConfigDelegationProperties;
+  /** The developer portal Cross-Origin Resource Sharing (CORS) settings. */
+  cors?: PortalConfigCorsProperties;
+  /** The developer portal Content Security Policy (CSP) settings. */
+  csp?: PortalConfigCspProperties;
+}
+
+/** Portal Revision's contract details. */
+export interface PortalRevisionContract extends ProxyResource {
+  /** Portal revision description. */
+  description?: string;
+  /**
+   * Portal revision publishing status details.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly statusDetails?: string;
+  /**
+   * Status of the portal's revision.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly status?: PortalRevisionStatus;
+  /** Indicates if the portal's revision is public. */
+  isCurrent?: boolean;
+  /**
+   * Portal's revision creation date and time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdDateTime?: Date;
+  /**
+   * Last updated date and time.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly updatedDateTime?: Date;
+}
+
+/** Portal Settings for the Developer Portal. */
+export interface PortalSettingsContract extends ProxyResource {
+  /** A delegation Url. */
+  url?: string;
+  /** A base64-encoded validation key to validate, that a request is coming from Azure API Management. */
+  validationKey?: string;
+  /** Subscriptions delegation settings. */
+  subscriptions?: SubscriptionsDelegationSettingsProperties;
+  /** User registration delegation settings. */
+  userRegistration?: RegistrationDelegationSettingsProperties;
+  /** Redirect Anonymous users to the Sign-In page. */
+  enabled?: boolean;
+  /** Terms of service contract properties. */
+  termsOfService?: TermsOfServiceProperties;
+}
+
+/** Sign-In settings for the Developer Portal. */
+export interface PortalSigninSettings extends ProxyResource {
+  /** Redirect Anonymous users to the Sign-In page. */
+  enabled?: boolean;
+}
+
+/** Sign-Up settings for a developer portal. */
+export interface PortalSignupSettings extends ProxyResource {
+  /** Allow users to sign up on a developer portal. */
+  enabled?: boolean;
+  /** Terms of service contract properties. */
+  termsOfService?: TermsOfServiceProperties;
+}
+
+/** Delegation settings for a developer portal. */
+export interface PortalDelegationSettings extends ProxyResource {
+  /** A delegation Url. */
+  url?: string;
+  /** A base64-encoded validation key to validate, that a request is coming from Azure API Management. */
+  validationKey?: string;
+  /** Subscriptions delegation settings. */
+  subscriptions?: SubscriptionsDelegationSettingsProperties;
+  /** User registration delegation settings. */
+  userRegistration?: RegistrationDelegationSettingsProperties;
+}
+
+/** Subscription details. */
+export interface SubscriptionContract extends ProxyResource {
+  /** The user resource identifier of the subscription owner. The value is a valid relative URL in the format of /users/{userId} where {userId} is a user identifier. */
+  ownerId?: string;
+  /** Scope like /products/{productId} or /apis or /apis/{apiId}. */
+  scope?: string;
+  /** The name of the subscription, or null if the subscription has no name. */
+  displayName?: string;
+  /** Subscription state. Possible states are * active – the subscription is active, * suspended – the subscription is blocked, and the subscriber cannot call any APIs of the product, * submitted – the subscription request has been made by the developer, but has not yet been approved or rejected, * rejected – the subscription request has been denied by an administrator, * cancelled – the subscription has been cancelled by the developer or administrator, * expired – the subscription reached its expiration date and was deactivated. */
+  state?: SubscriptionState;
+  /**
+   * Subscription creation date. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly createdDate?: Date;
+  /**
+   * Subscription activation date. The setting is for audit purposes only and the subscription is not automatically activated. The subscription lifecycle can be managed by using the `state` property. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  startDate?: Date;
+  /**
+   * Subscription expiration date. The setting is for audit purposes only and the subscription is not automatically expired. The subscription lifecycle can be managed by using the `state` property. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  expirationDate?: Date;
+  /**
+   * Date when subscription was cancelled or expired. The setting is for audit purposes only and the subscription is not automatically cancelled. The subscription lifecycle can be managed by using the `state` property. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  endDate?: Date;
+  /**
+   * Upcoming subscription expiration notification date. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  notificationDate?: Date;
+  /** Subscription primary key. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  primaryKey?: string;
+  /** Subscription secondary key. This property will not be filled on 'GET' operations! Use '/listSecrets' POST request to get the value. */
+  secondaryKey?: string;
+  /** Optional subscription comment added by an administrator when the state is changed to the 'rejected'. */
+  stateComment?: string;
+  /** Determines whether tracing is enabled */
+  allowTracing?: boolean;
+}
+
+/** Global Schema Contract details. */
+export interface GlobalSchemaContract extends ProxyResource {
+  /** Schema Type. Immutable. */
+  schemaType?: SchemaType;
+  /** Free-form schema entity description. */
+  description?: string;
+  /** Json-encoded string for non json-based schema. */
+  value?: any;
+  /** Global Schema document object for json-based schema formats(e.g. json schema). */
+  document?: Record<string, unknown>;
+}
+
+/** Tenant Settings. */
+export interface TenantSettingsContract extends ProxyResource {
+  /** Tenant settings */
+  settings?: { [propertyName: string]: string };
+}
+
+/** Tenant Settings. */
+export interface AccessInformationContract extends ProxyResource {
+  /** Access Information type ('access' or 'gitAccess') */
+  idPropertiesId?: string;
+  /** Principal (User) Identifier. */
+  principalId?: string;
+  /** Determines whether direct access is enabled. */
+  enabled?: boolean;
+}
+
+/** Long Running Git Operation Results. */
+export interface OperationResultContract extends ProxyResource {
+  /** Operation result identifier. */
+  idPropertiesId?: string;
+  /** Status of an async operation. */
+  status?: AsyncOperationStatus;
+  /**
+   * Start time of an async operation. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  started?: Date;
+  /**
+   * Last update time of an async operation. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  updated?: Date;
+  /** Optional result info. */
+  resultInfo?: string;
+  /** Error Body Contract */
+  error?: ErrorResponseBody;
+  /**
+   * This property if only provided as part of the TenantConfiguration_Validate operation. It contains the log the entities which will be updated/created/deleted as part of the TenantConfiguration_Deploy operation.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly actionLog?: OperationResultLogItemContract[];
+}
+
+/** Result of Tenant Configuration Sync State. */
+export interface TenantConfigurationSyncStateContract extends ProxyResource {
+  /** The name of Git branch. */
+  branch?: string;
+  /** The latest commit Id. */
+  commitId?: string;
+  /** value indicating if last sync was save (true) or deploy (false) operation. */
+  isExport?: boolean;
+  /** value indicating if last synchronization was later than the configuration change. */
+  isSynced?: boolean;
+  /** value indicating whether Git configuration access is enabled. */
+  isGitEnabled?: boolean;
+  /**
+   * The date of the latest synchronization. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  syncDate?: Date;
+  /**
+   * The date of the latest configuration change. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  configurationChangeDate?: Date;
+  /** Most recent tenant configuration operation identifier */
+  lastOperationId?: string;
+}
+
+/** Markdown documentation details. */
+export interface DocumentationContract extends ProxyResource {
+  /** documentation title. */
+  title?: string;
+  /** Markdown documentation content. */
+  content?: string;
+}
+
+/** Long Running Git Resolver Results. */
+export interface ResolverResultContract extends ProxyResource {
+  /** Resolver result identifier. */
+  idPropertiesId?: string;
+  /** Status of an async resolver. */
+  status?: AsyncResolverStatus;
+  /**
+   * Start time of an async resolver. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  started?: Date;
+  /**
+   * Last update time of an async resolver. The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
+   *
+   */
+  updated?: Date;
+  /** Optional result info. */
+  resultInfo?: string;
+  /** Error Body Contract */
+  error?: ErrorResponseBody;
+  /**
+   * This property if only provided as part of the TenantConfiguration_Validate resolver. It contains the log the entities which will be updated/created/deleted as part of the TenantConfiguration_Deploy resolver.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly actionLog?: ResolverResultLogItemContract[];
+}
 
 /** Defines headers for Api_getEntityTag operation. */
 export interface ApiGetEntityTagHeaders {
@@ -4474,6 +4936,48 @@ export interface TagUpdateHeaders {
   eTag?: string;
 }
 
+/** Defines headers for GraphQLApiResolver_getEntityTag operation. */
+export interface GraphQLApiResolverGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GraphQLApiResolver_get operation. */
+export interface GraphQLApiResolverGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GraphQLApiResolver_createOrUpdate operation. */
+export interface GraphQLApiResolverCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GraphQLApiResolver_update operation. */
+export interface GraphQLApiResolverUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GraphQLApiResolverPolicy_getEntityTag operation. */
+export interface GraphQLApiResolverPolicyGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GraphQLApiResolverPolicy_get operation. */
+export interface GraphQLApiResolverPolicyGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GraphQLApiResolverPolicy_createOrUpdate operation. */
+export interface GraphQLApiResolverPolicyCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
 /** Defines headers for ApiPolicy_getEntityTag operation. */
 export interface ApiPolicyGetEntityTagHeaders {
   /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
@@ -4612,6 +5116,30 @@ export interface ApiTagDescriptionCreateOrUpdateHeaders {
   eTag?: string;
 }
 
+/** Defines headers for ApiWiki_getEntityTag operation. */
+export interface ApiWikiGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ApiWiki_get operation. */
+export interface ApiWikiGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ApiWiki_createOrUpdate operation. */
+export interface ApiWikiCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ApiWiki_update operation. */
+export interface ApiWikiUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
 /** Defines headers for ApiVersionSet_getEntityTag operation. */
 export interface ApiVersionSetGetEntityTagHeaders {
   /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
@@ -4662,6 +5190,54 @@ export interface AuthorizationServerUpdateHeaders {
 
 /** Defines headers for AuthorizationServer_listSecrets operation. */
 export interface AuthorizationServerListSecretsHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for AuthorizationProvider_get operation. */
+export interface AuthorizationProviderGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for AuthorizationProvider_createOrUpdate operation. */
+export interface AuthorizationProviderCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for Authorization_get operation. */
+export interface AuthorizationGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for Authorization_createOrUpdate operation. */
+export interface AuthorizationCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for Authorization_confirmConsentCode operation. */
+export interface AuthorizationConfirmConsentCodeHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for AuthorizationLoginLinks_post operation. */
+export interface AuthorizationLoginLinksPostHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for AuthorizationAccessPolicy_get operation. */
+export interface AuthorizationAccessPolicyGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for AuthorizationAccessPolicy_createOrUpdate operation. */
+export interface AuthorizationAccessPolicyCreateOrUpdateHeaders {
   /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
   eTag?: string;
 }
@@ -4766,6 +5342,31 @@ export interface ContentItemGetHeaders {
 export interface ContentItemCreateOrUpdateHeaders {
   /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
   eTag?: string;
+}
+
+/** Defines headers for DeletedServices_purge operation. */
+export interface DeletedServicesPurgeHeaders {
+  location?: string;
+}
+
+/** Defines headers for ApiManagementService_restore operation. */
+export interface ApiManagementServiceRestoreHeaders {
+  location?: string;
+}
+
+/** Defines headers for ApiManagementService_backup operation. */
+export interface ApiManagementServiceBackupHeaders {
+  location?: string;
+}
+
+/** Defines headers for ApiManagementService_migrateToStv2 operation. */
+export interface ApiManagementServiceMigrateToStv2Headers {
+  location?: string;
+}
+
+/** Defines headers for ApiManagementService_applyNetworkConfigurationUpdates operation. */
+export interface ApiManagementServiceApplyNetworkConfigurationUpdatesHeaders {
+  location?: string;
 }
 
 /** Defines headers for Diagnostic_getEntityTag operation. */
@@ -5050,6 +5651,36 @@ export interface PolicyCreateOrUpdateHeaders {
   eTag?: string;
 }
 
+/** Defines headers for PolicyFragment_getEntityTag operation. */
+export interface PolicyFragmentGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for PolicyFragment_get operation. */
+export interface PolicyFragmentGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for PolicyFragment_createOrUpdate operation. */
+export interface PolicyFragmentCreateOrUpdateHeaders {
+  /** Current entity state version */
+  eTag?: string;
+}
+
+/** Defines headers for PortalConfig_getEntityTag operation. */
+export interface PortalConfigGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for PortalConfig_get operation. */
+export interface PortalConfigGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
 /** Defines headers for PortalRevision_getEntityTag operation. */
 export interface PortalRevisionGetEntityTagHeaders {
   /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
@@ -5152,6 +5783,60 @@ export interface ProductPolicyCreateOrUpdateHeaders {
   eTag?: string;
 }
 
+/** Defines headers for ProductWiki_getEntityTag operation. */
+export interface ProductWikiGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ProductWiki_get operation. */
+export interface ProductWikiGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ProductWiki_createOrUpdate operation. */
+export interface ProductWikiCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ProductWiki_update operation. */
+export interface ProductWikiUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ProductWikis_list operation. */
+export interface ProductWikisListHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for ProductWikis_listNext operation. */
+export interface ProductWikisListNextHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GlobalSchema_getEntityTag operation. */
+export interface GlobalSchemaGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GlobalSchema_get operation. */
+export interface GlobalSchemaGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for GlobalSchema_createOrUpdate operation. */
+export interface GlobalSchemaCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
 /** Defines headers for TenantSettings_get operation. */
 export interface TenantSettingsGetHeaders {
   /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
@@ -5248,11 +5933,39 @@ export interface UserSubscriptionGetHeaders {
   eTag?: string;
 }
 
+/** Defines headers for Documentation_getEntityTag operation. */
+export interface DocumentationGetEntityTagHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for Documentation_get operation. */
+export interface DocumentationGetHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for Documentation_createOrUpdate operation. */
+export interface DocumentationCreateOrUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
+/** Defines headers for Documentation_update operation. */
+export interface DocumentationUpdateHeaders {
+  /** Current entity state version. Should be treated as opaque and used to make conditional HTTP requests. */
+  eTag?: string;
+}
+
 /** Known values of {@link Protocol} that the service accepts. */
 export enum KnownProtocol {
+  /** Http */
   Http = "http",
+  /** Https */
   Https = "https",
+  /** Ws */
   Ws = "ws",
+  /** Wss */
   Wss = "wss"
 }
 
@@ -5270,8 +5983,11 @@ export type Protocol = string;
 
 /** Known values of {@link ApiVersionSetContractDetailsVersioningScheme} that the service accepts. */
 export enum KnownApiVersionSetContractDetailsVersioningScheme {
+  /** The API Version is passed in a path segment. */
   Segment = "Segment",
+  /** The API Version is passed in a query parameter. */
   Query = "Query",
+  /** The API Version is passed in a HTTP header. */
   Header = "Header"
 }
 
@@ -5280,9 +5996,9 @@ export enum KnownApiVersionSetContractDetailsVersioningScheme {
  * {@link KnownApiVersionSetContractDetailsVersioningScheme} can be used interchangeably with ApiVersionSetContractDetailsVersioningScheme,
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
- * **Segment** \
- * **Query** \
- * **Header**
+ * **Segment**: The API Version is passed in a path segment. \
+ * **Query**: The API Version is passed in a query parameter. \
+ * **Header**: The API Version is passed in a HTTP header.
  */
 export type ApiVersionSetContractDetailsVersioningScheme = string;
 
@@ -5306,9 +6022,13 @@ export type BearerTokenSendingMethods = string;
 
 /** Known values of {@link ApiType} that the service accepts. */
 export enum KnownApiType {
+  /** Http */
   Http = "http",
+  /** Soap */
   Soap = "soap",
+  /** Websocket */
   Websocket = "websocket",
+  /** Graphql */
   Graphql = "graphql"
 }
 
@@ -5334,7 +6054,7 @@ export enum KnownContentFormat {
   SwaggerJson = "swagger-json",
   /** The OpenAPI 2.0 JSON document is hosted on a publicly accessible internet address. */
   SwaggerLinkJson = "swagger-link-json",
-  /** The contents are inline and the document is a WSDL/Soap document. */
+  /** The contents are inline and the document is a WSDL\/Soap document. */
   Wsdl = "wsdl",
   /** The WSDL document is hosted on a publicly accessible internet address. */
   WsdlLink = "wsdl-link",
@@ -5393,15 +6113,33 @@ export enum KnownSoapApiType {
  */
 export type SoapApiType = string;
 
+/** Known values of {@link TranslateRequiredQueryParametersConduct} that the service accepts. */
+export enum KnownTranslateRequiredQueryParametersConduct {
+  /** Translates required query parameters to template ones. Is a default value */
+  Template = "template",
+  /** Leaves required query parameters as they are (no translation done). */
+  Query = "query"
+}
+
+/**
+ * Defines values for TranslateRequiredQueryParametersConduct. \
+ * {@link KnownTranslateRequiredQueryParametersConduct} can be used interchangeably with TranslateRequiredQueryParametersConduct,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **template**: Translates required query parameters to template ones. Is a default value \
+ * **query**: Leaves required query parameters as they are (no translation done).
+ */
+export type TranslateRequiredQueryParametersConduct = string;
+
 /** Known values of {@link PolicyContentFormat} that the service accepts. */
 export enum KnownPolicyContentFormat {
   /** The contents are inline and Content type is an XML document. */
   Xml = "xml",
-  /** The policy XML document is hosted on a http endpoint accessible from the API Management service. */
+  /** The policy XML document is hosted on a HTTP endpoint accessible from the API Management service. */
   XmlLink = "xml-link",
   /** The contents are inline and Content type is a non XML encoded policy document. */
   Rawxml = "rawxml",
-  /** The policy document is not Xml encoded and is hosted on a http endpoint accessible from the API Management service. */
+  /** The policy document is not XML encoded and is hosted on a HTTP endpoint accessible from the API Management service. */
   RawxmlLink = "rawxml-link"
 }
 
@@ -5411,14 +6149,15 @@ export enum KnownPolicyContentFormat {
  *  this enum contains the known values that the service supports.
  * ### Known values supported by the service
  * **xml**: The contents are inline and Content type is an XML document. \
- * **xml-link**: The policy XML document is hosted on a http endpoint accessible from the API Management service. \
+ * **xml-link**: The policy XML document is hosted on a HTTP endpoint accessible from the API Management service. \
  * **rawxml**: The contents are inline and Content type is a non XML encoded policy document. \
- * **rawxml-link**: The policy document is not Xml encoded and is hosted on a http endpoint accessible from the API Management service.
+ * **rawxml-link**: The policy document is not XML encoded and is hosted on a HTTP endpoint accessible from the API Management service.
  */
 export type PolicyContentFormat = string;
 
 /** Known values of {@link PolicyIdName} that the service accepts. */
 export enum KnownPolicyIdName {
+  /** Policy */
   Policy = "policy"
 }
 
@@ -5501,9 +6240,9 @@ export type DataMaskingMode = string;
 export enum KnownHttpCorrelationProtocol {
   /** Do not read and inject correlation headers. */
   None = "None",
-  /** Inject Request-Id and Request-Context headers with request correlation data. See https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/HttpCorrelationProtocol.md. */
+  /** Inject Request-Id and Request-Context headers with request correlation data. See https:\//github.com\/dotnet\/corefx\/blob\/master\/src\/System.Diagnostics.DiagnosticSource\/src\/HttpCorrelationProtocol.md. */
   Legacy = "Legacy",
-  /** Inject Trace Context headers. See https://w3c.github.io/trace-context. */
+  /** Inject Trace Context headers. See https:\//w3c.github.io\/trace-context. */
   W3C = "W3C"
 }
 
@@ -5613,6 +6352,7 @@ export type ExportFormat = string;
 
 /** Known values of {@link ExportApi} that the service accepts. */
 export enum KnownExportApi {
+  /** True */
   True = "true"
 }
 
@@ -5672,13 +6412,13 @@ export type VersioningScheme = string;
 
 /** Known values of {@link GrantType} that the service accepts. */
 export enum KnownGrantType {
-  /** Authorization Code Grant flow as described https://tools.ietf.org/html/rfc6749#section-4.1. */
+  /** Authorization Code Grant flow as described https:\//tools.ietf.org\/html\/rfc6749#section-4.1. */
   AuthorizationCode = "authorizationCode",
-  /** Implicit Code Grant flow as described https://tools.ietf.org/html/rfc6749#section-4.2. */
+  /** Implicit Code Grant flow as described https:\//tools.ietf.org\/html\/rfc6749#section-4.2. */
   Implicit = "implicit",
-  /** Resource Owner Password Grant flow as described https://tools.ietf.org/html/rfc6749#section-4.3. */
+  /** Resource Owner Password Grant flow as described https:\//tools.ietf.org\/html\/rfc6749#section-4.3. */
   ResourceOwnerPassword = "resourceOwnerPassword",
-  /** Client Credentials Grant flow as described https://tools.ietf.org/html/rfc6749#section-4.4. */
+  /** Client Credentials Grant flow as described https:\//tools.ietf.org\/html\/rfc6749#section-4.4. */
   ClientCredentials = "clientCredentials"
 }
 
@@ -5714,7 +6454,9 @@ export type ClientAuthenticationMethod = string;
 
 /** Known values of {@link BearerTokenSendingMethod} that the service accepts. */
 export enum KnownBearerTokenSendingMethod {
+  /** AuthorizationHeader */
   AuthorizationHeader = "authorizationHeader",
+  /** Query */
   Query = "query"
 }
 
@@ -5727,6 +6469,39 @@ export enum KnownBearerTokenSendingMethod {
  * **query**
  */
 export type BearerTokenSendingMethod = string;
+
+/** Known values of {@link AuthorizationType} that the service accepts. */
+export enum KnownAuthorizationType {
+  /** OAuth2 authorization type */
+  OAuth2 = "OAuth2"
+}
+
+/**
+ * Defines values for AuthorizationType. \
+ * {@link KnownAuthorizationType} can be used interchangeably with AuthorizationType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **OAuth2**: OAuth2 authorization type
+ */
+export type AuthorizationType = string;
+
+/** Known values of {@link OAuth2GrantType} that the service accepts. */
+export enum KnownOAuth2GrantType {
+  /** Authorization Code grant */
+  AuthorizationCode = "AuthorizationCode",
+  /** Client Credential grant */
+  ClientCredentials = "ClientCredentials"
+}
+
+/**
+ * Defines values for OAuth2GrantType. \
+ * {@link KnownOAuth2GrantType} can be used interchangeably with OAuth2GrantType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **AuthorizationCode**: Authorization Code grant \
+ * **ClientCredentials**: Client Credential grant
+ */
+export type OAuth2GrantType = string;
 
 /** Known values of {@link BackendProtocol} that the service accepts. */
 export enum KnownBackendProtocol {
@@ -5748,6 +6523,7 @@ export type BackendProtocol = string;
 
 /** Known values of {@link PreferredIPVersion} that the service accepts. */
 export enum KnownPreferredIPVersion {
+  /** IPv4 */
   IPv4 = "IPv4"
 }
 
@@ -5762,8 +6538,11 @@ export type PreferredIPVersion = string;
 
 /** Known values of {@link ConnectivityCheckProtocol} that the service accepts. */
 export enum KnownConnectivityCheckProtocol {
+  /** TCP */
   TCP = "TCP",
+  /** Http */
   Http = "HTTP",
+  /** Https */
   Https = "HTTPS"
 }
 
@@ -5780,7 +6559,9 @@ export type ConnectivityCheckProtocol = string;
 
 /** Known values of {@link Method} that the service accepts. */
 export enum KnownMethod {
+  /** GET */
   GET = "GET",
+  /** Post */
   Post = "POST"
 }
 
@@ -5796,8 +6577,11 @@ export type Method = string;
 
 /** Known values of {@link Origin} that the service accepts. */
 export enum KnownOrigin {
+  /** Local */
   Local = "Local",
+  /** Inbound */
   Inbound = "Inbound",
+  /** Outbound */
   Outbound = "Outbound"
 }
 
@@ -5814,7 +6598,9 @@ export type Origin = string;
 
 /** Known values of {@link Severity} that the service accepts. */
 export enum KnownSeverity {
+  /** Error */
   Error = "Error",
+  /** Warning */
   Warning = "Warning"
 }
 
@@ -5830,14 +6616,23 @@ export type Severity = string;
 
 /** Known values of {@link IssueType} that the service accepts. */
 export enum KnownIssueType {
+  /** Unknown */
   Unknown = "Unknown",
+  /** AgentStopped */
   AgentStopped = "AgentStopped",
+  /** GuestFirewall */
   GuestFirewall = "GuestFirewall",
+  /** DnsResolution */
   DnsResolution = "DnsResolution",
+  /** SocketBind */
   SocketBind = "SocketBind",
+  /** NetworkSecurityRule */
   NetworkSecurityRule = "NetworkSecurityRule",
+  /** UserDefinedRoute */
   UserDefinedRoute = "UserDefinedRoute",
+  /** PortThrottled */
   PortThrottled = "PortThrottled",
+  /** Platform */
   Platform = "Platform"
 }
 
@@ -5860,9 +6655,13 @@ export type IssueType = string;
 
 /** Known values of {@link ConnectionStatus} that the service accepts. */
 export enum KnownConnectionStatus {
+  /** Unknown */
   Unknown = "Unknown",
+  /** Connected */
   Connected = "Connected",
+  /** Disconnected */
   Disconnected = "Disconnected",
+  /** Degraded */
   Degraded = "Degraded"
 }
 
@@ -5952,10 +6751,15 @@ export type AccessType = string;
 
 /** Known values of {@link HostnameType} that the service accepts. */
 export enum KnownHostnameType {
+  /** Proxy */
   Proxy = "Proxy",
+  /** Portal */
   Portal = "Portal",
+  /** Management */
   Management = "Management",
+  /** Scm */
   Scm = "Scm",
+  /** DeveloperPortal */
   DeveloperPortal = "DeveloperPortal"
 }
 
@@ -5974,9 +6778,13 @@ export type HostnameType = string;
 
 /** Known values of {@link CertificateSource} that the service accepts. */
 export enum KnownCertificateSource {
+  /** Managed */
   Managed = "Managed",
+  /** KeyVault */
   KeyVault = "KeyVault",
+  /** Custom */
   Custom = "Custom",
+  /** BuiltIn */
   BuiltIn = "BuiltIn"
 }
 
@@ -5994,8 +6802,11 @@ export type CertificateSource = string;
 
 /** Known values of {@link CertificateStatus} that the service accepts. */
 export enum KnownCertificateStatus {
+  /** Completed */
   Completed = "Completed",
+  /** Failed */
   Failed = "Failed",
+  /** InProgress */
   InProgress = "InProgress"
 }
 
@@ -6012,7 +6823,9 @@ export type CertificateStatus = string;
 
 /** Known values of {@link PublicNetworkAccess} that the service accepts. */
 export enum KnownPublicNetworkAccess {
+  /** Enabled */
   Enabled = "Enabled",
+  /** Disabled */
   Disabled = "Disabled"
 }
 
@@ -6025,6 +6838,24 @@ export enum KnownPublicNetworkAccess {
  * **Disabled**
  */
 export type PublicNetworkAccess = string;
+
+/** Known values of {@link NatGatewayState} that the service accepts. */
+export enum KnownNatGatewayState {
+  /** Nat Gateway is enabled for the service. */
+  Enabled = "Enabled",
+  /** Nat Gateway is disabled for the service. */
+  Disabled = "Disabled"
+}
+
+/**
+ * Defines values for NatGatewayState. \
+ * {@link KnownNatGatewayState} can be used interchangeably with NatGatewayState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled**: Nat Gateway is enabled for the service. \
+ * **Disabled**: Nat Gateway is disabled for the service.
+ */
+export type NatGatewayState = string;
 
 /** Known values of {@link PlatformVersion} that the service accepts. */
 export enum KnownPlatformVersion {
@@ -6052,7 +6883,9 @@ export type PlatformVersion = string;
 
 /** Known values of {@link CertificateConfigurationStoreName} that the service accepts. */
 export enum KnownCertificateConfigurationStoreName {
+  /** CertificateAuthority */
   CertificateAuthority = "CertificateAuthority",
+  /** Root */
   Root = "Root"
 }
 
@@ -6089,8 +6922,11 @@ export type VirtualNetworkType = string;
 
 /** Known values of {@link PrivateEndpointServiceConnectionStatus} that the service accepts. */
 export enum KnownPrivateEndpointServiceConnectionStatus {
+  /** Pending */
   Pending = "Pending",
+  /** Approved */
   Approved = "Approved",
+  /** Rejected */
   Rejected = "Rejected"
 }
 
@@ -6107,9 +6943,13 @@ export type PrivateEndpointServiceConnectionStatus = string;
 
 /** Known values of {@link ApimIdentityType} that the service accepts. */
 export enum KnownApimIdentityType {
+  /** SystemAssigned */
   SystemAssigned = "SystemAssigned",
+  /** UserAssigned */
   UserAssigned = "UserAssigned",
+  /** SystemAssignedUserAssigned */
   SystemAssignedUserAssigned = "SystemAssigned, UserAssigned",
+  /** None */
   None = "None"
 }
 
@@ -6127,9 +6967,13 @@ export type ApimIdentityType = string;
 
 /** Known values of {@link CreatedByType} that the service accepts. */
 export enum KnownCreatedByType {
+  /** User */
   User = "User",
+  /** Application */
   Application = "Application",
+  /** ManagedIdentity */
   ManagedIdentity = "ManagedIdentity",
+  /** Key */
   Key = "Key"
 }
 
@@ -6147,19 +6991,33 @@ export type CreatedByType = string;
 
 /** Known values of {@link TemplateName} that the service accepts. */
 export enum KnownTemplateName {
+  /** ApplicationApprovedNotificationMessage */
   ApplicationApprovedNotificationMessage = "applicationApprovedNotificationMessage",
+  /** AccountClosedDeveloper */
   AccountClosedDeveloper = "accountClosedDeveloper",
+  /** QuotaLimitApproachingDeveloperNotificationMessage */
   QuotaLimitApproachingDeveloperNotificationMessage = "quotaLimitApproachingDeveloperNotificationMessage",
+  /** NewDeveloperNotificationMessage */
   NewDeveloperNotificationMessage = "newDeveloperNotificationMessage",
+  /** EmailChangeIdentityDefault */
   EmailChangeIdentityDefault = "emailChangeIdentityDefault",
+  /** InviteUserNotificationMessage */
   InviteUserNotificationMessage = "inviteUserNotificationMessage",
+  /** NewCommentNotificationMessage */
   NewCommentNotificationMessage = "newCommentNotificationMessage",
+  /** ConfirmSignUpIdentityDefault */
   ConfirmSignUpIdentityDefault = "confirmSignUpIdentityDefault",
+  /** NewIssueNotificationMessage */
   NewIssueNotificationMessage = "newIssueNotificationMessage",
+  /** PurchaseDeveloperNotificationMessage */
   PurchaseDeveloperNotificationMessage = "purchaseDeveloperNotificationMessage",
+  /** PasswordResetIdentityDefault */
   PasswordResetIdentityDefault = "passwordResetIdentityDefault",
+  /** PasswordResetByAdminNotificationMessage */
   PasswordResetByAdminNotificationMessage = "passwordResetByAdminNotificationMessage",
+  /** RejectDeveloperNotificationMessage */
   RejectDeveloperNotificationMessage = "rejectDeveloperNotificationMessage",
+  /** RequestDeveloperNotificationMessage */
   RequestDeveloperNotificationMessage = "requestDeveloperNotificationMessage"
 }
 
@@ -6262,8 +7120,11 @@ export type LoggerType = string;
 
 /** Known values of {@link ConnectivityStatusType} that the service accepts. */
 export enum KnownConnectivityStatusType {
+  /** Initializing */
   Initializing = "initializing",
+  /** Success */
   Success = "success",
+  /** Failure */
   Failure = "failure"
 }
 
@@ -6311,6 +7172,45 @@ export enum KnownNotificationName {
  */
 export type NotificationName = string;
 
+/** Known values of {@link PolicyFragmentContentFormat} that the service accepts. */
+export enum KnownPolicyFragmentContentFormat {
+  /** The contents are inline and Content type is an XML document. */
+  Xml = "xml",
+  /** The contents are inline and Content type is a non XML encoded policy document. */
+  Rawxml = "rawxml"
+}
+
+/**
+ * Defines values for PolicyFragmentContentFormat. \
+ * {@link KnownPolicyFragmentContentFormat} can be used interchangeably with PolicyFragmentContentFormat,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **xml**: The contents are inline and Content type is an XML document. \
+ * **rawxml**: The contents are inline and Content type is a non XML encoded policy document.
+ */
+export type PolicyFragmentContentFormat = string;
+
+/** Known values of {@link PortalSettingsCspMode} that the service accepts. */
+export enum KnownPortalSettingsCspMode {
+  /** The browser will block requests not matching allowed origins. */
+  Enabled = "enabled",
+  /** The browser will not apply the origin restrictions. */
+  Disabled = "disabled",
+  /** The browser will report requests not matching allowed origins without blocking them. */
+  ReportOnly = "reportOnly"
+}
+
+/**
+ * Defines values for PortalSettingsCspMode. \
+ * {@link KnownPortalSettingsCspMode} can be used interchangeably with PortalSettingsCspMode,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **enabled**: The browser will block requests not matching allowed origins. \
+ * **disabled**: The browser will not apply the origin restrictions. \
+ * **reportOnly**: The browser will report requests not matching allowed origins without blocking them.
+ */
+export type PortalSettingsCspMode = string;
+
 /** Known values of {@link PortalRevisionStatus} that the service accepts. */
 export enum KnownPortalRevisionStatus {
   /** Portal's revision has been queued. */
@@ -6337,9 +7237,13 @@ export type PortalRevisionStatus = string;
 
 /** Known values of {@link PrivateEndpointConnectionProvisioningState} that the service accepts. */
 export enum KnownPrivateEndpointConnectionProvisioningState {
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Creating */
   Creating = "Creating",
+  /** Deleting */
   Deleting = "Deleting",
+  /** Failed */
   Failed = "Failed"
 }
 
@@ -6355,8 +7259,27 @@ export enum KnownPrivateEndpointConnectionProvisioningState {
  */
 export type PrivateEndpointConnectionProvisioningState = string;
 
+/** Known values of {@link SchemaType} that the service accepts. */
+export enum KnownSchemaType {
+  /** XML schema type. */
+  Xml = "xml",
+  /** Json schema type. */
+  Json = "json"
+}
+
+/**
+ * Defines values for SchemaType. \
+ * {@link KnownSchemaType} can be used interchangeably with SchemaType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **xml**: XML schema type. \
+ * **json**: Json schema type.
+ */
+export type SchemaType = string;
+
 /** Known values of {@link SettingsTypeName} that the service accepts. */
 export enum KnownSettingsTypeName {
+  /** Public */
   Public = "public"
 }
 
@@ -6389,7 +7312,9 @@ export type AppType = string;
 
 /** Known values of {@link AccessIdName} that the service accepts. */
 export enum KnownAccessIdName {
+  /** Access */
   Access = "access",
+  /** GitAccess */
   GitAccess = "gitAccess"
 }
 
@@ -6405,6 +7330,7 @@ export type AccessIdName = string;
 
 /** Known values of {@link ConfigurationIdName} that the service accepts. */
 export enum KnownConfigurationIdName {
+  /** Configuration */
   Configuration = "configuration"
 }
 
@@ -6477,6 +7403,12 @@ export type ApiManagementSkuRestrictionsReasonCode =
   | "NotAvailableForSubscription";
 /** Defines values for AsyncOperationStatus. */
 export type AsyncOperationStatus =
+  | "Started"
+  | "InProgress"
+  | "Succeeded"
+  | "Failed";
+/** Defines values for AsyncResolverStatus. */
+export type AsyncResolverStatus =
   | "Started"
   | "InProgress"
   | "Succeeded"
@@ -6557,34 +7489,14 @@ export type ApiListByTagsResponse = TagResourceCollection;
 
 /** Optional parameters. */
 export interface ApiListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| serviceUrl | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| path | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| isCurrent | filter | eq, ne |  |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** Include tags in the response. */
-  tags?: string;
-  /** Include full ApiVersionSet resource in response */
-  expandApiVersionSet?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiListByServiceNextResponse = ApiCollection;
 
 /** Optional parameters. */
 export interface ApiListByTagsNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| apiRevision | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| path | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| serviceUrl | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| isCurrent | filter | eq |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** Include not tagged APIs. */
-  includeNotTaggedApis?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByTagsNext operation. */
 export type ApiListByTagsNextResponse = TagResourceCollection;
@@ -6605,14 +7517,7 @@ export type ApiRevisionListByServiceResponse = ApiRevisionCollection;
 
 /** Optional parameters. */
 export interface ApiRevisionListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| apiRevision | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiRevisionListByServiceNextResponse = ApiRevisionCollection;
@@ -6670,14 +7575,7 @@ export interface ApiReleaseDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiReleaseListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| notes | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiReleaseListByServiceNextResponse = ApiReleaseCollection;
@@ -6738,16 +7636,7 @@ export interface ApiOperationDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiOperationListByApiNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| method | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| urlTemplate | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** Include tags in the response. */
-  tags?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByApiNext operation. */
 export type ApiOperationListByApiNextResponse = OperationCollection;
@@ -6959,61 +7848,137 @@ export interface TagDeleteOptionalParams extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
 export interface TagListByOperationNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByOperationNext operation. */
 export type TagListByOperationNextResponse = TagCollection;
 
 /** Optional parameters. */
 export interface TagListByApiNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByApiNext operation. */
 export type TagListByApiNextResponse = TagCollection;
 
 /** Optional parameters. */
 export interface TagListByProductNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByProductNext operation. */
 export type TagListByProductNextResponse = TagCollection;
 
 /** Optional parameters. */
 export interface TagListByServiceNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByServiceNext operation. */
+export type TagListByServiceNextResponse = TagCollection;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverListByApiOptionalParams
   extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| path | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
   filter?: string;
   /** Number of records to return. */
   top?: number;
   /** Number of records to skip. */
   skip?: number;
-  /** Scope like 'apis', 'products' or 'apis/{apiId} */
-  scope?: string;
 }
 
-/** Contains response data for the listByServiceNext operation. */
-export type TagListByServiceNextResponse = TagCollection;
+/** Contains response data for the listByApi operation. */
+export type GraphQLApiResolverListByApiResponse = ResolverCollection;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type GraphQLApiResolverGetEntityTagResponse = GraphQLApiResolverGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type GraphQLApiResolverGetResponse = GraphQLApiResolverGetHeaders &
+  ResolverContract;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type GraphQLApiResolverCreateOrUpdateResponse = GraphQLApiResolverCreateOrUpdateHeaders &
+  ResolverContract;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverUpdateOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the update operation. */
+export type GraphQLApiResolverUpdateResponse = GraphQLApiResolverUpdateHeaders &
+  ResolverContract;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface GraphQLApiResolverListByApiNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByApiNext operation. */
+export type GraphQLApiResolverListByApiNextResponse = ResolverCollection;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverPolicyListByResolverOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByResolver operation. */
+export type GraphQLApiResolverPolicyListByResolverResponse = PolicyCollection;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverPolicyGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type GraphQLApiResolverPolicyGetEntityTagResponse = GraphQLApiResolverPolicyGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverPolicyGetOptionalParams
+  extends coreClient.OperationOptions {
+  /** Policy Export Format. */
+  format?: PolicyExportFormat;
+}
+
+/** Contains response data for the get operation. */
+export type GraphQLApiResolverPolicyGetResponse = GraphQLApiResolverPolicyGetHeaders &
+  PolicyContract;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverPolicyCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type GraphQLApiResolverPolicyCreateOrUpdateResponse = GraphQLApiResolverPolicyCreateOrUpdateHeaders &
+  PolicyContract;
+
+/** Optional parameters. */
+export interface GraphQLApiResolverPolicyDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface GraphQLApiResolverPolicyListByResolverNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByResolverNext operation. */
+export type GraphQLApiResolverPolicyListByResolverNextResponse = PolicyCollection;
 
 /** Optional parameters. */
 export interface ApiProductListByApisOptionalParams
@@ -7031,14 +7996,7 @@ export type ApiProductListByApisResponse = ProductCollection;
 
 /** Optional parameters. */
 export interface ApiProductListByApisNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByApisNext operation. */
 export type ApiProductListByApisNextResponse = ProductCollection;
@@ -7134,14 +8092,7 @@ export interface ApiSchemaDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiSchemaListByApiNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| contentType | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByApiNext operation. */
 export type ApiSchemaListByApiNextResponse = SchemaCollection;
@@ -7200,14 +8151,7 @@ export interface ApiDiagnosticDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiDiagnosticListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiDiagnosticListByServiceNextResponse = DiagnosticCollection;
@@ -7268,16 +8212,7 @@ export interface ApiIssueDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiIssueListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| userId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** Expand the comment attachments. */
-  expandCommentsAttachments?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiIssueListByServiceNextResponse = IssueCollection;
@@ -7328,14 +8263,7 @@ export interface ApiIssueCommentDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiIssueCommentListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| userId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiIssueCommentListByServiceNextResponse = IssueCommentCollection;
@@ -7386,14 +8314,7 @@ export interface ApiIssueAttachmentDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiIssueAttachmentListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| userId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiIssueAttachmentListByServiceNextResponse = IssueAttachmentCollection;
@@ -7444,14 +8365,7 @@ export interface ApiTagDescriptionDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiTagDescriptionListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiTagDescriptionListByServiceNextResponse = TagDescriptionCollection;
@@ -7474,19 +8388,66 @@ export type OperationListByTagsResponse = TagResourceCollection;
 
 /** Optional parameters. */
 export interface OperationListByTagsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByTagsNext operation. */
+export type OperationListByTagsNextResponse = TagResourceCollection;
+
+/** Optional parameters. */
+export interface ApiWikiGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type ApiWikiGetEntityTagResponse = ApiWikiGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface ApiWikiGetOptionalParams extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type ApiWikiGetResponse = ApiWikiGetHeaders & WikiContract;
+
+/** Optional parameters. */
+export interface ApiWikiCreateOrUpdateOptionalParams
   extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| apiName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| method | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| urlTemplate | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type ApiWikiCreateOrUpdateResponse = ApiWikiCreateOrUpdateHeaders &
+  WikiContract;
+
+/** Optional parameters. */
+export interface ApiWikiUpdateOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the update operation. */
+export type ApiWikiUpdateResponse = ApiWikiUpdateHeaders & WikiContract;
+
+/** Optional parameters. */
+export interface ApiWikiDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface ApiWikisListOptionalParams
+  extends coreClient.OperationOptions {
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | eq |  contains |</br> */
   filter?: string;
   /** Number of records to return. */
   top?: number;
   /** Number of records to skip. */
   skip?: number;
-  /** Include not tagged Operations. */
-  includeNotTaggedOperations?: boolean;
 }
 
-/** Contains response data for the listByTagsNext operation. */
-export type OperationListByTagsNextResponse = TagResourceCollection;
+/** Contains response data for the list operation. */
+export type ApiWikisListResponse = WikiCollection;
+
+/** Optional parameters. */
+export interface ApiWikisListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ApiWikisListNextResponse = WikiCollection;
 
 /** Optional parameters. */
 export interface ApiExportGetOptionalParams
@@ -7549,14 +8510,7 @@ export interface ApiVersionSetDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ApiVersionSetListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ApiVersionSetListByServiceNextResponse = ApiVersionSetCollection;
@@ -7623,6 +8577,13 @@ export type AuthorizationServerListSecretsResponse = AuthorizationServerListSecr
 
 /** Optional parameters. */
 export interface AuthorizationServerListByServiceNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByServiceNext operation. */
+export type AuthorizationServerListByServiceNextResponse = AuthorizationServerCollection;
+
+/** Optional parameters. */
+export interface AuthorizationProviderListByServiceOptionalParams
   extends coreClient.OperationOptions {
   /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
   filter?: string;
@@ -7632,8 +8593,141 @@ export interface AuthorizationServerListByServiceNextOptionalParams
   skip?: number;
 }
 
+/** Contains response data for the listByService operation. */
+export type AuthorizationProviderListByServiceResponse = AuthorizationProviderCollection;
+
+/** Optional parameters. */
+export interface AuthorizationProviderGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type AuthorizationProviderGetResponse = AuthorizationProviderGetHeaders &
+  AuthorizationProviderContract;
+
+/** Optional parameters. */
+export interface AuthorizationProviderCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type AuthorizationProviderCreateOrUpdateResponse = AuthorizationProviderCreateOrUpdateHeaders &
+  AuthorizationProviderContract;
+
+/** Optional parameters. */
+export interface AuthorizationProviderDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface AuthorizationProviderListByServiceNextOptionalParams
+  extends coreClient.OperationOptions {}
+
 /** Contains response data for the listByServiceNext operation. */
-export type AuthorizationServerListByServiceNextResponse = AuthorizationServerCollection;
+export type AuthorizationProviderListByServiceNextResponse = AuthorizationProviderCollection;
+
+/** Optional parameters. */
+export interface AuthorizationListByAuthorizationProviderOptionalParams
+  extends coreClient.OperationOptions {
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
+  filter?: string;
+  /** Number of records to return. */
+  top?: number;
+  /** Number of records to skip. */
+  skip?: number;
+}
+
+/** Contains response data for the listByAuthorizationProvider operation. */
+export type AuthorizationListByAuthorizationProviderResponse = AuthorizationCollection;
+
+/** Optional parameters. */
+export interface AuthorizationGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type AuthorizationGetResponse = AuthorizationGetHeaders &
+  AuthorizationContract;
+
+/** Optional parameters. */
+export interface AuthorizationCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type AuthorizationCreateOrUpdateResponse = AuthorizationCreateOrUpdateHeaders &
+  AuthorizationContract;
+
+/** Optional parameters. */
+export interface AuthorizationDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface AuthorizationConfirmConsentCodeOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the confirmConsentCode operation. */
+export type AuthorizationConfirmConsentCodeResponse = AuthorizationConfirmConsentCodeHeaders;
+
+/** Optional parameters. */
+export interface AuthorizationListByAuthorizationProviderNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByAuthorizationProviderNext operation. */
+export type AuthorizationListByAuthorizationProviderNextResponse = AuthorizationCollection;
+
+/** Optional parameters. */
+export interface AuthorizationLoginLinksPostOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the post operation. */
+export type AuthorizationLoginLinksPostResponse = AuthorizationLoginLinksPostHeaders &
+  AuthorizationLoginResponseContract;
+
+/** Optional parameters. */
+export interface AuthorizationAccessPolicyListByAuthorizationOptionalParams
+  extends coreClient.OperationOptions {
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
+  filter?: string;
+  /** Number of records to return. */
+  top?: number;
+  /** Number of records to skip. */
+  skip?: number;
+}
+
+/** Contains response data for the listByAuthorization operation. */
+export type AuthorizationAccessPolicyListByAuthorizationResponse = AuthorizationAccessPolicyCollection;
+
+/** Optional parameters. */
+export interface AuthorizationAccessPolicyGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type AuthorizationAccessPolicyGetResponse = AuthorizationAccessPolicyGetHeaders &
+  AuthorizationAccessPolicyContract;
+
+/** Optional parameters. */
+export interface AuthorizationAccessPolicyCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type AuthorizationAccessPolicyCreateOrUpdateResponse = AuthorizationAccessPolicyCreateOrUpdateHeaders &
+  AuthorizationAccessPolicyContract;
+
+/** Optional parameters. */
+export interface AuthorizationAccessPolicyDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface AuthorizationAccessPolicyListByAuthorizationNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByAuthorizationNext operation. */
+export type AuthorizationAccessPolicyListByAuthorizationNextResponse = AuthorizationAccessPolicyCollection;
 
 /** Optional parameters. */
 export interface BackendListByServiceOptionalParams
@@ -7693,14 +8787,7 @@ export interface BackendReconnectOptionalParams
 
 /** Optional parameters. */
 export interface BackendListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| title | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| url | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type BackendListByServiceNextResponse = BackendCollection;
@@ -7754,12 +8841,7 @@ export interface CacheDeleteOptionalParams
 
 /** Optional parameters. */
 export interface CacheListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type CacheListByServiceNextResponse = CacheCollection;
@@ -7820,16 +8902,7 @@ export type CertificateRefreshSecretResponse = CertificateRefreshSecretHeaders &
 
 /** Optional parameters. */
 export interface CertificateListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| subject | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| thumbprint | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| expirationDate | filter | ge, le, eq, ne, gt, lt |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** When set to true, the response contains only certificates entities which failed refresh. */
-  isKeyVaultRefreshFailed?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type CertificateListByServiceNextResponse = CertificateCollection;
@@ -8050,6 +9123,18 @@ export interface ApiManagementServiceDeleteOptionalParams
 }
 
 /** Optional parameters. */
+export interface ApiManagementServiceMigrateToStv2OptionalParams
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the migrateToStv2 operation. */
+export type ApiManagementServiceMigrateToStv2Response = ApiManagementServiceResource;
+
+/** Optional parameters. */
 export interface ApiManagementServiceListByResourceGroupOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -8165,14 +9250,7 @@ export interface DiagnosticDeleteOptionalParams
 
 /** Optional parameters. */
 export interface DiagnosticListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type DiagnosticListByServiceNextResponse = DiagnosticCollection;
@@ -8230,14 +9308,7 @@ export interface EmailTemplateDeleteOptionalParams
 
 /** Optional parameters. */
 export interface EmailTemplateListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type EmailTemplateListByServiceNextResponse = EmailTemplateCollection;
@@ -8312,14 +9383,7 @@ export type GatewayGenerateTokenResponse = GatewayTokenContract;
 
 /** Optional parameters. */
 export interface GatewayListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| region | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type GatewayListByServiceNextResponse = GatewayCollection;
@@ -8370,14 +9434,7 @@ export interface GatewayHostnameConfigurationDeleteOptionalParams
 
 /** Optional parameters. */
 export interface GatewayHostnameConfigurationListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| hostname | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type GatewayHostnameConfigurationListByServiceNextResponse = GatewayHostnameConfigurationCollection;
@@ -8419,14 +9476,7 @@ export interface GatewayApiDeleteOptionalParams
 
 /** Optional parameters. */
 export interface GatewayApiListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type GatewayApiListByServiceNextResponse = ApiCollection;
@@ -8477,14 +9527,7 @@ export interface GatewayCertificateAuthorityDeleteOptionalParams
 
 /** Optional parameters. */
 export interface GatewayCertificateAuthorityListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | eq, ne |  |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type GatewayCertificateAuthorityListByServiceNextResponse = GatewayCertificateAuthorityCollection;
@@ -8540,14 +9583,7 @@ export interface GroupDeleteOptionalParams
 
 /** Optional parameters. */
 export interface GroupListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| externalId | filter | eq |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type GroupListByServiceNextResponse = GroupCollection;
@@ -8588,14 +9624,7 @@ export interface GroupUserDeleteOptionalParams
 
 /** Optional parameters. */
 export interface GroupUserListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| firstName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| lastName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| email | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| registrationDate | filter | ge, le, eq, ne, gt, lt |     |</br>| note | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type GroupUserListNextResponse = UserCollection;
@@ -8682,14 +9711,7 @@ export type IssueGetResponse = IssueGetHeaders & IssueContract;
 
 /** Optional parameters. */
 export interface IssueListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| apiId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| title | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| authorName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type IssueListByServiceNextResponse = IssueCollection;
@@ -8745,14 +9767,7 @@ export interface LoggerDeleteOptionalParams
 
 /** Optional parameters. */
 export interface LoggerListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| loggerType | filter | eq |     |</br>| resourceId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type LoggerListByServiceNextResponse = LoggerCollection;
@@ -8842,16 +9857,7 @@ export type NamedValueRefreshSecretResponse = NamedValueRefreshSecretHeaders &
 
 /** Optional parameters. */
 export interface NamedValueListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| tags | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith, any, all |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** When set to true, the response contains only named value entities which failed refresh. */
-  isKeyVaultRefreshFailed?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type NamedValueListByServiceNextResponse = NamedValueCollection;
@@ -8901,12 +9907,7 @@ export type NotificationCreateOrUpdateResponse = NotificationContract;
 
 /** Optional parameters. */
 export interface NotificationListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type NotificationListByServiceNextResponse = NotificationCollection;
@@ -9027,14 +10028,7 @@ export type OpenIdConnectProviderListSecretsResponse = OpenIdConnectProviderList
 
 /** Optional parameters. */
 export interface OpenIdConnectProviderListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type OpenIdConnectProviderListByServiceNextResponse = OpenIdConnectProviderCollection;
@@ -9093,6 +10087,107 @@ export interface PolicyDescriptionListByServiceOptionalParams
 
 /** Contains response data for the listByService operation. */
 export type PolicyDescriptionListByServiceResponse = PolicyDescriptionCollection;
+
+/** Optional parameters. */
+export interface PolicyFragmentListByServiceOptionalParams
+  extends coreClient.OperationOptions {
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter, orderBy | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| value | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
+  filter?: string;
+  /** Number of records to return. */
+  top?: number;
+  /** Number of records to skip. */
+  skip?: number;
+  /** OData order by query option. */
+  orderby?: string;
+}
+
+/** Contains response data for the listByService operation. */
+export type PolicyFragmentListByServiceResponse = PolicyFragmentCollection;
+
+/** Optional parameters. */
+export interface PolicyFragmentGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type PolicyFragmentGetEntityTagResponse = PolicyFragmentGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface PolicyFragmentGetOptionalParams
+  extends coreClient.OperationOptions {
+  /** Policy fragment content format. */
+  format?: PolicyFragmentContentFormat;
+}
+
+/** Contains response data for the get operation. */
+export type PolicyFragmentGetResponse = PolicyFragmentGetHeaders &
+  PolicyFragmentContract;
+
+/** Optional parameters. */
+export interface PolicyFragmentCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type PolicyFragmentCreateOrUpdateResponse = PolicyFragmentCreateOrUpdateHeaders &
+  PolicyFragmentContract;
+
+/** Optional parameters. */
+export interface PolicyFragmentDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface PolicyFragmentListReferencesOptionalParams
+  extends coreClient.OperationOptions {
+  /** Number of records to return. */
+  top?: number;
+  /** Number of records to skip. */
+  skip?: number;
+}
+
+/** Contains response data for the listReferences operation. */
+export type PolicyFragmentListReferencesResponse = ResourceCollection;
+
+/** Optional parameters. */
+export interface PortalConfigListByServiceOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByService operation. */
+export type PortalConfigListByServiceResponse = PortalConfigCollection;
+
+/** Optional parameters. */
+export interface PortalConfigGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type PortalConfigGetEntityTagResponse = PortalConfigGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface PortalConfigGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type PortalConfigGetResponse = PortalConfigGetHeaders &
+  PortalConfigContract;
+
+/** Optional parameters. */
+export interface PortalConfigUpdateOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the update operation. */
+export type PortalConfigUpdateResponse = PortalConfigContract;
+
+/** Optional parameters. */
+export interface PortalConfigCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createOrUpdate operation. */
+export type PortalConfigCreateOrUpdateResponse = PortalConfigContract;
 
 /** Optional parameters. */
 export interface PortalRevisionListByServiceOptionalParams
@@ -9159,22 +10254,7 @@ export type PortalRevisionUpdateResponse = PortalRevisionUpdateHeaders &
 
 /** Optional parameters. */
 export interface PortalRevisionListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /**
-   * | Field       | Supported operators    | Supported functions               |
-   * |-------------|------------------------|-----------------------------------|
-   *
-   * |name | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith|
-   * |description | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith|
-   * |isCurrent | eq, ne |    |
-   *
-   */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type PortalRevisionListByServiceNextResponse = PortalRevisionCollection;
@@ -9403,34 +10483,14 @@ export type ProductListByTagsResponse = TagResourceCollection;
 
 /** Optional parameters. */
 export interface ProductListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| terms | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq |     |</br>| groups | expand |     |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** Products which are part of a specific tag. */
-  tags?: string;
-  /** When set to true, the response contains an array of groups that have visibility to the product. The default is false. */
-  expandGroups?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type ProductListByServiceNextResponse = ProductCollection;
 
 /** Optional parameters. */
 export interface ProductListByTagsNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| terms | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** Include not tagged Products. */
-  includeNotTaggedProducts?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByTagsNext operation. */
 export type ProductListByTagsNextResponse = TagResourceCollection;
@@ -9471,14 +10531,7 @@ export interface ProductApiDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ProductApiListByProductNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| serviceUrl | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| path | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByProductNext operation. */
 export type ProductApiListByProductNextResponse = ApiCollection;
@@ -9519,14 +10572,7 @@ export interface ProductGroupDeleteOptionalParams
 
 /** Optional parameters. */
 export interface ProductGroupListByProductNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt |     |</br>| displayName | filter | eq, ne |     |</br>| description | filter | eq, ne |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByProductNext operation. */
 export type ProductGroupListByProductNextResponse = GroupCollection;
@@ -9547,14 +10593,7 @@ export type ProductSubscriptionsListResponse = SubscriptionCollection;
 
 /** Optional parameters. */
 export interface ProductSubscriptionsListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| stateComment | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| ownerId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| scope | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| userId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| productId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq |     |</br>| user | expand |     |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type ProductSubscriptionsListNextResponse = SubscriptionCollection;
@@ -9597,6 +10636,64 @@ export type ProductPolicyCreateOrUpdateResponse = ProductPolicyCreateOrUpdateHea
 /** Optional parameters. */
 export interface ProductPolicyDeleteOptionalParams
   extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface ProductWikiGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type ProductWikiGetEntityTagResponse = ProductWikiGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface ProductWikiGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type ProductWikiGetResponse = ProductWikiGetHeaders & WikiContract;
+
+/** Optional parameters. */
+export interface ProductWikiCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type ProductWikiCreateOrUpdateResponse = ProductWikiCreateOrUpdateHeaders &
+  WikiContract;
+
+/** Optional parameters. */
+export interface ProductWikiUpdateOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the update operation. */
+export type ProductWikiUpdateResponse = ProductWikiUpdateHeaders & WikiContract;
+
+/** Optional parameters. */
+export interface ProductWikiDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface ProductWikisListOptionalParams
+  extends coreClient.OperationOptions {
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | eq |  contains |</br> */
+  filter?: string;
+  /** Number of records to return. */
+  top?: number;
+  /** Number of records to skip. */
+  skip?: number;
+}
+
+/** Contains response data for the list operation. */
+export type ProductWikisListResponse = ProductWikisListHeaders & WikiCollection;
+
+/** Optional parameters. */
+export interface ProductWikisListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ProductWikisListNextResponse = ProductWikisListNextHeaders &
+  WikiCollection;
 
 /** Optional parameters. */
 export interface QuotaByCounterKeysListByServiceOptionalParams
@@ -9750,99 +10847,107 @@ export type ReportsListByRequestResponse = RequestReportCollection;
 
 /** Optional parameters. */
 export interface ReportsListByApiNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** OData order by query option. */
-  orderby?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByApiNext operation. */
 export type ReportsListByApiNextResponse = ReportCollection;
 
 /** Optional parameters. */
 export interface ReportsListByUserNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** OData order by query option. */
-  orderby?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByUserNext operation. */
 export type ReportsListByUserNextResponse = ReportCollection;
 
 /** Optional parameters. */
 export interface ReportsListByOperationNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** OData order by query option. */
-  orderby?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByOperationNext operation. */
 export type ReportsListByOperationNextResponse = ReportCollection;
 
 /** Optional parameters. */
 export interface ReportsListByProductNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** OData order by query option. */
-  orderby?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByProductNext operation. */
 export type ReportsListByProductNextResponse = ReportCollection;
 
 /** Optional parameters. */
 export interface ReportsListByGeoNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByGeoNext operation. */
 export type ReportsListByGeoNextResponse = ReportCollection;
 
 /** Optional parameters. */
 export interface ReportsListBySubscriptionNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** OData order by query option. */
-  orderby?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySubscriptionNext operation. */
 export type ReportsListBySubscriptionNextResponse = ReportCollection;
 
 /** Optional parameters. */
 export interface ReportsListByTimeNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByTimeNext operation. */
+export type ReportsListByTimeNextResponse = ReportCollection;
+
+/** Optional parameters. */
+export interface GlobalSchemaListByServiceOptionalParams
   extends coreClient.OperationOptions {
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
+  filter?: string;
   /** Number of records to return. */
   top?: number;
   /** Number of records to skip. */
   skip?: number;
-  /** OData order by query option. */
-  orderby?: string;
 }
 
-/** Contains response data for the listByTimeNext operation. */
-export type ReportsListByTimeNextResponse = ReportCollection;
+/** Contains response data for the listByService operation. */
+export type GlobalSchemaListByServiceResponse = GlobalSchemaCollection;
+
+/** Optional parameters. */
+export interface GlobalSchemaGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type GlobalSchemaGetEntityTagResponse = GlobalSchemaGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface GlobalSchemaGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type GlobalSchemaGetResponse = GlobalSchemaGetHeaders &
+  GlobalSchemaContract;
+
+/** Optional parameters. */
+export interface GlobalSchemaCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type GlobalSchemaCreateOrUpdateResponse = GlobalSchemaCreateOrUpdateHeaders &
+  GlobalSchemaContract;
+
+/** Optional parameters. */
+export interface GlobalSchemaDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface GlobalSchemaListByServiceNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByServiceNext operation. */
+export type GlobalSchemaListByServiceNextResponse = GlobalSchemaCollection;
 
 /** Optional parameters. */
 export interface TenantSettingsListByServiceOptionalParams
@@ -9864,10 +10969,7 @@ export type TenantSettingsGetResponse = TenantSettingsGetHeaders &
 
 /** Optional parameters. */
 export interface TenantSettingsListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Not used */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type TenantSettingsListByServiceNextResponse = TenantSettingsCollection;
@@ -9973,14 +11075,7 @@ export type SubscriptionListSecretsResponse = SubscriptionListSecretsHeaders &
 
 /** Optional parameters. */
 export interface SubscriptionListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| stateComment | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| ownerId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| scope | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| userId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| productId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq |     |</br>| user | expand |     |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type SubscriptionListNextResponse = SubscriptionCollection;
@@ -10001,14 +11096,7 @@ export type TagResourceListByServiceResponse = TagResourceCollection;
 
 /** Optional parameters. */
 export interface TagResourceListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| aid | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| apiName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| apiRevision | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| path | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| serviceUrl | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| method | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| urlTemplate | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| terms | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq |     |</br>| isCurrent | filter | eq |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type TagResourceListByServiceNextResponse = TagResourceCollection;
@@ -10072,10 +11160,7 @@ export type TenantAccessListSecretsResponse = TenantAccessListSecretsHeaders &
 
 /** Optional parameters. */
 export interface TenantAccessListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Not used */
-  filter?: string;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type TenantAccessListByServiceNextResponse = AccessInformationCollection;
@@ -10205,16 +11290,7 @@ export type UserGetSharedAccessTokenResponse = UserTokenResult;
 
 /** Optional parameters. */
 export interface UserListByServiceNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| firstName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| lastName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| email | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| state | filter | eq |     |</br>| registrationDate | filter | ge, le, eq, ne, gt, lt |     |</br>| note | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| groups | expand |     |     |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-  /** Detailed Group in response. */
-  expandGroups?: boolean;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByServiceNext operation. */
 export type UserListByServiceNextResponse = UserCollection;
@@ -10235,14 +11311,7 @@ export type UserGroupListResponse = GroupCollection;
 
 /** Optional parameters. */
 export interface UserGroupListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|------------------------|-----------------------------------|</br>| name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>| description | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type UserGroupListNextResponse = GroupCollection;
@@ -10271,14 +11340,7 @@ export type UserSubscriptionGetResponse = UserSubscriptionGetHeaders &
 
 /** Optional parameters. */
 export interface UserSubscriptionListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** | Field     |     Usage     |     Supported operators    | Supported functions               |</br>|-------------|------------------------|-----------------------------------|</br>|name | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>|displayName | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>|stateComment | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>|ownerId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>|scope | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>|userId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br>|productId | filter | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |</br> */
-  filter?: string;
-  /** Number of records to return. */
-  top?: number;
-  /** Number of records to skip. */
-  skip?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type UserSubscriptionListNextResponse = SubscriptionCollection;
@@ -10303,6 +11365,65 @@ export interface UserConfirmationPasswordSendOptionalParams
   /** Determines the type of application which send the create user request. Default is legacy publisher portal. */
   appType?: AppType;
 }
+
+/** Optional parameters. */
+export interface DocumentationListByServiceOptionalParams
+  extends coreClient.OperationOptions {
+  /** |     Field     |     Usage     |     Supported operators     |     Supported functions     |</br>|-------------|-------------|-------------|-------------|</br>| name | filter | eq |  contains |</br> */
+  filter?: string;
+  /** Number of records to return. */
+  top?: number;
+  /** Number of records to skip. */
+  skip?: number;
+}
+
+/** Contains response data for the listByService operation. */
+export type DocumentationListByServiceResponse = DocumentationCollection;
+
+/** Optional parameters. */
+export interface DocumentationGetEntityTagOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getEntityTag operation. */
+export type DocumentationGetEntityTagResponse = DocumentationGetEntityTagHeaders;
+
+/** Optional parameters. */
+export interface DocumentationGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type DocumentationGetResponse = DocumentationGetHeaders &
+  DocumentationContract;
+
+/** Optional parameters. */
+export interface DocumentationCreateOrUpdateOptionalParams
+  extends coreClient.OperationOptions {
+  /** ETag of the Entity. Not required when creating an entity, but required when updating an entity. */
+  ifMatch?: string;
+}
+
+/** Contains response data for the createOrUpdate operation. */
+export type DocumentationCreateOrUpdateResponse = DocumentationCreateOrUpdateHeaders &
+  DocumentationContract;
+
+/** Optional parameters. */
+export interface DocumentationUpdateOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the update operation. */
+export type DocumentationUpdateResponse = DocumentationUpdateHeaders &
+  DocumentationContract;
+
+/** Optional parameters. */
+export interface DocumentationDeleteOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
+export interface DocumentationListByServiceNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByServiceNext operation. */
+export type DocumentationListByServiceNextResponse = DocumentationCollection;
 
 /** Optional parameters. */
 export interface ApiManagementClientOptionalParams

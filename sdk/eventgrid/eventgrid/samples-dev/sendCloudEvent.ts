@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Send events to Event Grid using the Cloud Events 1.0 Schema.
@@ -7,10 +7,7 @@
  */
 
 import { EventGridPublisherClient, AzureKeyCredential } from "@azure/eventgrid";
-import * as dotenv from "dotenv";
-
-// Load the .env file if it exists
-dotenv.config();
+import "dotenv/config";
 
 // The URL of the endpoint of the Event Grid topic.
 const endpoint = process.env["EVENT_GRID_CLOUD_EVENT_SCHEMA_ENDPOINT"] || "";
@@ -24,7 +21,7 @@ export async function main(): Promise<void> {
   const client = new EventGridPublisherClient(
     endpoint,
     "CloudEvent",
-    new AzureKeyCredential(accessKey)
+    new AzureKeyCredential(accessKey),
   );
 
   // Send an event to the Event Grid Service, using the Cloud Event schema.
@@ -34,9 +31,9 @@ export async function main(): Promise<void> {
       type: "azure.sdk.eventgrid.samples.cloudevent",
       source: "/azure/sdk/eventgrid/samples/sendEventSample",
       data: {
-        message: "this is a sample event"
-      }
-    }
+        message: "this is a sample event",
+      },
+    },
   ]);
 }
 

@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { VirtualMachineScaleSetExtensions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ComputeManagementClient } from "../computeManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   VirtualMachineScaleSetExtension,
   VirtualMachineScaleSetExtensionsListNextOptionalParams,
   VirtualMachineScaleSetExtensionsListOptionalParams,
+  VirtualMachineScaleSetExtensionsListResponse,
   VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams,
   VirtualMachineScaleSetExtensionsCreateOrUpdateResponse,
   VirtualMachineScaleSetExtensionUpdate,
@@ -26,21 +32,21 @@ import {
   VirtualMachineScaleSetExtensionsDeleteOptionalParams,
   VirtualMachineScaleSetExtensionsGetOptionalParams,
   VirtualMachineScaleSetExtensionsGetResponse,
-  VirtualMachineScaleSetExtensionsListResponse,
-  VirtualMachineScaleSetExtensionsListNextResponse
+  VirtualMachineScaleSetExtensionsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing VirtualMachineScaleSetExtensions operations. */
 export class VirtualMachineScaleSetExtensionsImpl
-  implements VirtualMachineScaleSetExtensions {
-  private readonly client: ComputeManagementClientContext;
+  implements VirtualMachineScaleSetExtensions
+{
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class VirtualMachineScaleSetExtensions class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -53,7 +59,7 @@ export class VirtualMachineScaleSetExtensionsImpl
   public list(
     resourceGroupName: string,
     vmScaleSetName: string,
-    options?: VirtualMachineScaleSetExtensionsListOptionalParams
+    options?: VirtualMachineScaleSetExtensionsListOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachineScaleSetExtension> {
     const iter = this.listPagingAll(resourceGroupName, vmScaleSetName, options);
     return {
@@ -63,41 +69,58 @@ export class VirtualMachineScaleSetExtensionsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, vmScaleSetName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          vmScaleSetName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     vmScaleSetName: string,
-    options?: VirtualMachineScaleSetExtensionsListOptionalParams
+    options?: VirtualMachineScaleSetExtensionsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<VirtualMachineScaleSetExtension[]> {
-    let result = await this._list(resourceGroupName, vmScaleSetName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualMachineScaleSetExtensionsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, vmScaleSetName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         vmScaleSetName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     vmScaleSetName: string,
-    options?: VirtualMachineScaleSetExtensionsListOptionalParams
+    options?: VirtualMachineScaleSetExtensionsListOptionalParams,
   ): AsyncIterableIterator<VirtualMachineScaleSetExtension> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       vmScaleSetName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -116,32 +139,29 @@ export class VirtualMachineScaleSetExtensionsImpl
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtension,
-    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VirtualMachineScaleSetExtensionsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<VirtualMachineScaleSetExtensionsCreateOrUpdateResponse>,
       VirtualMachineScaleSetExtensionsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<VirtualMachineScaleSetExtensionsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -150,8 +170,8 @@ export class VirtualMachineScaleSetExtensionsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -159,26 +179,31 @@ export class VirtualMachineScaleSetExtensionsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         vmScaleSetName,
         vmssExtensionName,
         extensionParameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      VirtualMachineScaleSetExtensionsCreateOrUpdateResponse,
+      OperationState<VirtualMachineScaleSetExtensionsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -194,14 +219,14 @@ export class VirtualMachineScaleSetExtensionsImpl
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtension,
-    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsCreateOrUpdateOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       vmScaleSetName,
       vmssExtensionName,
       extensionParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -219,30 +244,29 @@ export class VirtualMachineScaleSetExtensionsImpl
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtensionUpdate,
-    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachineScaleSetExtensionsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachineScaleSetExtensionsUpdateResponse>,
       VirtualMachineScaleSetExtensionsUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<VirtualMachineScaleSetExtensionsUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -251,8 +275,8 @@ export class VirtualMachineScaleSetExtensionsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -260,26 +284,31 @@ export class VirtualMachineScaleSetExtensionsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         vmScaleSetName,
         vmssExtensionName,
         extensionParameters,
-        options
+        options,
       },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      VirtualMachineScaleSetExtensionsUpdateResponse,
+      OperationState<VirtualMachineScaleSetExtensionsUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -295,14 +324,14 @@ export class VirtualMachineScaleSetExtensionsImpl
     vmScaleSetName: string,
     vmssExtensionName: string,
     extensionParameters: VirtualMachineScaleSetExtensionUpdate,
-    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams
+    options?: VirtualMachineScaleSetExtensionsUpdateOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       vmScaleSetName,
       vmssExtensionName,
       extensionParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -318,25 +347,24 @@ export class VirtualMachineScaleSetExtensionsImpl
     resourceGroupName: string,
     vmScaleSetName: string,
     vmssExtensionName: string,
-    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -345,8 +373,8 @@ export class VirtualMachineScaleSetExtensionsImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -354,20 +382,22 @@ export class VirtualMachineScaleSetExtensionsImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, vmScaleSetName, vmssExtensionName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, vmScaleSetName, vmssExtensionName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -381,13 +411,13 @@ export class VirtualMachineScaleSetExtensionsImpl
     resourceGroupName: string,
     vmScaleSetName: string,
     vmssExtensionName: string,
-    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams
+    options?: VirtualMachineScaleSetExtensionsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       vmScaleSetName,
       vmssExtensionName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -403,11 +433,11 @@ export class VirtualMachineScaleSetExtensionsImpl
     resourceGroupName: string,
     vmScaleSetName: string,
     vmssExtensionName: string,
-    options?: VirtualMachineScaleSetExtensionsGetOptionalParams
+    options?: VirtualMachineScaleSetExtensionsGetOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vmScaleSetName, vmssExtensionName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -420,11 +450,11 @@ export class VirtualMachineScaleSetExtensionsImpl
   private _list(
     resourceGroupName: string,
     vmScaleSetName: string,
-    options?: VirtualMachineScaleSetExtensionsListOptionalParams
+    options?: VirtualMachineScaleSetExtensionsListOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vmScaleSetName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -439,11 +469,11 @@ export class VirtualMachineScaleSetExtensionsImpl
     resourceGroupName: string,
     vmScaleSetName: string,
     nextLink: string,
-    options?: VirtualMachineScaleSetExtensionsListNextOptionalParams
+    options?: VirtualMachineScaleSetExtensionsListNextOptionalParams,
   ): Promise<VirtualMachineScaleSetExtensionsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, vmScaleSetName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -451,137 +481,155 @@ export class VirtualMachineScaleSetExtensionsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
     },
     201: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
     },
     202: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
     },
     204: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
-    }
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.extensionParameters2,
+  requestBody: Parameters.extensionParameters,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmScaleSetName,
-    Parameters.vmssExtensionName
+    Parameters.vmssExtensionName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
     },
     201: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
     },
     202: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
     },
     204: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
-    }
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.extensionParameters3,
+  requestBody: Parameters.extensionParameters1,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmScaleSetName,
-    Parameters.vmssExtensionName
+    Parameters.vmssExtensionName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
   httpMethod: "DELETE",
-  responses: { 200: {}, 201: {}, 202: {}, 204: {} },
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmScaleSetName,
-    Parameters.vmssExtensionName
+    Parameters.vmssExtensionName,
   ],
-  serializer
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions/{vmssExtensionName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtension
-    }
+      bodyMapper: Mappers.VirtualMachineScaleSetExtension,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.expand],
+  queryParameters: [Parameters.apiVersion, Parameters.expand1],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
+    Parameters.resourceGroupName,
     Parameters.vmScaleSetName,
-    Parameters.vmssExtensionName
+    Parameters.vmssExtensionName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}/extensions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtensionListResult
-    }
+      bodyMapper: Mappers.VirtualMachineScaleSetExtensionListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.vmScaleSetName
+    Parameters.resourceGroupName,
+    Parameters.vmScaleSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualMachineScaleSetExtensionListResult
-    }
+      bodyMapper: Mappers.VirtualMachineScaleSetExtensionListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.vmScaleSetName
+    Parameters.resourceGroupName,
+    Parameters.vmScaleSetName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -4,10 +4,11 @@
 
 ```ts
 
-import { CommonClientOptions } from '@azure/core-client';
-import { OperationOptions } from '@azure/core-client';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { TokenCredential } from '@azure/core-auth';
+import type { CommonClientOptions } from '@azure/core-client';
+import type * as coreClient from '@azure/core-client';
+import type { OperationOptions } from '@azure/core-client';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export type AggregationType = "None" | "Average" | "Count" | "Minimum" | "Maximum" | "Total";
@@ -20,11 +21,33 @@ export const Durations: {
     readonly oneDay: "P1D";
     readonly oneHour: "PT1H";
     readonly fourHours: "PT4H";
-    readonly twentyFourHours: "P1D";
-    readonly fourtyEightHours: "P2D";
+    readonly twentyFourHours: "PT24H";
+    readonly fortyEightHours: "PT48H";
+    readonly fourtyEightHours: "PT48H";
     readonly thirtyMinutes: "PT30M";
     readonly fiveMinutes: "PT5M";
 };
+
+// @public
+export enum KnownMonitorAudience {
+    AzureChina = "https://metrics.monitor.azure.cn",
+    AzureGovernment = "https://metrics.monitor.azure.us",
+    AzurePublicCloud = "https://metrics.monitor.azure.com"
+}
+
+// @public
+export enum KnownMonitorLogsQueryAudience {
+    AzureChina = "https://api.loganalytics.azure.cn",
+    AzureGovernment = "https://api.loganalytics.us",
+    AzurePublicCloud = "https://api.loganalytics.io"
+}
+
+// @public
+export enum KnownMonitorMetricsQueryAudience {
+    AzureChina = "https://management.chinacloudapi.cn",
+    AzureGovernment = "https://management.usgovcloudapi.net",
+    AzurePublicCloud = "https://management.azure.com/"
+}
 
 // @public
 export interface ListMetricDefinitionsOptions extends OperationOptions {
@@ -32,7 +55,7 @@ export interface ListMetricDefinitionsOptions extends OperationOptions {
 }
 
 // @public
-export interface ListMetricNamespacesOptions {
+export interface ListMetricNamespacesOptions extends OperationOptions {
     startTime?: string;
 }
 
@@ -61,11 +84,13 @@ export type LogsQueryBatchResult = Array<LogsQueryPartialResult | LogsQuerySucce
 export class LogsQueryClient {
     constructor(tokenCredential: TokenCredential, options?: LogsQueryClientOptions);
     queryBatch(batch: QueryBatch[], options?: LogsQueryBatchOptions): Promise<LogsQueryBatchResult>;
+    queryResource(resourceId: string, query: string, timespan: QueryTimeInterval, options?: LogsQueryOptions): Promise<LogsQueryResult>;
     queryWorkspace(workspaceId: string, query: string, timespan: QueryTimeInterval, options?: LogsQueryOptions): Promise<LogsQueryResult>;
 }
 
 // @public
 export interface LogsQueryClientOptions extends CommonClientOptions {
+    audience?: string;
     endpoint?: string;
 }
 
@@ -171,7 +196,14 @@ export interface MetricNamespace {
 }
 
 // @public
+export class MetricsClient {
+    constructor(endpoint: string, tokenCredential: TokenCredential, options?: MetricsClientOptions);
+    queryResources(resourceIds: string[], metricNames: string[], metricNamespace: string, options?: MetricsQueryResourcesOptions): Promise<MetricsQueryResult[]>;
+}
+
+// @public
 export interface MetricsClientOptions extends CommonClientOptions {
+    audience?: string;
     endpoint?: string;
 }
 
@@ -186,12 +218,27 @@ export class MetricsQueryClient {
 // @public
 export interface MetricsQueryOptions extends OperationOptions {
     aggregations?: AggregationType[];
+    autoAdjustTimegrain?: boolean;
     filter?: string;
     granularity?: string;
     metricNamespace?: string;
     orderBy?: string;
     resultType?: ResultType;
+    rollUpBy?: string;
     timespan?: QueryTimeInterval;
+    top?: number;
+    validateDimensions?: boolean;
+}
+
+// @public
+export interface MetricsQueryResourcesOptions extends coreClient.OperationOptions {
+    aggregation?: string;
+    endTime?: Date;
+    filter?: string;
+    interval?: string;
+    orderBy?: string;
+    rollUpBy?: string;
+    startTime?: Date;
     top?: number;
 }
 
@@ -202,6 +249,7 @@ export interface MetricsQueryResult {
     granularity?: string;
     metrics: Metric[];
     namespace?: string;
+    resourceId?: string;
     resourceRegion?: string;
     timespan: QueryTimeInterval;
 }

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ExpressRouteCircuit,
   ExpressRouteCircuitsListOptionalParams,
@@ -29,7 +29,7 @@ import {
   ExpressRouteCircuitsGetStatsOptionalParams,
   ExpressRouteCircuitsGetStatsResponse,
   ExpressRouteCircuitsGetPeeringStatsOptionalParams,
-  ExpressRouteCircuitsGetPeeringStatsResponse
+  ExpressRouteCircuitsGetPeeringStatsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -42,14 +42,14 @@ export interface ExpressRouteCircuits {
    */
   list(
     resourceGroupName: string,
-    options?: ExpressRouteCircuitsListOptionalParams
+    options?: ExpressRouteCircuitsListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteCircuit>;
   /**
    * Gets all the express route circuits in a subscription.
    * @param options The options parameters.
    */
   listAll(
-    options?: ExpressRouteCircuitsListAllOptionalParams
+    options?: ExpressRouteCircuitsListAllOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteCircuit>;
   /**
    * Deletes the specified express route circuit.
@@ -60,8 +60,8 @@ export interface ExpressRouteCircuits {
   beginDelete(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ExpressRouteCircuitsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified express route circuit.
    * @param resourceGroupName The name of the resource group.
@@ -71,7 +71,7 @@ export interface ExpressRouteCircuits {
   beginDeleteAndWait(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitsDeleteOptionalParams
+    options?: ExpressRouteCircuitsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets information about the specified express route circuit.
@@ -82,7 +82,7 @@ export interface ExpressRouteCircuits {
   get(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitsGetOptionalParams
+    options?: ExpressRouteCircuitsGetOptionalParams,
   ): Promise<ExpressRouteCircuitsGetResponse>;
   /**
    * Creates or updates an express route circuit.
@@ -95,10 +95,10 @@ export interface ExpressRouteCircuits {
     resourceGroupName: string,
     circuitName: string,
     parameters: ExpressRouteCircuit,
-    options?: ExpressRouteCircuitsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCircuitsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteCircuitsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteCircuitsCreateOrUpdateResponse>,
       ExpressRouteCircuitsCreateOrUpdateResponse
     >
   >;
@@ -113,7 +113,7 @@ export interface ExpressRouteCircuits {
     resourceGroupName: string,
     circuitName: string,
     parameters: ExpressRouteCircuit,
-    options?: ExpressRouteCircuitsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCircuitsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRouteCircuitsCreateOrUpdateResponse>;
   /**
    * Updates an express route circuit tags.
@@ -126,7 +126,7 @@ export interface ExpressRouteCircuits {
     resourceGroupName: string,
     circuitName: string,
     parameters: TagsObject,
-    options?: ExpressRouteCircuitsUpdateTagsOptionalParams
+    options?: ExpressRouteCircuitsUpdateTagsOptionalParams,
   ): Promise<ExpressRouteCircuitsUpdateTagsResponse>;
   /**
    * Gets the currently advertised ARP table associated with the express route circuit in a resource
@@ -142,10 +142,10 @@ export interface ExpressRouteCircuits {
     circuitName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCircuitsListArpTableOptionalParams
+    options?: ExpressRouteCircuitsListArpTableOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteCircuitsListArpTableResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteCircuitsListArpTableResponse>,
       ExpressRouteCircuitsListArpTableResponse
     >
   >;
@@ -163,7 +163,7 @@ export interface ExpressRouteCircuits {
     circuitName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCircuitsListArpTableOptionalParams
+    options?: ExpressRouteCircuitsListArpTableOptionalParams,
   ): Promise<ExpressRouteCircuitsListArpTableResponse>;
   /**
    * Gets the currently advertised routes table associated with the express route circuit in a resource
@@ -179,10 +179,10 @@ export interface ExpressRouteCircuits {
     circuitName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCircuitsListRoutesTableOptionalParams
+    options?: ExpressRouteCircuitsListRoutesTableOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteCircuitsListRoutesTableResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteCircuitsListRoutesTableResponse>,
       ExpressRouteCircuitsListRoutesTableResponse
     >
   >;
@@ -200,7 +200,7 @@ export interface ExpressRouteCircuits {
     circuitName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCircuitsListRoutesTableOptionalParams
+    options?: ExpressRouteCircuitsListRoutesTableOptionalParams,
   ): Promise<ExpressRouteCircuitsListRoutesTableResponse>;
   /**
    * Gets the currently advertised routes table summary associated with the express route circuit in a
@@ -216,10 +216,10 @@ export interface ExpressRouteCircuits {
     circuitName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCircuitsListRoutesTableSummaryOptionalParams
+    options?: ExpressRouteCircuitsListRoutesTableSummaryOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteCircuitsListRoutesTableSummaryResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteCircuitsListRoutesTableSummaryResponse>,
       ExpressRouteCircuitsListRoutesTableSummaryResponse
     >
   >;
@@ -237,7 +237,7 @@ export interface ExpressRouteCircuits {
     circuitName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCircuitsListRoutesTableSummaryOptionalParams
+    options?: ExpressRouteCircuitsListRoutesTableSummaryOptionalParams,
   ): Promise<ExpressRouteCircuitsListRoutesTableSummaryResponse>;
   /**
    * Gets all the stats from an express route circuit in a resource group.
@@ -248,7 +248,7 @@ export interface ExpressRouteCircuits {
   getStats(
     resourceGroupName: string,
     circuitName: string,
-    options?: ExpressRouteCircuitsGetStatsOptionalParams
+    options?: ExpressRouteCircuitsGetStatsOptionalParams,
   ): Promise<ExpressRouteCircuitsGetStatsResponse>;
   /**
    * Gets all stats from an express route circuit in a resource group.
@@ -261,6 +261,6 @@ export interface ExpressRouteCircuits {
     resourceGroupName: string,
     circuitName: string,
     peeringName: string,
-    options?: ExpressRouteCircuitsGetPeeringStatsOptionalParams
+    options?: ExpressRouteCircuitsGetPeeringStatsOptionalParams,
   ): Promise<ExpressRouteCircuitsGetPeeringStatsResponse>;
 }

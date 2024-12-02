@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT Licence.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 /**
  * This sample demonstrates how the sendMessages() method can be used to send messages to Service Bus
@@ -15,13 +15,14 @@
  */
 
 import { ServiceBusClient, ServiceBusMessage, ServiceBusMessageBatch } from "@azure/service-bus";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
 dotenv.config();
 
 // Define connection string and related Service Bus entity names here
-const connectionString = process.env.SERVICEBUS_CONNECTION_STRING || "<connection string>";
+const fqdn = process.env.SERVICEBUS_FQDN || "<your-servicebus-namespace>.servicebus.windows.net";
 const queueName = process.env.QUEUE_NAME || "<queue name>";
 
 const firstSetOfMessages: ServiceBusMessage[] = [
@@ -29,7 +30,7 @@ const firstSetOfMessages: ServiceBusMessage[] = [
   { body: "Werner Heisenberg" },
   { body: "Marie Curie" },
   { body: "Steven Hawking" },
-  { body: "Isaac Newton" }
+  { body: "Isaac Newton" },
 ];
 
 const secondSetOfMessages: ServiceBusMessage[] = [
@@ -37,11 +38,12 @@ const secondSetOfMessages: ServiceBusMessage[] = [
   { body: "Michael Faraday" },
   { body: "Galileo Galilei" },
   { body: "Johannes Kepler" },
-  { body: "Nikolaus Kopernikus" }
+  { body: "Nikolaus Kopernikus" },
 ];
 
 export async function main() {
-  const sbClient = new ServiceBusClient(connectionString);
+  const credential = new DefaultAzureCredential();
+  const sbClient = new ServiceBusClient(fqdn, credential);
 
   // createSender() can also be used to create a sender for a topic.
   const sender = sbClient.createSender(queueName);
@@ -69,6 +71,16 @@ export async function main() {
     // Send the batch
     console.log(`Sending the last 5 scientists (as a ServiceBusMessageBatch)`);
     await sender.sendMessages(batch);
+
+    // Send a single message
+    console.log(`Sending one scientists`);
+    const message: ServiceBusMessage = {
+      contentType: "application/json",
+      subject: "Scientist",
+      body: { firstName: "Albert", lastName: "Einstein" },
+      timeToLive: 2 * 60 * 1000, // message expires in 2 minutes
+    };
+    await sender.sendMessages(message);
 
     // Close the sender
     console.log(`Done sending, closing...`);

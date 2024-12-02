@@ -1,0 +1,21 @@
+{
+  "extends": "../../../tsconfig",
+  "compilerOptions": {
+    "lib": ["ES2018.AsyncIterable"],
+    "paths": {
+      "@azure/eventgrid-system-events": ["./src/index"]
+    },
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "."
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.mts",
+    "src/**/*.cts",
+    "samples-dev/**/*.ts",
+    "test/**/*.ts",
+    "test/**/*.mts",
+    "test/**/*.cts"
+  ]
+}

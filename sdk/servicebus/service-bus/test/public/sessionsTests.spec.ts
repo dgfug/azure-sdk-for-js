@@ -1,32 +1,26 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import chai, { assert } from "chai";
 import Long from "long";
-const should = chai.should();
-import chaiAsPromised from "chai-as-promised";
-chai.use(chaiAsPromised);
-import {
+import type {
   ServiceBusReceivedMessage,
-  delay,
   ProcessErrorArgs,
-  isServiceBusError,
-  ServiceBusError
-} from "../../src";
+  ServiceBusError,
+} from "../../src/index.js";
+import { delay, isServiceBusError } from "../../src/index.js";
 
-import { TestClientType, TestMessage, checkWithTimeout } from "./utils/testUtils";
-import { ServiceBusSender } from "../../src";
-import { ServiceBusSessionReceiver } from "../../src";
+import { TestClientType, TestMessage, checkWithTimeout } from "./utils/testUtils.js";
+import type { ServiceBusSender } from "../../src/index.js";
+import type { ServiceBusSessionReceiver } from "../../src/index.js";
+import type { EntityName, ServiceBusClientForTests } from "./utils/testutils2.js";
 import {
-  EntityName,
-  ServiceBusClientForTests,
   createServiceBusClientForTests,
   testPeekMsgsLength,
-  getRandomTestClientTypeWithSessions
-} from "./utils/testutils2";
-import { AbortController } from "@azure/abort-controller";
-import sinon from "sinon";
-import { ServiceBusSessionReceiverImpl } from "../../src/receivers/sessionReceiver";
+  getRandomTestClientTypeWithSessions,
+} from "./utils/testutils2.js";
+import type { ServiceBusSessionReceiverImpl } from "../../src/receivers/sessionReceiver.js";
+import { describe, it, afterEach, afterAll, vi } from "vitest";
+import { expect, should } from "./utils/chai.js";
 
 let unexpectedError: Error | undefined;
 
@@ -51,7 +45,7 @@ describe("session tests", () => {
     }
 
     sender = serviceBusClient.test.addToCleanup(
-      serviceBusClient.createSender(entityNames.queue ?? entityNames.topic!)
+      serviceBusClient.createSender(entityNames.queue ?? entityNames.topic!),
     );
 
     // Observation -
@@ -67,7 +61,7 @@ describe("session tests", () => {
     // const peekedMsgs = await receiver.peekMessages();
     // const receiverEntityType = receiver.entityType;
     // if (peekedMsgs.length) {
-    //   chai.assert.fail(`Please use an empty ${receiverEntityType} for integration testing`);
+    //   assert.fail(`Please use an empty ${receiverEntityType} for integration testing`);
     // }
   }
 
@@ -77,14 +71,12 @@ describe("session tests", () => {
     await serviceBusClient.test.after();
   });
 
-  describe(`${testClientType}: Session Receiver Tests`, function(): void {
-    it("acceptNextSession() No sessionId on empty queue throws OperationTimeoutError", async function(): Promise<
-      void
-    > {
+  describe(`${testClientType}: Session Receiver Tests`, function (): void {
+    it("acceptNextSession() No sessionId on empty queue throws OperationTimeoutError", async function (): Promise<void> {
       let expectedErrorThrown = false;
       try {
         await beforeEachTest();
-      } catch (error) {
+      } catch (error: any) {
         // TODO: https://github.com/Azure/azure-sdk-for-js/issues/9775 to figure out why we get two different errors.
         if (
           isServiceBusError(error) &&
@@ -98,22 +90,20 @@ describe("session tests", () => {
       should.equal(
         expectedErrorThrown,
         true,
-        `Instead of ServiceTimeout or SessionCannotBeLocked, found ${unexpectedError}`
+        `Instead of ServiceTimeout or SessionCannotBeLocked, found ${unexpectedError}`,
       );
       await serviceBusClient.close();
     });
 
-    it("acceptSession() An already locked session throws SessionCannotBeLockedError", async function(): Promise<
-      void
-    > {
+    it("acceptSession() An already locked session throws SessionCannotBeLockedError", async function (): Promise<void> {
       let expectedErrorThrown = false;
       await beforeEachTest("boo");
       try {
         await serviceBusClient.test.acceptSessionWithPeekLock(
           { queue: receiver.entityPath, usesSessions: true },
-          "boo"
+          "boo",
         );
-      } catch (error) {
+      } catch (error: any) {
         if (isServiceBusError(error) && error.code === "SessionCannotBeLocked") {
           expectedErrorThrown = true;
         } else {
@@ -123,14 +113,12 @@ describe("session tests", () => {
       should.equal(
         expectedErrorThrown,
         true,
-        `Instead of SessionCannotBeLockedError, found ${unexpectedError}`
+        `Instead of SessionCannotBeLockedError, found ${unexpectedError}`,
       );
       await serviceBusClient.close();
     });
 
-    it("Batch Receiver: no messages received for invalid sessionId", async function(): Promise<
-      void
-    > {
+    it("Batch Receiver: no messages received for invalid sessionId", async function (): Promise<void> {
       const nonExistentSessionId: string = "non" + TestMessage.sessionId;
       await beforeEachTest(nonExistentSessionId);
       const testMessage = TestMessage.getSessionSample();
@@ -153,15 +141,13 @@ describe("session tests", () => {
       should.equal(
         msgs[0].messageId,
         testMessage.messageId,
-        "MessageId is different than expected"
+        "MessageId is different than expected",
       );
       await receiver.completeMessage(msgs[0]);
       await testPeekMsgsLength(receiver, 0);
     });
 
-    it("Streaming Receiver: no messages received for invalid sessionId", async function(): Promise<
-      void
-    > {
+    it("Streaming Receiver: no messages received for invalid sessionId", async function (): Promise<void> {
       const nonExistentSessionId: string = "non" + TestMessage.sessionId;
       await beforeEachTest(nonExistentSessionId);
       const testMessage = TestMessage.getSessionSample();
@@ -173,7 +159,7 @@ describe("session tests", () => {
           receivedMsgs.push(msg);
           return Promise.resolve();
         },
-        processError
+        processError,
       });
       await delay(2000);
       should.equal(receivedMsgs.length, 0, `Expected 0, received ${receivedMsgs.length} messages`);
@@ -192,14 +178,14 @@ describe("session tests", () => {
             should.equal(
               msg.messageId,
               testMessage.messageId,
-              "MessageId is different than expected"
+              "MessageId is different than expected",
             );
             await receiver.completeMessage(msg);
             receivedMsgs.push(msg);
           },
-          processError
+          processError,
         },
-        { autoCompleteMessages: false }
+        { autoCompleteMessages: false },
       );
 
       const msgsCheck = await checkWithTimeout(() => receivedMsgs.length === 1);
@@ -209,7 +195,7 @@ describe("session tests", () => {
       await testPeekMsgsLength(receiver, 0);
     });
 
-    it("Testing getState and setState", async function(): Promise<void> {
+    it("Testing getState and setState", async function (): Promise<void> {
       await beforeEachTest(TestMessage.sessionId);
       const testMessage = TestMessage.getSessionSample();
       await sender.sendMessages(testMessage);
@@ -222,12 +208,12 @@ describe("session tests", () => {
       should.equal(
         msgs[0].messageId,
         testMessage.messageId,
-        "MessageId is different than expected"
+        "MessageId is different than expected",
       );
       should.equal(
         msgs[0].sessionId,
         testMessage.sessionId,
-        "SessionId is different than expected"
+        "SessionId is different than expected",
       );
 
       let testState = await receiver.getSessionState();
@@ -251,12 +237,12 @@ describe("session tests", () => {
       should.equal(
         msgs[0].messageId,
         testMessage.messageId,
-        "MessageId is different than expected"
+        "MessageId is different than expected",
       );
       should.equal(
         msgs[0].sessionId,
         testMessage.sessionId,
-        "SessionId is different than expected"
+        "SessionId is different than expected",
       );
 
       testState = await receiver.getSessionState();
@@ -267,58 +253,71 @@ describe("session tests", () => {
       await testPeekMsgsLength(receiver, 0);
     });
 
-    it("Abort getState request", async function(): Promise<void> {
+    it("Abort getState request", async function (): Promise<void> {
       await beforeEachTest(TestMessage.sessionId);
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 1);
       try {
         await receiver.getSessionState({ abortSignal: controller.signal });
         throw new Error(`Test failure`);
-      } catch (err) {
-        err.message.should.equal("The operation was aborted.");
+      } catch (err: any) {
         err.name.should.equal("AbortError");
       }
     });
 
-    it("Abort setState request on the session receiver", async function(): Promise<void> {
+    it("Abort setState request on the session receiver", async function (): Promise<void> {
       await beforeEachTest(TestMessage.sessionId);
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 1);
       try {
         await receiver.setSessionState("why", { abortSignal: controller.signal });
         throw new Error(`Test failure`);
-      } catch (err) {
-        err.message.should.equal("The operation was aborted.");
+      } catch (err: any) {
         err.name.should.equal("AbortError");
       }
     });
 
-    it("Abort renewSessionLock request on the session receiver", async function(): Promise<void> {
+    it("Abort renewSessionLock request on the session receiver", async function (): Promise<void> {
       await beforeEachTest(TestMessage.sessionId);
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 1);
       try {
         await receiver.renewSessionLock({ abortSignal: controller.signal });
         throw new Error(`Test failure`);
-      } catch (err) {
-        err.message.should.equal("The operation was aborted.");
+      } catch (err: any) {
         err.name.should.equal("AbortError");
       }
     });
 
-    it("Abort receiveDeferredMessages request on the session receiver", async function(): Promise<
-      void
-    > {
+    it("Abort receiveDeferredMessages request on the session receiver", async function (): Promise<void> {
       await beforeEachTest(TestMessage.sessionId);
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 1);
       try {
         await receiver.receiveDeferredMessages([Long.ZERO], { abortSignal: controller.signal });
         throw new Error(`Test failure`);
-      } catch (err) {
-        err.message.should.equal("The operation was aborted.");
+      } catch (err: any) {
         err.name.should.equal("AbortError");
       }
+    });
+
+    ["acceptSession", "acceptNextSession"].forEach((method) => {
+      it(`${method} on session id of empty string`, async () => {
+        serviceBusClient = createServiceBusClientForTests();
+        const entityNames = await serviceBusClient.test.createTestEntities(testClientType);
+        const testMessage = TestMessage.getSessionSample();
+        testMessage.sessionId = "";
+        sender = serviceBusClient.test.addToCleanup(
+          serviceBusClient.createSender(entityNames.queue ?? entityNames.topic!),
+        );
+        await sender.sendMessages(testMessage);
+        receiver =
+          method === "acceptSession"
+            ? await serviceBusClient.test.acceptSessionWithPeekLock(entityNames, "")
+            : await serviceBusClient.test.acceptNextSessionWithPeekLock(entityNames);
+        const msgs = await receiver.receiveMessages(10);
+        should.equal(msgs.length, 1, "Unexpected number of messages received");
+      });
     });
   });
 });
@@ -328,18 +327,18 @@ describe("session tests", () => {
  * https://github.com/Azure/azure-sdk-for-js/pull/8447#issuecomment-618510245
  * If support for this is added in the future, we can stop skipping this test.
  */
-describe.skip("SessionReceiver - disconnects - (if recovery is supported in future)", function(): void {
+describe.skip("SessionReceiver - disconnects - (if recovery is supported in future)", function (): void {
   let serviceBusClient: ServiceBusClientForTests;
   async function beforeEachTest(testClientType: TestClientType): Promise<EntityName> {
     serviceBusClient = createServiceBusClientForTests();
     return serviceBusClient.test.createTestEntities(testClientType);
   }
 
-  after(() => {
+  afterAll(() => {
     return serviceBusClient.test.after();
   });
 
-  it("can receive and settle messages after a disconnect", async function(): Promise<void> {
+  it("can receive and settle messages after a disconnect", async function (): Promise<void> {
     const testMessage = TestMessage.getSessionSample();
     // Create the sender and receiver.
     const entityName = await beforeEachTest(TestClientType.UnpartitionedQueueWithSessions);
@@ -347,8 +346,8 @@ describe.skip("SessionReceiver - disconnects - (if recovery is supported in futu
       entityName.queue!,
       testMessage.sessionId,
       {
-        maxAutoLockRenewalDurationInMs: 10000 // Lower this value so that test can complete in time.
-      }
+        maxAutoLockRenewalDurationInMs: 10000, // Lower this value so that test can complete in time.
+      },
     );
     const sender = serviceBusClient.createSender(entityName.queue!);
     // Send a message so we can be sure when the receiver is open and active.
@@ -357,8 +356,8 @@ describe.skip("SessionReceiver - disconnects - (if recovery is supported in futu
     let settledMessageCount = 0;
 
     let messageHandlerCount = 0;
-    let receiverIsActiveResolver: Function;
-    let receiverSecondMessageResolver: Function;
+    let receiverIsActiveResolver: (value: unknown) => void;
+    let receiverSecondMessageResolver: (value: unknown) => void;
     const receiverIsActive = new Promise((resolve) => {
       receiverIsActiveResolver = resolve;
     });
@@ -374,22 +373,22 @@ describe.skip("SessionReceiver - disconnects - (if recovery is supported in futu
         try {
           await receiver.completeMessage(message);
           settledMessageCount++;
-        } catch (err) {
+        } catch (err: any) {
           receivedErrors.push(err);
         }
         if (messageHandlerCount === 1) {
           // Since we've received a message, mark the receiver as active.
-          receiverIsActiveResolver();
+          receiverIsActiveResolver(undefined);
         } else {
           // Mark the second message resolver!
-          receiverSecondMessageResolver();
+          receiverSecondMessageResolver(undefined);
         }
       },
       async processError(err) {
         console.log(`Got an error`);
         console.error(err);
         receivedErrors.push(err);
-      }
+      },
     });
 
     // Wait until we're sure the receiver is open and receiving messages.
@@ -401,7 +400,7 @@ describe.skip("SessionReceiver - disconnects - (if recovery is supported in futu
     const connectionContext = (receiver as any)["_context"];
     const refreshConnection = connectionContext.refreshConnection;
     let refreshConnectionCalled = 0;
-    connectionContext.refreshConnection = function(...args: any) {
+    connectionContext.refreshConnection = function (...args: any) {
       refreshConnectionCalled++;
       refreshConnection.apply(this, args);
     };
@@ -420,18 +419,18 @@ describe.skip("SessionReceiver - disconnects - (if recovery is supported in futu
   });
 });
 
-describe("SessionReceiver - disconnects", function(): void {
+describe("SessionReceiver - disconnects", function (): void {
   let serviceBusClient: ServiceBusClientForTests;
   async function beforeEachTest(testClientType: TestClientType): Promise<EntityName> {
     serviceBusClient = createServiceBusClientForTests();
     return serviceBusClient.test.createTestEntities(testClientType);
   }
 
-  after(() => {
+  afterAll(() => {
     return serviceBusClient.test.after();
   });
 
-  it("calls processError and closes the link", async function(): Promise<void> {
+  it("calls processError and closes the link", async function (): Promise<void> {
     const testMessage = TestMessage.getSessionSample();
     // Create the sender and receiver.
     const entityName = await beforeEachTest(TestClientType.UnpartitionedQueueWithSessions);
@@ -439,12 +438,12 @@ describe("SessionReceiver - disconnects", function(): void {
       entityName.queue!,
       testMessage.sessionId,
       {
-        maxAutoLockRenewalDurationInMs: 10000 // Lower this value so that test can complete in time.
-      }
+        maxAutoLockRenewalDurationInMs: 10000, // Lower this value so that test can complete in time.
+      },
     );
 
-    let receiverSecondMessageResolver: Function;
-    let errorIsThrownResolver: Function;
+    let receiverSecondMessageResolver: (value: unknown) => void;
+    let errorIsThrownResolver: (value: ProcessErrorArgs | PromiseLike<ProcessErrorArgs>) => void;
     const errorIsThrown = new Promise<ProcessErrorArgs>((resolve) => {
       errorIsThrownResolver = resolve;
     });
@@ -454,9 +453,9 @@ describe("SessionReceiver - disconnects", function(): void {
 
     const sender = serviceBusClient.createSender(entityName.queue!);
     should.equal(receiver.isClosed, false, "Receiver should not have been closed");
-    const isCloseCalledSpy = sinon.spy(
+    const isCloseCalledSpy = vi.spyOn(
       (receiver as ServiceBusSessionReceiverImpl)["_messageSession"],
-      "close"
+      "close",
     );
 
     // Send a message so we can be sure when the receiver is open and active.
@@ -469,9 +468,9 @@ describe("SessionReceiver - disconnects", function(): void {
         },
         async processError(err) {
           errorIsThrownResolver(err);
-        }
+        },
       },
-      { autoCompleteMessages: false }
+      { autoCompleteMessages: false },
     );
 
     const err = await errorIsThrown;
@@ -479,7 +478,7 @@ describe("SessionReceiver - disconnects", function(): void {
     should.equal(
       (err.error as ServiceBusError).code,
       "SessionLockLost",
-      "error code is not SessionLockLost"
+      "error code is not SessionLockLost",
     );
 
     // NOTE: this is a hokey workaround. It used to be that you'd only get the single error
@@ -488,8 +487,8 @@ describe("SessionReceiver - disconnects", function(): void {
     //
     // This is only an issue for this test because we're trying to do some timing dependent checks of our
     // internal state.
-    await checkWithTimeout(() => isCloseCalledSpy.called);
-    assert.isTrue(isCloseCalledSpy.called, "Close should have been called on the message session");
+    await checkWithTimeout(() => isCloseCalledSpy.mock.lastCall !== undefined);
+    expect(isCloseCalledSpy).toHaveBeenCalled(); // Close should have been called on the message session
 
     // send a second message to trigger the message handler again.
     await sender.sendMessages(TestMessage.getSessionSample());
@@ -497,14 +496,16 @@ describe("SessionReceiver - disconnects", function(): void {
       entityName.queue!,
       testMessage.sessionId,
       {
-        maxAutoLockRenewalDurationInMs: 10000 // Lower this value so that test can complete in time.
-      }
+        maxAutoLockRenewalDurationInMs: 10000, // Lower this value so that test can complete in time.
+      },
     );
     receiver2.subscribe({
       async processMessage(_message: ServiceBusReceivedMessage) {
-        receiverSecondMessageResolver();
+        receiverSecondMessageResolver(undefined);
       },
-      async processError(_err) {}
+      async processError(_err) {
+        /* empty body */
+      },
     });
     await receiverSecondMessage;
     await receiver2.close();

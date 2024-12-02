@@ -1,41 +1,49 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredential, GetTokenOptions, AccessToken } from "@azure/core-auth";
-import { TokenCredentialOptions } from "../tokenCredentialOptions";
-import { credentialLogger } from "../util/logging";
-import { checkTenantId } from "../util/checkTenantId";
-import { MsalAuthorizationCode } from "../msal/nodeFlows/msalAuthorizationCode";
-import { MsalFlow } from "../msal/flows";
-import { trace } from "../util/tracing";
+import type { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
+import {
+  processMultiTenantRequest,
+  resolveAdditionallyAllowedTenantIds,
+} from "../util/tenantIdUtils.js";
+import type { AuthorizationCodeCredentialOptions } from "./authorizationCodeCredentialOptions.js";
+import { checkTenantId } from "../util/tenantIdUtils.js";
+import { credentialLogger } from "../util/logging.js";
+import { ensureScopes } from "../util/scopeUtils.js";
+import { tracingClient } from "../util/tracing.js";
+import type { MsalClient } from "../msal/nodeFlows/msalClient.js";
+import { createMsalClient } from "../msal/nodeFlows/msalClient.js";
 
 const logger = credentialLogger("AuthorizationCodeCredential");
 
 /**
- * Enables authentication to Azure Active Directory using an authorization code
+ * Enables authentication to Microsoft Entra ID using an authorization code
  * that was obtained through the authorization code flow, described in more detail
- * in the Azure Active Directory documentation:
+ * in the Microsoft Entra ID documentation:
  *
- * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow
+ * https://learn.microsoft.com/entra/identity-platform/v2-oauth2-auth-code-flow
  */
 export class AuthorizationCodeCredential implements TokenCredential {
-  private msalFlow: MsalFlow;
+  private msalClient: MsalClient;
   private disableAutomaticAuthentication?: boolean;
   private authorizationCode: string;
   private redirectUri: string;
+  private tenantId?: string;
+  private additionallyAllowedTenantIds: string[];
+  private clientSecret?: string;
 
   /**
-   * Creates an instance of CodeFlowCredential with the details needed
+   * Creates an instance of AuthorizationCodeCredential with the details needed
    * to request an access token using an authentication that was obtained
-   * from Azure Active Directory.
+   * from Microsoft Entra ID.
    *
    * It is currently necessary for the user of this credential to initiate
    * the authorization code flow to obtain an authorization code to be used
    * with this credential.  A full example of this flow is provided here:
    *
-   * https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/samples/manual/authorizationCodeSample.ts
+   * https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/samples/v2/manual/authorizationCodeSample.ts
    *
-   * @param tenantId - The Azure Active Directory tenant (directory) ID or name.
+   * @param tenantId - The Microsoft Entra tenant (directory) ID or name.
    *                 'common' may be used when dealing with multi-tenant scenarios.
    * @param clientId - The client (application) ID of an App Registration in the tenant.
    * @param clientSecret - A client secret that was generated for the App Registration
@@ -52,20 +60,20 @@ export class AuthorizationCodeCredential implements TokenCredential {
     clientSecret: string,
     authorizationCode: string,
     redirectUri: string,
-    options?: TokenCredentialOptions
+    options?: AuthorizationCodeCredentialOptions,
   );
   /**
-   * Creates an instance of CodeFlowCredential with the details needed
+   * Creates an instance of AuthorizationCodeCredential with the details needed
    * to request an access token using an authentication that was obtained
-   * from Azure Active Directory.
+   * from Microsoft Entra ID.
    *
    * It is currently necessary for the user of this credential to initiate
    * the authorization code flow to obtain an authorization code to be used
    * with this credential.  A full example of this flow is provided here:
    *
-   * https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/samples/manual/authorizationCodeSample.ts
+   * https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/samples/v2/manual/authorizationCodeSample.ts
    *
-   * @param tenantId - The Azure Active Directory tenant (directory) ID or name.
+   * @param tenantId - The Microsoft Entra tenant (directory) ID or name.
    *                 'common' may be used when dealing with multi-tenant scenarios.
    * @param clientId - The client (application) ID of an App Registration in the tenant.
    * @param authorizationCode - An authorization code that was received from following the
@@ -80,7 +88,7 @@ export class AuthorizationCodeCredential implements TokenCredential {
     clientId: string,
     authorizationCode: string,
     redirectUri: string,
-    options?: TokenCredentialOptions
+    options?: AuthorizationCodeCredentialOptions,
   );
   /**
    * @hidden
@@ -91,11 +99,11 @@ export class AuthorizationCodeCredential implements TokenCredential {
     clientId: string,
     clientSecretOrAuthorizationCode: string,
     authorizationCodeOrRedirectUri: string,
-    redirectUriOrOptions: string | TokenCredentialOptions | undefined,
-    options?: TokenCredentialOptions
+    redirectUriOrOptions: string | AuthorizationCodeCredentialOptions | undefined,
+    options?: AuthorizationCodeCredentialOptions,
   ) {
     checkTenantId(logger, tenantId);
-    let clientSecret: string | undefined = clientSecretOrAuthorizationCode;
+    this.clientSecret = clientSecretOrAuthorizationCode;
 
     if (typeof redirectUriOrOptions === "string") {
       // the clientId+clientSecret constructor
@@ -106,23 +114,25 @@ export class AuthorizationCodeCredential implements TokenCredential {
       // clientId only
       this.authorizationCode = clientSecretOrAuthorizationCode;
       this.redirectUri = authorizationCodeOrRedirectUri as string;
-      clientSecret = undefined;
-      options = redirectUriOrOptions as TokenCredentialOptions;
+      this.clientSecret = undefined;
+      options = redirectUriOrOptions as AuthorizationCodeCredentialOptions;
     }
 
-    this.msalFlow = new MsalAuthorizationCode({
+    // TODO: Validate tenant if provided
+    this.tenantId = tenantId;
+    this.additionallyAllowedTenantIds = resolveAdditionallyAllowedTenantIds(
+      options?.additionallyAllowedTenants,
+    );
+
+    this.msalClient = createMsalClient(clientId, tenantId, {
       ...options,
-      clientSecret,
-      clientId,
-      tokenCredentialOptions: options || {},
       logger,
-      redirectUri: this.redirectUri,
-      authorizationCode: this.authorizationCode
+      tokenCredentialOptions: options ?? {},
     });
   }
 
   /**
-   * Authenticates with Azure Active Directory and returns an access token if successful.
+   * Authenticates with Microsoft Entra ID and returns an access token if successful.
    * If authentication fails, a {@link CredentialUnavailableError} will be thrown with the details of the failure.
    *
    * @param scopes - The list of scopes for which the token will have access.
@@ -130,12 +140,29 @@ export class AuthorizationCodeCredential implements TokenCredential {
    *                TokenCredential implementation might make.
    */
   async getToken(scopes: string | string[], options: GetTokenOptions = {}): Promise<AccessToken> {
-    return trace(`${this.constructor.name}.getToken`, options, async (newOptions) => {
-      const arrayScopes = Array.isArray(scopes) ? scopes : [scopes];
-      return this.msalFlow.getToken(arrayScopes, {
-        ...newOptions,
-        disableAutomaticAuthentication: this.disableAutomaticAuthentication
-      });
-    });
+    return tracingClient.withSpan(
+      `${this.constructor.name}.getToken`,
+      options,
+      async (newOptions) => {
+        const tenantId = processMultiTenantRequest(
+          this.tenantId,
+          newOptions,
+          this.additionallyAllowedTenantIds,
+        );
+        newOptions.tenantId = tenantId;
+
+        const arrayScopes = ensureScopes(scopes);
+        return this.msalClient.getTokenByAuthorizationCode(
+          arrayScopes,
+          this.redirectUri,
+          this.authorizationCode,
+          this.clientSecret,
+          {
+            ...newOptions,
+            disableAutomaticAuthentication: this.disableAutomaticAuthentication,
+          },
+        );
+      },
+    );
   }
 }

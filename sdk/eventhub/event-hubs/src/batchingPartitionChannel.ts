@@ -1,19 +1,22 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AmqpAnnotatedMessage, delay } from "@azure/core-amqp";
-import {
+import type { AmqpAnnotatedMessage } from "@azure/core-amqp";
+import { delay } from "@azure/core-amqp";
+import type {
   EventData,
   EventDataBatch,
   EventHubBufferedProducerClientOptions,
   EventHubProducerClient,
-  OperationOptions
-} from "./index";
-import { AwaitableQueue } from "./impl/awaitableQueue";
-import { isDefined, isObjectWithProperties } from "./util/typeGuards";
-import { AbortSignalLike } from "@azure/abort-controller";
-import { getPromiseParts } from "./util/getPromiseParts";
-import { logger } from "./log";
+  OperationOptions,
+} from "./index.js";
+import type { AbortOptions } from "@azure/core-util";
+import { isDefined, isObjectWithProperties } from "@azure/core-util";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import { AwaitableQueue } from "./impl/awaitableQueue.js";
+import { getPromiseParts } from "./util/getPromiseParts.js";
+import { logger } from "./logger.js";
+import { cancelablePromiseRace } from "@azure/core-util";
 
 export interface BatchingPartitionChannelProps {
   loopAbortSignal: AbortSignalLike;
@@ -47,7 +50,7 @@ export class BatchingPartitionChannel {
   private _flushState:
     | { isFlushing: false }
     | { isFlushing: true; currentPromise: Promise<void>; resolve: () => void } = {
-    isFlushing: false
+    isFlushing: false,
   };
   private _isRunning: boolean = false;
   private _lastBatchCreationTime: number = 0;
@@ -67,7 +70,7 @@ export class BatchingPartitionChannel {
     onSendEventsErrorHandler,
     onSendEventsSuccessHandler,
     partitionId,
-    producer
+    producer,
   }: BatchingPartitionChannelProps) {
     this._loopAbortSignal = loopAbortSignal;
     this._maxBufferSize = maxBufferSize;
@@ -94,8 +97,8 @@ export class BatchingPartitionChannel {
           `The following error occured during batch creation or sending: ${JSON.stringify(
             e,
             undefined,
-            "  "
-          )}`
+            "  ",
+          )}`,
         );
       });
     }
@@ -153,7 +156,6 @@ export class BatchingPartitionChannel {
    */
   private async _startPublishLoop() {
     let batch: EventDataBatch | undefined;
-    let futureEvent = this._eventQueue.shift();
     // `eventToAddToBatch` is used to keep track of an event that has been removed
     // from the queue, but has not yet been added to a batch.
     // This prevents losing an event if a `sendBatch` or `createBatch` call fails
@@ -171,7 +173,18 @@ export class BatchingPartitionChannel {
 
         const event =
           eventToAddToBatch ??
-          (await Promise.race([futureEvent, delay<void>(maximumTimeToWaitForEvent)]));
+          (await cancelablePromiseRace<[EventData | AmqpAnnotatedMessage, void]>(
+            [
+              (abortOptions: AbortOptions) => this._eventQueue.shift(abortOptions),
+              (abortOptions: AbortOptions) =>
+                delay<void>(
+                  maximumTimeToWaitForEvent,
+                  abortOptions.abortSignal,
+                  abortOptions.abortErrorMsg,
+                ),
+            ],
+            { abortSignal: this._loopAbortSignal },
+          ));
 
         if (!event) {
           // We didn't receive an event within the allotted time.
@@ -184,8 +197,6 @@ export class BatchingPartitionChannel {
           continue;
         } else if (!eventToAddToBatch) {
           eventToAddToBatch = event;
-          // We received an event, so get a promise for the next one.
-          futureEvent = this._eventQueue.shift();
         }
 
         const didAdd = batch.tryAdd(event);
@@ -220,7 +231,7 @@ export class BatchingPartitionChannel {
         }
         // Clear reference to existing event since it has been added to the batch.
         eventToAddToBatch = undefined;
-      } catch (err) {
+      } catch (err: any) {
         if (!isObjectWithProperties(err, ["name"]) || err.name !== "AbortError") {
           this._reportFailure(err);
           batch = undefined;
@@ -242,7 +253,7 @@ export class BatchingPartitionChannel {
     this._lastBatchCreationTime = Date.now();
     this._batchedEvents = [];
     const batch = await this._producer.createBatch({
-      partitionId: this._partitionId
+      partitionId: this._partitionId,
     });
     this._incrementReadiness();
     return batch;
@@ -274,18 +285,20 @@ export class BatchingPartitionChannel {
   private _reportSuccess() {
     this._bufferCount = this._bufferCount - this._batchedEvents.length;
     this._updateFlushState();
-    this._onSendEventsSuccessHandler?.({
-      events: this._batchedEvents,
-      partitionId: this._partitionId
-    }).catch((e) => {
+    try {
+      this._onSendEventsSuccessHandler?.({
+        events: this._batchedEvents,
+        partitionId: this._partitionId,
+      });
+    } catch (e: unknown) {
       logger.error(
-        `The following error occured in the onSendEventsSuccessHandler: ${JSON.stringify(
+        `The following error occurred in the onSendEventsSuccessHandler: ${JSON.stringify(
           e,
           undefined,
-          "  "
-        )}`
+          "  ",
+        )}`,
       );
-    });
+    }
   }
 
   /**
@@ -295,19 +308,21 @@ export class BatchingPartitionChannel {
   private _reportFailure(err: any, event?: EventData | AmqpAnnotatedMessage) {
     this._bufferCount = this._bufferCount - (event ? 1 : this._batchedEvents.length);
     this._updateFlushState();
-    this._onSendEventsErrorHandler({
-      error: err,
-      events: event ? [event] : this._batchedEvents,
-      partitionId: this._partitionId
-    }).catch((e) => {
+    try {
+      this._onSendEventsErrorHandler({
+        error: err,
+        events: event ? [event] : this._batchedEvents,
+        partitionId: this._partitionId,
+      });
+    } catch (e: unknown) {
       logger.error(
-        `The following error occured in the onSendEventsErrorHandler: ${JSON.stringify(
+        `The following error occurred in the onSendEventsErrorHandler: ${JSON.stringify(
           e,
           undefined,
-          "  "
-        )}`
+          "  ",
+        )}`,
       );
-    });
+    }
   }
 
   /**

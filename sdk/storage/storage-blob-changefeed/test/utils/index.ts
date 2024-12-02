@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as dotenv from "dotenv";
-import { SimpleTokenCredential } from "./testutils.common";
+import { configureBlobStorageClient, SimpleTokenCredential } from "./testutils.common";
+import type { StoragePipelineOptions } from "@azure/storage-blob";
 import { StorageSharedKeyCredential, BlobServiceClient } from "@azure/storage-blob";
 import { BlobChangeFeedClient } from "../../src";
-import { TokenCredential } from "@azure/core-http";
+import type { TokenCredential } from "@azure/core-auth";
+import type { Recorder } from "@azure-tools/test-recorder";
 import { env } from "@azure-tools/test-recorder";
-
-dotenv.config();
 
 export * from "./testutils.common";
 
@@ -16,11 +15,11 @@ export function getGenericCredential(accountType: string): StorageSharedKeyCrede
   const accountNameEnvVar = `${accountType}ACCOUNT_NAME`;
   const accountKeyEnvVar = `${accountType}ACCOUNT_KEY`;
 
-  const accountName = process.env[accountNameEnvVar];
-  const accountKey = process.env[accountKeyEnvVar];
+  const accountName = env[accountNameEnvVar];
+  const accountKey = env[accountKeyEnvVar];
   if (!accountName || !accountKey || accountName === "" || accountKey === "") {
     throw new Error(
-      `${accountNameEnvVar} and/or ${accountKeyEnvVar} environment variables not specified.`
+      `${accountNameEnvVar} and/or ${accountKeyEnvVar} environment variables not specified.`,
     );
   }
 
@@ -29,7 +28,7 @@ export function getGenericCredential(accountType: string): StorageSharedKeyCrede
 
 export function getGenericBSU(
   accountType: string,
-  accountNameSuffix: string = ""
+  accountNameSuffix: string = "",
 ): BlobServiceClient {
   if (
     env.STORAGE_CONNECTION_STRING &&
@@ -46,7 +45,7 @@ export function getGenericBSU(
 
 export function getTokenCredential(): TokenCredential {
   const accountTokenEnvVar = `ACCOUNT_TOKEN`;
-  const accountToken = process.env[accountTokenEnvVar];
+  const accountToken = env[accountTokenEnvVar];
   if (!accountToken || accountToken === "") {
     throw new Error(`${accountTokenEnvVar} environment variables not specified.`);
   }
@@ -57,7 +56,7 @@ export function getTokenCredential(): TokenCredential {
 export function getTokenBSU(): BlobServiceClient {
   const accountNameEnvVar = `ACCOUNT_NAME`;
 
-  const accountName = process.env[accountNameEnvVar];
+  const accountName = env[accountNameEnvVar];
   if (!accountName || accountName === "") {
     throw new Error(`${accountNameEnvVar} environment variables not specified.`);
   }
@@ -77,7 +76,7 @@ export function getAlternateBSU(): BlobServiceClient {
 
 export function getConnectionStringFromEnvironment(): string {
   const connectionStringEnvVar = `STORAGE_CONNECTION_STRING`;
-  const connectionString = process.env[connectionStringEnvVar];
+  const connectionString = env[connectionStringEnvVar];
 
   if (!connectionString) {
     throw new Error(`${connectionStringEnvVar} environment variables not specified.`);
@@ -87,18 +86,22 @@ export function getConnectionStringFromEnvironment(): string {
 }
 
 export function getBlobChangeFeedClient(
+  recorder: Recorder,
   accountType: string = "",
-  accountNameSuffix: string = ""
+  accountNameSuffix: string = "",
+  options: StoragePipelineOptions = {},
 ): BlobChangeFeedClient {
+  let client: BlobChangeFeedClient;
   if (
     env.STORAGE_CONNECTION_STRING &&
     env.STORAGE_CONNECTION_STRING.startsWith("UseDevelopmentStorage=true")
   ) {
-    return BlobChangeFeedClient.fromConnectionString(getConnectionStringFromEnvironment());
+    client = BlobChangeFeedClient.fromConnectionString(getConnectionStringFromEnvironment());
   } else {
     const credential = getGenericCredential(accountType) as StorageSharedKeyCredential;
-
     const blobPrimaryURL = `https://${credential.accountName}${accountNameSuffix}.blob.core.windows.net/`;
-    return new BlobChangeFeedClient(blobPrimaryURL, credential);
+    client = new BlobChangeFeedClient(blobPrimaryURL, credential, options);
   }
+  configureBlobStorageClient(recorder, client);
+  return client;
 }

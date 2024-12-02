@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import { setAuthorizationHeader } from "../auth";
 import { Constants, HTTPMethod, jsonStringifyAndEscapeNonASCII, ResourceType } from "../common";
-import { CosmosClientOptions } from "../CosmosClientOptions";
-import { PartitionKey } from "../documents";
-import { CosmosHeaders } from "../queryExecutionContext";
-import { FeedOptions, RequestOptions } from "./index";
-
+import type { CosmosClientOptions } from "../CosmosClientOptions";
+import type { PartitionKeyInternal } from "../documents";
+import type { CosmosHeaders } from "../queryExecutionContext";
+import type { FeedOptions, RequestOptions } from "./index";
+import { defaultLogger } from "../common/logger";
+import { ChangeFeedMode } from "../client/ChangeFeed";
 // ----------------------------------------------------------------------------
 // Utility methods
 //
@@ -41,7 +42,7 @@ interface GetHeadersOptions {
   options: RequestOptions & FeedOptions;
   partitionKeyRangeId?: string;
   useMultipleWriteLocations?: boolean;
-  partitionKey?: PartitionKey;
+  partitionKey?: PartitionKeyInternal;
 }
 
 const JsonContentType = "application/json";
@@ -59,12 +60,12 @@ export async function getHeaders({
   options = {},
   partitionKeyRangeId,
   useMultipleWriteLocations,
-  partitionKey
+  partitionKey,
 }: GetHeadersOptions): Promise<CosmosHeaders> {
   const headers: CosmosHeaders = {
     [Constants.HttpHeaders.ResponseContinuationTokenLimitInKB]: 1,
     [Constants.HttpHeaders.EnableCrossPartitionQuery]: true,
-    ...defaultHeaders
+    ...defaultHeaders,
   };
 
   if (useMultipleWriteLocations) {
@@ -115,8 +116,15 @@ export async function getHeaders({
     }
   }
 
-  if (options.useIncrementalFeed) {
-    headers[Constants.HttpHeaders.A_IM] = "Incremental Feed";
+  if (options.useAllVersionsAndDeletesFeed) {
+    // headers required for reading feed in allVersionsAndDeletes mode
+    headers[Constants.HttpHeaders.A_IM] = ChangeFeedMode.AllVersionsAndDeletes;
+    headers[Constants.HttpHeaders.ChangeFeedWireFormatVersion] =
+      Constants.AllVersionsAndDeletesChangeFeedWireFormatVersion;
+  }
+
+  if (options.useIncrementalFeed || options.useLatestVersionFeed) {
+    headers[Constants.HttpHeaders.A_IM] = ChangeFeedMode.LatestVersion;
   }
 
   if (options.indexingDirective) {
@@ -125,6 +133,27 @@ export async function getHeaders({
 
   if (options.consistencyLevel) {
     headers[Constants.HttpHeaders.ConsistencyLevel] = options.consistencyLevel;
+  }
+
+  if (options.priorityLevel) {
+    headers[Constants.HttpHeaders.PriorityLevel] = options.priorityLevel;
+  }
+
+  if (options.maxIntegratedCacheStalenessInMs && resourceType === ResourceType.item) {
+    if (typeof options.maxIntegratedCacheStalenessInMs === "number") {
+      headers[Constants.HttpHeaders.DedicatedGatewayPerRequestCacheStaleness] =
+        options.maxIntegratedCacheStalenessInMs.toString();
+    } else {
+      defaultLogger.error(
+        `RangeError: maxIntegratedCacheStalenessInMs "${options.maxIntegratedCacheStalenessInMs}" is not a valid parameter.`,
+      );
+      headers[Constants.HttpHeaders.DedicatedGatewayPerRequestCacheStaleness] = "null";
+    }
+  }
+
+  if (options.bypassIntegratedCache) {
+    headers[Constants.HttpHeaders.DedicatedGatewayPerRequestBypassCache] =
+      options.bypassIntegratedCache.toString();
   }
 
   if (options.resourceTokenExpirySeconds) {
@@ -147,7 +176,11 @@ export async function getHeaders({
     headers[Constants.HttpHeaders.PopulateQueryMetrics] = options.populateQueryMetrics;
   }
 
-  if (options.maxDegreeOfParallelism !== undefined) {
+  if (
+    options.maxDegreeOfParallelism !== undefined &&
+    options.maxDegreeOfParallelism !== 0 &&
+    options.maxDegreeOfParallelism !== 1
+  ) {
     headers[Constants.HttpHeaders.ParallelizeCrossPartitionQuery] = true;
   }
 
@@ -156,9 +189,6 @@ export async function getHeaders({
   }
 
   if (partitionKey !== undefined && !headers[Constants.HttpHeaders.PartitionKey]) {
-    if (partitionKey === null || !Array.isArray(partitionKey)) {
-      partitionKey = [partitionKey as string];
-    }
     headers[Constants.HttpHeaders.PartitionKey] = jsonStringifyAndEscapeNonASCII(partitionKey);
   }
 
@@ -187,6 +217,11 @@ export async function getHeaders({
   if (options.disableRUPerMinuteUsage) {
     headers[Constants.HttpHeaders.DisableRUPerMinuteUsage] = true;
   }
+
+  if (options.populateIndexMetrics) {
+    headers[Constants.HttpHeaders.PopulateIndexMetrics] = options.populateIndexMetrics;
+  }
+
   if (
     clientOptions.key ||
     clientOptions.resourceTokens ||

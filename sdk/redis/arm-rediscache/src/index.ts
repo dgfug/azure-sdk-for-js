@@ -7,7 +7,7 @@
  */
 
 /// <reference lib="esnext.asynciterable" />
+export { getContinuationToken } from "./pagingHelper";
 export * from "./models";
 export { RedisManagementClient } from "./redisManagementClient";
-export { RedisManagementClientContext } from "./redisManagementClientContext";
 export * from "./operationsInterfaces";

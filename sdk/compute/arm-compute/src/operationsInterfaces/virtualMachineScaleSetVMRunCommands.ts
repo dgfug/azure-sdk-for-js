@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualMachineRunCommand,
   VirtualMachineScaleSetVMRunCommandsListOptionalParams,
@@ -18,7 +18,7 @@ import {
   VirtualMachineScaleSetVMRunCommandsUpdateResponse,
   VirtualMachineScaleSetVMRunCommandsDeleteOptionalParams,
   VirtualMachineScaleSetVMRunCommandsGetOptionalParams,
-  VirtualMachineScaleSetVMRunCommandsGetResponse
+  VirtualMachineScaleSetVMRunCommandsGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -35,7 +35,7 @@ export interface VirtualMachineScaleSetVMRunCommands {
     resourceGroupName: string,
     vmScaleSetName: string,
     instanceId: string,
-    options?: VirtualMachineScaleSetVMRunCommandsListOptionalParams
+    options?: VirtualMachineScaleSetVMRunCommandsListOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachineRunCommand>;
   /**
    * The operation to create or update the VMSS VM run command.
@@ -52,12 +52,10 @@ export interface VirtualMachineScaleSetVMRunCommands {
     instanceId: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommand,
-    options?: VirtualMachineScaleSetVMRunCommandsCreateOrUpdateOptionalParams
+    options?: VirtualMachineScaleSetVMRunCommandsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResponse>,
       VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResponse
     >
   >;
@@ -76,7 +74,7 @@ export interface VirtualMachineScaleSetVMRunCommands {
     instanceId: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommand,
-    options?: VirtualMachineScaleSetVMRunCommandsCreateOrUpdateOptionalParams
+    options?: VirtualMachineScaleSetVMRunCommandsCreateOrUpdateOptionalParams,
   ): Promise<VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResponse>;
   /**
    * The operation to update the VMSS VM run command.
@@ -93,10 +91,10 @@ export interface VirtualMachineScaleSetVMRunCommands {
     instanceId: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommandUpdate,
-    options?: VirtualMachineScaleSetVMRunCommandsUpdateOptionalParams
+    options?: VirtualMachineScaleSetVMRunCommandsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachineScaleSetVMRunCommandsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachineScaleSetVMRunCommandsUpdateResponse>,
       VirtualMachineScaleSetVMRunCommandsUpdateResponse
     >
   >;
@@ -115,7 +113,7 @@ export interface VirtualMachineScaleSetVMRunCommands {
     instanceId: string,
     runCommandName: string,
     runCommand: VirtualMachineRunCommandUpdate,
-    options?: VirtualMachineScaleSetVMRunCommandsUpdateOptionalParams
+    options?: VirtualMachineScaleSetVMRunCommandsUpdateOptionalParams,
   ): Promise<VirtualMachineScaleSetVMRunCommandsUpdateResponse>;
   /**
    * The operation to delete the VMSS VM run command.
@@ -130,8 +128,8 @@ export interface VirtualMachineScaleSetVMRunCommands {
     vmScaleSetName: string,
     instanceId: string,
     runCommandName: string,
-    options?: VirtualMachineScaleSetVMRunCommandsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachineScaleSetVMRunCommandsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to delete the VMSS VM run command.
    * @param resourceGroupName The name of the resource group.
@@ -145,7 +143,7 @@ export interface VirtualMachineScaleSetVMRunCommands {
     vmScaleSetName: string,
     instanceId: string,
     runCommandName: string,
-    options?: VirtualMachineScaleSetVMRunCommandsDeleteOptionalParams
+    options?: VirtualMachineScaleSetVMRunCommandsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * The operation to get the VMSS VM run command.
@@ -160,6 +158,6 @@ export interface VirtualMachineScaleSetVMRunCommands {
     vmScaleSetName: string,
     instanceId: string,
     runCommandName: string,
-    options?: VirtualMachineScaleSetVMRunCommandsGetOptionalParams
+    options?: VirtualMachineScaleSetVMRunCommandsGetOptionalParams,
   ): Promise<VirtualMachineScaleSetVMRunCommandsGetResponse>;
 }

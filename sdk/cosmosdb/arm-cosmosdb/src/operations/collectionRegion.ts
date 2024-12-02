@@ -6,28 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { CollectionRegion } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   Metric,
   CollectionRegionListMetricsOptionalParams,
-  CollectionRegionListMetricsResponse
+  CollectionRegionListMetricsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing CollectionRegion operations. */
 export class CollectionRegionImpl implements CollectionRegion {
-  private readonly client: CosmosDBManagementClientContext;
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class CollectionRegion class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -51,7 +51,7 @@ export class CollectionRegionImpl implements CollectionRegion {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionRegionListMetricsOptionalParams
+    options?: CollectionRegionListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<Metric> {
     const iter = this.listMetricsPagingAll(
       resourceGroupName,
@@ -60,7 +60,7 @@ export class CollectionRegionImpl implements CollectionRegion {
       databaseRid,
       collectionRid,
       filter,
-      options
+      options,
     );
     return {
       next() {
@@ -69,7 +69,10 @@ export class CollectionRegionImpl implements CollectionRegion {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricsPagingPage(
           resourceGroupName,
           accountName,
@@ -77,9 +80,10 @@ export class CollectionRegionImpl implements CollectionRegion {
           databaseRid,
           collectionRid,
           filter,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -90,16 +94,18 @@ export class CollectionRegionImpl implements CollectionRegion {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionRegionListMetricsOptionalParams
+    options?: CollectionRegionListMetricsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<Metric[]> {
-    let result = await this._listMetrics(
+    let result: CollectionRegionListMetricsResponse;
+    result = await this._listMetrics(
       resourceGroupName,
       accountName,
       region,
       databaseRid,
       collectionRid,
       filter,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -111,7 +117,7 @@ export class CollectionRegionImpl implements CollectionRegion {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionRegionListMetricsOptionalParams
+    options?: CollectionRegionListMetricsOptionalParams,
   ): AsyncIterableIterator<Metric> {
     for await (const page of this.listMetricsPagingPage(
       resourceGroupName,
@@ -120,7 +126,7 @@ export class CollectionRegionImpl implements CollectionRegion {
       databaseRid,
       collectionRid,
       filter,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -146,7 +152,7 @@ export class CollectionRegionImpl implements CollectionRegion {
     databaseRid: string,
     collectionRid: string,
     filter: string,
-    options?: CollectionRegionListMetricsOptionalParams
+    options?: CollectionRegionListMetricsOptionalParams,
   ): Promise<CollectionRegionListMetricsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -156,9 +162,9 @@ export class CollectionRegionImpl implements CollectionRegion {
         databaseRid,
         collectionRid,
         filter,
-        options
+        options,
       },
-      listMetricsOperationSpec
+      listMetricsOperationSpec,
     );
   }
 }
@@ -166,13 +172,12 @@ export class CollectionRegionImpl implements CollectionRegion {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/region/{region}/databases/{databaseRid}/collections/{collectionRid}/metrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/region/{region}/databases/{databaseRid}/collections/{collectionRid}/metrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.MetricListResult
-    }
+      bodyMapper: Mappers.MetricListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
@@ -182,8 +187,8 @@ const listMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.accountName,
     Parameters.databaseRid,
     Parameters.collectionRid,
-    Parameters.region
+    Parameters.region,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

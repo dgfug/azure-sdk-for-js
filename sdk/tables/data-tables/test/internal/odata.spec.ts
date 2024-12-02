@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { odata } from "../../src";
-import { assert } from "chai";
+// Licensed under the MIT License.
+import { odata } from "../../src/index.js";
+import { describe, it, assert } from "vitest";
 
 describe("odata", () => {
   it("should handle empty string", () => {
@@ -37,5 +36,11 @@ describe("odata", () => {
     const testValue = '"FooBar"';
     const testString = odata`test string ${testValue}`;
     assert.equal(testString, "test string '\"FooBar\"'");
+  });
+
+  it("should not escape property names unnecessarily", () => {
+    const testDate = new Date(1);
+    const testString = odata`test lt ${testDate}`;
+    assert.equal(testString, `test lt datetime'${testDate.toISOString()}'`);
   });
 });

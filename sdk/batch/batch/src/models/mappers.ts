@@ -99,6 +99,18 @@ export const ImageReference: msRest.CompositeMapper = {
         type: {
           name: "String"
         }
+      },
+      sharedGalleryImageId: {
+        serializedName: "sharedGalleryImageId",
+        type: {
+          name: "String"
+        }
+      },
+      communityGalleryImageId: {
+        serializedName: "communityGalleryImageId",
+        type: {
+          name: "String"
+        }
       }
     }
   }
@@ -130,7 +142,10 @@ export const ImageInformation: msRest.CompositeMapper = {
         serializedName: "osType",
         type: {
           name: "Enum",
-          allowedValues: ["linux", "windows"]
+          allowedValues: [
+            "linux",
+            "windows"
+          ]
         }
       },
       capabilities: {
@@ -155,7 +170,10 @@ export const ImageInformation: msRest.CompositeMapper = {
         serializedName: "verificationType",
         type: {
           name: "Enum",
-          allowedValues: ["verified", "unverified"]
+          allowedValues: [
+            "verified",
+            "unverified"
+          ]
         }
       }
     }
@@ -175,7 +193,9 @@ export const AuthenticationTokenSettings: msRest.CompositeMapper = {
           element: {
             type: {
               name: "Enum",
-              allowedValues: ["job"]
+              allowedValues: [
+                "job"
+              ]
             }
           }
         }
@@ -553,7 +573,11 @@ export const Certificate: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["active", "deleting", "deletefailed"]
+          allowedValues: [
+            "active",
+            "deleting",
+            "deletefailed"
+          ]
         }
       },
       stateTransitionTime: {
@@ -566,7 +590,11 @@ export const Certificate: msRest.CompositeMapper = {
         serializedName: "previousState",
         type: {
           name: "Enum",
-          allowedValues: ["active", "deleting", "deletefailed"]
+          allowedValues: [
+            "active",
+            "deleting",
+            "deletefailed"
+          ]
         }
       },
       previousStateTransitionTime: {
@@ -682,7 +710,10 @@ export const CertificateAddParameter: msRest.CompositeMapper = {
         serializedName: "certificateFormat",
         type: {
           name: "Enum",
-          allowedValues: ["pfx", "cer"]
+          allowedValues: [
+            "pfx",
+            "cer"
+          ]
         }
       },
       password: {
@@ -840,6 +871,12 @@ export const JobNetworkConfiguration: msRest.CompositeMapper = {
         type: {
           name: "String"
         }
+      },
+      skipWithdrawFromVNet: {
+        serializedName: "skipWithdrawFromVNet",
+        type: {
+          name: "Boolean"
+        }
       }
     }
   }
@@ -896,6 +933,28 @@ export const ContainerRegistry: msRest.CompositeMapper = {
   }
 };
 
+export const ContainerHostBatchBindMountEntry: msRest.CompositeMapper = {
+  serializedName: "ContainerHostBatchBindMountEntry",
+  type: {
+    name: "Composite",
+    className: "ContainerHostBatchBindMountEntry",
+    modelProperties: {
+      source: {
+        serializedName: "source",
+        type: {
+          name: "String"
+        }
+      },
+      isReadOnly: {
+        serializedName: "isReadOnly",
+        type: {
+          name: "Boolean"
+        }
+      }
+    }
+  }
+};
+
 export const TaskContainerSettings: msRest.CompositeMapper = {
   serializedName: "TaskContainerSettings",
   type: {
@@ -926,7 +985,22 @@ export const TaskContainerSettings: msRest.CompositeMapper = {
         serializedName: "workingDirectory",
         type: {
           name: "Enum",
-          allowedValues: ["taskWorkingDirectory", "containerImageDefault"]
+          allowedValues: [
+            "taskWorkingDirectory",
+            "containerImageDefault"
+          ]
+        }
+      },
+      containerHostBatchBindMounts: {
+        serializedName: "containerHostBatchBindMounts",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ContainerHostBatchBindMountEntry"
+            }
+          }
         }
       }
     }
@@ -1009,6 +1083,29 @@ export const EnvironmentSetting: msRest.CompositeMapper = {
   }
 };
 
+export const HttpHeader: msRest.CompositeMapper = {
+  serializedName: "HttpHeader",
+  type: {
+    name: "Composite",
+    className: "HttpHeader",
+    modelProperties: {
+      name: {
+        required: true,
+        serializedName: "name",
+        type: {
+          name: "String"
+        }
+      },
+      value: {
+        serializedName: "value",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
 export const ExitOptions: msRest.CompositeMapper = {
   serializedName: "ExitOptions",
   type: {
@@ -1019,14 +1116,21 @@ export const ExitOptions: msRest.CompositeMapper = {
         serializedName: "jobAction",
         type: {
           name: "Enum",
-          allowedValues: ["none", "disable", "terminate"]
+          allowedValues: [
+            "none",
+            "disable",
+            "terminate"
+          ]
         }
       },
       dependencyAction: {
         serializedName: "dependencyAction",
         type: {
           name: "Enum",
-          allowedValues: ["satisfy", "block"]
+          allowedValues: [
+            "satisfy",
+            "block"
+          ]
         }
       }
     }
@@ -1155,14 +1259,20 @@ export const AutoUserSpecification: msRest.CompositeMapper = {
         serializedName: "scope",
         type: {
           name: "Enum",
-          allowedValues: ["task", "pool"]
+          allowedValues: [
+            "task",
+            "pool"
+          ]
         }
       },
       elevationLevel: {
         serializedName: "elevationLevel",
         type: {
           name: "Enum",
-          allowedValues: ["nonadmin", "admin"]
+          allowedValues: [
+            "nonadmin",
+            "admin"
+          ]
         }
       }
     }
@@ -1230,7 +1340,10 @@ export const WindowsUserConfiguration: msRest.CompositeMapper = {
         serializedName: "loginMode",
         type: {
           name: "Enum",
-          allowedValues: ["batch", "interactive"]
+          allowedValues: [
+            "batch",
+            "interactive"
+          ]
         }
       }
     }
@@ -1261,7 +1374,10 @@ export const UserAccount: msRest.CompositeMapper = {
         serializedName: "elevationLevel",
         type: {
           name: "Enum",
-          allowedValues: ["nonadmin", "admin"]
+          allowedValues: [
+            "nonadmin",
+            "admin"
+          ]
         }
       },
       linuxUserConfiguration: {
@@ -1335,6 +1451,18 @@ export const OutputFileBlobContainerDestination: msRest.CompositeMapper = {
           name: "Composite",
           className: "ComputeNodeIdentityReference"
         }
+      },
+      uploadHeaders: {
+        serializedName: "uploadHeaders",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "HttpHeader"
+            }
+          }
+        }
       }
     }
   }
@@ -1368,7 +1496,11 @@ export const OutputFileUploadOptions: msRest.CompositeMapper = {
         serializedName: "uploadCondition",
         type: {
           name: "Enum",
-          allowedValues: ["tasksuccess", "taskfailure", "taskcompletion"]
+          allowedValues: [
+            "tasksuccess",
+            "taskfailure",
+            "taskcompletion"
+          ]
         }
       }
     }
@@ -1702,7 +1834,10 @@ export const TaskSchedulingPolicy: msRest.CompositeMapper = {
         serializedName: "nodeFillType",
         type: {
           name: "Enum",
-          allowedValues: ["spread", "pack"]
+          allowedValues: [
+            "spread",
+            "pack"
+          ]
         }
       }
     }
@@ -1800,7 +1935,10 @@ export const CertificateReference: msRest.CompositeMapper = {
         serializedName: "storeLocation",
         type: {
           name: "Enum",
-          allowedValues: ["currentuser", "localmachine"]
+          allowedValues: [
+            "currentuser",
+            "localmachine"
+          ]
         }
       },
       storeName: {
@@ -1816,7 +1954,11 @@ export const CertificateReference: msRest.CompositeMapper = {
           element: {
             type: {
               name: "Enum",
-              allowedValues: ["starttask", "task", "remoteuser"]
+              allowedValues: [
+                "starttask",
+                "task",
+                "remoteuser"
+              ]
             }
           }
         }
@@ -1841,29 +1983,6 @@ export const MetadataItem: msRest.CompositeMapper = {
       value: {
         required: true,
         serializedName: "value",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const CloudServiceConfiguration: msRest.CompositeMapper = {
-  serializedName: "CloudServiceConfiguration",
-  type: {
-    name: "Composite",
-    className: "CloudServiceConfiguration",
-    modelProperties: {
-      osFamily: {
-        required: true,
-        serializedName: "osFamily",
-        type: {
-          name: "String"
-        }
-      },
-      osVersion: {
-        serializedName: "osVersion",
         type: {
           name: "String"
         }
@@ -1905,7 +2024,11 @@ export const DataDisk: msRest.CompositeMapper = {
         serializedName: "caching",
         type: {
           name: "Enum",
-          allowedValues: ["none", "readonly", "readwrite"]
+          allowedValues: [
+            "none",
+            "readonly",
+            "readwrite"
+          ]
         }
       },
       diskSizeGB: {
@@ -1919,7 +2042,11 @@ export const DataDisk: msRest.CompositeMapper = {
         serializedName: "storageAccountType",
         type: {
           name: "Enum",
-          allowedValues: ["standard_lrs", "premium_lrs"]
+          allowedValues: [
+            "standard_lrs",
+            "premium_lrs",
+            "standardssd_lrs"
+          ]
         }
       }
     }
@@ -1934,9 +2061,7 @@ export const ContainerConfiguration: msRest.CompositeMapper = {
     modelProperties: {
       type: {
         required: true,
-        isConstant: true,
         serializedName: "type",
-        defaultValue: "dockerCompatible",
         type: {
           name: "String"
         }
@@ -1981,7 +2106,10 @@ export const DiskEncryptionConfiguration: msRest.CompositeMapper = {
           element: {
             type: {
               name: "Enum",
-              allowedValues: ["osdisk", "temporarydisk"]
+              allowedValues: [
+                "osdisk",
+                "temporarydisk"
+              ]
             }
           }
         }
@@ -2000,7 +2128,10 @@ export const NodePlacementConfiguration: msRest.CompositeMapper = {
         serializedName: "policy",
         type: {
           name: "Enum",
-          allowedValues: ["regional", "zonal"]
+          allowedValues: [
+            "regional",
+            "zonal"
+          ]
         }
       }
     }
@@ -2046,6 +2177,12 @@ export const VMExtension: msRest.CompositeMapper = {
           name: "Boolean"
         }
       },
+      enableAutomaticUpgrade: {
+        serializedName: "enableAutomaticUpgrade",
+        type: {
+          name: "Boolean"
+        }
+      },
       settings: {
         serializedName: "settings",
         type: {
@@ -2083,7 +2220,53 @@ export const DiffDiskSettings: msRest.CompositeMapper = {
         serializedName: "placement",
         type: {
           name: "Enum",
-          allowedValues: ["CacheDisk"]
+          allowedValues: [
+            "CacheDisk"
+          ]
+        }
+      }
+    }
+  }
+};
+
+export const VMDiskSecurityProfile: msRest.CompositeMapper = {
+  serializedName: "VMDiskSecurityProfile",
+  type: {
+    name: "Composite",
+    className: "VMDiskSecurityProfile",
+    modelProperties: {
+      securityEncryptionType: {
+        serializedName: "securityEncryptionType",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ManagedDisk: msRest.CompositeMapper = {
+  serializedName: "ManagedDisk",
+  type: {
+    name: "Composite",
+    className: "ManagedDisk",
+    modelProperties: {
+      storageAccountType: {
+        serializedName: "storageAccountType",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "standard_lrs",
+            "premium_lrs",
+            "standardssd_lrs"
+          ]
+        }
+      },
+      securityProfile: {
+        serializedName: "securityProfile",
+        type: {
+          name: "Composite",
+          className: "VMDiskSecurityProfile"
         }
       }
     }
@@ -2101,6 +2284,108 @@ export const OSDisk: msRest.CompositeMapper = {
         type: {
           name: "Composite",
           className: "DiffDiskSettings"
+        }
+      },
+      caching: {
+        serializedName: "caching",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "none",
+            "readonly",
+            "readwrite"
+          ]
+        }
+      },
+      managedDisk: {
+        serializedName: "managedDisk",
+        type: {
+          name: "Composite",
+          className: "ManagedDisk"
+        }
+      },
+      diskSizeGB: {
+        serializedName: "diskSizeGB",
+        type: {
+          name: "Number"
+        }
+      },
+      writeAcceleratorEnabled: {
+        serializedName: "writeAcceleratorEnabled",
+        type: {
+          name: "Boolean"
+        }
+      }
+    }
+  }
+};
+
+export const UefiSettings: msRest.CompositeMapper = {
+  serializedName: "UefiSettings",
+  type: {
+    name: "Composite",
+    className: "UefiSettings",
+    modelProperties: {
+      secureBootEnabled: {
+        serializedName: "secureBootEnabled",
+        type: {
+          name: "Boolean"
+        }
+      },
+      vTpmEnabled: {
+        serializedName: "vTpmEnabled",
+        type: {
+          name: "Boolean"
+        }
+      }
+    }
+  }
+};
+
+export const SecurityProfile: msRest.CompositeMapper = {
+  serializedName: "SecurityProfile",
+  type: {
+    name: "Composite",
+    className: "SecurityProfile",
+    modelProperties: {
+      securityType: {
+        serializedName: "securityType",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "trustedLaunch",
+            "confidentialVM"
+          ]
+        }
+      },
+      encryptionAtHost: {
+        serializedName: "encryptionAtHost",
+        type: {
+          name: "Boolean"
+        }
+      },
+      uefiSettings: {
+        serializedName: "uefiSettings",
+        type: {
+          name: "Composite",
+          className: "UefiSettings"
+        }
+      }
+    }
+  }
+};
+
+export const ServiceArtifactReference: msRest.CompositeMapper = {
+  serializedName: "ServiceArtifactReference",
+  type: {
+    name: "Composite",
+    className: "ServiceArtifactReference",
+    modelProperties: {
+      id: {
+        required: true,
+        serializedName: "id",
+        type: {
+          name: "String"
         }
       }
     }
@@ -2192,6 +2477,20 @@ export const VirtualMachineConfiguration: msRest.CompositeMapper = {
           name: "Composite",
           className: "OSDisk"
         }
+      },
+      securityProfile: {
+        serializedName: "securityProfile",
+        type: {
+          name: "Composite",
+          className: "SecurityProfile"
+        }
+      },
+      serviceArtifactReference: {
+        serializedName: "serviceArtifactReference",
+        type: {
+          name: "Composite",
+          className: "ServiceArtifactReference"
+        }
       }
     }
   }
@@ -2215,7 +2514,10 @@ export const NetworkSecurityGroupRule: msRest.CompositeMapper = {
         serializedName: "access",
         type: {
           name: "Enum",
-          allowedValues: ["allow", "deny"]
+          allowedValues: [
+            "allow",
+            "deny"
+          ]
         }
       },
       sourceAddressPrefix: {
@@ -2258,7 +2560,10 @@ export const InboundNATPool: msRest.CompositeMapper = {
         serializedName: "protocol",
         type: {
           name: "Enum",
-          allowedValues: ["tcp", "udp"]
+          allowedValues: [
+            "tcp",
+            "udp"
+          ]
         }
       },
       backendPort: {
@@ -2331,7 +2636,11 @@ export const PublicIPAddressConfiguration: msRest.CompositeMapper = {
         serializedName: "provision",
         type: {
           name: "Enum",
-          allowedValues: ["batchmanaged", "usermanaged", "nopublicipaddresses"]
+          allowedValues: [
+            "batchmanaged",
+            "usermanaged",
+            "nopublicipaddresses"
+          ]
         }
       },
       ipAddressIds: {
@@ -2365,7 +2674,10 @@ export const NetworkConfiguration: msRest.CompositeMapper = {
         serializedName: "dynamicVNetAssignmentScope",
         type: {
           name: "Enum",
-          allowedValues: ["none", "job"]
+          allowedValues: [
+            "none",
+            "job"
+          ]
         }
       },
       endpointConfiguration: {
@@ -2380,6 +2692,12 @@ export const NetworkConfiguration: msRest.CompositeMapper = {
         type: {
           name: "Composite",
           className: "PublicIPAddressConfiguration"
+        }
+      },
+      enableAcceleratedNetworking: {
+        serializedName: "enableAcceleratedNetworking",
+        type: {
+          name: "Boolean"
         }
       }
     }
@@ -2598,6 +2916,140 @@ export const MountConfiguration: msRest.CompositeMapper = {
   }
 };
 
+export const AutomaticOSUpgradePolicy: msRest.CompositeMapper = {
+  serializedName: "AutomaticOSUpgradePolicy",
+  type: {
+    name: "Composite",
+    className: "AutomaticOSUpgradePolicy",
+    modelProperties: {
+      disableAutomaticRollback: {
+        serializedName: "disableAutomaticRollback",
+        type: {
+          name: "Boolean"
+        }
+      },
+      enableAutomaticOSUpgrade: {
+        serializedName: "enableAutomaticOSUpgrade",
+        type: {
+          name: "Boolean"
+        }
+      },
+      useRollingUpgradePolicy: {
+        serializedName: "useRollingUpgradePolicy",
+        type: {
+          name: "Boolean"
+        }
+      },
+      osRollingUpgradeDeferral: {
+        serializedName: "osRollingUpgradeDeferral",
+        type: {
+          name: "Boolean"
+        }
+      }
+    }
+  }
+};
+
+export const RollingUpgradePolicy: msRest.CompositeMapper = {
+  serializedName: "RollingUpgradePolicy",
+  type: {
+    name: "Composite",
+    className: "RollingUpgradePolicy",
+    modelProperties: {
+      enableCrossZoneUpgrade: {
+        serializedName: "enableCrossZoneUpgrade",
+        type: {
+          name: "Boolean"
+        }
+      },
+      maxBatchInstancePercent: {
+        serializedName: "maxBatchInstancePercent",
+        constraints: {
+          InclusiveMaximum: 100,
+          InclusiveMinimum: 5
+        },
+        type: {
+          name: "Number"
+        }
+      },
+      maxUnhealthyInstancePercent: {
+        serializedName: "maxUnhealthyInstancePercent",
+        constraints: {
+          InclusiveMaximum: 100,
+          InclusiveMinimum: 5
+        },
+        type: {
+          name: "Number"
+        }
+      },
+      maxUnhealthyUpgradedInstancePercent: {
+        serializedName: "maxUnhealthyUpgradedInstancePercent",
+        constraints: {
+          InclusiveMaximum: 100,
+          InclusiveMinimum: 0
+        },
+        type: {
+          name: "Number"
+        }
+      },
+      pauseTimeBetweenBatches: {
+        serializedName: "pauseTimeBetweenBatches",
+        type: {
+          name: "TimeSpan"
+        }
+      },
+      prioritizeUnhealthyInstances: {
+        serializedName: "prioritizeUnhealthyInstances",
+        type: {
+          name: "Boolean"
+        }
+      },
+      rollbackFailedInstancesOnPolicyBreach: {
+        serializedName: "rollbackFailedInstancesOnPolicyBreach",
+        type: {
+          name: "Boolean"
+        }
+      }
+    }
+  }
+};
+
+export const UpgradePolicy: msRest.CompositeMapper = {
+  serializedName: "UpgradePolicy",
+  type: {
+    name: "Composite",
+    className: "UpgradePolicy",
+    modelProperties: {
+      mode: {
+        required: true,
+        serializedName: "mode",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "automatic",
+            "manual",
+            "rolling"
+          ]
+        }
+      },
+      automaticOSUpgradePolicy: {
+        serializedName: "automaticOSUpgradePolicy",
+        type: {
+          name: "Composite",
+          className: "AutomaticOSUpgradePolicy"
+        }
+      },
+      rollingUpgradePolicy: {
+        serializedName: "rollingUpgradePolicy",
+        type: {
+          name: "Composite",
+          className: "RollingUpgradePolicy"
+        }
+      }
+    }
+  }
+};
+
 export const PoolSpecification: msRest.CompositeMapper = {
   serializedName: "PoolSpecification",
   type: {
@@ -2615,13 +3067,6 @@ export const PoolSpecification: msRest.CompositeMapper = {
         serializedName: "vmSize",
         type: {
           name: "String"
-        }
-      },
-      cloudServiceConfiguration: {
-        serializedName: "cloudServiceConfiguration",
-        type: {
-          name: "Composite",
-          className: "CloudServiceConfiguration"
         }
       },
       virtualMachineConfiguration: {
@@ -2724,17 +3169,6 @@ export const PoolSpecification: msRest.CompositeMapper = {
           }
         }
       },
-      applicationLicenses: {
-        serializedName: "applicationLicenses",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
       userAccounts: {
         serializedName: "userAccounts",
         type: {
@@ -2770,6 +3204,35 @@ export const PoolSpecification: msRest.CompositeMapper = {
             }
           }
         }
+      },
+      targetNodeCommunicationMode: {
+        serializedName: "targetNodeCommunicationMode",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "default",
+            "classic",
+            "simplified"
+          ]
+        }
+      },
+      upgradePolicy: {
+        serializedName: "upgradePolicy",
+        type: {
+          name: "Composite",
+          className: "UpgradePolicy"
+        }
+      },
+      resourceTags: {
+        serializedName: "resourceTags",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: {
+              name: "String"
+            }
+          }
+        }
       }
     }
   }
@@ -2792,7 +3255,10 @@ export const AutoPoolSpecification: msRest.CompositeMapper = {
         serializedName: "poolLifetimeOption",
         type: {
           name: "Enum",
-          allowedValues: ["jobschedule", "job"]
+          allowedValues: [
+            "jobschedule",
+            "job"
+          ]
         }
       },
       keepAlive: {
@@ -2847,6 +3313,12 @@ export const JobSpecification: msRest.CompositeMapper = {
           name: "Number"
         }
       },
+      allowTaskPreemption: {
+        serializedName: "allowTaskPreemption",
+        type: {
+          name: "Boolean"
+        }
+      },
       maxParallelTasks: {
         serializedName: "maxParallelTasks",
         defaultValue: -1,
@@ -2870,14 +3342,20 @@ export const JobSpecification: msRest.CompositeMapper = {
         serializedName: "onAllTasksComplete",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "terminatejob"]
+          allowedValues: [
+            "noaction",
+            "terminatejob"
+          ]
         }
       },
       onTaskFailure: {
         serializedName: "onTaskFailure",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "performexitoptionsjobaction"]
+          allowedValues: [
+            "noaction",
+            "performexitoptionsjobaction"
+          ]
         }
       },
       networkConfiguration: {
@@ -2930,7 +3408,6 @@ export const JobSpecification: msRest.CompositeMapper = {
       poolInfo: {
         required: true,
         serializedName: "poolInfo",
-        defaultValue: {},
         type: {
           name: "Composite",
           className: "PoolInformation"
@@ -3157,7 +3634,13 @@ export const CloudJobSchedule: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["active", "completed", "disabled", "terminating", "deleting"]
+          allowedValues: [
+            "active",
+            "completed",
+            "disabled",
+            "terminating",
+            "deleting"
+          ]
         }
       },
       stateTransitionTime: {
@@ -3170,7 +3653,13 @@ export const CloudJobSchedule: msRest.CompositeMapper = {
         serializedName: "previousState",
         type: {
           name: "Enum",
-          allowedValues: ["active", "completed", "disabled", "terminating", "deleting"]
+          allowedValues: [
+            "active",
+            "completed",
+            "disabled",
+            "terminating",
+            "deleting"
+          ]
         }
       },
       previousStateTransitionTime: {
@@ -3253,7 +3742,6 @@ export const JobScheduleAddParameter: msRest.CompositeMapper = {
       jobSpecification: {
         required: true,
         serializedName: "jobSpecification",
-        defaultValue: {},
         type: {
           name: "Composite",
           className: "JobSpecification"
@@ -3286,7 +3774,10 @@ export const JobSchedulingError: msRest.CompositeMapper = {
         serializedName: "category",
         type: {
           name: "Enum",
-          allowedValues: ["usererror", "servererror"]
+          allowedValues: [
+            "usererror",
+            "servererror"
+          ]
         }
       },
       code: {
@@ -3455,6 +3946,12 @@ export const CloudJob: msRest.CompositeMapper = {
           name: "Number"
         }
       },
+      allowTaskPreemption: {
+        serializedName: "allowTaskPreemption",
+        type: {
+          name: "Boolean"
+        }
+      },
       maxParallelTasks: {
         serializedName: "maxParallelTasks",
         defaultValue: -1,
@@ -3513,14 +4010,20 @@ export const CloudJob: msRest.CompositeMapper = {
         serializedName: "onAllTasksComplete",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "terminatejob"]
+          allowedValues: [
+            "noaction",
+            "terminatejob"
+          ]
         }
       },
       onTaskFailure: {
         serializedName: "onTaskFailure",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "performexitoptionsjobaction"]
+          allowedValues: [
+            "noaction",
+            "performexitoptionsjobaction"
+          ]
         }
       },
       networkConfiguration: {
@@ -3592,6 +4095,12 @@ export const JobAddParameter: msRest.CompositeMapper = {
           name: "Number"
         }
       },
+      allowTaskPreemption: {
+        serializedName: "allowTaskPreemption",
+        type: {
+          name: "Boolean"
+        }
+      },
       constraints: {
         serializedName: "constraints",
         type: {
@@ -3635,7 +4144,6 @@ export const JobAddParameter: msRest.CompositeMapper = {
       poolInfo: {
         required: true,
         serializedName: "poolInfo",
-        defaultValue: {},
         type: {
           name: "Composite",
           className: "PoolInformation"
@@ -3645,14 +4153,20 @@ export const JobAddParameter: msRest.CompositeMapper = {
         serializedName: "onAllTasksComplete",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "terminatejob"]
+          allowedValues: [
+            "noaction",
+            "terminatejob"
+          ]
         }
       },
       onTaskFailure: {
         serializedName: "onTaskFailure",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "performexitoptionsjobaction"]
+          allowedValues: [
+            "noaction",
+            "performexitoptionsjobaction"
+          ]
         }
       },
       metadata: {
@@ -3723,7 +4237,10 @@ export const TaskFailureInformation: msRest.CompositeMapper = {
         serializedName: "category",
         type: {
           name: "Enum",
-          allowedValues: ["usererror", "servererror"]
+          allowedValues: [
+            "usererror",
+            "servererror"
+          ]
         }
       },
       code: {
@@ -3778,7 +4295,10 @@ export const JobPreparationTaskExecutionInformation: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["running", "completed"]
+          allowedValues: [
+            "running",
+            "completed"
+          ]
         }
       },
       taskRootDirectory: {
@@ -3830,7 +4350,10 @@ export const JobPreparationTaskExecutionInformation: msRest.CompositeMapper = {
         serializedName: "result",
         type: {
           name: "Enum",
-          allowedValues: ["success", "failure"]
+          allowedValues: [
+            "success",
+            "failure"
+          ]
         }
       }
     }
@@ -3861,7 +4384,10 @@ export const JobReleaseTaskExecutionInformation: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["running", "completed"]
+          allowedValues: [
+            "running",
+            "completed"
+          ]
         }
       },
       taskRootDirectory: {
@@ -3900,7 +4426,10 @@ export const JobReleaseTaskExecutionInformation: msRest.CompositeMapper = {
         serializedName: "result",
         type: {
           name: "Enum",
-          allowedValues: ["success", "failure"]
+          allowedValues: [
+            "success",
+            "failure"
+          ]
         }
       }
     }
@@ -4185,7 +4714,11 @@ export const InstanceViewStatus: msRest.CompositeMapper = {
         serializedName: "level",
         type: {
           name: "Enum",
-          allowedValues: ["Error", "Info", "Warning"]
+          allowedValues: [
+            "Error",
+            "Info",
+            "Warning"
+          ]
         }
       },
       message: {
@@ -4316,7 +4849,10 @@ export const BatchPoolIdentity: msRest.CompositeMapper = {
         serializedName: "type",
         type: {
           name: "Enum",
-          allowedValues: ["UserAssigned", "None"]
+          allowedValues: [
+            "UserAssigned",
+            "None"
+          ]
         }
       },
       userAssignedIdentities: {
@@ -4381,7 +4917,10 @@ export const CloudPool: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["active", "deleting"]
+          allowedValues: [
+            "active",
+            "deleting"
+          ]
         }
       },
       stateTransitionTime: {
@@ -4394,7 +4933,11 @@ export const CloudPool: msRest.CompositeMapper = {
         serializedName: "allocationState",
         type: {
           name: "Enum",
-          allowedValues: ["steady", "resizing", "stopping"]
+          allowedValues: [
+            "steady",
+            "resizing",
+            "stopping"
+          ]
         }
       },
       allocationStateTransitionTime: {
@@ -4407,13 +4950,6 @@ export const CloudPool: msRest.CompositeMapper = {
         serializedName: "vmSize",
         type: {
           name: "String"
-        }
-      },
-      cloudServiceConfiguration: {
-        serializedName: "cloudServiceConfiguration",
-        type: {
-          name: "Composite",
-          className: "CloudServiceConfiguration"
         }
       },
       virtualMachineConfiguration: {
@@ -4534,17 +5070,6 @@ export const CloudPool: msRest.CompositeMapper = {
           }
         }
       },
-      applicationLicenses: {
-        serializedName: "applicationLicenses",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
       taskSlotsPerNode: {
         serializedName: "taskSlotsPerNode",
         type: {
@@ -4607,6 +5132,47 @@ export const CloudPool: msRest.CompositeMapper = {
           name: "Composite",
           className: "BatchPoolIdentity"
         }
+      },
+      targetNodeCommunicationMode: {
+        serializedName: "targetNodeCommunicationMode",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "default",
+            "classic",
+            "simplified"
+          ]
+        }
+      },
+      currentNodeCommunicationMode: {
+        readOnly: true,
+        serializedName: "currentNodeCommunicationMode",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "default",
+            "classic",
+            "simplified"
+          ]
+        }
+      },
+      upgradePolicy: {
+        serializedName: "upgradePolicy",
+        type: {
+          name: "Composite",
+          className: "UpgradePolicy"
+        }
+      },
+      resourceTags: {
+        serializedName: "resourceTags",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: {
+              name: "String"
+            }
+          }
+        }
       }
     }
   }
@@ -4636,13 +5202,6 @@ export const PoolAddParameter: msRest.CompositeMapper = {
         serializedName: "vmSize",
         type: {
           name: "String"
-        }
-      },
-      cloudServiceConfiguration: {
-        serializedName: "cloudServiceConfiguration",
-        type: {
-          name: "Composite",
-          className: "CloudServiceConfiguration"
         }
       },
       virtualMachineConfiguration: {
@@ -4732,17 +5291,6 @@ export const PoolAddParameter: msRest.CompositeMapper = {
           }
         }
       },
-      applicationLicenses: {
-        serializedName: "applicationLicenses",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "String"
-            }
-          }
-        }
-      },
       taskSlotsPerNode: {
         serializedName: "taskSlotsPerNode",
         type: {
@@ -4788,6 +5336,35 @@ export const PoolAddParameter: msRest.CompositeMapper = {
             type: {
               name: "Composite",
               className: "MountConfiguration"
+            }
+          }
+        }
+      },
+      targetNodeCommunicationMode: {
+        serializedName: "targetNodeCommunicationMode",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "default",
+            "classic",
+            "simplified"
+          ]
+        }
+      },
+      upgradePolicy: {
+        serializedName: "upgradePolicy",
+        type: {
+          name: "Composite",
+          className: "UpgradePolicy"
+        }
+      },
+      resourceTags: {
+        serializedName: "resourceTags",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: {
+              name: "String"
             }
           }
         }
@@ -4881,7 +5458,10 @@ export const TaskExecutionInformation: msRest.CompositeMapper = {
         serializedName: "result",
         type: {
           name: "Enum",
-          allowedValues: ["success", "failure"]
+          allowedValues: [
+            "success",
+            "failure"
+          ]
         }
       }
     }
@@ -5190,7 +5770,12 @@ export const CloudTask: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["active", "preparing", "running", "completed"]
+          allowedValues: [
+            "active",
+            "preparing",
+            "running",
+            "completed"
+          ]
         }
       },
       stateTransitionTime: {
@@ -5203,7 +5788,12 @@ export const CloudTask: msRest.CompositeMapper = {
         serializedName: "previousState",
         type: {
           name: "Enum",
-          allowedValues: ["active", "preparing", "running", "completed"]
+          allowedValues: [
+            "active",
+            "preparing",
+            "running",
+            "completed"
+          ]
         }
       },
       previousStateTransitionTime: {
@@ -5602,7 +6192,11 @@ export const TaskAddResult: msRest.CompositeMapper = {
         serializedName: "status",
         type: {
           name: "Enum",
-          allowedValues: ["success", "clienterror", "servererror"]
+          allowedValues: [
+            "success",
+            "clienterror",
+            "servererror"
+          ]
         }
       },
       taskId: {
@@ -5718,7 +6312,11 @@ export const SubtaskInformation: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["preparing", "running", "completed"]
+          allowedValues: [
+            "preparing",
+            "running",
+            "completed"
+          ]
         }
       },
       stateTransitionTime: {
@@ -5731,7 +6329,11 @@ export const SubtaskInformation: msRest.CompositeMapper = {
         serializedName: "previousState",
         type: {
           name: "Enum",
-          allowedValues: ["preparing", "running", "completed"]
+          allowedValues: [
+            "preparing",
+            "running",
+            "completed"
+          ]
         }
       },
       previousStateTransitionTime: {
@@ -5744,7 +6346,10 @@ export const SubtaskInformation: msRest.CompositeMapper = {
         serializedName: "result",
         type: {
           name: "Enum",
-          allowedValues: ["success", "failure"]
+          allowedValues: [
+            "success",
+            "failure"
+          ]
         }
       }
     }
@@ -5808,7 +6413,12 @@ export const TaskInformation: msRest.CompositeMapper = {
         serializedName: "taskState",
         type: {
           name: "Enum",
-          allowedValues: ["active", "preparing", "running", "completed"]
+          allowedValues: [
+            "active",
+            "preparing",
+            "running",
+            "completed"
+          ]
         }
       },
       executionInfo: {
@@ -5833,7 +6443,10 @@ export const StartTaskInformation: msRest.CompositeMapper = {
         serializedName: "state",
         type: {
           name: "Enum",
-          allowedValues: ["running", "completed"]
+          allowedValues: [
+            "running",
+            "completed"
+          ]
         }
       },
       startTime: {
@@ -5886,7 +6499,10 @@ export const StartTaskInformation: msRest.CompositeMapper = {
         serializedName: "result",
         type: {
           name: "Enum",
-          allowedValues: ["success", "failure"]
+          allowedValues: [
+            "success",
+            "failure"
+          ]
         }
       }
     }
@@ -5945,7 +6561,10 @@ export const InboundEndpoint: msRest.CompositeMapper = {
         serializedName: "protocol",
         type: {
           name: "Enum",
-          allowedValues: ["tcp", "udp"]
+          allowedValues: [
+            "tcp",
+            "udp"
+          ]
         }
       },
       publicIPAddress: {
@@ -6015,6 +6634,12 @@ export const VirtualMachineInfo: msRest.CompositeMapper = {
           name: "Composite",
           className: "ImageReference"
         }
+      },
+      scaleSetVmResourceId: {
+        serializedName: "scaleSetVmResourceId",
+        type: {
+          name: "String"
+        }
       }
     }
   }
@@ -6055,7 +6680,10 @@ export const ComputeNode: msRest.CompositeMapper = {
             "unknown",
             "leavingpool",
             "offline",
-            "preempted"
+            "preempted",
+            "upgradingos",
+            "deallocated",
+            "deallocating"
           ]
         }
       },
@@ -6063,7 +6691,10 @@ export const ComputeNode: msRest.CompositeMapper = {
         serializedName: "schedulingState",
         type: {
           name: "Enum",
-          allowedValues: ["enabled", "disabled"]
+          allowedValues: [
+            "enabled",
+            "disabled"
+          ]
         }
       },
       stateTransitionTime: {
@@ -6325,7 +6956,6 @@ export const JobScheduleUpdateParameter: msRest.CompositeMapper = {
       jobSpecification: {
         required: true,
         serializedName: "jobSpecification",
-        defaultValue: {},
         type: {
           name: "Composite",
           className: "JobSpecification"
@@ -6358,7 +6988,11 @@ export const JobDisableParameter: msRest.CompositeMapper = {
         serializedName: "disableTasks",
         type: {
           name: "Enum",
-          allowedValues: ["requeue", "terminate", "wait"]
+          allowedValues: [
+            "requeue",
+            "terminate",
+            "wait"
+          ]
         }
       }
     }
@@ -6399,11 +7033,20 @@ export const JobPatchParameter: msRest.CompositeMapper = {
           name: "Number"
         }
       },
+      allowTaskPreemption: {
+        serializedName: "allowTaskPreemption",
+        type: {
+          name: "Boolean"
+        }
+      },
       onAllTasksComplete: {
         serializedName: "onAllTasksComplete",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "terminatejob"]
+          allowedValues: [
+            "noaction",
+            "terminatejob"
+          ]
         }
       },
       constraints: {
@@ -6418,6 +7061,13 @@ export const JobPatchParameter: msRest.CompositeMapper = {
         type: {
           name: "Composite",
           className: "PoolInformation"
+        }
+      },
+      networkConfiguration: {
+        serializedName: "networkConfiguration",
+        type: {
+          name: "Composite",
+          className: "JobNetworkConfiguration"
         }
       },
       metadata: {
@@ -6448,6 +7098,19 @@ export const JobUpdateParameter: msRest.CompositeMapper = {
           name: "Number"
         }
       },
+      maxParallelTasks: {
+        serializedName: "maxParallelTasks",
+        defaultValue: -1,
+        type: {
+          name: "Number"
+        }
+      },
+      allowTaskPreemption: {
+        serializedName: "allowTaskPreemption",
+        type: {
+          name: "Boolean"
+        }
+      },
       constraints: {
         serializedName: "constraints",
         type: {
@@ -6458,7 +7121,6 @@ export const JobUpdateParameter: msRest.CompositeMapper = {
       poolInfo: {
         required: true,
         serializedName: "poolInfo",
-        defaultValue: {},
         type: {
           name: "Composite",
           className: "PoolInformation"
@@ -6480,7 +7142,10 @@ export const JobUpdateParameter: msRest.CompositeMapper = {
         serializedName: "onAllTasksComplete",
         type: {
           name: "Enum",
-          allowedValues: ["noaction", "terminatejob"]
+          allowedValues: [
+            "noaction",
+            "terminatejob"
+          ]
         }
       }
     }
@@ -6554,7 +7219,12 @@ export const PoolResizeParameter: msRest.CompositeMapper = {
         serializedName: "nodeDeallocationOption",
         type: {
           name: "Enum",
-          allowedValues: ["requeue", "terminate", "taskcompletion", "retaineddata"]
+          allowedValues: [
+            "requeue",
+            "terminate",
+            "taskcompletion",
+            "retaineddata"
+          ]
         }
       }
     }
@@ -6612,6 +7282,17 @@ export const PoolUpdatePropertiesParameter: msRest.CompositeMapper = {
             }
           }
         }
+      },
+      targetNodeCommunicationMode: {
+        serializedName: "targetNodeCommunicationMode",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "default",
+            "classic",
+            "simplified"
+          ]
+        }
       }
     }
   }
@@ -6662,6 +7343,104 @@ export const PoolPatchParameter: msRest.CompositeMapper = {
             type: {
               name: "Composite",
               className: "MetadataItem"
+            }
+          }
+        }
+      },
+      targetNodeCommunicationMode: {
+        serializedName: "targetNodeCommunicationMode",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "default",
+            "classic",
+            "simplified"
+          ]
+        }
+      },
+      displayName: {
+        serializedName: "displayName",
+        type: {
+          name: "String"
+        }
+      },
+      vmSize: {
+        serializedName: "vmSize",
+        type: {
+          name: "String"
+        }
+      },
+      taskSlotsPerNode: {
+        serializedName: "taskSlotsPerNode",
+        type: {
+          name: "Number"
+        }
+      },
+      taskSchedulingPolicy: {
+        serializedName: "taskSchedulingPolicy",
+        type: {
+          name: "Composite",
+          className: "TaskSchedulingPolicy"
+        }
+      },
+      enableInterNodeCommunication: {
+        serializedName: "enableInterNodeCommunication",
+        type: {
+          name: "Boolean"
+        }
+      },
+      virtualMachineConfiguration: {
+        serializedName: "virtualMachineConfiguration",
+        type: {
+          name: "Composite",
+          className: "VirtualMachineConfiguration"
+        }
+      },
+      networkConfiguration: {
+        serializedName: "networkConfiguration",
+        type: {
+          name: "Composite",
+          className: "NetworkConfiguration"
+        }
+      },
+      userAccounts: {
+        serializedName: "userAccounts",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "UserAccount"
+            }
+          }
+        }
+      },
+      mountConfiguration: {
+        serializedName: "mountConfiguration",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "MountConfiguration"
+            }
+          }
+        }
+      },
+      upgradePolicy: {
+        serializedName: "upgradePolicy",
+        type: {
+          name: "Composite",
+          className: "UpgradePolicy"
+        }
+      },
+      resourceTags: {
+        serializedName: "resourceTags",
+        type: {
+          name: "Dictionary",
+          value: {
+            type: {
+              name: "String"
             }
           }
         }
@@ -6725,7 +7504,12 @@ export const NodeRebootParameter: msRest.CompositeMapper = {
         serializedName: "nodeRebootOption",
         type: {
           name: "Enum",
-          allowedValues: ["requeue", "terminate", "taskcompletion", "retaineddata"]
+          allowedValues: [
+            "requeue",
+            "terminate",
+            "taskcompletion",
+            "retaineddata"
+          ]
         }
       }
     }
@@ -6742,7 +7526,12 @@ export const NodeReimageParameter: msRest.CompositeMapper = {
         serializedName: "nodeReimageOption",
         type: {
           name: "Enum",
-          allowedValues: ["requeue", "terminate", "taskcompletion", "retaineddata"]
+          allowedValues: [
+            "requeue",
+            "terminate",
+            "taskcompletion",
+            "retaineddata"
+          ]
         }
       }
     }
@@ -6759,7 +7548,33 @@ export const NodeDisableSchedulingParameter: msRest.CompositeMapper = {
         serializedName: "nodeDisableSchedulingOption",
         type: {
           name: "Enum",
-          allowedValues: ["requeue", "terminate", "taskcompletion"]
+          allowedValues: [
+            "requeue",
+            "terminate",
+            "taskcompletion"
+          ]
+        }
+      }
+    }
+  }
+};
+
+export const NodeDeallocateParameter: msRest.CompositeMapper = {
+  serializedName: "NodeDeallocateParameter",
+  type: {
+    name: "Composite",
+    className: "NodeDeallocateParameter",
+    modelProperties: {
+      nodeDeallocateOption: {
+        serializedName: "nodeDeallocateOption",
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "requeue",
+            "terminate",
+            "taskcompletion",
+            "retaineddata"
+          ]
         }
       }
     }
@@ -6797,7 +7612,12 @@ export const NodeRemoveParameter: msRest.CompositeMapper = {
         serializedName: "nodeDeallocationOption",
         type: {
           name: "Enum",
-          allowedValues: ["requeue", "terminate", "taskcompletion", "retaineddata"]
+          allowedValues: [
+            "requeue",
+            "terminate",
+            "taskcompletion",
+            "retaineddata"
+          ]
         }
       }
     }
@@ -6962,6 +7782,27 @@ export const NodeCounts: msRest.CompositeMapper = {
           name: "Number"
         }
       },
+      upgradingOS: {
+        required: true,
+        serializedName: "upgradingOS",
+        type: {
+          name: "Number"
+        }
+      },
+      deallocated: {
+        required: true,
+        serializedName: "deallocated",
+        type: {
+          name: "Number"
+        }
+      },
+      deallocating: {
+        required: true,
+        serializedName: "deallocating",
+        type: {
+          name: "Number"
+        }
+      },
       total: {
         required: true,
         serializedName: "total",
@@ -7098,37 +7939,6 @@ export const PoolListUsageMetricsOptions: msRest.CompositeMapper = {
           name: "Number"
         }
       },
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const PoolGetAllLifetimeStatisticsOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "PoolGetAllLifetimeStatisticsOptions",
-    modelProperties: {
       timeout: {
         defaultValue: 30,
         type: {
@@ -7833,617 +8643,6 @@ export const AccountListPoolNodeCountsOptions: msRest.CompositeMapper = {
   }
 };
 
-export const JobGetAllLifetimeStatisticsOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobGetAllLifetimeStatisticsOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobDeleteMethodOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobDeleteMethodOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifNoneMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifModifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifUnmodifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobGetOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobGetOptions",
-    modelProperties: {
-      select: {
-        type: {
-          name: "String"
-        }
-      },
-      expand: {
-        type: {
-          name: "String"
-        }
-      },
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifNoneMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifModifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifUnmodifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobPatchOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobPatchOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifNoneMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifModifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifUnmodifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobUpdateOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobUpdateOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifNoneMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifModifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifUnmodifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobDisableOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobDisableOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifNoneMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifModifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifUnmodifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobEnableOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobEnableOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifNoneMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifModifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifUnmodifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobTerminateOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobTerminateOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifNoneMatch: {
-        type: {
-          name: "String"
-        }
-      },
-      ifModifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      },
-      ifUnmodifiedSince: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobAddOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobAddOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobListOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobListOptions",
-    modelProperties: {
-      filter: {
-        type: {
-          name: "String"
-        }
-      },
-      select: {
-        type: {
-          name: "String"
-        }
-      },
-      expand: {
-        type: {
-          name: "String"
-        }
-      },
-      maxResults: {
-        defaultValue: 1000,
-        type: {
-          name: "Number"
-        }
-      },
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobListFromJobScheduleOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobListFromJobScheduleOptions",
-    modelProperties: {
-      filter: {
-        type: {
-          name: "String"
-        }
-      },
-      select: {
-        type: {
-          name: "String"
-        }
-      },
-      expand: {
-        type: {
-          name: "String"
-        }
-      },
-      maxResults: {
-        defaultValue: 1000,
-        type: {
-          name: "Number"
-        }
-      },
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobListPreparationAndReleaseTaskStatusOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobListPreparationAndReleaseTaskStatusOptions",
-    modelProperties: {
-      filter: {
-        type: {
-          name: "String"
-        }
-      },
-      select: {
-        type: {
-          name: "String"
-        }
-      },
-      maxResults: {
-        defaultValue: 1000,
-        type: {
-          name: "Number"
-        }
-      },
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobGetTaskCountsOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobGetTaskCountsOptions",
-    modelProperties: {
-      timeout: {
-        defaultValue: 30,
-        type: {
-          name: "Number"
-        }
-      },
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
 export const CertificateAddOptions: msRest.CompositeMapper = {
   type: {
     name: "Composite",
@@ -9037,6 +9236,12 @@ export const JobScheduleDeleteMethodOptions: msRest.CompositeMapper = {
         type: {
           name: "DateTimeRfc1123"
         }
+      },
+      force: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
       }
     }
   }
@@ -9353,6 +9558,12 @@ export const JobScheduleTerminateOptions: msRest.CompositeMapper = {
         type: {
           name: "DateTimeRfc1123"
         }
+      },
+      force: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
       }
     }
   }
@@ -9415,6 +9626,598 @@ export const JobScheduleListOptions: msRest.CompositeMapper = {
           name: "Number"
         }
       },
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobDeleteMethodOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobDeleteMethodOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifNoneMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifModifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifUnmodifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      force: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      }
+    }
+  }
+};
+
+export const JobGetOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobGetOptions",
+    modelProperties: {
+      select: {
+        type: {
+          name: "String"
+        }
+      },
+      expand: {
+        type: {
+          name: "String"
+        }
+      },
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifNoneMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifModifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifUnmodifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobPatchOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobPatchOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifNoneMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifModifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifUnmodifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobUpdateOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobUpdateOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifNoneMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifModifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifUnmodifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobDisableOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobDisableOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifNoneMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifModifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifUnmodifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobEnableOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobEnableOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifNoneMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifModifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifUnmodifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobTerminateOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobTerminateOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifNoneMatch: {
+        type: {
+          name: "String"
+        }
+      },
+      ifModifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      ifUnmodifiedSince: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      force: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      }
+    }
+  }
+};
+
+export const JobAddOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobAddOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobListOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobListOptions",
+    modelProperties: {
+      filter: {
+        type: {
+          name: "String"
+        }
+      },
+      select: {
+        type: {
+          name: "String"
+        }
+      },
+      expand: {
+        type: {
+          name: "String"
+        }
+      },
+      maxResults: {
+        defaultValue: 1000,
+        type: {
+          name: "Number"
+        }
+      },
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobListFromJobScheduleOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobListFromJobScheduleOptions",
+    modelProperties: {
+      filter: {
+        type: {
+          name: "String"
+        }
+      },
+      select: {
+        type: {
+          name: "String"
+        }
+      },
+      expand: {
+        type: {
+          name: "String"
+        }
+      },
+      maxResults: {
+        defaultValue: 1000,
+        type: {
+          name: "Number"
+        }
+      },
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobListPreparationAndReleaseTaskStatusOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobListPreparationAndReleaseTaskStatusOptions",
+    modelProperties: {
+      filter: {
+        type: {
+          name: "String"
+        }
+      },
+      select: {
+        type: {
+          name: "String"
+        }
+      },
+      maxResults: {
+        defaultValue: 1000,
+        type: {
+          name: "Number"
+        }
+      },
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobGetTaskCountsOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobGetTaskCountsOptions",
+    modelProperties: {
       timeout: {
         defaultValue: 30,
         type: {
@@ -9530,7 +10333,7 @@ export const TaskAddCollectionOptions: msRest.CompositeMapper = {
     className: "TaskAddCollectionOptions",
     modelProperties: {
       timeout: {
-        defaultValue: 30,
+        defaultValue: 120,
         type: {
           name: "Number"
         }
@@ -10109,10 +10912,10 @@ export const ComputeNodeEnableSchedulingOptions: msRest.CompositeMapper = {
   }
 };
 
-export const ComputeNodeGetRemoteLoginSettingsOptions: msRest.CompositeMapper = {
+export const ComputeNodeStartOptions: msRest.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "ComputeNodeGetRemoteLoginSettingsOptions",
+    className: "ComputeNodeStartOptions",
     modelProperties: {
       timeout: {
         defaultValue: 30,
@@ -10140,10 +10943,41 @@ export const ComputeNodeGetRemoteLoginSettingsOptions: msRest.CompositeMapper = 
   }
 };
 
-export const ComputeNodeGetRemoteDesktopOptions: msRest.CompositeMapper = {
+export const ComputeNodeDeallocateOptions: msRest.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "ComputeNodeGetRemoteDesktopOptions",
+    className: "ComputeNodeDeallocateOptions",
+    modelProperties: {
+      timeout: {
+        defaultValue: 30,
+        type: {
+          name: "Number"
+        }
+      },
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const ComputeNodeGetRemoteLoginSettingsOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ComputeNodeGetRemoteLoginSettingsOptions",
     modelProperties: {
       timeout: {
         defaultValue: 30,
@@ -10452,81 +11286,6 @@ export const AccountListPoolNodeCountsNextOptions: msRest.CompositeMapper = {
   }
 };
 
-export const JobListNextOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobListNextOptions",
-    modelProperties: {
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobListFromJobScheduleNextOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobListFromJobScheduleNextOptions",
-    modelProperties: {
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobListPreparationAndReleaseTaskStatusNextOptions: msRest.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "JobListPreparationAndReleaseTaskStatusNextOptions",
-    modelProperties: {
-      clientRequestId: {
-        type: {
-          name: "Uuid"
-        }
-      },
-      returnClientRequestId: {
-        defaultValue: false,
-        type: {
-          name: "Boolean"
-        }
-      },
-      ocpDate: {
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
 export const CertificateListNextOptions: msRest.CompositeMapper = {
   type: {
     name: "Composite",
@@ -10606,6 +11365,81 @@ export const JobScheduleListNextOptions: msRest.CompositeMapper = {
   type: {
     name: "Composite",
     className: "JobScheduleListNextOptions",
+    modelProperties: {
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobListNextOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobListNextOptions",
+    modelProperties: {
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobListFromJobScheduleNextOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobListFromJobScheduleNextOptions",
+    modelProperties: {
+      clientRequestId: {
+        type: {
+          name: "Uuid"
+        }
+      },
+      returnClientRequestId: {
+        defaultValue: false,
+        type: {
+          name: "Boolean"
+        }
+      },
+      ocpDate: {
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      }
+    }
+  }
+};
+
+export const JobListPreparationAndReleaseTaskStatusNextOptions: msRest.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "JobListPreparationAndReleaseTaskStatusNextOptions",
     modelProperties: {
       clientRequestId: {
         type: {
@@ -10854,74 +11688,6 @@ export const AccountListPoolNodeCountsHeaders: msRest.CompositeMapper = {
         serializedName: "request-id",
         type: {
           name: "Uuid"
-        }
-      }
-    }
-  }
-};
-
-export const PoolGetAllLifetimeStatisticsHeaders: msRest.CompositeMapper = {
-  serializedName: "pool-getalllifetimestatistics-headers",
-  type: {
-    name: "Composite",
-    className: "PoolGetAllLifetimeStatisticsHeaders",
-    modelProperties: {
-      clientRequestId: {
-        serializedName: "client-request-id",
-        type: {
-          name: "Uuid"
-        }
-      },
-      requestId: {
-        serializedName: "request-id",
-        type: {
-          name: "Uuid"
-        }
-      },
-      eTag: {
-        serializedName: "etag",
-        type: {
-          name: "String"
-        }
-      },
-      lastModified: {
-        serializedName: "last-modified",
-        type: {
-          name: "DateTimeRfc1123"
-        }
-      }
-    }
-  }
-};
-
-export const JobGetAllLifetimeStatisticsHeaders: msRest.CompositeMapper = {
-  serializedName: "job-getalllifetimestatistics-headers",
-  type: {
-    name: "Composite",
-    className: "JobGetAllLifetimeStatisticsHeaders",
-    modelProperties: {
-      clientRequestId: {
-        serializedName: "client-request-id",
-        type: {
-          name: "Uuid"
-        }
-      },
-      requestId: {
-        serializedName: "request-id",
-        type: {
-          name: "Uuid"
-        }
-      },
-      eTag: {
-        serializedName: "etag",
-        type: {
-          name: "String"
-        }
-      },
-      lastModified: {
-        serializedName: "last-modified",
-        type: {
-          name: "DateTimeRfc1123"
         }
       }
     }
@@ -13378,11 +14144,11 @@ export const ComputeNodeEnableSchedulingHeaders: msRest.CompositeMapper = {
   }
 };
 
-export const ComputeNodeGetRemoteLoginSettingsHeaders: msRest.CompositeMapper = {
-  serializedName: "computenode-getremoteloginsettings-headers",
+export const ComputeNodeStartHeaders: msRest.CompositeMapper = {
+  serializedName: "computenode-start-headers",
   type: {
     name: "Composite",
-    className: "ComputeNodeGetRemoteLoginSettingsHeaders",
+    className: "ComputeNodeStartHeaders",
     modelProperties: {
       clientRequestId: {
         serializedName: "client-request-id",
@@ -13407,16 +14173,62 @@ export const ComputeNodeGetRemoteLoginSettingsHeaders: msRest.CompositeMapper = 
         type: {
           name: "DateTimeRfc1123"
         }
+      },
+      dataServiceId: {
+        serializedName: "dataserviceid",
+        type: {
+          name: "String"
+        }
       }
     }
   }
 };
 
-export const ComputeNodeGetRemoteDesktopHeaders: msRest.CompositeMapper = {
-  serializedName: "computenode-getremotedesktop-headers",
+export const ComputeNodeDeallocateHeaders: msRest.CompositeMapper = {
+  serializedName: "computenode-deallocate-headers",
   type: {
     name: "Composite",
-    className: "ComputeNodeGetRemoteDesktopHeaders",
+    className: "ComputeNodeDeallocateHeaders",
+    modelProperties: {
+      clientRequestId: {
+        serializedName: "client-request-id",
+        type: {
+          name: "Uuid"
+        }
+      },
+      requestId: {
+        serializedName: "request-id",
+        type: {
+          name: "Uuid"
+        }
+      },
+      eTag: {
+        serializedName: "etag",
+        type: {
+          name: "String"
+        }
+      },
+      lastModified: {
+        serializedName: "last-modified",
+        type: {
+          name: "DateTimeRfc1123"
+        }
+      },
+      dataServiceId: {
+        serializedName: "dataserviceid",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ComputeNodeGetRemoteLoginSettingsHeaders: msRest.CompositeMapper = {
+  serializedName: "computenode-getremoteloginsettings-headers",
+  type: {
+    name: "Composite",
+    className: "ComputeNodeGetRemoteLoginSettingsHeaders",
     modelProperties: {
       clientRequestId: {
         serializedName: "client-request-id",
@@ -13710,62 +14522,6 @@ export const PoolNodeCountsListResult: msRest.CompositeMapper = {
   }
 };
 
-export const CloudJobListResult: msRest.CompositeMapper = {
-  serializedName: "CloudJobListResult",
-  type: {
-    name: "Composite",
-    className: "CloudJobListResult",
-    modelProperties: {
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "CloudJob"
-            }
-          }
-        }
-      },
-      odatanextLink: {
-        serializedName: "odata\\.nextLink",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const CloudJobListPreparationAndReleaseTaskStatusResult: msRest.CompositeMapper = {
-  serializedName: "CloudJobListPreparationAndReleaseTaskStatusResult",
-  type: {
-    name: "Composite",
-    className: "CloudJobListPreparationAndReleaseTaskStatusResult",
-    modelProperties: {
-      value: {
-        serializedName: "",
-        type: {
-          name: "Sequence",
-          element: {
-            type: {
-              name: "Composite",
-              className: "JobPreparationAndReleaseTaskExecutionInformation"
-            }
-          }
-        }
-      },
-      odatanextLink: {
-        serializedName: "odata\\.nextLink",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
 export const CertificateListResult: msRest.CompositeMapper = {
   serializedName: "CertificateListResult",
   type: {
@@ -13836,6 +14592,62 @@ export const CloudJobScheduleListResult: msRest.CompositeMapper = {
             type: {
               name: "Composite",
               className: "CloudJobSchedule"
+            }
+          }
+        }
+      },
+      odatanextLink: {
+        serializedName: "odata\\.nextLink",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const CloudJobListResult: msRest.CompositeMapper = {
+  serializedName: "CloudJobListResult",
+  type: {
+    name: "Composite",
+    className: "CloudJobListResult",
+    modelProperties: {
+      value: {
+        serializedName: "",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "CloudJob"
+            }
+          }
+        }
+      },
+      odatanextLink: {
+        serializedName: "odata\\.nextLink",
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const CloudJobListPreparationAndReleaseTaskStatusResult: msRest.CompositeMapper = {
+  serializedName: "CloudJobListPreparationAndReleaseTaskStatusResult",
+  type: {
+    name: "Composite",
+    className: "CloudJobListPreparationAndReleaseTaskStatusResult",
+    modelProperties: {
+      value: {
+        serializedName: "",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "JobPreparationAndReleaseTaskExecutionInformation"
             }
           }
         }

@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { IdentityProvider } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   IdentityProviderContract,
   IdentityProviderListByServiceNextOptionalParams,
@@ -37,19 +38,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing IdentityProvider operations. */
 export class IdentityProviderImpl implements IdentityProvider {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class IdentityProvider class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists a collection of Identity Provider configured in the specified service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -70,11 +71,15 @@ export class IdentityProviderImpl implements IdentityProvider {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -83,15 +88,22 @@ export class IdentityProviderImpl implements IdentityProvider {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: IdentityProviderListByServiceOptionalParams
+    options?: IdentityProviderListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<IdentityProviderContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: IdentityProviderListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -100,7 +112,9 @@ export class IdentityProviderImpl implements IdentityProvider {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -120,7 +134,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * Lists a collection of Identity Provider configured in the specified service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -137,7 +151,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * Gets the entity state (Etag) version of the identityProvider specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param identityProviderName Identity Provider Type identifier.
    * @param options The options parameters.
@@ -156,7 +170,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * Gets the configuration details of the identity Provider configured in specified service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param identityProviderName Identity Provider Type identifier.
    * @param options The options parameters.
@@ -175,7 +189,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * Creates or Updates the IdentityProvider configuration.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param identityProviderName Identity Provider Type identifier.
    * @param parameters Create parameters.
@@ -202,7 +216,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * Updates an existing IdentityProvider configuration.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param identityProviderName Identity Provider Type identifier.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -233,7 +247,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * Deletes the specified identity provider configuration.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param identityProviderName Identity Provider Type identifier.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -261,7 +275,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * Gets the client secret details of the Identity Provider.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param identityProviderName Identity Provider Type identifier.
    * @param options The options parameters.
@@ -280,7 +294,7 @@ export class IdentityProviderImpl implements IdentityProvider {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -386,7 +400,7 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters38,
+  requestBody: Parameters.parameters49,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -416,7 +430,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters39,
+  requestBody: Parameters.parameters50,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -490,7 +504,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

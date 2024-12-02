@@ -1,33 +1,30 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type {
+  CommunicationAccessToken,
+  CommunicationIdentityClientOptions,
+  CommunicationUserToken,
+  GetTokenForTeamsUserOptions,
+  CreateUserAndTokenOptions,
+  GetTokenOptions,
+  TokenScope,
+} from "./models.js";
+import type { CommunicationUserIdentifier } from "@azure/communication-common";
 import {
   createCommunicationAuthPolicy,
-  parseClientArguments,
   isKeyCredential,
-  CommunicationUserIdentifier
+  parseClientArguments,
 } from "@azure/communication-common";
-import { isTokenCredential, KeyCredential, TokenCredential } from "@azure/core-auth";
-import {
-  InternalPipelineOptions,
-  createPipelineFromOptions,
-  OperationOptions,
-  operationOptionsToRequestOptionsBase
-} from "@azure/core-http";
-import { SpanStatusCode } from "@azure/core-tracing";
-import { CommunicationIdentity, IdentityRestClient } from "./generated/src/identityRestClient";
-import { SDK_VERSION } from "./constants";
-import { logger } from "./common/logger";
-import { createSpan } from "./common/tracing";
-import {
-  CommunicationIdentityClientOptions,
-  TokenScope,
-  CommunicationUserToken,
-  CommunicationAccessToken
-} from "./models";
+import type { InternalClientPipelineOptions, OperationOptions } from "@azure/core-client";
+import type { KeyCredential, TokenCredential } from "@azure/core-auth";
+import { isTokenCredential } from "@azure/core-auth";
+import { IdentityRestClient } from "./generated/src/identityRestClient.js";
+import { logger } from "./common/logger.js";
+import { tracingClient } from "./generated/src/tracing.js";
 
 const isCommunicationIdentityClientOptions = (
-  options: any
+  options: any,
 ): options is CommunicationIdentityClientOptions =>
   options && !isTokenCredential(options) && !isKeyCredential(options);
 
@@ -38,7 +35,7 @@ export class CommunicationIdentityClient {
   /**
    * A reference to the auto-generated UserToken HTTP client.
    */
-  private readonly client: CommunicationIdentity;
+  private readonly client: IdentityRestClient;
 
   /**
    * Initializes a new instance of the CommunicationIdentity class.
@@ -57,7 +54,7 @@ export class CommunicationIdentityClient {
   public constructor(
     endpoint: string,
     credential: KeyCredential,
-    options?: CommunicationIdentityClientOptions
+    options?: CommunicationIdentityClientOptions,
   );
   /**
    * Initializes a new instance of the CommunicationIdentity class using a TokenCredential.
@@ -68,45 +65,35 @@ export class CommunicationIdentityClient {
   public constructor(
     endpoint: string,
     credential: TokenCredential,
-    options?: CommunicationIdentityClientOptions
+    options?: CommunicationIdentityClientOptions,
   );
 
   public constructor(
     connectionStringOrEndpoint: string,
     credentialOrOptions?: KeyCredential | CommunicationIdentityClientOptions | TokenCredential,
-    maybeOptions: CommunicationIdentityClientOptions = {}
+    maybeOptions: CommunicationIdentityClientOptions = {},
   ) {
     const { url, credential } = parseClientArguments(
       connectionStringOrEndpoint,
-      credentialOrOptions
+      credentialOrOptions,
     );
     const options = isCommunicationIdentityClientOptions(credentialOrOptions)
       ? credentialOrOptions
       : maybeOptions;
-    const libInfo = `azsdk-js-communication-identity/${SDK_VERSION}`;
 
-    if (!options.userAgentOptions) {
-      options.userAgentOptions = {};
-    }
-
-    if (options.userAgentOptions.userAgentPrefix) {
-      options.userAgentOptions.userAgentPrefix = `${options.userAgentOptions.userAgentPrefix} ${libInfo}`;
-    } else {
-      options.userAgentOptions.userAgentPrefix = libInfo;
-    }
-
-    const internalPipelineOptions: InternalPipelineOptions = {
+    const internalPipelineOptions: InternalClientPipelineOptions = {
       ...options,
       ...{
         loggingOptions: {
-          logger: logger.info
-        }
-      }
+          logger: logger.info,
+        },
+      },
     };
 
+    this.client = new IdentityRestClient(url, { endpoint: url, ...internalPipelineOptions });
+
     const authPolicy = createCommunicationAuthPolicy(credential);
-    const pipeline = createPipelineFromOptions(internalPipelineOptions, authPolicy);
-    this.client = new IdentityRestClient(url, pipeline).communicationIdentity;
+    this.client.pipeline.addPolicy(authPolicy);
   }
 
   /**
@@ -116,28 +103,18 @@ export class CommunicationIdentityClient {
    * @param scopes - Scopes to include in the token.
    * @param options - Additional options for the request.
    */
-  public async getToken(
+  public getToken(
     user: CommunicationUserIdentifier,
     scopes: TokenScope[],
-    options: OperationOptions = {}
+    options: GetTokenOptions = {},
   ): Promise<CommunicationAccessToken> {
-    const { span, updatedOptions } = createSpan("CommunicationIdentity-issueToken", options);
-    try {
-      const { _response, ...result } = await this.client.issueAccessToken(
+    return tracingClient.withSpan("CommunicationIdentity-issueToken", options, (updatedOptions) => {
+      return this.client.communicationIdentityOperations.issueAccessToken(
         user.communicationUserId,
-        { scopes },
-        operationOptionsToRequestOptionsBase(updatedOptions)
+        scopes,
+        { expiresInMinutes: options.tokenExpiresInMinutes, ...updatedOptions },
       );
-      return result;
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 
   /**
@@ -146,25 +123,21 @@ export class CommunicationIdentityClient {
    * @param user - The user whose tokens are being revoked.
    * @param options - Additional options for the request.
    */
-  public async revokeTokens(
+  public revokeTokens(
     user: CommunicationUserIdentifier,
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<void> {
-    const { span, updatedOptions } = createSpan("CommunicationIdentity-revokeTokens", options);
-    try {
-      await this.client.revokeAccessTokens(
-        user.communicationUserId,
-        operationOptionsToRequestOptionsBase(updatedOptions)
-      );
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "CommunicationIdentity-revokeTokens",
+      options,
+      async (updatedOptions) => {
+        await this.client.communicationIdentityOperations.revokeAccessTokens(
+          user.communicationUserId,
+          updatedOptions,
+        );
+      },
+    );
   }
 
   /**
@@ -172,22 +145,21 @@ export class CommunicationIdentityClient {
    *
    * @param options - Additional options for the request.
    */
-  public async createUser(options: OperationOptions = {}): Promise<CommunicationUserIdentifier> {
-    const { span, updatedOptions } = createSpan("CommunicationIdentity-createUser", options);
-    try {
-      const result = await this.client.create(operationOptionsToRequestOptionsBase(updatedOptions));
-      return {
-        communicationUserId: result.identity.id
-      };
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+  // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+  public createUser(options: OperationOptions = {}): Promise<CommunicationUserIdentifier> {
+    return tracingClient.withSpan(
+      "CommunicationIdentity-createUser",
+      options,
+      async (updatedOptions) => {
+        const result = await this.client.communicationIdentityOperations.create({
+          expiresInMinutes: undefined,
+          ...updatedOptions,
+        });
+        return {
+          communicationUserId: result.identity.id,
+        };
+      },
+    );
   }
 
   /**
@@ -196,32 +168,25 @@ export class CommunicationIdentityClient {
    * @param scopes - Scopes to include in the token.
    * @param options - Additional options for the request.
    */
-  public async createUserAndToken(
+  public createUserAndToken(
     scopes: TokenScope[],
-    options: OperationOptions = {}
+    options: CreateUserAndTokenOptions = {},
   ): Promise<CommunicationUserToken> {
-    const { span, updatedOptions } = createSpan(
+    return tracingClient.withSpan(
       "CommunicationIdentity-createUserAndToken",
-      options
+      options,
+      async (updatedOptions) => {
+        const { identity, accessToken } = await this.client.communicationIdentityOperations.create({
+          createTokenWithScopes: scopes,
+          expiresInMinutes: options.tokenExpiresInMinutes,
+          ...updatedOptions,
+        });
+        return {
+          ...accessToken!,
+          user: { communicationUserId: identity.id },
+        };
+      },
     );
-    try {
-      const { identity, accessToken } = await this.client.create({
-        body: { createTokenWithScopes: scopes },
-        ...operationOptionsToRequestOptionsBase(updatedOptions)
-      });
-      return {
-        ...accessToken!,
-        user: { communicationUserId: identity.id }
-      };
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -230,55 +195,43 @@ export class CommunicationIdentityClient {
    * @param user - The user being deleted.
    * @param options - Additional options for the request.
    */
-  public async deleteUser(
+  public deleteUser(
     user: CommunicationUserIdentifier,
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<void> {
-    const { span, updatedOptions } = createSpan("CommunicationIdentity-deleteUser", options);
-    try {
-      await this.client.delete(
-        user.communicationUserId,
-        operationOptionsToRequestOptionsBase(updatedOptions)
-      );
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "CommunicationIdentity-deleteUser",
+      options,
+      async (updatedOptions) => {
+        await this.client.communicationIdentityOperations.delete(
+          user.communicationUserId,
+          updatedOptions,
+        );
+      },
+    );
   }
 
   /**
-   * Exchanges an AAD access token of a Teams user for a new Communication Identity access token with a matching expiration time.
+   * Exchanges an Azure AD access token of a Teams user for a new Communication Identity access token with a matching expiration time.
    *
-   * @param teamsToken - AAD access token of a Teams user.
-   * @param options - Additional options for the request.
+   * @param options - Options used to exchange an Azure AD access token of a Teams user for a new Communication Identity access token.
    */
-  public async getTokenForTeamsUser(
-    teamsUserAadToken: string,
-    options: OperationOptions = {}
+  public getTokenForTeamsUser(
+    options: GetTokenForTeamsUserOptions,
   ): Promise<CommunicationAccessToken> {
-    const { span, updatedOptions } = createSpan(
+    return tracingClient.withSpan(
       "CommunicationIdentity-getTokenForTeamsUser",
-      options
+      options,
+      (updatedOptions) => {
+        const { teamsUserAadToken, clientId, userObjectId } = updatedOptions;
+        return this.client.communicationIdentityOperations.exchangeTeamsUserAccessToken(
+          teamsUserAadToken,
+          clientId,
+          userObjectId,
+          updatedOptions,
+        );
+      },
     );
-    try {
-      const { _response, ...result } = await this.client.exchangeTeamsUserAccessToken(
-        { token: teamsUserAadToken },
-        operationOptionsToRequestOptionsBase(updatedOptions)
-      );
-      return result;
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 }

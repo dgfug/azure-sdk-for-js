@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { getPagedAsyncIterator, PagedAsyncIterableIterator, PagedResult } from "@azure/core-paging";
-import { Client, createRestError, PathUncheckedResponse } from "@azure-rest/core-client";
+import type { PagedAsyncIterableIterator, PagedResult } from "@azure/core-paging";
+import { getPagedAsyncIterator } from "@azure/core-paging";
+import type { Client, PathUncheckedResponse } from "@azure-rest/core-client";
+import { createRestError } from "@azure-rest/core-client";
 
 /**
  * Helper type to extract the type of an array
@@ -14,7 +16,7 @@ export type GetArrayType<T> = T extends Array<infer TData> ? TData : never;
  */
 export type GetPage<TPage> = (
   pageLink: string,
-  maxPageSize?: number
+  maxPageSize?: number,
 ) => Promise<{
   page: TPage;
   nextPageLink?: string;
@@ -57,7 +59,7 @@ export type PaginateReturn<TResult> = TResult extends
 export function paginate<TResponse extends PathUncheckedResponse>(
   client: Client,
   initialResponse: TResponse,
-  options: PagingOptions<TResponse> = {}
+  options: PagingOptions<TResponse> = {},
 ): PagedAsyncIterableIterator<PaginateReturn<TResponse>> {
   // Extract element type from initial response
   type TElement = PaginateReturn<TResponse>;
@@ -116,7 +118,7 @@ function getElements<T = unknown>(body: unknown, itemName: string): T[] {
   // type of elements in the page in PaginateReturn
   if (!Array.isArray(value)) {
     throw new Error(
-      `Couldn't paginate response\n Body doesn't contain an array property with name: ${itemName}`
+      `Couldn't paginate response\n Body doesn't contain an array property with name: ${itemName}`,
     );
   }
 
@@ -131,7 +133,7 @@ function checkPagingRequest(response: PathUncheckedResponse): void {
   if (!Http2xxStatusCodes.includes(response.status)) {
     throw createRestError(
       `Pagination failed with unexpected statusCode ${response.status}`,
-      response
+      response,
     );
   }
 }
@@ -139,7 +141,10 @@ function checkPagingRequest(response: PathUncheckedResponse): void {
 /**
  * Extracts the itemName and nextLinkName from the initial response to use them for pagination
  */
-function getPaginationProperties(initialResponse: PathUncheckedResponse) {
+function getPaginationProperties(initialResponse: PathUncheckedResponse): {
+  itemName: string;
+  nextLinkName: string | undefined;
+} {
   // Build a set with the passed custom nextLinkNames
   const nextLinkNames = new Set(["nextLink"]);
 
@@ -169,7 +174,7 @@ function getPaginationProperties(initialResponse: PathUncheckedResponse) {
     throw new Error(
       `Couldn't paginate response\n Body doesn't contain an array property with name: ${[
         ...itemNames,
-      ].join(" OR ")}`
+      ].join(" OR ")}`,
     );
   }
 

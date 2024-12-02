@@ -1,15 +1,18 @@
-import { ArtifactsClient } from "../../src/artifactsClient";
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+import type { ArtifactsClient } from "../../src/artifactsClient.js";
 import { Recorder } from "@azure-tools/test-recorder";
-import { assert } from "chai";
-import { createClient, createRecorder } from "./utils/recordedClient";
+import { createClient } from "./utils/recordedClient.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 describe("IntegrationRuntimes", () => {
   let recorder: Recorder;
   let client: ArtifactsClient;
 
-  beforeEach(function() {
-    recorder = createRecorder(this);
-    client = createClient();
+  beforeEach(async (ctx) => {
+    recorder = new Recorder(ctx);
+    client = await createClient(recorder);
   });
 
   afterEach(async () => {

@@ -1,62 +1,67 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-naming-options rule.
- * @author Arpan Laha
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-naming-options";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-naming-options", rule, {
   valid: [
     // single method
     {
-      code: "class ExampleClient { createExample(options: CreateExampleOptions) {}; };"
+      code: "class ExampleClient { createExample(options: CreateExampleOptions) {}; };",
+    },
+    // single method with default value
+    {
+      code: "class ExampleClient { createExample(options: CreateExampleOptions = {}) {}; };",
     },
     // multiple methods
     {
-      code:
-        "class ExampleClient { createExample(options: CreateExampleOptions) {}; upsertExample(options: UpsertExampleOptions) {}; };"
+      code: "class ExampleClient { createExample(options: CreateExampleOptions) {}; upsertExample(options: UpsertExampleOptions) {}; };",
     },
     // class constructor
     {
-      code: "class ExampleClient { constructor(options: ExampleClientOptions) {}; };"
+      code: "class ExampleClient { constructor(options: ExampleClientOptions) {}; };",
     },
     // not a client
     {
-      code: "class Example { createExample(options: Options) {}; };"
-    }
+      code: "class Example { createExample(options: Options) {}; };",
+    },
   ],
   invalid: [
     {
       code: "class ExampleClient { createExample(options: Options) {}; };",
       errors: [
         {
-          message: "options parameter type is not prefixed with the method name"
-        }
-      ]
+          message: "options parameter type is not prefixed with the method name",
+        },
+      ],
+    },
+    {
+      code: "class ExampleClient { createExample(options: Options = {}) {}; };",
+      errors: [
+        {
+          message: "options parameter type is not prefixed with the method name",
+        },
+      ],
     },
     {
       code: "class ExampleClient { constructor(options: Options) {}; };",
       errors: [
         {
-          message: "options parameter type is not prefixed with the class name"
-        }
-      ]
-    }
-  ]
+          message: "options parameter type is not prefixed with the class name",
+        },
+      ],
+    },
+  ],
 });

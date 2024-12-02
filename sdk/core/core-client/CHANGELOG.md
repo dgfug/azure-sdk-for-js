@@ -1,17 +1,125 @@
 # Release History
 
-## 1.3.3 (Unreleased)
+## 1.9.3 (Unreleased)
 
 ### Features Added
-
-- Added a new function `authorizeRequestOnClaimChallenge`, that can be used with the `@azure/core-rest-pipeline`'s `bearerTokenAuthenticationPolicy` to support [Continuous Access Evaluation (CAE) challenges](https://docs.microsoft.com/azure/active-directory/conditional-access/concept-continuous-access-evaluation).
-  - Call the `bearerTokenAuthenticationPolicy` with the following options: `bearerTokenAuthenticationPolicy({ authorizeRequestOnChallenge: authorizeRequestOnClaimChallenge })`. Once provided, the `bearerTokenAuthenticationPolicy` policy will internally handle Continuous Access Evaluation (CAE) challenges. When it can't complete a challenge it will return the 401 (unauthorized) response from ARM.
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 1.9.2 (2024-04-09)
+
+### Bugs Fixed
+
+- Address two issues related to Azure Disk Storage. [PR #29087](https://github.com/Azure/azure-sdk-for-js/pull/29087)
+
+### Other Changes
+
+- Revert TypeScript output target to ES2017.
+
+## 1.9.1 (2024-03-20)
+
+### Bugs Fixed
+
+- Addressed an issue with `authorizeRequestOnTenantChallenge` not correctly parsing challenges. [PR #28967](https://github.com/Azure/azure-sdk-for-js/pull/28967)
+
+### Other Changes
+
+- Add top-level `browser` field to `package.json` as fallback for legacy bundlers that do not support the `exports` field.
+
+## 1.9.0 (2024-03-12)
+
+### Other Changes
+
+- Migrated the codebase to ESM. This change is internal and should not affect customers.
+- Migrated unit tests to vitest.
+
+## 1.8.0 (2024-02-01)
+
+### Bugs Fixed
+
+- Fix an error when serializing browser ReadableStream [PR #27052](https://github.com/Azure/azure-sdk-for-js/pull/27052)
+
+### Other Changes
+
+- Upgrade dependency `@azure/abort-controller` version to `^2.0.0`.
+
+## 1.7.3 (2023-06-01)
+
+### Other Changes
+
+- remove the validation that credential scopes must be a valid URL [Issue #25881](https://github.com/Azure/azure-sdk-for-js/issues/25881)
+
+## 1.7.2 (2023-02-23)
+
+### Bugs Fixed
+
+- Fix a deserializer issue where setting null value when it's necessary.
+
+## 1.7.1 (2023-02-02)
+
+### Other Changes
+
+- Only deserialize headers that are mapped in OperationSpec when using a header mapper. Previously core-client would include all header values when deserializing, leading to result objects having unintended extra metadata.
+
+## 1.7.0 (2023-01-05)
+
+### Features Added
+
+- Ported support for `xmlIsMsText` from `@azure/core-http`.
+
+### Bugs Fixed
+
+- Fix a serializer issue where resettable streams were not being accepted.
+- Fix an issue where XML options are not propagated during deserialization.
+
+## 1.6.1 (2022-08-04)
+
+### Bugs Fixed
+
+- Fix serializer to find the correct discriminator index. Please refer to [#22523](https://github.com/Azure/azure-sdk-for-js/pull/22523) for further details.
+
+### Other Changes
+
+- Removed the constraints check during serialization. Please refer [#21839](https://github.com/Azure/azure-sdk-for-js/issues/21839) for further details.
+
+## 1.6.0 (2022-05-05)
+
+### Features Added
+
+- Added a new property endpoint in ServiceClientOptions and mark the baseUri as deprecated to encourage people to use endpoint. See issue link [here](https://github.com/Azure/autorest.typescript/issues/1337)
+- Upgraded our `@azure/core-tracing` dependency to version 1.0
+- Add callbacks to support Storage challenge authentication [PR#21678](https://github.com/Azure/azure-sdk-for-js/pull/21678)
+
+## 1.5.0 (2022-02-03)
+
+### Features Added
+
+- Added new `CommonClientOptions` member `additionalPolicies` to allow passing custom pipeline policies to client constructors. [PR #19920](https://github.com/Azure/azure-sdk-for-js/pull/19920)
+
+### Bugs Fixed
+
+- Addressed an issue where the `onResponse` callback wouldn't be called in certain cases where an unexpected response was received from the service. [PR #19702](https://github.com/Azure/azure-sdk-for-js/pull/19702)
+
+## 1.4.0 (2022-01-06)
+
+### Features Added
+
+- Added a new function `authorizeRequestOnClaimChallenge`, that can be used with the `@azure/core-rest-pipeline`'s `bearerTokenAuthenticationPolicy` to support [Continuous Access Evaluation (CAE) challenges](https://docs.microsoft.com/azure/active-directory/conditional-access/concept-continuous-access-evaluation).
+- Call the `bearerTokenAuthenticationPolicy` with the following options: `bearerTokenAuthenticationPolicy({ authorizeRequestOnChallenge: authorizeRequestOnClaimChallenge })`. Once provided, the `bearerTokenAuthenticationPolicy` policy will internally handle Continuous Access Evaluation (CAE) challenges. When it can't complete a challenge it will return the 401 (unauthorized) response from ARM.
+
+### Bugs Fixed
+
+- Fixed a serializer issue with nested polymorphics. [PR #19455](https://github.com/Azure/azure-sdk-for-js/pull/19455)
+
+## 1.3.3 (2021-12-02)
+
+### Bugs Fixed
+
+- Added a check to handle undefined value during the parsing of query parameters. Please refer to [PR #18621](https://github.com/Azure/azure-sdk-for-js/pull/18621) for further details.
 
 ## 1.3.2 (2021-10-25)
 

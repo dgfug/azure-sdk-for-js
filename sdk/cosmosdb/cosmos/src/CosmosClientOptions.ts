@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { TokenCredential } from "@azure/core-auth";
-import { TokenProvider } from "./auth";
-import { PermissionDefinition } from "./client";
-import { ConnectionPolicy, ConsistencyLevel } from "./documents";
-import { PluginConfig } from "./plugins/Plugin";
-import { CosmosHeaders } from "./queryExecutionContext/CosmosHeaders";
+// Licensed under the MIT License.
+import type { TokenCredential } from "@azure/core-auth";
+import type { TokenProvider } from "./auth";
+import type { PermissionDefinition } from "./client";
+import type { ConnectionPolicy, ConsistencyLevel } from "./documents";
+import type { PluginConfig } from "./plugins/Plugin";
+import type { CosmosHeaders } from "./queryExecutionContext/CosmosHeaders";
+import type { CosmosDbDiagnosticLevel } from "./diagnostics/CosmosDbDiagnosticLevel";
+import type { HttpClient } from "@azure/core-rest-pipeline";
 
 // We expose our own Agent interface to avoid taking a dependency on and leaking node types. This interface should mirror the node Agent interface
 export interface Agent {
@@ -33,7 +35,6 @@ export interface CosmosClientOptions {
    * Obtain a credential object by creating an `@azure/identity` credential object
    * We will then use your credential object and a scope URL (your cosmos db endpoint)
    * to authenticate requests to Cosmos
-   * This feature is in private preview and not yet available for every Cosmos account
    */
   aadCredentials?: TokenCredential;
   /** An array of {@link Permission} objects. */
@@ -51,8 +52,12 @@ export interface CosmosClientOptions {
    * Use an agent such as https://github.com/TooTallNate/node-proxy-agent if you need to connect to Cosmos via a proxy
    */
   agent?: Agent;
+  /** An optional custom `HttpClient` shape to customize how requests are made by the HTTP pipeline.
+   * See `@azure/core-rest-pipeline` for details on how to implement this interface. */
+  httpClient?: HttpClient;
   /** A custom string to append to the default SDK user agent. */
   userAgentSuffix?: string;
+  diagnosticLevel?: CosmosDbDiagnosticLevel;
   /** @internal */
   plugins?: PluginConfig[];
 }

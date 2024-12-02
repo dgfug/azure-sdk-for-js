@@ -1,21 +1,32 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientSecretCredential } from "@azure/identity";
-import { env, record, Recorder, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import * as assert from "assert";
-import { Context } from "mocha";
+// Licensed under the MIT License.
+
+import { createTestCredential } from "@azure-tools/test-credential";
+import type { Recorder, RecorderStartOptions } from "@azure-tools/test-recorder";
+import { assertEnvironmentVariable, env } from "@azure-tools/test-recorder";
+import { assert } from "vitest";
 import { createClientLogger } from "@azure/logger";
-import { LogsTable, LogsQueryClient, MetricsQueryClient } from "../../../src";
-import { ExponentialRetryPolicyOptions } from "@azure/core-rest-pipeline";
+import type { LogsTable } from "../../../src/index.js";
+import { LogsQueryClient, MetricsQueryClient, MetricsClient } from "../../../src/index.js";
+import type { ExponentialRetryPolicyOptions } from "@azure/core-rest-pipeline";
 export const loggerForTest = createClientLogger("test");
 
-const replaceableVariables: Record<string, string> = {
+const replacementForLogsResourceId = env["LOGS_RESOURCE_ID"]?.startsWith("/")
+  ? "/logs-arm-resource-id"
+  : "logs-arm-resource-id";
+
+const envSetupForPlayback: Record<string, string> = {
   MONITOR_WORKSPACE_ID: "workspace-id",
   METRICS_RESOURCE_ID: "metrics-arm-resource-id",
+  LOGS_RESOURCE_ID: replacementForLogsResourceId,
   MQ_APPLICATIONINSIGHTS_CONNECTION_STRING: "mq_applicationinsights_connection",
-  AZURE_TENANT_ID: "98123456-7614-3456-5678-789980112547",
-  AZURE_CLIENT_ID: "azure_client_id",
-  AZURE_CLIENT_SECRET: "azure_client_secret"
+};
+
+const recorderOptions: RecorderStartOptions = {
+  envSetupForPlayback,
+  removeCentralSanitizers: [
+    "AZSDK3493", // .name in the body is not a secret and is listed below in the beforeEach section
+  ],
 };
 export interface RecorderAndLogsClient {
   client: LogsQueryClient;
@@ -27,106 +38,116 @@ export interface RecorderAndMetricsClient {
   recorder: Recorder;
 }
 
-export const testEnv = new Proxy(replaceableVariables, {
+export interface RecorderAndMetricsBatchQueryClient {
+  client: MetricsClient;
+  // recorder: Recorder;
+}
+
+export async function createRecorderAndMetricsBatchQueryClient(): Promise<RecorderAndMetricsBatchQueryClient> {
+  // await recorder.start(recorderOptions);
+  const testCredential = createTestCredential();
+  const batchEndPoint =
+    env["AZURE_MONITOR_BATCH_ENDPOINT"] ?? "https://eastus.metrics.monitor.azure.com/";
+  const client = new MetricsClient(batchEndPoint, testCredential);
+
+  return {
+    client: client,
+    // recorder: recorder,
+  };
+}
+
+export function getMetricsBatchResourceIds(): string[] {
+  const resourceId: string = assertEnvironmentVariable("LOGS_RESOURCE_ID");
+  return [resourceId, `${resourceId}2`];
+}
+
+export function getMetricsBatchNamespace(): string {
+  return env["AZURE_MONITOR_BATCH_NAMESPACE"] ?? "requests/count";
+}
+
+export function getMetricsBatchNames(): string[] {
+  const metricNamesString = env["AZURE_MONITOR_BATCH_METRICNAMES"];
+  if (!metricNamesString) {
+    return ["requests", "count"];
+  }
+  return metricNamesString.split(" ");
+}
+
+export const testEnv = new Proxy(envSetupForPlayback, {
   get: (target, key: string) => {
     return env[key] || target[key];
-  }
+  },
 });
 
-export const environmentSetup: RecorderEnvironmentSetup = {
-  // == Recorder Environment Setup == Add the replaceable variables from
-  // above
-  replaceableVariables,
+export async function createRecorderAndMetricsClient(
+  recorder: Recorder,
+): Promise<RecorderAndMetricsClient> {
+  await recorder.start(recorderOptions);
+  const client = new MetricsQueryClient(createTestCredential(), {
+    audience: "https://management.azure.com",
+    ...recorder.configureClientOptions({}),
+  });
 
-  // We don't use this in the template, but if we had any query parameters
-  // we wished to discard, we could add them here
-  queryParametersToSkip: [],
-
-  // Finally, we need to remove the AAD `access_token` from any requests.
-  // This is very important, as it cannot be removed using environment
-  // variable or query parameter replacement.  The
-  // `customizationsOnRecordings` field allows us to make arbitrary
-  // replacements within recordings.
-  customizationsOnRecordings: [
-    (recording: string): any =>
-      recording.replace(/"access_token":"[^"]*"/g, `"access_token":"access_token"`)
-  ]
-};
-
-export function createRecorderAndMetricsClient(context: Context): RecorderAndMetricsClient {
-  const recorder = record(context, environmentSetup);
   return {
-    client: new MetricsQueryClient(createTestClientSecretCredential()),
-    recorder
+    client: client,
+    recorder: recorder,
   };
 }
 
-export function createRecorderAndLogsClient(
-  context: Context,
-  retryOptions?: ExponentialRetryPolicyOptions
-): RecorderAndLogsClient {
-  const recorder = record(context, environmentSetup);
-  return {
-    client: new LogsQueryClient(createTestClientSecretCredential(), {
-      retryOptions
-    }),
-    recorder
-  };
-}
-
-export function createTestClientSecretCredential(): ClientSecretCredential {
-  if (!env.AZURE_TENANT_ID || !env.AZURE_CLIENT_ID || !env.AZURE_CLIENT_SECRET) {
-    throw new Error(
-      "AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET must be set to run live tests"
-    );
-  }
-
-  return new ClientSecretCredential(
-    env.AZURE_TENANT_ID,
-    env.AZURE_CLIENT_ID,
-    env.AZURE_CLIENT_SECRET
+export async function createRecorderAndLogsClient(
+  recorder: Recorder,
+  retryOptions?: ExponentialRetryPolicyOptions,
+): Promise<RecorderAndLogsClient> {
+  await recorder.start(recorderOptions);
+  await recorder.addSanitizers(
+    {
+      bodySanitizers: [
+        {
+          regex: true,
+          target: "(.*)range x from 1 to (?<step_limit>[0-9]+) step 1(.*)",
+          value: "10000000000000",
+          groupForReplace: "step_limit",
+        },
+      ],
+    },
+    ["playback", "record"],
   );
-}
 
-export function getMonitorWorkspaceId(mochaContext: Pick<Context, "skip">): string {
-  return getRequiredEnvVar(mochaContext, "MONITOR_WORKSPACE_ID");
-}
+  const client = new LogsQueryClient(
+    createTestCredential(),
+    recorder.configureClientOptions({ retryOptions }),
+  );
 
-export function getMetricsArmResourceId(
-  mochaContext: Pick<Context, "skip">
-): {
-  resourceId: string;
-} {
   return {
-    resourceId: getRequiredEnvVar(mochaContext, "METRICS_RESOURCE_ID")
+    client,
+    recorder,
   };
 }
 
-export function getAppInsightsConnectionString(mochaContext: Pick<Context, "skip">): string {
-  let appInsightsConnectionString = getRequiredEnvVar(
-    mochaContext,
-    "MQ_APPLICATIONINSIGHTS_CONNECTION_STRING"
+export function getMonitorWorkspaceId(): string {
+  return assertEnvironmentVariable("MONITOR_WORKSPACE_ID");
+}
+
+export function getMetricsArmResourceId(): string {
+  return assertEnvironmentVariable("METRICS_RESOURCE_ID");
+}
+
+export function getLogsArmResourceId(): string {
+  return assertEnvironmentVariable("LOGS_RESOURCE_ID");
+}
+export function getAppInsightsConnectionString(): string {
+  let appInsightsConnectionString = assertEnvironmentVariable(
+    "MQ_APPLICATIONINSIGHTS_CONNECTION_STRING",
   );
 
   // TODO: this is a workaround for now - adding in an endpoint causes the Monitor endpoint to return a 308 (ie: permanent redirect)
   // Removing for now until we get fix the exporter.
   appInsightsConnectionString = appInsightsConnectionString.replace(
     /IngestionEndpoint=.+?(;|$)/,
-    ""
+    "",
   );
 
   return appInsightsConnectionString;
-}
-
-function getRequiredEnvVar(mochaContext: Pick<Context, "skip">, variableName: string): string {
-  if (!env[variableName]) {
-    console.log(
-      `TODO: live tests skipped until test-resources + data population is set up (missing ${variableName} env var).`
-    );
-    mochaContext.skip();
-  }
-
-  return env[variableName];
 }
 
 export function printLogQueryTables(tables: LogsTable[]): void {
@@ -150,7 +171,7 @@ export function assertQueryTable(
     columns: string[];
     rows: LogsTable["rows"];
   },
-  message: string
+  message: string,
 ): void {
   if (table == null) {
     throw new Error(`${message}: Table was null/undefined`);
@@ -160,9 +181,9 @@ export function assertQueryTable(
     {
       name: table.name,
       rows: table.rows,
-      columns: table.columnDescriptors.map((c) => c.name)
+      columns: table.columnDescriptors.map((c) => c.name),
     },
     expectedTable,
-    `${message}: tables weren't equal`
+    `${message}: tables weren't equal`,
   );
 }

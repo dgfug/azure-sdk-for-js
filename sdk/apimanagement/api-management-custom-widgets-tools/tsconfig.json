@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig",
+  "compilerOptions": {
+    "lib": ["dom"],
+    "resolveJsonModule": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.cts",
+    "src/**/*.mts",
+    "test/**/*.ts",
+    "test/**/*.cts",
+    "test/**/*.mts"
+  ]
+}

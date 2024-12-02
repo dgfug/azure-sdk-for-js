@@ -1,17 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
 import {
   createTriggerUri,
   getIdFromLink,
   getPathFromLink,
   isResourceValid,
-  ResourceType
+  ResourceType,
 } from "../../common";
-import { RequestOptions } from "../../request";
-import { Container } from "../Container";
-import { TriggerDefinition } from "./TriggerDefinition";
+import type { RequestOptions } from "../../request";
+import type { Container } from "../Container";
+import type { TriggerDefinition } from "./TriggerDefinition";
 import { TriggerResponse } from "./TriggerResponse";
+import { getEmptyCosmosDiagnostics, withDiagnostics } from "../../utils/diagnostics";
 
 /**
  * Operations to read, replace, or delete a {@link Trigger}.
@@ -34,23 +36,32 @@ export class Trigger {
   constructor(
     public readonly container: Container,
     public readonly id: string,
-    private readonly clientContext: ClientContext
+    private readonly clientContext: ClientContext,
   ) {}
 
   /**
    * Read the {@link TriggerDefinition} for the given {@link Trigger}.
    */
   public async read(options?: RequestOptions): Promise<TriggerResponse> {
-    const path = getPathFromLink(this.url);
-    const id = getIdFromLink(this.url);
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      const path = getPathFromLink(this.url);
+      const id = getIdFromLink(this.url);
 
-    const response = await this.clientContext.read<TriggerDefinition>({
-      path,
-      resourceType: ResourceType.trigger,
-      resourceId: id,
-      options
-    });
-    return new TriggerResponse(response.result, response.headers, response.code, this);
+      const response = await this.clientContext.read<TriggerDefinition>({
+        path,
+        resourceType: ResourceType.trigger,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      return new TriggerResponse(
+        response.result,
+        response.headers,
+        response.code,
+        this,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 
   /**
@@ -59,43 +70,61 @@ export class Trigger {
    */
   public async replace(
     body: TriggerDefinition,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<TriggerResponse> {
-    if (body.body) {
-      body.body = body.body.toString();
-    }
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      if (body.body) {
+        body.body = body.body.toString();
+      }
 
-    const err = {};
-    if (!isResourceValid(body, err)) {
-      throw err;
-    }
+      const err = {};
+      if (!isResourceValid(body, err)) {
+        throw err;
+      }
 
-    const path = getPathFromLink(this.url);
-    const id = getIdFromLink(this.url);
+      const path = getPathFromLink(this.url);
+      const id = getIdFromLink(this.url);
 
-    const response = await this.clientContext.replace<TriggerDefinition>({
-      body,
-      path,
-      resourceType: ResourceType.trigger,
-      resourceId: id,
-      options
-    });
-    return new TriggerResponse(response.result, response.headers, response.code, this);
+      const response = await this.clientContext.replace<TriggerDefinition>({
+        body,
+        path,
+        resourceType: ResourceType.trigger,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      return new TriggerResponse(
+        response.result,
+        response.headers,
+        response.code,
+        this,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 
   /**
    * Delete the given {@link Trigger}.
    */
   public async delete(options?: RequestOptions): Promise<TriggerResponse> {
-    const path = getPathFromLink(this.url);
-    const id = getIdFromLink(this.url);
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      const path = getPathFromLink(this.url);
+      const id = getIdFromLink(this.url);
 
-    const response = await this.clientContext.delete<TriggerDefinition>({
-      path,
-      resourceType: ResourceType.trigger,
-      resourceId: id,
-      options
-    });
-    return new TriggerResponse(response.result, response.headers, response.code, this);
+      const response = await this.clientContext.delete<TriggerDefinition>({
+        path,
+        resourceType: ResourceType.trigger,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      return new TriggerResponse(
+        response.result,
+        response.headers,
+        response.code,
+        this,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 }

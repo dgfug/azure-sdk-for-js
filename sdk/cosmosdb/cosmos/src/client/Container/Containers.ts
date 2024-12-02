@@ -1,25 +1,28 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
 import {
   Constants,
   getIdFromLink,
   getPathFromLink,
   isResourceValid,
   ResourceType,
-  StatusCodes
+  StatusCodes,
 } from "../../common";
 import { DEFAULT_PARTITION_KEY_PATH } from "../../common/partitionKeys";
-import { mergeHeaders, SqlQuerySpec } from "../../queryExecutionContext";
+import type { SqlQuerySpec } from "../../queryExecutionContext";
+import { mergeHeaders } from "../../queryExecutionContext";
 import { QueryIterator } from "../../queryIterator";
-import { FeedOptions, RequestOptions } from "../../request";
-import { Database } from "../Database";
-import { Resource } from "../Resource";
+import type { FeedOptions, RequestOptions } from "../../request";
+import type { Database } from "../Database";
+import type { Resource } from "../Resource";
 import { Container } from "./Container";
-import { ContainerDefinition } from "./ContainerDefinition";
-import { ContainerRequest } from "./ContainerRequest";
+import type { ContainerDefinition } from "./ContainerDefinition";
+import type { ContainerRequest } from "./ContainerRequest";
 import { ContainerResponse } from "./ContainerResponse";
 import { validateOffer } from "../../utils/offers";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
+import { getEmptyCosmosDiagnostics, withDiagnostics } from "../../utils/diagnostics";
 
 /**
  * Operations for creating new containers, and reading/querying all containers
@@ -32,7 +35,10 @@ import { validateOffer } from "../../utils/offers";
  * do this once on application start up.
  */
 export class Containers {
-  constructor(public readonly database: Database, private readonly clientContext: ClientContext) {}
+  constructor(
+    public readonly database: Database,
+    private readonly clientContext: ClientContext,
+  ) {}
 
   /**
    * Queries all containers.
@@ -72,16 +78,22 @@ export class Containers {
     const path = getPathFromLink(this.database.url, ResourceType.container);
     const id = getIdFromLink(this.database.url);
 
-    return new QueryIterator(this.clientContext, query, options, (innerOptions) => {
-      return this.clientContext.queryFeed<ContainerDefinition>({
-        path,
-        resourceType: ResourceType.container,
-        resourceId: id,
-        resultFn: (result) => result.DocumentCollections,
-        query,
-        options: innerOptions
-      });
-    });
+    return new QueryIterator(
+      this.clientContext,
+      query,
+      options,
+      (diagNode: DiagnosticNodeInternal, innerOptions) => {
+        return this.clientContext.queryFeed<ContainerDefinition>({
+          path,
+          resourceType: ResourceType.container,
+          resourceId: id,
+          resultFn: (result) => result.DocumentCollections,
+          query,
+          options: innerOptions,
+          diagnosticNode: diagNode,
+        });
+      },
+    );
   }
 
   /**
@@ -103,7 +115,20 @@ export class Containers {
    */
   public async create(
     body: ContainerRequest,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
+  ): Promise<ContainerResponse> {
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      return this.createInternal(diagnosticNode, body, options);
+    }, this.clientContext);
+  }
+
+  /**
+   * @hidden
+   */
+  public async createInternal(
+    diagnosticNode: DiagnosticNodeInternal,
+    body: ContainerRequest,
+    options: RequestOptions = {},
   ): Promise<ContainerResponse> {
     const err = {};
     if (!isResourceValid(body, err)) {
@@ -123,14 +148,14 @@ export class Containers {
           };
         };
       } = {
-        maxThroughput: body.maxThroughput
+        maxThroughput: body.maxThroughput,
       };
       if (body.autoUpgradePolicy) {
         autoscaleParams.autoUpgradePolicy = body.autoUpgradePolicy;
       }
       const autoscaleHeader = JSON.stringify(autoscaleParams);
       options.initialHeaders = Object.assign({}, options.initialHeaders, {
-        [Constants.HttpHeaders.AutoscaleSettings]: autoscaleHeader
+        [Constants.HttpHeaders.AutoscaleSettings]: autoscaleHeader,
       });
       delete body.maxThroughput;
       delete body.autoUpgradePolicy;
@@ -138,7 +163,7 @@ export class Containers {
 
     if (body.throughput) {
       options.initialHeaders = Object.assign({}, options.initialHeaders, {
-        [Constants.HttpHeaders.OfferThroughput]: body.throughput
+        [Constants.HttpHeaders.OfferThroughput]: body.throughput,
       });
       delete body.throughput;
     }
@@ -148,14 +173,14 @@ export class Containers {
         throw new Error("Partition key must start with '/'");
       }
       body.partitionKey = {
-        paths: [body.partitionKey]
+        paths: [body.partitionKey],
       };
     }
 
     // If they don't specify a partition key, use the default path
     if (!body.partitionKey || !body.partitionKey.paths) {
       body.partitionKey = {
-        paths: [DEFAULT_PARTITION_KEY_PATH]
+        paths: [DEFAULT_PARTITION_KEY_PATH],
       };
     }
 
@@ -164,10 +189,17 @@ export class Containers {
       path,
       resourceType: ResourceType.container,
       resourceId: id,
-      options
+      diagnosticNode,
+      options,
     });
     const ref = new Container(this.database, response.result.id, this.clientContext);
-    return new ContainerResponse(response.result, response.headers, response.code, ref);
+    return new ContainerResponse(
+      response.result,
+      response.headers,
+      response.code,
+      ref,
+      getEmptyCosmosDiagnostics(),
+    );
   }
 
   /**
@@ -191,7 +223,7 @@ export class Containers {
    */
   public async createIfNotExists(
     body: ContainerRequest,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<ContainerResponse> {
     if (!body || body.id === null || body.id === undefined) {
       throw new Error("body parameter must be an object with an id property");
@@ -200,19 +232,23 @@ export class Containers {
       1. Attempt to read the Container (based on an assumption that most containers will already exist, so its faster)
       2. If it fails with NotFound error, attempt to create the container. Else, return the read results.
     */
-    try {
-      const readResponse = await this.database.container(body.id).read(options);
-      return readResponse;
-    } catch (err) {
-      if (err.code === StatusCodes.NotFound) {
-        const createResponse = await this.create(body, options);
-        // Must merge the headers to capture RU costskaty
-        mergeHeaders(createResponse.headers, err.headers);
-        return createResponse;
-      } else {
-        throw err;
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      try {
+        const readResponse = await this.database
+          .container(body.id)
+          .readInternal(diagnosticNode, options);
+        return readResponse;
+      } catch (err: any) {
+        if (err.code === StatusCodes.NotFound) {
+          const createResponse = await this.createInternal(diagnosticNode, body, options);
+          // Must merge the headers to capture RU costskaty
+          mergeHeaders(createResponse.headers, err.headers);
+          return createResponse;
+        } else {
+          throw err;
+        }
       }
-    }
+    }, this.clientContext);
   }
 
   /**

@@ -1,30 +1,29 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type { OperationOptions } from "@azure/core-client";
+import type { RestError } from "@azure/core-rest-pipeline";
+import { delay } from "@azure/core-util";
+import EventEmitter from "events";
+import type { IndexDocumentsResult } from "./generated/data/models";
 import { IndexDocumentsBatch } from "./indexDocumentsBatch";
-import {
+import type {
   IndexDocumentsAction,
-  SearchIndexingBufferedSenderOptions,
-  SearchIndexingBufferedSenderUploadDocumentsOptions,
-  SearchIndexingBufferedSenderMergeDocumentsOptions,
-  SearchIndexingBufferedSenderMergeOrUploadDocumentsOptions,
+  IndexDocumentsOptions,
   SearchIndexingBufferedSenderDeleteDocumentsOptions,
   SearchIndexingBufferedSenderFlushDocumentsOptions,
-  IndexDocumentsOptions
+  SearchIndexingBufferedSenderMergeDocumentsOptions,
+  SearchIndexingBufferedSenderMergeOrUploadDocumentsOptions,
+  SearchIndexingBufferedSenderOptions,
+  SearchIndexingBufferedSenderUploadDocumentsOptions,
 } from "./indexModels";
-import { IndexDocumentsResult } from "./generated/data/models";
-import { OperationOptions } from "@azure/core-client";
-import EventEmitter from "events";
-import { createSpan } from "./tracing";
-import { SpanStatusCode } from "@azure/core-tracing";
-import { delay } from "./serviceUtils";
 import { getRandomIntegerInclusive } from "./serviceUtils";
-import { RestError } from "@azure/core-rest-pipeline";
+import { createSpan } from "./tracing";
 
 /**
  * Index Documents Client
  */
-export interface IndexDocumentsClient<T> {
+export interface IndexDocumentsClient<TModel extends object> {
   /**
    * Perform a set of index modifications (upload, merge, mergeOrUpload, delete)
    * for the given set of documents.
@@ -33,8 +32,8 @@ export interface IndexDocumentsClient<T> {
    * @param options - Additional options.
    */
   indexDocuments(
-    batch: IndexDocumentsBatch<T>,
-    options: IndexDocumentsOptions
+    batch: IndexDocumentsBatch<TModel>,
+    options: IndexDocumentsOptions,
   ): Promise<IndexDocumentsResult>;
 }
 
@@ -51,23 +50,19 @@ export const DEFAULT_FLUSH_WINDOW: number = 60000;
  */
 export const DEFAULT_RETRY_COUNT: number = 3;
 /**
- * Default retry delay.
- */
-export const DEFAULT_RETRY_DELAY: number = 800;
-/**
  * Default Max Delay between retries.
  */
-export const DEFAULT_MAX_RETRY_DELAY: number = 60000;
+const DEFAULT_MAX_RETRY_DELAY: number = 60000;
 
 /**
  * Class used to perform buffered operations against a search index,
  * including adding, updating, and removing them.
  */
-export class SearchIndexingBufferedSender<T> {
+export class SearchIndexingBufferedSender<TModel extends object> {
   /**
    * Search Client used to call the underlying IndexBatch operations.
    */
-  private client: IndexDocumentsClient<T>;
+  private client: IndexDocumentsClient<TModel>;
   /**
    * Indicates if autoFlush is enabled.
    */
@@ -95,7 +90,7 @@ export class SearchIndexingBufferedSender<T> {
   /**
    * Batch object used to complete the service call.
    */
-  private batchObject: IndexDocumentsBatch<T>;
+  private batchObject: IndexDocumentsBatch<TModel>;
   /**
    * Clean up for the timer
    */
@@ -107,7 +102,7 @@ export class SearchIndexingBufferedSender<T> {
   /**
    * Method to retrieve the document key
    */
-  private documentKeyRetriever: (document: T) => string;
+  private documentKeyRetriever: (document: TModel) => string;
 
   /**
    * Creates a new instance of SearchIndexingBufferedSender.
@@ -117,9 +112,9 @@ export class SearchIndexingBufferedSender<T> {
    *
    */
   constructor(
-    client: IndexDocumentsClient<T>,
-    documentKeyRetriever: (document: T) => string,
-    options: SearchIndexingBufferedSenderOptions = {}
+    client: IndexDocumentsClient<TModel>,
+    documentKeyRetriever: (document: TModel) => string,
+    options: SearchIndexingBufferedSenderOptions = {},
   ) {
     this.client = client;
     this.documentKeyRetriever = documentKeyRetriever;
@@ -132,7 +127,7 @@ export class SearchIndexingBufferedSender<T> {
     this.maxRetriesPerAction = options.maxRetriesPerAction ?? DEFAULT_RETRY_COUNT;
     this.maxThrottlingDelayInMs = options.maxThrottlingDelayInMs ?? DEFAULT_MAX_RETRY_DELAY;
 
-    this.batchObject = new IndexDocumentsBatch<T>();
+    this.batchObject = new IndexDocumentsBatch<TModel>();
     if (this.autoFlush) {
       const interval = setInterval(() => this.flush(), this.flushWindowInMs);
       interval?.unref();
@@ -149,24 +144,24 @@ export class SearchIndexingBufferedSender<T> {
    * @param options - Upload options.
    */
   public async uploadDocuments(
-    documents: T[],
-    options: SearchIndexingBufferedSenderUploadDocumentsOptions = {}
+    documents: TModel[],
+    options: SearchIndexingBufferedSenderUploadDocumentsOptions = {},
   ): Promise<void> {
     const { span, updatedOptions } = createSpan(
       "SearchIndexingBufferedSender-uploadDocuments",
-      options
+      options,
     );
     try {
       this.batchObject.upload(documents);
       this.emitter.emit("batchAdded", {
         action: "upload",
-        documents
+        documents,
       });
       return this.internalFlush(false, updatedOptions);
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
+        status: "error",
+        error: e.message,
       });
       throw e;
     } finally {
@@ -181,24 +176,24 @@ export class SearchIndexingBufferedSender<T> {
    * @param options - Upload options.
    */
   public async mergeDocuments(
-    documents: T[],
-    options: SearchIndexingBufferedSenderMergeDocumentsOptions = {}
+    documents: TModel[],
+    options: SearchIndexingBufferedSenderMergeDocumentsOptions = {},
   ): Promise<void> {
     const { span, updatedOptions } = createSpan(
       "SearchIndexingBufferedSender-mergeDocuments",
-      options
+      options,
     );
     try {
       this.batchObject.merge(documents);
       this.emitter.emit("batchAdded", {
         action: "merge",
-        documents
+        documents,
       });
       return this.internalFlush(false, updatedOptions);
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
+        status: "error",
+        error: e.message,
       });
       throw e;
     } finally {
@@ -213,24 +208,24 @@ export class SearchIndexingBufferedSender<T> {
    * @param options - Upload options.
    */
   public async mergeOrUploadDocuments(
-    documents: T[],
-    options: SearchIndexingBufferedSenderMergeOrUploadDocumentsOptions = {}
+    documents: TModel[],
+    options: SearchIndexingBufferedSenderMergeOrUploadDocumentsOptions = {},
   ): Promise<void> {
     const { span, updatedOptions } = createSpan(
       "SearchIndexingBufferedSender-mergeOrUploadDocuments",
-      options
+      options,
     );
     try {
       this.batchObject.mergeOrUpload(documents);
       this.emitter.emit("batchAdded", {
         action: "mergeOrUpload",
-        documents
+        documents,
       });
       return this.internalFlush(false, updatedOptions);
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
+        status: "error",
+        error: e.message,
       });
       throw e;
     } finally {
@@ -245,24 +240,24 @@ export class SearchIndexingBufferedSender<T> {
    * @param options - Upload options.
    */
   public async deleteDocuments(
-    documents: T[],
-    options: SearchIndexingBufferedSenderDeleteDocumentsOptions = {}
+    documents: TModel[],
+    options: SearchIndexingBufferedSenderDeleteDocumentsOptions = {},
   ): Promise<void> {
     const { span, updatedOptions } = createSpan(
       "SearchIndexingBufferedSender-deleteDocuments",
-      options
+      options,
     );
     try {
       this.batchObject.delete(documents);
       this.emitter.emit("batchAdded", {
         action: "delete",
-        documents
+        documents,
       });
       return this.internalFlush(false, updatedOptions);
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
+        status: "error",
+        error: e.message,
       });
       throw e;
     } finally {
@@ -276,17 +271,17 @@ export class SearchIndexingBufferedSender<T> {
    * @param options - Flush options.
    */
   public async flush(
-    options: SearchIndexingBufferedSenderFlushDocumentsOptions = {}
+    options: SearchIndexingBufferedSenderFlushDocumentsOptions = {},
   ): Promise<void> {
     const { span, updatedOptions } = createSpan("SearchIndexingBufferedSender-flush", options);
     try {
       if (this.batchObject.actions.length > 0) {
         return this.internalFlush(true, updatedOptions);
       }
-    } catch (e) {
+    } catch (e: any) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
+        status: "error",
+        error: e.message,
       });
       throw e;
     } finally {
@@ -312,14 +307,17 @@ export class SearchIndexingBufferedSender<T> {
    * @param event - Event to be emitted
    * @param listener - Event Listener
    */
-  public on(event: "batchAdded", listener: (e: { action: string; documents: T[] }) => void): void;
+  public on(
+    event: "batchAdded",
+    listener: (e: { action: string; documents: TModel[] }) => void,
+  ): void;
   /**
    * Attach Batch Sent Event
    *
    * @param event - Event to be emitted
    * @param listener - Event Listener
    */
-  public on(event: "beforeDocumentSent", listener: (e: IndexDocumentsAction<T>) => void): void;
+  public on(event: "beforeDocumentSent", listener: (e: IndexDocumentsAction<TModel>) => void): void;
   /**
    * Attach Batch Succeeded Event
    *
@@ -336,7 +334,7 @@ export class SearchIndexingBufferedSender<T> {
   public on(event: "batchFailed", listener: (e: RestError) => void): void;
   public on(
     event: "batchAdded" | "beforeDocumentSent" | "batchSucceeded" | "batchFailed" | "batchResizing",
-    listener: (e: any) => void
+    listener: (e: any) => void,
   ): void {
     this.emitter.on(event, listener);
   }
@@ -347,14 +345,20 @@ export class SearchIndexingBufferedSender<T> {
    * @param event - Event to be emitted
    * @param listener - Event Listener
    */
-  public off(event: "batchAdded", listener: (e: { action: string; documents: T[] }) => void): void;
+  public off(
+    event: "batchAdded",
+    listener: (e: { action: string; documents: TModel[] }) => void,
+  ): void;
   /**
    * Detach Batch Sent Event
    *
    * @param event - Event to be emitted
    * @param listener - Event Listener
    */
-  public off(event: "beforeDocumentSent", listener: (e: IndexDocumentsAction<T>) => void): void;
+  public off(
+    event: "beforeDocumentSent",
+    listener: (e: IndexDocumentsAction<TModel>) => void,
+  ): void;
   /**
    * Detach Batch Succeeded Event
    *
@@ -371,7 +375,7 @@ export class SearchIndexingBufferedSender<T> {
   public off(event: "batchFailed", listener: (e: RestError) => void): void;
   public off(
     event: "batchAdded" | "beforeDocumentSent" | "batchSucceeded" | "batchFailed",
-    listener: (e: any) => void
+    listener: (e: any) => void,
   ): void {
     this.emitter.removeListener(event, listener);
   }
@@ -383,8 +387,8 @@ export class SearchIndexingBufferedSender<T> {
   private async internalFlush(force: boolean, options: OperationOptions = {}): Promise<void> {
     if (force || (this.autoFlush && this.isBatchReady())) {
       // Split it
-      const actions: IndexDocumentsAction<T>[] = this.batchObject.actions;
-      this.batchObject = new IndexDocumentsBatch<T>();
+      const actions: IndexDocumentsAction<TModel>[] = this.batchObject.actions;
+      this.batchObject = new IndexDocumentsBatch<TModel>();
       while (actions.length > 0) {
         const actionsToSend = actions.splice(0, this.initialBatchActionCount);
         const { batchToSubmit, submitLater } = this.pruneActions(actionsToSend);
@@ -394,15 +398,16 @@ export class SearchIndexingBufferedSender<T> {
     }
   }
 
-  private pruneActions(
-    batch: IndexDocumentsAction<T>[]
-  ): { batchToSubmit: IndexDocumentsAction<T>[]; submitLater: IndexDocumentsAction<T>[] } {
+  private pruneActions(batch: IndexDocumentsAction<TModel>[]): {
+    batchToSubmit: IndexDocumentsAction<TModel>[];
+    submitLater: IndexDocumentsAction<TModel>[];
+  } {
     const hashSet: Set<string> = new Set<string>();
-    const resultBatch: IndexDocumentsAction<T>[] = [];
-    const pruned: IndexDocumentsAction<T>[] = [];
+    const resultBatch: IndexDocumentsAction<TModel>[] = [];
+    const pruned: IndexDocumentsAction<TModel>[] = [];
 
     for (const document of batch) {
-      const key = this.documentKeyRetriever((document as unknown) as T);
+      const key = this.documentKeyRetriever(document as unknown as TModel);
       if (hashSet.has(key)) {
         pruned.push(document);
       } else {
@@ -414,26 +419,26 @@ export class SearchIndexingBufferedSender<T> {
   }
 
   private async submitDocuments(
-    actionsToSend: IndexDocumentsAction<T>[],
+    actionsToSend: IndexDocumentsAction<TModel>[],
     options: OperationOptions,
-    retryAttempt: number = 1
+    retryAttempt: number = 1,
   ): Promise<void> {
     try {
       for (const action of actionsToSend) {
         this.emitter.emit("beforeDocumentSent", action);
       }
       const result = await this.client.indexDocuments(
-        new IndexDocumentsBatch<T>(actionsToSend),
-        options
+        new IndexDocumentsBatch<TModel>(actionsToSend),
+        options,
       );
       // raise success event
       this.emitter.emit("batchSucceeded", result);
-    } catch (e) {
+    } catch (e: any) {
       if (e.statusCode && e.statusCode === 413 && actionsToSend.length > 1) {
         // Cut the payload size to half
         const splitActionsArray = [
           actionsToSend.slice(0, actionsToSend.length / 2),
-          actionsToSend.slice(actionsToSend.length / 2, actionsToSend.length)
+          actionsToSend.slice(actionsToSend.length / 2, actionsToSend.length),
         ];
         this.initialBatchActionCount = splitActionsArray[0].length; // So, we do not want 413 happening again and again
         for (const actions of splitActionsArray) {

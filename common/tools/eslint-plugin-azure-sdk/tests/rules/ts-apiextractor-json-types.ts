@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-package-json-types rule.
- * @author Arpan Laha
- * @author Will Temple
+ *
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-apiextractor-json-types";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -27,7 +27,7 @@ const exampleConfigGood = `{
   "dtsRollup": {
     "enabled": true,
     "untrimmedFilePath": "",
-    "publicTrimmedFilePath": "./types/template.d.ts"
+    "publicTrimmedFilePath": "./types/service-bus.d.ts"
   },
   "messages": {
     "tsdocMessageReporting": {
@@ -82,102 +82,96 @@ const exampleConfigBad = `{
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-package-json-types", rule, {
   valid: [
     {
       // only the fields we care about
-      code: '{"dtsRollup": {"publicTrimmedFilePath": "typings/package-a.d.ts"}}',
-      filename: "sdk/package/package-a/api-extractor.json"
+      code: '{"dtsRollup": {"publicTrimmedFilePath": "typings/service-bus.d.ts"}}',
+      filename: "service-bus/api-extractor.json",
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/eventhub/event-hubs/package.json with "scripts" removed for testing purposes)
       code: exampleConfigGood,
-      filename: "sdk/template/template/api-extractor.json"
+      filename: "service-bus/api-extractor.json",
     },
     {
       // only the fields we care about
-      code: '{"dtsRollup": {"publicTrimmedFilePath": "typings/package-a.d.ts"}}',
-      filename: "sdk/package/package-a/not_api-extractor.json"
-    }
+      code: '{"dtsRollup": {"publicTrimmedFilePath": "typings/service-bus.d.ts"}}',
+      filename: "service-bus/package.json",
+    },
   ],
   invalid: [
     {
       code: '{"notDTSRollup": {}}',
-      filename: "sdk/package/package-a/api-extractor.json",
+      filename: "service-bus/api-extractor.json",
       errors: [
         {
-          message: "dtsRollup does not exist at the outermost level"
-        }
-      ]
+          message: "dtsRollup does not exist at the outermost level",
+        },
+      ],
     },
     {
       // dtsRollup exists but doesn't specify publicTrimmedFilePath
       code: `{"dtsRollup": {"notPublicTrimmedFilePath": ""}}`,
-      filename: "sdk/package/package-a/api-extractor.json",
+      filename: "service-bus/api-extractor.json",
       errors: [
         {
-          message: "publicTrimmedFilePath is not a member of dtsRollup"
-        }
-      ]
+          message: "publicTrimmedFilePath is not a member of dtsRollup",
+        },
+      ],
     },
     {
       // dtsRollup is in a nested object
       code: '{"outer": {"dtsRollup": {"publicTrimmedFilePath" : "./types/package-a.d.ts"}}}',
-      filename: "sdk/package/package-a/api-extractor.json",
+      filename: "service-bus/api-extractor.json",
       errors: [
         {
-          message: "dtsRollup does not exist at the outermost level"
-        }
-      ]
+          message: "dtsRollup does not exist at the outermost level",
+        },
+      ],
     },
     {
       // publicTrimmedFilePath is not a direct child of dtsRollup
       code: `{"dtsRollup": {"outer": {"publicTrimmedFilePath": "./types/package-a.d.ts"}}}`,
-      filename: "sdk/package/package-a/api-extractor.json",
+      filename: "service-bus/api-extractor.json",
       errors: [
         {
-          message: "publicTrimmedFilePath is not a member of dtsRollup"
-        }
-      ]
+          message: "publicTrimmedFilePath is not a member of dtsRollup",
+        },
+      ],
     },
     {
       // publicTrimmedFilePath set to a non-string literal
       code: `{"dtsRollup": {"publicTrimmedFilePath": {}}}`,
-      filename: "sdk/package/package-a/api-extractor.json",
+      filename: "service-bus/api-extractor.json",
       errors: [
         {
-          message: ".d.ts rollup path is not set to a string"
-        }
-      ]
+          message: ".d.ts rollup path is not set to a string",
+        },
+      ],
     },
     {
       // only the fields we care about
       code: '{"dtsRollup": {"publicTrimmedFilePath": "./typings/package-a.ts"}}',
-      filename: "sdk/package/package-a/api-extractor.json",
+      filename: "service-bus/api-extractor.json",
       errors: [
         {
-          message: "provided .d.ts rollup path is not a TypeScript declaration file"
-        }
-      ]
+          message: "provided .d.ts rollup path is not a TypeScript declaration file",
+        },
+      ],
     },
     {
       // types output does not match filename
       code: exampleConfigBad,
-      filename: "sdk/template/template/api-extractor.json",
+      filename: "service-bus/api-extractor.json",
       errors: [
         {
           message:
-            "provided .d.ts rollup path should be named 'template.d.ts' after the package directory"
-        }
-      ]
-    }
-  ]
+            "provided .d.ts rollup path should be named 'service-bus.d.ts' after the package directory",
+        },
+      ],
+    },
+  ],
 });

@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Debugger } from "@azure/logger";
-import { PipelineResponse, PipelineRequest, SendRequest } from "../interfaces";
-import { PipelinePolicy } from "../pipeline";
-import { logger as coreLogger } from "../log";
-import { Sanitizer } from "../util/sanitizer";
+import type { Debugger } from "@azure/logger";
+import type { PipelineRequest, PipelineResponse, SendRequest } from "../interfaces.js";
+import type { PipelinePolicy } from "../pipeline.js";
+import { logger as coreLogger } from "../log.js";
+import { Sanitizer } from "../util/sanitizer.js";
 
 /**
  * The programmatic identifier of the logPolicy.
@@ -46,7 +46,7 @@ export function logPolicy(options: LogPolicyOptions = {}): PipelinePolicy {
   const logger = options.logger ?? coreLogger.info;
   const sanitizer = new Sanitizer({
     additionalAllowedHeaderNames: options.additionalAllowedHeaderNames,
-    additionalAllowedQueryParameters: options.additionalAllowedQueryParameters
+    additionalAllowedQueryParameters: options.additionalAllowedQueryParameters,
   });
   return {
     name: logPolicyName,
@@ -63,6 +63,6 @@ export function logPolicy(options: LogPolicyOptions = {}): PipelinePolicy {
       logger(`Headers: ${sanitizer.sanitize(response.headers)}`);
 
       return response;
-    }
+    },
   };
 }

@@ -1,32 +1,33 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
+import { assert } from "chai";
 
-import * as dotenv from "dotenv";
+import type { StorageSharedKeyCredential, ContainerClient, BlobServiceClient } from "../../src";
 import {
   AppendBlobClient,
   newPipeline,
-  StorageSharedKeyCredential,
-  ContainerClient,
   generateBlobSASQueryParameters,
   BlobSASPermissions,
-  BlobServiceClient
 } from "../../src";
 import {
   getBSU,
   getConnectionStringFromEnvironment,
   bodyToString,
   recorderEnvSetup,
-  getTokenBSU,
-  getTokenCredential
+  getTokenBSUWithDefaultCredential,
+  getStorageAccessTokenWithDefaultCredential,
+  getUniqueName,
+  configureBlobStorageClient,
+  SimpleTokenCredential,
 } from "../utils";
-import { TokenCredential } from "@azure/core-http";
+import type { TokenCredential } from "@azure/core-auth";
 import { assertClientUsesTokenCredential } from "../utils/assert";
-import { isPlaybackMode, record, Recorder } from "@azure-tools/test-recorder";
+import { Recorder, isLiveMode } from "@azure-tools/test-recorder";
 import { Test_CPK_INFO } from "../utils/fakeTestSecrets";
-import { Context } from "mocha";
-dotenv.config();
+import type { Context } from "mocha";
+import { getBlobServiceAccountAudience } from "../../src/models";
+import { createTestCredential } from "@azure-tools/test-credential";
 
 describe("AppendBlobClient Node.js only", () => {
   let containerName: string;
@@ -37,113 +38,187 @@ describe("AppendBlobClient Node.js only", () => {
   let recorder: Recorder;
 
   let blobServiceClient: BlobServiceClient;
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    blobServiceClient = getBSU();
-    containerName = recorder.getUniqueName("container");
+  const timeoutForLargeFileUploadingTest = 20 * 60 * 1000;
+
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderEnvSetup);
+    await recorder.addSanitizers(
+      {
+        removeHeaderSanitizer: {
+          headersForRemoval: [
+            "x-ms-copy-source",
+            "x-ms-copy-source-authorization",
+            "x-ms-encryption-key",
+          ],
+        },
+      },
+      ["playback", "record"],
+    );
+    blobServiceClient = getBSU(recorder);
+    containerName = recorder.variable("container", getUniqueName("container"));
     containerClient = blobServiceClient.getContainerClient(containerName);
     await containerClient.create();
-    blobName = recorder.getUniqueName("blob");
+    blobName = recorder.variable("blob", getUniqueName("blob"));
     appendBlobClient = containerClient.getAppendBlobClient(blobName);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await containerClient.delete();
     await recorder.stop();
   });
 
-  it("can be created with a url and a credential", async () => {
-    const factories = (appendBlobClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+  it("can be created with a url and a credential", async function () {
+    const credential = (appendBlobClient as any).credential as StorageSharedKeyCredential;
     const newClient = new AppendBlobClient(appendBlobClient.url, credential);
+    configureBlobStorageClient(recorder, newClient);
 
     await newClient.create();
     await newClient.download();
   });
 
-  it("can be created with a url and a credential and an option bag", async () => {
-    const factories = (appendBlobClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+  it("can be created with a url and a credential and an option bag", async function () {
+    const credential = (appendBlobClient as any).credential as StorageSharedKeyCredential;
     const newClient = new AppendBlobClient(appendBlobClient.url, credential, {
-      userAgentOptions: { userAgentPrefix: "test/1.0" }
+      userAgentOptions: { userAgentPrefix: "test/1.0" },
     });
+    configureBlobStorageClient(recorder, newClient);
 
     await newClient.create();
     await newClient.download();
   });
 
-  it("can be created with a url and a TokenCredential", async () => {
+  it("can be created with a url and a TokenCredential", async function () {
     const tokenCredential: TokenCredential = {
       getToken: () =>
         Promise.resolve({
           token: "token",
-          expiresOnTimestamp: 12345
-        })
+          expiresOnTimestamp: 12345,
+        }),
     };
     const newClient = new AppendBlobClient(appendBlobClient.url, tokenCredential);
     assertClientUsesTokenCredential(newClient);
   });
 
+  it("Default audience should work", async () => {
+    await appendBlobClient.create();
+    const appendBlobClientWithOAuthToken = new AppendBlobClient(
+      appendBlobClient.url,
+      createTestCredential(),
+    );
+    configureBlobStorageClient(recorder, appendBlobClientWithOAuthToken);
+    const exist = await appendBlobClientWithOAuthToken.exists();
+    assert.equal(exist, true);
+  });
+
+  it("Customized audience should work", async () => {
+    await appendBlobClient.create();
+    const appendBlobClientWithOAuthToken = new AppendBlobClient(
+      appendBlobClient.url,
+      createTestCredential(),
+      {
+        audience: [getBlobServiceAccountAudience(blobServiceClient.accountName)],
+      },
+    );
+    configureBlobStorageClient(recorder, appendBlobClientWithOAuthToken);
+    const exist = await appendBlobClientWithOAuthToken.exists();
+    assert.equal(exist, true);
+  });
+
+  it("Bearer token challenge should work", async () => {
+    await appendBlobClient.create();
+
+    // To validate that bad audience should fail.
+    const authToken = await createTestCredential().getToken(
+      "https://badaudience.blob.core.windows.net/.default",
+    );
+    assert.isNotNull(authToken);
+    const appendBlobClientWithPlainOAuthToken = new AppendBlobClient(
+      appendBlobClient.url,
+      new SimpleTokenCredential(authToken!.token),
+    );
+    configureBlobStorageClient(recorder, appendBlobClientWithPlainOAuthToken);
+
+    try {
+      await appendBlobClientWithPlainOAuthToken.exists();
+      assert.fail("Should fail with 401");
+    } catch (err) {
+      assert.strictEqual((err as any).statusCode, 401);
+    }
+    const appendBlobClientWithOAuthToken = new AppendBlobClient(
+      appendBlobClient.url,
+      createTestCredential(),
+      {
+        audience: ["https://badaudience.blob.core.windows.net/.default"],
+      },
+    );
+    configureBlobStorageClient(recorder, appendBlobClientWithOAuthToken);
+    const exist = await appendBlobClientWithOAuthToken.exists();
+    assert.equal(exist, true);
+  });
+
   it("can be created with a url and a pipeline", async () => {
-    const factories = (appendBlobClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+    const credential = (appendBlobClient as any).credential as StorageSharedKeyCredential;
     const pipeline = newPipeline(credential);
     const newClient = new AppendBlobClient(appendBlobClient.url, pipeline);
+    configureBlobStorageClient(recorder, newClient);
 
     await newClient.create();
     await newClient.download();
   });
 
-  it("can be created with a connection string", async () => {
+  it("can be created with a connection string", async function () {
     const newClient = new AppendBlobClient(
       getConnectionStringFromEnvironment(),
       containerName,
-      blobName
+      blobName,
     );
+    configureBlobStorageClient(recorder, newClient);
 
     await newClient.create();
     await newClient.download();
   });
 
-  it("can be created with a connection string and an option bag", async () => {
+  it("can be created with a connection string and an option bag", async function () {
     const newClient = new AppendBlobClient(
       getConnectionStringFromEnvironment(),
       containerName,
       blobName,
       {
         retryOptions: {
-          maxTries: 5
-        }
-      }
+          maxTries: 5,
+        },
+      },
     );
+    configureBlobStorageClient(recorder, newClient);
 
     await newClient.create();
     await newClient.download();
   });
 
-  it("appendBlockFromURL", async () => {
+  it("appendBlockFromURL", async function () {
     await appendBlobClient.create();
 
     const content = "Hello World!";
-    const blockBlobName = recorder.getUniqueName("blockblob");
+    const blockBlobName = recorder.variable("blockblob", getUniqueName("blockblob"));
     const blockBlobClient = containerClient.getBlockBlobClient(blockBlobName);
     await blockBlobClient.upload(content, content.length);
 
     // Get a SAS for blobURL
-    const expiryTime = recorder.newDate("expiry");
+
+    const expiryTime = new Date(recorder.variable("expiry", new Date().toISOString()));
     expiryTime.setDate(expiryTime.getDate() + 1);
 
-    const factories = (blockBlobClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+    const credential = (blockBlobClient as any).credential as StorageSharedKeyCredential;
 
     const sas = generateBlobSASQueryParameters(
       {
         expiresOn: expiryTime,
         containerName,
         blobName: blockBlobName,
-        permissions: BlobSASPermissions.parse("r")
+        permissions: BlobSASPermissions.parse("r"),
       },
-      credential
+      credential,
     );
 
     await appendBlobClient.appendBlock(content, content.length);
@@ -154,43 +229,39 @@ describe("AppendBlobClient Node.js only", () => {
     assert.equal(downloadResponse.contentLength!, content.length * 2);
   });
 
-  it("appendBlockFromURL - source SAS and destination bearer token", async function(this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
+  it("appendBlockFromURL - source SAS and destination bearer token", async function (this: Context) {
     await appendBlobClient.create();
 
     const content = "Hello World!";
-    const blockBlobName = recorder.getUniqueName("blockblob");
+    const blockBlobName = recorder.variable("blockblob", getUniqueName("blockblob"));
     const blockBlobClient = containerClient.getBlockBlobClient(blockBlobName);
     await blockBlobClient.upload(content, content.length);
 
     // Get a SAS for blobURL
-    const expiryTime = recorder.newDate("expiry");
+    const expiryTime = new Date(recorder.variable("expiry", new Date().toISOString()));
     expiryTime.setDate(expiryTime.getDate() + 1);
 
-    const factories = (blockBlobClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
+    const credential = (blockBlobClient as any).credential as StorageSharedKeyCredential;
 
     const sas = generateBlobSASQueryParameters(
       {
         expiresOn: expiryTime,
         containerName,
         blobName: blockBlobName,
-        permissions: BlobSASPermissions.parse("r")
+        permissions: BlobSASPermissions.parse("r"),
       },
-      credential
+      credential,
     );
 
-    const tokenBlobServiceClient = getTokenBSU();
+    const tokenBlobServiceClient = getTokenBSUWithDefaultCredential(recorder);
     const tokenAppendBlobClient = tokenBlobServiceClient
       .getContainerClient(containerName)
       .getAppendBlobClient(blobName);
+
     await tokenAppendBlobClient.appendBlockFromURL(
       `${blockBlobClient.url}?${sas}`,
       0,
-      content.length
+      content.length,
     );
 
     const downloadResponse = await appendBlobClient.download(0);
@@ -198,28 +269,23 @@ describe("AppendBlobClient Node.js only", () => {
     assert.equal(downloadResponse.contentLength!, content.length);
   });
 
-  it("appendBlockFromURL - source bear token and destination account key", async function(this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
+  it("appendBlockFromURL - source bear token and destination account key", async function (this: Context) {
     await appendBlobClient.create();
 
     const content = "Hello World!";
-    const blockBlobName = recorder.getUniqueName("blockblob");
+    const blockBlobName = recorder.variable("blockblob", getUniqueName("blockblob"));
     const blockBlobClient = containerClient.getBlockBlobClient(blockBlobName);
     await blockBlobClient.upload(content, content.length);
 
-    const tokenCredential = getTokenCredential();
-    const accessToken = await tokenCredential.getToken([]);
+    const accessToken = await getStorageAccessTokenWithDefaultCredential();
 
-    // const tokenBlobServiceClient = getTokenBSUWithDefaultCredential();
+    // const tokenBlobServiceClient = getTokenBSUWithDefaultCredential(recorder);
     // const tokenAppendBlobClient = tokenBlobServiceClient.getContainerClient(containerName).getAppendBlobClient(blobName);
     await appendBlobClient.appendBlockFromURL(blockBlobClient.url, 0, content.length, {
       sourceAuthorization: {
         scheme: "Bearer",
-        value: accessToken!.token
-      }
+        value: accessToken!.token,
+      },
     });
 
     const downloadResponse = await appendBlobClient.download(0);
@@ -227,19 +293,15 @@ describe("AppendBlobClient Node.js only", () => {
     assert.equal(downloadResponse.contentLength!, content.length);
   });
 
-  it("appendBlockFromURL - destination bearer token", async function(this: Context) {
-    if (!isPlaybackMode()) {
-      // Enable this when STG78 - version 2020-10-02 is enabled on production.
-      this.skip();
-    }
+  it("appendBlockFromURL - destination bearer token", async function (this: Context) {
     await appendBlobClient.create();
 
     const content = "Hello World!";
-    const blockBlobName = recorder.getUniqueName("blockblob");
+    const blockBlobName = recorder.variable("blockblob", getUniqueName("blockblob"));
     const blockBlobClient = containerClient.getBlockBlobClient(blockBlobName);
     await blockBlobClient.upload(content, content.length);
 
-    const tokenBlobServiceClient = getTokenBSU();
+    const tokenBlobServiceClient = getTokenBSUWithDefaultCredential(recorder);
     const tokenAppendBlobClient = tokenBlobServiceClient
       .getContainerClient(containerName)
       .getAppendBlobClient(blobName);
@@ -250,76 +312,104 @@ describe("AppendBlobClient Node.js only", () => {
     assert.equal(downloadResponse.contentLength!, content.length);
   });
 
+  // [Copy source error code] Feature is pending on service side, skip the case for now.
+  it.skip("appendBlockFromURL - should fail with source error message", async function () {
+    const tmr = new Date(recorder.variable("tmr", new Date().toISOString()));
+    tmr.setDate(tmr.getDate() + 1);
+
+    const newBlobClient = containerClient.getAppendBlobClient(
+      recorder.variable("copiedblob", getUniqueName("copiedblob")),
+    );
+    await newBlobClient.create();
+
+    const sourceUrl = await appendBlobClient.generateSasUrl({
+      permissions: BlobSASPermissions.parse("d"),
+      expiresOn: tmr,
+    });
+
+    try {
+      await newBlobClient.appendBlockFromURL(sourceUrl, 0, 512);
+    } catch (err) {
+      assert.deepEqual((err as any).details.errorCode, "CannotVerifyCopySource");
+      assert.equal((err as any).details.copySourceStatusCode, 403);
+      assert.deepEqual((err as any).details.copySourceErrorCode, "AuthorizationPermissionMismatch");
+      assert.deepEqual(
+        (err as any).details.copySourceErrorMessage,
+        "This request is not authorized to perform this operation using this permission.",
+      );
+    }
+  });
+
   it("conditional tags for appendBlockFromURL's destination blob", async () => {
-    const newBlobClient = containerClient.getAppendBlobClient(recorder.getUniqueName("copiedblob"));
+    const newBlobClient = containerClient.getAppendBlobClient(
+      recorder.variable("copiedblob", getUniqueName("copiedblob")),
+    );
     const tags2 = {
-      tag: "val"
+      tag: "val",
     };
     await newBlobClient.create({ tags: tags2 });
 
     const content = "Hello World!";
-    const blockBlobName = recorder.getUniqueName("blockblob");
+    const blockBlobName = recorder.variable("blockblob", getUniqueName("blockblob"));
     const blockBlobClient = containerClient.getBlockBlobClient(blockBlobName);
     await blockBlobClient.upload(content, content.length);
     // Get a SAS for blobURL
-    const factories = (blockBlobClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
-    const expiryTime = recorder.newDate("expiry");
+    const credential = (blockBlobClient as any).credential as StorageSharedKeyCredential;
+    const expiryTime = new Date(recorder.variable("expiry", new Date().toISOString()));
     expiryTime.setDate(expiryTime.getDate() + 1);
     const sas = generateBlobSASQueryParameters(
       {
         expiresOn: expiryTime,
         containerName,
         blobName: blockBlobName,
-        permissions: BlobSASPermissions.parse("r")
+        permissions: BlobSASPermissions.parse("r"),
       },
-      credential
+      credential,
     );
 
     let exceptionCaught = false;
     try {
       await newBlobClient.appendBlockFromURL(`${blockBlobClient.url}?${sas}`, 0, content.length, {
-        conditions: { tagConditions: "tag1 = 'val2'" }
+        conditions: { tagConditions: "tag1 = 'val2'" },
       });
-    } catch (err) {
+    } catch (err: any) {
       assert.equal(err.details?.errorCode, "ConditionNotMet");
       exceptionCaught = true;
     }
     assert.ok(exceptionCaught);
 
     await newBlobClient.appendBlockFromURL(`${blockBlobClient.url}?${sas}`, 0, content.length, {
-      conditions: { tagConditions: "tag = 'val'" }
+      conditions: { tagConditions: "tag = 'val'" },
     });
   });
 
   it("create, appendBlock, appendBlockFromURL and download with CPK", async () => {
     const cResp = await appendBlobClient.create({
-      customerProvidedKey: Test_CPK_INFO
+      customerProvidedKey: Test_CPK_INFO,
     });
     assert.equal(cResp.encryptionKeySha256, Test_CPK_INFO.encryptionKeySha256);
 
     const content = "Hello World!";
-    const blockBlobName = recorder.getUniqueName("blockblob");
+    const blockBlobName = recorder.variable("blockblob", getUniqueName("blockblob"));
     const blobClient = containerClient.getBlockBlobClient(blockBlobName);
     await blobClient.upload(content, content.length);
 
     // Get a SAS for blobURL
-    const factories = (blobClient as any).pipeline.factories;
-    const credential = factories[factories.length - 1] as StorageSharedKeyCredential;
-    const expiryTime = recorder.newDate("expiry");
+    const credential = (blobClient as any).credential as StorageSharedKeyCredential;
+    const expiryTime = new Date(recorder.variable("expiry", new Date().toISOString()));
     expiryTime.setDate(expiryTime.getDate() + 1);
     const sas = generateBlobSASQueryParameters(
       {
         expiresOn: expiryTime,
         containerName,
         blobName: blockBlobName,
-        permissions: BlobSASPermissions.parse("r")
+        permissions: BlobSASPermissions.parse("r"),
       },
-      credential
+      credential,
     );
 
     const aResp = await appendBlobClient.appendBlock(content, content.length, {
-      customerProvidedKey: Test_CPK_INFO
+      customerProvidedKey: Test_CPK_INFO,
     });
     assert.equal(aResp.encryptionKeySha256, Test_CPK_INFO.encryptionKeySha256);
 
@@ -327,14 +417,33 @@ describe("AppendBlobClient Node.js only", () => {
       `${blobClient.url}?${sas}`,
       0,
       content.length,
-      { customerProvidedKey: Test_CPK_INFO }
+      { customerProvidedKey: Test_CPK_INFO },
     );
     assert.equal(aResp2.encryptionKeySha256, Test_CPK_INFO.encryptionKeySha256);
 
     const downloadResponse = await appendBlobClient.download(0, undefined, {
-      customerProvidedKey: Test_CPK_INFO
+      customerProvidedKey: Test_CPK_INFO,
     });
     assert.equal(await bodyToString(downloadResponse, content.length * 2), content + content);
     assert.equal(downloadResponse.contentLength!, content.length * 2);
   });
+
+  it("appendBlock - append large block", async function (this: Context) {
+    if (!isLiveMode()) {
+      // Recorder file larger than github limitation
+      this.skip();
+    }
+    await appendBlobClient.create();
+
+    const largeBlockSize = 100 * 1024 * 1024;
+    const content = new Uint8Array(largeBlockSize);
+    for (let i = 0; i < largeBlockSize; i = i + 1000) {
+      content[i] = i;
+    }
+    await appendBlobClient.appendBlock(content, content.length);
+
+    const downloadResponse = await appendBlobClient.downloadToBuffer(0);
+    assert.deepStrictEqual(downloadResponse, content);
+    assert.equal(downloadResponse.length, content.length);
+  }).timeout(timeoutForLargeFileUploadingTest);
 });

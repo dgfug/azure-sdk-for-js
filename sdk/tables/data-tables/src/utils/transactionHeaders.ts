@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RawHttpHeaders } from "@azure/core-rest-pipeline";
-import { getBaseTransactionHeaders } from "./baseTransactionHeaders";
+import type { RawHttpHeaders } from "@azure/core-rest-pipeline";
+import { getBaseTransactionHeaders } from "./baseTransactionHeaders.js";
 
 /**
  * @internal
@@ -14,6 +14,6 @@ export function getTransactionHeaders(transactionGuid: string): RawHttpHeaders {
     ...baseHeaders,
     // The below headers are not supported in the browser as they are flagged as "unsafe headers"
     "Accept-Charset": "UTF-8",
-    Connection: "Keep-Alive"
+    Connection: "Keep-Alive",
   };
 }

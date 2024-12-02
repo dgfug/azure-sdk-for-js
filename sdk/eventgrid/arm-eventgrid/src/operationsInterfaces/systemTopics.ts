@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   SystemTopic,
   SystemTopicsListBySubscriptionOptionalParams,
@@ -19,7 +19,7 @@ import {
   SystemTopicsDeleteOptionalParams,
   SystemTopicUpdateParameters,
   SystemTopicsUpdateOptionalParams,
-  SystemTopicsUpdateResponse
+  SystemTopicsUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface SystemTopics {
    * @param options The options parameters.
    */
   listBySubscription(
-    options?: SystemTopicsListBySubscriptionOptionalParams
+    options?: SystemTopicsListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<SystemTopic>;
   /**
    * List all the system topics under a resource group.
@@ -39,7 +39,7 @@ export interface SystemTopics {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: SystemTopicsListByResourceGroupOptionalParams
+    options?: SystemTopicsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<SystemTopic>;
   /**
    * Get properties of a system topic.
@@ -50,7 +50,7 @@ export interface SystemTopics {
   get(
     resourceGroupName: string,
     systemTopicName: string,
-    options?: SystemTopicsGetOptionalParams
+    options?: SystemTopicsGetOptionalParams,
   ): Promise<SystemTopicsGetResponse>;
   /**
    * Asynchronously creates a new system topic with the specified parameters.
@@ -63,10 +63,10 @@ export interface SystemTopics {
     resourceGroupName: string,
     systemTopicName: string,
     systemTopicInfo: SystemTopic,
-    options?: SystemTopicsCreateOrUpdateOptionalParams
+    options?: SystemTopicsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SystemTopicsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SystemTopicsCreateOrUpdateResponse>,
       SystemTopicsCreateOrUpdateResponse
     >
   >;
@@ -81,7 +81,7 @@ export interface SystemTopics {
     resourceGroupName: string,
     systemTopicName: string,
     systemTopicInfo: SystemTopic,
-    options?: SystemTopicsCreateOrUpdateOptionalParams
+    options?: SystemTopicsCreateOrUpdateOptionalParams,
   ): Promise<SystemTopicsCreateOrUpdateResponse>;
   /**
    * Delete existing system topic.
@@ -92,8 +92,8 @@ export interface SystemTopics {
   beginDelete(
     resourceGroupName: string,
     systemTopicName: string,
-    options?: SystemTopicsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: SystemTopicsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete existing system topic.
    * @param resourceGroupName The name of the resource group within the user's subscription.
@@ -103,7 +103,7 @@ export interface SystemTopics {
   beginDeleteAndWait(
     resourceGroupName: string,
     systemTopicName: string,
-    options?: SystemTopicsDeleteOptionalParams
+    options?: SystemTopicsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Asynchronously updates a system topic with the specified parameters.
@@ -116,10 +116,10 @@ export interface SystemTopics {
     resourceGroupName: string,
     systemTopicName: string,
     systemTopicUpdateParameters: SystemTopicUpdateParameters,
-    options?: SystemTopicsUpdateOptionalParams
+    options?: SystemTopicsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<SystemTopicsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<SystemTopicsUpdateResponse>,
       SystemTopicsUpdateResponse
     >
   >;
@@ -134,6 +134,6 @@ export interface SystemTopics {
     resourceGroupName: string,
     systemTopicName: string,
     systemTopicUpdateParameters: SystemTopicUpdateParameters,
-    options?: SystemTopicsUpdateOptionalParams
+    options?: SystemTopicsUpdateOptionalParams,
   ): Promise<SystemTopicsUpdateResponse>;
 }

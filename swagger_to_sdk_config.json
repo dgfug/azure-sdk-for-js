@@ -1,22 +1,28 @@
 {
   "advancedOptions": {
     "createSdkPullRequests": true,
-    "generationCallMode": "one-per-config"
+    "generationCallMode": "one-per-config",
+    "breakingChangeTracking": true
   },
   "initOptions": {
     "initScript": {
-      "path": "sh .scripts/automation_init.sh"
+      "path": "sh .scripts/automation_init.sh",
+      "stderr": {
+        "showInComment": ".*ERROR.*"
+      }
     }
   },
   "generateOptions": {
     "generateScript": {
       "path": "sh .scripts/automation_generate.sh",
       "stderr": {
-        "showInComment": "^\\[AUTOREST\\]",
-        "scriptError": "^\\[ERROR\\]",
-        "scriptWarning": "^\\[WARNING\\]"
+        "showInComment": ".*ERROR.*"
       }
     },
     "parseGenerateOutput": true
+  },
+  "packageOptions": {
+    "breakingChangeLabel": "CI-BreakingChange-JavaScript",
+    "breakingChangesLabel": "BreakingChange-JavaScript-Sdk"
   }
 }

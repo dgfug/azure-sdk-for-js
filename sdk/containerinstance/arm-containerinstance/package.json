@@ -1,13 +1,20 @@
 {
   "name": "@azure/arm-containerinstance",
+  "sdk-type": "mgmt",
   "author": "Microsoft Corporation",
-  "description": "ContainerInstanceManagementClient Library with typescript type definitions for node.js and browser.",
-  "version": "6.2.0",
+  "description": "A generated SDK for ContainerInstanceManagementClient.",
+  "version": "9.2.0-beta.2",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
-    "@azure/ms-rest-azure-js": "^2.1.0",
-    "@azure/ms-rest-js": "^2.2.0",
-    "@azure/core-auth": "^1.1.4",
-    "tslib": "^1.10.0"
+    "@azure/core-lro": "^2.5.4",
+    "@azure/abort-controller": "^2.1.2",
+    "@azure/core-paging": "^1.2.0",
+    "@azure/core-client": "^1.7.0",
+    "@azure/core-auth": "^1.6.0",
+    "@azure/core-rest-pipeline": "^1.14.0",
+    "tslib": "^2.2.0"
   },
   "keywords": [
     "node",
@@ -17,17 +24,24 @@
     "isomorphic"
   ],
   "license": "MIT",
-  "main": "./dist/arm-containerinstance.js",
-  "module": "./esm/containerInstanceManagementClient.js",
-  "types": "./esm/containerInstanceManagementClient.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist-esm/src/index.js",
+  "types": "./types/arm-containerinstance.d.ts",
   "devDependencies": {
-    "typescript": "^3.6.0",
-    "rollup": "^1.18.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-sourcemaps": "^0.4.2",
-    "uglify-js": "^3.6.0"
+    "typescript": "~5.6.2",
+    "dotenv": "^16.0.0",
+    "@azure/dev-tool": "^1.0.0",
+    "@azure/identity": "^4.2.1",
+    "@azure-tools/test-recorder": "^3.0.0",
+    "@azure-tools/test-credential": "^1.1.0",
+    "mocha": "^10.0.0",
+    "@types/mocha": "^10.0.0",
+    "tsx": "^4.7.1",
+    "@types/chai": "^4.2.8",
+    "chai": "^4.2.0",
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.0.0"
   },
-  "homepage": "https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/containerinstance/arm-containerinstance",
   "repository": {
     "type": "git",
     "url": "https://github.com/Azure/azure-sdk-for-js.git"
@@ -40,20 +54,60 @@
     "dist/**/*.js.map",
     "dist/**/*.d.ts",
     "dist/**/*.d.ts.map",
-    "esm/**/*.js",
-    "esm/**/*.js.map",
-    "esm/**/*.d.ts",
-    "esm/**/*.d.ts.map",
+    "dist-esm/**/*.js",
+    "dist-esm/**/*.js.map",
+    "dist-esm/**/*.d.ts",
+    "dist-esm/**/*.d.ts.map",
     "src/**/*.ts",
     "README.md",
-    "rollup.config.js",
-    "tsconfig.json"
+    "LICENSE",
+    "tsconfig.json",
+    "review/*",
+    "CHANGELOG.md",
+    "types/*"
   ],
   "scripts": {
-    "build": "tsc && rollup -c rollup.config.js && npm run minify",
-    "minify": "uglifyjs -c -m --comments --source-map \"content='./dist/arm-containerinstance.js.map'\" -o ./dist/arm-containerinstance.min.js ./dist/arm-containerinstance.js",
-    "prepack": "npm install && npm run build"
+    "build": "npm run clean && tsc && dev-tool run bundle && npm run minify && dev-tool run vendored mkdirp ./review && npm run extract-api",
+    "minify": "dev-tool run vendored uglifyjs -c -m --comments --source-map \"content='./dist/index.js.map'\" -o ./dist/index.min.js ./dist/index.js",
+    "prepack": "npm run build",
+    "pack": "npm pack 2>&1",
+    "extract-api": "dev-tool run extract-api",
+    "lint": "echo skipped",
+    "clean": "dev-tool run vendored rimraf --glob dist dist-browser dist-esm test-dist temp types *.tgz *.log",
+    "build:node": "echo skipped",
+    "build:browser": "echo skipped",
+    "build:test": "echo skipped",
+    "build:samples": "echo skipped.",
+    "check-format": "echo skipped",
+    "execute:samples": "echo skipped",
+    "format": "echo skipped",
+    "test": "npm run integration-test",
+    "test:node": "echo skipped",
+    "test:browser": "echo skipped",
+    "unit-test": "npm run unit-test:node && npm run unit-test:browser",
+    "unit-test:node": "dev-tool run vendored cross-env TEST_MODE=playback npm run integration-test:node",
+    "unit-test:browser": "echo skipped",
+    "integration-test": "npm run integration-test:node && npm run integration-test:browser",
+    "integration-test:node": "dev-tool run test:node-ts-input -- --timeout 1200000 'test/*.ts'",
+    "integration-test:browser": "echo skipped"
   },
   "sideEffects": false,
-  "autoPublish": true
+  "//metadata": {
+    "constantPaths": [
+      {
+        "path": "src/containerInstanceManagementClient.ts",
+        "prefix": "packageDetails"
+      }
+    ]
+  },
+  "autoPublish": true,
+  "homepage": "https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/containerinstance/arm-containerinstance",
+  "//sampleConfiguration": {
+    "productName": "",
+    "productSlugs": [
+      "azure"
+    ],
+    "disableDocsMs": true,
+    "apiRefLink": "https://docs.microsoft.com/javascript/api/@azure/arm-containerinstance?view=azure-node-preview"
+  }
 }

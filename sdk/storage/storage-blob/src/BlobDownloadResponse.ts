@@ -1,22 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { HttpResponse, isNode } from "@azure/core-http";
-import { BlobImmutabilityPolicyMode } from "./generatedModels";
+// Licensed under the MIT License.
+import { isNode } from "@azure/core-util";
+import type { BlobImmutabilityPolicyMode } from "./generatedModels";
 
-import {
+import type {
   BlobDownloadHeaders,
   BlobType,
   CopyStatusType,
   LeaseDurationType,
   LeaseStateType,
-  LeaseStatusType
+  LeaseStatusType,
 } from "./generatedModels";
-import { BlobDownloadResponseParsed, Metadata, ObjectReplicationPolicy } from "./models";
-import {
+import type { BlobDownloadResponseParsed, Metadata, ObjectReplicationPolicy } from "./models";
+import type {
   ReadableStreamGetter,
-  RetriableReadableStream,
-  RetriableReadableStreamOptions
+  RetriableReadableStreamOptions,
 } from "./utils/RetriableReadableStream";
+import { RetriableReadableStream } from "./utils/RetriableReadableStream";
+import type { ResponseWithHeaders } from "./utils/utils.common";
 
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -340,6 +341,15 @@ export class BlobDownloadResponse implements BlobDownloadResponseParsed {
   }
 
   /**
+   * Returns the date and time the blob was created.
+   *
+   * @readonly
+   */
+  public get createdOn(): Date | undefined {
+    return this.originalResponse.createdOn;
+  }
+
+  /**
    * A name-value pair
    * to associate with a file storage object.
    *
@@ -496,9 +506,7 @@ export class BlobDownloadResponse implements BlobDownloadResponseParsed {
   /**
    * The HTTP response.
    */
-  public get _response(): HttpResponse & {
-    parsedHeaders: BlobDownloadHeaders;
-  } {
+  public get _response(): ResponseWithHeaders<BlobDownloadHeaders>["_response"] {
     return this.originalResponse._response;
   }
 
@@ -519,7 +527,7 @@ export class BlobDownloadResponse implements BlobDownloadResponseParsed {
     getter: ReadableStreamGetter,
     offset: number,
     count: number,
-    options: RetriableReadableStreamOptions = {}
+    options: RetriableReadableStreamOptions = {},
   ) {
     this.originalResponse = originalResponse;
     this.blobDownloadStream = new RetriableReadableStream(
@@ -527,7 +535,7 @@ export class BlobDownloadResponse implements BlobDownloadResponseParsed {
       getter,
       offset,
       count,
-      options
+      options,
     );
   }
 }

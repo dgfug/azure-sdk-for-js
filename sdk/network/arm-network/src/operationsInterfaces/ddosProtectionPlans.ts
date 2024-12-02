@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   DdosProtectionPlan,
   DdosProtectionPlansListOptionalParams,
@@ -19,7 +19,7 @@ import {
   DdosProtectionPlansCreateOrUpdateResponse,
   TagsObject,
   DdosProtectionPlansUpdateTagsOptionalParams,
-  DdosProtectionPlansUpdateTagsResponse
+  DdosProtectionPlansUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface DdosProtectionPlans {
    * @param options The options parameters.
    */
   list(
-    options?: DdosProtectionPlansListOptionalParams
+    options?: DdosProtectionPlansListOptionalParams,
   ): PagedAsyncIterableIterator<DdosProtectionPlan>;
   /**
    * Gets all the DDoS protection plans in a resource group.
@@ -39,7 +39,7 @@ export interface DdosProtectionPlans {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: DdosProtectionPlansListByResourceGroupOptionalParams
+    options?: DdosProtectionPlansListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<DdosProtectionPlan>;
   /**
    * Deletes the specified DDoS protection plan.
@@ -50,8 +50,8 @@ export interface DdosProtectionPlans {
   beginDelete(
     resourceGroupName: string,
     ddosProtectionPlanName: string,
-    options?: DdosProtectionPlansDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DdosProtectionPlansDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified DDoS protection plan.
    * @param resourceGroupName The name of the resource group.
@@ -61,7 +61,7 @@ export interface DdosProtectionPlans {
   beginDeleteAndWait(
     resourceGroupName: string,
     ddosProtectionPlanName: string,
-    options?: DdosProtectionPlansDeleteOptionalParams
+    options?: DdosProtectionPlansDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets information about the specified DDoS protection plan.
@@ -72,7 +72,7 @@ export interface DdosProtectionPlans {
   get(
     resourceGroupName: string,
     ddosProtectionPlanName: string,
-    options?: DdosProtectionPlansGetOptionalParams
+    options?: DdosProtectionPlansGetOptionalParams,
   ): Promise<DdosProtectionPlansGetResponse>;
   /**
    * Creates or updates a DDoS protection plan.
@@ -85,10 +85,10 @@ export interface DdosProtectionPlans {
     resourceGroupName: string,
     ddosProtectionPlanName: string,
     parameters: DdosProtectionPlan,
-    options?: DdosProtectionPlansCreateOrUpdateOptionalParams
+    options?: DdosProtectionPlansCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DdosProtectionPlansCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DdosProtectionPlansCreateOrUpdateResponse>,
       DdosProtectionPlansCreateOrUpdateResponse
     >
   >;
@@ -103,7 +103,7 @@ export interface DdosProtectionPlans {
     resourceGroupName: string,
     ddosProtectionPlanName: string,
     parameters: DdosProtectionPlan,
-    options?: DdosProtectionPlansCreateOrUpdateOptionalParams
+    options?: DdosProtectionPlansCreateOrUpdateOptionalParams,
   ): Promise<DdosProtectionPlansCreateOrUpdateResponse>;
   /**
    * Update a DDoS protection plan tags.
@@ -116,6 +116,6 @@ export interface DdosProtectionPlans {
     resourceGroupName: string,
     ddosProtectionPlanName: string,
     parameters: TagsObject,
-    options?: DdosProtectionPlansUpdateTagsOptionalParams
+    options?: DdosProtectionPlansUpdateTagsOptionalParams,
   ): Promise<DdosProtectionPlansUpdateTagsResponse>;
 }

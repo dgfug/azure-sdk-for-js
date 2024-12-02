@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { PerfTest } from "../src";
 
@@ -14,7 +14,7 @@ export class Exception extends PerfTest {
   async run(): Promise<void> {
     try {
       throw new Error();
-    } catch (e) {
+    } catch (e: unknown) {
       // Nothing to do here
     }
   }

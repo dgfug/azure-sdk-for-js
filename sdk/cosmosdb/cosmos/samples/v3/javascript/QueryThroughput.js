@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Demonstrates query throughput scenarios.
  */
 
-const path = require("path");
 require("dotenv").config();
 
 const { CosmosClient } = require("@azure/cosmos");

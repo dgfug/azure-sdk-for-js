@@ -8,7 +8,7 @@
 import { ChatClient } from "@azure/communication-chat";
 import {
   AzureCommunicationTokenCredential,
-  parseConnectionString
+  parseConnectionString,
 } from "@azure/communication-common";
 import { CommunicationIdentityClient } from "@azure/communication-identity";
 
@@ -29,25 +29,25 @@ export async function main() {
   // create ChatClient
   const chatClient = new ChatClient(
     endpoint,
-    new AzureCommunicationTokenCredential(userToken.token)
+    new AzureCommunicationTokenCredential(userToken.token),
   );
 
   // create chat thread
   console.log("Creating Thread...");
   const createChatThreadRequest = {
-    topic: "Hello, World!"
+    topic: "Hello, World!",
   };
   const createChatThreadOptions = {
     participants: [
       {
         id: user,
-        displayName: "Jack"
-      }
-    ]
+        displayName: "Jack",
+      },
+    ],
   };
   const createChatThreadResult = await chatClient.createChatThread(
     createChatThreadRequest,
-    createChatThreadOptions
+    createChatThreadOptions,
   );
   const threadId = createChatThreadResult.chatThread ? createChatThreadResult.chatThread.id : "";
 

@@ -1,21 +1,21 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { ConnectionContext } from "../../../src/connectionContext";
-import {
+import type { ConnectionContext } from "../../../src/connectionContext.js";
+import type {
   AwaitableSender,
   Receiver as RheaPromiseReceiver,
-  ReceiverEvents,
-  ReceiverOptions
+  ReceiverOptions,
 } from "rhea-promise";
+import { ReceiverEvents } from "rhea-promise";
 import { Constants } from "@azure/core-amqp";
-import { AccessToken } from "@azure/core-auth";
+import type { AccessToken } from "@azure/core-auth";
 import { EventEmitter } from "events";
-import { getUniqueName } from "../../../src/util/utils";
-import { Link } from "rhea-promise/typings/lib/link";
-import { ReceiveOptions } from "../../../src/core/messageReceiver";
-import { StreamingReceiver } from "../../../src/core/streamingReceiver";
-import { ReceiveMode } from "../../../src/models";
+import { getUniqueName } from "../../../src/util/utils.js";
+import type { ReceiveOptions } from "../../../src/core/messageReceiver.js";
+import { StreamingReceiver } from "../../../src/core/streamingReceiver.js";
+import type { ReceiveMode } from "../../../src/models.js";
+import { afterEach } from "vitest";
 
 export interface CreateConnectionContextForTestsOptions {
   host?: string;
@@ -36,7 +36,7 @@ export interface CreateConnectionContextForTestsOptions {
  *
  */
 export function createConnectionContextForTests(
-  options?: CreateConnectionContextForTestsOptions
+  options?: CreateConnectionContextForTestsOptions,
 ): ConnectionContext & {
   initWasCalled: boolean;
 } {
@@ -57,7 +57,7 @@ export function createConnectionContextForTests(
       endpoint: "my.service.bus",
       // used by tracing
       entityPath: options?.entityPath ?? "fakeEntityPath",
-      host: options?.host ?? "fakeHost"
+      host: options?.host ?? "fakeHost",
     },
     connectionId: "connection-id",
     connection: {
@@ -71,9 +71,9 @@ export function createConnectionContextForTests(
           options.onCreateAwaitableSenderCalled();
         }
 
-        const testAwaitableSender = ({
-          setMaxListeners: () => testAwaitableSender
-        } as any) as AwaitableSender;
+        const testAwaitableSender = {
+          setMaxListeners: () => testAwaitableSender,
+        } as any as AwaitableSender;
 
         mockLinkProperties(testAwaitableSender);
 
@@ -93,14 +93,14 @@ export function createConnectionContextForTests(
       },
       async close(): Promise<void> {
         /** Nothing to do here */
-      }
+      },
     },
     tokenCredential: {
       getToken() {
         return {
-          expiresOnTimestamp: Date.now() + 10 * 60 * 1000
+          expiresOnTimestamp: Date.now() + 10 * 60 * 1000,
         } as AccessToken;
-      }
+      },
     },
     cbsSession: {
       cbsLock: "cbs-lock",
@@ -115,12 +115,12 @@ export function createConnectionContextForTests(
       },
       isOpen() {
         return initWasCalled;
-      }
+      },
     },
-    initWasCalled
+    initWasCalled,
   };
 
-  return (fakeConnectionContext as any) as ReturnType<typeof createConnectionContextForTests>;
+  return fakeConnectionContext as any as ReturnType<typeof createConnectionContextForTests>;
 }
 
 /**
@@ -131,7 +131,7 @@ export function createConnectionContextForTests(
  */
 export function createConnectionContextForTestsWithSessionId(
   sessionId: string = "hello",
-  options?: CreateConnectionContextForTestsOptions
+  options?: CreateConnectionContextForTestsOptions,
 ): ConnectionContext & {
   initWasCalled: boolean;
 } {
@@ -140,18 +140,18 @@ export function createConnectionContextForTestsWithSessionId(
     onCreateReceiverCalled: (receiver) => {
       (receiver as any).source = {
         filter: {
-          [Constants.sessionFilterName]: sessionId
-        }
+          [Constants.sessionFilterName]: sessionId,
+        },
       };
 
       (receiver as any).properties = {
-        ["com.microsoft:locked-until-utc"]: Date.now()
+        ["com.microsoft:locked-until-utc"]: Date.now(),
       };
 
       if (options?.onCreateReceiverCalled) {
         options?.onCreateReceiverCalled(receiver);
       }
-    }
+    },
   });
 
   return connectionContext;
@@ -171,7 +171,7 @@ export function createRheaReceiverForTests(options?: ReceiverOptions): RheaPromi
   (receiver as any).name = options?.name == null ? getUniqueName("entity") : options.name;
 
   (receiver as any).connection = {
-    id: "connection-id"
+    id: "connection-id",
   };
 
   const link = {
@@ -180,7 +180,7 @@ export function createRheaReceiverForTests(options?: ReceiverOptions): RheaPromi
       // simulate drain
       (receiver as any).credit = 0;
       receiver.emit(ReceiverEvents.receiverDrained, undefined);
-    }
+    },
   };
 
   (receiver as any)["_link"] = link;
@@ -207,7 +207,7 @@ export function createRheaReceiverForTests(options?: ReceiverOptions): RheaPromi
   return receiver;
 }
 
-export function mockLinkProperties(link: Link): void {
+export function mockLinkProperties(link: RheaPromiseReceiver | AwaitableSender): void {
   let isOpen = true;
 
   link.close = async (): Promise<void> => {
@@ -235,7 +235,7 @@ export function getPromiseResolverForTest(): {
   return {
     promise,
     resolve: resolver!,
-    reject: rejecter!
+    reject: rejecter!,
   };
 }
 
@@ -255,7 +255,7 @@ export function defer<T>(): {
   return {
     promise,
     resolve: actualResolve!,
-    reject: actualReject!
+    reject: actualReject!,
   };
 }
 
@@ -270,12 +270,15 @@ export const retryableErrorForTests = (() => {
  * and also installs the proper cleanup handlers so all created receivers
  * are closed when each test completes.
  */
-export function addTestStreamingReceiver() {
+export function addTestStreamingReceiver(): (
+  entityPath: string,
+  options?: ReceiveOptions,
+) => StreamingReceiver {
   const closeables = addCloseablesCleanup();
 
   function createTestStreamingReceiver(
     entityPath: string,
-    options?: ReceiveOptions
+    options?: ReceiveOptions,
   ): StreamingReceiver {
     const connectionContext = createConnectionContextForTests();
 
@@ -283,11 +286,18 @@ export function addTestStreamingReceiver() {
       options = {
         lockRenewer: undefined,
         receiveMode: <ReceiveMode>"peekLock",
-        maxConcurrentCalls: 101
+        maxConcurrentCalls: 101,
+        skipParsingBodyAsJson: false,
+        skipConvertingDate: false,
       };
     }
 
-    const streamingReceiver = new StreamingReceiver(connectionContext, entityPath, options);
+    const streamingReceiver = new StreamingReceiver(
+      "serviceBusClientId",
+      connectionContext,
+      entityPath,
+      options,
+    );
     closeables.push(streamingReceiver);
     return streamingReceiver;
   }
@@ -308,7 +318,7 @@ export function addCloseablesCleanup(): { close(): Promise<void> }[] {
     for (const closeable of closeables) {
       try {
         await closeable.close();
-      } catch (err) {
+      } catch (err: any) {
         console.log(`Error while closing test object ${err.message}`);
       }
     }

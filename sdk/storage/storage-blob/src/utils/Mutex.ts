@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 enum MutexLockStatus {
   LOCKED,
-  UNLOCKED
+  UNLOCKED,
 }
 
 type Callback = (...args: any[]) => any;

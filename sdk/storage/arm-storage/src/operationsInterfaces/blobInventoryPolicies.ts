@@ -6,7 +6,6 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   BlobInventoryPolicy,
@@ -16,7 +15,7 @@ import {
   BlobInventoryPoliciesGetResponse,
   BlobInventoryPoliciesCreateOrUpdateOptionalParams,
   BlobInventoryPoliciesCreateOrUpdateResponse,
-  BlobInventoryPoliciesDeleteOptionalParams
+  BlobInventoryPoliciesDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -34,7 +33,7 @@ export interface BlobInventoryPolicies {
   list(
     resourceGroupName: string,
     accountName: string,
-    options?: BlobInventoryPoliciesListOptionalParams
+    options?: BlobInventoryPoliciesListOptionalParams,
   ): PagedAsyncIterableIterator<BlobInventoryPolicy>;
   /**
    * Gets the blob inventory policy associated with the specified storage account.
@@ -51,7 +50,7 @@ export interface BlobInventoryPolicies {
     resourceGroupName: string,
     accountName: string,
     blobInventoryPolicyName: BlobInventoryPolicyName,
-    options?: BlobInventoryPoliciesGetOptionalParams
+    options?: BlobInventoryPoliciesGetOptionalParams,
   ): Promise<BlobInventoryPoliciesGetResponse>;
   /**
    * Sets the blob inventory policy to the specified storage account.
@@ -70,7 +69,7 @@ export interface BlobInventoryPolicies {
     accountName: string,
     blobInventoryPolicyName: BlobInventoryPolicyName,
     properties: BlobInventoryPolicy,
-    options?: BlobInventoryPoliciesCreateOrUpdateOptionalParams
+    options?: BlobInventoryPoliciesCreateOrUpdateOptionalParams,
   ): Promise<BlobInventoryPoliciesCreateOrUpdateResponse>;
   /**
    * Deletes the blob inventory policy associated with the specified storage account.
@@ -87,6 +86,6 @@ export interface BlobInventoryPolicies {
     resourceGroupName: string,
     accountName: string,
     blobInventoryPolicyName: BlobInventoryPolicyName,
-    options?: BlobInventoryPoliciesDeleteOptionalParams
+    options?: BlobInventoryPoliciesDeleteOptionalParams,
   ): Promise<void>;
 }

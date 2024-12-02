@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as Logger from "../src";
-import { assert } from "chai";
+import * as Logger from "../src/index.js";
+import { describe, it, assert } from "vitest";
 
 const testLogger = Logger.createClientLogger("test");
 
-describe("AzureLogger", function() {
+describe("AzureLogger", function () {
   it("is not enabled", () => {
     // AzureLogger is only used to enable a way to redirect logs.
     // This test ensures logs aren't redirected to the root logger.

@@ -1,5 +1,146 @@
 # Release History
 
+## 4.9.1 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 4.9.0 (2024-10-16)
+
+### Features Added
+
+- Add support for Continuous Access Evaluation (CAE). [#31140](https://github.com/Azure/azure-sdk-for-js/pull/31140)
+
+### Other Changes
+
+- Native ESM support has been added, and this package will now emit both CommonJS and ESM. [#31332](https://github.com/Azure/azure-sdk-for-js/pull/31332)
+
+## 4.8.0 (2024-02-14)
+
+### Features Added
+
+Since 4.7.2:
+
+- Added `hsmPlatform` property to `KeyProperties`.
+
+### Other Changes
+
+- The default service version is now `7.5`.
+
+## 4.8.0-beta.1 (2023-11-08)
+
+### Features Added
+
+- Added `hsmPlatform` property to `KeyProperties`.
+
+### Other Changes
+
+- The default service version is now `7.5-preview.1`.
+
+## 4.7.2 (2023-08-10)
+
+### Bugs Fixed
+
+- Fixed a bug where `listPropertiesOfKeysVersions` failed to retrieve the second page of results. Issue [#26547](https://github.com/Azure/azure-sdk-for-js/issues/26547); PR [#26584](https://github.com/Azure/azure-sdk-for-js/pull/26584).
+- Bumped `@azure/core-rest-pipeline` dependency to version including the `isRestError` helper, which was used in PR [#26016](https://github.com/Azure/azure-sdk-for-js/issues/26016).
+
+## 4.7.1 (2023-06-06)
+
+### Bugs Fixed
+
+- Fixed an issue where cryptographic operations would fail if the client did not have the get permission on the key, even if it had permission for the underlying operation. Issue [#26001](https://github.com/Azure/azure-sdk-for-js/issues/26001); PR [#26016](https://github.com/Azure/azure-sdk-for-js/issues/26016)
+
+## 4.7.0 (2023-03-09)
+
+### Breaking Changes
+
+- Removed support for OKP key types as introduced in 4.7.0-beta.1. These changes are only breaking for customers consuming the 4.7.0-beta.1 API, and do not affect those consuming a stable release such as 4.6.0.
+  - Removed `OKP` and `OKP-HSM` from `KnownKeyTypes`.
+  - Removed `EdDSA` from `KnownSignatureAlgorithms`.
+  - Removed `Ed25519` from `KnownKeyCurveNames`.
+
+### Other Changes
+
+- `KeyClient` and `CryptographyClient` now support service version 7.4 by default.
+
+## 4.7.0-beta.1 (2022-11-10)
+
+- Added support for [Octet Key Pair (OKP)](https://datatracker.ietf.org/doc/html/rfc8037) key types as well as `sign`, `verify`, `signData`, and `verifyData` cryptography operations when using OKP keys.
+  - Added support for the Ed25519 curve for the creation of OKP keys.
+
+## 4.6.0 (2022-09-20)
+
+### Breaking Changes
+
+- Verify the challenge resource matches the vault domain.
+  This should affect few customers who can set `disableChallengeResourceVerification` in the options bag to `true` to disable.
+  See https://aka.ms/azsdk/blog/vault-uri for more information.
+
+## 4.5.0 (2022-08-09)
+
+### Breaking Changes
+
+- Migrated to the Core v2 HTTP pipeline. As a result of this migration:
+  - The response types no longer contain the raw response `_response`. To access the raw response, an `onResponse` callback has to be passed in the request options bag, for example:
+    ```ts
+    let rawResponse: FullOperationResponse | undefined;
+    await client.operationName(/* ...parameters... */, {
+      onResponse: (response) => (rawResponse = response),
+    });
+    ```
+  - The re-export of the `PipelineOptions` type from `@azure/core-http` has been removed. If you previously relied on this export, consider either using the more specific `CertificateClientOptions` type or importing `PipelineOptions` from `@azure/core-http` directly.
+
+### Other Changes
+
+- Documentation fixes.
+
+## 4.5.0-beta.1 (2022-07-07)
+
+### Breaking Changes
+
+- As a result of the migration to Core v2:
+  - The response types no longer contain the raw response `_response`. To access the raw response, an `onResponse` callback has to be passed in the request options bag, for example:
+    ```ts
+    let rawResponse: FullOperationResponse | undefined;
+    await client.operationName(/* ...parameters... */, {
+      onResponse: (response) => (rawResponse = response),
+    });
+    ```
+  - The re-export of the `PipelineOptions` type from `@azure/core-http` has been removed. If you previously relied on this export, consider either using the more specific `CertificateClientOptions` type or importing `PipelineOptions` from `@azure/core-http` directly.
+
+### Other Changes
+
+- Migrated the generated client to `@azure/core-rest-pipeline` ("Core v2"). See [Azure Core v1 vs v2](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-rest-pipeline/documentation/core2.md) for more on the difference and benefits of the move.
+
+## 4.4.0 (2022-03-24)
+
+### Features Added
+
+- Added support for `KeyClient.getRandomBytes` which, when connected to a managed HSM, can be used to generate a byte array of a given length with random values.
+- Added support for Secure key Release from a Managed HSM.
+  - Added `KeyClient.releaseKey` to release a key from a Managed HSM.
+  - Added `exportable` and `releasePolicy` to `KeyVaultKey.properties`, `createKeyOptions`, and `importKeyOptions` in order to specify whether the key is exportable and to associate a release policy to a given key.
+- Added support for automated key rotation in Azure Key Vault and Managed HSM.
+  - Added `KeyClient.rotateKey` to rotate a key on-demand.
+  - Added `KeyClient.updateKeyRotationPolicy` to update a key's automated rotation policy.
+- Added support for `KeyClient.getCryptographyClient(keyName, options)` which provides a simple way to create a `CryptographyClient` for a given key (identified by its name).
+  - An optional `keyVersion` property may be used in the `options` parameter to create a cryptography client targeting a specific key version. The latest version is used by default.
+
+### Other Changes
+
+- This release updates `KeyClient` and `CryptographyClient` to support service version 7.3 by default.
+
+## 4.4.0-beta.4 (2022-02-08)
+
+### Features Added
+
+- Added `KeyReleasePolicy#immutable` flag to support immutable release policies. Once a release policy is marked as immutable, it can no longer be modified.
+
 ## 4.4.0-beta.3 (2021-11-09)
 
 ### Features Added

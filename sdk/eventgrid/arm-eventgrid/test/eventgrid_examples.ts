@@ -8,36 +8,38 @@
 
 import {
   env,
-  record,
-  RecorderEnvironmentSetup,
   Recorder,
+  RecorderStartOptions,
   delay,
-  isPlaybackMode
+  isPlaybackMode,
 } from "@azure-tools/test-recorder";
-import * as assert from "assert";
-import { ClientSecretCredential } from "@azure/identity";
+import { NoOpCredential } from "@azure-tools/test-credential";
+import { assert } from "chai";
+import { Context } from "mocha";
 import { EventGridManagementClient } from "../src/eventGridManagementClient";
+import { DefaultAzureCredential } from "@azure/identity";
 
-const recorderEnvSetup: RecorderEnvironmentSetup = {
-  replaceableVariables: {
-    AZURE_CLIENT_ID: "azure_client_id",
-    AZURE_CLIENT_SECRET: "azure_client_secret",
-    AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
-    SUBSCRIPTION_ID: "azure_subscription_id"
-  },
-  customizationsOnRecordings: [
-    (recording: any): any =>
-      recording.replace(
-        /"access_token":"[^"]*"/g,
-        `"access_token":"access_token"`
-      )
+const replaceableVariables: Record<string, string> = {
+  AZURE_CLIENT_ID: "azure_client_id",
+  AZURE_CLIENT_SECRET: "azure_client_secret",
+  AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
+  SUBSCRIPTION_ID: "azure_subscription_id",
+};
+
+const recorderOptions: RecorderStartOptions = {
+  envSetupForPlayback: replaceableVariables,
+  removeCentralSanitizers: [
+    "AZSDK3493", // .name in the body is not a secret and is listed below in the beforeEach section
   ],
-  queryParametersToSkip: []
 };
 
 export const testPollingOptions = {
   updateIntervalInMs: isPlaybackMode() ? 0 : undefined,
 };
+
+export function createTestCredential() {
+  return isPlaybackMode() ? new NoOpCredential() : new DefaultAzureCredential();
+}
 
 describe("Eventgrid test", () => {
   let recorder: Recorder;
@@ -47,21 +49,26 @@ describe("Eventgrid test", () => {
   let resourceGroupName: string;
   let topicName: string;
   let domainName: string;
+  let eventSubscriptionName: string;
+  let domaintopicName: string;
 
-  beforeEach(async function () {
-    recorder = record(this, recorderEnvSetup);
-    subscriptionId = env.SUBSCRIPTION_ID;
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderOptions);
+    subscriptionId = env.SUBSCRIPTION_ID || "";
     // This is an example of how the environment variables are used
-    const credential = new ClientSecretCredential(
-      env.AZURE_TENANT_ID,
-      env.AZURE_CLIENT_ID,
-      env.AZURE_CLIENT_SECRET
+    const credential = createTestCredential();
+    client = new EventGridManagementClient(
+      credential,
+      subscriptionId,
+      recorder.configureClientOptions({}),
     );
-    client = new EventGridManagementClient(credential, subscriptionId);
-    location = "eastus";
+    location = "east us2 euap";
     resourceGroupName = "myjstest";
     topicName = "mytopicxxx";
     domainName = "mydomainxxx";
+    domaintopicName = "mydomaintopicxxx";
+    eventSubscriptionName = "myeventSubscription";
   });
 
   afterEach(async function () {
@@ -69,7 +76,12 @@ describe("Eventgrid test", () => {
   });
 
   it("topics create test", async function () {
-    const res = await client.topics.beginCreateOrUpdateAndWait(resourceGroupName, topicName, { location: "westcentralus" }, testPollingOptions);
+    const res = await client.topics.beginCreateOrUpdateAndWait(
+      resourceGroupName,
+      topicName,
+      { location },
+      testPollingOptions,
+    );
     assert.equal(res.name, topicName);
   });
 
@@ -81,27 +93,28 @@ describe("Eventgrid test", () => {
     assert.equal(resArray.length, 1);
   });
 
-  it("topics delete test", async function () {
-    const res = await client.topics.beginDeleteAndWait(resourceGroupName, topicName, testPollingOptions);
-    const resArray = new Array();
-    for await (let item of client.topics.listByResourceGroup(resourceGroupName)) {
-      resArray.push(item);
-    }
-    assert.equal(resArray.length, 0);
-  });
-
   it("domains create test", async function () {
-    const res = await client.domains.beginCreateOrUpdateAndWait(resourceGroupName, domainName, { location: location }, testPollingOptions);
+    const res = await client.domains.beginCreateOrUpdateAndWait(
+      resourceGroupName,
+      domainName,
+      { location: location },
+      testPollingOptions,
+    );
     assert.equal(res.name, domainName);
   });
 
   it("domains update test", async function () {
-    const res = await client.domains.beginUpdateAndWait(resourceGroupName, domainName, {
-      tags: {
-        tag1: "value1",
-        tag2: "value2"
-      }
-    }, testPollingOptions);
+    const res = await client.domains.beginUpdateAndWait(
+      resourceGroupName,
+      domainName,
+      {
+        tags: {
+          tag1: "value1",
+          tag2: "value2",
+        },
+      },
+      testPollingOptions,
+    );
     //It's void response
   });
 
@@ -115,11 +128,156 @@ describe("Eventgrid test", () => {
     for await (let item of client.domains.listByResourceGroup(resourceGroupName)) {
       resArray.push(item);
     }
-    assert.equal(resArray.length, 1)
+    assert.equal(resArray.length, 1);
+  });
+
+  it("domaintopics create test", async function () {
+    const res = await client.topics.beginCreateOrUpdateAndWait(
+      resourceGroupName,
+      domaintopicName,
+      { location },
+      testPollingOptions,
+    );
+    assert.equal(res.name, domaintopicName);
+  });
+
+  it("domainTopicEventSubscriptions create test", async function () {
+    //before test this case please create an eventhub namespace "czweventhub" and an eventhub "czweh"
+    const res = await client.domainTopicEventSubscriptions.beginCreateOrUpdateAndWait(
+      resourceGroupName,
+      domainName,
+      domaintopicName,
+      eventSubscriptionName,
+      {
+        topic:
+          "/subscriptions/" +
+          subscriptionId +
+          "/resourceGroups/myjstest/providers/Microsoft.EventGrid/domains/mydomainxxx/topics/testDomainTopic",
+        destination: {
+          endpointType: "EventHub",
+          resourceId:
+            "/subscriptions/" +
+            subscriptionId +
+            "/resourceGroups/myjstest/providers/Microsoft.EventHub/namespaces/czweventhub/eventhubs/czweh",
+        },
+        filter: {
+          advancedFilters: [],
+          enableAdvancedFilteringOnArrays: true,
+        },
+        eventDeliverySchema: "EventGridSchema",
+      },
+      testPollingOptions,
+    );
+    console.log(res);
+    assert.equal(res.name, eventSubscriptionName);
+  });
+
+  it("domainTopicEventSubscriptions listByResourceGroup test", async function () {
+    const resArray = new Array();
+    for await (let item of client.domainTopicEventSubscriptions.list(
+      resourceGroupName,
+      domainName,
+      domaintopicName,
+    )) {
+      resArray.push(item);
+    }
+    assert.equal(resArray.length, 1);
+    console.log("********************************");
+  });
+
+  it("domainTopicEventSubscriptions get test", async function () {
+    const res = await client.domainTopicEventSubscriptions.get(
+      resourceGroupName,
+      domainName,
+      domaintopicName,
+      eventSubscriptionName,
+    );
+    assert.equal(res.name, eventSubscriptionName);
+  });
+
+  it("domainTopicEventSubscriptions update test", async function () {
+    const res = await client.domainTopicEventSubscriptions.beginUpdateAndWait(
+      resourceGroupName,
+      domainName,
+      domaintopicName,
+      eventSubscriptionName,
+      {
+        destination: {
+          endpointType: "EventHub",
+          resourceId:
+            "/subscriptions/" +
+            subscriptionId +
+            "/resourceGroups/myjstest/providers/Microsoft.EventHub/namespaces/czweventhub/eventhubs/czweh",
+        },
+        filter: {
+          advancedFilters: [],
+          enableAdvancedFilteringOnArrays: true,
+        },
+        eventDeliverySchema: "EventGridSchema",
+      },
+      testPollingOptions,
+    );
+    console.log(res);
+    assert.equal(res.name, eventSubscriptionName);
+  });
+
+  it("domainTopicEventSubscriptions delete test", async function () {
+    const res = await client.domainTopicEventSubscriptions.beginDeleteAndWait(
+      resourceGroupName,
+      domainName,
+      topicName,
+      eventSubscriptionName,
+      testPollingOptions,
+    );
+    const resArray = new Array();
+    for await (let item of client.domainTopicEventSubscriptions.list(
+      resourceGroupName,
+      domainName,
+      topicName,
+    )) {
+      resArray.push(item);
+    }
+    assert.equal(resArray.length, 0);
+  });
+
+  it("domaintopics delete test", async function () {
+    const res = await client.domainTopics.beginDeleteAndWait(
+      resourceGroupName,
+      domainName,
+      domaintopicName,
+      testPollingOptions,
+    );
+    const resArray = new Array();
+    for await (let item of client.domainTopics.listByDomain(resourceGroupName, domainName)) {
+      resArray.push(item);
+    }
+    assert.equal(resArray.length, 0);
+  });
+
+  it("topics delete test", async function () {
+    const res = await client.topics.beginDeleteAndWait(
+      resourceGroupName,
+      topicName,
+      testPollingOptions,
+    );
+    const res1 = await client.topics.beginDeleteAndWait(
+      resourceGroupName,
+      domaintopicName,
+      testPollingOptions,
+    ); // when create a domaintopic, it will create a topic with the same name, so we also need to delete that resource to make test pass.
+    const resArray = new Array();
+    for await (let item of client.topics.listByResourceGroup(resourceGroupName)) {
+      resArray.push(item);
+    }
+    assert.equal(resArray.length, 0);
   });
 
   it("domains delete test", async function () {
-    const res = await client.domains.beginDeleteAndWait(resourceGroupName, domainName, testPollingOptions);
+    const res = await client.domains.beginDeleteAndWait(
+      resourceGroupName,
+      domainName,
+      testPollingOptions,
+    );
     const resArray = new Array();
     for await (let item of client.domains.listByResourceGroup(resourceGroupName)) {
       resArray.push(item);

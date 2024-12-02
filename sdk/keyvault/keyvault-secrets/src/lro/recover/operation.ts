@@ -1,27 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortSignalLike } from "@azure/abort-controller";
-import {
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type {
   DeletedSecret,
   GetSecretOptions,
   KeyVaultSecret,
-  SecretProperties
-} from "../../secretsModels";
-import {
-  KeyVaultSecretPollOperation,
-  KeyVaultSecretPollOperationState
-} from "../keyVaultSecretPoller";
-import { KeyVaultClient } from "../../generated/keyVaultClient";
-import { getSecretFromSecretBundle } from "../../transformations";
-import { OperationOptions } from "@azure/core-http";
-
-import { createTraceFunction } from "../../../../keyvault-common/src";
-
-/**
- * @internal
- */
-const withTrace = createTraceFunction("Azure.KeyVault.Secrets.RecoverDeletedSecretPoller");
+  SecretProperties,
+} from "../../secretsModels.js";
+import type { KeyVaultSecretPollOperationState } from "../keyVaultSecretPoller.js";
+import { KeyVaultSecretPollOperation } from "../keyVaultSecretPoller.js";
+import type { KeyVaultClient } from "../../generated/keyVaultClient.js";
+import { getSecretFromSecretBundle } from "../../transformations.js";
+import type { OperationOptions } from "@azure/core-client";
+import { tracingClient } from "../../tracing.js";
 
 /**
  * An interface representing the state of a delete secret's poll operation
@@ -40,7 +32,7 @@ export class RecoverDeletedSecretPollOperation extends KeyVaultSecretPollOperati
     public state: RecoverDeletedSecretPollOperationState,
     private vaultUrl: string,
     private client: KeyVaultClient,
-    private options: OperationOptions = {}
+    private options: OperationOptions = {},
   ) {
     super(state, { cancelMessage: "Canceling the recovery of a deleted secret is not supported." });
   }
@@ -50,15 +42,19 @@ export class RecoverDeletedSecretPollOperation extends KeyVaultSecretPollOperati
    * This operation requires the secrets/get permission.
    */
   private getSecret(name: string, options: GetSecretOptions = {}): Promise<KeyVaultSecret> {
-    return withTrace("getSecret", options, async (updatedOptions) => {
-      const response = await this.client.getSecret(
-        this.vaultUrl,
-        name,
-        options && options.version ? options.version : "",
-        updatedOptions
-      );
-      return getSecretFromSecretBundle(response);
-    });
+    return tracingClient.withSpan(
+      "RecoverDeletedSecretPoller.getSecret",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.getSecret(
+          this.vaultUrl,
+          name,
+          options && options.version ? options.version : "",
+          updatedOptions,
+        );
+        return getSecretFromSecretBundle(response);
+      },
+    );
   }
 
   /**
@@ -67,12 +63,20 @@ export class RecoverDeletedSecretPollOperation extends KeyVaultSecretPollOperati
    */
   private recoverDeletedSecret(
     name: string,
-    options: GetSecretOptions = {}
+    options: GetSecretOptions = {},
   ): Promise<DeletedSecret> {
-    return withTrace("recoverDeletedSecret", options, async (updatedOptions) => {
-      const response = await this.client.recoverDeletedSecret(this.vaultUrl, name, updatedOptions);
-      return getSecretFromSecretBundle(response);
-    });
+    return tracingClient.withSpan(
+      "RecoverDeletedSecretPoller.recoverDeletedSecret",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.recoverDeletedSecret(
+          this.vaultUrl,
+          name,
+          updatedOptions,
+        );
+        return getSecretFromSecretBundle(response);
+      },
+    );
   }
 
   /**
@@ -83,7 +87,7 @@ export class RecoverDeletedSecretPollOperation extends KeyVaultSecretPollOperati
     options: {
       abortSignal?: AbortSignalLike;
       fireProgress?: (state: RecoverDeletedSecretPollOperationState) => void;
-    } = {}
+    } = {},
   ): Promise<RecoverDeletedSecretPollOperation> {
     const state = this.state;
     const { name } = state;
@@ -109,7 +113,7 @@ export class RecoverDeletedSecretPollOperation extends KeyVaultSecretPollOperati
       try {
         state.result = (await this.getSecret(name, this.options)).properties;
         state.isCompleted = true;
-      } catch (error) {
+      } catch (error: any) {
         if (error.statusCode === 403) {
           // At this point, the resource exists but the user doesn't have access to it.
           state.isCompleted = true;

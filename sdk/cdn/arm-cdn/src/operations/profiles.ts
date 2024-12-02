@@ -6,25 +6,31 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Profiles } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CdnManagementClientContext } from "../cdnManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { CdnManagementClient } from "../cdnManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   Profile,
   ProfilesListNextOptionalParams,
   ProfilesListOptionalParams,
+  ProfilesListResponse,
   ProfilesListByResourceGroupNextOptionalParams,
   ProfilesListByResourceGroupOptionalParams,
+  ProfilesListByResourceGroupResponse,
   ResourceUsage,
   ProfilesListResourceUsageNextOptionalParams,
   ProfilesListResourceUsageOptionalParams,
-  ProfilesListResponse,
-  ProfilesListByResourceGroupResponse,
+  ProfilesListResourceUsageResponse,
   ProfilesGetOptionalParams,
   ProfilesGetResponse,
   ProfilesCreateOptionalParams,
@@ -33,35 +39,42 @@ import {
   ProfilesUpdateOptionalParams,
   ProfilesUpdateResponse,
   ProfilesDeleteOptionalParams,
+  CanMigrateParameters,
+  ProfilesCanMigrateOptionalParams,
+  ProfilesCanMigrateResponse,
+  MigrationParameters,
+  ProfilesMigrateOptionalParams,
+  ProfilesMigrateResponse,
+  ProfilesMigrationCommitOptionalParams,
   ProfilesGenerateSsoUriOptionalParams,
   ProfilesGenerateSsoUriResponse,
   ProfilesListSupportedOptimizationTypesOptionalParams,
   ProfilesListSupportedOptimizationTypesResponse,
-  ProfilesListResourceUsageResponse,
   ProfilesListNextResponse,
   ProfilesListByResourceGroupNextResponse,
-  ProfilesListResourceUsageNextResponse
+  ProfilesListResourceUsageNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Profiles operations. */
 export class ProfilesImpl implements Profiles {
-  private readonly client: CdnManagementClientContext;
+  private readonly client: CdnManagementClient;
 
   /**
    * Initialize a new instance of the class Profiles class.
    * @param client Reference to the service client
    */
-  constructor(client: CdnManagementClientContext) {
+  constructor(client: CdnManagementClient) {
     this.client = client;
   }
 
   /**
-   * Lists all of the CDN profiles within an Azure subscription.
+   * Lists all of the Azure Front Door Standard, Azure Front Door Premium, and CDN profiles within an
+   * Azure subscription.
    * @param options The options parameters.
    */
   public list(
-    options?: ProfilesListOptionalParams
+    options?: ProfilesListOptionalParams,
   ): PagedAsyncIterableIterator<Profile> {
     const iter = this.listPagingAll(options);
     return {
@@ -71,27 +84,39 @@ export class ProfilesImpl implements Profiles {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: ProfilesListOptionalParams
+    options?: ProfilesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Profile[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ProfilesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: ProfilesListOptionalParams
+    options?: ProfilesListOptionalParams,
   ): AsyncIterableIterator<Profile> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -99,13 +124,14 @@ export class ProfilesImpl implements Profiles {
   }
 
   /**
-   * Lists all of the CDN profiles within a resource group.
+   * Lists all of the Azure Front Door Standard, Azure Front Door Premium, and CDN profiles within a
+   * resource group.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
    * @param options The options parameters.
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: ProfilesListByResourceGroupOptionalParams
+    options?: ProfilesListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Profile> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -115,57 +141,75 @@ export class ProfilesImpl implements Profiles {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: ProfilesListByResourceGroupOptionalParams
+    options?: ProfilesListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Profile[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ProfilesListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: ProfilesListByResourceGroupOptionalParams
+    options?: ProfilesListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<Profile> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
   }
 
   /**
-   * Checks the quota and actual usage of endpoints under the given CDN profile.
+   * Checks the quota and actual usage of endpoints under the given Azure Front Door Standard or Azure
+   * Front Door Premium or CDN profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param options The options parameters.
    */
   public listResourceUsage(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesListResourceUsageOptionalParams
+    options?: ProfilesListResourceUsageOptionalParams,
   ): PagedAsyncIterableIterator<ResourceUsage> {
     const iter = this.listResourceUsagePagingAll(
       resourceGroupName,
       profileName,
-      options
+      options,
     );
     return {
       next() {
@@ -174,101 +218,119 @@ export class ProfilesImpl implements Profiles {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listResourceUsagePagingPage(
           resourceGroupName,
           profileName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listResourceUsagePagingPage(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesListResourceUsageOptionalParams
+    options?: ProfilesListResourceUsageOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ResourceUsage[]> {
-    let result = await this._listResourceUsage(
-      resourceGroupName,
-      profileName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ProfilesListResourceUsageResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listResourceUsage(
+        resourceGroupName,
+        profileName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listResourceUsageNext(
         resourceGroupName,
         profileName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listResourceUsagePagingAll(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesListResourceUsageOptionalParams
+    options?: ProfilesListResourceUsageOptionalParams,
   ): AsyncIterableIterator<ResourceUsage> {
     for await (const page of this.listResourceUsagePagingPage(
       resourceGroupName,
       profileName,
-      options
+      options,
     )) {
       yield* page;
     }
   }
 
   /**
-   * Lists all of the CDN profiles within an Azure subscription.
+   * Lists all of the Azure Front Door Standard, Azure Front Door Premium, and CDN profiles within an
+   * Azure subscription.
    * @param options The options parameters.
    */
   private _list(
-    options?: ProfilesListOptionalParams
+    options?: ProfilesListOptionalParams,
   ): Promise<ProfilesListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
 
   /**
-   * Lists all of the CDN profiles within a resource group.
+   * Lists all of the Azure Front Door Standard, Azure Front Door Premium, and CDN profiles within a
+   * resource group.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
    * @param options The options parameters.
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: ProfilesListByResourceGroupOptionalParams
+    options?: ProfilesListByResourceGroupOptionalParams,
   ): Promise<ProfilesListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
   /**
-   * Gets a CDN profile with the specified profile name under the specified subscription and resource
-   * group.
+   * Gets an Azure Front Door Standard or Azure Front Door Premium or CDN profile with the specified
+   * profile name under the specified subscription and resource group.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param options The options parameters.
    */
   get(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesGetOptionalParams
+    options?: ProfilesGetOptionalParams,
   ): Promise<ProfilesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
   /**
-   * Creates a new CDN profile with a profile name under the specified subscription and resource group.
+   * Creates a new Azure Front Door Standard or Azure Front Door Premium or CDN profile with a profile
+   * name under the specified subscription and resource group.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param profile Profile properties needed to create a new profile.
    * @param options The options parameters.
    */
@@ -276,30 +338,29 @@ export class ProfilesImpl implements Profiles {
     resourceGroupName: string,
     profileName: string,
     profile: Profile,
-    options?: ProfilesCreateOptionalParams
+    options?: ProfilesCreateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ProfilesCreateResponse>,
+    SimplePollerLike<
+      OperationState<ProfilesCreateResponse>,
       ProfilesCreateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ProfilesCreateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -308,8 +369,8 @@ export class ProfilesImpl implements Profiles {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -317,26 +378,33 @@ export class ProfilesImpl implements Profiles {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, profileName, profile, options },
-      createOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, profileName, profile, options },
+      spec: createOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ProfilesCreateResponse,
+      OperationState<ProfilesCreateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
-   * Creates a new CDN profile with a profile name under the specified subscription and resource group.
+   * Creates a new Azure Front Door Standard or Azure Front Door Premium or CDN profile with a profile
+   * name under the specified subscription and resource group.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param profile Profile properties needed to create a new profile.
    * @param options The options parameters.
    */
@@ -344,22 +412,23 @@ export class ProfilesImpl implements Profiles {
     resourceGroupName: string,
     profileName: string,
     profile: Profile,
-    options?: ProfilesCreateOptionalParams
+    options?: ProfilesCreateOptionalParams,
   ): Promise<ProfilesCreateResponse> {
     const poller = await this.beginCreate(
       resourceGroupName,
       profileName,
       profile,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
 
   /**
-   * Updates an existing CDN profile with the specified profile name under the specified subscription and
-   * resource group.
+   * Updates an existing Azure Front Door Standard or Azure Front Door Premium or CDN profile with the
+   * specified profile name under the specified subscription and resource group.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param profileUpdateParameters Profile properties needed to update an existing profile.
    * @param options The options parameters.
    */
@@ -367,30 +436,29 @@ export class ProfilesImpl implements Profiles {
     resourceGroupName: string,
     profileName: string,
     profileUpdateParameters: ProfileUpdateParameters,
-    options?: ProfilesUpdateOptionalParams
+    options?: ProfilesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ProfilesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ProfilesUpdateResponse>,
       ProfilesUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ProfilesUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -399,8 +467,8 @@ export class ProfilesImpl implements Profiles {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -408,27 +476,38 @@ export class ProfilesImpl implements Profiles {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, profileName, profileUpdateParameters, options },
-      updateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        profileName,
+        profileUpdateParameters,
+        options,
+      },
+      spec: updateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ProfilesUpdateResponse,
+      OperationState<ProfilesUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
-   * Updates an existing CDN profile with the specified profile name under the specified subscription and
-   * resource group.
+   * Updates an existing Azure Front Door Standard or Azure Front Door Premium or CDN profile with the
+   * specified profile name under the specified subscription and resource group.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param profileUpdateParameters Profile properties needed to update an existing profile.
    * @param options The options parameters.
    */
@@ -436,46 +515,47 @@ export class ProfilesImpl implements Profiles {
     resourceGroupName: string,
     profileName: string,
     profileUpdateParameters: ProfileUpdateParameters,
-    options?: ProfilesUpdateOptionalParams
+    options?: ProfilesUpdateOptionalParams,
   ): Promise<ProfilesUpdateResponse> {
     const poller = await this.beginUpdate(
       resourceGroupName,
       profileName,
       profileUpdateParameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
 
   /**
-   * Deletes an existing CDN profile with the specified parameters. Deleting a profile will result in the
-   * deletion of all of the sub-resources including endpoints, origins and custom domains.
+   * Deletes an existing  Azure Front Door Standard or Azure Front Door Premium or CDN profile with the
+   * specified parameters. Deleting a profile will result in the deletion of all of the sub-resources
+   * including endpoints, origins and custom domains.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param options The options parameters.
    */
   async beginDelete(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ProfilesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -484,8 +564,8 @@ export class ProfilesImpl implements Profiles {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -493,38 +573,308 @@ export class ProfilesImpl implements Profiles {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, profileName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, profileName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
-   * Deletes an existing CDN profile with the specified parameters. Deleting a profile will result in the
-   * deletion of all of the sub-resources including endpoints, origins and custom domains.
+   * Deletes an existing  Azure Front Door Standard or Azure Front Door Premium or CDN profile with the
+   * specified parameters. Deleting a profile will result in the deletion of all of the sub-resources
+   * including endpoints, origins and custom domains.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param options The options parameters.
    */
   async beginDeleteAndWait(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesDeleteOptionalParams
+    options?: ProfilesDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       profileName,
-      options
+      options,
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Checks if CDN profile can be migrated to Azure Frontdoor(Standard/Premium) profile.
+   * @param resourceGroupName Name of the Resource group within the Azure subscription.
+   * @param canMigrateParameters Properties needed to check if cdn profile or classic frontdoor can be
+   *                             migrated.
+   * @param options The options parameters.
+   */
+  async beginCanMigrate(
+    resourceGroupName: string,
+    canMigrateParameters: CanMigrateParameters,
+    options?: ProfilesCanMigrateOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<ProfilesCanMigrateResponse>,
+      ProfilesCanMigrateResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<ProfilesCanMigrateResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, canMigrateParameters, options },
+      spec: canMigrateOperationSpec,
+    });
+    const poller = await createHttpPoller<
+      ProfilesCanMigrateResponse,
+      OperationState<ProfilesCanMigrateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Checks if CDN profile can be migrated to Azure Frontdoor(Standard/Premium) profile.
+   * @param resourceGroupName Name of the Resource group within the Azure subscription.
+   * @param canMigrateParameters Properties needed to check if cdn profile or classic frontdoor can be
+   *                             migrated.
+   * @param options The options parameters.
+   */
+  async beginCanMigrateAndWait(
+    resourceGroupName: string,
+    canMigrateParameters: CanMigrateParameters,
+    options?: ProfilesCanMigrateOptionalParams,
+  ): Promise<ProfilesCanMigrateResponse> {
+    const poller = await this.beginCanMigrate(
+      resourceGroupName,
+      canMigrateParameters,
+      options,
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Migrate the CDN profile to Azure Frontdoor(Standard/Premium) profile. The change need to be
+   * committed after this.
+   * @param resourceGroupName Name of the Resource group within the Azure subscription.
+   * @param migrationParameters Properties needed to migrate the profile.
+   * @param options The options parameters.
+   */
+  async beginMigrate(
+    resourceGroupName: string,
+    migrationParameters: MigrationParameters,
+    options?: ProfilesMigrateOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<ProfilesMigrateResponse>,
+      ProfilesMigrateResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<ProfilesMigrateResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, migrationParameters, options },
+      spec: migrateOperationSpec,
+    });
+    const poller = await createHttpPoller<
+      ProfilesMigrateResponse,
+      OperationState<ProfilesMigrateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Migrate the CDN profile to Azure Frontdoor(Standard/Premium) profile. The change need to be
+   * committed after this.
+   * @param resourceGroupName Name of the Resource group within the Azure subscription.
+   * @param migrationParameters Properties needed to migrate the profile.
+   * @param options The options parameters.
+   */
+  async beginMigrateAndWait(
+    resourceGroupName: string,
+    migrationParameters: MigrationParameters,
+    options?: ProfilesMigrateOptionalParams,
+  ): Promise<ProfilesMigrateResponse> {
+    const poller = await this.beginMigrate(
+      resourceGroupName,
+      migrationParameters,
+      options,
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Commit the migrated Azure Frontdoor(Standard/Premium) profile.
+   * @param resourceGroupName Name of the Resource group within the Azure subscription.
+   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param options The options parameters.
+   */
+  async beginMigrationCommit(
+    resourceGroupName: string,
+    profileName: string,
+    options?: ProfilesMigrationCommitOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<void> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, profileName, options },
+      spec: migrationCommitOperationSpec,
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Commit the migrated Azure Frontdoor(Standard/Premium) profile.
+   * @param resourceGroupName Name of the Resource group within the Azure subscription.
+   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param options The options parameters.
+   */
+  async beginMigrationCommitAndWait(
+    resourceGroupName: string,
+    profileName: string,
+    options?: ProfilesMigrationCommitOptionalParams,
+  ): Promise<void> {
+    const poller = await this.beginMigrationCommit(
+      resourceGroupName,
+      profileName,
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -541,11 +891,11 @@ export class ProfilesImpl implements Profiles {
   generateSsoUri(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesGenerateSsoUriOptionalParams
+    options?: ProfilesGenerateSsoUriOptionalParams,
   ): Promise<ProfilesGenerateSsoUriResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, options },
-      generateSsoUriOperationSpec
+      generateSsoUriOperationSpec,
     );
   }
 
@@ -553,34 +903,37 @@ export class ProfilesImpl implements Profiles {
    * Gets the supported optimization types for the current profile. A user can create an endpoint with an
    * optimization type from the listed values.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param options The options parameters.
    */
   listSupportedOptimizationTypes(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesListSupportedOptimizationTypesOptionalParams
+    options?: ProfilesListSupportedOptimizationTypesOptionalParams,
   ): Promise<ProfilesListSupportedOptimizationTypesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, options },
-      listSupportedOptimizationTypesOperationSpec
+      listSupportedOptimizationTypesOperationSpec,
     );
   }
 
   /**
-   * Checks the quota and actual usage of endpoints under the given CDN profile.
+   * Checks the quota and actual usage of endpoints under the given Azure Front Door Standard or Azure
+   * Front Door Premium or CDN profile.
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param options The options parameters.
    */
   private _listResourceUsage(
     resourceGroupName: string,
     profileName: string,
-    options?: ProfilesListResourceUsageOptionalParams
+    options?: ProfilesListResourceUsageOptionalParams,
   ): Promise<ProfilesListResourceUsageResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, options },
-      listResourceUsageOperationSpec
+      listResourceUsageOperationSpec,
     );
   }
 
@@ -591,11 +944,11 @@ export class ProfilesImpl implements Profiles {
    */
   private _listNext(
     nextLink: string,
-    options?: ProfilesListNextOptionalParams
+    options?: ProfilesListNextOptionalParams,
   ): Promise<ProfilesListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -608,18 +961,19 @@ export class ProfilesImpl implements Profiles {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: ProfilesListByResourceGroupNextOptionalParams
+    options?: ProfilesListByResourceGroupNextOptionalParams,
   ): Promise<ProfilesListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
   /**
    * ListResourceUsageNext
    * @param resourceGroupName Name of the Resource group within the Azure subscription.
-   * @param profileName Name of the CDN profile which is unique within the resource group.
+   * @param profileName Name of the Azure Front Door Standard or Azure Front Door Premium or CDN profile
+   *                    which is unique within the resource group.
    * @param nextLink The nextLink from the previous successful call to the ListResourceUsage method.
    * @param options The options parameters.
    */
@@ -627,11 +981,11 @@ export class ProfilesImpl implements Profiles {
     resourceGroupName: string,
     profileName: string,
     nextLink: string,
-    options?: ProfilesListResourceUsageNextOptionalParams
+    options?: ProfilesListResourceUsageNextOptionalParams,
   ): Promise<ProfilesListResourceUsageNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, profileName, nextLink, options },
-      listResourceUsageNextOperationSpec
+      listResourceUsageNextOperationSpec,
     );
   }
 }
@@ -643,80 +997,77 @@ const listOperationSpec: coreClient.OperationSpec = {
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ProfileListResult
+      bodyMapper: Mappers.ProfileListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ProfileListResult
+      bodyMapper: Mappers.ProfileListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.ErrorResponse,
     },
-    default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.Profile,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.profileName1,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     201: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     202: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     204: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.profile,
   queryParameters: [Parameters.apiVersion],
@@ -724,32 +1075,31 @@ const createOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     201: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     202: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     204: {
-      bodyMapper: Mappers.Profile
+      bodyMapper: Mappers.Profile,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.profileUpdateParameters,
   queryParameters: [Parameters.apiVersion],
@@ -757,15 +1107,14 @@ const updateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -773,145 +1122,223 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const canMigrateOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/canMigrate",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.CanMigrateResult,
+    },
+    201: {
+      bodyMapper: Mappers.CanMigrateResult,
+    },
+    202: {
+      bodyMapper: Mappers.CanMigrateResult,
+    },
+    204: {
+      bodyMapper: Mappers.CanMigrateResult,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse,
+    },
+  },
+  requestBody: Parameters.canMigrateParameters,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+  ],
+  headerParameters: [Parameters.contentType, Parameters.accept],
+  mediaType: "json",
+  serializer,
+};
+const migrateOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/migrate",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.MigrateResult,
+    },
+    201: {
+      bodyMapper: Mappers.MigrateResult,
+    },
+    202: {
+      bodyMapper: Mappers.MigrateResult,
+    },
+    204: {
+      bodyMapper: Mappers.MigrateResult,
+    },
+    default: {
+      bodyMapper: Mappers.ErrorResponse,
+    },
+  },
+  requestBody: Parameters.migrationParameters,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+  ],
+  headerParameters: [Parameters.contentType, Parameters.accept],
+  mediaType: "json",
+  serializer,
+};
+const migrationCommitOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/migrationCommit",
+  httpMethod: "POST",
+  responses: {
+    200: {},
+    201: {},
+    202: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.ErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.profileName1,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const generateSsoUriOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/generateSsoUri",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/generateSsoUri",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SsoUri
+      bodyMapper: Mappers.SsoUri,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listSupportedOptimizationTypesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getSupportedOptimizationTypes",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/getSupportedOptimizationTypes",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SupportedOptimizationTypesListResult
+      bodyMapper: Mappers.SupportedOptimizationTypesListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listResourceUsageOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/checkResourceUsage",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/checkResourceUsage",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceUsageListResult
+      bodyMapper: Mappers.ResourceUsageListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName
+    Parameters.profileName1,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ProfileListResult
+      bodyMapper: Mappers.ProfileListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ProfileListResult
+      bodyMapper: Mappers.ProfileListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listResourceUsageNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceUsageListResult
+      bodyMapper: Mappers.ResourceUsageListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.profileName,
-    Parameters.nextLink
+    Parameters.profileName1,
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

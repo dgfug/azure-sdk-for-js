@@ -1,17 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AvroReadable } from "./AvroReadable";
+// TODO: Do a review of non-interfaces
+/* eslint-disable @azure/azure-sdk/ts-use-interface-parameters */
+
 import {
-  AVRO_SYNC_MARKER_SIZE,
-  AVRO_INIT_BYTES,
   AVRO_CODEC_KEY,
-  AVRO_SCHEMA_KEY
+  AVRO_INIT_BYTES,
+  AVRO_SCHEMA_KEY,
+  AVRO_SYNC_MARKER_SIZE,
 } from "./AvroConstants";
+import { AvroParser, AvroType } from "./AvroParser";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { AvroReadable } from "./AvroReadable";
 import { arraysEqual } from "./utils/utils.common";
-import { AvroType, AvroParser } from "./AvroParser";
-import "@azure/core-paging";
-import { AbortSignalLike } from "@azure/abort-controller";
 
 /**
  * Options to configure the {@link AvroReader.parseObjects} operation.
@@ -60,14 +62,14 @@ export class AvroReader {
     dataStream: AvroReadable,
     headerStream: AvroReadable,
     currentBlockOffset: number,
-    indexWithinCurrentBlock: number
+    indexWithinCurrentBlock: number,
   );
 
   constructor(
     dataStream: AvroReadable,
     headerStream?: AvroReadable,
     currentBlockOffset?: number,
-    indexWithinCurrentBlock?: number
+    indexWithinCurrentBlock?: number,
   ) {
     this._dataStream = dataStream;
     this._headerStream = headerStream || dataStream;
@@ -77,9 +79,9 @@ export class AvroReader {
     this._initialBlockOffset = currentBlockOffset || 0;
   }
 
-  private async initialize(options: AvroParseOptions = {}) {
+  private async initialize(options: AvroParseOptions = {}): Promise<void> {
     const header = await AvroParser.readFixedBytes(this._headerStream, AVRO_INIT_BYTES.length, {
-      abortSignal: options.abortSignal
+      abortSignal: options.abortSignal,
     });
     if (!arraysEqual(header, AVRO_INIT_BYTES)) {
       throw new Error("Stream is not an Avro file.");
@@ -88,30 +90,30 @@ export class AvroReader {
     // File metadata is written as if defined by the following map schema:
     // { "type": "map", "values": "bytes"}
     this._metadata = await AvroParser.readMap(this._headerStream, AvroParser.readString, {
-      abortSignal: options.abortSignal
+      abortSignal: options.abortSignal,
     });
 
     // Validate codec
     const codec = this._metadata![AVRO_CODEC_KEY];
-    if (!(codec == undefined || codec == "null")) {
+    if (!(codec === undefined || codec === null || codec === "null")) {
       throw new Error("Codecs are not supported");
     }
 
     // The 16-byte, randomly-generated sync marker for this file.
     this._syncMarker = await AvroParser.readFixedBytes(this._headerStream, AVRO_SYNC_MARKER_SIZE, {
-      abortSignal: options.abortSignal
+      abortSignal: options.abortSignal,
     });
 
     // Parse the schema
     const schema = JSON.parse(this._metadata![AVRO_SCHEMA_KEY]);
     this._itemType = AvroType.fromSchema(schema);
 
-    if (this._blockOffset == 0) {
+    if (this._blockOffset === 0) {
       this._blockOffset = this._initialBlockOffset + this._dataStream.position;
     }
 
     this._itemsRemainingInBlock = await AvroParser.readLong(this._dataStream, {
-      abortSignal: options.abortSignal
+      abortSignal: options.abortSignal,
     });
     // skip block length
     await AvroParser.readLong(this._dataStream, { abortSignal: options.abortSignal });
@@ -130,7 +132,7 @@ export class AvroReader {
   }
 
   public async *parseObjects(
-    options: AvroParseOptions = {}
+    options: AvroParseOptions = {},
   ): AsyncIterableIterator<Record<string, any> | null> {
     if (!this._initialized) {
       await this.initialize(options);
@@ -138,15 +140,15 @@ export class AvroReader {
 
     while (this.hasNext()) {
       const result = await this._itemType!.read(this._dataStream, {
-        abortSignal: options.abortSignal
+        abortSignal: options.abortSignal,
       });
 
       this._itemsRemainingInBlock!--;
       this._objectIndex!++;
 
-      if (this._itemsRemainingInBlock == 0) {
+      if (this._itemsRemainingInBlock === 0) {
         const marker = await AvroParser.readFixedBytes(this._dataStream, AVRO_SYNC_MARKER_SIZE, {
-          abortSignal: options.abortSignal
+          abortSignal: options.abortSignal,
         });
 
         this._blockOffset = this._initialBlockOffset + this._dataStream.position;
@@ -158,9 +160,9 @@ export class AvroReader {
 
         try {
           this._itemsRemainingInBlock = await AvroParser.readLong(this._dataStream, {
-            abortSignal: options.abortSignal
+            abortSignal: options.abortSignal,
           });
-        } catch (err) {
+        } catch {
           // We hit the end of the stream.
           this._itemsRemainingInBlock = 0;
         }

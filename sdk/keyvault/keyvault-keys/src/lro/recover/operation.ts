@@ -1,19 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortSignalLike } from "@azure/abort-controller";
-import { OperationOptions } from "@azure/core-http";
-import { KeyVaultClient } from "../../generated/keyVaultClient";
-import { KeyVaultKey, GetKeyOptions, RecoverDeletedKeyOptions } from "../../keysModels";
-import { getKeyFromKeyBundle } from "../../transformations";
-import { KeyVaultKeyPollOperation, KeyVaultKeyPollOperationState } from "../keyVaultKeyPoller";
-
-import { createTraceFunction } from "../../../../keyvault-common/src";
-
-/**
- * @internal
- */
-const withTrace = createTraceFunction("Azure.KeyVault.Keys.RecoverDeletedKeyPoller");
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { OperationOptions } from "@azure/core-client";
+import type { KeyVaultClient } from "../../generated/keyVaultClient.js";
+import type { GetKeyOptions, KeyVaultKey, RecoverDeletedKeyOptions } from "../../keysModels.js";
+import { tracingClient } from "../../tracing.js";
+import { getKeyFromKeyBundle } from "../../transformations.js";
+import type { KeyVaultKeyPollOperationState } from "../keyVaultKeyPoller.js";
+import { KeyVaultKeyPollOperation } from "../keyVaultKeyPoller.js";
 
 /**
  * An interface representing the state of a delete key's poll operation
@@ -29,7 +24,7 @@ export class RecoverDeletedKeyPollOperation extends KeyVaultKeyPollOperation<
     public state: RecoverDeletedKeyPollOperationState,
     private vaultUrl: string,
     private client: KeyVaultClient,
-    private operationOptions: OperationOptions = {}
+    private operationOptions: OperationOptions = {},
   ) {
     super(state, { cancelMessage: "Canceling the recovery of a deleted key is not supported." });
   }
@@ -39,15 +34,19 @@ export class RecoverDeletedKeyPollOperation extends KeyVaultKeyPollOperation<
    * This operation requires the keys/get permission.
    */
   private getKey(name: string, options: GetKeyOptions = {}): Promise<KeyVaultKey> {
-    return withTrace("generatedClient.getKey", options, async (updatedOptions) => {
-      const response = await this.client.getKey(
-        this.vaultUrl,
-        name,
-        updatedOptions?.version || "",
-        updatedOptions
-      );
-      return getKeyFromKeyBundle(response);
-    });
+    return tracingClient.withSpan(
+      "RecoverDeleteKeyPoller.getKey",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.getKey(
+          this.vaultUrl,
+          name,
+          updatedOptions?.version || "",
+          updatedOptions,
+        );
+        return getKeyFromKeyBundle(response);
+      },
+    );
   }
 
   /**
@@ -56,12 +55,16 @@ export class RecoverDeletedKeyPollOperation extends KeyVaultKeyPollOperation<
    */
   private async recoverDeletedKey(
     name: string,
-    options: RecoverDeletedKeyOptions = {}
+    options: RecoverDeletedKeyOptions = {},
   ): Promise<KeyVaultKey> {
-    return withTrace("generatedClient.recoverDeleteKey", options, async (updatedOptions) => {
-      const response = await this.client.recoverDeletedKey(this.vaultUrl, name, updatedOptions);
-      return getKeyFromKeyBundle(response);
-    });
+    return tracingClient.withSpan(
+      "RecoverDeletedKeyPoller.recoverDeleteKey",
+      options,
+      async (updatedOptions) => {
+        const response = await this.client.recoverDeletedKey(this.vaultUrl, name, updatedOptions);
+        return getKeyFromKeyBundle(response);
+      },
+    );
   }
 
   /**
@@ -71,7 +74,7 @@ export class RecoverDeletedKeyPollOperation extends KeyVaultKeyPollOperation<
     options: {
       abortSignal?: AbortSignalLike;
       fireProgress?: (state: RecoverDeletedKeyPollOperationState) => void;
-    } = {}
+    } = {},
   ): Promise<RecoverDeletedKeyPollOperation> {
     const state = this.state;
     const { name } = state;
@@ -98,7 +101,7 @@ export class RecoverDeletedKeyPollOperation extends KeyVaultKeyPollOperation<
       try {
         state.result = await this.getKey(name, operationOptions);
         state.isCompleted = true;
-      } catch (error) {
+      } catch (error: any) {
         if (error.statusCode === 403) {
           // At this point, the resource exists but the user doesn't have access to it.
           state.isCompleted = true;

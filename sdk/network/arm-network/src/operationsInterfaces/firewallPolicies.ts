@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   FirewallPolicy,
   FirewallPoliciesListOptionalParams,
@@ -16,7 +16,10 @@ import {
   FirewallPoliciesGetOptionalParams,
   FirewallPoliciesGetResponse,
   FirewallPoliciesCreateOrUpdateOptionalParams,
-  FirewallPoliciesCreateOrUpdateResponse
+  FirewallPoliciesCreateOrUpdateResponse,
+  TagsObject,
+  FirewallPoliciesUpdateTagsOptionalParams,
+  FirewallPoliciesUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -29,14 +32,14 @@ export interface FirewallPolicies {
    */
   list(
     resourceGroupName: string,
-    options?: FirewallPoliciesListOptionalParams
+    options?: FirewallPoliciesListOptionalParams,
   ): PagedAsyncIterableIterator<FirewallPolicy>;
   /**
    * Gets all the Firewall Policies in a subscription.
    * @param options The options parameters.
    */
   listAll(
-    options?: FirewallPoliciesListAllOptionalParams
+    options?: FirewallPoliciesListAllOptionalParams,
   ): PagedAsyncIterableIterator<FirewallPolicy>;
   /**
    * Deletes the specified Firewall Policy.
@@ -47,8 +50,8 @@ export interface FirewallPolicies {
   beginDelete(
     resourceGroupName: string,
     firewallPolicyName: string,
-    options?: FirewallPoliciesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: FirewallPoliciesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified Firewall Policy.
    * @param resourceGroupName The name of the resource group.
@@ -58,7 +61,7 @@ export interface FirewallPolicies {
   beginDeleteAndWait(
     resourceGroupName: string,
     firewallPolicyName: string,
-    options?: FirewallPoliciesDeleteOptionalParams
+    options?: FirewallPoliciesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified Firewall Policy.
@@ -69,7 +72,7 @@ export interface FirewallPolicies {
   get(
     resourceGroupName: string,
     firewallPolicyName: string,
-    options?: FirewallPoliciesGetOptionalParams
+    options?: FirewallPoliciesGetOptionalParams,
   ): Promise<FirewallPoliciesGetResponse>;
   /**
    * Creates or updates the specified Firewall Policy.
@@ -82,10 +85,10 @@ export interface FirewallPolicies {
     resourceGroupName: string,
     firewallPolicyName: string,
     parameters: FirewallPolicy,
-    options?: FirewallPoliciesCreateOrUpdateOptionalParams
+    options?: FirewallPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<FirewallPoliciesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<FirewallPoliciesCreateOrUpdateResponse>,
       FirewallPoliciesCreateOrUpdateResponse
     >
   >;
@@ -100,6 +103,19 @@ export interface FirewallPolicies {
     resourceGroupName: string,
     firewallPolicyName: string,
     parameters: FirewallPolicy,
-    options?: FirewallPoliciesCreateOrUpdateOptionalParams
+    options?: FirewallPoliciesCreateOrUpdateOptionalParams,
   ): Promise<FirewallPoliciesCreateOrUpdateResponse>;
+  /**
+   * Updates tags of a Azure Firewall Policy resource.
+   * @param resourceGroupName The name of the resource group.
+   * @param firewallPolicyName The name of the Firewall Policy.
+   * @param parameters Parameters supplied to update Azure Firewall Policy tags.
+   * @param options The options parameters.
+   */
+  updateTags(
+    resourceGroupName: string,
+    firewallPolicyName: string,
+    parameters: TagsObject,
+    options?: FirewallPoliciesUpdateTagsOptionalParams,
+  ): Promise<FirewallPoliciesUpdateTagsResponse>;
 }

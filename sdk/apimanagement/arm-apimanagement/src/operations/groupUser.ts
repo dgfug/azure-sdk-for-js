@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { GroupUser } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   UserContract,
   GroupUserListNextOptionalParams,
@@ -28,19 +29,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing GroupUser operations. */
 export class GroupUserImpl implements GroupUser {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class GroupUser class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists a collection of user entities associated with the group.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param groupId Group identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -64,12 +65,16 @@ export class GroupUserImpl implements GroupUser {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           serviceName,
           groupId,
-          options
+          options,
+          settings
         );
       }
     };
@@ -79,16 +84,23 @@ export class GroupUserImpl implements GroupUser {
     resourceGroupName: string,
     serviceName: string,
     groupId: string,
-    options?: GroupUserListOptionalParams
+    options?: GroupUserListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<UserContract[]> {
-    let result = await this._list(
-      resourceGroupName,
-      serviceName,
-      groupId,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: GroupUserListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        serviceName,
+        groupId,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -98,7 +110,9 @@ export class GroupUserImpl implements GroupUser {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -120,7 +134,7 @@ export class GroupUserImpl implements GroupUser {
 
   /**
    * Lists a collection of user entities associated with the group.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param groupId Group identifier. Must be unique in the current API Management service instance.
    * @param options The options parameters.
@@ -139,7 +153,7 @@ export class GroupUserImpl implements GroupUser {
 
   /**
    * Checks that user entity specified by identifier is associated with the group entity.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param groupId Group identifier. Must be unique in the current API Management service instance.
    * @param userId User identifier. Must be unique in the current API Management service instance.
@@ -160,7 +174,7 @@ export class GroupUserImpl implements GroupUser {
 
   /**
    * Add existing user to existing group
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param groupId Group identifier. Must be unique in the current API Management service instance.
    * @param userId User identifier. Must be unique in the current API Management service instance.
@@ -181,7 +195,7 @@ export class GroupUserImpl implements GroupUser {
 
   /**
    * Remove existing user from existing group.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param groupId Group identifier. Must be unique in the current API Management service instance.
    * @param userId User identifier. Must be unique in the current API Management service instance.
@@ -202,7 +216,7 @@ export class GroupUserImpl implements GroupUser {
 
   /**
    * ListNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param groupId Group identifier. Must be unique in the current API Management service instance.
    * @param nextLink The nextLink from the previous successful call to the List method.
@@ -336,12 +350,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [
-    Parameters.filter,
-    Parameters.top,
-    Parameters.skip,
-    Parameters.apiVersion
-  ],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

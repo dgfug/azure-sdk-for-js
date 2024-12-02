@@ -6,14 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { createSpan } from "../tracing";
-import { PipelineRunOperations } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import type { PipelineRunOperations } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as coreTracing from "@azure/core-tracing";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { ArtifactsClientContext } from "../artifactsClientContext";
-import {
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import type { ArtifactsClient } from "../artifactsClient.js";
+import type {
   RunFilterParameters,
   PipelineRunQueryPipelineRunsByWorkspaceOptionalParams,
   PipelineRunQueryPipelineRunsByWorkspaceResponse,
@@ -21,145 +20,9 @@ import {
   PipelineRunGetPipelineRunResponse,
   PipelineRunQueryActivityRunsOptionalParams,
   PipelineRunQueryActivityRunsResponse,
-  PipelineRunCancelPipelineRunOptionalParams
-} from "../models";
+  PipelineRunCancelPipelineRunOptionalParams,
+} from "../models/index.js";
 
-/** Class containing PipelineRunOperations operations. */
-export class PipelineRunOperationsImpl implements PipelineRunOperations {
-  private readonly client: ArtifactsClientContext;
-
-  /**
-   * Initialize a new instance of the class PipelineRunOperations class.
-   * @param client Reference to the service client
-   */
-  constructor(client: ArtifactsClientContext) {
-    this.client = client;
-  }
-
-  /**
-   * Query pipeline runs in the workspace based on input filter conditions.
-   * @param filterParameters Parameters to filter the pipeline run.
-   * @param options The options parameters.
-   */
-  async queryPipelineRunsByWorkspace(
-    filterParameters: RunFilterParameters,
-    options?: PipelineRunQueryPipelineRunsByWorkspaceOptionalParams
-  ): Promise<PipelineRunQueryPipelineRunsByWorkspaceResponse> {
-    const { span } = createSpan(
-      "ArtifactsClient-queryPipelineRunsByWorkspace",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { filterParameters, options },
-        queryPipelineRunsByWorkspaceOperationSpec
-      );
-      return result as PipelineRunQueryPipelineRunsByWorkspaceResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Get a pipeline run by its run ID.
-   * @param runId The pipeline run identifier.
-   * @param options The options parameters.
-   */
-  async getPipelineRun(
-    runId: string,
-    options?: PipelineRunGetPipelineRunOptionalParams
-  ): Promise<PipelineRunGetPipelineRunResponse> {
-    const { span } = createSpan(
-      "ArtifactsClient-getPipelineRun",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { runId, options },
-        getPipelineRunOperationSpec
-      );
-      return result as PipelineRunGetPipelineRunResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Query activity runs based on input filter conditions.
-   * @param pipelineName The pipeline name.
-   * @param runId The pipeline run identifier.
-   * @param filterParameters Parameters to filter the activity runs.
-   * @param options The options parameters.
-   */
-  async queryActivityRuns(
-    pipelineName: string,
-    runId: string,
-    filterParameters: RunFilterParameters,
-    options?: PipelineRunQueryActivityRunsOptionalParams
-  ): Promise<PipelineRunQueryActivityRunsResponse> {
-    const { span } = createSpan(
-      "ArtifactsClient-queryActivityRuns",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { pipelineName, runId, filterParameters, options },
-        queryActivityRunsOperationSpec
-      );
-      return result as PipelineRunQueryActivityRunsResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-
-  /**
-   * Cancel a pipeline run by its run ID.
-   * @param runId The pipeline run identifier.
-   * @param options The options parameters.
-   */
-  async cancelPipelineRun(
-    runId: string,
-    options?: PipelineRunCancelPipelineRunOptionalParams
-  ): Promise<void> {
-    const { span } = createSpan(
-      "ArtifactsClient-cancelPipelineRun",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { runId, options },
-        cancelPipelineRunOperationSpec
-      );
-      return result as void;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-}
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
@@ -168,56 +31,52 @@ const queryPipelineRunsByWorkspaceOperationSpec: coreClient.OperationSpec = {
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.PipelineRunsQueryResponse
+      bodyMapper: Mappers.PipelineRunsQueryResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.filterParameters,
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion5],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getPipelineRunOperationSpec: coreClient.OperationSpec = {
   path: "/pipelineruns/{runId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PipelineRun
+      bodyMapper: Mappers.PipelineRun,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion2],
-  urlParameters: [Parameters.endpoint, Parameters.runId],
+  queryParameters: [Parameters.apiVersion5],
+  urlParameters: [Parameters.endpoint, Parameters.runId1],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const queryActivityRunsOperationSpec: coreClient.OperationSpec = {
   path: "/pipelines/{pipelineName}/pipelineruns/{runId}/queryActivityruns",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.ActivityRunsQueryResponse
+      bodyMapper: Mappers.ActivityRunsQueryResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.filterParameters,
-  queryParameters: [Parameters.apiVersion2],
-  urlParameters: [
-    Parameters.endpoint,
-    Parameters.pipelineName,
-    Parameters.runId
-  ],
+  queryParameters: [Parameters.apiVersion5],
+  urlParameters: [Parameters.endpoint, Parameters.pipelineName, Parameters.runId1],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const cancelPipelineRunOperationSpec: coreClient.OperationSpec = {
   path: "/pipelineruns/{runId}/cancel",
@@ -225,11 +84,112 @@ const cancelPipelineRunOperationSpec: coreClient.OperationSpec = {
   responses: {
     200: {},
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion2, Parameters.isRecursive],
-  urlParameters: [Parameters.endpoint, Parameters.runId],
+  queryParameters: [Parameters.apiVersion5, Parameters.isRecursive],
+  urlParameters: [Parameters.endpoint, Parameters.runId1],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
+
+/** Class containing PipelineRunOperations operations. */
+export class PipelineRunOperationsImpl implements PipelineRunOperations {
+  private readonly client: ArtifactsClient;
+
+  /**
+   * Initialize a new instance of the class PipelineRunOperations class.
+   * @param client - Reference to the service client
+   */
+  constructor(client: ArtifactsClient) {
+    this.client = client;
+  }
+
+  /**
+   * Query pipeline runs in the workspace based on input filter conditions.
+   * @param filterParameters - Parameters to filter the pipeline run.
+   * @param options - The options parameters.
+   */
+  async queryPipelineRunsByWorkspace(
+    filterParameters: RunFilterParameters,
+    options?: PipelineRunQueryPipelineRunsByWorkspaceOptionalParams,
+  ): Promise<PipelineRunQueryPipelineRunsByWorkspaceResponse> {
+    return tracingClient.withSpan(
+      "ArtifactsClient.queryPipelineRunsByWorkspace",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { filterParameters, updatedOptions },
+          queryPipelineRunsByWorkspaceOperationSpec,
+        ) as Promise<PipelineRunQueryPipelineRunsByWorkspaceResponse>;
+      },
+    );
+  }
+
+  /**
+   * Get a pipeline run by its run ID.
+   * @param runId - The pipeline run identifier.
+   * @param options - The options parameters.
+   */
+  async getPipelineRun(
+    runId: string,
+    options?: PipelineRunGetPipelineRunOptionalParams,
+  ): Promise<PipelineRunGetPipelineRunResponse> {
+    return tracingClient.withSpan(
+      "ArtifactsClient.getPipelineRun",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { runId, updatedOptions },
+          getPipelineRunOperationSpec,
+        ) as Promise<PipelineRunGetPipelineRunResponse>;
+      },
+    );
+  }
+
+  /**
+   * Query activity runs based on input filter conditions.
+   * @param pipelineName - The pipeline name.
+   * @param runId - The pipeline run identifier.
+   * @param filterParameters - Parameters to filter the activity runs.
+   * @param options - The options parameters.
+   */
+  async queryActivityRuns(
+    pipelineName: string,
+    runId: string,
+    filterParameters: RunFilterParameters,
+    options?: PipelineRunQueryActivityRunsOptionalParams,
+  ): Promise<PipelineRunQueryActivityRunsResponse> {
+    return tracingClient.withSpan(
+      "ArtifactsClient.queryActivityRuns",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { pipelineName, runId, filterParameters, updatedOptions },
+          queryActivityRunsOperationSpec,
+        ) as Promise<PipelineRunQueryActivityRunsResponse>;
+      },
+    );
+  }
+
+  /**
+   * Cancel a pipeline run by its run ID.
+   * @param runId - The pipeline run identifier.
+   * @param options - The options parameters.
+   */
+  async cancelPipelineRun(
+    runId: string,
+    options?: PipelineRunCancelPipelineRunOptionalParams,
+  ): Promise<void> {
+    return tracingClient.withSpan(
+      "ArtifactsClient.cancelPipelineRun",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { runId, updatedOptions },
+          cancelPipelineRunOperationSpec,
+        ) as Promise<void>;
+      },
+    );
+  }
+}

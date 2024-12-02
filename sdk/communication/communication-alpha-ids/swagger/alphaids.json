@@ -1,0 +1,372 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "AlphaIdsClient",
+    "description": "The alpha ids client uses Azure Communication Services to purchase and manage alpha ids.",
+    "version": "2023-07-12"
+  },
+  "paths": {
+    "/alphaIds": {
+      "get": {
+        "tags": [
+          "AlphaIDs"
+        ],
+        "summary": "Gets the list of alpha ids for the current resource.",
+        "operationId": "AlphaIds_GetAlphaIds",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "skip",
+            "description": "An optional parameter for how many entries to skip, for pagination purposes.",
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          },
+          {
+            "in": "query",
+            "name": "top",
+            "description": "An optional parameter for how many entries to return, for pagination purposes.",
+            "type": "integer",
+            "format": "int32",
+            "default": 100
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/AcquiredAlphaIds"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/CommunicationErrorResponse"
+            }
+          }
+        },
+        "x-ms-pageable": {
+          "nextLinkName": "nextLink",
+          "itemName": "alphaIds"
+        },
+        "x-ms-examples": {
+          "List alpha ids": {
+            "$ref": "./examples/GetAlphaIds.json"
+          }
+        }
+      }
+    },
+    "/alphaIds/dynamic/configuration": {
+      "get": {
+        "tags": [
+          "AlphaIDs"
+        ],
+        "summary": "Get the Dynamic Alpha ID configuration that's applied for the current resource.",
+        "operationId": "AlphaIds_GetDynamicAlphaIdConfiguration",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/DynamicAlphaIdConfiguration"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/CommunicationErrorResponse"
+            }
+          }
+        },
+        "x-ms-examples": {
+          "Get the current Dynamic Alpha IDs configuration": {
+            "$ref": "./examples/GetDynamicAlphaIdConfiguration.json"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "AlphaIDs"
+        ],
+        "summary": "Creates or updates Dynamic Alpha ID Configuration for the current resource.",
+        "operationId": "AlphaIds_UpsertDynamicAlphaIdConfiguration",
+        "consumes": [
+          "application/merge-patch+json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "The configuration data that is intended to be applied.",
+            "schema": {
+              "$ref": "#/definitions/DynamicAlphaIdConfiguration"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/DynamicAlphaIdConfiguration"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/CommunicationErrorResponse"
+            }
+          }
+        },
+        "x-ms-examples": {
+          "Enables Dynamic Alpha IDs for the current resource": {
+            "$ref": "./examples/UpsertDynamicAlphaIdConfiguration.json"
+          }
+        }
+      }
+    },
+    "/alphaIds/dynamic/countries": {
+      "get": {
+        "tags": [
+          "AlphaIDs"
+        ],
+        "summary": "Gets the list of countries that support Dynamic Alpha IDs.",
+        "operationId": "AlphaIds_GetDynamicAlphaIdCountries",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/SupportedCountries"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/CommunicationErrorResponse"
+            }
+          }
+        },
+        "x-ms-examples": {
+          "List dynamic alpha id countries": {
+            "$ref": "./examples/GetDynamicAlphaIdCountries.json"
+          }
+        }
+      }
+    },
+    "/alphaIds/pre-registered/countries": {
+      "get": {
+        "tags": [
+          "AlphaIDs"
+        ],
+        "summary": "Gets the list of countries that support Pre-Registered Alpha IDs.",
+        "operationId": "AlphaIds_GetPreRegisteredAlphaIdCountries",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/SupportedCountries"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/CommunicationErrorResponse"
+            }
+          }
+        },
+        "x-ms-examples": {
+          "List pre-registered alpha id countries": {
+            "$ref": "./examples/GetPreRegisteredAlphaIdCountries.json"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AcquiredAlphaIds": {
+      "description": "A wrapper for a list of alpha id entities.",
+      "type": "object",
+      "properties": {
+        "alphaIds": {
+          "description": "List of alpha ids.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlphaId"
+          }
+        },
+        "nextLink": {
+          "description": "Represents the URL link to the next page.",
+          "type": "string"
+        }
+      }
+    },
+    "AlphaId": {
+      "description": "Represents an AlphaId acquired in a given country.",
+      "type": "object",
+      "properties": {
+        "value": {
+          "description": "The value of the AlphaId e.g. 'CONTOSO', etc.",
+          "type": "string"
+        },
+        "countryCode": {
+          "description": "ISO 3166 2-char code representing the country e.g. 'US'.",
+          "type": "string"
+        },
+        "purchaseDate": {
+          "format": "date-time",
+          "description": "Date in which number was purchased.",
+          "type": "string"
+        }
+      }
+    },
+    "DynamicAlphaIdConfiguration": {
+      "description": "<br>Represents a collection of settings for configuring Dynamic Alpha ID support for a specific resource.\r\n<br>\r\n            Initially, Alpha IDs were restricted to customers that had valid use cases for them, so this configuration could be leveraged to enable its usage.\r\n            ",
+      "required": [
+        "enabled"
+      ],
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Indicates whether the use of Dynamic Alpha IDs is supported for a specific resource.",
+          "type": "boolean"
+        }
+      }
+    },
+    "SupportedCountries": {
+      "description": "A wrapper for a list of countries.",
+      "type": "object",
+      "properties": {
+        "countries": {
+          "description": "List of conutries supporting alpha ids.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    
+    "CommunicationErrorResponse": {
+      "description": "The Communication Services error.",
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "description": "The Communication Services error.",
+          "$ref": "#/definitions/CommunicationError"
+        }
+      }
+    },
+    "CommunicationError": {
+      "description": "The Communication Services error.",
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "The error code."
+        },
+        "message": {
+          "type": "string",
+          "description": "The error message."
+        },
+        "target": {
+          "type": "string",
+          "readOnly": true,
+          "description": "The error target."
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CommunicationError"
+          },
+          "readOnly": true,
+          "description": "Further details about specific errors that led to this error."
+        },
+        "innererror": {
+          "x-ms-client-name": "innerError",
+          "readOnly": true,
+          "$ref": "#/definitions/CommunicationError",
+          "description": "The inner error if any."
+        }
+      }
+    }
+  },
+  "parameters": {
+    "ApiVersionParameter": {
+      "in": "query",
+      "name": "api-version",
+      "description": "Version of API to invoke",
+      "required": true,
+      "type": "string"
+    },
+    "Endpoint": {
+      "in": "path",
+      "name": "endpoint",
+      "description": "The communication resource, for example https://resourcename.communication.azure.com",
+      "required": true,
+      "type": "string",
+      "x-ms-skip-url-encoding": true,
+      "x-ms-parameter-location": "client"
+    }
+  },
+  "securityDefinitions": {
+    "azure_auth": {
+      "type": "oauth2",
+      "flow": "implicit",
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+      "scopes": {
+        "user_impersonation": "impersonate your user account"
+      },
+      "description": "Azure Active Directory OAuth2 Flow"
+    }
+  },
+  "x-ms-parameterized-host": {
+    "hostTemplate": "{endpoint}",
+    "useSchemePrefix": false,
+    "parameters": [
+      {
+        "$ref": "#/parameters/Endpoint"
+      }
+    ]
+  }
+}

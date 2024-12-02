@@ -1,49 +1,56 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /// <reference lib="esnext.asynciterable" />
 
-import {
-  PipelineOptions,
-  operationOptionsToRequestOptionsBase,
-  ServiceClientOptions,
-  OperationOptions
-} from "@azure/core-http";
-import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
-import "@azure/core-paging";
-import { TokenCredential } from "@azure/core-auth";
+import type { InternalPipelineOptions } from "@azure/core-rest-pipeline";
+import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
+import type { PageSettings, PagedAsyncIterableIterator } from "@azure/core-paging";
+import type { TokenCredential } from "@azure/core-auth";
+import { isTokenCredential } from "@azure/core-auth";
+import type { OperationOptions } from "@azure/core-client";
+import type { ExtendedCommonClientOptions } from "@azure/core-http-compat";
 import { GeneratedClient } from "./generated/generatedClient";
-import { createSpan } from "./tracing";
-import { MetricsAdvisorKeyCredential } from "./metricsAdvisorKeyCredentialPolicy";
-import { SpanStatusCode } from "@azure/core-tracing";
-import {
-  MetricFeedbackUnion,
+import type { MetricsAdvisorKeyCredential } from "./metricsAdvisorKeyCredentialPolicy";
+import { createMetricsAdvisorKeyCredentialPolicy } from "./metricsAdvisorKeyCredentialPolicy";
+import type {
+  AlertQueryTimeMode,
+  AlertsPageResponse,
+  AnomaliesPageResponse,
+  AnomalyAlert,
   AnomalyIncident,
   DataPointAnomaly,
-  AnomalyAlert,
-  GetMetricEnrichedSeriesDataResponse,
-  GetIncidentRootCauseResponse,
-  AlertsPageResponse,
-  IncidentsPageResponse,
-  AnomaliesPageResponse,
-  DimensionValuesPageResponse,
-  MetricSeriesPageResponse,
-  MetricEnrichmentStatusPageResponse,
-  MetricSeriesDefinition,
   DimensionKey,
+  DimensionValuesPageResponse,
   EnrichmentStatus,
+  GetIncidentRootCauseResponse,
+  GetMetricEnrichedSeriesDataResponse,
   GetMetricSeriesDataResponse,
+  IncidentsPageResponse,
+  MetricEnrichmentStatusPageResponse,
   MetricFeedbackPageResponse,
-  AlertQueryTimeMode
+  MetricFeedbackUnion,
+  MetricSeriesDefinition,
+  MetricSeriesPageResponse,
 } from "./models";
-import { SeverityFilterCondition, FeedbackType, FeedbackQueryTimeMode } from "./generated/models";
-import { toServiceMetricFeedbackUnion, fromServiceMetricFeedbackUnion } from "./transforms";
-import { createClientPipeline } from "./createClientPipeline";
+import type {
+  FeedbackQueryTimeMode,
+  FeedbackType,
+  SeverityFilterCondition,
+} from "./generated/models";
+import { fromServiceMetricFeedbackUnion, toServiceMetricFeedbackUnion } from "./transforms";
+import {
+  DEFAULT_COGNITIVE_SCOPE,
+  MetricsAdvisorLoggingAllowedHeaderNames,
+  MetricsAdvisorLoggingAllowedQueryParameters,
+} from "./constants";
+import { logger } from "./logger";
+import { tracingClient } from "./tracing";
 
 /**
  * Client options used to configure Metrics Advisor API requests.
  */
-export interface MetricsAdvisorClientOptions extends PipelineOptions {}
+export interface MetricsAdvisorClientOptions extends ExtendedCommonClientOptions {}
 
 /**
  * Options for listing incidents for detection configurations
@@ -181,11 +188,6 @@ export class MetricsAdvisorClient {
   public readonly endpointUrl: string;
 
   /**
-   * A reference to service client options.
-   */
-  private readonly pipeline: ServiceClientOptions;
-
-  /**
    * A reference to the auto-generated MetricsAdvisor HTTP client.
    */
   private readonly client: GeneratedClient;
@@ -209,11 +211,22 @@ export class MetricsAdvisorClient {
   constructor(
     endpointUrl: string,
     credential: TokenCredential | MetricsAdvisorKeyCredential,
-    options: MetricsAdvisorClientOptions = {}
+    options: MetricsAdvisorClientOptions = {},
   ) {
     this.endpointUrl = endpointUrl;
-    this.pipeline = createClientPipeline(credential, options);
-    this.client = new GeneratedClient(this.endpointUrl, this.pipeline);
+    const internalPipelineOptions: InternalPipelineOptions = {
+      ...options,
+      loggingOptions: {
+        logger: logger.info,
+        additionalAllowedHeaderNames: MetricsAdvisorLoggingAllowedHeaderNames,
+        additionalAllowedQueryParameters: MetricsAdvisorLoggingAllowedQueryParameters,
+      },
+    };
+    this.client = new GeneratedClient(this.endpointUrl, internalPipelineOptions);
+    const authPolicy = isTokenCredential(credential)
+      ? bearerTokenAuthenticationPolicy({ credential, scopes: DEFAULT_COGNITIVE_SCOPE })
+      : createMetricsAdvisorKeyCredentialPolicy(credential);
+    this.client.pipeline.addPolicy(authPolicy);
   }
 
   /**
@@ -226,13 +239,13 @@ export class MetricsAdvisorClient {
     timeMode: AlertQueryTimeMode,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListAlertsOptions = {}
+    options: ListAlertsOptions = {},
   ): AsyncIterableIterator<AlertsPageResponse> {
     let segmentResponse;
     const optionsBody = {
       startTime: startTime,
       endTime: endTime,
-      timeMode: timeMode
+      timeMode: timeMode,
     };
     if (continuationToken === undefined) {
       segmentResponse = await this.client.getAlertsByAnomalyAlertingConfiguration(
@@ -240,8 +253,8 @@ export class MetricsAdvisorClient {
         optionsBody,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const alerts = segmentResponse.value?.map((a) => {
         return {
@@ -249,12 +262,12 @@ export class MetricsAdvisorClient {
           alertConfigId: alertConfigId,
           createdOn: a.createdTime,
           modifiedOn: a.modifiedTime,
-          timestamp: a.timestamp?.getTime()
+          timestamp: a.timestamp?.getTime(),
         };
       });
       const resultArray = Object.defineProperty(alerts || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
       continuationToken = segmentResponse.nextLink;
@@ -266,7 +279,7 @@ export class MetricsAdvisorClient {
       segmentResponse = await this.client.getAlertsByAnomalyAlertingConfigurationNext(
         continuationToken,
         optionsBody,
-        options
+        options,
       );
       const alerts = segmentResponse.value?.map((a) => {
         return {
@@ -274,12 +287,12 @@ export class MetricsAdvisorClient {
           alertConfigId: alertConfigId,
           createdOn: a.createdTime,
           modifiedOn: a.modifiedTime,
-          timestamp: a.timestamp?.getTime()
+          timestamp: a.timestamp?.getTime(),
         };
       });
       const resultArray = Object.defineProperty(alerts || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
       continuationToken = segmentResponse.nextLink;
@@ -294,7 +307,7 @@ export class MetricsAdvisorClient {
     startTime: Date,
     endTime: Date,
     timeMode: AlertQueryTimeMode,
-    options: ListAlertsOptions
+    options: ListAlertsOptions,
   ): AsyncIterableIterator<AnomalyAlert> {
     for await (const segment of this.listSegmentOfAlerts(
       alertConfigId,
@@ -303,7 +316,7 @@ export class MetricsAdvisorClient {
       timeMode,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -372,14 +385,14 @@ export class MetricsAdvisorClient {
     startTime: Date | string,
     endTime: Date | string,
     timeMode: AlertQueryTimeMode,
-    options: ListAlertsOptions = {}
+    options: ListAlertsOptions = {},
   ): PagedAsyncIterableIterator<AnomalyAlert, AlertsPageResponse> {
     const iter = this.listItemsOfAlerts(
       alertConfigId,
       typeof startTime === "string" ? new Date(startTime) : startTime,
       typeof endTime === "string" ? new Date(endTime) : endTime,
       timeMode,
-      options
+      options,
     );
     return {
       /**
@@ -405,9 +418,9 @@ export class MetricsAdvisorClient {
           timeMode,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -419,7 +432,7 @@ export class MetricsAdvisorClient {
     alertId: string,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListAnomaliesForAlertConfigurationOptions = {}
+    options: ListAnomaliesForAlertConfigurationOptions = {},
   ): AsyncIterableIterator<AnomaliesPageResponse> {
     let segmentResponse;
     if (continuationToken === undefined) {
@@ -428,8 +441,8 @@ export class MetricsAdvisorClient {
         alertId,
         {
           skip: options.skip,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const anomalies = segmentResponse.value?.map((a) => {
         return {
@@ -440,12 +453,12 @@ export class MetricsAdvisorClient {
           seriesKey: a.dimension,
           severity: a.property.anomalySeverity,
           status: a.property.anomalyStatus,
-          timestamp: a.timestamp.getTime()
+          timestamp: a.timestamp.getTime(),
         };
       });
       const resultArray = Object.defineProperty(anomalies || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
       continuationToken = segmentResponse.nextLink;
@@ -460,8 +473,8 @@ export class MetricsAdvisorClient {
         continuationToken,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const anomalies = segmentResponse.value?.map((a) => {
         return {
@@ -472,12 +485,12 @@ export class MetricsAdvisorClient {
           seriesKey: a.dimension,
           severity: a.property.anomalySeverity,
           status: a.property.anomalyStatus,
-          timestamp: a.timestamp.getTime()
+          timestamp: a.timestamp.getTime(),
         };
       });
       const resultArray = Object.defineProperty(anomalies || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
       continuationToken = segmentResponse.nextLink;
@@ -490,14 +503,14 @@ export class MetricsAdvisorClient {
   private async *listItemsOfAnomaliesForAlert(
     alertConfigId: string,
     alertId: string,
-    options: ListAnomaliesForAlertConfigurationOptions & { maxPageSize?: number } = {}
+    options: ListAnomaliesForAlertConfigurationOptions & { maxPageSize?: number } = {},
   ): AsyncIterableIterator<DataPointAnomaly> {
     for await (const segment of this.listSegmentsOfAnomaliesForAlert(
       alertConfigId,
       alertId,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -557,7 +570,8 @@ export class MetricsAdvisorClient {
 
   public listAnomaliesForAlert(
     alert: AnomalyAlert,
-    options: ListAnomaliesForAlertConfigurationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: ListAnomaliesForAlertConfigurationOptions = {},
   ): PagedAsyncIterableIterator<DataPointAnomaly, AnomaliesPageResponse> {
     const iter = this.listItemsOfAnomaliesForAlert(alert.alertConfigId, alert.id, options);
     return {
@@ -582,9 +596,9 @@ export class MetricsAdvisorClient {
           alert.id,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -596,7 +610,7 @@ export class MetricsAdvisorClient {
     alertId: string,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListIncidentsForAlertOptions = {}
+    options: ListIncidentsForAlertOptions = {},
   ): AsyncIterableIterator<IncidentsPageResponse> {
     let segmentResponse;
     if (continuationToken === undefined) {
@@ -605,8 +619,8 @@ export class MetricsAdvisorClient {
         alertId,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const incidents = segmentResponse.value?.map((incident) => {
         return {
@@ -617,12 +631,12 @@ export class MetricsAdvisorClient {
           status: incident.property.incidentStatus!,
           severity: incident.property.maxSeverity,
           startTime: incident.startTime,
-          lastOccurredTime: incident.lastTime
+          lastOccurredTime: incident.lastTime,
         };
       });
       const resultArray = Object.defineProperty(incidents || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
       continuationToken = segmentResponse.nextLink;
@@ -637,8 +651,8 @@ export class MetricsAdvisorClient {
         continuationToken,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const incidents = segmentResponse.value?.map((incident) => {
         return {
@@ -649,12 +663,12 @@ export class MetricsAdvisorClient {
           status: incident.property.incidentStatus!,
           severity: incident.property.maxSeverity,
           startTime: incident.startTime,
-          lastOccurredTime: incident.lastTime
+          lastOccurredTime: incident.lastTime,
         };
       });
       const resultArray = Object.defineProperty(incidents || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -668,14 +682,14 @@ export class MetricsAdvisorClient {
   private async *listItemsOfIncidentsForAlert(
     alertConfigId: string,
     alertId: string,
-    options: ListIncidentsForAlertOptions = {}
+    options: ListIncidentsForAlertOptions = {},
   ): AsyncIterableIterator<AnomalyIncident> {
     for await (const segment of this.listSegmentsOfIncidentsForAlert(
       alertConfigId,
       alertId,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -734,7 +748,7 @@ export class MetricsAdvisorClient {
    */
   public listIncidentsForAlert(
     alert: AnomalyAlert,
-    options: ListIncidentsForAlertOptions = {}
+    options: ListIncidentsForAlertOptions = {},
   ): PagedAsyncIterableIterator<AnomalyIncident, IncidentsPageResponse> {
     const iter = this.listItemsOfIncidentsForAlert(alert.alertConfigId, alert.id, options);
     return {
@@ -759,9 +773,9 @@ export class MetricsAdvisorClient {
           alert.id,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -779,19 +793,19 @@ export class MetricsAdvisorClient {
     seriesKey: DimensionKey[],
     startTime: Date | string,
     endTime: Date | string,
-    options: GetMetricEnrichedSeriesDataOptions = {}
+    options: GetMetricEnrichedSeriesDataOptions = {},
   ): Promise<GetMetricEnrichedSeriesDataResponse> {
     const optionsBody = {
       startTime: typeof startTime === "string" ? new Date(startTime) : startTime,
       endTime: typeof endTime === "string" ? new Date(endTime) : endTime,
       series: seriesKey.map((s) => {
         return { dimension: s };
-      })
+      }),
     };
     const result = await this.client.getSeriesByAnomalyDetectionConfiguration(
       detectionConfigId,
       optionsBody,
-      options
+      options,
     );
     const results = result.value.map((d) => {
       return {
@@ -802,7 +816,7 @@ export class MetricsAdvisorClient {
         lowerBounds: d.lowerBoundaryList,
         upperBounds: d.upperBoundaryList,
         isAnomaly: d.isAnomalyList,
-        periods: d.periodList
+        periods: d.periodList,
       };
     });
 
@@ -818,7 +832,7 @@ export class MetricsAdvisorClient {
     endTime: Date,
     maxPageSize?: number,
     continuationToken?: string,
-    options: ListAnomaliesForDetectionConfigurationOptions = {}
+    options: ListAnomaliesForDetectionConfigurationOptions = {},
   ): AsyncIterableIterator<AnomaliesPageResponse> {
     let segmentResponse;
     const optionsBody = {
@@ -830,9 +844,9 @@ export class MetricsAdvisorClient {
               dimensionFilter: options.seriesGroupKeys?.map((d) => {
                 return { dimension: d };
               }),
-              severityFilter: options.severityFilter
+              severityFilter: options.severityFilter,
             }
-          : undefined
+          : undefined,
     };
     if (continuationToken === undefined) {
       segmentResponse = await this.client.getAnomaliesByAnomalyDetectionConfiguration(
@@ -840,8 +854,8 @@ export class MetricsAdvisorClient {
         optionsBody,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const anomalies = segmentResponse.value?.map((a) => {
         return {
@@ -852,12 +866,12 @@ export class MetricsAdvisorClient {
           modifiedOn: a.modifiedTime,
           seriesKey: a.dimension,
           severity: a.property.anomalySeverity,
-          status: a.property.anomalyStatus
+          status: a.property.anomalyStatus,
         };
       });
       const resultArray = Object.defineProperty(anomalies || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
       continuationToken = segmentResponse.nextLink;
@@ -869,7 +883,7 @@ export class MetricsAdvisorClient {
       segmentResponse = await this.client.getAnomaliesByAnomalyDetectionConfigurationNext(
         continuationToken,
         optionsBody,
-        options
+        options,
       );
       continuationToken = segmentResponse.nextLink;
       const anomalies = segmentResponse.value?.map((a) => {
@@ -881,12 +895,12 @@ export class MetricsAdvisorClient {
           modifiedOn: a.modifiedTime,
           seriesKey: a.dimension,
           severity: a.property.anomalySeverity,
-          status: a.property.anomalyStatus
+          status: a.property.anomalyStatus,
         };
       });
       const resultArray = Object.defineProperty(anomalies || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
     }
@@ -899,7 +913,7 @@ export class MetricsAdvisorClient {
     detectionConfigId: string,
     startTime: Date,
     endTime: Date,
-    options: ListAnomaliesForDetectionConfigurationOptions
+    options: ListAnomaliesForDetectionConfigurationOptions,
   ): AsyncIterableIterator<DataPointAnomaly> {
     for await (const segment of this.listSegmentsOfAnomaliesForDetectionConfig(
       detectionConfigId,
@@ -907,7 +921,7 @@ export class MetricsAdvisorClient {
       endTime,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -972,7 +986,7 @@ export class MetricsAdvisorClient {
     detectionConfigId: string,
     startTime: Date | string,
     endTime: Date | string,
-    options: ListAnomaliesForDetectionConfigurationOptions = {}
+    options: ListAnomaliesForDetectionConfigurationOptions = {},
   ): PagedAsyncIterableIterator<DataPointAnomaly, AnomaliesPageResponse> {
     const start: Date = typeof startTime === "string" ? new Date(startTime) : startTime;
     const end: Date = typeof endTime === "string" ? new Date(endTime) : endTime;
@@ -980,7 +994,7 @@ export class MetricsAdvisorClient {
       detectionConfigId,
       start,
       end,
-      options
+      options,
     );
     return {
       /**
@@ -1005,9 +1019,9 @@ export class MetricsAdvisorClient {
           end,
           settings.maxPageSize,
           settings.continuationToken,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -1019,7 +1033,7 @@ export class MetricsAdvisorClient {
     dimensionName: string,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListAnomalyDimensionValuesOptions = {}
+    options: ListAnomalyDimensionValuesOptions = {},
   ): AsyncIterableIterator<DimensionValuesPageResponse> {
     let segmentResponse;
     const optionsBody = {
@@ -1027,7 +1041,7 @@ export class MetricsAdvisorClient {
       dimensionFilter: options.seriesGroupKey ? { dimension: options.seriesGroupKey } : undefined,
       startTime,
       endTime,
-      dimensionName
+      dimensionName,
     };
     if (continuationToken === undefined) {
       segmentResponse = await this.client.getDimensionOfAnomaliesByAnomalyDetectionConfiguration(
@@ -1035,12 +1049,12 @@ export class MetricsAdvisorClient {
         optionsBody,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const resultArray = Object.defineProperty(segmentResponse.value, "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1050,14 +1064,15 @@ export class MetricsAdvisorClient {
     // we are using nextLink so don't send 'skip' in options
     delete options.skip;
     while (continuationToken) {
-      segmentResponse = await this.client.getDimensionOfAnomaliesByAnomalyDetectionConfigurationNext(
-        continuationToken,
-        optionsBody,
-        options
-      );
+      segmentResponse =
+        await this.client.getDimensionOfAnomaliesByAnomalyDetectionConfigurationNext(
+          continuationToken,
+          optionsBody,
+          options,
+        );
       const resultArray = Object.defineProperty(segmentResponse.value, "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1071,7 +1086,7 @@ export class MetricsAdvisorClient {
     startTime: Date,
     endTime: Date,
     dimensionName: string,
-    options: ListAnomalyDimensionValuesOptions
+    options: ListAnomalyDimensionValuesOptions,
   ): AsyncIterableIterator<string> {
     for await (const segment of this.listSegmentsOfAnomalyDimensionValues(
       detectionConfigId,
@@ -1080,7 +1095,7 @@ export class MetricsAdvisorClient {
       dimensionName,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -1151,14 +1166,14 @@ export class MetricsAdvisorClient {
     startTime: Date | string,
     endTime: Date | string,
     dimensionName: string,
-    options: ListAnomalyDimensionValuesOptions = {}
+    options: ListAnomalyDimensionValuesOptions = {},
   ): PagedAsyncIterableIterator<string, DimensionValuesPageResponse> {
     const iter = this.listItemsOfAnomalyDimensionValues(
       detectionConfigId,
       typeof startTime === "string" ? new Date(startTime) : startTime,
       typeof endTime === "string" ? new Date(endTime) : endTime,
       dimensionName,
-      options
+      options,
     );
     return {
       /**
@@ -1184,9 +1199,9 @@ export class MetricsAdvisorClient {
           dimensionName,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -1197,7 +1212,7 @@ export class MetricsAdvisorClient {
     endTime: Date,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListIncidentsForDetectionConfigurationOptions = {}
+    options: ListIncidentsForDetectionConfigurationOptions = {},
   ): AsyncIterableIterator<IncidentsPageResponse> {
     let segmentResponse;
     const optionsBody = {
@@ -1206,8 +1221,8 @@ export class MetricsAdvisorClient {
       filter: {
         dimensionFilter: options.seriesGroupKeys?.map((d) => {
           return { dimension: d };
-        })
-      }
+        }),
+      },
     };
     if (continuationToken === undefined) {
       segmentResponse = await this.client.getIncidentsByAnomalyDetectionConfiguration(
@@ -1215,8 +1230,8 @@ export class MetricsAdvisorClient {
         optionsBody,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const incidents = segmentResponse.value?.map((incident) => {
         return {
@@ -1227,12 +1242,12 @@ export class MetricsAdvisorClient {
           status: incident.property.incidentStatus!,
           severity: incident.property.maxSeverity,
           startTime: incident.startTime,
-          lastOccurredTime: incident.lastTime
+          lastOccurredTime: incident.lastTime,
         };
       });
       const resultArray = Object.defineProperty(incidents || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1246,8 +1261,8 @@ export class MetricsAdvisorClient {
         continuationToken,
         {
           ...options,
-          maxpagesize: maxPageSize
-        }
+          maxpagesize: maxPageSize,
+        },
       );
       const incidents = segmentResponse.value?.map((incident) => {
         return {
@@ -1258,12 +1273,12 @@ export class MetricsAdvisorClient {
           status: incident.property.incidentStatus!,
           severity: incident.property.maxSeverity,
           startTime: incident.startTime,
-          lastOccurredTime: incident.lastTime
+          lastOccurredTime: incident.lastTime,
         };
       });
       const resultArray = Object.defineProperty(incidents || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1276,7 +1291,7 @@ export class MetricsAdvisorClient {
     detectionConfigId: string,
     startTime: Date,
     endTime: Date,
-    options: ListIncidentsForDetectionConfigurationOptions
+    options: ListIncidentsForDetectionConfigurationOptions,
   ): AsyncIterableIterator<AnomalyIncident> {
     for await (const segment of this.listSegmentsOfIncidentsForDetectionConfig(
       detectionConfigId,
@@ -1284,7 +1299,7 @@ export class MetricsAdvisorClient {
       endTime,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -1349,7 +1364,7 @@ export class MetricsAdvisorClient {
     detectionConfigId: string,
     startTime: Date | string,
     endTime: Date | string,
-    options: ListIncidentsForDetectionConfigurationOptions = {}
+    options: ListIncidentsForDetectionConfigurationOptions = {},
   ): PagedAsyncIterableIterator<AnomalyIncident, IncidentsPageResponse> {
     const start: Date = typeof startTime === "string" ? new Date(startTime) : startTime;
     const end: Date = typeof endTime === "string" ? new Date(endTime) : endTime;
@@ -1357,7 +1372,7 @@ export class MetricsAdvisorClient {
       detectionConfigId,
       start,
       end,
-      options
+      options,
     );
     return {
       /**
@@ -1382,9 +1397,9 @@ export class MetricsAdvisorClient {
           end,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -1398,40 +1413,31 @@ export class MetricsAdvisorClient {
   public async getIncidentRootCauses(
     detectionConfigId: string,
     incidentId: string,
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<GetIncidentRootCauseResponse> {
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return tracingClient.withSpan(
       "MetricsAdvisorClient-getIncidentRootCauses",
-      options
-    );
-
-    try {
-      const requestOptions = operationOptionsToRequestOptionsBase(finalOptions);
-      const result = await this.client.getRootCauseOfIncidentByAnomalyDetectionConfiguration(
-        detectionConfigId,
-        incidentId,
-        requestOptions
-      );
-      const transformed = result.value?.map((r) => {
+      options,
+      async (finalOptions) => {
+        const result = await this.client.getRootCauseOfIncidentByAnomalyDetectionConfiguration(
+          detectionConfigId,
+          incidentId,
+          finalOptions,
+        );
+        const transformed = result.value?.map((r) => {
+          return {
+            seriesKey: r.rootCause.dimension,
+            path: r.path,
+            score: r.score,
+            description: r.description,
+          };
+        });
         return {
-          seriesKey: r.rootCause.dimension,
-          path: r.path,
-          score: r.score,
-          description: r.description
+          rootCauses: transformed,
         };
-      });
-      return {
-        rootCauses: transformed
-      };
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+      },
+    );
   }
 
   /**
@@ -1443,32 +1449,23 @@ export class MetricsAdvisorClient {
    */
   public async addFeedback(
     feedback: MetricFeedbackUnion,
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<MetricFeedbackUnion> {
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return tracingClient.withSpan(
       "MetricsAdvisorClient-addFeedback",
-      options
+      options,
+      async (finalOptions) => {
+        const serviceFeedback = toServiceMetricFeedbackUnion(feedback);
+        const result = await this.client.createMetricFeedback(serviceFeedback, finalOptions);
+        if (!result.location) {
+          throw new Error("Expected a valid location to retrieve the created configuration");
+        }
+        const lastSlashIndex = result.location.lastIndexOf("/");
+        const feedbackId = result.location.substring(lastSlashIndex + 1);
+        return this.getFeedback(feedbackId);
+      },
     );
-
-    try {
-      const requestOptions = operationOptionsToRequestOptionsBase(finalOptions);
-      const serviceFeedback = toServiceMetricFeedbackUnion(feedback);
-      const result = await this.client.createMetricFeedback(serviceFeedback, requestOptions);
-      if (!result.location) {
-        throw new Error("Expected a valid location to retrieve the created configuration");
-      }
-      const lastSlashIndex = result.location.lastIndexOf("/");
-      const feedbackId = result.location.substring(lastSlashIndex + 1);
-      return this.getFeedback(feedbackId);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -1478,33 +1475,24 @@ export class MetricsAdvisorClient {
    */
   public async getFeedback(
     id: string,
-    options: OperationOptions = {}
+    // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
+    options: OperationOptions = {},
   ): Promise<MetricFeedbackUnion> {
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return tracingClient.withSpan(
       "MetricsAdvisorClient-getFeedback",
-      options
+      options,
+      async (finalOptions) => {
+        const result = await this.client.getMetricFeedback(id, finalOptions);
+        return fromServiceMetricFeedbackUnion(result);
+      },
     );
-
-    try {
-      const requestOptions = operationOptionsToRequestOptionsBase(finalOptions);
-      const result = await this.client.getMetricFeedback(id, requestOptions);
-      return fromServiceMetricFeedbackUnion(result);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   private async *listSegmentsOfFeedback(
     metricId: string,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListFeedbackOptions = {}
+    options: ListFeedbackOptions = {},
   ): AsyncIterableIterator<MetricFeedbackPageResponse> {
     let segmentResponse;
     const startTime =
@@ -1523,19 +1511,19 @@ export class MetricsAdvisorClient {
       feedbackType: options.filter?.feedbackType,
       startTime,
       endTime,
-      timeMode: options.filter?.timeMode
+      timeMode: options.filter?.timeMode,
     };
     if (continuationToken === undefined) {
       segmentResponse = await this.client.listMetricFeedbacks(optionsBody, {
         ...options,
-        maxpagesize: maxPageSize
+        maxpagesize: maxPageSize,
       });
       const feedbacks = segmentResponse.value?.map((feedback) => {
         return fromServiceMetricFeedbackUnion(feedback);
       });
       const resultArray = Object.defineProperty(feedbacks || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1546,14 +1534,14 @@ export class MetricsAdvisorClient {
       segmentResponse = await this.client.listMetricFeedbacksNext(
         continuationToken,
         optionsBody,
-        options
+        options,
       );
       const feedbacks = segmentResponse.value?.map((feedback) => {
         return fromServiceMetricFeedbackUnion(feedback);
       });
       const resultArray = Object.defineProperty(feedbacks || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1563,13 +1551,13 @@ export class MetricsAdvisorClient {
 
   private async *listItemsOfFeedback(
     metricId: string,
-    options: ListFeedbackOptions = {}
+    options: ListFeedbackOptions = {},
   ): AsyncIterableIterator<MetricFeedbackUnion> {
     for await (const segment of this.listSegmentsOfFeedback(
       metricId,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -1629,7 +1617,7 @@ export class MetricsAdvisorClient {
    */
   public listFeedback(
     metricId: string,
-    options: ListFeedbackOptions = {}
+    options: ListFeedbackOptions = {},
   ): PagedAsyncIterableIterator<MetricFeedbackUnion, MetricFeedbackPageResponse> {
     const iter = this.listItemsOfFeedback(metricId, options);
     return {
@@ -1653,9 +1641,9 @@ export class MetricsAdvisorClient {
           metricId,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -1674,12 +1662,12 @@ export class MetricsAdvisorClient {
     seriesKey: DimensionKey[],
     startTime: Date | string,
     endTime: Date | string,
-    options: GetMetricSeriesDataOptions = {}
+    options: GetMetricSeriesDataOptions = {},
   ): Promise<GetMetricSeriesDataResponse> {
     const optionsBody = {
       startTime: typeof startTime === "string" ? new Date(startTime) : startTime,
       endTime: typeof endTime === "string" ? new Date(endTime) : endTime,
-      series: seriesKey
+      series: seriesKey,
     };
     const result = await this.client.getMetricData(metricId, optionsBody, options);
     const resultArray =
@@ -1687,7 +1675,7 @@ export class MetricsAdvisorClient {
         return {
           definition: { metricId: s.id!.metricId!, seriesKey: s.id!.dimension! },
           timestamps: s.timestampList,
-          values: s.valueList
+          values: s.valueList,
         };
       }) || [];
 
@@ -1699,27 +1687,27 @@ export class MetricsAdvisorClient {
     activeSince: Date,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListMetricSeriesDefinitionsOptions = {}
+    options: ListMetricSeriesDefinitionsOptions = {},
   ): AsyncIterableIterator<MetricSeriesPageResponse> {
     let segmentResponse;
     const optionsBody = {
       activeSince: activeSince,
-      dimensionFilter: options.dimensionFilter
+      dimensionFilter: options.dimensionFilter,
     };
     if (continuationToken === undefined) {
       segmentResponse = await this.client.getMetricSeries(metricId, optionsBody, {
         ...options,
-        maxpagesize: maxPageSize
+        maxpagesize: maxPageSize,
       });
       const definitions = segmentResponse.value?.map((d) => {
         return {
           metricId: d.metricId!,
-          seriesKey: d.dimension!
+          seriesKey: d.dimension!,
         };
       });
       const resultArray = Object.defineProperty(definitions || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1732,17 +1720,17 @@ export class MetricsAdvisorClient {
       segmentResponse = await this.client.getMetricSeriesNext(
         continuationToken,
         optionsBody,
-        options
+        options,
       );
       const definitions = segmentResponse.value?.map((d) => {
         return {
           metricId: d.metricId!,
-          seriesKey: d.dimension!
+          seriesKey: d.dimension!,
         };
       });
       const resultArray = Object.defineProperty(definitions || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1753,14 +1741,14 @@ export class MetricsAdvisorClient {
   private async *listItemsOfMetricSeriesDefinitions(
     metricId: string,
     activeSince: Date,
-    options: ListMetricSeriesDefinitionsOptions
+    options: ListMetricSeriesDefinitionsOptions,
   ): AsyncIterableIterator<MetricSeriesDefinition> {
     for await (const segment of this.listSegmentsOfMetricSeriesDefinitions(
       metricId,
       activeSince,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -1821,12 +1809,12 @@ export class MetricsAdvisorClient {
   public listMetricSeriesDefinitions(
     metricId: string,
     activeSince: Date | string,
-    options: ListMetricSeriesDefinitionsOptions = {}
+    options: ListMetricSeriesDefinitionsOptions = {},
   ): PagedAsyncIterableIterator<MetricSeriesDefinition, MetricSeriesPageResponse> {
     const iter = this.listItemsOfMetricSeriesDefinitions(
       metricId,
       typeof activeSince === "string" ? new Date(activeSince) : activeSince,
-      options
+      options,
     );
     return {
       /**
@@ -1850,9 +1838,9 @@ export class MetricsAdvisorClient {
           typeof activeSince === "string" ? new Date(activeSince) : activeSince,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -1861,21 +1849,21 @@ export class MetricsAdvisorClient {
     dimensionName: string,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListMetricDimensionValuesOptions = {}
+    options: ListMetricDimensionValuesOptions = {},
   ): AsyncIterableIterator<DimensionValuesPageResponse> {
     let segmentResponse;
     const optionsBody = {
-      dimensionName: dimensionName
+      dimensionName: dimensionName,
     };
 
     if (continuationToken === undefined) {
       segmentResponse = await this.client.getMetricDimension(metricId, optionsBody, {
         ...options,
-        maxpagesize: maxPageSize
+        maxpagesize: maxPageSize,
       });
       const resultArray = Object.defineProperty(segmentResponse.value || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1888,11 +1876,11 @@ export class MetricsAdvisorClient {
       segmentResponse = await this.client.getMetricDimensionNext(
         continuationToken,
         optionsBody,
-        options
+        options,
       );
       const resultArray = Object.defineProperty(segmentResponse.value || [], "continuationToken", {
         enumerable: true,
-        value: segmentResponse.nextLink
+        value: segmentResponse.nextLink,
       });
       yield resultArray;
 
@@ -1903,14 +1891,14 @@ export class MetricsAdvisorClient {
   private async *listItemsOfMetricDimensionValues(
     metricId: string,
     dimensionName: string,
-    options: ListMetricDimensionValuesOptions
+    options: ListMetricDimensionValuesOptions,
   ): AsyncIterableIterator<string> {
     for await (const segment of this.listSegmentsOfMetricDimensionValues(
       metricId,
       dimensionName,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -1970,7 +1958,7 @@ export class MetricsAdvisorClient {
    */ public listMetricDimensionValues(
     metricId: string,
     dimensionName: string,
-    options: ListMetricDimensionValuesOptions = {}
+    options: ListMetricDimensionValuesOptions = {},
   ): PagedAsyncIterableIterator<string, DimensionValuesPageResponse> {
     const iter = this.listItemsOfMetricDimensionValues(metricId, dimensionName, options);
 
@@ -1996,9 +1984,9 @@ export class MetricsAdvisorClient {
           dimensionName,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 
@@ -2008,31 +1996,31 @@ export class MetricsAdvisorClient {
     endTime: Date,
     continuationToken?: string,
     maxPageSize?: number,
-    options: ListMetricEnrichmentStatusOptions = {}
+    options: ListMetricEnrichmentStatusOptions = {},
   ): AsyncIterableIterator<MetricEnrichmentStatusPageResponse> {
     let segmentResponse;
     const optionsBody = {
       startTime: startTime,
-      endTime: endTime
+      endTime: endTime,
     };
     if (continuationToken === undefined) {
       segmentResponse = await this.client.getEnrichmentStatusByMetric(metricId, optionsBody, {
         ...options,
-        maxpagesize: maxPageSize
+        maxpagesize: maxPageSize,
       });
       const resultArray = Object.defineProperty(
         segmentResponse.value?.map((s) => {
           return {
             timestamp: s.timestamp?.getTime(),
             status: s.status,
-            message: s.message
+            message: s.message,
           };
         }) || [],
         "continuationToken",
         {
           enumerable: true,
-          value: segmentResponse.nextLink
-        }
+          value: segmentResponse.nextLink,
+        },
       );
       yield resultArray;
       continuationToken = segmentResponse.nextLink;
@@ -2044,21 +2032,21 @@ export class MetricsAdvisorClient {
       segmentResponse = await this.client.getEnrichmentStatusByMetricNext(
         continuationToken,
         optionsBody,
-        options
+        options,
       );
       const resultArray = Object.defineProperty(
         segmentResponse.value?.map((s) => {
           return {
             timestamp: s.timestamp?.getTime(),
             status: s.status,
-            message: s.message
+            message: s.message,
           };
         }) || [],
         "continuationToken",
         {
           enumerable: true,
-          value: segmentResponse.nextLink
-        }
+          value: segmentResponse.nextLink,
+        },
       );
       yield resultArray;
 
@@ -2070,7 +2058,7 @@ export class MetricsAdvisorClient {
     metricId: string,
     startTime: Date,
     endTime: Date,
-    options: ListMetricEnrichmentStatusOptions
+    options: ListMetricEnrichmentStatusOptions,
   ): AsyncIterableIterator<EnrichmentStatus> {
     for await (const segment of this.listSegmentsOfMetricEnrichmentStatus(
       metricId,
@@ -2078,7 +2066,7 @@ export class MetricsAdvisorClient {
       endTime,
       undefined,
       undefined,
-      options
+      options,
     )) {
       if (segment) {
         yield* segment;
@@ -2142,13 +2130,13 @@ export class MetricsAdvisorClient {
     metricId: string,
     startTime: Date | string,
     endTime: Date | string,
-    options: ListMetricEnrichmentStatusOptions = {}
+    options: ListMetricEnrichmentStatusOptions = {},
   ): PagedAsyncIterableIterator<EnrichmentStatus, MetricEnrichmentStatusPageResponse> {
     const iter = this.listItemsOfMetricEnrichmentStatus(
       metricId,
       typeof startTime === "string" ? new Date(startTime) : startTime,
       typeof endTime === "string" ? new Date(endTime) : endTime,
-      options
+      options,
     );
     return {
       /**
@@ -2173,9 +2161,9 @@ export class MetricsAdvisorClient {
           typeof endTime === "string" ? new Date(endTime) : endTime,
           settings.continuationToken,
           settings.maxPageSize,
-          options
+          options,
         );
-      }
+      },
     };
   }
 }

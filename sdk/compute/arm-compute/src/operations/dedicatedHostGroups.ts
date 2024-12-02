@@ -6,18 +6,21 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DedicatedHostGroups } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ComputeManagementClientContext } from "../computeManagementClientContext";
+import { ComputeManagementClient } from "../computeManagementClient";
 import {
   DedicatedHostGroup,
   DedicatedHostGroupsListByResourceGroupNextOptionalParams,
   DedicatedHostGroupsListByResourceGroupOptionalParams,
+  DedicatedHostGroupsListByResourceGroupResponse,
   DedicatedHostGroupsListBySubscriptionNextOptionalParams,
   DedicatedHostGroupsListBySubscriptionOptionalParams,
+  DedicatedHostGroupsListBySubscriptionResponse,
   DedicatedHostGroupsCreateOrUpdateOptionalParams,
   DedicatedHostGroupsCreateOrUpdateResponse,
   DedicatedHostGroupUpdate,
@@ -26,22 +29,20 @@ import {
   DedicatedHostGroupsDeleteOptionalParams,
   DedicatedHostGroupsGetOptionalParams,
   DedicatedHostGroupsGetResponse,
-  DedicatedHostGroupsListByResourceGroupResponse,
-  DedicatedHostGroupsListBySubscriptionResponse,
   DedicatedHostGroupsListByResourceGroupNextResponse,
-  DedicatedHostGroupsListBySubscriptionNextResponse
+  DedicatedHostGroupsListBySubscriptionNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing DedicatedHostGroups operations. */
 export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
-  private readonly client: ComputeManagementClientContext;
+  private readonly client: ComputeManagementClient;
 
   /**
    * Initialize a new instance of the class DedicatedHostGroups class.
    * @param client Reference to the service client
    */
-  constructor(client: ComputeManagementClientContext) {
+  constructor(client: ComputeManagementClient) {
     this.client = client;
   }
 
@@ -53,7 +54,7 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: DedicatedHostGroupsListByResourceGroupOptionalParams
+    options?: DedicatedHostGroupsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<DedicatedHostGroup> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -63,37 +64,53 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: DedicatedHostGroupsListByResourceGroupOptionalParams
+    options?: DedicatedHostGroupsListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DedicatedHostGroup[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DedicatedHostGroupsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: DedicatedHostGroupsListByResourceGroupOptionalParams
+    options?: DedicatedHostGroupsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<DedicatedHostGroup> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -105,7 +122,7 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
    * @param options The options parameters.
    */
   public listBySubscription(
-    options?: DedicatedHostGroupsListBySubscriptionOptionalParams
+    options?: DedicatedHostGroupsListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<DedicatedHostGroup> {
     const iter = this.listBySubscriptionPagingAll(options);
     return {
@@ -115,27 +132,39 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySubscriptionPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySubscriptionPagingPage(options, settings);
+      },
     };
   }
 
   private async *listBySubscriptionPagingPage(
-    options?: DedicatedHostGroupsListBySubscriptionOptionalParams
+    options?: DedicatedHostGroupsListBySubscriptionOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<DedicatedHostGroup[]> {
-    let result = await this._listBySubscription(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DedicatedHostGroupsListBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySubscription(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySubscriptionNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listBySubscriptionPagingAll(
-    options?: DedicatedHostGroupsListBySubscriptionOptionalParams
+    options?: DedicatedHostGroupsListBySubscriptionOptionalParams,
   ): AsyncIterableIterator<DedicatedHostGroup> {
     for await (const page of this.listBySubscriptionPagingPage(options)) {
       yield* page;
@@ -154,11 +183,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
     resourceGroupName: string,
     hostGroupName: string,
     parameters: DedicatedHostGroup,
-    options?: DedicatedHostGroupsCreateOrUpdateOptionalParams
+    options?: DedicatedHostGroupsCreateOrUpdateOptionalParams,
   ): Promise<DedicatedHostGroupsCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostGroupName, parameters, options },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -173,11 +202,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
     resourceGroupName: string,
     hostGroupName: string,
     parameters: DedicatedHostGroupUpdate,
-    options?: DedicatedHostGroupsUpdateOptionalParams
+    options?: DedicatedHostGroupsUpdateOptionalParams,
   ): Promise<DedicatedHostGroupsUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostGroupName, parameters, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -190,11 +219,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
   delete(
     resourceGroupName: string,
     hostGroupName: string,
-    options?: DedicatedHostGroupsDeleteOptionalParams
+    options?: DedicatedHostGroupsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostGroupName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -207,11 +236,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
   get(
     resourceGroupName: string,
     hostGroupName: string,
-    options?: DedicatedHostGroupsGetOptionalParams
+    options?: DedicatedHostGroupsGetOptionalParams,
   ): Promise<DedicatedHostGroupsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostGroupName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -223,11 +252,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: DedicatedHostGroupsListByResourceGroupOptionalParams
+    options?: DedicatedHostGroupsListByResourceGroupOptionalParams,
   ): Promise<DedicatedHostGroupsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -237,11 +266,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
    * @param options The options parameters.
    */
   private _listBySubscription(
-    options?: DedicatedHostGroupsListBySubscriptionOptionalParams
+    options?: DedicatedHostGroupsListBySubscriptionOptionalParams,
   ): Promise<DedicatedHostGroupsListBySubscriptionResponse> {
     return this.client.sendOperationRequest(
       { options },
-      listBySubscriptionOperationSpec
+      listBySubscriptionOperationSpec,
     );
   }
 
@@ -254,11 +283,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: DedicatedHostGroupsListByResourceGroupNextOptionalParams
+    options?: DedicatedHostGroupsListByResourceGroupNextOptionalParams,
   ): Promise<DedicatedHostGroupsListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
@@ -269,11 +298,11 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
    */
   private _listBySubscriptionNext(
     nextLink: string,
-    options?: DedicatedHostGroupsListBySubscriptionNextOptionalParams
+    options?: DedicatedHostGroupsListBySubscriptionNextOptionalParams,
   ): Promise<DedicatedHostGroupsListBySubscriptionNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listBySubscriptionNextOperationSpec
+      listBySubscriptionNextOperationSpec,
     );
   }
 }
@@ -281,147 +310,167 @@ export class DedicatedHostGroupsImpl implements DedicatedHostGroups {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.DedicatedHostGroup
+      bodyMapper: Mappers.DedicatedHostGroup,
     },
     201: {
-      bodyMapper: Mappers.DedicatedHostGroup
-    }
+      bodyMapper: Mappers.DedicatedHostGroup,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters4,
+  requestBody: Parameters.parameters15,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.hostGroupName
+    Parameters.resourceGroupName,
+    Parameters.hostGroupName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.DedicatedHostGroup
-    }
+      bodyMapper: Mappers.DedicatedHostGroup,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters5,
+  requestBody: Parameters.parameters16,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.hostGroupName
+    Parameters.resourceGroupName,
+    Parameters.hostGroupName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
   httpMethod: "DELETE",
-  responses: { 200: {}, 204: {} },
+  responses: {
+    200: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.hostGroupName
+    Parameters.resourceGroupName,
+    Parameters.hostGroupName,
   ],
-  serializer
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DedicatedHostGroup
-    }
+      bodyMapper: Mappers.DedicatedHostGroup,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.expand1],
+  queryParameters: [Parameters.apiVersion, Parameters.expand2],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.hostGroupName
+    Parameters.resourceGroupName,
+    Parameters.hostGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DedicatedHostGroupListResult
-    }
+      bodyMapper: Mappers.DedicatedHostGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
+    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySubscriptionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/hostGroups",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/hostGroups",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DedicatedHostGroupListResult
-    }
+      bodyMapper: Mappers.DedicatedHostGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DedicatedHostGroupListResult
-    }
+      bodyMapper: Mappers.DedicatedHostGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySubscriptionNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DedicatedHostGroupListResult
-    }
+      bodyMapper: Mappers.DedicatedHostGroupListResult,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

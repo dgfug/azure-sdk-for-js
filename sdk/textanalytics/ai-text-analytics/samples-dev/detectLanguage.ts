@@ -26,7 +26,7 @@ const documents = [
   "Este es un document escrito en Español.",
   "这是一个用中文写的文件",
   "Dies ist ein Dokument in deutsche Sprache.",
-  "Detta är ett dokument skrivet på engelska."
+  "Detta är ett dokument skrivet på engelska.",
 ];
 
 export async function main() {
@@ -41,7 +41,7 @@ export async function main() {
     if (!result.error) {
       const primaryLanguage = result.primaryLanguage;
       console.log(
-        `\tDetected language: ${primaryLanguage.name} (ISO 6391 code: ${primaryLanguage.iso6391Name})`
+        `\tDetected language: ${primaryLanguage.name} (ISO 6391 code: ${primaryLanguage.iso6391Name})`,
       );
     } else {
       console.error("\tError:", result.error);

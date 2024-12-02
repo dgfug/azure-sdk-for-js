@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * Encodes a string in base64 format.
@@ -16,8 +16,6 @@ export function encodeString(value: string): string {
  * @internal
  */
 export function encodeByteArray(value: Uint8Array): string {
-  // Buffer.from accepts <ArrayBuffer> | <SharedArrayBuffer>-- the TypeScript definition is off here
-  // https://nodejs.org/api/buffer.html#buffer_class_method_buffer_from_arraybuffer_byteoffset_length
   const bufferValue = value instanceof Buffer ? value : Buffer.from(value.buffer as ArrayBuffer);
   return bufferValue.toString("base64");
 }
@@ -34,6 +32,7 @@ export function decodeString(value: string): Uint8Array {
 /**
  * Decodes a base64 string into a string.
  * @param value - the base64 string to decode
+ * @internal
  */
 export function decodeStringToString(value: string): string {
   return Buffer.from(value, "base64").toString();

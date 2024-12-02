@@ -6,13 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { SubscriptionUsages } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   SubscriptionUsage,
   SubscriptionUsagesListByLocationNextOptionalParams,
@@ -20,19 +20,19 @@ import {
   SubscriptionUsagesListByLocationResponse,
   SubscriptionUsagesGetOptionalParams,
   SubscriptionUsagesGetResponse,
-  SubscriptionUsagesListByLocationNextResponse
+  SubscriptionUsagesListByLocationNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing SubscriptionUsages operations. */
 export class SubscriptionUsagesImpl implements SubscriptionUsages {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class SubscriptionUsages class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -43,7 +43,7 @@ export class SubscriptionUsagesImpl implements SubscriptionUsages {
    */
   public listByLocation(
     locationName: string,
-    options?: SubscriptionUsagesListByLocationOptionalParams
+    options?: SubscriptionUsagesListByLocationOptionalParams,
   ): PagedAsyncIterableIterator<SubscriptionUsage> {
     const iter = this.listByLocationPagingAll(locationName, options);
     return {
@@ -53,37 +53,49 @@ export class SubscriptionUsagesImpl implements SubscriptionUsages {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByLocationPagingPage(locationName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByLocationPagingPage(locationName, options, settings);
+      },
     };
   }
 
   private async *listByLocationPagingPage(
     locationName: string,
-    options?: SubscriptionUsagesListByLocationOptionalParams
+    options?: SubscriptionUsagesListByLocationOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<SubscriptionUsage[]> {
-    let result = await this._listByLocation(locationName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: SubscriptionUsagesListByLocationResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByLocation(locationName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByLocationNext(
         locationName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByLocationPagingAll(
     locationName: string,
-    options?: SubscriptionUsagesListByLocationOptionalParams
+    options?: SubscriptionUsagesListByLocationOptionalParams,
   ): AsyncIterableIterator<SubscriptionUsage> {
     for await (const page of this.listByLocationPagingPage(
       locationName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -96,11 +108,11 @@ export class SubscriptionUsagesImpl implements SubscriptionUsages {
    */
   private _listByLocation(
     locationName: string,
-    options?: SubscriptionUsagesListByLocationOptionalParams
+    options?: SubscriptionUsagesListByLocationOptionalParams,
   ): Promise<SubscriptionUsagesListByLocationResponse> {
     return this.client.sendOperationRequest(
       { locationName, options },
-      listByLocationOperationSpec
+      listByLocationOperationSpec,
     );
   }
 
@@ -113,11 +125,11 @@ export class SubscriptionUsagesImpl implements SubscriptionUsages {
   get(
     locationName: string,
     usageName: string,
-    options?: SubscriptionUsagesGetOptionalParams
+    options?: SubscriptionUsagesGetOptionalParams,
   ): Promise<SubscriptionUsagesGetResponse> {
     return this.client.sendOperationRequest(
       { locationName, usageName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -130,11 +142,11 @@ export class SubscriptionUsagesImpl implements SubscriptionUsages {
   private _listByLocationNext(
     locationName: string,
     nextLink: string,
-    options?: SubscriptionUsagesListByLocationNextOptionalParams
+    options?: SubscriptionUsagesListByLocationNextOptionalParams,
   ): Promise<SubscriptionUsagesListByLocationNextResponse> {
     return this.client.sendOperationRequest(
       { locationName, nextLink, options },
-      listByLocationNextOperationSpec
+      listByLocationNextOperationSpec,
     );
   }
 }
@@ -142,60 +154,57 @@ export class SubscriptionUsagesImpl implements SubscriptionUsages {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByLocationOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/usages",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/usages",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SubscriptionUsageListResult
+      bodyMapper: Mappers.SubscriptionUsageListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.locationName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/usages/{usageName}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.SubscriptionUsage
-    },
-    default: {}
-  },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.locationName,
-    Parameters.usageName
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationName}/usages/{usageName}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.SubscriptionUsage,
+    },
+    default: {},
+  },
+  queryParameters: [Parameters.apiVersion3],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.locationName,
+    Parameters.usageName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const listByLocationNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SubscriptionUsageListResult
+      bodyMapper: Mappers.SubscriptionUsageListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.locationName
+    Parameters.locationName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

@@ -6,9 +6,9 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import * as coreClient from "@azure/core-client";
 
-export const SendMessageRequest: coreHttp.CompositeMapper = {
+export const SendMessageRequest: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "SendMessageRequest",
@@ -17,39 +17,44 @@ export const SendMessageRequest: coreHttp.CompositeMapper = {
         serializedName: "from",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       smsRecipients: {
         serializedName: "smsRecipients",
         required: true,
         type: {
           name: "Sequence",
-          element: { type: { name: "Composite", className: "SmsRecipient" } }
-        }
+          element: {
+            type: {
+              name: "Composite",
+              className: "SmsRecipient",
+            },
+          },
+        },
       },
       message: {
         constraints: {
-          MaxLength: 2048
+          MaxLength: 2048,
         },
         serializedName: "message",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       smsSendOptions: {
         serializedName: "smsSendOptions",
         type: {
           name: "Composite",
-          className: "SmsSendOptions"
-        }
-      }
-    }
-  }
+          className: "SmsSendOptions",
+        },
+      },
+    },
+  },
 };
 
-export const SmsRecipient: coreHttp.CompositeMapper = {
+export const SmsRecipient: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "SmsRecipient",
@@ -58,26 +63,26 @@ export const SmsRecipient: coreHttp.CompositeMapper = {
         serializedName: "to",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       repeatabilityRequestId: {
         serializedName: "repeatabilityRequestId",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       repeatabilityFirstSent: {
         serializedName: "repeatabilityFirstSent",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const SmsSendOptions: coreHttp.CompositeMapper = {
+export const SmsSendOptions: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "SmsSendOptions",
@@ -86,20 +91,30 @@ export const SmsSendOptions: coreHttp.CompositeMapper = {
         serializedName: "enableDeliveryReport",
         required: true,
         type: {
-          name: "Boolean"
-        }
+          name: "Boolean",
+        },
       },
       tag: {
         serializedName: "tag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+      deliveryReportTimeoutInSeconds: {
+        constraints: {
+          InclusiveMaximum: 43200,
+          InclusiveMinimum: 60,
+        },
+        serializedName: "deliveryReportTimeoutInSeconds",
+        type: {
+          name: "Number",
+        },
+      },
+    },
+  },
 };
 
-export const SmsSendResponse: coreHttp.CompositeMapper = {
+export const SmsSendResponse: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "SmsSendResponse",
@@ -110,15 +125,18 @@ export const SmsSendResponse: coreHttp.CompositeMapper = {
         type: {
           name: "Sequence",
           element: {
-            type: { name: "Composite", className: "SmsSendResponseItem" }
-          }
-        }
-      }
-    }
-  }
+            type: {
+              name: "Composite",
+              className: "SmsSendResponseItem",
+            },
+          },
+        },
+      },
+    },
+  },
 };
 
-export const SmsSendResponseItem: coreHttp.CompositeMapper = {
+export const SmsSendResponseItem: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "SmsSendResponseItem",
@@ -127,41 +145,41 @@ export const SmsSendResponseItem: coreHttp.CompositeMapper = {
         serializedName: "to",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       messageId: {
         serializedName: "messageId",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       httpStatusCode: {
         serializedName: "httpStatusCode",
         required: true,
         type: {
-          name: "Number"
-        }
+          name: "Number",
+        },
       },
       repeatabilityResult: {
         serializedName: "repeatabilityResult",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       successful: {
         serializedName: "successful",
         required: true,
         type: {
-          name: "Boolean"
-        }
+          name: "Boolean",
+        },
       },
       errorMessage: {
         serializedName: "errorMessage",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };

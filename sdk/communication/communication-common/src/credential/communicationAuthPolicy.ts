@@ -1,9 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { isTokenCredential, KeyCredential, TokenCredential } from "@azure/core-auth";
-import { bearerTokenAuthenticationPolicy, RequestPolicyFactory } from "@azure/core-http";
-import { createCommunicationAccessKeyCredentialPolicy } from "./communicationAccessKeyCredentialPolicy";
+import {
+  type BearerTokenAuthenticationPolicyOptions,
+  type PipelinePolicy,
+  bearerTokenAuthenticationPolicy,
+} from "@azure/core-rest-pipeline";
+import { type KeyCredential, type TokenCredential, isTokenCredential } from "@azure/core-auth";
+import { createCommunicationAccessKeyCredentialPolicy } from "./communicationAccessKeyCredentialPolicy.js";
 /**
  * Creates a pipeline policy to authenticate request based
  * on the credential passed in.
@@ -11,12 +15,16 @@ import { createCommunicationAccessKeyCredentialPolicy } from "./communicationAcc
  *
  * @param credential - The KeyCredential or TokenCredential.
  */
-export const createCommunicationAuthPolicy = (
-  credential: KeyCredential | TokenCredential
-): RequestPolicyFactory => {
+export function createCommunicationAuthPolicy(
+  credential: KeyCredential | TokenCredential,
+): PipelinePolicy {
   if (isTokenCredential(credential)) {
-    return bearerTokenAuthenticationPolicy(credential, "https://communication.azure.com//.default");
+    const policyOptions: BearerTokenAuthenticationPolicyOptions = {
+      credential: credential,
+      scopes: ["https://communication.azure.com//.default"],
+    };
+    return bearerTokenAuthenticationPolicy(policyOptions);
   } else {
     return createCommunicationAccessKeyCredentialPolicy(credential);
   }
-};
+}

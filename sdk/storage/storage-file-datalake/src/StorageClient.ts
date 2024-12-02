@@ -1,23 +1,43 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { isNode, isTokenCredential, TokenCredential } from "@azure/core-http";
-import { OperationTracingOptions } from "@azure/core-tracing";
-
-import { AnonymousCredential } from "./credentials/AnonymousCredential";
-import { StorageSharedKeyCredential } from "./credentials/StorageSharedKeyCredential";
-import { StorageClientContext } from "./generated/src/storageClientContext";
-import { Pipeline } from "./Pipeline";
+// Licensed under the MIT License.
+import type { TokenCredential } from "@azure/core-auth";
+import { StorageContextClient } from "./StorageContextClient";
+import type { StorageClient as StorageClientContext } from "./generated/src";
+import type { Pipeline, PipelineLike, StoragePipelineOptions } from "./Pipeline";
+import type { AnonymousCredential } from "@azure/storage-blob";
+import { BlobServiceClient } from "@azure/storage-blob";
+import type { StorageSharedKeyCredential } from "@azure/storage-blob";
 import { toBlobEndpointUrl, toDfsEndpointUrl } from "./transforms";
 import { escapeURLPath, getAccountNameFromUrl, getURLScheme, iEqual } from "./utils/utils.common";
+import type { ExtendedServiceClientOptions } from "@azure/core-http-compat";
+import type { HttpClient, Pipeline as CorePipeline } from "@azure/core-rest-pipeline";
+import type { OperationTracingOptions } from "@azure/core-tracing";
 
 /**
  * An interface for options common to every remote operation.
  */
 export interface CommonOptions {
-  /**
-   * Options to configure spans created when tracing is enabled.
-   */
   tracingOptions?: OperationTracingOptions;
+}
+
+// This function relies on the Pipeline already being initialized by a storage-blob client
+function getCoreClientOptions(pipeline: Pipeline): ExtendedServiceClientOptions {
+  const { httpClient: v1Client, ...restOptions } = pipeline.options as StoragePipelineOptions;
+  const httpClient: HttpClient = (pipeline as any)._coreHttpClient;
+  if (!httpClient) {
+    throw new Error("Pipeline not correctly initialized; missing V2 HttpClient");
+  }
+
+  const corePipeline: CorePipeline = (pipeline as any)._corePipeline;
+  if (!corePipeline) {
+    throw new Error("Pipeline not correctly initialized; missing V2 Pipeline");
+  }
+  return {
+    ...restOptions,
+    allowInsecureConnection: true,
+    httpClient,
+    pipeline: corePipeline,
+  };
 }
 
 /**
@@ -75,37 +95,28 @@ export abstract class StorageClient {
    * @param url - url to resource
    * @param pipeline - request policy pipeline.
    */
-  protected constructor(url: string, pipeline: Pipeline) {
+  protected constructor(url: string, pipeline: PipelineLike) {
     // URL should be encoded and only once, protocol layer shouldn't encode URL again
     this.url = escapeURLPath(url);
     this.blobEndpointUrl = toBlobEndpointUrl(this.url);
     this.dfsEndpointUrl = toDfsEndpointUrl(this.url);
     this.accountName = getAccountNameFromUrl(this.blobEndpointUrl);
     this.pipeline = pipeline;
-    this.storageClientContext = new StorageClientContext(
+    // creating this BlobServiceClient allows us to use the converted V2 Pipeline attached to `pipeline`.
+    const blobClient = new BlobServiceClient(url, pipeline);
+    this.storageClientContext = new StorageContextClient(
       this.dfsEndpointUrl,
-      pipeline.toServiceClientOptions()
+      getCoreClientOptions(pipeline),
     );
-    this.storageClientContextToBlobEndpoint = new StorageClientContext(
+
+    this.storageClientContextToBlobEndpoint = new StorageContextClient(
       this.blobEndpointUrl,
-      pipeline.toServiceClientOptions()
+      getCoreClientOptions(pipeline),
     );
 
     this.isHttps = iEqual(getURLScheme(this.url) || "", "https");
 
-    this.credential = new AnonymousCredential();
-    for (const factory of this.pipeline.factories) {
-      if (
-        (isNode && factory instanceof StorageSharedKeyCredential) ||
-        factory instanceof AnonymousCredential
-      ) {
-        this.credential = factory;
-      } else if (isTokenCredential((factory as any).credential)) {
-        // Only works if the factory has been attached a "credential" property.
-        // We do that in newPipeline() when using TokenCredential.
-        this.credential = (factory as any).credential;
-      }
-    }
+    this.credential = (blobClient as any).credential;
 
     // Override protocol layer's default content-type
     const storageClientContext = this.storageClientContext as any;

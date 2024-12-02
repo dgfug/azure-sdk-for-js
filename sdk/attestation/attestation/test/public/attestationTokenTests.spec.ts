@@ -1,37 +1,32 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../src/jsrsasign.d.ts"/>
 import * as jsrsasign from "jsrsasign";
 
-import { assert, expect, use as chaiUse } from "chai";
-import { Context } from "mocha";
-import chaiPromises from "chai-as-promised";
-chaiUse(chaiPromises);
-
 import { Recorder } from "@azure-tools/test-recorder";
+import { bytesToString, stringToBytes } from "../../src/utils/utf8.js";
 
-import { createRecorder } from "../utils/recordedClient";
+import { createECDSKey, createRSAKey, createX509Certificate } from "../utils/cryptoUtils.js";
+import { verifyAttestationSigningKey } from "../../src/utils/helpers.js";
+import { AttestationTokenImpl } from "../../src/models/attestationToken.js";
+import { recorderOptions } from "../utils/recordedClient.js";
+import { describe, it, assert, expect, beforeEach, afterEach } from "vitest";
 
-import { bytesToString, stringToBytes } from "../../src/utils/utf8";
-
-import { createECDSKey, createRSAKey, createX509Certificate } from "../utils/cryptoUtils";
-import { verifyAttestationSigningKey } from "../../src/utils/helpers";
-import { AttestationTokenImpl } from "../../src/models/attestationToken";
-
-describe("AttestationTokenTests", function() {
+describe("AttestationTokenTests", function () {
   let recorder: Recorder;
 
-  beforeEach(function(this: Context) {
-    recorder = createRecorder(this);
+  beforeEach(async function (ctx) {
+    recorder = new Recorder(ctx);
+    await recorder.start(recorderOptions);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
-  it("#testUtf8ConversionFunctions", async () => {
+  it("#testUtf8ConversionFunctions", async function () {
     const buffer = stringToBytes("ABCDEF");
     assert.equal(65, buffer[0]);
     assert.equal(66, buffer[1]);
@@ -43,7 +38,7 @@ describe("AttestationTokenTests", function() {
     assert.equal("ABCDEF", str);
   });
 
-  it("#createRsaSigningKey", async () => {
+  it("#createRsaSigningKey", async function () {
     const [privKey, pubKey] = createRSAKey();
     const cert = createX509Certificate(privKey, pubKey, "testCert");
     assert.isTrue(privKey.length !== 0);
@@ -53,7 +48,7 @@ describe("AttestationTokenTests", function() {
     assert.isTrue(signingKey.certificate.length !== 0);
   });
 
-  it("#createEcdsSigningKey", async () => {
+  it("#createEcdsSigningKey", async function () {
     const [privKey, pubKey] = createECDSKey();
     const cert = createX509Certificate(privKey, pubKey, "testCert");
     assert.isTrue(privKey.length !== 0);
@@ -65,7 +60,7 @@ describe("AttestationTokenTests", function() {
 
   // Create a signing key, but use the wrong key - this should throw an
   // exception, because the key doesn't match the certificate.
-  it("#createSigningKeyWrongKey", async () => {
+  it("#createSigningKeyWrongKey", async function () {
     const [privKey, pubKey] = createECDSKey();
     const cert = createX509Certificate(privKey, pubKey, "testCert");
 
@@ -80,7 +75,7 @@ describe("AttestationTokenTests", function() {
   /**
    * Creates an unsecured attestation token.
    */
-  it("#createUnsecuredAttestationToken", async () => {
+  it("#createUnsecuredAttestationToken", async function () {
     const sourceObject = JSON.stringify({ foo: "foo", bar: 10 });
     const token = AttestationTokenImpl.create({ body: sourceObject });
 
@@ -92,7 +87,7 @@ describe("AttestationTokenTests", function() {
   /**
    * Creates an unsecured empty attestation token.
    */
-  it("#createUnsecuredEmptyAttestationToken", async () => {
+  it("#createUnsecuredEmptyAttestationToken", async function () {
     const token = AttestationTokenImpl.create({});
 
     // An empty unsecured attestation token has a well known value, check it.
@@ -105,7 +100,7 @@ describe("AttestationTokenTests", function() {
   /**
    * Creates a secured empty attestation token with the specified key.
    */
-  it("#createEmptySecuredAttestationToken", async () => {
+  it("#createEmptySecuredAttestationToken", async function () {
     const [privKey, pubKey] = createRSAKey();
     const cert = createX509Certificate(privKey, pubKey, "certificate");
 
@@ -132,7 +127,7 @@ describe("AttestationTokenTests", function() {
   /**
    * Creates a secured attestation token with the specified key.
    */
-  it("#createSecuredAttestationToken", async () => {
+  it("#createSecuredAttestationToken", async function () {
     const [privKey, pubKey] = createRSAKey();
     const cert = createX509Certificate(privKey, pubKey, "certificate");
 
@@ -145,14 +140,14 @@ describe("AttestationTokenTests", function() {
       exp: currentTime + 30,
       iat: currentTime,
       nbf: currentTime,
-      iss: "this is an issuer"
+      iss: "this is an issuer",
     };
 
     const sourceJson = JSON.stringify(sourceObject);
     const token = AttestationTokenImpl.create({
       body: sourceJson,
       privateKey: privKey,
-      certificate: cert
+      certificate: cert,
     });
 
     // Let's look at some of the properties on the token and confirm they match
@@ -168,7 +163,7 @@ describe("AttestationTokenTests", function() {
     expect(token.issuer).to.equal("this is an issuer");
   });
 
-  it("#verifyAttestationTokenCallback", async () => {
+  it("#verifyAttestationTokenCallback", async function () {
     const sourceObject = JSON.stringify({ foo: "foo", bar: 10 });
 
     const token = AttestationTokenImpl.create({ body: sourceObject });
@@ -180,8 +175,8 @@ describe("AttestationTokenTests", function() {
         validateAttestationToken: (tokenToCheck) => {
           console.log("In callback, token algorithm: " + tokenToCheck.algorithm);
           return undefined;
-        }
-      })
+        },
+      }),
     );
 
     assert.isTrue(
@@ -191,13 +186,13 @@ describe("AttestationTokenTests", function() {
           validateAttestationToken: (tokenToCheck) => {
             console.log("In callback, token algorithm: " + tokenToCheck.algorithm);
             return ["There was a validation failure"];
-          }
+          },
         })
-        .find((s) => s.search("validation")) !== undefined
+        .find((s) => s.search("validation")) !== undefined,
     );
   });
 
-  it("#verifyAttestationTokenIssuer", async () => {
+  it("#verifyAttestationTokenIssuer", async function () {
     const currentTime = Math.floor(new Date().getTime() / 1000);
     {
       // Source expires in 30 seconds.
@@ -207,7 +202,7 @@ describe("AttestationTokenTests", function() {
         nbf: currentTime,
         iss: "this is an issuer",
         foo: "foo",
-        bar: 10
+        bar: 10,
       });
 
       const token = AttestationTokenImpl.create({ body: sourceObject });
@@ -217,8 +212,8 @@ describe("AttestationTokenTests", function() {
         token.getTokenProblems(undefined, {
           validateToken: true,
           validateIssuer: true,
-          expectedIssuer: "this is an issuer"
-        })
+          expectedIssuer: "this is an issuer",
+        }),
       );
 
       assert.isTrue(
@@ -226,13 +221,13 @@ describe("AttestationTokenTests", function() {
           .getTokenProblems(undefined, {
             validateToken: true,
             validateIssuer: true,
-            expectedIssuer: "this is a different issuer"
+            expectedIssuer: "this is a different issuer",
           })
-          .find((s) => s.search("different issuer")) !== undefined
+          .find((s) => s.search("different issuer")) !== undefined,
       );
     }
   });
-  it("#verifyAttestationTimeouts", async () => {
+  it("#verifyAttestationTimeouts", async function () {
     const currentTime = Math.floor(new Date().getTime() / 1000);
 
     {
@@ -242,7 +237,7 @@ describe("AttestationTokenTests", function() {
         iat: currentTime,
         nbf: currentTime,
         foo: "foo",
-        bar: 10
+        bar: 10,
       });
 
       const token = AttestationTokenImpl.create({ body: sourceObject });
@@ -252,8 +247,8 @@ describe("AttestationTokenTests", function() {
         token.getTokenProblems(undefined, {
           validateToken: true,
           validateExpirationTime: true,
-          validateNotBeforeTime: true
-        })
+          validateNotBeforeTime: true,
+        }),
       );
     }
 
@@ -264,7 +259,7 @@ describe("AttestationTokenTests", function() {
         iat: currentTime,
         nbf: currentTime,
         foo: "foo",
-        bar: 10
+        bar: 10,
       });
 
       const token = AttestationTokenImpl.create({ body: sourceObject });
@@ -274,9 +269,9 @@ describe("AttestationTokenTests", function() {
           .getTokenProblems(undefined, {
             validateToken: true,
             validateExpirationTime: true,
-            validateNotBeforeTime: true
+            validateNotBeforeTime: true,
           })
-          .find((s) => s.search("expired")) !== undefined
+          .find((s) => s.search("expired")) !== undefined,
       );
 
       // Validate the token again, this time specifying a validation slack of
@@ -287,8 +282,8 @@ describe("AttestationTokenTests", function() {
           validateToken: true,
           validateExpirationTime: true,
           validateNotBeforeTime: true,
-          timeValidationSlack: 10
-        })
+          timeValidationSlack: 10,
+        }),
       );
     }
     {
@@ -298,7 +293,7 @@ describe("AttestationTokenTests", function() {
         iat: currentTime + 5,
         nbf: currentTime + 5,
         foo: "foo",
-        bar: 10
+        bar: 10,
       });
 
       const token = AttestationTokenImpl.create({ body: sourceObject });
@@ -307,9 +302,9 @@ describe("AttestationTokenTests", function() {
           .getTokenProblems(undefined, {
             validateToken: true,
             validateExpirationTime: true,
-            validateNotBeforeTime: true
+            validateNotBeforeTime: true,
           })
-          .find((s) => s.search("not yet")) !== undefined
+          .find((s) => s.search("not yet")) !== undefined,
       );
 
       // Validate the token again, this time specifying a validation slack of
@@ -320,8 +315,8 @@ describe("AttestationTokenTests", function() {
           validateToken: true,
           validateExpirationTime: true,
           validateNotBeforeTime: true,
-          timeValidationSlack: 10
-        })
+          timeValidationSlack: 10,
+        }),
       );
     }
   });

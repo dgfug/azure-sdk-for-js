@@ -6,11 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { Chat } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import { Chat } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { ChatApiClientContext } from "../chatApiClientContext";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { ChatApiClient } from "../chatApiClient.js";
 import {
   CreateChatThreadRequest,
   ChatCreateChatThreadOptionalParams,
@@ -19,18 +20,18 @@ import {
   ChatListChatThreadsResponse,
   ChatDeleteChatThreadOptionalParams,
   ChatListChatThreadsNextOptionalParams,
-  ChatListChatThreadsNextResponse
-} from "../models";
+  ChatListChatThreadsNextResponse,
+} from "../models/index.js";
 
 /** Class containing Chat operations. */
 export class ChatImpl implements Chat {
-  private readonly client: ChatApiClientContext;
+  private readonly client: ChatApiClient;
 
   /**
    * Initialize a new instance of the class Chat class.
    * @param client Reference to the service client
    */
-  constructor(client: ChatApiClientContext) {
+  constructor(client: ChatApiClient) {
     this.client = client;
   }
 
@@ -39,13 +40,19 @@ export class ChatImpl implements Chat {
    * @param createChatThreadRequest Request payload for creating a chat thread.
    * @param options The options parameters.
    */
-  createChatThread(
+  async createChatThread(
     createChatThreadRequest: CreateChatThreadRequest,
-    options?: ChatCreateChatThreadOptionalParams
+    options?: ChatCreateChatThreadOptionalParams,
   ): Promise<ChatCreateChatThreadResponse> {
-    return this.client.sendOperationRequest(
-      { createChatThreadRequest, options },
-      createChatThreadOperationSpec
+    return tracingClient.withSpan(
+      "ChatApiClient.createChatThread",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { createChatThreadRequest, options },
+          createChatThreadOperationSpec,
+        ) as Promise<ChatCreateChatThreadResponse>;
+      },
     );
   }
 
@@ -53,12 +60,18 @@ export class ChatImpl implements Chat {
    * Gets the list of chat threads of a user.
    * @param options The options parameters.
    */
-  listChatThreads(
-    options?: ChatListChatThreadsOptionalParams
+  async listChatThreads(
+    options?: ChatListChatThreadsOptionalParams,
   ): Promise<ChatListChatThreadsResponse> {
-    return this.client.sendOperationRequest(
-      { options },
-      listChatThreadsOperationSpec
+    return tracingClient.withSpan(
+      "ChatApiClient.listChatThreads",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { options },
+          listChatThreadsOperationSpec,
+        ) as Promise<ChatListChatThreadsResponse>;
+      },
     );
   }
 
@@ -67,13 +80,19 @@ export class ChatImpl implements Chat {
    * @param chatThreadId Id of the thread to be deleted.
    * @param options The options parameters.
    */
-  deleteChatThread(
+  async deleteChatThread(
     chatThreadId: string,
-    options?: ChatDeleteChatThreadOptionalParams
+    options?: ChatDeleteChatThreadOptionalParams,
   ): Promise<void> {
-    return this.client.sendOperationRequest(
-      { chatThreadId, options },
-      deleteChatThreadOperationSpec
+    return tracingClient.withSpan(
+      "ChatApiClient.deleteChatThread",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { chatThreadId, options },
+          deleteChatThreadOperationSpec,
+        ) as Promise<void>;
+      },
     );
   }
 
@@ -82,13 +101,19 @@ export class ChatImpl implements Chat {
    * @param nextLink The nextLink from the previous successful call to the ListChatThreads method.
    * @param options The options parameters.
    */
-  listChatThreadsNext(
+  async listChatThreadsNext(
     nextLink: string,
-    options?: ChatListChatThreadsNextOptionalParams
+    options?: ChatListChatThreadsNextOptionalParams,
   ): Promise<ChatListChatThreadsNextResponse> {
-    return this.client.sendOperationRequest(
-      { nextLink, options },
-      listChatThreadsNextOperationSpec
+    return tracingClient.withSpan(
+      "ChatApiClient.listChatThreadsNext",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { nextLink, options },
+          listChatThreadsNextOperationSpec,
+        ) as Promise<ChatListChatThreadsNextResponse>;
+      },
     );
   }
 }
@@ -100,24 +125,24 @@ const createChatThreadOperationSpec: coreClient.OperationSpec = {
   httpMethod: "POST",
   responses: {
     201: {
-      bodyMapper: Mappers.CreateChatThreadResult
+      bodyMapper: Mappers.CreateChatThreadResult,
     },
     401: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     403: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     429: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     503: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
-    }
+      isError: true,
+    },
   },
   requestBody: Parameters.createChatThreadRequest,
   queryParameters: [Parameters.apiVersion],
@@ -125,43 +150,43 @@ const createChatThreadOperationSpec: coreClient.OperationSpec = {
   headerParameters: [
     Parameters.accept,
     Parameters.contentType,
-    Parameters.repeatabilityRequestId
+    Parameters.repeatabilityRequestId,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listChatThreadsOperationSpec: coreClient.OperationSpec = {
   path: "/chat/threads",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ChatThreadsItemCollection
+      bodyMapper: Mappers.ChatThreadsItemCollection,
     },
     401: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     403: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     429: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     503: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
-    }
+      isError: true,
+    },
   },
   queryParameters: [
     Parameters.maxPageSize,
     Parameters.apiVersion,
-    Parameters.startTime
+    Parameters.startTime,
   ],
   urlParameters: [Parameters.endpoint],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteChatThreadOperationSpec: coreClient.OperationSpec = {
   path: "/chat/threads/{chatThreadId}",
@@ -170,56 +195,51 @@ const deleteChatThreadOperationSpec: coreClient.OperationSpec = {
     204: {},
     401: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     403: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     429: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     503: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
-    }
+      isError: true,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.chatThreadId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listChatThreadsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ChatThreadsItemCollection
+      bodyMapper: Mappers.ChatThreadsItemCollection,
     },
     401: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     403: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     429: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
+      isError: true,
     },
     503: {
       bodyMapper: Mappers.CommunicationErrorResponse,
-      isError: true
-    }
+      isError: true,
+    },
   },
-  queryParameters: [
-    Parameters.maxPageSize,
-    Parameters.apiVersion,
-    Parameters.startTime
-  ],
   urlParameters: [Parameters.endpoint, Parameters.nextLink],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

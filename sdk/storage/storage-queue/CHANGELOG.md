@@ -1,14 +1,138 @@
 # Release History
 
-## 12.8.0-beta.2 (Unreleased)
+## 12.25.0 (2024-11-13)
 
 ### Features Added
 
-### Breaking Changes
+- Added support for service version 2025-01-05.
+
+## 12.24.0 (2024-09-22)
+
+### Features Added
+
+- Includes all features released in 12.24.0-beta.1.
+
+### Other Changes
+
+- Upgraded dependency on `@azure/core-xml` to version `1.4.3`.
+
+## 12.24.0-beta.1 (2024-08-09)
+
+### Features Added
+
+- Added support for service version 2024-11-04.
+- Added ability to retrieve SAS string to sign for debugging purposes.
+
+## 12.23.0 (2024-07-18)
+
+### Features Added
+
+- Includes all features released in 12.23.0-beta.1.
 
 ### Bugs Fixed
 
+- Correct content-length header with request body length. (#30138)
+
+## 12.23.0-beta.1 (2024-06-13)
+
+### Features Added
+
+- Added support for service version 2024-08-04.
+- Added more detailed messaging for authorization failure cases.
+
+## 12.22.0 (2024-06-04)
+
+### Features Added
+
+- Includes all features released in 12.22.0-beta.1.
+- Allow HTTP connections
+
+## 12.17.0 (2024-05-11)
+
+### Features Added
+
+- Added support for service version 2024-05-04.
+
+## 12.16.0 (2023-11-09)
+
+### Features Added
+
+- Includes all features released in 12.16.0-beta.1.
+
+## 12.22.0-beta.1 (2023-11-01)
+
 ### Other Changes
+
+- Migrated dependency on `@azure/core-http` to `@azure/core-rest-pipeline`.
+
+## 12.16.0-beta.1 (2023-10-18)
+
+### Features Added
+
+- Added support for service version 2023-11-03.
+- Added support for indicating audience in StoragePipelineOptions.
+
+## 12.15.0 (2023-09-14)
+
+### Features Added
+
+- Added support for service version 2023-08-03.
+
+## 12.14.0 (2023-07-12)
+
+### Features Added
+
+- Added support for service version 2023-01-03.
+
+## 12.13.0 (2023-04-13)
+
+### Features Added
+
+- Added support for service version 2022-11-02.
+
+## 12.12.0 (2023-02-23)
+
+### Other Changes
+
+- Update dependency `@azure/core-http` version to `^3.0.0`.
+
+## 12.11.0 (2022-10-14)
+
+### Features 
+
+- Added support for service version 2021-10-04.
+
+### Bugs Fixed
+
+- Refined URL parsing method to let it be able to correctly parse URLs with account name in path.
+
+## 12.10.0 (2022-07-08)
+
+### Features Added
+
+- Added support for service version 2021-08-06.
+
+## 12.9.0 (2022-05-12)
+
+### Features Added
+
+- Added support for service version 2021-06-08.
+
+### Bugs Fixed
+
+- Add `react-native` mapping to ESM entry point
+- Fixed a bug where customized `ProxyOptions` is overwrited by a default one when initializing `QueueServiceClient` or `QueueClient` with connection string.
+- Refined user-agent value to avoid failure when os information is not available on some platforms.
+
+## 12.8.0 (2022-03-11)
+
+### Features Added
+
+- Added support for service version 2021-04-10.
+
+### Bugs Fixed
+
+- Fixed a bug where customized `ProxyOptions` is overwrited by a default one when initializing `QueueServiceClient` or `QueueClient` with connection string.
 
 ## 12.8.0-beta.1 (2021-11-09)
 
@@ -167,13 +291,13 @@
   Before this change the option is specified as
   ```js
   queueServiceClient.listShares({
-    include: "metadata"
+    include: "metadata",
   });
   ```
   After this change:
   ```js
   queueServiceClient.listShares({
-    includeMetadata: true
+    includeMetadata: true,
   });
   ```
 
@@ -189,7 +313,7 @@
 - Updated HTTP client from axios to node-fetch in Node.js runtime.
 - A new option `keepAliveOptions` added to parameter of `newPipeline()` which controls keep-alive configurations. Keep-alive is enabled by default.
 - Pass through `options.abortSignal` to the optional `abortSignal` attribute in option bags instead of using `AbortSignal.none` as the default value when `options.abortSignal` is not specified.
-- Basic HTTP proxy authentication support is added. Proxy settings can be passed in the options while creating a new client. Example - [typescript/proxyAuth.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-queue/samples/typescript/src/proxyAuth.ts)
+- Basic HTTP proxy authentication support is added. Proxy settings can be passed in the options while creating a new client. Example - [typescript/proxyAuth.ts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/storage/storage-queue/samples/v12/typescript/src/proxyAuth.ts)
 - Connection strings for explicit storage endpoints are supported. - [Configure Azure Storage connection strings](https://docs.microsoft.com/azure/storage/common/storage-configure-connection-string#create-a-connection-string-for-an-explicit-storage-endpoint)
 
 ## 10.3.0 (2019-09-09)
@@ -246,7 +370,7 @@
   - Connection string method is supported only in Node.js (not browsers).
 - Creation/Deletion of child resources are duplicated to parent client type.
 - HTTP proxy support is added (Node.js only).
-  - Please refer to the `proxyAuth.ts` sample in the `samples/typescript` folder.
+  - Please refer to the `proxyAuth.ts` sample in the `samples/v12/typescript` folder.
 - Request and response headers are now logged at INFO level, with sensitive data redacted.
 
 For release notes and more information please visit https://aka.ms/azsdk/releases/july2019preview

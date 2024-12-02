@@ -5,9 +5,9 @@ token service (STS) for authentication. This package supports exchanging Mixed R
 token from the STS that can be used to access Mixed Reality services.
 
 Key links:
-- [Source code](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/mixedreality/mixed-reality-authentication/) |
-- [Package (NPM)](https://www.npmjs.com/package/@azure/mixed-reality-authentication) |
-- [API reference documentation](https://aka.ms/azsdk/js/mixed-reality-authentication/docs) |
+- [Source code](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/mixedreality/mixed-reality-authentication/)
+- [Package (NPM)](https://www.npmjs.com/package/@azure/mixed-reality-authentication)
+- [API reference documentation](https://learn.microsoft.com/javascript/api/overview/azure/mixed-reality-authentication-readme)
 - [Samples](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/mixedreality/mixed-reality-authentication/samples)
 
 ![Mixed Reality service authentication diagram](https://docs.microsoft.com/azure/spatial-anchors/concepts/media/spatial-anchors-authentication-overview.png)
@@ -16,7 +16,7 @@ Key links:
 
 ### Currently supported environments
 
-- [LTS versions of Node.js](https://nodejs.org/about/releases/)
+- [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule)
 
 ### Prerequisites
 
@@ -165,7 +165,7 @@ documentation for the client library you're using to determine if and how this m
 Enabling logging may help uncover useful information about failures. In order to see a log of HTTP requests and responses, set the `AZURE_LOG_LEVEL` environment variable to `info`. Alternatively, logging can be enabled at runtime by calling `setLogLevel` in the `@azure/logger`:
 
 ```javascript
-import { setLogLevel } from "@azure/logger";
+const { setLogLevel } = require("@azure/logger");
 
 setLogLevel("info");
 ```

@@ -6,29 +6,30 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { PartitionKeyRangeIdRegion } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   PartitionMetric,
   PartitionKeyRangeIdRegionListMetricsOptionalParams,
-  PartitionKeyRangeIdRegionListMetricsResponse
+  PartitionKeyRangeIdRegionListMetricsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing PartitionKeyRangeIdRegion operations. */
 export class PartitionKeyRangeIdRegionImpl
-  implements PartitionKeyRangeIdRegion {
-  private readonly client: CosmosDBManagementClientContext;
+  implements PartitionKeyRangeIdRegion
+{
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class PartitionKeyRangeIdRegion class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -54,7 +55,7 @@ export class PartitionKeyRangeIdRegionImpl
     collectionRid: string,
     partitionKeyRangeId: string,
     filter: string,
-    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams
+    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<PartitionMetric> {
     const iter = this.listMetricsPagingAll(
       resourceGroupName,
@@ -64,7 +65,7 @@ export class PartitionKeyRangeIdRegionImpl
       collectionRid,
       partitionKeyRangeId,
       filter,
-      options
+      options,
     );
     return {
       next() {
@@ -73,7 +74,10 @@ export class PartitionKeyRangeIdRegionImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listMetricsPagingPage(
           resourceGroupName,
           accountName,
@@ -82,9 +86,10 @@ export class PartitionKeyRangeIdRegionImpl
           collectionRid,
           partitionKeyRangeId,
           filter,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -96,9 +101,11 @@ export class PartitionKeyRangeIdRegionImpl
     collectionRid: string,
     partitionKeyRangeId: string,
     filter: string,
-    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams
+    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<PartitionMetric[]> {
-    let result = await this._listMetrics(
+    let result: PartitionKeyRangeIdRegionListMetricsResponse;
+    result = await this._listMetrics(
       resourceGroupName,
       accountName,
       region,
@@ -106,7 +113,7 @@ export class PartitionKeyRangeIdRegionImpl
       collectionRid,
       partitionKeyRangeId,
       filter,
-      options
+      options,
     );
     yield result.value || [];
   }
@@ -119,7 +126,7 @@ export class PartitionKeyRangeIdRegionImpl
     collectionRid: string,
     partitionKeyRangeId: string,
     filter: string,
-    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams
+    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams,
   ): AsyncIterableIterator<PartitionMetric> {
     for await (const page of this.listMetricsPagingPage(
       resourceGroupName,
@@ -129,7 +136,7 @@ export class PartitionKeyRangeIdRegionImpl
       collectionRid,
       partitionKeyRangeId,
       filter,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -157,7 +164,7 @@ export class PartitionKeyRangeIdRegionImpl
     collectionRid: string,
     partitionKeyRangeId: string,
     filter: string,
-    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams
+    options?: PartitionKeyRangeIdRegionListMetricsOptionalParams,
   ): Promise<PartitionKeyRangeIdRegionListMetricsResponse> {
     return this.client.sendOperationRequest(
       {
@@ -168,9 +175,9 @@ export class PartitionKeyRangeIdRegionImpl
         collectionRid,
         partitionKeyRangeId,
         filter,
-        options
+        options,
       },
-      listMetricsOperationSpec
+      listMetricsOperationSpec,
     );
   }
 }
@@ -178,13 +185,12 @@ export class PartitionKeyRangeIdRegionImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listMetricsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/region/{region}/databases/{databaseRid}/collections/{collectionRid}/partitionKeyRangeId/{partitionKeyRangeId}/metrics",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/region/{region}/databases/{databaseRid}/collections/{collectionRid}/partitionKeyRangeId/{partitionKeyRangeId}/metrics",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.PartitionMetricListResult
-    }
+      bodyMapper: Mappers.PartitionMetricListResult,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
@@ -195,8 +201,8 @@ const listMetricsOperationSpec: coreClient.OperationSpec = {
     Parameters.databaseRid,
     Parameters.collectionRid,
     Parameters.region,
-    Parameters.partitionKeyRangeId
+    Parameters.partitionKeyRangeId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

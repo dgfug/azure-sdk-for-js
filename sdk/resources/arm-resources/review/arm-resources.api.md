@@ -6,9 +6,9 @@
 
 import * as coreAuth from '@azure/core-auth';
 import * as coreClient from '@azure/core-client';
+import { OperationState } from '@azure/core-lro';
 import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PollerLike } from '@azure/core-lro';
-import { PollOperationState } from '@azure/core-lro';
+import { SimplePollerLike } from '@azure/core-lro';
 
 // @public
 export interface Alias {
@@ -157,14 +157,9 @@ export interface DeploymentOperations {
     getAtTenantScope(deploymentName: string, operationId: string, options?: DeploymentOperationsGetAtTenantScopeOptionalParams): Promise<DeploymentOperationsGetAtTenantScopeResponse>;
     list(resourceGroupName: string, deploymentName: string, options?: DeploymentOperationsListOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
     listAtManagementGroupScope(groupId: string, deploymentName: string, options?: DeploymentOperationsListAtManagementGroupScopeOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
-    listAtManagementGroupScopeNext(groupId: string, deploymentName: string, nextLink: string, options?: DeploymentOperationsListAtManagementGroupScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
     listAtScope(scope: string, deploymentName: string, options?: DeploymentOperationsListAtScopeOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
-    listAtScopeNext(scope: string, deploymentName: string, nextLink: string, options?: DeploymentOperationsListAtScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
     listAtSubscriptionScope(deploymentName: string, options?: DeploymentOperationsListAtSubscriptionScopeOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
-    listAtSubscriptionScopeNext(deploymentName: string, nextLink: string, options?: DeploymentOperationsListAtSubscriptionScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
     listAtTenantScope(deploymentName: string, options?: DeploymentOperationsListAtTenantScopeOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
-    listAtTenantScopeNext(deploymentName: string, nextLink: string, options?: DeploymentOperationsListAtTenantScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
-    listNext(resourceGroupName: string, deploymentName: string, nextLink: string, options?: DeploymentOperationsListNextOptionalParams): PagedAsyncIterableIterator<DeploymentOperation>;
 }
 
 // @public
@@ -203,16 +198,7 @@ export interface DeploymentOperationsGetOptionalParams extends coreClient.Operat
 export type DeploymentOperationsGetResponse = DeploymentOperation;
 
 // @public
-export interface DeploymentOperationsListAtManagementGroupScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
-}
-
-// @public
-export type DeploymentOperationsListAtManagementGroupScopeNextNextResponse = DeploymentOperationsListResult;
-
-// @public
 export interface DeploymentOperationsListAtManagementGroupScopeNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
 }
 
 // @public
@@ -227,16 +213,7 @@ export interface DeploymentOperationsListAtManagementGroupScopeOptionalParams ex
 export type DeploymentOperationsListAtManagementGroupScopeResponse = DeploymentOperationsListResult;
 
 // @public
-export interface DeploymentOperationsListAtScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
-}
-
-// @public
-export type DeploymentOperationsListAtScopeNextNextResponse = DeploymentOperationsListResult;
-
-// @public
 export interface DeploymentOperationsListAtScopeNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
 }
 
 // @public
@@ -251,16 +228,7 @@ export interface DeploymentOperationsListAtScopeOptionalParams extends coreClien
 export type DeploymentOperationsListAtScopeResponse = DeploymentOperationsListResult;
 
 // @public
-export interface DeploymentOperationsListAtSubscriptionScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
-}
-
-// @public
-export type DeploymentOperationsListAtSubscriptionScopeNextNextResponse = DeploymentOperationsListResult;
-
-// @public
 export interface DeploymentOperationsListAtSubscriptionScopeNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
 }
 
 // @public
@@ -275,16 +243,7 @@ export interface DeploymentOperationsListAtSubscriptionScopeOptionalParams exten
 export type DeploymentOperationsListAtSubscriptionScopeResponse = DeploymentOperationsListResult;
 
 // @public
-export interface DeploymentOperationsListAtTenantScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
-}
-
-// @public
-export type DeploymentOperationsListAtTenantScopeNextNextResponse = DeploymentOperationsListResult;
-
-// @public
 export interface DeploymentOperationsListAtTenantScopeNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
 }
 
 // @public
@@ -299,16 +258,7 @@ export interface DeploymentOperationsListAtTenantScopeOptionalParams extends cor
 export type DeploymentOperationsListAtTenantScopeResponse = DeploymentOperationsListResult;
 
 // @public
-export interface DeploymentOperationsListNextNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
-}
-
-// @public
-export type DeploymentOperationsListNextNextResponse = DeploymentOperationsListResult;
-
-// @public
 export interface DeploymentOperationsListNextOptionalParams extends coreClient.OperationOptions {
-    top?: number;
 }
 
 // @public
@@ -363,43 +313,43 @@ export interface DeploymentPropertiesExtended {
 
 // @public
 export interface Deployments {
-    beginCreateOrUpdate(resourceGroupName: string, deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsCreateOrUpdateResponse>, DeploymentsCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsCreateOrUpdateResponse>, DeploymentsCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateOptionalParams): Promise<DeploymentsCreateOrUpdateResponse>;
-    beginCreateOrUpdateAtManagementGroupScope(groupId: string, deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsCreateOrUpdateAtManagementGroupScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsCreateOrUpdateAtManagementGroupScopeResponse>, DeploymentsCreateOrUpdateAtManagementGroupScopeResponse>>;
+    beginCreateOrUpdateAtManagementGroupScope(groupId: string, deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsCreateOrUpdateAtManagementGroupScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsCreateOrUpdateAtManagementGroupScopeResponse>, DeploymentsCreateOrUpdateAtManagementGroupScopeResponse>>;
     beginCreateOrUpdateAtManagementGroupScopeAndWait(groupId: string, deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsCreateOrUpdateAtManagementGroupScopeOptionalParams): Promise<DeploymentsCreateOrUpdateAtManagementGroupScopeResponse>;
-    beginCreateOrUpdateAtScope(scope: string, deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateAtScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsCreateOrUpdateAtScopeResponse>, DeploymentsCreateOrUpdateAtScopeResponse>>;
+    beginCreateOrUpdateAtScope(scope: string, deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateAtScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsCreateOrUpdateAtScopeResponse>, DeploymentsCreateOrUpdateAtScopeResponse>>;
     beginCreateOrUpdateAtScopeAndWait(scope: string, deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateAtScopeOptionalParams): Promise<DeploymentsCreateOrUpdateAtScopeResponse>;
-    beginCreateOrUpdateAtSubscriptionScope(deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateAtSubscriptionScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>, DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>>;
+    beginCreateOrUpdateAtSubscriptionScope(deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateAtSubscriptionScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>, DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>>;
     beginCreateOrUpdateAtSubscriptionScopeAndWait(deploymentName: string, parameters: Deployment, options?: DeploymentsCreateOrUpdateAtSubscriptionScopeOptionalParams): Promise<DeploymentsCreateOrUpdateAtSubscriptionScopeResponse>;
-    beginCreateOrUpdateAtTenantScope(deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsCreateOrUpdateAtTenantScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsCreateOrUpdateAtTenantScopeResponse>, DeploymentsCreateOrUpdateAtTenantScopeResponse>>;
+    beginCreateOrUpdateAtTenantScope(deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsCreateOrUpdateAtTenantScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsCreateOrUpdateAtTenantScopeResponse>, DeploymentsCreateOrUpdateAtTenantScopeResponse>>;
     beginCreateOrUpdateAtTenantScopeAndWait(deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsCreateOrUpdateAtTenantScopeOptionalParams): Promise<DeploymentsCreateOrUpdateAtTenantScopeResponse>;
-    beginDelete(resourceGroupName: string, deploymentName: string, options?: DeploymentsDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, deploymentName: string, options?: DeploymentsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, deploymentName: string, options?: DeploymentsDeleteOptionalParams): Promise<void>;
-    beginDeleteAtManagementGroupScope(groupId: string, deploymentName: string, options?: DeploymentsDeleteAtManagementGroupScopeOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDeleteAtManagementGroupScope(groupId: string, deploymentName: string, options?: DeploymentsDeleteAtManagementGroupScopeOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAtManagementGroupScopeAndWait(groupId: string, deploymentName: string, options?: DeploymentsDeleteAtManagementGroupScopeOptionalParams): Promise<void>;
-    beginDeleteAtScope(scope: string, deploymentName: string, options?: DeploymentsDeleteAtScopeOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDeleteAtScope(scope: string, deploymentName: string, options?: DeploymentsDeleteAtScopeOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAtScopeAndWait(scope: string, deploymentName: string, options?: DeploymentsDeleteAtScopeOptionalParams): Promise<void>;
-    beginDeleteAtSubscriptionScope(deploymentName: string, options?: DeploymentsDeleteAtSubscriptionScopeOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDeleteAtSubscriptionScope(deploymentName: string, options?: DeploymentsDeleteAtSubscriptionScopeOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAtSubscriptionScopeAndWait(deploymentName: string, options?: DeploymentsDeleteAtSubscriptionScopeOptionalParams): Promise<void>;
-    beginDeleteAtTenantScope(deploymentName: string, options?: DeploymentsDeleteAtTenantScopeOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDeleteAtTenantScope(deploymentName: string, options?: DeploymentsDeleteAtTenantScopeOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAtTenantScopeAndWait(deploymentName: string, options?: DeploymentsDeleteAtTenantScopeOptionalParams): Promise<void>;
-    beginValidate(resourceGroupName: string, deploymentName: string, parameters: Deployment, options?: DeploymentsValidateOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsValidateResponse>, DeploymentsValidateResponse>>;
+    beginValidate(resourceGroupName: string, deploymentName: string, parameters: Deployment, options?: DeploymentsValidateOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsValidateResponse>, DeploymentsValidateResponse>>;
     beginValidateAndWait(resourceGroupName: string, deploymentName: string, parameters: Deployment, options?: DeploymentsValidateOptionalParams): Promise<DeploymentsValidateResponse>;
-    beginValidateAtManagementGroupScope(groupId: string, deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsValidateAtManagementGroupScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsValidateAtManagementGroupScopeResponse>, DeploymentsValidateAtManagementGroupScopeResponse>>;
+    beginValidateAtManagementGroupScope(groupId: string, deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsValidateAtManagementGroupScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsValidateAtManagementGroupScopeResponse>, DeploymentsValidateAtManagementGroupScopeResponse>>;
     beginValidateAtManagementGroupScopeAndWait(groupId: string, deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsValidateAtManagementGroupScopeOptionalParams): Promise<DeploymentsValidateAtManagementGroupScopeResponse>;
-    beginValidateAtScope(scope: string, deploymentName: string, parameters: Deployment, options?: DeploymentsValidateAtScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsValidateAtScopeResponse>, DeploymentsValidateAtScopeResponse>>;
+    beginValidateAtScope(scope: string, deploymentName: string, parameters: Deployment, options?: DeploymentsValidateAtScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsValidateAtScopeResponse>, DeploymentsValidateAtScopeResponse>>;
     beginValidateAtScopeAndWait(scope: string, deploymentName: string, parameters: Deployment, options?: DeploymentsValidateAtScopeOptionalParams): Promise<DeploymentsValidateAtScopeResponse>;
-    beginValidateAtSubscriptionScope(deploymentName: string, parameters: Deployment, options?: DeploymentsValidateAtSubscriptionScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsValidateAtSubscriptionScopeResponse>, DeploymentsValidateAtSubscriptionScopeResponse>>;
+    beginValidateAtSubscriptionScope(deploymentName: string, parameters: Deployment, options?: DeploymentsValidateAtSubscriptionScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsValidateAtSubscriptionScopeResponse>, DeploymentsValidateAtSubscriptionScopeResponse>>;
     beginValidateAtSubscriptionScopeAndWait(deploymentName: string, parameters: Deployment, options?: DeploymentsValidateAtSubscriptionScopeOptionalParams): Promise<DeploymentsValidateAtSubscriptionScopeResponse>;
-    beginValidateAtTenantScope(deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsValidateAtTenantScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsValidateAtTenantScopeResponse>, DeploymentsValidateAtTenantScopeResponse>>;
+    beginValidateAtTenantScope(deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsValidateAtTenantScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsValidateAtTenantScopeResponse>, DeploymentsValidateAtTenantScopeResponse>>;
     beginValidateAtTenantScopeAndWait(deploymentName: string, parameters: ScopedDeployment, options?: DeploymentsValidateAtTenantScopeOptionalParams): Promise<DeploymentsValidateAtTenantScopeResponse>;
-    beginWhatIf(resourceGroupName: string, deploymentName: string, parameters: DeploymentWhatIf, options?: DeploymentsWhatIfOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsWhatIfResponse>, DeploymentsWhatIfResponse>>;
+    beginWhatIf(resourceGroupName: string, deploymentName: string, parameters: DeploymentWhatIf, options?: DeploymentsWhatIfOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsWhatIfResponse>, DeploymentsWhatIfResponse>>;
     beginWhatIfAndWait(resourceGroupName: string, deploymentName: string, parameters: DeploymentWhatIf, options?: DeploymentsWhatIfOptionalParams): Promise<DeploymentsWhatIfResponse>;
-    beginWhatIfAtManagementGroupScope(groupId: string, deploymentName: string, parameters: ScopedDeploymentWhatIf, options?: DeploymentsWhatIfAtManagementGroupScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsWhatIfAtManagementGroupScopeResponse>, DeploymentsWhatIfAtManagementGroupScopeResponse>>;
+    beginWhatIfAtManagementGroupScope(groupId: string, deploymentName: string, parameters: ScopedDeploymentWhatIf, options?: DeploymentsWhatIfAtManagementGroupScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsWhatIfAtManagementGroupScopeResponse>, DeploymentsWhatIfAtManagementGroupScopeResponse>>;
     beginWhatIfAtManagementGroupScopeAndWait(groupId: string, deploymentName: string, parameters: ScopedDeploymentWhatIf, options?: DeploymentsWhatIfAtManagementGroupScopeOptionalParams): Promise<DeploymentsWhatIfAtManagementGroupScopeResponse>;
-    beginWhatIfAtSubscriptionScope(deploymentName: string, parameters: DeploymentWhatIf, options?: DeploymentsWhatIfAtSubscriptionScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsWhatIfAtSubscriptionScopeResponse>, DeploymentsWhatIfAtSubscriptionScopeResponse>>;
+    beginWhatIfAtSubscriptionScope(deploymentName: string, parameters: DeploymentWhatIf, options?: DeploymentsWhatIfAtSubscriptionScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsWhatIfAtSubscriptionScopeResponse>, DeploymentsWhatIfAtSubscriptionScopeResponse>>;
     beginWhatIfAtSubscriptionScopeAndWait(deploymentName: string, parameters: DeploymentWhatIf, options?: DeploymentsWhatIfAtSubscriptionScopeOptionalParams): Promise<DeploymentsWhatIfAtSubscriptionScopeResponse>;
-    beginWhatIfAtTenantScope(deploymentName: string, parameters: ScopedDeploymentWhatIf, options?: DeploymentsWhatIfAtTenantScopeOptionalParams): Promise<PollerLike<PollOperationState<DeploymentsWhatIfAtTenantScopeResponse>, DeploymentsWhatIfAtTenantScopeResponse>>;
+    beginWhatIfAtTenantScope(deploymentName: string, parameters: ScopedDeploymentWhatIf, options?: DeploymentsWhatIfAtTenantScopeOptionalParams): Promise<SimplePollerLike<OperationState<DeploymentsWhatIfAtTenantScopeResponse>, DeploymentsWhatIfAtTenantScopeResponse>>;
     beginWhatIfAtTenantScopeAndWait(deploymentName: string, parameters: ScopedDeploymentWhatIf, options?: DeploymentsWhatIfAtTenantScopeOptionalParams): Promise<DeploymentsWhatIfAtTenantScopeResponse>;
     calculateTemplateHash(template: Record<string, unknown>, options?: DeploymentsCalculateTemplateHashOptionalParams): Promise<DeploymentsCalculateTemplateHashResponse>;
     cancel(resourceGroupName: string, deploymentName: string, options?: DeploymentsCancelOptionalParams): Promise<void>;
@@ -423,15 +373,10 @@ export interface Deployments {
     getAtSubscriptionScope(deploymentName: string, options?: DeploymentsGetAtSubscriptionScopeOptionalParams): Promise<DeploymentsGetAtSubscriptionScopeResponse>;
     getAtTenantScope(deploymentName: string, options?: DeploymentsGetAtTenantScopeOptionalParams): Promise<DeploymentsGetAtTenantScopeResponse>;
     listAtManagementGroupScope(groupId: string, options?: DeploymentsListAtManagementGroupScopeOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
-    listAtManagementGroupScopeNext(groupId: string, nextLink: string, options?: DeploymentsListAtManagementGroupScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
     listAtScope(scope: string, options?: DeploymentsListAtScopeOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
-    listAtScopeNext(scope: string, nextLink: string, options?: DeploymentsListAtScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
     listAtSubscriptionScope(options?: DeploymentsListAtSubscriptionScopeOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
-    listAtSubscriptionScopeNext(nextLink: string, options?: DeploymentsListAtSubscriptionScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
     listAtTenantScope(options?: DeploymentsListAtTenantScopeOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
-    listAtTenantScopeNext(nextLink: string, options?: DeploymentsListAtTenantScopeNextOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
     listByResourceGroup(resourceGroupName: string, options?: DeploymentsListByResourceGroupOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
-    listByResourceGroupNext(resourceGroupName: string, nextLink: string, options?: DeploymentsListByResourceGroupNextOptionalParams): PagedAsyncIterableIterator<DeploymentExtended>;
 }
 
 // @public
@@ -652,18 +597,7 @@ export interface DeploymentsGetOptionalParams extends coreClient.OperationOption
 export type DeploymentsGetResponse = DeploymentExtended;
 
 // @public
-export interface DeploymentsListAtManagementGroupScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type DeploymentsListAtManagementGroupScopeNextNextResponse = DeploymentListResult;
-
-// @public
 export interface DeploymentsListAtManagementGroupScopeNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -679,18 +613,7 @@ export interface DeploymentsListAtManagementGroupScopeOptionalParams extends cor
 export type DeploymentsListAtManagementGroupScopeResponse = DeploymentListResult;
 
 // @public
-export interface DeploymentsListAtScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type DeploymentsListAtScopeNextNextResponse = DeploymentListResult;
-
-// @public
 export interface DeploymentsListAtScopeNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -706,18 +629,7 @@ export interface DeploymentsListAtScopeOptionalParams extends coreClient.Operati
 export type DeploymentsListAtScopeResponse = DeploymentListResult;
 
 // @public
-export interface DeploymentsListAtSubscriptionScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type DeploymentsListAtSubscriptionScopeNextNextResponse = DeploymentListResult;
-
-// @public
 export interface DeploymentsListAtSubscriptionScopeNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -733,18 +645,7 @@ export interface DeploymentsListAtSubscriptionScopeOptionalParams extends coreCl
 export type DeploymentsListAtSubscriptionScopeResponse = DeploymentListResult;
 
 // @public
-export interface DeploymentsListAtTenantScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type DeploymentsListAtTenantScopeNextNextResponse = DeploymentListResult;
-
-// @public
 export interface DeploymentsListAtTenantScopeNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -760,18 +661,7 @@ export interface DeploymentsListAtTenantScopeOptionalParams extends coreClient.O
 export type DeploymentsListAtTenantScopeResponse = DeploymentListResult;
 
 // @public
-export interface DeploymentsListByResourceGroupNextNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type DeploymentsListByResourceGroupNextNextResponse = DeploymentListResult;
-
-// @public
 export interface DeploymentsListByResourceGroupNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -904,9 +794,9 @@ export interface DeploymentWhatIf {
 }
 
 // @public
-export type DeploymentWhatIfProperties = DeploymentProperties & {
+export interface DeploymentWhatIfProperties extends DeploymentProperties {
     whatIfSettings?: DeploymentWhatIfSettings;
-};
+}
 
 // @public
 export interface DeploymentWhatIfSettings {
@@ -952,21 +842,21 @@ export interface ExtendedLocation {
 export type ExtendedLocationType = string;
 
 // @public
-export type GenericResource = Resource & {
-    plan?: Plan;
-    properties?: Record<string, unknown>;
+export interface GenericResource extends Resource {
+    identity?: Identity;
     kind?: string;
     managedBy?: string;
+    plan?: Plan;
+    properties?: Record<string, unknown>;
     sku?: Sku;
-    identity?: Identity;
-};
+}
 
 // @public
-export type GenericResourceExpanded = GenericResource & {
-    readonly createdTime?: Date;
+export interface GenericResourceExpanded extends GenericResource {
     readonly changedTime?: Date;
+    readonly createdTime?: Date;
     readonly provisioningState?: string;
-};
+}
 
 // @public
 export interface GenericResourceFilter {
@@ -974,6 +864,9 @@ export interface GenericResourceFilter {
     tagname?: string;
     tagvalue?: string;
 }
+
+// @public
+export function getContinuationToken(page: unknown): string | undefined;
 
 // @public
 export interface HttpMessage {
@@ -1016,57 +909,37 @@ export enum KnownAliasPathTokenType {
 
 // @public
 export enum KnownExpressionEvaluationOptionsScopeType {
-    // (undocumented)
     Inner = "Inner",
-    // (undocumented)
     NotSpecified = "NotSpecified",
-    // (undocumented)
     Outer = "Outer"
 }
 
 // @public
 export enum KnownExtendedLocationType {
-    // (undocumented)
     EdgeZone = "EdgeZone"
 }
 
 // @public
 export enum KnownProviderAuthorizationConsentState {
-    // (undocumented)
     Consented = "Consented",
-    // (undocumented)
     NotRequired = "NotRequired",
-    // (undocumented)
     NotSpecified = "NotSpecified",
-    // (undocumented)
     Required = "Required"
 }
 
 // @public
 export enum KnownProvisioningState {
-    // (undocumented)
     Accepted = "Accepted",
-    // (undocumented)
     Canceled = "Canceled",
-    // (undocumented)
     Created = "Created",
-    // (undocumented)
     Creating = "Creating",
-    // (undocumented)
     Deleted = "Deleted",
-    // (undocumented)
     Deleting = "Deleting",
-    // (undocumented)
     Failed = "Failed",
-    // (undocumented)
     NotSpecified = "NotSpecified",
-    // (undocumented)
     Ready = "Ready",
-    // (undocumented)
     Running = "Running",
-    // (undocumented)
     Succeeded = "Succeeded",
-    // (undocumented)
     Updating = "Updating"
 }
 
@@ -1116,15 +989,7 @@ export interface OperationListResult {
 // @public
 export interface Operations {
     list(options?: OperationsListOptionalParams): PagedAsyncIterableIterator<Operation>;
-    listNext(nextLink: string, options?: OperationsListNextOptionalParams): PagedAsyncIterableIterator<Operation>;
 }
-
-// @public
-export interface OperationsListNextNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type OperationsListNextNextResponse = OperationListResult;
 
 // @public
 export interface OperationsListNextOptionalParams extends coreClient.OperationOptions {
@@ -1229,6 +1094,8 @@ export interface ProviderResourceType {
         [propertyName: string]: string;
     };
     resourceType?: string;
+    // (undocumented)
+    zoneMappings?: ZoneMapping[];
 }
 
 // @public
@@ -1256,8 +1123,6 @@ export interface Providers {
     getAtTenantScope(resourceProviderNamespace: string, options?: ProvidersGetAtTenantScopeOptionalParams): Promise<ProvidersGetAtTenantScopeResponse>;
     list(options?: ProvidersListOptionalParams): PagedAsyncIterableIterator<Provider>;
     listAtTenantScope(options?: ProvidersListAtTenantScopeOptionalParams): PagedAsyncIterableIterator<Provider>;
-    listAtTenantScopeNext(nextLink: string, options?: ProvidersListAtTenantScopeNextOptionalParams): PagedAsyncIterableIterator<Provider>;
-    listNext(nextLink: string, options?: ProvidersListNextOptionalParams): PagedAsyncIterableIterator<Provider>;
     providerPermissions(resourceProviderNamespace: string, options?: ProvidersProviderPermissionsOptionalParams): Promise<ProvidersProviderPermissionsResponse>;
     register(resourceProviderNamespace: string, options?: ProvidersRegisterOptionalParams): Promise<ProvidersRegisterResponse>;
     registerAtManagementGroupScope(resourceProviderNamespace: string, groupId: string, options?: ProvidersRegisterAtManagementGroupScopeOptionalParams): Promise<void>;
@@ -1281,18 +1146,7 @@ export interface ProvidersGetOptionalParams extends coreClient.OperationOptions 
 export type ProvidersGetResponse = Provider;
 
 // @public
-export interface ProvidersListAtTenantScopeNextNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    top?: number;
-}
-
-// @public
-export type ProvidersListAtTenantScopeNextNextResponse = ProviderListResult;
-
-// @public
 export interface ProvidersListAtTenantScopeNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    top?: number;
 }
 
 // @public
@@ -1301,25 +1155,13 @@ export type ProvidersListAtTenantScopeNextResponse = ProviderListResult;
 // @public
 export interface ProvidersListAtTenantScopeOptionalParams extends coreClient.OperationOptions {
     expand?: string;
-    top?: number;
 }
 
 // @public
 export type ProvidersListAtTenantScopeResponse = ProviderListResult;
 
 // @public
-export interface ProvidersListNextNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    top?: number;
-}
-
-// @public
-export type ProvidersListNextNextResponse = ProviderListResult;
-
-// @public
 export interface ProvidersListNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    top?: number;
 }
 
 // @public
@@ -1328,7 +1170,6 @@ export type ProvidersListNextResponse = ProviderListResult;
 // @public
 export interface ProvidersListOptionalParams extends coreClient.OperationOptions {
     expand?: string;
-    top?: number;
 }
 
 // @public
@@ -1426,15 +1267,14 @@ export interface ResourceGroupProperties {
 
 // @public
 export interface ResourceGroups {
-    beginDelete(resourceGroupName: string, options?: ResourceGroupsDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, options?: ResourceGroupsDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, options?: ResourceGroupsDeleteOptionalParams): Promise<void>;
-    beginExportTemplate(resourceGroupName: string, parameters: ExportTemplateRequest, options?: ResourceGroupsExportTemplateOptionalParams): Promise<PollerLike<PollOperationState<ResourceGroupsExportTemplateResponse>, ResourceGroupsExportTemplateResponse>>;
+    beginExportTemplate(resourceGroupName: string, parameters: ExportTemplateRequest, options?: ResourceGroupsExportTemplateOptionalParams): Promise<SimplePollerLike<OperationState<ResourceGroupsExportTemplateResponse>, ResourceGroupsExportTemplateResponse>>;
     beginExportTemplateAndWait(resourceGroupName: string, parameters: ExportTemplateRequest, options?: ResourceGroupsExportTemplateOptionalParams): Promise<ResourceGroupsExportTemplateResponse>;
     checkExistence(resourceGroupName: string, options?: ResourceGroupsCheckExistenceOptionalParams): Promise<ResourceGroupsCheckExistenceResponse>;
     createOrUpdate(resourceGroupName: string, parameters: ResourceGroup, options?: ResourceGroupsCreateOrUpdateOptionalParams): Promise<ResourceGroupsCreateOrUpdateResponse>;
     get(resourceGroupName: string, options?: ResourceGroupsGetOptionalParams): Promise<ResourceGroupsGetResponse>;
     list(options?: ResourceGroupsListOptionalParams): PagedAsyncIterableIterator<ResourceGroup>;
-    listNext(nextLink: string, options?: ResourceGroupsListNextOptionalParams): PagedAsyncIterableIterator<ResourceGroup>;
     update(resourceGroupName: string, parameters: ResourceGroupPatchable, options?: ResourceGroupsUpdateOptionalParams): Promise<ResourceGroupsUpdateResponse>;
 }
 
@@ -1478,18 +1318,7 @@ export interface ResourceGroupsGetOptionalParams extends coreClient.OperationOpt
 export type ResourceGroupsGetResponse = ResourceGroup;
 
 // @public
-export interface ResourceGroupsListNextNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type ResourceGroupsListNextNextResponse = ResourceGroupListResult;
-
-// @public
 export interface ResourceGroupsListNextOptionalParams extends coreClient.OperationOptions {
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -1521,8 +1350,12 @@ export interface ResourceListResult {
 }
 
 // @public (undocumented)
-export class ResourceManagementClient extends ResourceManagementClientContext {
+export class ResourceManagementClient extends coreClient.ServiceClient {
+    // (undocumented)
+    $host: string;
     constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: ResourceManagementClientOptionalParams);
+    // (undocumented)
+    apiVersion: string;
     // (undocumented)
     deploymentOperations: DeploymentOperations;
     // (undocumented)
@@ -1538,18 +1371,9 @@ export class ResourceManagementClient extends ResourceManagementClientContext {
     // (undocumented)
     resources: Resources;
     // (undocumented)
-    tagsOperations: TagsOperations;
-}
-
-// @public (undocumented)
-export class ResourceManagementClientContext extends coreClient.ServiceClient {
-    // (undocumented)
-    $host: string;
-    constructor(credentials: coreAuth.TokenCredential, subscriptionId: string, options?: ResourceManagementClientOptionalParams);
-    // (undocumented)
-    apiVersion: string;
-    // (undocumented)
     subscriptionId: string;
+    // (undocumented)
+    tagsOperations: TagsOperations;
 }
 
 // @public
@@ -1575,21 +1399,21 @@ export interface ResourceReference {
 
 // @public
 export interface Resources {
-    beginCreateOrUpdate(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, parameters: GenericResource, options?: ResourcesCreateOrUpdateOptionalParams): Promise<PollerLike<PollOperationState<ResourcesCreateOrUpdateResponse>, ResourcesCreateOrUpdateResponse>>;
+    beginCreateOrUpdate(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, parameters: GenericResource, options?: ResourcesCreateOrUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ResourcesCreateOrUpdateResponse>, ResourcesCreateOrUpdateResponse>>;
     beginCreateOrUpdateAndWait(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, parameters: GenericResource, options?: ResourcesCreateOrUpdateOptionalParams): Promise<ResourcesCreateOrUpdateResponse>;
-    beginCreateOrUpdateById(resourceId: string, apiVersion: string, parameters: GenericResource, options?: ResourcesCreateOrUpdateByIdOptionalParams): Promise<PollerLike<PollOperationState<ResourcesCreateOrUpdateByIdResponse>, ResourcesCreateOrUpdateByIdResponse>>;
+    beginCreateOrUpdateById(resourceId: string, apiVersion: string, parameters: GenericResource, options?: ResourcesCreateOrUpdateByIdOptionalParams): Promise<SimplePollerLike<OperationState<ResourcesCreateOrUpdateByIdResponse>, ResourcesCreateOrUpdateByIdResponse>>;
     beginCreateOrUpdateByIdAndWait(resourceId: string, apiVersion: string, parameters: GenericResource, options?: ResourcesCreateOrUpdateByIdOptionalParams): Promise<ResourcesCreateOrUpdateByIdResponse>;
-    beginDelete(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, options?: ResourcesDeleteOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDelete(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, options?: ResourcesDeleteOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteAndWait(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, options?: ResourcesDeleteOptionalParams): Promise<void>;
-    beginDeleteById(resourceId: string, apiVersion: string, options?: ResourcesDeleteByIdOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginDeleteById(resourceId: string, apiVersion: string, options?: ResourcesDeleteByIdOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginDeleteByIdAndWait(resourceId: string, apiVersion: string, options?: ResourcesDeleteByIdOptionalParams): Promise<void>;
-    beginMoveResources(sourceResourceGroupName: string, parameters: ResourcesMoveInfo, options?: ResourcesMoveResourcesOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginMoveResources(sourceResourceGroupName: string, parameters: ResourcesMoveInfo, options?: ResourcesMoveResourcesOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginMoveResourcesAndWait(sourceResourceGroupName: string, parameters: ResourcesMoveInfo, options?: ResourcesMoveResourcesOptionalParams): Promise<void>;
-    beginUpdate(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, parameters: GenericResource, options?: ResourcesUpdateOptionalParams): Promise<PollerLike<PollOperationState<ResourcesUpdateResponse>, ResourcesUpdateResponse>>;
+    beginUpdate(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, parameters: GenericResource, options?: ResourcesUpdateOptionalParams): Promise<SimplePollerLike<OperationState<ResourcesUpdateResponse>, ResourcesUpdateResponse>>;
     beginUpdateAndWait(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, parameters: GenericResource, options?: ResourcesUpdateOptionalParams): Promise<ResourcesUpdateResponse>;
-    beginUpdateById(resourceId: string, apiVersion: string, parameters: GenericResource, options?: ResourcesUpdateByIdOptionalParams): Promise<PollerLike<PollOperationState<ResourcesUpdateByIdResponse>, ResourcesUpdateByIdResponse>>;
+    beginUpdateById(resourceId: string, apiVersion: string, parameters: GenericResource, options?: ResourcesUpdateByIdOptionalParams): Promise<SimplePollerLike<OperationState<ResourcesUpdateByIdResponse>, ResourcesUpdateByIdResponse>>;
     beginUpdateByIdAndWait(resourceId: string, apiVersion: string, parameters: GenericResource, options?: ResourcesUpdateByIdOptionalParams): Promise<ResourcesUpdateByIdResponse>;
-    beginValidateMoveResources(sourceResourceGroupName: string, parameters: ResourcesMoveInfo, options?: ResourcesValidateMoveResourcesOptionalParams): Promise<PollerLike<PollOperationState<void>, void>>;
+    beginValidateMoveResources(sourceResourceGroupName: string, parameters: ResourcesMoveInfo, options?: ResourcesValidateMoveResourcesOptionalParams): Promise<SimplePollerLike<OperationState<void>, void>>;
     beginValidateMoveResourcesAndWait(sourceResourceGroupName: string, parameters: ResourcesMoveInfo, options?: ResourcesValidateMoveResourcesOptionalParams): Promise<void>;
     checkExistence(resourceGroupName: string, resourceProviderNamespace: string, parentResourcePath: string, resourceType: string, resourceName: string, apiVersion: string, options?: ResourcesCheckExistenceOptionalParams): Promise<ResourcesCheckExistenceResponse>;
     checkExistenceById(resourceId: string, apiVersion: string, options?: ResourcesCheckExistenceByIdOptionalParams): Promise<ResourcesCheckExistenceByIdResponse>;
@@ -1597,8 +1421,6 @@ export interface Resources {
     getById(resourceId: string, apiVersion: string, options?: ResourcesGetByIdOptionalParams): Promise<ResourcesGetByIdResponse>;
     list(options?: ResourcesListOptionalParams): PagedAsyncIterableIterator<GenericResourceExpanded>;
     listByResourceGroup(resourceGroupName: string, options?: ResourcesListByResourceGroupOptionalParams): PagedAsyncIterableIterator<GenericResourceExpanded>;
-    listByResourceGroupNext(resourceGroupName: string, nextLink: string, options?: ResourcesListByResourceGroupNextOptionalParams): PagedAsyncIterableIterator<GenericResourceExpanded>;
-    listNext(nextLink: string, options?: ResourcesListNextOptionalParams): PagedAsyncIterableIterator<GenericResourceExpanded>;
 }
 
 // @public
@@ -1664,20 +1486,7 @@ export interface ResourcesGetOptionalParams extends coreClient.OperationOptions 
 export type ResourcesGetResponse = GenericResource;
 
 // @public
-export interface ResourcesListByResourceGroupNextNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type ResourcesListByResourceGroupNextNextResponse = ResourceListResult;
-
-// @public
 export interface ResourcesListByResourceGroupNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -1694,20 +1503,7 @@ export interface ResourcesListByResourceGroupOptionalParams extends coreClient.O
 export type ResourcesListByResourceGroupResponse = ResourceListResult;
 
 // @public
-export interface ResourcesListNextNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    filter?: string;
-    top?: number;
-}
-
-// @public
-export type ResourcesListNextNextResponse = ResourceListResult;
-
-// @public
 export interface ResourcesListNextOptionalParams extends coreClient.OperationOptions {
-    expand?: string;
-    filter?: string;
-    top?: number;
 }
 
 // @public
@@ -1826,6 +1622,60 @@ export interface Tags {
 }
 
 // @public
+export interface TagsCreateOrUpdateAtScopeOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TagsCreateOrUpdateAtScopeResponse = TagsResource;
+
+// @public
+export interface TagsCreateOrUpdateOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TagsCreateOrUpdateResponse = TagDetails;
+
+// @public
+export interface TagsCreateOrUpdateValueOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TagsCreateOrUpdateValueResponse = TagValue;
+
+// @public
+export interface TagsDeleteAtScopeOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface TagsDeleteOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface TagsDeleteValueOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export interface TagsGetAtScopeOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TagsGetAtScopeResponse = TagsResource;
+
+// @public
+export interface TagsListNextOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TagsListNextResponse = TagsListResult;
+
+// @public
+export interface TagsListOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TagsListResponse = TagsListResult;
+
+// @public
 export interface TagsListResult {
     readonly nextLink?: string;
     value?: TagDetails[];
@@ -1833,85 +1683,16 @@ export interface TagsListResult {
 
 // @public
 export interface TagsOperations {
-    createOrUpdate(tagName: string, options?: TagsOperationsCreateOrUpdateOptionalParams): Promise<TagsOperationsCreateOrUpdateResponse>;
-    createOrUpdateAtScope(scope: string, parameters: TagsResource, options?: TagsOperationsCreateOrUpdateAtScopeOptionalParams): Promise<TagsOperationsCreateOrUpdateAtScopeResponse>;
-    createOrUpdateValue(tagName: string, tagValue: string, options?: TagsOperationsCreateOrUpdateValueOptionalParams): Promise<TagsOperationsCreateOrUpdateValueResponse>;
-    delete(tagName: string, options?: TagsOperationsDeleteOptionalParams): Promise<void>;
-    deleteAtScope(scope: string, options?: TagsOperationsDeleteAtScopeOptionalParams): Promise<void>;
-    deleteValue(tagName: string, tagValue: string, options?: TagsOperationsDeleteValueOptionalParams): Promise<void>;
-    getAtScope(scope: string, options?: TagsOperationsGetAtScopeOptionalParams): Promise<TagsOperationsGetAtScopeResponse>;
-    list(options?: TagsOperationsListOptionalParams): PagedAsyncIterableIterator<TagDetails>;
-    listNext(nextLink: string, options?: TagsOperationsListNextOptionalParams): PagedAsyncIterableIterator<TagDetails>;
-    updateAtScope(scope: string, parameters: TagsPatchResource, options?: TagsOperationsUpdateAtScopeOptionalParams): Promise<TagsOperationsUpdateAtScopeResponse>;
+    createOrUpdate(tagName: string, options?: TagsCreateOrUpdateOptionalParams): Promise<TagsCreateOrUpdateResponse>;
+    createOrUpdateAtScope(scope: string, parameters: TagsResource, options?: TagsCreateOrUpdateAtScopeOptionalParams): Promise<TagsCreateOrUpdateAtScopeResponse>;
+    createOrUpdateValue(tagName: string, tagValue: string, options?: TagsCreateOrUpdateValueOptionalParams): Promise<TagsCreateOrUpdateValueResponse>;
+    delete(tagName: string, options?: TagsDeleteOptionalParams): Promise<void>;
+    deleteAtScope(scope: string, options?: TagsDeleteAtScopeOptionalParams): Promise<void>;
+    deleteValue(tagName: string, tagValue: string, options?: TagsDeleteValueOptionalParams): Promise<void>;
+    getAtScope(scope: string, options?: TagsGetAtScopeOptionalParams): Promise<TagsGetAtScopeResponse>;
+    list(options?: TagsListOptionalParams): PagedAsyncIterableIterator<TagDetails>;
+    updateAtScope(scope: string, parameters: TagsPatchResource, options?: TagsUpdateAtScopeOptionalParams): Promise<TagsUpdateAtScopeResponse>;
 }
-
-// @public
-export interface TagsOperationsCreateOrUpdateAtScopeOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsCreateOrUpdateAtScopeResponse = TagsResource;
-
-// @public
-export interface TagsOperationsCreateOrUpdateOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsCreateOrUpdateResponse = TagDetails;
-
-// @public
-export interface TagsOperationsCreateOrUpdateValueOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsCreateOrUpdateValueResponse = TagValue;
-
-// @public
-export interface TagsOperationsDeleteAtScopeOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export interface TagsOperationsDeleteOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export interface TagsOperationsDeleteValueOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export interface TagsOperationsGetAtScopeOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsGetAtScopeResponse = TagsResource;
-
-// @public
-export interface TagsOperationsListNextNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsListNextNextResponse = TagsListResult;
-
-// @public
-export interface TagsOperationsListNextOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsListNextResponse = TagsListResult;
-
-// @public
-export interface TagsOperationsListOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsListResponse = TagsListResult;
-
-// @public
-export interface TagsOperationsUpdateAtScopeOptionalParams extends coreClient.OperationOptions {
-}
-
-// @public
-export type TagsOperationsUpdateAtScopeResponse = TagsResource;
 
 // @public
 export type TagsPatchOperation = string;
@@ -1929,6 +1710,13 @@ export interface TagsResource {
     properties: Tags;
     readonly type?: string;
 }
+
+// @public
+export interface TagsUpdateAtScopeOptionalParams extends coreClient.OperationOptions {
+}
+
+// @public
+export type TagsUpdateAtScopeResponse = TagsResource;
 
 // @public
 export interface TagValue {
@@ -1988,6 +1776,12 @@ export interface WhatIfPropertyChange {
 // @public
 export type WhatIfResultFormat = "ResourceIdOnly" | "FullResourcePayloads";
 
+// @public (undocumented)
+export interface ZoneMapping {
+    location?: string;
+    // (undocumented)
+    zones?: string[];
+}
 
 // (No @packageDocumentation comment for this package)
 

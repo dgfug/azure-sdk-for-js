@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VpnGateway,
   VpnGatewaysListByResourceGroupOptionalParams,
@@ -25,7 +25,7 @@ import {
   VpnGatewaysStartPacketCaptureOptionalParams,
   VpnGatewaysStartPacketCaptureResponse,
   VpnGatewaysStopPacketCaptureOptionalParams,
-  VpnGatewaysStopPacketCaptureResponse
+  VpnGatewaysStopPacketCaptureResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -38,14 +38,14 @@ export interface VpnGateways {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: VpnGatewaysListByResourceGroupOptionalParams
+    options?: VpnGatewaysListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<VpnGateway>;
   /**
    * Lists all the VpnGateways in a subscription.
    * @param options The options parameters.
    */
   list(
-    options?: VpnGatewaysListOptionalParams
+    options?: VpnGatewaysListOptionalParams,
   ): PagedAsyncIterableIterator<VpnGateway>;
   /**
    * Retrieves the details of a virtual wan vpn gateway.
@@ -56,7 +56,7 @@ export interface VpnGateways {
   get(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysGetOptionalParams
+    options?: VpnGatewaysGetOptionalParams,
   ): Promise<VpnGatewaysGetResponse>;
   /**
    * Creates a virtual wan vpn gateway if it doesn't exist else updates the existing gateway.
@@ -69,10 +69,10 @@ export interface VpnGateways {
     resourceGroupName: string,
     gatewayName: string,
     vpnGatewayParameters: VpnGateway,
-    options?: VpnGatewaysCreateOrUpdateOptionalParams
+    options?: VpnGatewaysCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VpnGatewaysCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VpnGatewaysCreateOrUpdateResponse>,
       VpnGatewaysCreateOrUpdateResponse
     >
   >;
@@ -87,7 +87,7 @@ export interface VpnGateways {
     resourceGroupName: string,
     gatewayName: string,
     vpnGatewayParameters: VpnGateway,
-    options?: VpnGatewaysCreateOrUpdateOptionalParams
+    options?: VpnGatewaysCreateOrUpdateOptionalParams,
   ): Promise<VpnGatewaysCreateOrUpdateResponse>;
   /**
    * Updates virtual wan vpn gateway tags.
@@ -100,10 +100,10 @@ export interface VpnGateways {
     resourceGroupName: string,
     gatewayName: string,
     vpnGatewayParameters: TagsObject,
-    options?: VpnGatewaysUpdateTagsOptionalParams
+    options?: VpnGatewaysUpdateTagsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VpnGatewaysUpdateTagsResponse>,
+    SimplePollerLike<
+      OperationState<VpnGatewaysUpdateTagsResponse>,
       VpnGatewaysUpdateTagsResponse
     >
   >;
@@ -118,7 +118,7 @@ export interface VpnGateways {
     resourceGroupName: string,
     gatewayName: string,
     vpnGatewayParameters: TagsObject,
-    options?: VpnGatewaysUpdateTagsOptionalParams
+    options?: VpnGatewaysUpdateTagsOptionalParams,
   ): Promise<VpnGatewaysUpdateTagsResponse>;
   /**
    * Deletes a virtual wan vpn gateway.
@@ -129,8 +129,8 @@ export interface VpnGateways {
   beginDelete(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VpnGatewaysDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a virtual wan vpn gateway.
    * @param resourceGroupName The resource group name of the VpnGateway.
@@ -140,7 +140,7 @@ export interface VpnGateways {
   beginDeleteAndWait(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysDeleteOptionalParams
+    options?: VpnGatewaysDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Resets the primary of the vpn gateway in the specified resource group.
@@ -151,10 +151,10 @@ export interface VpnGateways {
   beginReset(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysResetOptionalParams
+    options?: VpnGatewaysResetOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VpnGatewaysResetResponse>,
+    SimplePollerLike<
+      OperationState<VpnGatewaysResetResponse>,
       VpnGatewaysResetResponse
     >
   >;
@@ -167,7 +167,7 @@ export interface VpnGateways {
   beginResetAndWait(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysResetOptionalParams
+    options?: VpnGatewaysResetOptionalParams,
   ): Promise<VpnGatewaysResetResponse>;
   /**
    * Starts packet capture on vpn gateway in the specified resource group.
@@ -178,10 +178,10 @@ export interface VpnGateways {
   beginStartPacketCapture(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysStartPacketCaptureOptionalParams
+    options?: VpnGatewaysStartPacketCaptureOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VpnGatewaysStartPacketCaptureResponse>,
+    SimplePollerLike<
+      OperationState<VpnGatewaysStartPacketCaptureResponse>,
       VpnGatewaysStartPacketCaptureResponse
     >
   >;
@@ -194,7 +194,7 @@ export interface VpnGateways {
   beginStartPacketCaptureAndWait(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysStartPacketCaptureOptionalParams
+    options?: VpnGatewaysStartPacketCaptureOptionalParams,
   ): Promise<VpnGatewaysStartPacketCaptureResponse>;
   /**
    * Stops packet capture on vpn gateway in the specified resource group.
@@ -205,10 +205,10 @@ export interface VpnGateways {
   beginStopPacketCapture(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysStopPacketCaptureOptionalParams
+    options?: VpnGatewaysStopPacketCaptureOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VpnGatewaysStopPacketCaptureResponse>,
+    SimplePollerLike<
+      OperationState<VpnGatewaysStopPacketCaptureResponse>,
       VpnGatewaysStopPacketCaptureResponse
     >
   >;
@@ -221,6 +221,6 @@ export interface VpnGateways {
   beginStopPacketCaptureAndWait(
     resourceGroupName: string,
     gatewayName: string,
-    options?: VpnGatewaysStopPacketCaptureOptionalParams
+    options?: VpnGatewaysStopPacketCaptureOptionalParams,
   ): Promise<VpnGatewaysStopPacketCaptureResponse>;
 }

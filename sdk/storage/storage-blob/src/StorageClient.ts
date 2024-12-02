@@ -1,13 +1,15 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { StorageClientContext } from "./generated/src/storageClientContext";
-import { PipelineLike } from "./Pipeline";
+import type { StorageClient as StorageClientContext } from "./generated/src/";
+import { StorageContextClient } from "./StorageContextClient";
+import type { PipelineLike } from "./Pipeline";
+import { getCoreClientOptions, getCredentialFromPipeline } from "./Pipeline";
 import { escapeURLPath, getURLScheme, iEqual, getAccountNameFromUrl } from "./utils/utils.common";
-import { AnonymousCredential } from "./credentials/AnonymousCredential";
-import { StorageSharedKeyCredential } from "./credentials/StorageSharedKeyCredential";
-import { TokenCredential, isTokenCredential, isNode } from "@azure/core-http";
-import { OperationTracingOptions } from "@azure/core-tracing";
+import type { AnonymousCredential } from "./credentials/AnonymousCredential";
+import type { StorageSharedKeyCredential } from "./credentials/StorageSharedKeyCredential";
+import type { TokenCredential } from "@azure/core-auth";
+import type { OperationTracingOptions } from "@azure/core-tracing";
 
 /**
  * An interface for options common to every remote operation.
@@ -58,26 +60,11 @@ export abstract class StorageClient {
     this.url = escapeURLPath(url);
     this.accountName = getAccountNameFromUrl(url);
     this.pipeline = pipeline;
-    this.storageClientContext = new StorageClientContext(
-      this.url,
-      pipeline.toServiceClientOptions()
-    );
+    this.storageClientContext = new StorageContextClient(this.url, getCoreClientOptions(pipeline));
 
     this.isHttps = iEqual(getURLScheme(this.url) || "", "https");
 
-    this.credential = new AnonymousCredential();
-    for (const factory of this.pipeline.factories) {
-      if (
-        (isNode && factory instanceof StorageSharedKeyCredential) ||
-        factory instanceof AnonymousCredential
-      ) {
-        this.credential = factory;
-      } else if (isTokenCredential((factory as any).credential)) {
-        // Only works if the factory has been attached a "credential" property.
-        // We do that in newPipeline() when using TokenCredential.
-        this.credential = (factory as any).credential;
-      }
-    }
+    this.credential = getCredentialFromPipeline(pipeline);
 
     // Override protocol layer's default content-type
     const storageClientContext = this.storageClientContext as any;

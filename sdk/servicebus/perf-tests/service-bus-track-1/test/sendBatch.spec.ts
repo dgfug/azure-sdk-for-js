@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PerfOptionDictionary } from "@azure/test-utils-perf";
+import { PerfOptionDictionary } from "@azure-tools/test-perf";
 import { SendableMessageInfo } from "@azure/service-bus";
 import { ServiceBusTest } from "./sbBase.spec";
 
@@ -19,26 +19,27 @@ export class BatchSendTest extends ServiceBusTest<SendTestOptions> {
       description: "Size in bytes",
       shortName: "sz",
       longName: "size",
-      defaultValue: 1024
+      defaultValue: 1024,
     },
     numberOfMessages: {
       required: true,
       description: "Number of messages per send",
       shortName: "num",
       longName: "numberOfMessages",
-      defaultValue: 10
-    }
+      defaultValue: 10,
+    },
   };
 
   constructor() {
     super();
     const sbMessage = {
-      body: Buffer.alloc(this.parsedOptions.messageBodySize.value!)
+      body: Buffer.alloc(this.parsedOptions.messageBodySize.value!),
     };
     this.batch = new Array(this.parsedOptions.numberOfMessages.value!).fill(sbMessage);
   }
 
-  async run(): Promise<void> {
+  async runBatch(): Promise<number> {
     await BatchSendTest.sender.sendBatch(this.batch);
+    return this.batch.length;
   }
 }

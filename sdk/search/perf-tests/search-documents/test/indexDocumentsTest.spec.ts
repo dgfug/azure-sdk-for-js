@@ -1,5 +1,5 @@
 import { SearchDocumentsBase, SearchDocumentsTestOptions } from "./core/searchDocumentsBase.spec";
-import { PerfOptionDictionary } from "@azure/test-utils-perf";
+import { PerfOptionDictionary } from "@azure-tools/test-perf";
 import { generateHotels } from "./core/documentsGenerator";
 import { Hotel } from "./core/hotel";
 import { IndexDocumentsBatch } from "@azure/search-documents";
@@ -11,8 +11,8 @@ export class IndexDocumentsTest extends SearchDocumentsBase<SearchDocumentsTestO
       description: "Number of Documents to be created",
       shortName: "dc",
       longName: "documentsCount",
-      defaultValue: 10
-    }
+      defaultValue: 10,
+    },
   };
   private hotels: Hotel[];
 
@@ -24,7 +24,7 @@ export class IndexDocumentsTest extends SearchDocumentsBase<SearchDocumentsTestO
   async run(): Promise<void> {
     for (let i = 0; i < this.hotels.length; i++) {
       this.hotels[i].hotelId = Math.floor(
-        Math.random() * (this.hotels.length * 2 - this.hotels.length + 1) + this.hotels.length
+        Math.random() * (this.hotels.length * 2 - this.hotels.length + 1) + this.hotels.length,
       ).toString();
     }
     const batch: IndexDocumentsBatch<Hotel> = new IndexDocumentsBatch<Hotel>();

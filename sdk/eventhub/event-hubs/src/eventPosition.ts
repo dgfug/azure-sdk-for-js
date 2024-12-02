@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { Constants, ErrorNameConditionMapper, translate } from "@azure/core-amqp";
-import { isDefined, objectHasProperty } from "./util/typeGuards";
+import { isDefined, objectHasProperty } from "@azure/core-util";
 
 /**
  * Represents the position of an event in an Event Hub partition, typically used when calling the `subscribe()`
@@ -22,7 +22,7 @@ export interface EventPosition {
    * The same offset may refer to a different event as events reach the age limit for
    * retention and are no longer visible within the partition.
    */
-  offset?: number | "@latest";
+  offset?: string | "@latest";
   /**
    * Indicates if the specified offset is inclusive of the event which it identifies.
    * This information is only relevent if the event position was identified by an offset or sequence number.
@@ -70,7 +70,7 @@ export function getEventPositionFilter(eventPosition: EventPosition): string {
   if (!result) {
     throw translate({
       condition: ErrorNameConditionMapper.ArgumentError,
-      description: "No starting position was set in the EventPosition."
+      description: "No starting position was set in the EventPosition.",
     });
   }
   return result;
@@ -93,7 +93,7 @@ export function isLatestPosition(eventPosition: EventPosition): boolean {
  * first event in the partition which has not expired due to the retention policy.
  */
 export const earliestEventPosition: EventPosition = {
-  offset: -1
+  offset: "-1",
 };
 
 /**
@@ -103,14 +103,14 @@ export const earliestEventPosition: EventPosition = {
  * @returns EventPosition
  */
 export const latestEventPosition: EventPosition = {
-  offset: "@latest"
+  offset: "@latest",
 };
 
 /**
  * @internal
  */
 export function validateEventPositions(
-  position: EventPosition | { [partitionId: string]: EventPosition }
+  position: EventPosition | { [partitionId: string]: EventPosition },
 ): void {
   if (!isDefined(position)) {
     return;
@@ -120,7 +120,7 @@ export function validateEventPositions(
 
   if (!keys.length) {
     throw new TypeError(
-      "Invalid value for EventPosition found. Pass an object with either of offset, sequenceNumber or enqueuedOn properties set."
+      "Invalid value for EventPosition found. Pass an object with either of offset, sequenceNumber or enqueuedOn properties set.",
     );
   }
 
@@ -176,13 +176,13 @@ function validateEventPosition(position: EventPosition): void {
     (enqueuedOnPresent && sequenceNumberPresent)
   ) {
     throw new TypeError(
-      "Invalid value for EventPosition found. Set only one of offset, sequenceNumber or enqueuedOn properties."
+      "Invalid value for EventPosition found. Set only one of offset, sequenceNumber or enqueuedOn properties.",
     );
   }
 
   if (!offsetPresent && !enqueuedOnPresent && !sequenceNumberPresent) {
     throw new TypeError(
-      "Invalid value for EventPosition found. Pass an object with either of offset, sequenceNumber or enqueuedOn properties set."
+      "Invalid value for EventPosition found. Pass an object with either of offset, sequenceNumber or enqueuedOn properties set.",
     );
   }
 }

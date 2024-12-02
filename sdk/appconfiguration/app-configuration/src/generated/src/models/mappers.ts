@@ -6,9 +6,9 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import * as coreClient from "@azure/core-client";
 
-export const KeyListResult: coreHttp.CompositeMapper = {
+export const KeyListResult: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "KeyListResult",
@@ -20,22 +20,22 @@ export const KeyListResult: coreHttp.CompositeMapper = {
           element: {
             type: {
               name: "Composite",
-              className: "Key"
-            }
-          }
-        }
+              className: "Key",
+            },
+          },
+        },
       },
       nextLink: {
         serializedName: "@nextLink",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const Key: coreHttp.CompositeMapper = {
+export const Key: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "Key",
@@ -44,14 +44,14 @@ export const Key: coreHttp.CompositeMapper = {
         serializedName: "name",
         readOnly: true,
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const ErrorModel: coreHttp.CompositeMapper = {
+export const ErrorModel: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ErrorModel",
@@ -59,38 +59,38 @@ export const ErrorModel: coreHttp.CompositeMapper = {
       type: {
         serializedName: "type",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       title: {
         serializedName: "title",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       name: {
         serializedName: "name",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       detail: {
         serializedName: "detail",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       status: {
         serializedName: "status",
         type: {
-          name: "Number"
-        }
-      }
-    }
-  }
+          name: "Number",
+        },
+      },
+    },
+  },
 };
 
-export const KeyValueListResult: coreHttp.CompositeMapper = {
+export const KeyValueListResult: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "KeyValueListResult",
@@ -102,22 +102,28 @@ export const KeyValueListResult: coreHttp.CompositeMapper = {
           element: {
             type: {
               name: "Composite",
-              className: "KeyValue"
-            }
-          }
-        }
+              className: "KeyValue",
+            },
+          },
+        },
+      },
+      etag: {
+        serializedName: "etag",
+        type: {
+          name: "String",
+        },
       },
       nextLink: {
         serializedName: "@nextLink",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const KeyValue: coreHttp.CompositeMapper = {
+export const KeyValue: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "KeyValue",
@@ -126,57 +132,234 @@ export const KeyValue: coreHttp.CompositeMapper = {
         serializedName: "key",
         required: true,
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       label: {
         serializedName: "label",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       contentType: {
         serializedName: "content_type",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       value: {
         serializedName: "value",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       lastModified: {
         serializedName: "last_modified",
         type: {
-          name: "DateTime"
-        }
+          name: "DateTime",
+        },
       },
       tags: {
         serializedName: "tags",
         type: {
           name: "Dictionary",
-          value: { type: { name: "String" } }
-        }
+          value: { type: { name: "String" } },
+        },
       },
       locked: {
         serializedName: "locked",
         type: {
-          name: "Boolean"
-        }
+          name: "Boolean",
+        },
       },
       etag: {
         serializedName: "etag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const LabelListResult: coreHttp.CompositeMapper = {
+export const SnapshotListResult: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SnapshotListResult",
+    modelProperties: {
+      items: {
+        serializedName: "items",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ConfigurationSnapshot",
+            },
+          },
+        },
+      },
+      nextLink: {
+        serializedName: "@nextLink",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ConfigurationSnapshot: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ConfigurationSnapshot",
+    modelProperties: {
+      name: {
+        serializedName: "name",
+        required: true,
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+      filters: {
+        constraints: {
+          MinItems: 1,
+          MaxItems: 3,
+        },
+        serializedName: "filters",
+        required: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ConfigurationSettingsFilter",
+            },
+          },
+        },
+      },
+      compositionType: {
+        serializedName: "composition_type",
+        type: {
+          name: "String",
+        },
+      },
+      createdOn: {
+        serializedName: "created",
+        readOnly: true,
+        type: {
+          name: "DateTime",
+        },
+      },
+      expiresOn: {
+        serializedName: "expires",
+        readOnly: true,
+        type: {
+          name: "DateTime",
+        },
+      },
+      retentionPeriodInSeconds: {
+        constraints: {
+          InclusiveMaximum: 7776000,
+          InclusiveMinimum: 3600,
+        },
+        serializedName: "retention_period",
+        type: {
+          name: "Number",
+        },
+      },
+      sizeInBytes: {
+        serializedName: "size",
+        readOnly: true,
+        type: {
+          name: "Number",
+        },
+      },
+      itemCount: {
+        serializedName: "items_count",
+        readOnly: true,
+        type: {
+          name: "Number",
+        },
+      },
+      tags: {
+        serializedName: "tags",
+        type: {
+          name: "Dictionary",
+          value: { type: { name: "String" } },
+        },
+      },
+      etag: {
+        serializedName: "etag",
+        readOnly: true,
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const ConfigurationSettingsFilter: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ConfigurationSettingsFilter",
+    modelProperties: {
+      keyFilter: {
+        serializedName: "key",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      labelFilter: {
+        serializedName: "label",
+        type: {
+          name: "String",
+        },
+      },
+      tagsFilter: {
+        constraints: {
+          UniqueItems: true,
+        },
+        serializedName: "tags",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "String",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+export const SnapshotUpdateParameters: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "SnapshotUpdateParameters",
+    modelProperties: {
+      status: {
+        serializedName: "status",
+        type: {
+          name: "String",
+        },
+      },
+    },
+  },
+};
+
+export const LabelListResult: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "LabelListResult",
@@ -188,38 +371,139 @@ export const LabelListResult: coreHttp.CompositeMapper = {
           element: {
             type: {
               name: "Composite",
-              className: "Label"
-            }
-          }
-        }
+              className: "SettingLabel",
+            },
+          },
+        },
       },
       nextLink: {
         serializedName: "@nextLink",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const Label: coreHttp.CompositeMapper = {
+export const SettingLabel: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "Label",
+    className: "SettingLabel",
     modelProperties: {
       name: {
         serializedName: "name",
         readOnly: true,
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationGetKeysHeaders: coreHttp.CompositeMapper = {
+export const OperationDetails: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "OperationDetails",
+    modelProperties: {
+      id: {
+        serializedName: "id",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      status: {
+        serializedName: "status",
+        required: true,
+        type: {
+          name: "Enum",
+          allowedValues: [
+            "NotStarted",
+            "Running",
+            "Succeeded",
+            "Failed",
+            "Canceled",
+          ],
+        },
+      },
+      error: {
+        serializedName: "error",
+        type: {
+          name: "Composite",
+          className: "ErrorDetail",
+        },
+      },
+    },
+  },
+};
+
+export const ErrorDetail: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ErrorDetail",
+    modelProperties: {
+      code: {
+        serializedName: "code",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      message: {
+        serializedName: "message",
+        required: true,
+        type: {
+          name: "String",
+        },
+      },
+      details: {
+        serializedName: "details",
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "ErrorDetail",
+            },
+          },
+        },
+      },
+      innererror: {
+        serializedName: "innererror",
+        type: {
+          name: "Composite",
+          className: "InnerError",
+        },
+      },
+    },
+  },
+};
+
+export const InnerError: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "InnerError",
+    modelProperties: {
+      code: {
+        serializedName: "code",
+        type: {
+          name: "String",
+        },
+      },
+      innererror: {
+        serializedName: "innererror",
+        type: {
+          name: "Composite",
+          className: "InnerError",
+        },
+      },
+    },
+  },
+};
+
+export const AppConfigurationGetKeysHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationGetKeysHeaders",
@@ -227,14 +511,14 @@ export const AppConfigurationGetKeysHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationCheckKeysHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationCheckKeysHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationCheckKeysHeaders",
@@ -242,14 +526,14 @@ export const AppConfigurationCheckKeysHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationGetKeyValuesHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationGetKeyValuesHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationGetKeyValuesHeaders",
@@ -257,29 +541,42 @@ export const AppConfigurationGetKeyValuesHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AppConfigurationCheckKeyValuesHeaders: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "AppConfigurationCheckKeyValuesHeaders",
-    modelProperties: {
-      syncToken: {
-        serializedName: "sync-token",
+          name: "String",
+        },
+      },
+      eTag: {
+        serializedName: "etag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationGetKeyValueHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationCheckKeyValuesHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationCheckKeyValuesHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationGetKeyValueHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationGetKeyValueHeaders",
@@ -287,26 +584,20 @@ export const AppConfigurationGetKeyValueHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       eTag: {
         serializedName: "etag",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      lastModified: {
-        serializedName: "last-modified",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const AppConfigurationPutKeyValueHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationPutKeyValueHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationPutKeyValueHeaders",
@@ -314,68 +605,212 @@ export const AppConfigurationPutKeyValueHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       eTag: {
         serializedName: "etag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationDeleteKeyValueHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationDeleteKeyValueHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationDeleteKeyValueHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationCheckKeyValueHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationCheckKeyValueHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationGetSnapshotsHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "AppConfigurationDeleteKeyValueHeaders",
+    className: "AppConfigurationGetSnapshotsHeaders",
     modelProperties: {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      eTag: {
-        serializedName: "etag",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
+    },
+  },
 };
 
-export const AppConfigurationCheckKeyValueHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationCheckSnapshotsHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationCheckSnapshotsHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationGetSnapshotHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
-    className: "AppConfigurationCheckKeyValueHeaders",
+    className: "AppConfigurationGetSnapshotHeaders",
     modelProperties: {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       eTag: {
         serializedName: "etag",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
-      lastModified: {
-        serializedName: "last-modified",
+      link: {
+        serializedName: "link",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationGetLabelsHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationCreateSnapshotHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationCreateSnapshotHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+        link: {
+          serializedName: "link",
+          type: {
+            name: "String",
+          },
+        },
+        operationLocation: {
+          serializedName: "operation-location",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationUpdateSnapshotHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationUpdateSnapshotHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+        link: {
+          serializedName: "link",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationCheckSnapshotHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationCheckSnapshotHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+        link: {
+          serializedName: "link",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationGetLabelsHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationGetLabelsHeaders",
@@ -383,14 +818,14 @@ export const AppConfigurationGetLabelsHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationCheckLabelsHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationCheckLabelsHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationCheckLabelsHeaders",
@@ -398,14 +833,14 @@ export const AppConfigurationCheckLabelsHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationPutLockHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationPutLockHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationPutLockHeaders",
@@ -413,20 +848,20 @@ export const AppConfigurationPutLockHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       eTag: {
         serializedName: "etag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationDeleteLockHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationDeleteLockHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationDeleteLockHeaders",
@@ -434,20 +869,20 @@ export const AppConfigurationDeleteLockHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
+          name: "String",
+        },
       },
       eTag: {
         serializedName: "etag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationGetRevisionsHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationGetRevisionsHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationGetRevisionsHeaders",
@@ -455,29 +890,42 @@ export const AppConfigurationGetRevisionsHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
-export const AppConfigurationCheckRevisionsHeaders: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "AppConfigurationCheckRevisionsHeaders",
-    modelProperties: {
-      syncToken: {
-        serializedName: "sync-token",
+          name: "String",
+        },
+      },
+      eTag: {
+        serializedName: "etag",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationGetKeysNextHeaders: coreHttp.CompositeMapper = {
+export const AppConfigurationCheckRevisionsHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationCheckRevisionsHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationGetKeysNextHeaders: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "AppConfigurationGetKeysNextHeaders",
@@ -485,54 +933,85 @@ export const AppConfigurationGetKeysNextHeaders: coreHttp.CompositeMapper = {
       syncToken: {
         serializedName: "sync-token",
         type: {
-          name: "String"
-        }
-      }
-    }
-  }
+          name: "String",
+        },
+      },
+    },
+  },
 };
 
-export const AppConfigurationGetKeyValuesNextHeaders: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "AppConfigurationGetKeyValuesNextHeaders",
-    modelProperties: {
-      syncToken: {
-        serializedName: "sync-token",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+export const AppConfigurationGetKeyValuesNextHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationGetKeyValuesNextHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
 
-export const AppConfigurationGetLabelsNextHeaders: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "AppConfigurationGetLabelsNextHeaders",
-    modelProperties: {
-      syncToken: {
-        serializedName: "sync-token",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+export const AppConfigurationGetSnapshotsNextHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationGetSnapshotsNextHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
 
-export const AppConfigurationGetRevisionsNextHeaders: coreHttp.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "AppConfigurationGetRevisionsNextHeaders",
-    modelProperties: {
-      syncToken: {
-        serializedName: "sync-token",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
+export const AppConfigurationGetLabelsNextHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationGetLabelsNextHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };
+
+export const AppConfigurationGetRevisionsNextHeaders: coreClient.CompositeMapper =
+  {
+    type: {
+      name: "Composite",
+      className: "AppConfigurationGetRevisionsNextHeaders",
+      modelProperties: {
+        syncToken: {
+          serializedName: "sync-token",
+          type: {
+            name: "String",
+          },
+        },
+        eTag: {
+          serializedName: "etag",
+          type: {
+            name: "String",
+          },
+        },
+      },
+    },
+  };

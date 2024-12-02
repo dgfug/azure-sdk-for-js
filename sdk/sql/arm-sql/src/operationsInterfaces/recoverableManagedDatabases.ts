@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   RecoverableManagedDatabase,
   RecoverableManagedDatabasesListByInstanceOptionalParams,
   RecoverableManagedDatabasesGetOptionalParams,
-  RecoverableManagedDatabasesGetResponse
+  RecoverableManagedDatabasesGetResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -28,7 +27,7 @@ export interface RecoverableManagedDatabases {
   listByInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: RecoverableManagedDatabasesListByInstanceOptionalParams
+    options?: RecoverableManagedDatabasesListByInstanceOptionalParams,
   ): PagedAsyncIterableIterator<RecoverableManagedDatabase>;
   /**
    * Gets a recoverable managed database.
@@ -42,6 +41,6 @@ export interface RecoverableManagedDatabases {
     resourceGroupName: string,
     managedInstanceName: string,
     recoverableDatabaseName: string,
-    options?: RecoverableManagedDatabasesGetOptionalParams
+    options?: RecoverableManagedDatabasesGetOptionalParams,
   ): Promise<RecoverableManagedDatabasesGetResponse>;
 }

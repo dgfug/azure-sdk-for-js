@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export const BytePrefix = {
   Undefined: "00",
@@ -23,5 +23,5 @@ export const BytePrefix = {
   Binary: "12",
   Guid: "13",
   Float: "14",
-  Infinity: "FF"
+  Infinity: "FF",
 };

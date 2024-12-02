@@ -1,22 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { ListenOptions } from "net";
+import rhea from "rhea";
 import { EventEmitter } from "events";
-import {
-  ConnectionOptions,
-  Container,
-  EventContext,
-  Message,
-  ReceiverEvents,
-  Sender,
-  create_container,
-  SenderEvents,
-  Receiver,
-  ConnectionEvents,
-  ConnectionError
-} from "rhea";
-import { convertBufferToMessages } from "../utils/convertBufferToMessage";
+import type { ListenOptions } from "net";
+import { convertBufferToMessages } from "../utils/convertBufferToMessage.js";
 
 export interface MockServerOptions {
   /**
@@ -74,42 +62,42 @@ export interface MockServerOptions {
 
 export interface ReceiverOpenEvent {
   entityPath: string;
-  receiver: Receiver;
-  context: EventContext;
+  receiver: rhea.Receiver;
+  context: rhea.EventContext;
 }
 
 export interface ReceiverCloseEvent {
   entityPath: string;
-  receiver: Receiver;
-  context: EventContext;
+  receiver: rhea.Receiver;
+  context: rhea.EventContext;
 }
 
 export interface SenderOpenEvent {
   entityPath: string;
-  sender: Sender;
-  context: EventContext;
+  sender: rhea.Sender;
+  context: rhea.EventContext;
 }
 
 export interface SenderCloseEvent {
   entityPath: string;
-  sender: Sender;
-  context: EventContext;
+  sender: rhea.Sender;
+  context: rhea.EventContext;
 }
 
 export interface ConnectionOpenEvent {
-  context: EventContext;
+  context: rhea.EventContext;
 }
 
 export interface ConnectionCloseEvent {
-  error?: Error | ConnectionError;
-  context: EventContext;
+  error?: Error | rhea.ConnectionError;
+  context: rhea.EventContext;
 }
 
 export interface OnMessagesEvent {
-  messages: Array<Message & { body?: Buffer }>;
+  messages: Array<rhea.Message & { body?: Buffer }>;
   entityPath: string;
-  sendMessage: (message: Message) => void;
-  context: EventContext;
+  sendMessage: (message: rhea.Message) => void;
+  context: rhea.EventContext;
 }
 
 /**
@@ -119,14 +107,14 @@ export interface OnMessagesEvent {
  * to interact with incoming messages and link notifications.
  */
 export class MockServer extends EventEmitter {
-  private _container: Container;
-  private _listener?: ReturnType<Container["listen"]>;
+  private _container: rhea.Container;
+  private _listener?: ReturnType<rhea.Container["listen"]>;
   private _options: MockServerOptions;
 
   constructor(options: MockServerOptions = {}) {
     super();
     this._options = options;
-    this._container = create_container();
+    this._container = rhea.create_container();
   }
 
   /**
@@ -148,7 +136,9 @@ export class MockServer extends EventEmitter {
     return new Promise((resolve, reject) => {
       const options = this._options;
       const ONE_MB = 1024 * 1024;
-      const listenOptions: ListenOptions & ConnectionOptions & any = {
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const listenOptions: ListenOptions & rhea.ConnectionOptions & any = {
         port: options.port ?? 0,
         max_frame_size: 65536,
         channel_max: 4999,
@@ -156,15 +146,15 @@ export class MockServer extends EventEmitter {
         receiver_options: {
           max_message_size: options.maxMessageSize ?? ONE_MB,
           autosettle: true,
-          autoaccept: false
+          autoaccept: false,
         },
         sender_options: {
           max_message_size: options.maxMessageSize ?? ONE_MB,
-          autosettle: true
+          autosettle: true,
         },
         transport: "tls",
         rejectUnauthorized: true,
-        ...options.tlsOptions
+        ...options.tlsOptions,
       };
 
       this._setupDefaultListeners();
@@ -183,6 +173,7 @@ export class MockServer extends EventEmitter {
   emit(type: "receiverClose", event: ReceiverCloseEvent): boolean;
   emit(type: "senderClose", event: SenderCloseEvent): boolean;
   emit(type: "connectionClose", event: ConnectionCloseEvent): boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
   emit(type: string, event: any): boolean {
     return super.emit(type, event);
   }
@@ -191,56 +182,57 @@ export class MockServer extends EventEmitter {
    * Add new "receiverOpen" event listener.
    * This event indicates when the remote peer has created a `Sender`
    * and the server creates a `Receiver` link in response.
-   * @param type "receiverOpen"
-   * @param listener
+   * @param type - "receiverOpen"
+   * @param listener -
    */
   public on(type: "receiverOpen", listener: (event: ReceiverOpenEvent) => void): this;
   /**
    * Add new "receiverClose" event listener.
    * This event indicates when the remote peer has closed a `Sender`
    * and the server closes a `Receiver` link in response.
-   * @param type "receiverClose"
-   * @param listener
+   * @param type - "receiverClose"
+   * @param listener -
    */
   public on(type: "receiverClose", listener: (event: ReceiverCloseEvent) => void): this;
   /**
    * Add new "connectionOpen" event listener.
    * This event indicates when the remote peer has created a connection to the server.
-   * @param type "connectionOpen"
-   * @param listener
+   * @param type - "connectionOpen"
+   * @param listener -
    */
   public on(type: "connectionOpen", listener: (event: ConnectionOpenEvent) => void): this;
   /**
    * Add new "senderOpen" event listener.
    * This event indicates when the remote peer has created a `Receiver`
    * and the server creates a `Sender` link in response.
-   * @param type "senderOpen"
-   * @param listener
+   * @param type - "senderOpen"
+   * @param listener -
    */
   public on(type: "senderOpen", listener: (event: SenderOpenEvent) => void): this;
   /**
    * Add new "senderClose" event listener.
    * This event indicates when the remote peer has closed a `Receiver`
    * and the server closes a `Sender` link in response.
-   * @param type "senderClose"
-   * @param listener
+   * @param type - "senderClose"
+   * @param listener -
    */
   public on(type: "senderClose", listener: (event: SenderCloseEvent) => void): this;
   /**
    * Add new "connectionClose" event listener.
    * This event indicates when the remote peer has closed a connection to the server.
-   * @param type "connectionClose"
-   * @param listener
+   * @param type - "connectionClose"
+   * @param listener -
    */
   public on(type: "connectionClose", listener: (event: ConnectionCloseEvent) => void): this;
   /**
    * Add new "onMessage" event listener.
    * This event indicates when the server has received a message from a remote peer.
    * Messages are received over a `Receiver` link.
-   * @param type "connectionClose"
-   * @param listener
+   * @param type - "connectionClose"
+   * @param listener -
    */
   public on(type: "onMessages", listener: (event: OnMessagesEvent) => void): this;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public on(type: string, listener: (event: any) => void): this {
     return super.on(type, listener);
   }
@@ -267,81 +259,86 @@ export class MockServer extends EventEmitter {
     });
   }
 
-  private _setupDefaultListeners() {
+  private _setupDefaultListeners(): void {
     this._container.sasl_server_mechanisms.enable_anonymous();
     this._container.sasl.server_add_external(this._container.sasl_server_mechanisms);
-    this._container.sasl_server_mechanisms["MSSBCBS"] = this._container.sasl_server_mechanisms[
-      "EXTERNAL"
-    ];
-    this._container.on(ConnectionEvents.connectionError, () => {});
-    this._container.on(ConnectionEvents.protocolError, () => {});
-    this._container.on(ConnectionEvents.connectionOpen, (context: EventContext) => {
-      context.connection.on("error", function(this: typeof context.connection, err: Error) {
+    this._container.sasl_server_mechanisms["MSSBCBS"] =
+      this._container.sasl_server_mechanisms["EXTERNAL"];
+    this._container.on(rhea.ConnectionEvents.connectionError, () => {
+      /* do nothing */
+    });
+    this._container.on(rhea.ConnectionEvents.protocolError, () => {
+      /* do nothing */
+    });
+    this._container.on(rhea.ConnectionEvents.connectionOpen, (context: rhea.EventContext) => {
+      context.connection.on("error", function (this: typeof context.connection, err: Error) {
         console.log(`Error occurred on connection:`, err?.message);
       });
       this.emit("connectionOpen", {
-        context
+        context,
       });
     });
-    this._container.on(ConnectionEvents.connectionClose, (context: EventContext) => {
+    this._container.on(rhea.ConnectionEvents.connectionClose, (context: rhea.EventContext) => {
       this.emit("connectionClose", {
         context,
-        error: context.error as ConnectionError
+        error: context.error as rhea.ConnectionError,
       });
     });
-    this._container.on(ConnectionEvents.disconnected, (context: EventContext) => {
+    this._container.on(rhea.ConnectionEvents.disconnected, (context: rhea.EventContext) => {
       this.emit("connectionClose", {
         context,
-        error: context.error as Error
+        error: context.error as Error,
       });
     });
-    this._container.on(SenderEvents.senderOpen, (context: EventContext) => {
+    this._container.on(rhea.SenderEvents.senderOpen, (context: rhea.EventContext) => {
       if (context.sender) {
         const entityPath = context.sender.source.address;
         this.emit("senderOpen", {
           context,
           entityPath,
-          sender: context.sender
+          sender: context.sender,
         });
       }
     });
-    this._container.on(ReceiverEvents.receiverOpen, (context: EventContext) => {
+    this._container.on(rhea.ReceiverEvents.receiverOpen, (context: rhea.EventContext) => {
       if (context.receiver) {
         const entityPath = context.receiver.target.address;
         this.emit("receiverOpen", {
           context,
           entityPath,
-          receiver: context.receiver
+          receiver: context.receiver,
         });
       }
     });
-    this._container.on(ReceiverEvents.message, this._handleMessage);
-    this._container.on(SenderEvents.senderClose, (context: EventContext) => {
+    this._container.on(rhea.ReceiverEvents.message, this._handleMessage);
+    this._container.on(rhea.SenderEvents.senderClose, (context: rhea.EventContext) => {
       if (context.sender) {
         const entityPath = context.sender.source.address;
         this.emit("senderClose", {
           context,
           entityPath,
-          sender: context.sender
+          sender: context.sender,
         });
       }
     });
-    this._container.on(ReceiverEvents.receiverClose, (context: EventContext) => {
+    this._container.on(rhea.ReceiverEvents.receiverClose, (context: rhea.EventContext) => {
       if (context.receiver) {
         const entityPath = context.receiver.target.address;
         this.emit("receiverClose", {
           context,
           entityPath,
-          receiver: context.receiver
+          receiver: context.receiver,
         });
       }
     });
-    this._container.on("error", function(err) {
+    this._container.on("error", function (err) {
       console.log("Unexpected error encountered:", err);
     });
   }
 
-  private _normalizeIncomingMessage(message: Message | Buffer): Array<Message & { body?: Buffer }> {
+  private _normalizeIncomingMessage(
+    message: rhea.Message | Buffer,
+  ): Array<rhea.Message & { body?: Buffer }> {
     const incomingMessages = Buffer.isBuffer(message)
       ? convertBufferToMessages(message)
       : [message];
@@ -358,7 +355,7 @@ export class MockServer extends EventEmitter {
     return incomingMessages;
   }
 
-  private _handleMessage = (context: EventContext) => {
+  private _handleMessage = (context: rhea.EventContext): void => {
     if (!context.message || !context.receiver) {
       return;
     }
@@ -368,16 +365,20 @@ export class MockServer extends EventEmitter {
     this.emit("onMessages", {
       messages: incomingMessages,
       entityPath,
-      sendMessage: (message: Message) => {
+      sendMessage: (message: rhea.Message) => {
         this._sendMessage(context, message, message.to);
       },
-      context
+      context,
     });
   };
 
-  private _sendMessage = (context: EventContext, outgoingMessage: Message, toLinkName?: string) => {
+  private _sendMessage = (
+    context: rhea.EventContext,
+    outgoingMessage: rhea.Message,
+    toLinkName?: string,
+  ): void => {
     const sender = context.connection.find_sender(
-      (s: Sender) => s.name === toLinkName || s.target.address === toLinkName
+      (s: rhea.Sender) => s.name === toLinkName || s.target.address === toLinkName,
     );
     if (sender) {
       sender.send(outgoingMessage);

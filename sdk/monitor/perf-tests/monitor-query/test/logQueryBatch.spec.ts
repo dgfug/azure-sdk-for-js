@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { PerfOptionDictionary, getEnvVar } from "@azure/test-utils-perf";
+// Licensed under the MIT License.
+import { PerfOptionDictionary, getEnvVar } from "@azure-tools/test-perf";
 import { MonitorQueryLog } from "./monitorQueryLog.spec";
 import { QueryBatch } from "@azure/monitor-query";
 
@@ -17,20 +17,20 @@ export class LogQueryBatchTest extends MonitorQueryLog<MonitorQueryTestOptions> 
       {
         workspaceId: this.workspaceId,
         query: "AzureActivity | summarize count()",
-        timespan: { startTime: new Date("2021-07-25"), endTime: new Date("2021-07-26") }
+        timespan: { startTime: new Date("2021-07-25"), endTime: new Date("2021-07-26") },
       },
       {
         workspaceId: this.workspaceId,
         query:
           "AppRequests | take 10  | summarize avgRequestDuration=avg(DurationMs) by bin(TimeGenerated, 10m), _ResourceId",
-        timespan: { startTime: new Date("2021-07-25"), endTime: new Date("2021-07-26") }
+        timespan: { startTime: new Date("2021-07-25"), endTime: new Date("2021-07-26") },
       },
       {
         workspaceId: this.workspaceId,
         query: "AppRequests | take 2",
         timespan: { duration: "" },
-        includeQueryStatistics: true
-      }
+        includeQueryStatistics: true,
+      },
     ];
   }
 

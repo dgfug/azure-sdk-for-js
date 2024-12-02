@@ -6,28 +6,28 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { RestorableSqlDatabases } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { CosmosDBManagementClientContext } from "../cosmosDBManagementClientContext";
+import { CosmosDBManagementClient } from "../cosmosDBManagementClient";
 import {
   RestorableSqlDatabaseGetResult,
   RestorableSqlDatabasesListOptionalParams,
-  RestorableSqlDatabasesListResponse
+  RestorableSqlDatabasesListResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RestorableSqlDatabases operations. */
 export class RestorableSqlDatabasesImpl implements RestorableSqlDatabases {
-  private readonly client: CosmosDBManagementClientContext;
+  private readonly client: CosmosDBManagementClient;
 
   /**
    * Initialize a new instance of the class RestorableSqlDatabases class.
    * @param client Reference to the service client
    */
-  constructor(client: CosmosDBManagementClientContext) {
+  constructor(client: CosmosDBManagementClient) {
     this.client = client;
   }
 
@@ -43,7 +43,7 @@ export class RestorableSqlDatabasesImpl implements RestorableSqlDatabases {
   public list(
     location: string,
     instanceId: string,
-    options?: RestorableSqlDatabasesListOptionalParams
+    options?: RestorableSqlDatabasesListOptionalParams,
   ): PagedAsyncIterableIterator<RestorableSqlDatabaseGetResult> {
     const iter = this.listPagingAll(location, instanceId, options);
     return {
@@ -53,30 +53,35 @@ export class RestorableSqlDatabasesImpl implements RestorableSqlDatabases {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(location, instanceId, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(location, instanceId, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     location: string,
     instanceId: string,
-    options?: RestorableSqlDatabasesListOptionalParams
+    options?: RestorableSqlDatabasesListOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<RestorableSqlDatabaseGetResult[]> {
-    let result = await this._list(location, instanceId, options);
+    let result: RestorableSqlDatabasesListResponse;
+    result = await this._list(location, instanceId, options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
     location: string,
     instanceId: string,
-    options?: RestorableSqlDatabasesListOptionalParams
+    options?: RestorableSqlDatabasesListOptionalParams,
   ): AsyncIterableIterator<RestorableSqlDatabaseGetResult> {
     for await (const page of this.listPagingPage(
       location,
       instanceId,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -94,11 +99,11 @@ export class RestorableSqlDatabasesImpl implements RestorableSqlDatabases {
   private _list(
     location: string,
     instanceId: string,
-    options?: RestorableSqlDatabasesListOptionalParams
+    options?: RestorableSqlDatabasesListOptionalParams,
   ): Promise<RestorableSqlDatabasesListResponse> {
     return this.client.sendOperationRequest(
       { location, instanceId, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 }
@@ -106,24 +111,23 @@ export class RestorableSqlDatabasesImpl implements RestorableSqlDatabases {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}/restorableSqlDatabases",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DocumentDB/locations/{location}/restorableDatabaseAccounts/{instanceId}/restorableSqlDatabases",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorableSqlDatabasesListResult
+      bodyMapper: Mappers.RestorableSqlDatabasesListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.location1,
-    Parameters.instanceId
+    Parameters.instanceId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

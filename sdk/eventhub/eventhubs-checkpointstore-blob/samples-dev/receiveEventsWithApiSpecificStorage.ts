@@ -12,40 +12,41 @@
  * events from where it last checkpointed.
  */
 
-import { EventHubConsumerClient, CheckpointStore } from "@azure/event-hubs";
+import { DefaultAzureCredential } from "@azure/identity";
+import { EventHubConsumerClient } from "@azure/event-hubs";
 import { BlobCheckpointStore } from "@azure/eventhubs-checkpointstore-blob";
-import { ContainerClient, StorageSharedKeyCredential } from "@azure/storage-blob";
-import { createCustomPipeline } from "./createCustomPipeline";
+import { BlobServiceClient, ContainerClient } from "@azure/storage-blob";
+import { createCustomPipeline } from "./createCustomPipeline.js";
 
-const connectionString =
-  process.env["EVENT_HUB_CONNECTION_STRING"] || "<event-hub-connection-string>";
-const eventHubName = process.env["EVENT_HUB_NAME"] || "<eventHubName>";
+import "dotenv/config";
+
+const fullyQualifiedNamespace = process.env["EVENTHUB_FQDN"] || "<fully qualified namespace>";
+const eventHubName = process.env["EVENTHUB_NAME"] || "<eventHubName>";
 const consumerGroup =
-  process.env["EVENT_HUB_CONSUMER_GROUP"] || EventHubConsumerClient.defaultConsumerGroupName;
-const storageContainerUrl =
-  process.env["STORAGE_CONTAINER_URL"] ||
-  "https://<storageaccount>.blob.core.windows.net/<containername>";
-const storageAccountName = process.env["STORAGE_ACCOUNT_NAME"] || "<storageaccount>";
-const storageAccountKey = process.env["STORAGE_ACCOUNT_KEY"] || "<key>";
+  process.env["EVENTHUB_CONSUMER_GROUP_NAME"] || EventHubConsumerClient.defaultConsumerGroupName;
+const storageEndpoint =
+  process.env["STORAGE_ENDPOINT"] || "https://<storageaccount>.blob.core.windows.net";
 
 export async function main() {
+  const credential = new DefaultAzureCredential();
   // The `containerClient` will be used by our eventhubs-checkpointstore-blob, which
   // persists any checkpoints from this session in Azure Storage.
-  const storageCredential = new StorageSharedKeyCredential(storageAccountName, storageAccountKey);
-  const storageContainerPipeline = createCustomPipeline(storageCredential);
-  const containerClient = new ContainerClient(storageContainerUrl, storageContainerPipeline);
+  const storageContainerPipeline = createCustomPipeline(credential);
+  const storageClient = new BlobServiceClient(storageEndpoint, storageContainerPipeline);
+  const containerClient = storageClient.getContainerClient("checkpointstore");
 
   if (!containerClient.exists()) {
     await containerClient.create();
   }
 
-  const checkpointStore: CheckpointStore = new BlobCheckpointStore(containerClient);
+  const checkpointStore = new BlobCheckpointStore(containerClient);
 
   const consumerClient = new EventHubConsumerClient(
     consumerGroup,
-    connectionString,
+    fullyQualifiedNamespace,
     eventHubName,
-    checkpointStore
+    credential,
+    checkpointStore,
   );
 
   // The below code will set up your program to listen to events from your Event Hub instance.
@@ -56,14 +57,14 @@ export async function main() {
     processEvents: async (events, context) => {
       for (const event of events) {
         console.log(
-          `Received event: '${event.body}' from partition: '${context.partitionId}' and consumer group: '${context.consumerGroup}'`
+          `Received event: '${event.body}' from partition: '${context.partitionId}' and consumer group: '${context.consumerGroup}'`,
         );
       }
 
       try {
         // save a checkpoint for the last event now that we've processed this batch.
         await context.updateCheckpoint(events[events.length - 1]);
-      } catch (err) {
+      } catch (err: any) {
         console.log(`Error when checkpointing on partition ${context.partitionId}: `, err);
         throw err;
       }
@@ -71,12 +72,12 @@ export async function main() {
       console.log(
         `Successfully checkpointed event with sequence number: ${
           events[events.length - 1].sequenceNumber
-        } from partition: 'partitionContext.partitionId'`
+        } from partition: 'partitionContext.partitionId'`,
       );
     },
     processError: async (err, context) => {
       console.log(`Error on partition "${context.partitionId}": ${err}`);
-    }
+    },
   });
 
   // after 30 seconds, stop processing

@@ -6,14 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   ManagedInstanceOperation,
   ManagedInstanceOperationsListByManagedInstanceOptionalParams,
   ManagedInstanceOperationsGetOptionalParams,
   ManagedInstanceOperationsGetResponse,
-  ManagedInstanceOperationsCancelOptionalParams
+  ManagedInstanceOperationsCancelOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -29,7 +28,7 @@ export interface ManagedInstanceOperations {
   listByManagedInstance(
     resourceGroupName: string,
     managedInstanceName: string,
-    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams
+    options?: ManagedInstanceOperationsListByManagedInstanceOptionalParams,
   ): PagedAsyncIterableIterator<ManagedInstanceOperation>;
   /**
    * Gets a management operation on a managed instance.
@@ -43,7 +42,7 @@ export interface ManagedInstanceOperations {
     resourceGroupName: string,
     managedInstanceName: string,
     operationId: string,
-    options?: ManagedInstanceOperationsGetOptionalParams
+    options?: ManagedInstanceOperationsGetOptionalParams,
   ): Promise<ManagedInstanceOperationsGetResponse>;
   /**
    * Cancels the asynchronous operation on the managed instance.
@@ -57,6 +56,6 @@ export interface ManagedInstanceOperations {
     resourceGroupName: string,
     managedInstanceName: string,
     operationId: string,
-    options?: ManagedInstanceOperationsCancelOptionalParams
+    options?: ManagedInstanceOperationsCancelOptionalParams,
   ): Promise<void>;
 }

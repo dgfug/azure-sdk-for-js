@@ -6,20 +6,27 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { AzureFirewalls } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   AzureFirewall,
   AzureFirewallsListNextOptionalParams,
   AzureFirewallsListOptionalParams,
+  AzureFirewallsListResponse,
   AzureFirewallsListAllNextOptionalParams,
   AzureFirewallsListAllOptionalParams,
+  AzureFirewallsListAllResponse,
   AzureFirewallsDeleteOptionalParams,
   AzureFirewallsGetOptionalParams,
   AzureFirewallsGetResponse,
@@ -28,22 +35,25 @@ import {
   TagsObject,
   AzureFirewallsUpdateTagsOptionalParams,
   AzureFirewallsUpdateTagsResponse,
-  AzureFirewallsListResponse,
-  AzureFirewallsListAllResponse,
+  AzureFirewallsListLearnedPrefixesOptionalParams,
+  AzureFirewallsListLearnedPrefixesResponse,
+  FirewallPacketCaptureParameters,
+  AzureFirewallsPacketCaptureOptionalParams,
+  AzureFirewallsPacketCaptureResponse,
   AzureFirewallsListNextResponse,
-  AzureFirewallsListAllNextResponse
+  AzureFirewallsListAllNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing AzureFirewalls operations. */
 export class AzureFirewallsImpl implements AzureFirewalls {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class AzureFirewalls class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -54,7 +64,7 @@ export class AzureFirewallsImpl implements AzureFirewalls {
    */
   public list(
     resourceGroupName: string,
-    options?: AzureFirewallsListOptionalParams
+    options?: AzureFirewallsListOptionalParams,
   ): PagedAsyncIterableIterator<AzureFirewall> {
     const iter = this.listPagingAll(resourceGroupName, options);
     return {
@@ -64,33 +74,45 @@ export class AzureFirewallsImpl implements AzureFirewalls {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(resourceGroupName, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
-    options?: AzureFirewallsListOptionalParams
+    options?: AzureFirewallsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<AzureFirewall[]> {
-    let result = await this._list(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: AzureFirewallsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
-    options?: AzureFirewallsListOptionalParams
+    options?: AzureFirewallsListOptionalParams,
   ): AsyncIterableIterator<AzureFirewall> {
     for await (const page of this.listPagingPage(resourceGroupName, options)) {
       yield* page;
@@ -102,7 +124,7 @@ export class AzureFirewallsImpl implements AzureFirewalls {
    * @param options The options parameters.
    */
   public listAll(
-    options?: AzureFirewallsListAllOptionalParams
+    options?: AzureFirewallsListAllOptionalParams,
   ): PagedAsyncIterableIterator<AzureFirewall> {
     const iter = this.listAllPagingAll(options);
     return {
@@ -112,27 +134,39 @@ export class AzureFirewallsImpl implements AzureFirewalls {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
+      },
     };
   }
 
   private async *listAllPagingPage(
-    options?: AzureFirewallsListAllOptionalParams
+    options?: AzureFirewallsListAllOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<AzureFirewall[]> {
-    let result = await this._listAll(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: AzureFirewallsListAllResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAll(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listAllPagingAll(
-    options?: AzureFirewallsListAllOptionalParams
+    options?: AzureFirewallsListAllOptionalParams,
   ): AsyncIterableIterator<AzureFirewall> {
     for await (const page of this.listAllPagingPage(options)) {
       yield* page;
@@ -148,25 +182,24 @@ export class AzureFirewallsImpl implements AzureFirewalls {
   async beginDelete(
     resourceGroupName: string,
     azureFirewallName: string,
-    options?: AzureFirewallsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: AzureFirewallsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -175,8 +208,8 @@ export class AzureFirewallsImpl implements AzureFirewalls {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -184,21 +217,23 @@ export class AzureFirewallsImpl implements AzureFirewalls {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, azureFirewallName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, azureFirewallName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -210,12 +245,12 @@ export class AzureFirewallsImpl implements AzureFirewalls {
   async beginDeleteAndWait(
     resourceGroupName: string,
     azureFirewallName: string,
-    options?: AzureFirewallsDeleteOptionalParams
+    options?: AzureFirewallsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       azureFirewallName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -229,11 +264,11 @@ export class AzureFirewallsImpl implements AzureFirewalls {
   get(
     resourceGroupName: string,
     azureFirewallName: string,
-    options?: AzureFirewallsGetOptionalParams
+    options?: AzureFirewallsGetOptionalParams,
   ): Promise<AzureFirewallsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, azureFirewallName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -248,30 +283,29 @@ export class AzureFirewallsImpl implements AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: AzureFirewall,
-    options?: AzureFirewallsCreateOrUpdateOptionalParams
+    options?: AzureFirewallsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<AzureFirewallsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<AzureFirewallsCreateOrUpdateResponse>,
       AzureFirewallsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<AzureFirewallsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -280,8 +314,8 @@ export class AzureFirewallsImpl implements AzureFirewalls {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -289,21 +323,26 @@ export class AzureFirewallsImpl implements AzureFirewalls {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, azureFirewallName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, azureFirewallName, parameters, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      AzureFirewallsCreateOrUpdateResponse,
+      OperationState<AzureFirewallsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -317,13 +356,13 @@ export class AzureFirewallsImpl implements AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: AzureFirewall,
-    options?: AzureFirewallsCreateOrUpdateOptionalParams
+    options?: AzureFirewallsCreateOrUpdateOptionalParams,
   ): Promise<AzureFirewallsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       azureFirewallName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -339,30 +378,29 @@ export class AzureFirewallsImpl implements AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: TagsObject,
-    options?: AzureFirewallsUpdateTagsOptionalParams
+    options?: AzureFirewallsUpdateTagsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<AzureFirewallsUpdateTagsResponse>,
+    SimplePollerLike<
+      OperationState<AzureFirewallsUpdateTagsResponse>,
       AzureFirewallsUpdateTagsResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<AzureFirewallsUpdateTagsResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -371,8 +409,8 @@ export class AzureFirewallsImpl implements AzureFirewalls {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -380,21 +418,26 @@ export class AzureFirewallsImpl implements AzureFirewalls {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, azureFirewallName, parameters, options },
-      updateTagsOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, azureFirewallName, parameters, options },
+      spec: updateTagsOperationSpec,
     });
+    const poller = await createHttpPoller<
+      AzureFirewallsUpdateTagsResponse,
+      OperationState<AzureFirewallsUpdateTagsResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -408,13 +451,13 @@ export class AzureFirewallsImpl implements AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: TagsObject,
-    options?: AzureFirewallsUpdateTagsOptionalParams
+    options?: AzureFirewallsUpdateTagsOptionalParams,
   ): Promise<AzureFirewallsUpdateTagsResponse> {
     const poller = await this.beginUpdateTags(
       resourceGroupName,
       azureFirewallName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -426,11 +469,11 @@ export class AzureFirewallsImpl implements AzureFirewalls {
    */
   private _list(
     resourceGroupName: string,
-    options?: AzureFirewallsListOptionalParams
+    options?: AzureFirewallsListOptionalParams,
   ): Promise<AzureFirewallsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -439,9 +482,194 @@ export class AzureFirewallsImpl implements AzureFirewalls {
    * @param options The options parameters.
    */
   private _listAll(
-    options?: AzureFirewallsListAllOptionalParams
+    options?: AzureFirewallsListAllOptionalParams,
   ): Promise<AzureFirewallsListAllResponse> {
     return this.client.sendOperationRequest({ options }, listAllOperationSpec);
+  }
+
+  /**
+   * Retrieves a list of all IP prefixes that azure firewall has learned to not SNAT.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the azure firewall.
+   * @param options The options parameters.
+   */
+  async beginListLearnedPrefixes(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    options?: AzureFirewallsListLearnedPrefixesOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<AzureFirewallsListLearnedPrefixesResponse>,
+      AzureFirewallsListLearnedPrefixesResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<AzureFirewallsListLearnedPrefixesResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, azureFirewallName, options },
+      spec: listLearnedPrefixesOperationSpec,
+    });
+    const poller = await createHttpPoller<
+      AzureFirewallsListLearnedPrefixesResponse,
+      OperationState<AzureFirewallsListLearnedPrefixesResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Retrieves a list of all IP prefixes that azure firewall has learned to not SNAT.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the azure firewall.
+   * @param options The options parameters.
+   */
+  async beginListLearnedPrefixesAndWait(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    options?: AzureFirewallsListLearnedPrefixesOptionalParams,
+  ): Promise<AzureFirewallsListLearnedPrefixesResponse> {
+    const poller = await this.beginListLearnedPrefixes(
+      resourceGroupName,
+      azureFirewallName,
+      options,
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Runs a packet capture on AzureFirewall.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the Azure Firewall.
+   * @param parameters Parameters supplied to run packet capture on azure firewall.
+   * @param options The options parameters.
+   */
+  async beginPacketCapture(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    parameters: FirewallPacketCaptureParameters,
+    options?: AzureFirewallsPacketCaptureOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<AzureFirewallsPacketCaptureResponse>,
+      AzureFirewallsPacketCaptureResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<AzureFirewallsPacketCaptureResponse> => {
+      return this.client.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, azureFirewallName, parameters, options },
+      spec: packetCaptureOperationSpec,
+    });
+    const poller = await createHttpPoller<
+      AzureFirewallsPacketCaptureResponse,
+      OperationState<AzureFirewallsPacketCaptureResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Runs a packet capture on AzureFirewall.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the Azure Firewall.
+   * @param parameters Parameters supplied to run packet capture on azure firewall.
+   * @param options The options parameters.
+   */
+  async beginPacketCaptureAndWait(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    parameters: FirewallPacketCaptureParameters,
+    options?: AzureFirewallsPacketCaptureOptionalParams,
+  ): Promise<AzureFirewallsPacketCaptureResponse> {
+    const poller = await this.beginPacketCapture(
+      resourceGroupName,
+      azureFirewallName,
+      parameters,
+      options,
+    );
+    return poller.pollUntilDone();
   }
 
   /**
@@ -453,11 +681,11 @@ export class AzureFirewallsImpl implements AzureFirewalls {
   private _listNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: AzureFirewallsListNextOptionalParams
+    options?: AzureFirewallsListNextOptionalParams,
   ): Promise<AzureFirewallsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -468,11 +696,11 @@ export class AzureFirewallsImpl implements AzureFirewalls {
    */
   private _listAllNext(
     nextLink: string,
-    options?: AzureFirewallsListAllNextOptionalParams
+    options?: AzureFirewallsListAllNextOptionalParams,
   ): Promise<AzureFirewallsListAllNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listAllNextOperationSpec
+      listAllNextOperationSpec,
     );
   }
 }
@@ -480,8 +708,7 @@ export class AzureFirewallsImpl implements AzureFirewalls {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -489,61 +716,59 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.azureFirewallName
+    Parameters.azureFirewallName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.azureFirewallName
+    Parameters.azureFirewallName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     201: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     202: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     204: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.parameters4,
   queryParameters: [Parameters.apiVersion],
@@ -551,32 +776,31 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.azureFirewallName1
+    Parameters.azureFirewallName1,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateTagsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     201: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     202: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     204: {
-      bodyMapper: Mappers.AzureFirewall
+      bodyMapper: Mappers.AzureFirewall,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.parameters1,
   queryParameters: [Parameters.apiVersion],
@@ -584,88 +808,146 @@ const updateTagsOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.azureFirewallName
+    Parameters.azureFirewallName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureFirewallListResult
+      bodyMapper: Mappers.AzureFirewallListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/azureFirewalls",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/azureFirewalls",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureFirewallListResult
+      bodyMapper: Mappers.AzureFirewallListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const listLearnedPrefixesOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}/learnedIPPrefixes",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.IPPrefixesList,
+    },
+    201: {
+      bodyMapper: Mappers.IPPrefixesList,
+    },
+    202: {
+      bodyMapper: Mappers.IPPrefixesList,
+    },
+    204: {
+      bodyMapper: Mappers.IPPrefixesList,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.azureFirewallName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const packetCaptureOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/azureFirewalls/{azureFirewallName}/packetCapture",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      headersMapper: Mappers.AzureFirewallsPacketCaptureHeaders,
+    },
+    201: {
+      headersMapper: Mappers.AzureFirewallsPacketCaptureHeaders,
+    },
+    202: {
+      headersMapper: Mappers.AzureFirewallsPacketCaptureHeaders,
+    },
+    204: {
+      headersMapper: Mappers.AzureFirewallsPacketCaptureHeaders,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  requestBody: Parameters.parameters5,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.azureFirewallName2,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureFirewallListResult
+      bodyMapper: Mappers.AzureFirewallListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureFirewallListResult
+      bodyMapper: Mappers.AzureFirewallListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

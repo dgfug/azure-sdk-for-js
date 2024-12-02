@@ -1,27 +1,27 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 import assert from "assert";
-import { Suite } from "mocha";
-import { UserDefinedFunctionDefinition, Container } from "../../../src";
+import type { Suite } from "mocha";
+import type { UserDefinedFunctionDefinition, Container } from "../../../src";
 import { removeAllDatabases, getTestContainer } from "../common/TestHelpers";
 
-describe("User Defined Function", function(this: Suite) {
+describe("User Defined Function", function (this: Suite) {
   this.timeout(process.env.MOCHA_TIMEOUT || 10000);
   let container: Container;
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     await removeAllDatabases();
     // get container
     container = await getTestContainer("UDFTests");
   });
-  it("nativeApi Should do UDF CRUD operations successfully", async function() {
+  it("nativeApi Should do UDF CRUD operations successfully", async function () {
     const { resources: udfs } = await container.scripts.userDefinedFunctions.readAll().fetchAll();
 
     // create a udf
     const beforeCreateUdfsCount = udfs.length;
     const udfDefinition: UserDefinedFunctionDefinition = {
       id: "sample udf",
-      body: "function () { const x = 10; }"
+      body: "function () { const x = 10; }",
     };
 
     // TODO also handle upsert case
@@ -31,13 +31,13 @@ describe("User Defined Function", function(this: Suite) {
     assert.equal(udf.body, "function () { const x = 10; }");
 
     // read udfs after creation
-    const {
-      resources: udfsAfterCreate
-    } = await container.scripts.userDefinedFunctions.readAll().fetchAll();
+    const { resources: udfsAfterCreate } = await container.scripts.userDefinedFunctions
+      .readAll()
+      .fetchAll();
     assert.equal(
       udfsAfterCreate.length,
       beforeCreateUdfsCount + 1,
-      "create should increase the number of udfs"
+      "create should increase the number of udfs",
     );
 
     // query udfs
@@ -46,9 +46,9 @@ describe("User Defined Function", function(this: Suite) {
       parameters: [
         {
           name: "@id",
-          value: udfDefinition.id
-        }
-      ]
+          value: udfDefinition.id,
+        },
+      ],
     };
     const { resources: results } = await container.scripts.userDefinedFunctions
       .query(querySpec)
@@ -78,7 +78,7 @@ describe("User Defined Function", function(this: Suite) {
     try {
       await container.scripts.userDefinedFunction(replacedUdf.id).read();
       assert.fail("Must fail to read after delete");
-    } catch (err) {
+    } catch (err: any) {
       const notFoundErrorCode = 404;
       assert.equal(err.code, notFoundErrorCode, "response should return error code 404");
     }

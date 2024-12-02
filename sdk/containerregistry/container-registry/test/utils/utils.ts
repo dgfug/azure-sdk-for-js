@@ -1,60 +1,71 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AzureAuthorityHosts, ClientSecretCredential } from "@azure/identity";
+import { AzureAuthorityHosts } from "@azure/identity";
+import { createTestCredential } from "@azure-tools/test-credential";
+import type { Recorder, RecorderStartOptions } from "@azure-tools/test-recorder";
+import { isLiveMode } from "@azure-tools/test-recorder";
 import {
-  env,
-  RecorderEnvironmentSetup,
-  pluginForClientSecretCredentialTests
-} from "@azure-tools/test-recorder";
-import { ContainerRegistryClient, KnownContainerRegistryAudience } from "../../src";
+  ContainerRegistryContentClient,
+  ContainerRegistryClient,
+  KnownContainerRegistryAudience,
+} from "../../src";
+import { createXhrHttpClient } from "@azure-tools/test-utils";
+import { isNodeLike } from "@azure/core-util";
 
 // When the recorder observes the values of these environment variables in any
 // recorded HTTP request or response, it will replace them with the values they
 // are mapped to below.
-const replaceableVariables: Record<string, string> = {
+const envSetupForPlayback: Record<string, string> = {
   CONTAINER_REGISTRY_ENDPOINT: "https://myregistry.azurecr.io",
   CONTAINER_REGISTRY_ANONYMOUS_ENDPOINT: "https://myregistry.azurecr.io",
-  CONTAINERREGISTRY_TENANT_ID: "12345678-1234-1234-1234-123456789012",
-  CONTAINERREGISTRY_CLIENT_ID: "azure_client_id",
-  CONTAINERREGISTRY_CLIENT_SECRET: "azure_client_secret",
   SUBSCRIPTION_ID: "subscription_id",
   RESOURCE_GROUP: "resource_group_id",
-  REGISTRY: "myregistry"
+  REGISTRY: "myregistry",
 };
 
 const expiryReplacement = "eyJleHAiOjg2NDAwMDAwMDAwMDB9"; //  base64 encoding of '{"exp":8640000000000}' ;
-export const recorderEnvSetup: RecorderEnvironmentSetup = {
+export const recorderStartOptions: RecorderStartOptions = {
   // == Recorder Environment Setup == Add the replaceable variables from
   // above
-  replaceableVariables,
+  envSetupForPlayback,
 
-  // We don't use this in the template, but if we had any query parameters
-  // we wished to discard, we could add them here
-  queryParametersToSkip: [],
+  sanitizerOptions: {
+    generalSanitizers: [
+      {
+        regex: true,
+        target: `"refresh_token":"[^"]+"`,
+        value: `"refresh_token":"sanitized.${expiryReplacement}.sanitized"`,
+      },
+      {
+        regex: true,
+        target: `access_token=([^&]+?)(&|"|$)`,
+        value: `access_token=SecretPlaceholder$2`,
+      },
+      {
+        regex: true,
+        target: `refresh_token=([^&]+?)(&|")`,
+        value: `refresh_token=sanitized.${expiryReplacement}.sanitized$2`,
+      },
+      {
+        regex: true,
+        target: `sig=([^&]+)`,
+        value: `sig=sanitized`,
+      },
+    ],
+    bodyKeySanitizers: [
+      {
+        jsonPath: "access_token",
+      },
+    ],
+  },
 
-  // Finally, we need to remove the AAD `refresh_token` from any requests.
-  // This is very important, as it cannot be removed using environment
-  // variable or query parameter replacement.  The
-  // `customizationsOnRecordings` field allows us to make arbitrary
-  // replacements within recordings.
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording.replace(
-        /"refresh_token":"[^"]+"/g,
-        `"refresh_token":"sanitized.${expiryReplacement}.sanitized"`
-      ),
-    (recording: string): string =>
-      recording.replace(/access_token=(.+?)(&|")/, `access_token=access_token$2`),
-    (recording: string): string =>
-      recording.replace(
-        /refresh_token=([^&]+?)(&|")/,
-        `refresh_token=sanitized.${expiryReplacement}.sanitized$2`
-      )
+  removeCentralSanitizers: [
+    // our own refresh token sanitizer above replaces the value with a valid JWT which is required for tests to work
+    "AZSDK3401",
+    // "name" as used in tag properties is not secret and does not need to be sanitized
+    "AZSDK3493",
   ],
-  onLoadCallbackForPlayback: () => {
-    pluginForClientSecretCredentialTests(env.CONTAINERREGISTRY_TENANT_ID);
-  }
 };
 
 function getAuthority(endpoint: string): AzureAuthorityHosts | undefined {
@@ -87,33 +98,54 @@ type ContainerRegistryServiceVersions = "2021-07-01";
 export function createRegistryClient(
   endpoint: string,
   serviceVersion: string,
-  options: { anonymous: boolean } = { anonymous: false }
+  recorder: Recorder,
+  options: { anonymous: boolean } = { anonymous: false },
 ): ContainerRegistryClient {
+  const authorityHost = getAuthority(endpoint);
+  const audience = getAudience(authorityHost);
+  const tokenCredentialOptions = authorityHost ? { authorityHost } : undefined;
+  const httpClient = isNodeLike || isLiveMode() ? undefined : createXhrHttpClient();
+  const clientOptions = {
+    audience,
+    serviceVersion: serviceVersion as ContainerRegistryServiceVersions,
+    httpClient,
+  };
+
+  if (options.anonymous) {
+    return new ContainerRegistryClient(endpoint, recorder.configureClientOptions(clientOptions));
+  }
+
+  const credential = createTestCredential({ ...tokenCredentialOptions, httpClient });
+
+  return new ContainerRegistryClient(
+    endpoint,
+    credential,
+    recorder.configureClientOptions(clientOptions),
+  );
+}
+
+export function createBlobClient(
+  endpoint: string,
+  repositoryName: string,
+  serviceVersion: string,
+  recorder: Recorder,
+): ContainerRegistryContentClient {
   const authorityHost = getAuthority(endpoint);
   const audience = getAudience(authorityHost);
   const tokenCredentialOptions = authorityHost ? { authorityHost } : undefined;
   const clientOptions = {
     audience,
-    serviceVersion: serviceVersion as ContainerRegistryServiceVersions
+    serviceVersion: serviceVersion as ContainerRegistryServiceVersions,
   };
 
-  if (options.anonymous) {
-    return new ContainerRegistryClient(endpoint, clientOptions);
-  }
+  const credential = createTestCredential(tokenCredentialOptions);
 
-  // We use ClientSecretCredential instead of DefaultAzureCredential in order
-  // to ensure that the requests made to the AAD server are always the same. If
-  // we used DefaultAzureCredential, they might be different on some machines
-  // than on others, depending on which credentials are available (such as
-  // Managed Identity or developer credentials).
-  const credential = new ClientSecretCredential(
-    env.CONTAINERREGISTRY_TENANT_ID,
-    env.CONTAINERREGISTRY_CLIENT_ID,
-    env.CONTAINERREGISTRY_CLIENT_SECRET,
-    tokenCredentialOptions
+  return new ContainerRegistryContentClient(
+    endpoint,
+    repositoryName,
+    credential,
+    recorder.configureClientOptions(clientOptions),
   );
-
-  return new ContainerRegistryClient(endpoint, credential, clientOptions);
 }
 
 export const serviceVersions = ["2021-07-01"] as const;

@@ -1,19 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import EventEmitter from "events";
 import { Connection } from "rhea-promise";
-import { stub } from "sinon";
+import EventEmitter from "events";
+import { vi } from "vitest";
 
 /**
  * Creates a stubbed rhea-promise Connection object.
  */
 export function createConnectionStub(): Connection {
   const connectionStub = new Connection();
-  stub(connectionStub, "open").resolves({} as any);
-  stub(connectionStub, "createSession").resolves({
+  vi.spyOn(connectionStub, "open").mockResolvedValue({} as any);
+  vi.spyOn(connectionStub, "createSession").mockResolvedValue({
     connection: {
-      id: "connection-1"
+      id: "connection-1",
     },
     createSender: () => {
       const sender = new EventEmitter() as any;
@@ -24,8 +24,8 @@ export function createConnectionStub(): Connection {
     },
     createReceiver: () => {
       return Promise.resolve(new EventEmitter());
-    }
+    },
   } as any);
-  stub(connectionStub, "id").get(() => "connection-1");
+  vi.spyOn(connectionStub, "id", "get").mockReturnValue("connection-1");
   return connectionStub;
 }

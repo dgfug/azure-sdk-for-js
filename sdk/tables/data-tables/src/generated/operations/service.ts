@@ -6,11 +6,11 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { Service } from "../operationsInterfaces";
+import { Service } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { GeneratedClientContext } from "../generatedClientContext";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { GeneratedClient } from "../generatedClient.js";
 import {
   TableServiceProperties,
   ServiceSetPropertiesOptionalParams,
@@ -19,17 +19,17 @@ import {
   ServiceGetPropertiesResponse,
   ServiceGetStatisticsOptionalParams,
   ServiceGetStatisticsResponse
-} from "../models";
+} from "../models/index.js";
 
-/** Class representing a Service. */
+/** Class containing Service operations. */
 export class ServiceImpl implements Service {
-  private readonly client: GeneratedClientContext;
+  private readonly client: GeneratedClient;
 
   /**
    * Initialize a new instance of the class Service class.
    * @param client Reference to the service client
    */
-  constructor(client: GeneratedClientContext) {
+  constructor(client: GeneratedClient) {
     this.client = client;
   }
 

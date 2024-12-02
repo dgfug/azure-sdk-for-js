@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { log } from "./log";
+import { log } from "./log.js";
 
 /**
  * A simple mechanism for enabling logging.
@@ -85,8 +85,8 @@ const debugObj: Debug = Object.assign(
     enable,
     enabled,
     disable,
-    log
-  }
+    log,
+  },
 );
 
 function enable(namespaces: string): void {
@@ -137,7 +137,7 @@ function createDebugger(namespace: string): Debugger {
     destroy,
     log: debugObj.log,
     namespace,
-    extend
+    extend,
   });
 
   function debug(...args: any[]): void {

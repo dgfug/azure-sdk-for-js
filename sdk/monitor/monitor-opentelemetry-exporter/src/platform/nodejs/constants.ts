@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * SDK info
@@ -8,5 +8,5 @@
 export const SDK_INFO = {
   NAME: "opentelemetry",
   RUNTIME: "node",
-  LANGUAGE: "nodejs"
+  LANGUAGE: "nodejs",
 };

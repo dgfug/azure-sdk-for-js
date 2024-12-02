@@ -6,20 +6,27 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ExpressRoutePorts } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   ExpressRoutePort,
   ExpressRoutePortsListByResourceGroupNextOptionalParams,
   ExpressRoutePortsListByResourceGroupOptionalParams,
+  ExpressRoutePortsListByResourceGroupResponse,
   ExpressRoutePortsListNextOptionalParams,
   ExpressRoutePortsListOptionalParams,
+  ExpressRoutePortsListResponse,
   ExpressRoutePortsDeleteOptionalParams,
   ExpressRoutePortsGetOptionalParams,
   ExpressRoutePortsGetResponse,
@@ -28,25 +35,23 @@ import {
   TagsObject,
   ExpressRoutePortsUpdateTagsOptionalParams,
   ExpressRoutePortsUpdateTagsResponse,
-  ExpressRoutePortsListByResourceGroupResponse,
-  ExpressRoutePortsListResponse,
   GenerateExpressRoutePortsLOARequest,
   ExpressRoutePortsGenerateLOAOptionalParams,
   ExpressRoutePortsGenerateLOAResponse,
   ExpressRoutePortsListByResourceGroupNextResponse,
-  ExpressRoutePortsListNextResponse
+  ExpressRoutePortsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ExpressRoutePorts operations. */
 export class ExpressRoutePortsImpl implements ExpressRoutePorts {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class ExpressRoutePorts class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -57,7 +62,7 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: ExpressRoutePortsListByResourceGroupOptionalParams
+    options?: ExpressRoutePortsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRoutePort> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -67,37 +72,53 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: ExpressRoutePortsListByResourceGroupOptionalParams
+    options?: ExpressRoutePortsListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ExpressRoutePort[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ExpressRoutePortsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: ExpressRoutePortsListByResourceGroupOptionalParams
+    options?: ExpressRoutePortsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<ExpressRoutePort> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -108,7 +129,7 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
    * @param options The options parameters.
    */
   public list(
-    options?: ExpressRoutePortsListOptionalParams
+    options?: ExpressRoutePortsListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRoutePort> {
     const iter = this.listPagingAll(options);
     return {
@@ -118,27 +139,39 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: ExpressRoutePortsListOptionalParams
+    options?: ExpressRoutePortsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ExpressRoutePort[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ExpressRoutePortsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: ExpressRoutePortsListOptionalParams
+    options?: ExpressRoutePortsListOptionalParams,
   ): AsyncIterableIterator<ExpressRoutePort> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -154,25 +187,24 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
   async beginDelete(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRoutePortsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: ExpressRoutePortsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -181,8 +213,8 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -190,21 +222,23 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, expressRoutePortName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, expressRoutePortName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -216,12 +250,12 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
   async beginDeleteAndWait(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRoutePortsDeleteOptionalParams
+    options?: ExpressRoutePortsDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       expressRoutePortName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -235,11 +269,11 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
   get(
     resourceGroupName: string,
     expressRoutePortName: string,
-    options?: ExpressRoutePortsGetOptionalParams
+    options?: ExpressRoutePortsGetOptionalParams,
   ): Promise<ExpressRoutePortsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, expressRoutePortName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -254,30 +288,29 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     parameters: ExpressRoutePort,
-    options?: ExpressRoutePortsCreateOrUpdateOptionalParams
+    options?: ExpressRoutePortsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRoutePortsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRoutePortsCreateOrUpdateResponse>,
       ExpressRoutePortsCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<ExpressRoutePortsCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -286,8 +319,8 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -295,21 +328,26 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, expressRoutePortName, parameters, options },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, expressRoutePortName, parameters, options },
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      ExpressRoutePortsCreateOrUpdateResponse,
+      OperationState<ExpressRoutePortsCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -323,13 +361,13 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     parameters: ExpressRoutePort,
-    options?: ExpressRoutePortsCreateOrUpdateOptionalParams
+    options?: ExpressRoutePortsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRoutePortsCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       expressRoutePortName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -345,11 +383,11 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     parameters: TagsObject,
-    options?: ExpressRoutePortsUpdateTagsOptionalParams
+    options?: ExpressRoutePortsUpdateTagsOptionalParams,
   ): Promise<ExpressRoutePortsUpdateTagsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, expressRoutePortName, parameters, options },
-      updateTagsOperationSpec
+      updateTagsOperationSpec,
     );
   }
 
@@ -360,11 +398,11 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: ExpressRoutePortsListByResourceGroupOptionalParams
+    options?: ExpressRoutePortsListByResourceGroupOptionalParams,
   ): Promise<ExpressRoutePortsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -373,7 +411,7 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
    * @param options The options parameters.
    */
   private _list(
-    options?: ExpressRoutePortsListOptionalParams
+    options?: ExpressRoutePortsListOptionalParams,
   ): Promise<ExpressRoutePortsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -389,11 +427,11 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
     resourceGroupName: string,
     expressRoutePortName: string,
     request: GenerateExpressRoutePortsLOARequest,
-    options?: ExpressRoutePortsGenerateLOAOptionalParams
+    options?: ExpressRoutePortsGenerateLOAOptionalParams,
   ): Promise<ExpressRoutePortsGenerateLOAResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, expressRoutePortName, request, options },
-      generateLOAOperationSpec
+      generateLOAOperationSpec,
     );
   }
 
@@ -406,11 +444,11 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: ExpressRoutePortsListByResourceGroupNextOptionalParams
+    options?: ExpressRoutePortsListByResourceGroupNextOptionalParams,
   ): Promise<ExpressRoutePortsListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
@@ -421,11 +459,11 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
    */
   private _listNext(
     nextLink: string,
-    options?: ExpressRoutePortsListNextOptionalParams
+    options?: ExpressRoutePortsListNextOptionalParams,
   ): Promise<ExpressRoutePortsListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -433,8 +471,7 @@ export class ExpressRoutePortsImpl implements ExpressRoutePorts {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -442,85 +479,82 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRoutePortName
+    Parameters.expressRoutePortName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRoutePort
+      bodyMapper: Mappers.ExpressRoutePort,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRoutePortName
+    Parameters.expressRoutePortName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRoutePort
+      bodyMapper: Mappers.ExpressRoutePort,
     },
     201: {
-      bodyMapper: Mappers.ExpressRoutePort
+      bodyMapper: Mappers.ExpressRoutePort,
     },
     202: {
-      bodyMapper: Mappers.ExpressRoutePort
+      bodyMapper: Mappers.ExpressRoutePort,
     },
     204: {
-      bodyMapper: Mappers.ExpressRoutePort
+      bodyMapper: Mappers.ExpressRoutePort,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters14,
+  requestBody: Parameters.parameters18,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRoutePortName
+    Parameters.expressRoutePortName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateTagsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts/{expressRoutePortName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRoutePort
+      bodyMapper: Mappers.ExpressRoutePort,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.parameters1,
   queryParameters: [Parameters.apiVersion],
@@ -528,61 +562,58 @@ const updateTagsOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRoutePortName
+    Parameters.expressRoutePortName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/ExpressRoutePorts",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRoutePortListResult
+      bodyMapper: Mappers.ExpressRoutePortListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/ExpressRoutePorts",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/ExpressRoutePorts",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRoutePortListResult
+      bodyMapper: Mappers.ExpressRoutePortListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const generateLOAOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRoutePorts/{expressRoutePortName}/generateLoa",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/expressRoutePorts/{expressRoutePortName}/generateLoa",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.GenerateExpressRoutePortsLOAResult
+      bodyMapper: Mappers.GenerateExpressRoutePortsLOAResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.request,
   queryParameters: [Parameters.apiVersion],
@@ -590,50 +621,48 @@ const generateLOAOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.expressRoutePortName
+    Parameters.expressRoutePortName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRoutePortListResult
+      bodyMapper: Mappers.ExpressRoutePortListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ExpressRoutePortListResult
+      bodyMapper: Mappers.ExpressRoutePortListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

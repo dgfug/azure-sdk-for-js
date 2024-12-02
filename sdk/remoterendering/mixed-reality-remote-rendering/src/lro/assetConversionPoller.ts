@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PollOperationState, Poller, PollOperation } from "@azure/core-lro";
+import type { PollOperation, PollOperationState } from "@azure/core-lro";
+import { Poller } from "@azure/core-lro";
 import { KnownAssetConversionStatus } from "../generated/models/index";
-import { RemoteRendering } from "../generated/operationsInterfaces";
+import type { RemoteRendering } from "../generated/operationsInterfaces";
 import { getConversionInternal } from "../internal/commonQueries";
-import { AbortSignalLike } from "@azure/abort-controller";
+import type { AbortSignalLike } from "@azure/abort-controller";
 import { delay } from "@azure/core-util";
-import { AssetConversion } from "../internal/assetConversion";
+import type { AssetConversion } from "../internal/assetConversion";
 
 /**
  * Options to configure the poller for the beginConversion operation.
@@ -70,7 +71,8 @@ export class AssetConversionOperationStateImpl implements AssetConversionOperati
  * @internal
  */
 class AssetConversionOperation
-  implements PollOperation<AssetConversionOperationState, AssetConversion> {
+  implements PollOperation<AssetConversionOperationState, AssetConversion>
+{
   private accountId: string;
   private operations: RemoteRendering;
   state: AssetConversionOperationState;
@@ -78,7 +80,7 @@ class AssetConversionOperation
   constructor(
     accountId: string,
     operations: RemoteRendering,
-    state: AssetConversionOperationState
+    state: AssetConversionOperationState,
   ) {
     this.operations = operations;
     this.accountId = accountId;
@@ -93,7 +95,7 @@ class AssetConversionOperation
       this.accountId,
       this.operations,
       this.state.latestResponse.conversionId,
-      "AssetConversionOperation-Update"
+      "AssetConversionOperation-Update",
     );
     return this;
   }
@@ -120,14 +122,14 @@ export class AssetConversionPoller extends Poller<AssetConversionOperationState,
     accountId: string,
     operations: RemoteRendering,
     assetConversion: AssetConversion,
-    options: AssetConversionPollerOptions
+    options: AssetConversionPollerOptions,
   ) {
     super(
       new AssetConversionOperation(
         accountId,
         operations,
-        new AssetConversionOperationStateImpl(assetConversion)
-      )
+        new AssetConversionOperationStateImpl(assetConversion),
+      ),
     );
     this.intervalInMs = options.intervalInMs ? options.intervalInMs : 10000;
   }

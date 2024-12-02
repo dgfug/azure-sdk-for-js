@@ -7,14 +7,22 @@
  */
 
 import * as coreClient from "@azure/core-client";
+import * as coreRestPipeline from "@azure/core-rest-pipeline";
 import * as coreAuth from "@azure/core-auth";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "./lroImpl";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "./pagingHelper";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "./lroImpl";
 import {
   ApplicationGatewaysImpl,
   ApplicationGatewayPrivateLinkResourcesImpl,
   ApplicationGatewayPrivateEndpointConnectionsImpl,
+  ApplicationGatewayWafDynamicManifestsDefaultImpl,
+  ApplicationGatewayWafDynamicManifestsImpl,
   ApplicationSecurityGroupsImpl,
   AvailableDelegationsImpl,
   AvailableResourceGroupDelegationsImpl,
@@ -25,6 +33,7 @@ import {
   BastionHostsImpl,
   NetworkInterfacesImpl,
   PublicIPAddressesImpl,
+  VipSwapImpl,
   CustomIPPrefixesImpl,
   DdosCustomPoliciesImpl,
   DdosProtectionPlansImpl,
@@ -41,11 +50,16 @@ import {
   ExpressRoutePortsLocationsImpl,
   ExpressRoutePortsImpl,
   ExpressRouteLinksImpl,
+  ExpressRoutePortAuthorizationsImpl,
+  ExpressRouteProviderPortsLocationImpl,
   FirewallPoliciesImpl,
   FirewallPolicyRuleCollectionGroupsImpl,
   FirewallPolicyIdpsSignaturesImpl,
   FirewallPolicyIdpsSignaturesOverridesImpl,
   FirewallPolicyIdpsSignaturesFilterValuesImpl,
+  FirewallPolicyDraftsImpl,
+  FirewallPolicyDeploymentsImpl,
+  FirewallPolicyRuleCollectionGroupDraftsImpl,
   IpAllocationsImpl,
   IpGroupsImpl,
   LoadBalancersImpl,
@@ -60,6 +74,24 @@ import {
   NetworkInterfaceIPConfigurationsImpl,
   NetworkInterfaceLoadBalancersImpl,
   NetworkInterfaceTapConfigurationsImpl,
+  NetworkManagersImpl,
+  NetworkManagerCommitsImpl,
+  NetworkManagerDeploymentStatusOperationsImpl,
+  SubscriptionNetworkManagerConnectionsImpl,
+  ManagementGroupNetworkManagerConnectionsImpl,
+  ConnectivityConfigurationsImpl,
+  NetworkGroupsImpl,
+  StaticMembersImpl,
+  ScopeConnectionsImpl,
+  SecurityAdminConfigurationsImpl,
+  AdminRuleCollectionsImpl,
+  AdminRulesImpl,
+  SecurityUserConfigurationsImpl,
+  SecurityUserRuleCollectionsImpl,
+  SecurityUserRulesImpl,
+  NetworkManagerRoutingConfigurationsImpl,
+  RoutingRuleCollectionsImpl,
+  RoutingRulesImpl,
   NetworkProfilesImpl,
   NetworkSecurityGroupsImpl,
   SecurityRulesImpl,
@@ -106,7 +138,9 @@ import {
   VpnSiteLinksImpl,
   VpnSitesConfigurationImpl,
   VpnServerConfigurationsImpl,
+  ConfigurationPolicyGroupsImpl,
   VirtualHubsImpl,
+  RouteMapsImpl,
   HubVirtualNetworkConnectionsImpl,
   VpnGatewaysImpl,
   VpnLinkConnectionsImpl,
@@ -118,17 +152,20 @@ import {
   VirtualHubRouteTableV2SImpl,
   ExpressRouteGatewaysImpl,
   ExpressRouteConnectionsImpl,
+  NetworkVirtualApplianceConnectionsImpl,
   VirtualHubBgpConnectionImpl,
   VirtualHubBgpConnectionsImpl,
   VirtualHubIpConfigurationImpl,
   HubRouteTablesImpl,
   RoutingIntentOperationsImpl,
-  WebApplicationFirewallPoliciesImpl
+  WebApplicationFirewallPoliciesImpl,
 } from "./operations";
 import {
   ApplicationGateways,
   ApplicationGatewayPrivateLinkResources,
   ApplicationGatewayPrivateEndpointConnections,
+  ApplicationGatewayWafDynamicManifestsDefault,
+  ApplicationGatewayWafDynamicManifests,
   ApplicationSecurityGroups,
   AvailableDelegations,
   AvailableResourceGroupDelegations,
@@ -139,6 +176,7 @@ import {
   BastionHosts,
   NetworkInterfaces,
   PublicIPAddresses,
+  VipSwap,
   CustomIPPrefixes,
   DdosCustomPolicies,
   DdosProtectionPlans,
@@ -155,11 +193,16 @@ import {
   ExpressRoutePortsLocations,
   ExpressRoutePorts,
   ExpressRouteLinks,
+  ExpressRoutePortAuthorizations,
+  ExpressRouteProviderPortsLocation,
   FirewallPolicies,
   FirewallPolicyRuleCollectionGroups,
   FirewallPolicyIdpsSignatures,
   FirewallPolicyIdpsSignaturesOverrides,
   FirewallPolicyIdpsSignaturesFilterValues,
+  FirewallPolicyDrafts,
+  FirewallPolicyDeployments,
+  FirewallPolicyRuleCollectionGroupDrafts,
   IpAllocations,
   IpGroups,
   LoadBalancers,
@@ -174,6 +217,24 @@ import {
   NetworkInterfaceIPConfigurations,
   NetworkInterfaceLoadBalancers,
   NetworkInterfaceTapConfigurations,
+  NetworkManagers,
+  NetworkManagerCommits,
+  NetworkManagerDeploymentStatusOperations,
+  SubscriptionNetworkManagerConnections,
+  ManagementGroupNetworkManagerConnections,
+  ConnectivityConfigurations,
+  NetworkGroups,
+  StaticMembers,
+  ScopeConnections,
+  SecurityAdminConfigurations,
+  AdminRuleCollections,
+  AdminRules,
+  SecurityUserConfigurations,
+  SecurityUserRuleCollections,
+  SecurityUserRules,
+  NetworkManagerRoutingConfigurations,
+  RoutingRuleCollections,
+  RoutingRules,
   NetworkProfiles,
   NetworkSecurityGroups,
   SecurityRules,
@@ -220,7 +281,9 @@ import {
   VpnSiteLinks,
   VpnSitesConfiguration,
   VpnServerConfigurations,
+  ConfigurationPolicyGroups,
   VirtualHubs,
+  RouteMaps,
   HubVirtualNetworkConnections,
   VpnGateways,
   VpnLinkConnections,
@@ -232,51 +295,69 @@ import {
   VirtualHubRouteTableV2S,
   ExpressRouteGateways,
   ExpressRouteConnections,
+  NetworkVirtualApplianceConnections,
   VirtualHubBgpConnection,
   VirtualHubBgpConnections,
   VirtualHubIpConfiguration,
   HubRouteTables,
   RoutingIntentOperations,
-  WebApplicationFirewallPolicies
+  WebApplicationFirewallPolicies,
 } from "./operationsInterfaces";
 import * as Parameters from "./models/parameters";
 import * as Mappers from "./models/mappers";
-import { NetworkManagementClientContext } from "./networkManagementClientContext";
 import {
   NetworkManagementClientOptionalParams,
   BastionShareableLink,
   BastionShareableLinkListRequest,
-  NetworkManagementClientPutBastionShareableLinkNextOptionalParams,
-  NetworkManagementClientPutBastionShareableLinkOptionalParams,
-  NetworkManagementClientGetBastionShareableLinkNextOptionalParams,
-  NetworkManagementClientGetBastionShareableLinkOptionalParams,
+  PutBastionShareableLinkNextOptionalParams,
+  PutBastionShareableLinkOptionalParams,
+  PutBastionShareableLinkResponse,
+  GetBastionShareableLinkNextOptionalParams,
+  GetBastionShareableLinkOptionalParams,
+  GetBastionShareableLinkResponse,
   BastionActiveSession,
-  NetworkManagementClientGetActiveSessionsNextOptionalParams,
-  NetworkManagementClientGetActiveSessionsOptionalParams,
+  GetActiveSessionsNextOptionalParams,
+  GetActiveSessionsOptionalParams,
+  GetActiveSessionsResponse,
   BastionSessionState,
   SessionIds,
-  NetworkManagementClientDisconnectActiveSessionsNextOptionalParams,
-  NetworkManagementClientDisconnectActiveSessionsOptionalParams,
-  NetworkManagementClientPutBastionShareableLinkResponse,
-  NetworkManagementClientDeleteBastionShareableLinkOptionalParams,
-  NetworkManagementClientGetBastionShareableLinkResponse,
-  NetworkManagementClientGetActiveSessionsResponse,
-  NetworkManagementClientDisconnectActiveSessionsResponse,
-  NetworkManagementClientCheckDnsNameAvailabilityOptionalParams,
-  NetworkManagementClientCheckDnsNameAvailabilityResponse,
-  NetworkManagementClientSupportedSecurityProvidersOptionalParams,
-  NetworkManagementClientSupportedSecurityProvidersResponse,
+  DisconnectActiveSessionsNextOptionalParams,
+  DisconnectActiveSessionsOptionalParams,
+  DisconnectActiveSessionsResponse,
+  DeleteBastionShareableLinkOptionalParams,
+  BastionShareableLinkTokenListRequest,
+  DeleteBastionShareableLinkByTokenOptionalParams,
+  DeleteBastionShareableLinkByTokenResponse,
+  CheckDnsNameAvailabilityOptionalParams,
+  CheckDnsNameAvailabilityResponse,
+  ExpressRouteProviderPortOptionalParams,
+  ExpressRouteProviderPortResponse,
+  ActiveConfigurationParameter,
+  ListActiveConnectivityConfigurationsOptionalParams,
+  ListActiveConnectivityConfigurationsResponse,
+  ListActiveSecurityAdminRulesOptionalParams,
+  ListActiveSecurityAdminRulesResponse,
+  QueryRequestOptions,
+  ListNetworkManagerEffectiveConnectivityConfigurationsOptionalParams,
+  ListNetworkManagerEffectiveConnectivityConfigurationsResponse,
+  ListNetworkManagerEffectiveSecurityAdminRulesOptionalParams,
+  ListNetworkManagerEffectiveSecurityAdminRulesResponse,
+  SupportedSecurityProvidersOptionalParams,
+  SupportedSecurityProvidersResponse,
   VirtualWanVpnProfileParameters,
-  NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileOptionalParams,
-  NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileResponse,
-  NetworkManagementClientPutBastionShareableLinkNextResponse,
-  NetworkManagementClientGetBastionShareableLinkNextResponse,
-  NetworkManagementClientGetActiveSessionsNextResponse,
-  NetworkManagementClientDisconnectActiveSessionsNextResponse
+  GeneratevirtualwanvpnserverconfigurationvpnprofileOptionalParams,
+  GeneratevirtualwanvpnserverconfigurationvpnprofileResponse,
+  PutBastionShareableLinkNextResponse,
+  GetBastionShareableLinkNextResponse,
+  GetActiveSessionsNextResponse,
+  DisconnectActiveSessionsNextResponse,
 } from "./models";
 
 /// <reference lib="esnext.asynciterable" />
-export class NetworkManagementClient extends NetworkManagementClientContext {
+export class NetworkManagementClient extends coreClient.ServiceClient {
+  $host: string;
+  subscriptionId?: string;
+
   /**
    * Initializes a new instance of the NetworkManagementClient class.
    * @param credentials Subscription credentials which uniquely identify client subscription.
@@ -287,21 +368,105 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   constructor(
     credentials: coreAuth.TokenCredential,
     subscriptionId: string,
-    options?: NetworkManagementClientOptionalParams
+    options?: NetworkManagementClientOptionalParams,
+  );
+  constructor(
+    credentials: coreAuth.TokenCredential,
+    options?: NetworkManagementClientOptionalParams,
+  );
+  constructor(
+    credentials: coreAuth.TokenCredential,
+    subscriptionIdOrOptions?: NetworkManagementClientOptionalParams | string,
+    options?: NetworkManagementClientOptionalParams,
   ) {
-    super(credentials, subscriptionId, options);
+    if (credentials === undefined) {
+      throw new Error("'credentials' cannot be null");
+    }
+
+    let subscriptionId: string | undefined;
+
+    if (typeof subscriptionIdOrOptions === "string") {
+      subscriptionId = subscriptionIdOrOptions;
+    } else if (typeof subscriptionIdOrOptions === "object") {
+      options = subscriptionIdOrOptions;
+    }
+
+    // Initializing default values for options
+    if (!options) {
+      options = {};
+    }
+    const defaults: NetworkManagementClientOptionalParams = {
+      requestContentType: "application/json; charset=utf-8",
+      credential: credentials,
+    };
+
+    const packageDetails = `azsdk-js-arm-network/33.4.1`;
+    const userAgentPrefix =
+      options.userAgentOptions && options.userAgentOptions.userAgentPrefix
+        ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
+        : `${packageDetails}`;
+
+    const optionsWithDefaults = {
+      ...defaults,
+      ...options,
+      userAgentOptions: {
+        userAgentPrefix,
+      },
+      endpoint:
+        options.endpoint ?? options.baseUri ?? "https://management.azure.com",
+    };
+    super(optionsWithDefaults);
+
+    let bearerTokenAuthenticationPolicyFound: boolean = false;
+    if (options?.pipeline && options.pipeline.getOrderedPolicies().length > 0) {
+      const pipelinePolicies: coreRestPipeline.PipelinePolicy[] =
+        options.pipeline.getOrderedPolicies();
+      bearerTokenAuthenticationPolicyFound = pipelinePolicies.some(
+        (pipelinePolicy) =>
+          pipelinePolicy.name ===
+          coreRestPipeline.bearerTokenAuthenticationPolicyName,
+      );
+    }
+    if (
+      !options ||
+      !options.pipeline ||
+      options.pipeline.getOrderedPolicies().length == 0 ||
+      !bearerTokenAuthenticationPolicyFound
+    ) {
+      this.pipeline.removePolicy({
+        name: coreRestPipeline.bearerTokenAuthenticationPolicyName,
+      });
+      this.pipeline.addPolicy(
+        coreRestPipeline.bearerTokenAuthenticationPolicy({
+          credential: credentials,
+          scopes:
+            optionsWithDefaults.credentialScopes ??
+            `${optionsWithDefaults.endpoint}/.default`,
+          challengeCallbacks: {
+            authorizeRequestOnChallenge:
+              coreClient.authorizeRequestOnClaimChallenge,
+          },
+        }),
+      );
+    }
+    // Parameter assignments
+    this.subscriptionId = subscriptionId;
+
+    // Assigning values to Constant parameters
+    this.$host = options.$host || "https://management.azure.com";
     this.applicationGateways = new ApplicationGatewaysImpl(this);
-    this.applicationGatewayPrivateLinkResources = new ApplicationGatewayPrivateLinkResourcesImpl(
-      this
-    );
-    this.applicationGatewayPrivateEndpointConnections = new ApplicationGatewayPrivateEndpointConnectionsImpl(
-      this
-    );
+    this.applicationGatewayPrivateLinkResources =
+      new ApplicationGatewayPrivateLinkResourcesImpl(this);
+    this.applicationGatewayPrivateEndpointConnections =
+      new ApplicationGatewayPrivateEndpointConnectionsImpl(this);
+    this.applicationGatewayWafDynamicManifestsDefault =
+      new ApplicationGatewayWafDynamicManifestsDefaultImpl(this);
+    this.applicationGatewayWafDynamicManifests =
+      new ApplicationGatewayWafDynamicManifestsImpl(this);
     this.applicationSecurityGroups = new ApplicationSecurityGroupsImpl(this);
     this.availableDelegations = new AvailableDelegationsImpl(this);
-    this.availableResourceGroupDelegations = new AvailableResourceGroupDelegationsImpl(
-      this
-    );
+    this.availableResourceGroupDelegations =
+      new AvailableResourceGroupDelegationsImpl(this);
     this.availableServiceAliases = new AvailableServiceAliasesImpl(this);
     this.azureFirewalls = new AzureFirewallsImpl(this);
     this.azureFirewallFqdnTags = new AzureFirewallFqdnTagsImpl(this);
@@ -309,79 +474,102 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     this.bastionHosts = new BastionHostsImpl(this);
     this.networkInterfaces = new NetworkInterfacesImpl(this);
     this.publicIPAddresses = new PublicIPAddressesImpl(this);
+    this.vipSwap = new VipSwapImpl(this);
     this.customIPPrefixes = new CustomIPPrefixesImpl(this);
     this.ddosCustomPolicies = new DdosCustomPoliciesImpl(this);
     this.ddosProtectionPlans = new DdosProtectionPlansImpl(this);
     this.dscpConfigurationOperations = new DscpConfigurationOperationsImpl(
-      this
+      this,
     );
     this.availableEndpointServices = new AvailableEndpointServicesImpl(this);
-    this.expressRouteCircuitAuthorizations = new ExpressRouteCircuitAuthorizationsImpl(
-      this
-    );
+    this.expressRouteCircuitAuthorizations =
+      new ExpressRouteCircuitAuthorizationsImpl(this);
     this.expressRouteCircuitPeerings = new ExpressRouteCircuitPeeringsImpl(
-      this
+      this,
     );
-    this.expressRouteCircuitConnections = new ExpressRouteCircuitConnectionsImpl(
-      this
-    );
-    this.peerExpressRouteCircuitConnections = new PeerExpressRouteCircuitConnectionsImpl(
-      this
-    );
+    this.expressRouteCircuitConnections =
+      new ExpressRouteCircuitConnectionsImpl(this);
+    this.peerExpressRouteCircuitConnections =
+      new PeerExpressRouteCircuitConnectionsImpl(this);
     this.expressRouteCircuits = new ExpressRouteCircuitsImpl(this);
     this.expressRouteServiceProviders = new ExpressRouteServiceProvidersImpl(
-      this
+      this,
     );
     this.expressRouteCrossConnections = new ExpressRouteCrossConnectionsImpl(
-      this
+      this,
     );
-    this.expressRouteCrossConnectionPeerings = new ExpressRouteCrossConnectionPeeringsImpl(
-      this
-    );
+    this.expressRouteCrossConnectionPeerings =
+      new ExpressRouteCrossConnectionPeeringsImpl(this);
     this.expressRoutePortsLocations = new ExpressRoutePortsLocationsImpl(this);
     this.expressRoutePorts = new ExpressRoutePortsImpl(this);
     this.expressRouteLinks = new ExpressRouteLinksImpl(this);
+    this.expressRoutePortAuthorizations =
+      new ExpressRoutePortAuthorizationsImpl(this);
+    this.expressRouteProviderPortsLocation =
+      new ExpressRouteProviderPortsLocationImpl(this);
     this.firewallPolicies = new FirewallPoliciesImpl(this);
-    this.firewallPolicyRuleCollectionGroups = new FirewallPolicyRuleCollectionGroupsImpl(
-      this
-    );
+    this.firewallPolicyRuleCollectionGroups =
+      new FirewallPolicyRuleCollectionGroupsImpl(this);
     this.firewallPolicyIdpsSignatures = new FirewallPolicyIdpsSignaturesImpl(
-      this
+      this,
     );
-    this.firewallPolicyIdpsSignaturesOverrides = new FirewallPolicyIdpsSignaturesOverridesImpl(
-      this
-    );
-    this.firewallPolicyIdpsSignaturesFilterValues = new FirewallPolicyIdpsSignaturesFilterValuesImpl(
-      this
-    );
+    this.firewallPolicyIdpsSignaturesOverrides =
+      new FirewallPolicyIdpsSignaturesOverridesImpl(this);
+    this.firewallPolicyIdpsSignaturesFilterValues =
+      new FirewallPolicyIdpsSignaturesFilterValuesImpl(this);
+    this.firewallPolicyDrafts = new FirewallPolicyDraftsImpl(this);
+    this.firewallPolicyDeployments = new FirewallPolicyDeploymentsImpl(this);
+    this.firewallPolicyRuleCollectionGroupDrafts =
+      new FirewallPolicyRuleCollectionGroupDraftsImpl(this);
     this.ipAllocations = new IpAllocationsImpl(this);
     this.ipGroups = new IpGroupsImpl(this);
     this.loadBalancers = new LoadBalancersImpl(this);
-    this.loadBalancerBackendAddressPools = new LoadBalancerBackendAddressPoolsImpl(
-      this
-    );
-    this.loadBalancerFrontendIPConfigurations = new LoadBalancerFrontendIPConfigurationsImpl(
-      this
-    );
+    this.loadBalancerBackendAddressPools =
+      new LoadBalancerBackendAddressPoolsImpl(this);
+    this.loadBalancerFrontendIPConfigurations =
+      new LoadBalancerFrontendIPConfigurationsImpl(this);
     this.inboundNatRules = new InboundNatRulesImpl(this);
-    this.loadBalancerLoadBalancingRules = new LoadBalancerLoadBalancingRulesImpl(
-      this
-    );
+    this.loadBalancerLoadBalancingRules =
+      new LoadBalancerLoadBalancingRulesImpl(this);
     this.loadBalancerOutboundRules = new LoadBalancerOutboundRulesImpl(this);
     this.loadBalancerNetworkInterfaces = new LoadBalancerNetworkInterfacesImpl(
-      this
+      this,
     );
     this.loadBalancerProbes = new LoadBalancerProbesImpl(this);
     this.natGateways = new NatGatewaysImpl(this);
-    this.networkInterfaceIPConfigurations = new NetworkInterfaceIPConfigurationsImpl(
-      this
-    );
+    this.networkInterfaceIPConfigurations =
+      new NetworkInterfaceIPConfigurationsImpl(this);
     this.networkInterfaceLoadBalancers = new NetworkInterfaceLoadBalancersImpl(
-      this
+      this,
     );
-    this.networkInterfaceTapConfigurations = new NetworkInterfaceTapConfigurationsImpl(
-      this
+    this.networkInterfaceTapConfigurations =
+      new NetworkInterfaceTapConfigurationsImpl(this);
+    this.networkManagers = new NetworkManagersImpl(this);
+    this.networkManagerCommits = new NetworkManagerCommitsImpl(this);
+    this.networkManagerDeploymentStatusOperations =
+      new NetworkManagerDeploymentStatusOperationsImpl(this);
+    this.subscriptionNetworkManagerConnections =
+      new SubscriptionNetworkManagerConnectionsImpl(this);
+    this.managementGroupNetworkManagerConnections =
+      new ManagementGroupNetworkManagerConnectionsImpl(this);
+    this.connectivityConfigurations = new ConnectivityConfigurationsImpl(this);
+    this.networkGroups = new NetworkGroupsImpl(this);
+    this.staticMembers = new StaticMembersImpl(this);
+    this.scopeConnections = new ScopeConnectionsImpl(this);
+    this.securityAdminConfigurations = new SecurityAdminConfigurationsImpl(
+      this,
     );
+    this.adminRuleCollections = new AdminRuleCollectionsImpl(this);
+    this.adminRules = new AdminRulesImpl(this);
+    this.securityUserConfigurations = new SecurityUserConfigurationsImpl(this);
+    this.securityUserRuleCollections = new SecurityUserRuleCollectionsImpl(
+      this,
+    );
+    this.securityUserRules = new SecurityUserRulesImpl(this);
+    this.networkManagerRoutingConfigurations =
+      new NetworkManagerRoutingConfigurationsImpl(this);
+    this.routingRuleCollections = new RoutingRuleCollectionsImpl(this);
+    this.routingRules = new RoutingRulesImpl(this);
     this.networkProfiles = new NetworkProfilesImpl(this);
     this.networkSecurityGroups = new NetworkSecurityGroupsImpl(this);
     this.securityRules = new SecurityRulesImpl(this);
@@ -390,7 +578,7 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     this.virtualApplianceSites = new VirtualApplianceSitesImpl(this);
     this.virtualApplianceSkus = new VirtualApplianceSkusImpl(this);
     this.inboundSecurityRuleOperations = new InboundSecurityRuleOperationsImpl(
-      this
+      this,
     );
     this.networkWatchers = new NetworkWatchersImpl(this);
     this.packetCaptures = new PacketCapturesImpl(this);
@@ -399,7 +587,7 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     this.operations = new OperationsImpl(this);
     this.privateEndpoints = new PrivateEndpointsImpl(this);
     this.availablePrivateEndpointTypes = new AvailablePrivateEndpointTypesImpl(
-      this
+      this,
     );
     this.privateDnsZoneGroups = new PrivateDnsZoneGroupsImpl(this);
     this.privateLinkServices = new PrivateLinkServicesImpl(this);
@@ -411,13 +599,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     this.securityPartnerProviders = new SecurityPartnerProvidersImpl(this);
     this.bgpServiceCommunities = new BgpServiceCommunitiesImpl(this);
     this.serviceEndpointPolicies = new ServiceEndpointPoliciesImpl(this);
-    this.serviceEndpointPolicyDefinitions = new ServiceEndpointPolicyDefinitionsImpl(
-      this
-    );
+    this.serviceEndpointPolicyDefinitions =
+      new ServiceEndpointPolicyDefinitionsImpl(this);
     this.serviceTags = new ServiceTagsImpl(this);
-    this.serviceTagInformationOperations = new ServiceTagInformationOperationsImpl(
-      this
-    );
+    this.serviceTagInformationOperations =
+      new ServiceTagInformationOperationsImpl(this);
     this.usages = new UsagesImpl(this);
     this.virtualNetworks = new VirtualNetworksImpl(this);
     this.subnets = new SubnetsImpl(this);
@@ -425,12 +611,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     this.serviceAssociationLinks = new ServiceAssociationLinksImpl(this);
     this.virtualNetworkPeerings = new VirtualNetworkPeeringsImpl(this);
     this.virtualNetworkGateways = new VirtualNetworkGatewaysImpl(this);
-    this.virtualNetworkGatewayConnections = new VirtualNetworkGatewayConnectionsImpl(
-      this
-    );
+    this.virtualNetworkGatewayConnections =
+      new VirtualNetworkGatewayConnectionsImpl(this);
     this.localNetworkGateways = new LocalNetworkGatewaysImpl(this);
     this.virtualNetworkGatewayNatRules = new VirtualNetworkGatewayNatRulesImpl(
-      this
+      this,
     );
     this.virtualNetworkTaps = new VirtualNetworkTapsImpl(this);
     this.virtualRouters = new VirtualRoutersImpl(this);
@@ -440,9 +625,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     this.vpnSiteLinks = new VpnSiteLinksImpl(this);
     this.vpnSitesConfiguration = new VpnSitesConfigurationImpl(this);
     this.vpnServerConfigurations = new VpnServerConfigurationsImpl(this);
+    this.configurationPolicyGroups = new ConfigurationPolicyGroupsImpl(this);
     this.virtualHubs = new VirtualHubsImpl(this);
+    this.routeMaps = new RouteMapsImpl(this);
     this.hubVirtualNetworkConnections = new HubVirtualNetworkConnectionsImpl(
-      this
+      this,
     );
     this.vpnGateways = new VpnGatewaysImpl(this);
     this.vpnLinkConnections = new VpnLinkConnectionsImpl(this);
@@ -450,40 +637,40 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     this.vpnSiteLinkConnections = new VpnSiteLinkConnectionsImpl(this);
     this.natRules = new NatRulesImpl(this);
     this.p2SVpnGateways = new P2SVpnGatewaysImpl(this);
-    this.vpnServerConfigurationsAssociatedWithVirtualWan = new VpnServerConfigurationsAssociatedWithVirtualWanImpl(
-      this
-    );
+    this.vpnServerConfigurationsAssociatedWithVirtualWan =
+      new VpnServerConfigurationsAssociatedWithVirtualWanImpl(this);
     this.virtualHubRouteTableV2S = new VirtualHubRouteTableV2SImpl(this);
     this.expressRouteGateways = new ExpressRouteGatewaysImpl(this);
     this.expressRouteConnections = new ExpressRouteConnectionsImpl(this);
+    this.networkVirtualApplianceConnections =
+      new NetworkVirtualApplianceConnectionsImpl(this);
     this.virtualHubBgpConnection = new VirtualHubBgpConnectionImpl(this);
     this.virtualHubBgpConnections = new VirtualHubBgpConnectionsImpl(this);
     this.virtualHubIpConfiguration = new VirtualHubIpConfigurationImpl(this);
     this.hubRouteTables = new HubRouteTablesImpl(this);
     this.routingIntentOperations = new RoutingIntentOperationsImpl(this);
-    this.webApplicationFirewallPolicies = new WebApplicationFirewallPoliciesImpl(
-      this
-    );
+    this.webApplicationFirewallPolicies =
+      new WebApplicationFirewallPoliciesImpl(this);
   }
 
   /**
    * Creates a Bastion Shareable Links for all the VMs specified in the request.
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param options The options parameters.
    */
   public beginListPutBastionShareableLinkAndWait(
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientPutBastionShareableLinkOptionalParams
+    options?: PutBastionShareableLinkOptionalParams,
   ): PagedAsyncIterableIterator<BastionShareableLink> {
     const iter = this.putBastionShareableLinkPagingAll(
       resourceGroupName,
       bastionHostName,
       bslRequest,
-      options
+      options,
     );
     return {
       next() {
@@ -492,14 +679,18 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.putBastionShareableLinkPagingPage(
           resourceGroupName,
           bastionHostName,
           bslRequest,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -507,27 +698,36 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientPutBastionShareableLinkOptionalParams
+    options?: PutBastionShareableLinkOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<BastionShareableLink[]> {
-    const poller = await this._putBastionShareableLink(
-      resourceGroupName,
-      bastionHostName,
-      bslRequest,
-      options
-    );
-    let result: any = await poller.pollUntilDone();
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: PutBastionShareableLinkResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      const poller = await this._putBastionShareableLink(
+        resourceGroupName,
+        bastionHostName,
+        bslRequest,
+        options,
+      );
+      result = await poller.pollUntilDone();
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._putBastionShareableLinkNext(
         resourceGroupName,
         bastionHostName,
         bslRequest,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -535,13 +735,13 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientPutBastionShareableLinkOptionalParams
+    options?: PutBastionShareableLinkOptionalParams,
   ): AsyncIterableIterator<BastionShareableLink> {
     for await (const page of this.putBastionShareableLinkPagingPage(
       resourceGroupName,
       bastionHostName,
       bslRequest,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -551,20 +751,20 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
    * Return the Bastion Shareable Links for all the VMs specified in the request.
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param options The options parameters.
    */
   public listBastionShareableLink(
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientGetBastionShareableLinkOptionalParams
+    options?: GetBastionShareableLinkOptionalParams,
   ): PagedAsyncIterableIterator<BastionShareableLink> {
     const iter = this.getBastionShareableLinkPagingAll(
       resourceGroupName,
       bastionHostName,
       bslRequest,
-      options
+      options,
     );
     return {
       next() {
@@ -573,14 +773,18 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.getBastionShareableLinkPagingPage(
           resourceGroupName,
           bastionHostName,
           bslRequest,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -588,26 +792,35 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientGetBastionShareableLinkOptionalParams
+    options?: GetBastionShareableLinkOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<BastionShareableLink[]> {
-    let result = await this._getBastionShareableLink(
-      resourceGroupName,
-      bastionHostName,
-      bslRequest,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: GetBastionShareableLinkResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._getBastionShareableLink(
+        resourceGroupName,
+        bastionHostName,
+        bslRequest,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._getBastionShareableLinkNext(
         resourceGroupName,
         bastionHostName,
         bslRequest,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -615,13 +828,13 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientGetBastionShareableLinkOptionalParams
+    options?: GetBastionShareableLinkOptionalParams,
   ): AsyncIterableIterator<BastionShareableLink> {
     for await (const page of this.getBastionShareableLinkPagingPage(
       resourceGroupName,
       bastionHostName,
       bslRequest,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -636,12 +849,12 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   public beginListActiveSessionsAndWait(
     resourceGroupName: string,
     bastionHostName: string,
-    options?: NetworkManagementClientGetActiveSessionsOptionalParams
+    options?: GetActiveSessionsOptionalParams,
   ): PagedAsyncIterableIterator<BastionActiveSession> {
     const iter = this.getActiveSessionsPagingAll(
       resourceGroupName,
       bastionHostName,
-      options
+      options,
     );
     return {
       next() {
@@ -650,50 +863,63 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.getActiveSessionsPagingPage(
           resourceGroupName,
           bastionHostName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *getActiveSessionsPagingPage(
     resourceGroupName: string,
     bastionHostName: string,
-    options?: NetworkManagementClientGetActiveSessionsOptionalParams
+    options?: GetActiveSessionsOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<BastionActiveSession[]> {
-    const poller = await this._getActiveSessions(
-      resourceGroupName,
-      bastionHostName,
-      options
-    );
-    let result: any = await poller.pollUntilDone();
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: GetActiveSessionsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      const poller = await this._getActiveSessions(
+        resourceGroupName,
+        bastionHostName,
+        options,
+      );
+      result = await poller.pollUntilDone();
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._getActiveSessionsNext(
         resourceGroupName,
         bastionHostName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *getActiveSessionsPagingAll(
     resourceGroupName: string,
     bastionHostName: string,
-    options?: NetworkManagementClientGetActiveSessionsOptionalParams
+    options?: GetActiveSessionsOptionalParams,
   ): AsyncIterableIterator<BastionActiveSession> {
     for await (const page of this.getActiveSessionsPagingPage(
       resourceGroupName,
       bastionHostName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -710,13 +936,13 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     sessionIds: SessionIds,
-    options?: NetworkManagementClientDisconnectActiveSessionsOptionalParams
+    options?: DisconnectActiveSessionsOptionalParams,
   ): PagedAsyncIterableIterator<BastionSessionState> {
     const iter = this.disconnectActiveSessionsPagingAll(
       resourceGroupName,
       bastionHostName,
       sessionIds,
-      options
+      options,
     );
     return {
       next() {
@@ -725,14 +951,18 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.disconnectActiveSessionsPagingPage(
           resourceGroupName,
           bastionHostName,
           sessionIds,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -740,26 +970,35 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     sessionIds: SessionIds,
-    options?: NetworkManagementClientDisconnectActiveSessionsOptionalParams
+    options?: DisconnectActiveSessionsOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<BastionSessionState[]> {
-    let result = await this._disconnectActiveSessions(
-      resourceGroupName,
-      bastionHostName,
-      sessionIds,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DisconnectActiveSessionsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._disconnectActiveSessions(
+        resourceGroupName,
+        bastionHostName,
+        sessionIds,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._disconnectActiveSessionsNext(
         resourceGroupName,
         bastionHostName,
         sessionIds,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -767,13 +1006,13 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     sessionIds: SessionIds,
-    options?: NetworkManagementClientDisconnectActiveSessionsOptionalParams
+    options?: DisconnectActiveSessionsOptionalParams,
   ): AsyncIterableIterator<BastionSessionState> {
     for await (const page of this.disconnectActiveSessionsPagingPage(
       resourceGroupName,
       bastionHostName,
       sessionIds,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -783,39 +1022,36 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
    * Creates a Bastion Shareable Links for all the VMs specified in the request.
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param options The options parameters.
    */
   private async _putBastionShareableLink(
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientPutBastionShareableLinkOptionalParams
+    options?: PutBastionShareableLinkOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        NetworkManagementClientPutBastionShareableLinkResponse
-      >,
-      NetworkManagementClientPutBastionShareableLinkResponse
+    SimplePollerLike<
+      OperationState<PutBastionShareableLinkResponse>,
+      PutBastionShareableLinkResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<NetworkManagementClientPutBastionShareableLinkResponse> => {
+      spec: coreClient.OperationSpec,
+    ): Promise<PutBastionShareableLinkResponse> => {
       return this.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -824,8 +1060,8 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -833,53 +1069,57 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, bastionHostName, bslRequest, options },
-      putBastionShareableLinkOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, bastionHostName, bslRequest, options },
+      spec: putBastionShareableLinkOperationSpec,
     });
+    const poller = await createHttpPoller<
+      PutBastionShareableLinkResponse,
+      OperationState<PutBastionShareableLinkResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Deletes the Bastion Shareable Links for all the VMs specified in the request.
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param options The options parameters.
    */
   async beginDeleteBastionShareableLink(
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientDeleteBastionShareableLinkOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: DeleteBastionShareableLinkOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -888,8 +1128,8 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -897,41 +1137,138 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, bastionHostName, bslRequest, options },
-      deleteBastionShareableLinkOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, bastionHostName, bslRequest, options },
+      spec: deleteBastionShareableLinkOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Deletes the Bastion Shareable Links for all the VMs specified in the request.
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param options The options parameters.
    */
   async beginDeleteBastionShareableLinkAndWait(
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientDeleteBastionShareableLinkOptionalParams
+    options?: DeleteBastionShareableLinkOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDeleteBastionShareableLink(
       resourceGroupName,
       bastionHostName,
       bslRequest,
-      options
+      options,
+    );
+    return poller.pollUntilDone();
+  }
+
+  /**
+   * Deletes the Bastion Shareable Links for all the tokens specified in the request.
+   * @param resourceGroupName The name of the resource group.
+   * @param bastionHostName The name of the Bastion Host.
+   * @param bslTokenRequest Post request for Delete Bastion Shareable Link By Token endpoint.
+   * @param options The options parameters.
+   */
+  async beginDeleteBastionShareableLinkByToken(
+    resourceGroupName: string,
+    bastionHostName: string,
+    bslTokenRequest: BastionShareableLinkTokenListRequest,
+    options?: DeleteBastionShareableLinkByTokenOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DeleteBastionShareableLinkByTokenResponse>,
+      DeleteBastionShareableLinkByTokenResponse
+    >
+  > {
+    const directSendOperation = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ): Promise<DeleteBastionShareableLinkByTokenResponse> => {
+      return this.sendOperationRequest(args, spec);
+    };
+    const sendOperationFn = async (
+      args: coreClient.OperationArguments,
+      spec: coreClient.OperationSpec,
+    ) => {
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
+      const providedCallback = args.options?.onResponse;
+      const callback: coreClient.RawResponseCallback = (
+        rawResponse: coreClient.FullOperationResponse,
+        flatResponse: unknown,
+      ) => {
+        currentRawResponse = rawResponse;
+        providedCallback?.(rawResponse, flatResponse);
+      };
+      const updatedArgs = {
+        ...args,
+        options: {
+          ...args.options,
+          onResponse: callback,
+        },
+      };
+      const flatResponse = await directSendOperation(updatedArgs, spec);
+      return {
+        flatResponse,
+        rawResponse: {
+          statusCode: currentRawResponse!.status,
+          body: currentRawResponse!.parsedBody,
+          headers: currentRawResponse!.headers.toJSON(),
+        },
+      };
+    };
+
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, bastionHostName, bslTokenRequest, options },
+      spec: deleteBastionShareableLinkByTokenOperationSpec,
+    });
+    const poller = await createHttpPoller<
+      DeleteBastionShareableLinkByTokenResponse,
+      OperationState<DeleteBastionShareableLinkByTokenResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
+  }
+
+  /**
+   * Deletes the Bastion Shareable Links for all the tokens specified in the request.
+   * @param resourceGroupName The name of the resource group.
+   * @param bastionHostName The name of the Bastion Host.
+   * @param bslTokenRequest Post request for Delete Bastion Shareable Link By Token endpoint.
+   * @param options The options parameters.
+   */
+  async beginDeleteBastionShareableLinkByTokenAndWait(
+    resourceGroupName: string,
+    bastionHostName: string,
+    bslTokenRequest: BastionShareableLinkTokenListRequest,
+    options?: DeleteBastionShareableLinkByTokenOptionalParams,
+  ): Promise<DeleteBastionShareableLinkByTokenResponse> {
+    const poller = await this.beginDeleteBastionShareableLinkByToken(
+      resourceGroupName,
+      bastionHostName,
+      bslTokenRequest,
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -940,18 +1277,18 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
    * Return the Bastion Shareable Links for all the VMs specified in the request.
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param options The options parameters.
    */
   private _getBastionShareableLink(
     resourceGroupName: string,
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
-    options?: NetworkManagementClientGetBastionShareableLinkOptionalParams
-  ): Promise<NetworkManagementClientGetBastionShareableLinkResponse> {
+    options?: GetBastionShareableLinkOptionalParams,
+  ): Promise<GetBastionShareableLinkResponse> {
     return this.sendOperationRequest(
       { resourceGroupName, bastionHostName, bslRequest, options },
-      getBastionShareableLinkOperationSpec
+      getBastionShareableLinkOperationSpec,
     );
   }
 
@@ -964,30 +1301,29 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   private async _getActiveSessions(
     resourceGroupName: string,
     bastionHostName: string,
-    options?: NetworkManagementClientGetActiveSessionsOptionalParams
+    options?: GetActiveSessionsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkManagementClientGetActiveSessionsResponse>,
-      NetworkManagementClientGetActiveSessionsResponse
+    SimplePollerLike<
+      OperationState<GetActiveSessionsResponse>,
+      GetActiveSessionsResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<NetworkManagementClientGetActiveSessionsResponse> => {
+      spec: coreClient.OperationSpec,
+    ): Promise<GetActiveSessionsResponse> => {
       return this.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -996,8 +1332,8 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -1005,21 +1341,26 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, bastionHostName, options },
-      getActiveSessionsOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, bastionHostName, options },
+      spec: getActiveSessionsOperationSpec,
     });
+    const poller = await createHttpPoller<
+      GetActiveSessionsResponse,
+      OperationState<GetActiveSessionsResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1033,11 +1374,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     sessionIds: SessionIds,
-    options?: NetworkManagementClientDisconnectActiveSessionsOptionalParams
-  ): Promise<NetworkManagementClientDisconnectActiveSessionsResponse> {
+    options?: DisconnectActiveSessionsOptionalParams,
+  ): Promise<DisconnectActiveSessionsResponse> {
     return this.sendOperationRequest(
       { resourceGroupName, bastionHostName, sessionIds, options },
-      disconnectActiveSessionsOperationSpec
+      disconnectActiveSessionsOperationSpec,
     );
   }
 
@@ -1051,11 +1392,102 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   checkDnsNameAvailability(
     location: string,
     domainNameLabel: string,
-    options?: NetworkManagementClientCheckDnsNameAvailabilityOptionalParams
-  ): Promise<NetworkManagementClientCheckDnsNameAvailabilityResponse> {
+    options?: CheckDnsNameAvailabilityOptionalParams,
+  ): Promise<CheckDnsNameAvailabilityResponse> {
     return this.sendOperationRequest(
       { location, domainNameLabel, options },
-      checkDnsNameAvailabilityOperationSpec
+      checkDnsNameAvailabilityOperationSpec,
+    );
+  }
+
+  /**
+   * Retrieves detail of a provider port.
+   * @param providerport The name of the provider port.
+   * @param options The options parameters.
+   */
+  expressRouteProviderPort(
+    providerport: string,
+    options?: ExpressRouteProviderPortOptionalParams,
+  ): Promise<ExpressRouteProviderPortResponse> {
+    return this.sendOperationRequest(
+      { providerport, options },
+      expressRouteProviderPortOperationSpec,
+    );
+  }
+
+  /**
+   * Lists active connectivity configurations in a network manager.
+   * @param resourceGroupName The name of the resource group.
+   * @param networkManagerName The name of the network manager.
+   * @param parameters Active Configuration Parameter.
+   * @param options The options parameters.
+   */
+  listActiveConnectivityConfigurations(
+    resourceGroupName: string,
+    networkManagerName: string,
+    parameters: ActiveConfigurationParameter,
+    options?: ListActiveConnectivityConfigurationsOptionalParams,
+  ): Promise<ListActiveConnectivityConfigurationsResponse> {
+    return this.sendOperationRequest(
+      { resourceGroupName, networkManagerName, parameters, options },
+      listActiveConnectivityConfigurationsOperationSpec,
+    );
+  }
+
+  /**
+   * Lists active security admin rules in a network manager.
+   * @param resourceGroupName The name of the resource group.
+   * @param networkManagerName The name of the network manager.
+   * @param parameters Active Configuration Parameter.
+   * @param options The options parameters.
+   */
+  listActiveSecurityAdminRules(
+    resourceGroupName: string,
+    networkManagerName: string,
+    parameters: ActiveConfigurationParameter,
+    options?: ListActiveSecurityAdminRulesOptionalParams,
+  ): Promise<ListActiveSecurityAdminRulesResponse> {
+    return this.sendOperationRequest(
+      { resourceGroupName, networkManagerName, parameters, options },
+      listActiveSecurityAdminRulesOperationSpec,
+    );
+  }
+
+  /**
+   * List all effective connectivity configurations applied on a virtual network.
+   * @param resourceGroupName The name of the resource group.
+   * @param virtualNetworkName The name of the virtual network.
+   * @param parameters Parameters supplied to list correct page.
+   * @param options The options parameters.
+   */
+  listNetworkManagerEffectiveConnectivityConfigurations(
+    resourceGroupName: string,
+    virtualNetworkName: string,
+    parameters: QueryRequestOptions,
+    options?: ListNetworkManagerEffectiveConnectivityConfigurationsOptionalParams,
+  ): Promise<ListNetworkManagerEffectiveConnectivityConfigurationsResponse> {
+    return this.sendOperationRequest(
+      { resourceGroupName, virtualNetworkName, parameters, options },
+      listNetworkManagerEffectiveConnectivityConfigurationsOperationSpec,
+    );
+  }
+
+  /**
+   * List all effective security admin rules applied on a virtual network.
+   * @param resourceGroupName The name of the resource group.
+   * @param virtualNetworkName The name of the virtual network.
+   * @param parameters Parameters supplied to list correct page.
+   * @param options The options parameters.
+   */
+  listNetworkManagerEffectiveSecurityAdminRules(
+    resourceGroupName: string,
+    virtualNetworkName: string,
+    parameters: QueryRequestOptions,
+    options?: ListNetworkManagerEffectiveSecurityAdminRulesOptionalParams,
+  ): Promise<ListNetworkManagerEffectiveSecurityAdminRulesResponse> {
+    return this.sendOperationRequest(
+      { resourceGroupName, virtualNetworkName, parameters, options },
+      listNetworkManagerEffectiveSecurityAdminRulesOperationSpec,
     );
   }
 
@@ -1068,11 +1500,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   supportedSecurityProviders(
     resourceGroupName: string,
     virtualWANName: string,
-    options?: NetworkManagementClientSupportedSecurityProvidersOptionalParams
-  ): Promise<NetworkManagementClientSupportedSecurityProvidersResponse> {
+    options?: SupportedSecurityProvidersOptionalParams,
+  ): Promise<SupportedSecurityProvidersResponse> {
     return this.sendOperationRequest(
       { resourceGroupName, virtualWANName, options },
-      supportedSecurityProvidersOperationSpec
+      supportedSecurityProvidersOperationSpec,
     );
   }
 
@@ -1089,32 +1521,29 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     virtualWANName: string,
     vpnClientParams: VirtualWanVpnProfileParameters,
-    options?: NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileOptionalParams
+    options?: GeneratevirtualwanvpnserverconfigurationvpnprofileOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileResponse
-      >,
-      NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileResponse
+    SimplePollerLike<
+      OperationState<GeneratevirtualwanvpnserverconfigurationvpnprofileResponse>,
+      GeneratevirtualwanvpnserverconfigurationvpnprofileResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
-    ): Promise<NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileResponse> => {
+      spec: coreClient.OperationSpec,
+    ): Promise<GeneratevirtualwanvpnserverconfigurationvpnprofileResponse> => {
       return this.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -1123,8 +1552,8 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -1132,21 +1561,26 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, virtualWANName, vpnClientParams, options },
-      generatevirtualwanvpnserverconfigurationvpnprofileOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, virtualWANName, vpnClientParams, options },
+      spec: generatevirtualwanvpnserverconfigurationvpnprofileOperationSpec,
     });
+    const poller = await createHttpPoller<
+      GeneratevirtualwanvpnserverconfigurationvpnprofileResponse,
+      OperationState<GeneratevirtualwanvpnserverconfigurationvpnprofileResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1162,16 +1596,15 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     virtualWANName: string,
     vpnClientParams: VirtualWanVpnProfileParameters,
-    options?: NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileOptionalParams
-  ): Promise<
-    NetworkManagementClientGeneratevirtualwanvpnserverconfigurationvpnprofileResponse
-  > {
-    const poller = await this.beginGeneratevirtualwanvpnserverconfigurationvpnprofile(
-      resourceGroupName,
-      virtualWANName,
-      vpnClientParams,
-      options
-    );
+    options?: GeneratevirtualwanvpnserverconfigurationvpnprofileOptionalParams,
+  ): Promise<GeneratevirtualwanvpnserverconfigurationvpnprofileResponse> {
+    const poller =
+      await this.beginGeneratevirtualwanvpnserverconfigurationvpnprofile(
+        resourceGroupName,
+        virtualWANName,
+        vpnClientParams,
+        options,
+      );
     return poller.pollUntilDone();
   }
 
@@ -1179,7 +1612,7 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
    * PutBastionShareableLinkNext
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param nextLink The nextLink from the previous successful call to the PutBastionShareableLink
    *                 method.
    * @param options The options parameters.
@@ -1189,11 +1622,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
     nextLink: string,
-    options?: NetworkManagementClientPutBastionShareableLinkNextOptionalParams
-  ): Promise<NetworkManagementClientPutBastionShareableLinkNextResponse> {
+    options?: PutBastionShareableLinkNextOptionalParams,
+  ): Promise<PutBastionShareableLinkNextResponse> {
     return this.sendOperationRequest(
       { resourceGroupName, bastionHostName, bslRequest, nextLink, options },
-      putBastionShareableLinkNextOperationSpec
+      putBastionShareableLinkNextOperationSpec,
     );
   }
 
@@ -1201,7 +1634,7 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
    * GetBastionShareableLinkNext
    * @param resourceGroupName The name of the resource group.
    * @param bastionHostName The name of the Bastion Host.
-   * @param bslRequest Post request for all the Bastion Shareable Link endpoints.
+   * @param bslRequest Post request for Create/Delete/Get Bastion Shareable Link endpoints.
    * @param nextLink The nextLink from the previous successful call to the GetBastionShareableLink
    *                 method.
    * @param options The options parameters.
@@ -1211,11 +1644,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     bastionHostName: string,
     bslRequest: BastionShareableLinkListRequest,
     nextLink: string,
-    options?: NetworkManagementClientGetBastionShareableLinkNextOptionalParams
-  ): Promise<NetworkManagementClientGetBastionShareableLinkNextResponse> {
+    options?: GetBastionShareableLinkNextOptionalParams,
+  ): Promise<GetBastionShareableLinkNextResponse> {
     return this.sendOperationRequest(
       { resourceGroupName, bastionHostName, bslRequest, nextLink, options },
-      getBastionShareableLinkNextOperationSpec
+      getBastionShareableLinkNextOperationSpec,
     );
   }
 
@@ -1230,11 +1663,11 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     resourceGroupName: string,
     bastionHostName: string,
     nextLink: string,
-    options?: NetworkManagementClientGetActiveSessionsNextOptionalParams
-  ): Promise<NetworkManagementClientGetActiveSessionsNextResponse> {
+    options?: GetActiveSessionsNextOptionalParams,
+  ): Promise<GetActiveSessionsNextResponse> {
     return this.sendOperationRequest(
       { resourceGroupName, bastionHostName, nextLink, options },
-      getActiveSessionsNextOperationSpec
+      getActiveSessionsNextOperationSpec,
     );
   }
 
@@ -1252,17 +1685,19 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
     bastionHostName: string,
     sessionIds: SessionIds,
     nextLink: string,
-    options?: NetworkManagementClientDisconnectActiveSessionsNextOptionalParams
-  ): Promise<NetworkManagementClientDisconnectActiveSessionsNextResponse> {
+    options?: DisconnectActiveSessionsNextOptionalParams,
+  ): Promise<DisconnectActiveSessionsNextResponse> {
     return this.sendOperationRequest(
       { resourceGroupName, bastionHostName, sessionIds, nextLink, options },
-      disconnectActiveSessionsNextOperationSpec
+      disconnectActiveSessionsNextOperationSpec,
     );
   }
 
   applicationGateways: ApplicationGateways;
   applicationGatewayPrivateLinkResources: ApplicationGatewayPrivateLinkResources;
   applicationGatewayPrivateEndpointConnections: ApplicationGatewayPrivateEndpointConnections;
+  applicationGatewayWafDynamicManifestsDefault: ApplicationGatewayWafDynamicManifestsDefault;
+  applicationGatewayWafDynamicManifests: ApplicationGatewayWafDynamicManifests;
   applicationSecurityGroups: ApplicationSecurityGroups;
   availableDelegations: AvailableDelegations;
   availableResourceGroupDelegations: AvailableResourceGroupDelegations;
@@ -1273,6 +1708,7 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   bastionHosts: BastionHosts;
   networkInterfaces: NetworkInterfaces;
   publicIPAddresses: PublicIPAddresses;
+  vipSwap: VipSwap;
   customIPPrefixes: CustomIPPrefixes;
   ddosCustomPolicies: DdosCustomPolicies;
   ddosProtectionPlans: DdosProtectionPlans;
@@ -1289,11 +1725,16 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   expressRoutePortsLocations: ExpressRoutePortsLocations;
   expressRoutePorts: ExpressRoutePorts;
   expressRouteLinks: ExpressRouteLinks;
+  expressRoutePortAuthorizations: ExpressRoutePortAuthorizations;
+  expressRouteProviderPortsLocation: ExpressRouteProviderPortsLocation;
   firewallPolicies: FirewallPolicies;
   firewallPolicyRuleCollectionGroups: FirewallPolicyRuleCollectionGroups;
   firewallPolicyIdpsSignatures: FirewallPolicyIdpsSignatures;
   firewallPolicyIdpsSignaturesOverrides: FirewallPolicyIdpsSignaturesOverrides;
   firewallPolicyIdpsSignaturesFilterValues: FirewallPolicyIdpsSignaturesFilterValues;
+  firewallPolicyDrafts: FirewallPolicyDrafts;
+  firewallPolicyDeployments: FirewallPolicyDeployments;
+  firewallPolicyRuleCollectionGroupDrafts: FirewallPolicyRuleCollectionGroupDrafts;
   ipAllocations: IpAllocations;
   ipGroups: IpGroups;
   loadBalancers: LoadBalancers;
@@ -1308,6 +1749,24 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   networkInterfaceIPConfigurations: NetworkInterfaceIPConfigurations;
   networkInterfaceLoadBalancers: NetworkInterfaceLoadBalancers;
   networkInterfaceTapConfigurations: NetworkInterfaceTapConfigurations;
+  networkManagers: NetworkManagers;
+  networkManagerCommits: NetworkManagerCommits;
+  networkManagerDeploymentStatusOperations: NetworkManagerDeploymentStatusOperations;
+  subscriptionNetworkManagerConnections: SubscriptionNetworkManagerConnections;
+  managementGroupNetworkManagerConnections: ManagementGroupNetworkManagerConnections;
+  connectivityConfigurations: ConnectivityConfigurations;
+  networkGroups: NetworkGroups;
+  staticMembers: StaticMembers;
+  scopeConnections: ScopeConnections;
+  securityAdminConfigurations: SecurityAdminConfigurations;
+  adminRuleCollections: AdminRuleCollections;
+  adminRules: AdminRules;
+  securityUserConfigurations: SecurityUserConfigurations;
+  securityUserRuleCollections: SecurityUserRuleCollections;
+  securityUserRules: SecurityUserRules;
+  networkManagerRoutingConfigurations: NetworkManagerRoutingConfigurations;
+  routingRuleCollections: RoutingRuleCollections;
+  routingRules: RoutingRules;
   networkProfiles: NetworkProfiles;
   networkSecurityGroups: NetworkSecurityGroups;
   securityRules: SecurityRules;
@@ -1354,7 +1813,9 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   vpnSiteLinks: VpnSiteLinks;
   vpnSitesConfiguration: VpnSitesConfiguration;
   vpnServerConfigurations: VpnServerConfigurations;
+  configurationPolicyGroups: ConfigurationPolicyGroups;
   virtualHubs: VirtualHubs;
+  routeMaps: RouteMaps;
   hubVirtualNetworkConnections: HubVirtualNetworkConnections;
   vpnGateways: VpnGateways;
   vpnLinkConnections: VpnLinkConnections;
@@ -1366,6 +1827,7 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
   virtualHubRouteTableV2S: VirtualHubRouteTableV2S;
   expressRouteGateways: ExpressRouteGateways;
   expressRouteConnections: ExpressRouteConnections;
+  networkVirtualApplianceConnections: NetworkVirtualApplianceConnections;
   virtualHubBgpConnection: VirtualHubBgpConnection;
   virtualHubBgpConnections: VirtualHubBgpConnections;
   virtualHubIpConfiguration: VirtualHubIpConfiguration;
@@ -1377,25 +1839,24 @@ export class NetworkManagementClient extends NetworkManagementClientContext {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const putBastionShareableLinkOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/createShareableLinks",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/createShareableLinks",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionShareableLinkListResult
+      bodyMapper: Mappers.BastionShareableLinkListResult,
     },
     201: {
-      bodyMapper: Mappers.BastionShareableLinkListResult
+      bodyMapper: Mappers.BastionShareableLinkListResult,
     },
     202: {
-      bodyMapper: Mappers.BastionShareableLinkListResult
+      bodyMapper: Mappers.BastionShareableLinkListResult,
     },
     204: {
-      bodyMapper: Mappers.BastionShareableLinkListResult
+      bodyMapper: Mappers.BastionShareableLinkListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.bslRequest,
   queryParameters: [Parameters.apiVersion],
@@ -1403,15 +1864,14 @@ const putBastionShareableLinkOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteBastionShareableLinkOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/deleteShareableLinks",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/deleteShareableLinks",
   httpMethod: "POST",
   responses: {
     200: {},
@@ -1419,8 +1879,8 @@ const deleteBastionShareableLinkOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.bslRequest,
   queryParameters: [Parameters.apiVersion],
@@ -1428,23 +1888,59 @@ const deleteBastionShareableLinkOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
+const deleteBastionShareableLinkByTokenOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/deleteShareableLinksByToken",
+    httpMethod: "POST",
+    responses: {
+      200: {
+        headersMapper:
+          Mappers.NetworkManagementClientDeleteBastionShareableLinkByTokenHeaders,
+      },
+      201: {
+        headersMapper:
+          Mappers.NetworkManagementClientDeleteBastionShareableLinkByTokenHeaders,
+      },
+      202: {
+        headersMapper:
+          Mappers.NetworkManagementClientDeleteBastionShareableLinkByTokenHeaders,
+      },
+      204: {
+        headersMapper:
+          Mappers.NetworkManagementClientDeleteBastionShareableLinkByTokenHeaders,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
+    },
+    requestBody: Parameters.bslTokenRequest,
+    queryParameters: [Parameters.apiVersion],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.resourceGroupName,
+      Parameters.subscriptionId,
+      Parameters.bastionHostName,
+    ],
+    headerParameters: [Parameters.accept, Parameters.contentType],
+    mediaType: "json",
+    serializer,
+  };
 const getBastionShareableLinkOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/getShareableLinks",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/getShareableLinks",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionShareableLinkListResult
+      bodyMapper: Mappers.BastionShareableLinkListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.bslRequest,
   queryParameters: [Parameters.apiVersion],
@@ -1452,54 +1948,52 @@ const getBastionShareableLinkOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getActiveSessionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/getActiveSessions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/getActiveSessions",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionActiveSessionListResult
+      bodyMapper: Mappers.BastionActiveSessionListResult,
     },
     201: {
-      bodyMapper: Mappers.BastionActiveSessionListResult
+      bodyMapper: Mappers.BastionActiveSessionListResult,
     },
     202: {
-      bodyMapper: Mappers.BastionActiveSessionListResult
+      bodyMapper: Mappers.BastionActiveSessionListResult,
     },
     204: {
-      bodyMapper: Mappers.BastionActiveSessionListResult
+      bodyMapper: Mappers.BastionActiveSessionListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const disconnectActiveSessionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/disconnectActiveSessions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}/disconnectActiveSessions",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionSessionDeleteResult
+      bodyMapper: Mappers.BastionSessionDeleteResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.sessionIds,
   queryParameters: [Parameters.apiVersion],
@@ -1507,178 +2001,288 @@ const disconnectActiveSessionsOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const checkDnsNameAvailabilityOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/locations/{location}/CheckDnsNameAvailability",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/locations/{location}/CheckDnsNameAvailability",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.DnsNameAvailabilityResult
+      bodyMapper: Mappers.DnsNameAvailabilityResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.domainNameLabel],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const supportedSecurityProvidersOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualWans/{virtualWANName}/supportedSecurityProviders",
+const expressRouteProviderPortOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/expressRouteProviderPorts/{providerport}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualWanSecurityProviders
+      bodyMapper: Mappers.ExpressRouteProviderPort,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.virtualWANName
+    Parameters.providerport,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const generatevirtualwanvpnserverconfigurationvpnprofileOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualWans/{virtualWANName}/GenerateVpnProfile",
+const listActiveConnectivityConfigurationsOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkManagers/{networkManagerName}/listActiveConnectivityConfigurations",
+    httpMethod: "POST",
+    responses: {
+      200: {
+        bodyMapper: Mappers.ActiveConnectivityConfigurationsListResult,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
+    },
+    requestBody: Parameters.parameters7,
+    queryParameters: [Parameters.apiVersion, Parameters.top],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.resourceGroupName,
+      Parameters.subscriptionId,
+      Parameters.networkManagerName,
+    ],
+    headerParameters: [Parameters.accept, Parameters.contentType],
+    mediaType: "json",
+    serializer,
+  };
+const listActiveSecurityAdminRulesOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkManagers/{networkManagerName}/listActiveSecurityAdminRules",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.VpnProfileResponse
-    },
-    201: {
-      bodyMapper: Mappers.VpnProfileResponse
-    },
-    202: {
-      bodyMapper: Mappers.VpnProfileResponse
-    },
-    204: {
-      bodyMapper: Mappers.VpnProfileResponse
+      bodyMapper: Mappers.ActiveSecurityAdminRulesListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.vpnClientParams,
+  requestBody: Parameters.parameters7,
+  queryParameters: [Parameters.apiVersion, Parameters.top],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.resourceGroupName,
+    Parameters.subscriptionId,
+    Parameters.networkManagerName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const listNetworkManagerEffectiveConnectivityConfigurationsOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/listNetworkManagerEffectiveConnectivityConfigurations",
+    httpMethod: "POST",
+    responses: {
+      200: {
+        bodyMapper:
+          Mappers.NetworkManagerEffectiveConnectivityConfigurationListResult,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
+    },
+    requestBody: Parameters.parameters8,
+    queryParameters: [Parameters.apiVersion, Parameters.top],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.resourceGroupName,
+      Parameters.subscriptionId,
+      Parameters.virtualNetworkName,
+    ],
+    headerParameters: [Parameters.accept, Parameters.contentType],
+    mediaType: "json",
+    serializer,
+  };
+const listNetworkManagerEffectiveSecurityAdminRulesOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/listNetworkManagerEffectiveSecurityAdminRules",
+    httpMethod: "POST",
+    responses: {
+      200: {
+        bodyMapper: Mappers.NetworkManagerEffectiveSecurityAdminRulesListResult,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
+    },
+    requestBody: Parameters.parameters8,
+    queryParameters: [Parameters.apiVersion, Parameters.top],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.resourceGroupName,
+      Parameters.subscriptionId,
+      Parameters.virtualNetworkName,
+    ],
+    headerParameters: [Parameters.accept, Parameters.contentType],
+    mediaType: "json",
+    serializer,
+  };
+const supportedSecurityProvidersOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualWans/{virtualWANName}/supportedSecurityProviders",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.VirtualWanSecurityProviders,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.virtualWANName
+    Parameters.virtualWANName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
+  headerParameters: [Parameters.accept],
+  serializer,
 };
+const generatevirtualwanvpnserverconfigurationvpnprofileOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualWans/{virtualWANName}/GenerateVpnProfile",
+    httpMethod: "POST",
+    responses: {
+      200: {
+        bodyMapper: Mappers.VpnProfileResponse,
+      },
+      201: {
+        bodyMapper: Mappers.VpnProfileResponse,
+      },
+      202: {
+        bodyMapper: Mappers.VpnProfileResponse,
+      },
+      204: {
+        bodyMapper: Mappers.VpnProfileResponse,
+      },
+      default: {
+        bodyMapper: Mappers.CloudError,
+      },
+    },
+    requestBody: Parameters.vpnClientParams,
+    queryParameters: [Parameters.apiVersion],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.resourceGroupName,
+      Parameters.subscriptionId,
+      Parameters.virtualWANName,
+    ],
+    headerParameters: [Parameters.accept, Parameters.contentType],
+    mediaType: "json",
+    serializer,
+  };
 const putBastionShareableLinkNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionShareableLinkListResult
+      bodyMapper: Mappers.BastionShareableLinkListResult,
     },
     202: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getBastionShareableLinkNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionShareableLinkListResult
+      bodyMapper: Mappers.BastionShareableLinkListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getActiveSessionsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionActiveSessionListResult
+      bodyMapper: Mappers.BastionActiveSessionListResult,
     },
     202: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const disconnectActiveSessionsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.BastionSessionDeleteResult
+      bodyMapper: Mappers.BastionSessionDeleteResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.bastionHostName
+    Parameters.bastionHostName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };

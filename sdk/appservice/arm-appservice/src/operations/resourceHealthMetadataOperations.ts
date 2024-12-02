@@ -6,48 +6,49 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ResourceHealthMetadataOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { WebSiteManagementClientContext } from "../webSiteManagementClientContext";
+import { WebSiteManagementClient } from "../webSiteManagementClient";
 import {
   ResourceHealthMetadata,
-  ResourceHealthMetadataOperationsListNextOptionalParams,
-  ResourceHealthMetadataOperationsListOptionalParams,
-  ResourceHealthMetadataOperationsListByResourceGroupNextOptionalParams,
-  ResourceHealthMetadataOperationsListByResourceGroupOptionalParams,
-  ResourceHealthMetadataOperationsListBySiteNextOptionalParams,
-  ResourceHealthMetadataOperationsListBySiteOptionalParams,
-  ResourceHealthMetadataOperationsListBySiteSlotNextOptionalParams,
-  ResourceHealthMetadataOperationsListBySiteSlotOptionalParams,
-  ResourceHealthMetadataOperationsListResponse,
-  ResourceHealthMetadataOperationsListByResourceGroupResponse,
-  ResourceHealthMetadataOperationsListBySiteResponse,
-  ResourceHealthMetadataOperationsGetBySiteOptionalParams,
-  ResourceHealthMetadataOperationsGetBySiteResponse,
-  ResourceHealthMetadataOperationsListBySiteSlotResponse,
-  ResourceHealthMetadataOperationsGetBySiteSlotOptionalParams,
-  ResourceHealthMetadataOperationsGetBySiteSlotResponse,
-  ResourceHealthMetadataOperationsListNextResponse,
-  ResourceHealthMetadataOperationsListByResourceGroupNextResponse,
-  ResourceHealthMetadataOperationsListBySiteNextResponse,
-  ResourceHealthMetadataOperationsListBySiteSlotNextResponse
+  ResourceHealthMetadataListNextOptionalParams,
+  ResourceHealthMetadataListOptionalParams,
+  ResourceHealthMetadataListResponse,
+  ResourceHealthMetadataListByResourceGroupNextOptionalParams,
+  ResourceHealthMetadataListByResourceGroupOptionalParams,
+  ResourceHealthMetadataListByResourceGroupResponse,
+  ResourceHealthMetadataListBySiteNextOptionalParams,
+  ResourceHealthMetadataListBySiteOptionalParams,
+  ResourceHealthMetadataListBySiteResponse,
+  ResourceHealthMetadataListBySiteSlotNextOptionalParams,
+  ResourceHealthMetadataListBySiteSlotOptionalParams,
+  ResourceHealthMetadataListBySiteSlotResponse,
+  ResourceHealthMetadataGetBySiteOptionalParams,
+  ResourceHealthMetadataGetBySiteResponse,
+  ResourceHealthMetadataGetBySiteSlotOptionalParams,
+  ResourceHealthMetadataGetBySiteSlotResponse,
+  ResourceHealthMetadataListNextResponse,
+  ResourceHealthMetadataListByResourceGroupNextResponse,
+  ResourceHealthMetadataListBySiteNextResponse,
+  ResourceHealthMetadataListBySiteSlotNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a ResourceHealthMetadataOperations. */
+/** Class containing ResourceHealthMetadataOperations operations. */
 export class ResourceHealthMetadataOperationsImpl
-  implements ResourceHealthMetadataOperations {
-  private readonly client: WebSiteManagementClientContext;
+  implements ResourceHealthMetadataOperations
+{
+  private readonly client: WebSiteManagementClient;
 
   /**
    * Initialize a new instance of the class ResourceHealthMetadataOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: WebSiteManagementClientContext) {
+  constructor(client: WebSiteManagementClient) {
     this.client = client;
   }
 
@@ -56,7 +57,7 @@ export class ResourceHealthMetadataOperationsImpl
    * @param options The options parameters.
    */
   public list(
-    options?: ResourceHealthMetadataOperationsListOptionalParams
+    options?: ResourceHealthMetadataListOptionalParams,
   ): PagedAsyncIterableIterator<ResourceHealthMetadata> {
     const iter = this.listPagingAll(options);
     return {
@@ -66,27 +67,39 @@ export class ResourceHealthMetadataOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: ResourceHealthMetadataOperationsListOptionalParams
+    options?: ResourceHealthMetadataListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ResourceHealthMetadata[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ResourceHealthMetadataListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: ResourceHealthMetadataOperationsListOptionalParams
+    options?: ResourceHealthMetadataListOptionalParams,
   ): AsyncIterableIterator<ResourceHealthMetadata> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -101,7 +114,7 @@ export class ResourceHealthMetadataOperationsImpl
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: ResourceHealthMetadataOperationsListByResourceGroupOptionalParams
+    options?: ResourceHealthMetadataListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<ResourceHealthMetadata> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -111,37 +124,53 @@ export class ResourceHealthMetadataOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: ResourceHealthMetadataOperationsListByResourceGroupOptionalParams
+    options?: ResourceHealthMetadataListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ResourceHealthMetadata[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ResourceHealthMetadataListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: ResourceHealthMetadataOperationsListByResourceGroupOptionalParams
+    options?: ResourceHealthMetadataListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<ResourceHealthMetadata> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -157,7 +186,7 @@ export class ResourceHealthMetadataOperationsImpl
   public listBySite(
     resourceGroupName: string,
     name: string,
-    options?: ResourceHealthMetadataOperationsListBySiteOptionalParams
+    options?: ResourceHealthMetadataListBySiteOptionalParams,
   ): PagedAsyncIterableIterator<ResourceHealthMetadata> {
     const iter = this.listBySitePagingAll(resourceGroupName, name, options);
     return {
@@ -167,41 +196,58 @@ export class ResourceHealthMetadataOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySitePagingPage(resourceGroupName, name, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySitePagingPage(
+          resourceGroupName,
+          name,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listBySitePagingPage(
     resourceGroupName: string,
     name: string,
-    options?: ResourceHealthMetadataOperationsListBySiteOptionalParams
+    options?: ResourceHealthMetadataListBySiteOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ResourceHealthMetadata[]> {
-    let result = await this._listBySite(resourceGroupName, name, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ResourceHealthMetadataListBySiteResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySite(resourceGroupName, name, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySiteNext(
         resourceGroupName,
         name,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listBySitePagingAll(
     resourceGroupName: string,
     name: string,
-    options?: ResourceHealthMetadataOperationsListBySiteOptionalParams
+    options?: ResourceHealthMetadataListBySiteOptionalParams,
   ): AsyncIterableIterator<ResourceHealthMetadata> {
     for await (const page of this.listBySitePagingPage(
       resourceGroupName,
       name,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -219,13 +265,13 @@ export class ResourceHealthMetadataOperationsImpl
     resourceGroupName: string,
     name: string,
     slot: string,
-    options?: ResourceHealthMetadataOperationsListBySiteSlotOptionalParams
+    options?: ResourceHealthMetadataListBySiteSlotOptionalParams,
   ): PagedAsyncIterableIterator<ResourceHealthMetadata> {
     const iter = this.listBySiteSlotPagingAll(
       resourceGroupName,
       name,
       slot,
-      options
+      options,
     );
     return {
       next() {
@@ -234,14 +280,18 @@ export class ResourceHealthMetadataOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listBySiteSlotPagingPage(
           resourceGroupName,
           name,
           slot,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -249,26 +299,35 @@ export class ResourceHealthMetadataOperationsImpl
     resourceGroupName: string,
     name: string,
     slot: string,
-    options?: ResourceHealthMetadataOperationsListBySiteSlotOptionalParams
+    options?: ResourceHealthMetadataListBySiteSlotOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ResourceHealthMetadata[]> {
-    let result = await this._listBySiteSlot(
-      resourceGroupName,
-      name,
-      slot,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ResourceHealthMetadataListBySiteSlotResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySiteSlot(
+        resourceGroupName,
+        name,
+        slot,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySiteSlotNext(
         resourceGroupName,
         name,
         slot,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -276,13 +335,13 @@ export class ResourceHealthMetadataOperationsImpl
     resourceGroupName: string,
     name: string,
     slot: string,
-    options?: ResourceHealthMetadataOperationsListBySiteSlotOptionalParams
+    options?: ResourceHealthMetadataListBySiteSlotOptionalParams,
   ): AsyncIterableIterator<ResourceHealthMetadata> {
     for await (const page of this.listBySiteSlotPagingPage(
       resourceGroupName,
       name,
       slot,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -293,8 +352,8 @@ export class ResourceHealthMetadataOperationsImpl
    * @param options The options parameters.
    */
   private _list(
-    options?: ResourceHealthMetadataOperationsListOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListResponse> {
+    options?: ResourceHealthMetadataListOptionalParams,
+  ): Promise<ResourceHealthMetadataListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
 
@@ -306,11 +365,11 @@ export class ResourceHealthMetadataOperationsImpl
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: ResourceHealthMetadataOperationsListByResourceGroupOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListByResourceGroupResponse> {
+    options?: ResourceHealthMetadataListByResourceGroupOptionalParams,
+  ): Promise<ResourceHealthMetadataListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -324,11 +383,11 @@ export class ResourceHealthMetadataOperationsImpl
   private _listBySite(
     resourceGroupName: string,
     name: string,
-    options?: ResourceHealthMetadataOperationsListBySiteOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListBySiteResponse> {
+    options?: ResourceHealthMetadataListBySiteOptionalParams,
+  ): Promise<ResourceHealthMetadataListBySiteResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, options },
-      listBySiteOperationSpec
+      listBySiteOperationSpec,
     );
   }
 
@@ -341,11 +400,11 @@ export class ResourceHealthMetadataOperationsImpl
   getBySite(
     resourceGroupName: string,
     name: string,
-    options?: ResourceHealthMetadataOperationsGetBySiteOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsGetBySiteResponse> {
+    options?: ResourceHealthMetadataGetBySiteOptionalParams,
+  ): Promise<ResourceHealthMetadataGetBySiteResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, options },
-      getBySiteOperationSpec
+      getBySiteOperationSpec,
     );
   }
 
@@ -361,11 +420,11 @@ export class ResourceHealthMetadataOperationsImpl
     resourceGroupName: string,
     name: string,
     slot: string,
-    options?: ResourceHealthMetadataOperationsListBySiteSlotOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListBySiteSlotResponse> {
+    options?: ResourceHealthMetadataListBySiteSlotOptionalParams,
+  ): Promise<ResourceHealthMetadataListBySiteSlotResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, slot, options },
-      listBySiteSlotOperationSpec
+      listBySiteSlotOperationSpec,
     );
   }
 
@@ -380,11 +439,11 @@ export class ResourceHealthMetadataOperationsImpl
     resourceGroupName: string,
     name: string,
     slot: string,
-    options?: ResourceHealthMetadataOperationsGetBySiteSlotOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsGetBySiteSlotResponse> {
+    options?: ResourceHealthMetadataGetBySiteSlotOptionalParams,
+  ): Promise<ResourceHealthMetadataGetBySiteSlotResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, slot, options },
-      getBySiteSlotOperationSpec
+      getBySiteSlotOperationSpec,
     );
   }
 
@@ -395,11 +454,11 @@ export class ResourceHealthMetadataOperationsImpl
    */
   private _listNext(
     nextLink: string,
-    options?: ResourceHealthMetadataOperationsListNextOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListNextResponse> {
+    options?: ResourceHealthMetadataListNextOptionalParams,
+  ): Promise<ResourceHealthMetadataListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -412,11 +471,11 @@ export class ResourceHealthMetadataOperationsImpl
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: ResourceHealthMetadataOperationsListByResourceGroupNextOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListByResourceGroupNextResponse> {
+    options?: ResourceHealthMetadataListByResourceGroupNextOptionalParams,
+  ): Promise<ResourceHealthMetadataListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
@@ -431,11 +490,11 @@ export class ResourceHealthMetadataOperationsImpl
     resourceGroupName: string,
     name: string,
     nextLink: string,
-    options?: ResourceHealthMetadataOperationsListBySiteNextOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListBySiteNextResponse> {
+    options?: ResourceHealthMetadataListBySiteNextOptionalParams,
+  ): Promise<ResourceHealthMetadataListBySiteNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, nextLink, options },
-      listBySiteNextOperationSpec
+      listBySiteNextOperationSpec,
     );
   }
 
@@ -452,11 +511,11 @@ export class ResourceHealthMetadataOperationsImpl
     name: string,
     slot: string,
     nextLink: string,
-    options?: ResourceHealthMetadataOperationsListBySiteSlotNextOptionalParams
-  ): Promise<ResourceHealthMetadataOperationsListBySiteSlotNextResponse> {
+    options?: ResourceHealthMetadataListBySiteSlotNextOptionalParams,
+  ): Promise<ResourceHealthMetadataListBySiteSlotNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, slot, nextLink, options },
-      listBySiteSlotNextOperationSpec
+      listBySiteSlotNextOperationSpec,
     );
   }
 }
@@ -464,98 +523,93 @@ export class ResourceHealthMetadataOperationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Web/resourceHealthMetadata",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Web/resourceHealthMetadata",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/resourceHealthMetadata",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/resourceHealthMetadata",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySiteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/resourceHealthMetadata",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/resourceHealthMetadata",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.name
+    Parameters.name,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getBySiteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/resourceHealthMetadata/default",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/resourceHealthMetadata/default",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadata
+      bodyMapper: Mappers.ResourceHealthMetadata,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.name
+    Parameters.name,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySiteSlotOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/resourceHealthMetadata",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/resourceHealthMetadata",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -563,22 +617,21 @@ const listBySiteSlotOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.name,
-    Parameters.slot
+    Parameters.slot,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getBySiteSlotOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/resourceHealthMetadata/default",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/slots/{slot}/resourceHealthMetadata/default",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadata
+      bodyMapper: Mappers.ResourceHealthMetadata,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -586,94 +639,90 @@ const getBySiteSlotOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.name,
-    Parameters.slot
+    Parameters.slot,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySiteNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.name,
-    Parameters.nextLink
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listBySiteSlotNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.ResourceHealthMetadataCollection
+      bodyMapper: Mappers.DefaultErrorResponse,
     },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.name,
     Parameters.nextLink,
-    Parameters.slot
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const listBySiteSlotNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.ResourceHealthMetadataCollection,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.name,
+    Parameters.nextLink,
+    Parameters.slot,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };

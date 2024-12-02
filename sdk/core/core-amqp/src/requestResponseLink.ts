@@ -1,24 +1,24 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AbortError, AbortSignalLike } from "@azure/abort-controller";
-import { Constants } from "./util/constants";
-import {
-  Message as RheaMessage,
+import type { AbortSignalLike } from "@azure/abort-controller";
+import { AbortError } from "@azure/abort-controller";
+import { ConditionStatusMapper, translate } from "./errors.js";
+import type {
   Connection,
   EventContext,
   Receiver,
-  ReceiverEvents,
   ReceiverOptions,
   ReqResLink,
+  Message as RheaMessage,
   Sender,
   SenderOptions,
   Session,
-  generate_uuid
 } from "rhea-promise";
-import { ConditionStatusMapper, StandardAbortMessage, translate } from "./errors";
-import { logErrorStackTrace, logger } from "./log";
-import { isDefined } from "./util/typeGuards";
+import { ReceiverEvents, SenderEvents, generate_uuid } from "rhea-promise";
+import { Constants, StandardAbortMessage } from "./util/constants.js";
+import { logErrorStackTrace, logger } from "./log.js";
+import { isDefined } from "@azure/core-util";
 
 /**
  * Describes the options that can be specified while sending a request.
@@ -60,12 +60,19 @@ export class RequestResponseLink implements ReqResLink {
    * @param sender - The amqp sender link.
    * @param receiver - The amqp receiver link.
    */
-  constructor(public session: Session, public sender: Sender, public receiver: Receiver) {
+  constructor(
+    public session: Session,
+    public sender: Sender,
+    public receiver: Receiver,
+  ) {
     this.session = session;
     this.sender = sender;
     this.receiver = receiver;
     this.receiver.on(ReceiverEvents.message, (context) => {
       onMessageReceived(context, this.connection.id, this._responsesMap);
+    });
+    this.sender.on(SenderEvents.senderError, (context) => {
+      onSenderError(context, this.connection.id, this._responsesMap);
     });
   }
 
@@ -155,13 +162,13 @@ export class RequestResponseLink implements ReqResLink {
         if (aborter) {
           aborter.removeEventListener("abort", onAbort);
         }
-        const address = this.receiver.address || "address";
+        const address = this.receiver?.address || "address";
         const desc: string =
           `The request with message_id "${request.message_id}" to "${address}" ` +
           `endpoint timed out. Please try again later.`;
         const e: Error = {
           name: "OperationTimeoutError",
-          message: desc
+          message: desc,
         };
         return reject(translate(e));
       }, timeoutInMs);
@@ -174,15 +181,10 @@ export class RequestResponseLink implements ReqResLink {
           if (isDefined(timer)) {
             clearTimeout(timer);
           }
-        }
+        },
       });
 
-      logger.verbose(
-        "[%s] %s request sent: %O",
-        this.connection.id,
-        request.to || "$management",
-        request
-      );
+      logger.verbose("[%s] %s request sent: %O", this.connection.id, request.to || "$management");
       this.sender.send(request);
     });
   }
@@ -221,7 +223,7 @@ export class RequestResponseLink implements ReqResLink {
     connection: Connection,
     senderOptions: SenderOptions,
     receiverOptions: ReceiverOptions,
-    createOptions: { abortSignal?: AbortSignalLike } = {}
+    createOptions: { abortSignal?: AbortSignalLike } = {},
   ): Promise<RequestResponseLink> {
     const { abortSignal } = createOptions;
     const session = await connection.createSession({ abortSignal });
@@ -229,7 +231,7 @@ export class RequestResponseLink implements ReqResLink {
     const receiver = await session.createReceiver({ ...receiverOptions, abortSignal });
     logger.verbose(
       "[%s] Successfully created the sender and receiver links on the same session.",
-      connection.id
+      connection.id,
     );
     return new RequestResponseLink(session, sender, receiver);
   }
@@ -251,12 +253,12 @@ type NormalizedInfo = {
  * Handle different variations of property names in responses emitted by EventHubs and ServiceBus.
  */
 export const getCodeDescriptionAndError = (
-  props: { [key: string]: string | number | undefined } = {}
+  props: { [key: string]: string | number | undefined } = {},
 ): NormalizedInfo => {
   return {
     statusCode: (props[Constants.statusCode] || props.statusCode) as number,
     statusDescription: (props[Constants.statusDescription] || props.statusDescription) as string,
-    errorCondition: (props[Constants.errorCondition] || props.errorCondition) as string
+    errorCondition: (props[Constants.errorCondition] || props.errorCondition) as string,
   };
 };
 
@@ -277,14 +279,14 @@ export const getCodeDescriptionAndError = (
 export function onMessageReceived(
   context: Pick<EventContext, "message">,
   connectionId: string,
-  responsesMap: Map<string, DeferredPromiseWithCallback>
+  responsesMap: Map<string, DeferredPromiseWithCallback>,
 ): void {
   const message = context.message;
   if (!message) {
     logger.verbose(
       `[${connectionId}] "message" property on the EventContext is "undefined" which is unexpected, ` +
         `returning from the "onMessageReceived" handler without resolving or rejecting the promise ` +
-        `upon encountering the message event.`
+        `upon encountering the message event.`,
     );
     return;
   }
@@ -294,7 +296,7 @@ export function onMessageReceived(
     logger.verbose(
       `[${connectionId}] correlationId "${responseCorrelationId}" property on the response does not match with ` +
         `any of the "request-id"s in the map, returning from the "onMessageReceived" handler without resolving ` +
-        `or rejecting the promise upon encountering the message event.`
+        `or rejecting the promise upon encountering the message event.`,
     );
     return;
   }
@@ -305,19 +307,19 @@ export function onMessageReceived(
   const deleteResult = responsesMap.delete(responseCorrelationId as string);
   logger.verbose(
     `[${connectionId}] Successfully deleted the response with id ${responseCorrelationId} from the map. ` +
-      `Delete result - ${deleteResult}`
+      `Delete result - ${deleteResult}`,
   );
 
   const info = getCodeDescriptionAndError(message.application_properties);
   let error;
   if (!info.statusCode) {
     error = new Error(
-      `[${connectionId}] No statusCode in the "application_properties" in the returned response with correlation-id: ${responseCorrelationId}`
+      `[${connectionId}] No statusCode in the "application_properties" in the returned response with correlation-id: ${responseCorrelationId}`,
     );
   }
   if (info.statusCode > 199 && info.statusCode < 300) {
     logger.verbose(
-      `[${connectionId}] Resolving the response with correlation-id: ${responseCorrelationId}`
+      `[${connectionId}] Resolving the response with correlation-id: ${responseCorrelationId}`,
     );
     return promise.resolve(message);
   }
@@ -326,10 +328,27 @@ export function onMessageReceived(
       info.errorCondition || ConditionStatusMapper[info.statusCode] || "amqp:internal-error";
     error = translate({
       condition: condition,
-      description: info.statusDescription
+      description: info.statusDescription,
     });
     logger.warning(`${error?.name}: ${error?.message}`);
   }
   logErrorStackTrace(error);
   return promise.reject(error);
+}
+
+function onSenderError(
+  context: Pick<EventContext, "sender">,
+  connectionId: string,
+  responsesMap: Map<string, DeferredPromiseWithCallback>,
+): void {
+  if (context.sender) {
+    for (const [key, promise] of responsesMap.entries()) {
+      logger.verbose(
+        `[${connectionId}] Sender closed due to error when sending request with message_id "${key}"`,
+      );
+      promise.cleanupBeforeResolveOrReject();
+      promise.reject(context.sender.error);
+    }
+    responsesMap.clear();
+  }
 }

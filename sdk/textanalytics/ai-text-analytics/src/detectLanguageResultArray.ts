@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TextDocumentBatchStatistics, LanguageResult, TextDocumentInput } from "./generated/models";
-import {
-  DetectLanguageResult,
-  makeDetectLanguageResult,
-  makeDetectLanguageErrorResult
-} from "./detectLanguageResult";
+import type {
+  LanguageResult,
+  TextDocumentBatchStatistics,
+  TextDocumentInput,
+} from "./generated/models";
+import type { DetectLanguageResult } from "./detectLanguageResult";
+import { makeDetectLanguageErrorResult, makeDetectLanguageResult } from "./detectLanguageResult";
 import { combineSuccessfulAndErroneousDocumentsWithStatisticsAndModelVersion } from "./textAnalyticsResult";
 
 /**
@@ -32,12 +33,12 @@ export interface DetectLanguageResultArray extends Array<DetectLanguageResult> {
  */
 export function makeDetectLanguageResultArray(
   input: TextDocumentInput[],
-  response: LanguageResult
+  response: LanguageResult,
 ): DetectLanguageResultArray {
   return combineSuccessfulAndErroneousDocumentsWithStatisticsAndModelVersion(
     input,
     response,
     makeDetectLanguageResult,
-    makeDetectLanguageErrorResult
+    makeDetectLanguageErrorResult,
   );
 }

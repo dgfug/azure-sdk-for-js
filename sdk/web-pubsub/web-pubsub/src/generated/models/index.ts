@@ -8,10 +8,12 @@
 
 import * as coreClient from "@azure/core-client";
 
-/** The response object containing the token for the client */
-export interface ClientTokenResponse {
-  /** The token value for the WebSocket client to connect to the service */
-  token?: string;
+/** The request object containing targets groups and a connection filter */
+export interface AddToGroupsRequest {
+  /** A list of groups which target connections will be added into */
+  groups?: string[];
+  /** An OData filter which target connections satisfy */
+  filter?: string;
 }
 
 /** The error object. */
@@ -33,8 +35,22 @@ export interface InnerError {
   inner?: InnerError;
 }
 
-/** Defines headers for WebPubSub_generateClientToken operation. */
-export interface WebPubSubGenerateClientTokenExceptionHeaders {
+/** The response object containing the token for the client */
+export interface ClientTokenResponse {
+  /** The token value for the WebSocket client to connect to the service */
+  token?: string;
+}
+
+/** The request object containing targets groups and a connection filter */
+export interface RemoveFromGroupsRequest {
+  /** A list of groups which target connections will be removed from */
+  groups?: string[];
+  /** An OData filter which target connections satisfy */
+  filter?: string;
+}
+
+/** Defines headers for WebPubSub_addConnectionsToGroups operation. */
+export interface WebPubSubAddConnectionsToGroupsExceptionHeaders {
   errorCode?: string;
 }
 
@@ -43,13 +59,18 @@ export interface WebPubSubCloseAllConnectionsExceptionHeaders {
   errorCode?: string;
 }
 
-/** Defines headers for WebPubSub_sendToAll operation. */
-export interface WebPubSubSendToAllExceptionHeaders {
+/** Defines headers for WebPubSub_generateClientToken operation. */
+export interface WebPubSubGenerateClientTokenExceptionHeaders {
   errorCode?: string;
 }
 
-/** Defines headers for WebPubSub_connectionExists operation. */
-export interface WebPubSubConnectionExistsExceptionHeaders {
+/** Defines headers for WebPubSub_removeConnectionsFromGroups operation. */
+export interface WebPubSubRemoveConnectionsFromGroupsExceptionHeaders {
+  errorCode?: string;
+}
+
+/** Defines headers for WebPubSub_sendToAll operation. */
+export interface WebPubSubSendToAllExceptionHeaders {
   errorCode?: string;
 }
 
@@ -58,8 +79,18 @@ export interface WebPubSubCloseConnectionExceptionHeaders {
   errorCode?: string;
 }
 
+/** Defines headers for WebPubSub_connectionExists operation. */
+export interface WebPubSubConnectionExistsExceptionHeaders {
+  errorCode?: string;
+}
+
 /** Defines headers for WebPubSub_sendToConnection operation. */
 export interface WebPubSubSendToConnectionExceptionHeaders {
+  errorCode?: string;
+}
+
+/** Defines headers for WebPubSub_removeConnectionFromAllGroups operation. */
+export interface WebPubSubRemoveConnectionFromAllGroupsExceptionHeaders {
   errorCode?: string;
 }
 
@@ -78,13 +109,28 @@ export interface WebPubSubSendToGroupExceptionHeaders {
   errorCode?: string;
 }
 
+/** Defines headers for WebPubSub_removeConnectionFromGroup operation. */
+export interface WebPubSubRemoveConnectionFromGroupExceptionHeaders {
+  errorCode?: string;
+}
+
 /** Defines headers for WebPubSub_addConnectionToGroup operation. */
 export interface WebPubSubAddConnectionToGroupExceptionHeaders {
   errorCode?: string;
 }
 
-/** Defines headers for WebPubSub_removeConnectionFromGroup operation. */
-export interface WebPubSubRemoveConnectionFromGroupExceptionHeaders {
+/** Defines headers for WebPubSub_revokePermission operation. */
+export interface WebPubSubRevokePermissionExceptionHeaders {
+  errorCode?: string;
+}
+
+/** Defines headers for WebPubSub_checkPermission operation. */
+export interface WebPubSubCheckPermissionExceptionHeaders {
+  errorCode?: string;
+}
+
+/** Defines headers for WebPubSub_grantPermission operation. */
+export interface WebPubSubGrantPermissionExceptionHeaders {
   errorCode?: string;
 }
 
@@ -103,8 +149,8 @@ export interface WebPubSubSendToUserExceptionHeaders {
   errorCode?: string;
 }
 
-/** Defines headers for WebPubSub_addUserToGroup operation. */
-export interface WebPubSubAddUserToGroupExceptionHeaders {
+/** Defines headers for WebPubSub_removeUserFromAllGroups operation. */
+export interface WebPubSubRemoveUserFromAllGroupsExceptionHeaders {
   errorCode?: string;
 }
 
@@ -113,30 +159,35 @@ export interface WebPubSubRemoveUserFromGroupExceptionHeaders {
   errorCode?: string;
 }
 
-/** Defines headers for WebPubSub_removeUserFromAllGroups operation. */
-export interface WebPubSubRemoveUserFromAllGroupsExceptionHeaders {
+/** Defines headers for WebPubSub_addUserToGroup operation. */
+export interface WebPubSubAddUserToGroupExceptionHeaders {
   errorCode?: string;
 }
 
-/** Defines headers for WebPubSub_grantPermission operation. */
-export interface WebPubSubGrantPermissionExceptionHeaders {
-  errorCode?: string;
+/** Known values of {@link WebPubSubClientType} that the service accepts. */
+export enum KnownWebPubSubClientType {
+  /** Default */
+  Default = "Default",
+  /** Mqtt */
+  Mqtt = "MQTT",
 }
 
-/** Defines headers for WebPubSub_revokePermission operation. */
-export interface WebPubSubRevokePermissionExceptionHeaders {
-  errorCode?: string;
-}
-
-/** Defines headers for WebPubSub_checkPermission operation. */
-export interface WebPubSubCheckPermissionExceptionHeaders {
-  errorCode?: string;
-}
+/**
+ * Defines values for WebPubSubClientType. \
+ * {@link KnownWebPubSubClientType} can be used interchangeably with WebPubSubClientType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Default** \
+ * **MQTT**
+ */
+export type WebPubSubClientType = string;
 
 /** Known values of {@link WebPubSubPermission} that the service accepts. */
 export enum KnownWebPubSubPermission {
+  /** SendToGroup */
   SendToGroup = "sendToGroup",
-  JoinLeaveGroup = "joinLeaveGroup"
+  /** JoinLeaveGroup */
+  JoinLeaveGroup = "joinLeaveGroup",
 }
 
 /**
@@ -156,18 +207,8 @@ export interface HealthApiGetServiceStatusOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
-export interface WebPubSubGenerateClientTokenOptionalParams
-  extends coreClient.OperationOptions {
-  /** User Id. */
-  userId?: string;
-  /** Roles that the connection with the generated token will have. */
-  roles?: string[];
-  /** The expire time of the generated token. */
-  expirationTimeInMinutes?: number;
-}
-
-/** Contains response data for the generateClientToken operation. */
-export type WebPubSubGenerateClientTokenResponse = ClientTokenResponse;
+export interface WebPubSubAddConnectionsToGroupsOptionalParams
+  extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
 export interface WebPubSubCloseAllConnectionsOptionalParams
@@ -179,10 +220,36 @@ export interface WebPubSubCloseAllConnectionsOptionalParams
 }
 
 /** Optional parameters. */
+export interface WebPubSubGenerateClientTokenOptionalParams
+  extends coreClient.OperationOptions {
+  /** User Id. */
+  userId?: string;
+  /** Roles that the connection with the generated token will have. */
+  roles?: string[];
+  /** The expire time of the generated token. */
+  expirationTimeInMinutes?: number;
+  /** Groups that the connection will join when it connects. */
+  groups?: string[];
+  /** The type of client. Case-insensitive. If not set, it's "Default". For Web PubSub for Socket.IO, only the default value is supported. For Web PubSub, the valid values are 'Default' and 'MQTT'. */
+  clientType?: WebPubSubClientType;
+}
+
+/** Contains response data for the generateClientToken operation. */
+export type WebPubSubGenerateClientTokenResponse = ClientTokenResponse;
+
+/** Optional parameters. */
+export interface WebPubSubRemoveConnectionsFromGroupsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Optional parameters. */
 export interface WebPubSubSendToAll$binaryOptionalParams
   extends coreClient.OperationOptions {
   /** Excluded connection Ids. */
   excludedConnections?: string[];
+  /** Following OData filter syntax to filter out the subscribers receiving the messages. */
+  filter?: string;
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
 }
 
 /** Optional parameters. */
@@ -190,11 +257,11 @@ export interface WebPubSubSendToAll$textOptionalParams
   extends coreClient.OperationOptions {
   /** Excluded connection Ids. */
   excludedConnections?: string[];
+  /** Following OData filter syntax to filter out the subscribers receiving the messages. */
+  filter?: string;
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
 }
-
-/** Optional parameters. */
-export interface WebPubSubConnectionExistsOptionalParams
-  extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
 export interface WebPubSubCloseConnectionOptionalParams
@@ -204,11 +271,25 @@ export interface WebPubSubCloseConnectionOptionalParams
 }
 
 /** Optional parameters. */
-export interface WebPubSubSendToConnection$binaryOptionalParams
+export interface WebPubSubConnectionExistsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
+export interface WebPubSubSendToConnection$binaryOptionalParams
+  extends coreClient.OperationOptions {
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
+}
+
+/** Optional parameters. */
 export interface WebPubSubSendToConnection$textOptionalParams
+  extends coreClient.OperationOptions {
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
+}
+
+/** Optional parameters. */
+export interface WebPubSubRemoveConnectionFromAllGroupsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
@@ -229,6 +310,10 @@ export interface WebPubSubSendToGroup$binaryOptionalParams
   extends coreClient.OperationOptions {
   /** Excluded connection Ids */
   excludedConnections?: string[];
+  /** Following OData filter syntax to filter out the subscribers receiving the messages. */
+  filter?: string;
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
 }
 
 /** Optional parameters. */
@@ -236,15 +321,40 @@ export interface WebPubSubSendToGroup$textOptionalParams
   extends coreClient.OperationOptions {
   /** Excluded connection Ids */
   excludedConnections?: string[];
+  /** Following OData filter syntax to filter out the subscribers receiving the messages. */
+  filter?: string;
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
 }
+
+/** Optional parameters. */
+export interface WebPubSubRemoveConnectionFromGroupOptionalParams
+  extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
 export interface WebPubSubAddConnectionToGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
-export interface WebPubSubRemoveConnectionFromGroupOptionalParams
-  extends coreClient.OperationOptions {}
+export interface WebPubSubRevokePermissionOptionalParams
+  extends coreClient.OperationOptions {
+  /** The meaning of the target depends on the specific permission. For joinLeaveGroup and sendToGroup, targetName is a required parameter standing for the group name. */
+  targetName?: string;
+}
+
+/** Optional parameters. */
+export interface WebPubSubCheckPermissionOptionalParams
+  extends coreClient.OperationOptions {
+  /** The meaning of the target depends on the specific permission. For joinLeaveGroup and sendToGroup, targetName is a required parameter standing for the group name. */
+  targetName?: string;
+}
+
+/** Optional parameters. */
+export interface WebPubSubGrantPermissionOptionalParams
+  extends coreClient.OperationOptions {
+  /** The meaning of the target depends on the specific permission. For joinLeaveGroup and sendToGroup, targetName is a required parameter standing for the group name. */
+  targetName?: string;
+}
 
 /** Optional parameters. */
 export interface WebPubSubUserExistsOptionalParams
@@ -261,14 +371,24 @@ export interface WebPubSubCloseUserConnectionsOptionalParams
 
 /** Optional parameters. */
 export interface WebPubSubSendToUser$binaryOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Following OData filter syntax to filter out the subscribers receiving the messages. */
+  filter?: string;
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
+}
 
 /** Optional parameters. */
 export interface WebPubSubSendToUser$textOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Following OData filter syntax to filter out the subscribers receiving the messages. */
+  filter?: string;
+  /** The time-to-live (TTL) value in seconds for messages sent to the service. 0 is the default value, which means the message never expires. 300 is the maximum value. If this parameter is non-zero, messages that are not consumed by the client within the specified TTL will be dropped by the service. This parameter can help when the client's bandwidth is limited. */
+  messageTtlSeconds?: number;
+}
 
 /** Optional parameters. */
-export interface WebPubSubAddUserToGroupOptionalParams
+export interface WebPubSubRemoveUserFromAllGroupsOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
@@ -276,29 +396,8 @@ export interface WebPubSubRemoveUserFromGroupOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Optional parameters. */
-export interface WebPubSubRemoveUserFromAllGroupsOptionalParams
+export interface WebPubSubAddUserToGroupOptionalParams
   extends coreClient.OperationOptions {}
-
-/** Optional parameters. */
-export interface WebPubSubGrantPermissionOptionalParams
-  extends coreClient.OperationOptions {
-  /** The meaning of the target depends on the specific permission. For joinLeaveGroup and sendToGroup, targetName is a required parameter standing for the group name. */
-  targetName?: string;
-}
-
-/** Optional parameters. */
-export interface WebPubSubRevokePermissionOptionalParams
-  extends coreClient.OperationOptions {
-  /** The meaning of the target depends on the specific permission. For joinLeaveGroup and sendToGroup, targetName is a required parameter standing for the group name. */
-  targetName?: string;
-}
-
-/** Optional parameters. */
-export interface WebPubSubCheckPermissionOptionalParams
-  extends coreClient.OperationOptions {
-  /** The meaning of the target depends on the specific permission. For joinLeaveGroup and sendToGroup, targetName is a required parameter standing for the group name. */
-  targetName?: string;
-}
 
 /** Optional parameters. */
 export interface GeneratedClientOptionalParams

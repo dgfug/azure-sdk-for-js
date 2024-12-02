@@ -6,39 +6,39 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { TopLevelDomains } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { WebSiteManagementClientContext } from "../webSiteManagementClientContext";
+import { WebSiteManagementClient } from "../webSiteManagementClient";
 import {
   TopLevelDomain,
   TopLevelDomainsListNextOptionalParams,
   TopLevelDomainsListOptionalParams,
+  TopLevelDomainsListResponse,
   TldLegalAgreement,
   TopLevelDomainAgreementOption,
   TopLevelDomainsListAgreementsNextOptionalParams,
   TopLevelDomainsListAgreementsOptionalParams,
-  TopLevelDomainsListResponse,
+  TopLevelDomainsListAgreementsResponse,
   TopLevelDomainsGetOptionalParams,
   TopLevelDomainsGetResponse,
-  TopLevelDomainsListAgreementsResponse,
   TopLevelDomainsListNextResponse,
-  TopLevelDomainsListAgreementsNextResponse
+  TopLevelDomainsListAgreementsNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a TopLevelDomains. */
+/** Class containing TopLevelDomains operations. */
 export class TopLevelDomainsImpl implements TopLevelDomains {
-  private readonly client: WebSiteManagementClientContext;
+  private readonly client: WebSiteManagementClient;
 
   /**
    * Initialize a new instance of the class TopLevelDomains class.
    * @param client Reference to the service client
    */
-  constructor(client: WebSiteManagementClientContext) {
+  constructor(client: WebSiteManagementClient) {
     this.client = client;
   }
 
@@ -47,7 +47,7 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
    * @param options The options parameters.
    */
   public list(
-    options?: TopLevelDomainsListOptionalParams
+    options?: TopLevelDomainsListOptionalParams,
   ): PagedAsyncIterableIterator<TopLevelDomain> {
     const iter = this.listPagingAll(options);
     return {
@@ -57,27 +57,39 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: TopLevelDomainsListOptionalParams
+    options?: TopLevelDomainsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<TopLevelDomain[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TopLevelDomainsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: TopLevelDomainsListOptionalParams
+    options?: TopLevelDomainsListOptionalParams,
   ): AsyncIterableIterator<TopLevelDomain> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -93,7 +105,7 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
   public listAgreements(
     name: string,
     agreementOption: TopLevelDomainAgreementOption,
-    options?: TopLevelDomainsListAgreementsOptionalParams
+    options?: TopLevelDomainsListAgreementsOptionalParams,
   ): PagedAsyncIterableIterator<TldLegalAgreement> {
     const iter = this.listAgreementsPagingAll(name, agreementOption, options);
     return {
@@ -103,41 +115,58 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAgreementsPagingPage(name, agreementOption, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAgreementsPagingPage(
+          name,
+          agreementOption,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listAgreementsPagingPage(
     name: string,
     agreementOption: TopLevelDomainAgreementOption,
-    options?: TopLevelDomainsListAgreementsOptionalParams
+    options?: TopLevelDomainsListAgreementsOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<TldLegalAgreement[]> {
-    let result = await this._listAgreements(name, agreementOption, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TopLevelDomainsListAgreementsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAgreements(name, agreementOption, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAgreementsNext(
         name,
         agreementOption,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listAgreementsPagingAll(
     name: string,
     agreementOption: TopLevelDomainAgreementOption,
-    options?: TopLevelDomainsListAgreementsOptionalParams
+    options?: TopLevelDomainsListAgreementsOptionalParams,
   ): AsyncIterableIterator<TldLegalAgreement> {
     for await (const page of this.listAgreementsPagingPage(
       name,
       agreementOption,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -148,7 +177,7 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
    * @param options The options parameters.
    */
   private _list(
-    options?: TopLevelDomainsListOptionalParams
+    options?: TopLevelDomainsListOptionalParams,
   ): Promise<TopLevelDomainsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -160,11 +189,11 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
    */
   get(
     name: string,
-    options?: TopLevelDomainsGetOptionalParams
+    options?: TopLevelDomainsGetOptionalParams,
   ): Promise<TopLevelDomainsGetResponse> {
     return this.client.sendOperationRequest(
       { name, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -177,11 +206,11 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
   private _listAgreements(
     name: string,
     agreementOption: TopLevelDomainAgreementOption,
-    options?: TopLevelDomainsListAgreementsOptionalParams
+    options?: TopLevelDomainsListAgreementsOptionalParams,
   ): Promise<TopLevelDomainsListAgreementsResponse> {
     return this.client.sendOperationRequest(
       { name, agreementOption, options },
-      listAgreementsOperationSpec
+      listAgreementsOperationSpec,
     );
   }
 
@@ -192,11 +221,11 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
    */
   private _listNext(
     nextLink: string,
-    options?: TopLevelDomainsListNextOptionalParams
+    options?: TopLevelDomainsListNextOptionalParams,
   ): Promise<TopLevelDomainsListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -211,11 +240,11 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
     name: string,
     agreementOption: TopLevelDomainAgreementOption,
     nextLink: string,
-    options?: TopLevelDomainsListAgreementsNextOptionalParams
+    options?: TopLevelDomainsListAgreementsNextOptionalParams,
   ): Promise<TopLevelDomainsListAgreementsNextResponse> {
     return this.client.sendOperationRequest(
       { name, agreementOption, nextLink, options },
-      listAgreementsNextOperationSpec
+      listAgreementsNextOperationSpec,
     );
   }
 }
@@ -223,97 +252,92 @@ export class TopLevelDomainsImpl implements TopLevelDomains {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TopLevelDomainCollection
+      bodyMapper: Mappers.TopLevelDomainCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains/{name}",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains/{name}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TopLevelDomain
+      bodyMapper: Mappers.TopLevelDomain,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId, Parameters.name],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAgreementsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains/{name}/listAgreements",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DomainRegistration/topLevelDomains/{name}/listAgreements",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TldLegalAgreementCollection
+      bodyMapper: Mappers.TldLegalAgreementCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   requestBody: Parameters.agreementOption,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId, Parameters.name],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TopLevelDomainCollection
+      bodyMapper: Mappers.TopLevelDomainCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAgreementsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.TldLegalAgreementCollection
+      bodyMapper: Mappers.TldLegalAgreementCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.name,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };

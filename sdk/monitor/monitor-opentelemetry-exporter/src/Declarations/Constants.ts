@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * Azure service API version.
@@ -8,7 +8,7 @@ export enum ServiceApiVersion {
   /**
    * V2 Version
    */
-  V2 = "2020-09-15_Preview"
+  V2 = "2020-09-15_Preview",
 }
 
 /**
@@ -41,6 +41,22 @@ export const ENV_CONNECTION_STRING = "APPLICATIONINSIGHTS_CONNECTION_STRING";
  * @internal
  */
 export const ENV_INSTRUMENTATION_KEY = "APPINSIGHTS_INSTRUMENTATIONKEY";
+/**
+ * Disable Statsbeat environment variable name.
+ * @internal
+ */
+export const ENV_DISABLE_STATSBEAT = "APPLICATIONINSIGHTS_STATSBEAT_DISABLED";
+/**
+ * Legacy disable Statsbeat environment variable name.
+ * @internal
+ */
+export const LEGACY_ENV_DISABLE_STATSBEAT = "APPLICATION_INSIGHTS_NO_STATSBEAT";
+/**
+ * Disable OpenTelemetry Resource Metric.
+ * @internal
+ */
+export const ENV_OPENTELEMETRY_RESOURCE_METRIC_DISABLED =
+  "APPLICATIONINSIGHTS_OPENTELEMETRY_RESOURCE_METRIC_DISABLED";
 
 /**
  * QuickPulse metric counter names.
@@ -64,7 +80,7 @@ export enum QuickPulseCounter {
   DEPENDENCY_DURATION = "\\ApplicationInsights\\Dependency Call Duration",
 
   // Exception
-  EXCEPTION_RATE = "\\ApplicationInsights\\Exceptions/Sec"
+  EXCEPTION_RATE = "\\ApplicationInsights\\Exceptions/Sec",
 }
 
 /**
@@ -82,7 +98,7 @@ export enum PerformanceCounter {
 
   // Requests
   REQUEST_RATE = "\\ASP.NET Applications(??APP_W3SVC_PROC??)\\Requests/Sec",
-  REQUEST_DURATION = "\\ASP.NET Applications(??APP_W3SVC_PROC??)\\Request Execution Time"
+  REQUEST_DURATION = "\\ASP.NET Applications(??APP_W3SVC_PROC??)\\Request Execution Time",
 }
 
 /**
@@ -100,7 +116,7 @@ export const PerformanceToQuickPulseCounter: { [key: string]: QuickPulseCounter 
   [QuickPulseCounter.DEPENDENCY_RATE]: QuickPulseCounter.DEPENDENCY_RATE,
   [QuickPulseCounter.DEPENDENCY_FAILURE_RATE]: QuickPulseCounter.DEPENDENCY_FAILURE_RATE,
   [QuickPulseCounter.DEPENDENCY_DURATION]: QuickPulseCounter.DEPENDENCY_DURATION,
-  [QuickPulseCounter.EXCEPTION_RATE]: QuickPulseCounter.EXCEPTION_RATE
+  [QuickPulseCounter.EXCEPTION_RATE]: QuickPulseCounter.EXCEPTION_RATE,
 };
 
 /**

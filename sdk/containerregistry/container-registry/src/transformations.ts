@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
+import type {
   ArtifactTagOrderBy as ServiceTagOrderBy,
   ArtifactManifestOrderBy as ServiceManifestOrderBy,
   ManifestWriteableProperties as ServiceManifestWritableProperties,
-  ArtifactManifestProperties as ServiceArtifactManifestProperties
+  ArtifactManifestProperties as ServiceArtifactManifestProperties,
 } from "./generated/models";
-import { ArtifactManifestProperties, TagOrderBy, ManifestOrderBy } from "./models";
+import type { ArtifactManifestProperties, ArtifactTagOrder, ArtifactManifestOrder } from "./models";
 
 /** Changeable attributes. Filter out `quarantineState` and `quarantineDetails` returned by service */
 interface ManifestWriteableProperties {
@@ -22,7 +22,7 @@ interface ManifestWriteableProperties {
 }
 
 export function toManifestWritableProperties(
-  from?: ServiceManifestWritableProperties
+  from?: ServiceManifestWritableProperties,
 ): ManifestWriteableProperties | undefined {
   // don't return unwanted properties, namely `quarantineState` and `quarantineDetails`
   return from
@@ -30,7 +30,7 @@ export function toManifestWritableProperties(
         canDelete: from.canDelete,
         canList: from.canList,
         canRead: from.canRead,
-        canWrite: from.canWrite
+        canWrite: from.canWrite,
       }
     : undefined;
 }
@@ -38,37 +38,37 @@ export function toManifestWritableProperties(
 export function toArtifactManifestProperties(
   from: ServiceArtifactManifestProperties,
   repositoryName: string,
-  registryLoginServer: string
+  registryLoginServer: string,
 ): ArtifactManifestProperties {
   return {
     registryLoginServer,
     repositoryName,
     digest: from.digest,
-    size: from.size,
+    sizeInBytes: from.size,
     createdOn: from.createdOn,
     lastUpdatedOn: from.lastUpdatedOn,
     architecture: from.architecture ?? undefined,
     operatingSystem: from.operatingSystem ?? undefined,
     relatedArtifacts: from.relatedArtifacts ?? [],
     tags: from.tags ?? [],
-    ...toManifestWritableProperties(from)
+    ...toManifestWritableProperties(from),
   };
 }
 
-export function toServiceTagOrderBy(orderBy?: TagOrderBy): ServiceTagOrderBy | undefined {
+export function toServiceTagOrderBy(orderBy?: ArtifactTagOrder): ServiceTagOrderBy | undefined {
   return orderBy === "LastUpdatedOnAscending"
     ? "timeasc"
     : orderBy === "LastUpdatedOnDescending"
-    ? "timedesc"
-    : undefined;
+      ? "timedesc"
+      : undefined;
 }
 
 export function toServiceManifestOrderBy(
-  orderBy?: ManifestOrderBy
+  orderBy?: ArtifactManifestOrder,
 ): ServiceManifestOrderBy | undefined {
   return orderBy === "LastUpdatedOnAscending"
     ? "timeasc"
     : orderBy === "LastUpdatedOnDescending"
-    ? "timedesc"
-    : undefined;
+      ? "timedesc"
+      : undefined;
 }

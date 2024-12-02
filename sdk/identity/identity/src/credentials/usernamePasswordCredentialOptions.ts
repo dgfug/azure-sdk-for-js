@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredentialOptions } from "../tokenCredentialOptions";
-import { CredentialPersistenceOptions } from "./credentialPersistenceOptions";
+import type { AuthorityValidationOptions } from "./authorityValidationOptions.js";
+import type { CredentialPersistenceOptions } from "./credentialPersistenceOptions.js";
+import type { MultiTenantTokenCredentialOptions } from "./multiTenantTokenCredentialOptions.js";
 
 /**
  * Defines options for the {@link UsernamePasswordCredential} class.
  */
 export interface UsernamePasswordCredentialOptions
-  extends TokenCredentialOptions,
-    CredentialPersistenceOptions {}
+  extends MultiTenantTokenCredentialOptions,
+    CredentialPersistenceOptions,
+    AuthorityValidationOptions {}

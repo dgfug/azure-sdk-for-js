@@ -6,12 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { ManagementGroups } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { OperationalInsightsManagementClientContext } from "../operationalInsightsManagementClientContext";
+import { OperationalInsightsManagementClient } from "../operationalInsightsManagementClient";
 import {
   ManagementGroup,
   ManagementGroupsListOptionalParams,
@@ -21,13 +21,13 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ManagementGroups operations. */
 export class ManagementGroupsImpl implements ManagementGroups {
-  private readonly client: OperationalInsightsManagementClientContext;
+  private readonly client: OperationalInsightsManagementClient;
 
   /**
    * Initialize a new instance of the class ManagementGroups class.
    * @param client Reference to the service client
    */
-  constructor(client: OperationalInsightsManagementClientContext) {
+  constructor(client: OperationalInsightsManagementClient) {
     this.client = client;
   }
 
@@ -50,8 +50,16 @@ export class ManagementGroupsImpl implements ManagementGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, workspaceName, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          workspaceName,
+          options,
+          settings
+        );
       }
     };
   }
@@ -59,9 +67,11 @@ export class ManagementGroupsImpl implements ManagementGroups {
   private async *listPagingPage(
     resourceGroupName: string,
     workspaceName: string,
-    options?: ManagementGroupsListOptionalParams
+    options?: ManagementGroupsListOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<ManagementGroup[]> {
-    let result = await this._list(resourceGroupName, workspaceName, options);
+    let result: ManagementGroupsListResponse;
+    result = await this._list(resourceGroupName, workspaceName, options);
     yield result.value || [];
   }
 
@@ -108,7 +118,7 @@ const listOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.WorkspaceListManagementGroupsResult
     }
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [Parameters.apiVersion1],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

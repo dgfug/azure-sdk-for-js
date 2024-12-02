@@ -1,18 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { base64Encode, base64Decode } from "./utils/bufferSerializer";
-import { EdmTypes, SignedIdentifier, TableEntityQueryOptions } from "./models";
-import { truncatedISO8061Date } from "./utils/truncateISO8061Date";
-import {
+// Licensed under the MIT License.
+
+import type { EdmTypes, SignedIdentifier, TableEntityQueryOptions } from "./models.js";
+import type {
+  QueryOptions as GeneratedQueryOptions,
   SignedIdentifier as GeneratedSignedIdentifier,
-  QueryOptions as GeneratedQueryOptions
-} from "./generated/models";
+} from "./generated/models/index.js";
+import { base64Decode, base64Encode } from "./utils/bufferSerializer.js";
+import { truncatedISO8061Date } from "./utils/truncateISO8061Date.js";
 
 const propertyCaseMap: Map<string, string> = new Map<string, string>([
   ["PartitionKey", "partitionKey"],
   ["RowKey", "rowKey"],
   ["odata.etag", "etag"],
-  ["Timestamp", "timestamp"]
+  ["Timestamp", "timestamp"],
 ]);
 
 const Edm = {
@@ -23,7 +24,7 @@ const Edm = {
   Guid: "Edm.Guid",
   Int32: "Edm.Int32",
   Int64: "Edm.Int64",
-  String: "Edm.String"
+  String: "Edm.String",
 } as const;
 
 type supportedTypes = boolean | string | number | Date | Uint8Array | bigint;
@@ -136,7 +137,7 @@ function getTypedObject(value: any, type: string, disableTypeConversion: boolean
 
 export function deserialize<T extends object = Record<string, any>>(
   obj: object,
-  disableTypeConversion: boolean = false
+  disableTypeConversion: boolean = false,
 ): T {
   const deserialized: any = {};
   for (const [key, value] of Object.entries(obj)) {
@@ -158,7 +159,17 @@ export function deserialize<T extends object = Record<string, any>>(
   return deserialized;
 }
 
-function inferTypedObject(propertyName: string, value: number | string | boolean) {
+function inferTypedObject(
+  propertyName: string,
+  value: number | string | boolean,
+):
+  | string
+  | number
+  | boolean
+  | {
+      value: string;
+      type: string;
+    } {
   // We need to skip service metadata fields such as partitionKey and rowKey and use the same value returned by the service
   if (propertyCaseMap.has(propertyName)) {
     return value;
@@ -190,7 +201,7 @@ function getTypedNumber(value: number): { value: string; type: "Int32" | "Double
 
 export function deserializeObjectsArray<T extends object>(
   objArray: object[],
-  disableTypeConversion: boolean
+  disableTypeConversion: boolean,
 ): T[] {
   return objArray.map((obj) => deserialize<T>(obj, disableTypeConversion));
 }
@@ -202,7 +213,7 @@ export function deserializeObjectsArray<T extends object>(
  * dates so that they are in the expected format
  */
 export function serializeSignedIdentifiers(
-  signedIdentifiers: SignedIdentifier[]
+  signedIdentifiers: SignedIdentifier[],
 ): GeneratedSignedIdentifier[] {
   return signedIdentifiers.map((acl) => {
     const { id, accessPolicy } = acl;
@@ -219,14 +230,14 @@ export function serializeSignedIdentifiers(
       accessPolicy: {
         ...(serializedExpiry && { expiry: serializedExpiry }),
         ...(serializedStart && { start: serializedStart }),
-        ...rest
-      }
+        ...rest,
+      },
     };
   });
 }
 
 export function deserializeSignedIdentifier(
-  signedIdentifiers: GeneratedSignedIdentifier[]
+  signedIdentifiers: GeneratedSignedIdentifier[],
 ): SignedIdentifier[] {
   return signedIdentifiers.map((si) => {
     const { id, accessPolicy } = si;
@@ -239,8 +250,8 @@ export function deserializeSignedIdentifier(
       accessPolicy: {
         ...(deserializedExpiry && { expiry: deserializedExpiry }),
         ...(deserializedStart && { start: deserializedStart }),
-        ...restAcl
-      }
+        ...restAcl,
+      },
     };
   });
 }

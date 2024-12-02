@@ -1,9 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import fs from "fs-extra";
-import path from "path";
-
+import path from "node:path";
 import { createPrinter } from "../../util/printer";
 import { findMatchingFiles } from "../../util/findMatchingFiles";
 import { resolveProject } from "../../util/resolveProject";
@@ -18,14 +17,14 @@ export const commandInfo = makeCommandInfo(
     directory: {
       kind: "string",
       description: "Base dir, default is process.cwd()",
-      default: process.cwd()
+      default: process.cwd(),
     },
     "use-packages": {
       kind: "boolean",
       description: "Use package dependencies in samples",
-      default: false
-    }
-  }
+      default: false,
+    },
+  },
 );
 
 /**
@@ -40,7 +39,7 @@ async function enableLocalRun(
   fileName: string,
   baseDir: string,
   pkgName: string,
-  usePackages: boolean
+  usePackages: boolean,
 ) {
   const fileContents = await fs.readFile(fileName, { encoding: "utf-8" });
   const isTs = fileName.endsWith(".ts");
@@ -66,18 +65,18 @@ async function enableLocalRun(
     // that can escape both linux and windows path separators
     const depth = relativeDir.length - relativeDir.split(path.sep).join("").length;
 
-    let relativePath = new Array(depth).fill("..").join("/");
+    const relativePath = new Array(depth).fill("..").join("/");
 
     outputContent = fileContents.replace(
       importRegex,
-      isTs ? `import $1 from "${relativePath}";` : `const $1 = require("${relativePath}");`
+      isTs ? `import $1 from "${relativePath}";` : `const $1 = require("${relativePath}");`,
     );
   }
 
   // Remove trailing call to main()
   outputContent = outputContent.replace(
     new RegExp("main\\(\\)\\.catch.*", "s"),
-    isTs ? "" : "module.exports = { main };\n"
+    isTs ? "" : "module.exports = { main };\n",
   );
 
   log("Updating imports in", fileName);
@@ -106,7 +105,7 @@ export default leafCommand(commandInfo, async (options) => {
   const tsDir = path.join(outputDir, "typescript", "src");
   const tsFiles = findMatchingFiles(
     tsDir,
-    (name, entry) => entry.isFile() && name.endsWith(".ts") && !name.endsWith(".d.ts")
+    (name, entry) => entry.isFile() && name.endsWith(".ts") && !name.endsWith(".d.ts"),
   );
 
   const jsDir = path.join(outputDir, "javascript");

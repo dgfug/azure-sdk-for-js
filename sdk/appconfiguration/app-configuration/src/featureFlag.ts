@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { errorMessageForUnexpectedSetting } from "./internal/helpers";
-import { JsonFeatureFlagValue } from "./internal/jsonModels";
-import { ConfigurationSetting, ConfigurationSettingParam } from "./models";
+import type { ConfigurationSetting, ConfigurationSettingParam } from "./models.js";
+import type { JsonFeatureFlagValue } from "./internal/jsonModels.js";
+import { logger } from "./logger.js";
 
 /**
  * The prefix for feature flags.
@@ -55,9 +55,11 @@ export const FeatureFlagHelper = {
    * Takes the FeatureFlag (JSON) and returns a ConfigurationSetting (with the props encodeed in the value).
    */
   toConfigurationSettingParam: (
-    featureFlag: ConfigurationSettingParam<FeatureFlagValue>
+    featureFlag: ConfigurationSettingParam<FeatureFlagValue>,
   ): ConfigurationSettingParam => {
+    logger.info("Encoding FeatureFlag value in a ConfigurationSetting:", featureFlag);
     if (!featureFlag.value) {
+      logger.error("FeatureFlag has an unexpected value", featureFlag);
       throw new TypeError(`FeatureFlag has an unexpected value - ${featureFlag.value}`);
     }
     let key = featureFlag.key;
@@ -69,28 +71,32 @@ export const FeatureFlagHelper = {
       enabled: featureFlag.value.enabled,
       description: featureFlag.value.description,
       conditions: {
-        client_filters: featureFlag.value.conditions.clientFilters
+        client_filters: featureFlag.value.conditions.clientFilters,
       },
-      display_name: featureFlag.value.displayName
+      display_name: featureFlag.value.displayName,
     };
 
     const configSetting = {
       ...featureFlag,
       key,
-      value: JSON.stringify(jsonFeatureFlagValue)
+      value: JSON.stringify(jsonFeatureFlagValue),
     };
     return configSetting;
-  }
+  },
 };
 
 /**
  * Takes the ConfigurationSetting as input and returns the ConfigurationSetting<FeatureFlagValue> by parsing the value string.
  */
 export function parseFeatureFlag(
-  setting: ConfigurationSetting
+  setting: ConfigurationSetting,
 ): ConfigurationSetting<FeatureFlagValue> {
+  logger.info("Parsing the value to return the FeatureFlagValue", setting);
   if (!isFeatureFlag(setting)) {
-    throw TypeError(errorMessageForUnexpectedSetting(setting.key, "FeatureFlag"));
+    logger.error("Invalid FeatureFlag input", setting);
+    throw TypeError(
+      `Setting with key ${setting.key} is not a valid FeatureFlag, make sure to have the correct content-type and a valid non-null value.`,
+    );
   }
 
   const jsonFeatureFlagValue = JSON.parse(setting.value) as JsonFeatureFlagValue;
@@ -106,10 +112,10 @@ export function parseFeatureFlag(
       enabled: jsonFeatureFlagValue.enabled,
       description: jsonFeatureFlagValue.description,
       displayName: jsonFeatureFlagValue.display_name,
-      conditions: { clientFilters: jsonFeatureFlagValue.conditions.client_filters }
+      conditions: { clientFilters: jsonFeatureFlagValue.conditions.client_filters },
     },
     key,
-    contentType: featureFlagContentType
+    contentType: featureFlagContentType,
   };
   return featureflag;
 }
@@ -120,7 +126,7 @@ export function parseFeatureFlag(
  * [Checks if the content type is featureFlagContentType `"application/vnd.microsoft.appconfig.ff+json;charset=utf-8"`]
  */
 export function isFeatureFlag(
-  setting: ConfigurationSetting
+  setting: ConfigurationSetting,
 ): setting is ConfigurationSetting & Required<Pick<ConfigurationSetting, "value">> {
   return (
     setting && setting.contentType === featureFlagContentType && typeof setting.value === "string"

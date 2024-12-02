@@ -1,7 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { URL } from "./url";
+// Licensed under the MIT License.
 
 export function checkURL(testString: string): URL {
   return new URL(testString);

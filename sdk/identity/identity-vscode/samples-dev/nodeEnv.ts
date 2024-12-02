@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * This sample shows an example of how to load the `@azure/identity-vscode`
@@ -30,16 +30,15 @@ const isProduction = process.env.NODE_ENV === "production";
 // may also have other development environments. You can customize this logic to
 // suit your needs.
 if (!isProduction) {
-  const {
-    vsCodePlugin
-  } = require("@azure/identity-vscode") as typeof import("@azure/identity-vscode");
+  const { vsCodePlugin } =
+    require("@azure/identity-vscode") as typeof import("@azure/identity-vscode");
   useIdentityPlugin(vsCodePlugin);
 }
 
 export async function main() {
   const credential = new DefaultAzureCredential();
 
-  // This is the scope we will use to get a token from the AAD token endpoint.
+  // This is the scope we will use to get a token from the Microsoft Entra token endpoint.
   // By default, we'll use the Microsoft Graph scope as an example, but when
   // you use the credential with an Azure SDK package, it will configure the
   // scope for you automatically.

@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export const SERVICE_VERSION = "2019-02-02";
 export const TRANSACTION_HTTP_VERSION_1_1 = "HTTP/1.1";
 export const TRANSACTION_HTTP_LINE_ENDING = "\r\n";
 
 export const STORAGE_SCOPE = "https://storage.azure.com/.default";
+export const COSMOS_SCOPE = "https://cosmos.azure.com/.default";
 
 export const HeaderConstants = {
   AUTHORIZATION: "authorization",
@@ -15,7 +16,7 @@ export const HeaderConstants = {
   CONTENT_TRANSFER_ENCODING: "content-transfer-encoding",
   DATE: "date",
   X_MS_DATE: "x-ms-date",
-  X_MS_VERSION: "x-ms-version"
+  X_MS_VERSION: "x-ms-version",
 };
 
 export const TablesLoggingAllowedHeaderNames = [
@@ -99,5 +100,5 @@ export const TablesLoggingAllowedHeaderNames = [
   "x-ms-source-if-none-match",
   "x-ms-source-if-unmodified-since",
   "x-ms-tag-count",
-  "x-ms-encryption-key-sha256"
+  "x-ms-encryption-key-sha256",
 ];

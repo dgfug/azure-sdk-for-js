@@ -10,25 +10,26 @@ import { ServerAutomaticTuningOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
-  ServerAutomaticTuningOperationsGetOptionalParams,
-  ServerAutomaticTuningOperationsGetResponse,
+  ServerAutomaticTuningGetOptionalParams,
+  ServerAutomaticTuningGetResponse,
   ServerAutomaticTuning,
-  ServerAutomaticTuningOperationsUpdateOptionalParams,
-  ServerAutomaticTuningOperationsUpdateResponse
+  ServerAutomaticTuningUpdateOptionalParams,
+  ServerAutomaticTuningUpdateResponse,
 } from "../models";
 
 /** Class containing ServerAutomaticTuningOperations operations. */
 export class ServerAutomaticTuningOperationsImpl
-  implements ServerAutomaticTuningOperations {
-  private readonly client: SqlManagementClientContext;
+  implements ServerAutomaticTuningOperations
+{
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class ServerAutomaticTuningOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -42,11 +43,11 @@ export class ServerAutomaticTuningOperationsImpl
   get(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerAutomaticTuningOperationsGetOptionalParams
-  ): Promise<ServerAutomaticTuningOperationsGetResponse> {
+    options?: ServerAutomaticTuningGetOptionalParams,
+  ): Promise<ServerAutomaticTuningGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -62,11 +63,11 @@ export class ServerAutomaticTuningOperationsImpl
     resourceGroupName: string,
     serverName: string,
     parameters: ServerAutomaticTuning,
-    options?: ServerAutomaticTuningOperationsUpdateOptionalParams
-  ): Promise<ServerAutomaticTuningOperationsUpdateResponse> {
+    options?: ServerAutomaticTuningUpdateOptionalParams,
+  ): Promise<ServerAutomaticTuningUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, parameters, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 }
@@ -74,44 +75,42 @@ export class ServerAutomaticTuningOperationsImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/automaticTuning/current",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/automaticTuning/current",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ServerAutomaticTuning
+      bodyMapper: Mappers.ServerAutomaticTuning,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.serverName
+    Parameters.serverName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/automaticTuning/current",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/automaticTuning/current",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.ServerAutomaticTuning
+      bodyMapper: Mappers.ServerAutomaticTuning,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters64,
-  queryParameters: [Parameters.apiVersion2],
+  requestBody: Parameters.parameters42,
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.serverName
+    Parameters.serverName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };

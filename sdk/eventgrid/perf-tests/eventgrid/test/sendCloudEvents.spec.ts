@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PerfTest, PerfOptionDictionary, getEnvVar } from "@azure/test-utils-perf";
+import { PerfTest, PerfOptionDictionary, getEnvVar } from "@azure-tools/test-perf";
 import {
   EventGridPublisherClient,
   AzureKeyCredential,
-  SendCloudEventInput
+  SendCloudEventInput,
 } from "@azure/eventgrid";
 
 interface SendCloudEventsPerfTestOptions {
@@ -19,8 +19,8 @@ export class SendCloudEventsTest extends PerfTest<SendCloudEventsPerfTestOptions
       description: "Number of events to send in a single request",
       shortName: "n",
       longName: "events-count",
-      defaultValue: 10
-    }
+      defaultValue: 10,
+    },
   };
   client: EventGridPublisherClient<"CloudEvent">;
   events: SendCloudEventInput<string>[] = [];
@@ -33,7 +33,7 @@ export class SendCloudEventsTest extends PerfTest<SendCloudEventsPerfTestOptions
       this.events.push({
         source: "sdk/eventgrid/perf-tests/eventgrid",
         type: "cloud-event-test-event",
-        data: `${i}`
+        data: `${i}`,
       });
     }
 

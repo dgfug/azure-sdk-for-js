@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { DigitalTwinsClient, DigitalTwinsAddRelationshipOptionalParams } from "../../src";
+import type { DigitalTwinsClient, DigitalTwinsAddRelationshipOptionalParams } from "../../src";
 import { authenticate } from "../utils/testAuthentication";
-import { Recorder } from "@azure-tools/test-recorder";
+import type { Recorder } from "@azure-tools/test-recorder";
 import chai from "chai";
+import { isRestError } from "@azure/core-rest-pipeline";
 
-const assert = chai.assert;
+const assert: typeof chai.assert = chai.assert;
 const should = chai.should();
 
 const BUILDING_MODEL_ID = "dtmi:samples:DTRelationshipsTestsBuilding;1";
@@ -30,16 +31,16 @@ const dtdl_model_building = {
         {
           "@type": "Property",
           name: "isAccessRestricted",
-          schema: "boolean"
-        }
-      ]
+          schema: "boolean",
+        },
+      ],
     },
     {
       "@type": "Property",
       name: "AverageTemperature",
-      schema: "double"
-    }
-  ]
+      schema: "double",
+    },
+  ],
 };
 
 const dtdl_model_floor = {
@@ -51,14 +52,14 @@ const dtdl_model_floor = {
     {
       "@type": "Relationship",
       name: "contains",
-      target: ROOM_MODEL_ID
+      target: ROOM_MODEL_ID,
     },
     {
       "@type": "Property",
       name: "AverageTemperature",
-      schema: "double"
-    }
-  ]
+      schema: "double",
+    },
+  ],
 };
 
 const dtdl_model_room = {
@@ -70,47 +71,56 @@ const dtdl_model_room = {
     {
       "@type": "Property",
       name: "Temperature",
-      schema: "double"
+      schema: "double",
     },
     {
       "@type": "Property",
       name: "IsOccupied",
-      schema: "boolean"
-    }
-  ]
+      schema: "boolean",
+    },
+  ],
 };
 
 describe("DigitalTwins Relationships - create, read, list, delete operations", () => {
   let client: DigitalTwinsClient;
   let recorder: Recorder;
 
-  beforeEach(async function(this: Mocha.Context) {
+  beforeEach(async function (this: Mocha.Context) {
     const authentication = await authenticate(this);
     client = authentication.client;
     recorder = authentication.recorder;
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
   async function deleteModels(): Promise<void> {
     try {
       await client.deleteModel(BUILDING_MODEL_ID);
-    } catch (Exception) {
-      console.error("deleteModel failure during test setup or cleanup");
+    } catch (e: any) {
+      if (!isRestError(e) || e.statusCode !== 404) {
+        console.error("deleteModel failed during test setup or cleanup", e);
+        throw e;
+      }
     }
 
     try {
       await client.deleteModel(FLOOR_MODEL_ID);
-    } catch (Exception) {
-      console.error("deleteModel failure during test setup or cleanup");
+    } catch (e: any) {
+      if (!isRestError(e) || e.statusCode !== 404) {
+        console.error("deleteModel failed during test setup or cleanup", e);
+        throw e;
+      }
     }
 
     try {
       await client.deleteModel(ROOM_MODEL_ID);
-    } catch (Exception) {
-      console.error("deleteModel failure during test setup or cleanup");
+    } catch (e: any) {
+      if (!isRestError(e) || e.statusCode !== 404) {
+        console.error("deleteModel failed during test setup or cleanup", e);
+        throw e;
+      }
     }
   }
 
@@ -127,44 +137,66 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
   async function deleteDigitalTwins(): Promise<void> {
     try {
       await client.deleteDigitalTwin(BUILDING_DIGITAL_TWIN_ID);
-    } catch (Exception) {
-      console.error("deleteDigitalTwin failure during test setup or cleanup");
+    } catch (e: any) {
+      if (!isRestError(e) || e.statusCode !== 404) {
+        console.error("deleteDigitalTwin failure during test setup or cleanup", e);
+        throw e;
+      }
     }
     try {
       await client.deleteDigitalTwin(FLOOR_DIGITAL_TWIN_ID);
-    } catch (Exception) {
-      console.error("deleteDigitalTwin failure during test setup or cleanup");
+    } catch (e: any) {
+      if (!isRestError(e) || e.statusCode !== 404) {
+        console.error("deleteDigitalTwin failure during test setup or cleanup", e);
+        throw e;
+      }
     }
     try {
       await client.deleteDigitalTwin(ROOM_DIGITAL_TWIN_ID);
-    } catch (Exception) {
-      console.error("deleteDigitalTwin failure during test setup or cleanup");
+    } catch (e: any) {
+      if (!isRestError(e) || e.statusCode !== 404) {
+        console.error("deleteDigitalTwin failure during test setup or cleanup", e);
+        throw e;
+      }
     }
+  }
+
+  async function cleanup(twinId: string, relationshipId: string): Promise<void> {
+    try {
+      await client.deleteRelationship(twinId, relationshipId);
+    } catch (e: any) {
+      if (!isRestError(e) || e.statusCode !== 404) {
+        console.error("deleteRelationship failure during test setup or cleanup", e);
+        throw e;
+      }
+    }
+    await deleteDigitalTwins();
+    await deleteModels();
   }
 
   async function createDigitalTwins(): Promise<void> {
     const buildingTwin = {
       $metadata: {
-        $model: BUILDING_MODEL_ID
+        $model: BUILDING_MODEL_ID,
       },
-      AverageTemperature: 68
+      AverageTemperature: 68,
     };
     await client.upsertDigitalTwin(BUILDING_DIGITAL_TWIN_ID, JSON.stringify(buildingTwin));
 
     const floorTwin = {
       $metadata: {
-        $model: FLOOR_MODEL_ID
+        $model: FLOOR_MODEL_ID,
       },
-      AverageTemperature: 75
+      AverageTemperature: 75,
     };
     await client.upsertDigitalTwin(FLOOR_DIGITAL_TWIN_ID, JSON.stringify(floorTwin));
 
     const roomTwin = {
       $metadata: {
-        $model: ROOM_MODEL_ID
+        $model: ROOM_MODEL_ID,
       },
       Temperature: 80,
-      IsOccupied: true
+      IsOccupied: true,
     };
     await client.upsertDigitalTwin(ROOM_DIGITAL_TWIN_ID, JSON.stringify(roomTwin));
   }
@@ -174,7 +206,7 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
     await createDigitalTwins();
   }
 
-  it("create basic relationship", async function() {
+  it("create basic relationship", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -183,46 +215,40 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $relationshipId: relationshipId,
       $sourceId: FLOOR_DIGITAL_TWIN_ID,
       $relationshipName: "contains",
-      $targetId: ROOM_DIGITAL_TWIN_ID
+      $targetId: ROOM_DIGITAL_TWIN_ID,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         FLOOR_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(FLOOR_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(FLOOR_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("create invalid relationship - invalid twin id", async function() {
+  it("create invalid relationship - invalid twin id", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -231,28 +257,22 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $relationshipId: relationshipId,
       $sourceId: FLOOR_DIGITAL_TWIN_ID,
       $relationshipName: "contains",
-      $targetId: ROOM_DIGITAL_TWIN_ID
+      $targetId: ROOM_DIGITAL_TWIN_ID,
     };
 
     let errorWasThrown = false;
     try {
       await client.upsertRelationship("foo", relationshipId, relationship);
-    } catch (error) {
+    } catch (error: any) {
       errorWasThrown = true;
       assert.include(error.message, `There is no digital twin instance that exists with the ID`);
     } finally {
-      try {
-        await client.deleteRelationship(FLOOR_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(FLOOR_DIGITAL_TWIN_ID, relationshipId);
     }
     should.equal(errorWasThrown, true, "Error was not thrown");
   });
 
-  it("create invalid relationship - invalid twin target id", async function() {
+  it("create invalid relationship - invalid twin target id", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -261,28 +281,22 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $relationshipId: relationshipId,
       $sourceId: FLOOR_DIGITAL_TWIN_ID,
       $relationshipName: "contains",
-      $targetId: "foo"
+      $targetId: "foo",
     };
 
     let errorWasThrown = false;
     try {
       await client.upsertRelationship(FLOOR_DIGITAL_TWIN_ID, relationshipId, relationship);
-    } catch (error) {
+    } catch (error: any) {
       errorWasThrown = true;
       assert.include(error.message, `The target digital twin is invalid or does not exist`);
     } finally {
-      try {
-        await client.deleteRelationship(FLOOR_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(FLOOR_DIGITAL_TWIN_ID, relationshipId);
     }
     should.equal(errorWasThrown, true, "Error was not thrown");
   });
 
-  it("create relationship conditionally", async function() {
+  it("create relationship conditionally", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -291,36 +305,36 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $relationshipId: relationshipId,
       $sourceId: FLOOR_DIGITAL_TWIN_ID,
       $relationshipName: "contains",
-      $targetId: ROOM_DIGITAL_TWIN_ID
+      $targetId: ROOM_DIGITAL_TWIN_ID,
     };
 
     try {
       const options: DigitalTwinsAddRelationshipOptionalParams = {};
       options.ifNoneMatch = "*";
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         FLOOR_DIGITAL_TWIN_ID,
         relationshipId,
         relationship,
-        options
+        options,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
 
       let errorWasThrown = false;
@@ -329,25 +343,19 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
           FLOOR_DIGITAL_TWIN_ID,
           relationshipId,
           relationship,
-          options
+          options,
         );
-      } catch (error) {
+      } catch (error: any) {
         errorWasThrown = true;
         assert.include(error.message, `header was specified but a relationship with the id`);
       }
       should.equal(errorWasThrown, true, "Error was not thrown");
     } finally {
-      try {
-        await client.deleteRelationship(FLOOR_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(FLOOR_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("upsert relationship", async function() {
+  it("upsert relationship", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -357,82 +365,76 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       relationship.isAccessRestricted = true;
-      const updatedRelationship = await client.upsertRelationship(
+      const updatedRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        updatedRelationship.body.$relationshipId,
+        updatedRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        updatedRelationship.body.$sourceId,
+        updatedRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        updatedRelationship.body.$targetId,
+        updatedRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        updatedRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        updatedRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        updatedRelationship.body.isAccessRestricted,
+        updatedRelationship.isAccessRestricted,
         true,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("get relationship", async function() {
+  it("get relationship", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -442,81 +444,75 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
-      const getRelationship = await client.getRelationship(
+      const getRelationship: any = await client.getRelationship(
         BUILDING_DIGITAL_TWIN_ID,
-        relationshipId
+        relationshipId,
       );
       assert.equal(
-        getRelationship.body.$relationshipId,
-        createdRelationship.body.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        getRelationship.$relationshipId,
+        createdRelationship.$relationshipId,
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        getRelationship.body.$sourceId,
-        createdRelationship.body.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        getRelationship.$sourceId,
+        createdRelationship.$sourceId,
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        getRelationship.body.$targetId,
-        createdRelationship.body.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        getRelationship.$targetId,
+        createdRelationship.$targetId,
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.equal(
-        getRelationship.body.$etag,
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        getRelationship.$etag,
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        getRelationship.body.isAccessRestricted,
-        createdRelationship.body.isAccessRestricted,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        getRelationship.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("get relationship not existing", async function() {
+  it("get relationship not existing", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -525,25 +521,19 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
     let errorWasThrown = false;
     try {
       await client.getRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-    } catch (error) {
+    } catch (error: any) {
       errorWasThrown = true;
       assert.include(
         error.message,
-        `Relationship ` + relationshipId + ` not found on twin ` + BUILDING_DIGITAL_TWIN_ID
+        `Relationship ` + relationshipId + ` not found on twin ` + BUILDING_DIGITAL_TWIN_ID,
       );
       should.equal(errorWasThrown, true, "Error was not thrown");
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("delete relationship", async function() {
+  it("delete relationship", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -553,37 +543,37 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
@@ -591,26 +581,20 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       let errorWasThrown = false;
       try {
         await client.getRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (error) {
+      } catch (error: any) {
         errorWasThrown = true;
         assert.include(
           error.message,
-          `Relationship ` + relationshipId + ` not found on twin ` + BUILDING_DIGITAL_TWIN_ID
+          `Relationship ` + relationshipId + ` not found on twin ` + BUILDING_DIGITAL_TWIN_ID,
         );
         should.equal(errorWasThrown, true, "Error was not thrown");
       }
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("delete relationship not existing", async function() {
+  it("delete relationship not existing", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -619,25 +603,19 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
     let errorWasThrown = false;
     try {
       await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-    } catch (error) {
+    } catch (error: any) {
       errorWasThrown = true;
       assert.include(
         error.message,
-        `Relationship ` + relationshipId + ` not found on twin ` + BUILDING_DIGITAL_TWIN_ID
+        `Relationship ` + relationshipId + ` not found on twin ` + BUILDING_DIGITAL_TWIN_ID,
       );
       should.equal(errorWasThrown, true, "Error was not thrown");
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("update relationship replace", async function() {
+  it("update relationship replace", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -647,83 +625,77 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       const patch = [
         {
           op: "replace",
           path: "/isAccessRestricted",
-          value: true
-        }
+          value: true,
+        },
       ];
       const updatedRelationship = await client.updateRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        patch
+        patch,
       );
       assert.isNotNull(
         updatedRelationship.etag,
-        "Unexpected eTag result from updateRelationship()."
+        "Unexpected eTag result from updateRelationship().",
       );
 
-      const getRelationship = await client.getRelationship(
+      const getRelationship: any = await client.getRelationship(
         BUILDING_DIGITAL_TWIN_ID,
-        relationshipId
+        relationshipId,
       );
       assert.equal(
         getRelationship.etag,
         updatedRelationship.etag,
-        "Unexpected eTag result from getRelationship()."
+        "Unexpected eTag result from getRelationship().",
       );
       assert.equal(
-        getRelationship.body.isAccessRestricted,
+        getRelationship.isAccessRestricted,
         true,
-        "Unexpected isAccessRestricted result from getRelationship()."
+        "Unexpected isAccessRestricted result from getRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("update relationship remove", async function() {
+  it("update relationship remove", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -733,81 +705,75 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       const patch = [
         {
           op: "remove",
-          path: "/isAccessRestricted"
-        }
+          path: "/isAccessRestricted",
+        },
       ];
       const updatedRelationship = await client.updateRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        patch
+        patch,
       );
       assert.isNotNull(
         updatedRelationship.etag,
-        "Unexpected eTag result from updateRelationship()."
+        "Unexpected eTag result from updateRelationship().",
       );
 
-      const getRelationship = await client.getRelationship(
+      const getRelationship: any = await client.getRelationship(
         BUILDING_DIGITAL_TWIN_ID,
-        relationshipId
+        relationshipId,
       );
       assert.equal(
         getRelationship.etag,
         updatedRelationship.etag,
-        "Unexpected eTag result from getRelationship()."
+        "Unexpected eTag result from getRelationship().",
       );
       assert.isUndefined(
-        getRelationship.body.isAccessRestricted,
-        "Unexpected isAccessRestricted result from getRelationship()."
+        getRelationship.isAccessRestricted,
+        "Unexpected isAccessRestricted result from getRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("update relationship add", async function() {
+  it("update relationship add", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -817,45 +783,45 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       const remove_patch = [
         {
           op: "remove",
-          path: "/isAccessRestricted"
-        }
+          path: "/isAccessRestricted",
+        },
       ];
       await client.updateRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId, remove_patch);
 
@@ -863,45 +829,39 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
         {
           op: "add",
           path: "/isAccessRestricted",
-          value: true
-        }
+          value: true,
+        },
       ];
       const updatedRelationship = await client.updateRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        patch
+        patch,
       );
       assert.isNotNull(
         updatedRelationship.etag,
-        "Unexpected eTag result from updateRelationship()."
+        "Unexpected eTag result from updateRelationship().",
       );
 
-      const getRelationship = await client.getRelationship(
+      const getRelationship: any = await client.getRelationship(
         BUILDING_DIGITAL_TWIN_ID,
-        relationshipId
+        relationshipId,
       );
       assert.equal(
         getRelationship.etag,
         updatedRelationship.etag,
-        "Unexpected eTag result from getRelationship()."
+        "Unexpected eTag result from getRelationship().",
       );
       assert.equal(
-        getRelationship.body.isAccessRestricted,
+        getRelationship.isAccessRestricted,
         true,
-        "Unexpected isAccessRestricted result from getRelationship()."
+        "Unexpected isAccessRestricted result from getRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("update relationship multiple", async function() {
+  it("update relationship multiple", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -911,86 +871,80 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       const patch = [
         {
           op: "replace",
           path: "/isAccessRestricted",
-          value: true
+          value: true,
         },
         {
           op: "remove",
-          path: "/isAccessRestricted"
-        }
+          path: "/isAccessRestricted",
+        },
       ];
       const updatedRelationship = await client.updateRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        patch
+        patch,
       );
       assert.isNotNull(
         updatedRelationship.etag,
-        "Unexpected eTag result from updateRelationship()."
+        "Unexpected eTag result from updateRelationship().",
       );
 
-      const getRelationship = await client.getRelationship(
+      const getRelationship: any = await client.getRelationship(
         BUILDING_DIGITAL_TWIN_ID,
-        relationshipId
+        relationshipId,
       );
       assert.equal(
         getRelationship.etag,
         updatedRelationship.etag,
-        "Unexpected eTag result from getRelationship()."
+        "Unexpected eTag result from getRelationship().",
       );
       assert.isUndefined(
-        getRelationship.body.isAccessRestricted,
-        "Unexpected isAccessRestricted result from getRelationship()."
+        getRelationship.isAccessRestricted,
+        "Unexpected isAccessRestricted result from getRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("update relationship invalid patch", async function() {
+  it("update relationship invalid patch", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -1000,50 +954,50 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       const patch1 = [
         {
           op: "move",
-          path: "/isAccessRestricted"
-        }
+          path: "/isAccessRestricted",
+        },
       ];
       let errorWasThrown = false;
       try {
         await client.updateRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId, patch1);
-      } catch (error) {
+      } catch (error: any) {
         errorWasThrown = true;
         assert.include(error.message, `Unsupported operation type move`);
         should.equal(errorWasThrown, true, "Error was not thrown");
@@ -1052,30 +1006,30 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       const patch2 = [
         {
           op: "remove",
-          path: "/isAccessDoorRestricted"
-        }
+          path: "/isAccessDoorRestricted",
+        },
       ];
       errorWasThrown = false;
       try {
         await client.updateRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId, patch2);
-      } catch (error) {
+      } catch (error: any) {
         errorWasThrown = true;
         assert.include(
           error.message,
-          `The target location specified by path segment 'isAccessDoorRestricted' was not found`
+          `The target location specified by path segment 'isAccessDoorRestricted' was not found`,
         );
         should.equal(errorWasThrown, true, "Error was not thrown");
       }
 
       const patch3 = [
         {
-          isAccessRestricted: false
-        }
+          isAccessRestricted: false,
+        },
       ];
       errorWasThrown = false;
       try {
         await client.updateRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId, patch3);
-      } catch (error) {
+      } catch (error: any) {
         errorWasThrown = true;
         assert.include(error.message, `Parameter op must not be empty`);
         should.equal(errorWasThrown, true, "Error was not thrown");
@@ -1085,23 +1039,17 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       errorWasThrown = false;
       try {
         await client.updateRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId, patch4);
-      } catch (error) {
+      } catch (error: any) {
         errorWasThrown = true;
         assert.include(error.message, `Parameter op must not be empty`);
         should.equal(errorWasThrown, true, "Error was not thrown");
       }
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("update relationship conditionally", async function() {
+  it("update relationship conditionally", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -1111,46 +1059,46 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.isAccessRestricted,
+        createdRelationship.isAccessRestricted,
         false,
-        "Unexpected isAccessRestricted result from upsertRelationship()."
+        "Unexpected isAccessRestricted result from upsertRelationship().",
       );
 
       const patch = [
         {
           op: "replace",
           path: "/isAccessRestricted",
-          value: true
-        }
+          value: true,
+        },
       ];
       const options: DigitalTwinsAddRelationshipOptionalParams = {};
       options.ifNoneMatch = "*";
@@ -1158,39 +1106,33 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
         patch,
-        options
+        options,
       );
       assert.isNotNull(
         updatedRelationship.etag,
-        "Unexpected eTag result from updateRelationship()."
+        "Unexpected eTag result from updateRelationship().",
       );
 
-      const getRelationship = await client.getRelationship(
+      const getRelationship: any = await client.getRelationship(
         BUILDING_DIGITAL_TWIN_ID,
-        relationshipId
+        relationshipId,
       );
       assert.equal(
         getRelationship.etag,
         updatedRelationship.etag,
-        "Unexpected eTag result from getRelationship()."
+        "Unexpected eTag result from getRelationship().",
       );
       assert.equal(
-        getRelationship.body.isAccessRestricted,
+        getRelationship.isAccessRestricted,
         true,
-        "Unexpected isAccessRestricted result from getRelationship()."
+        "Unexpected isAccessRestricted result from getRelationship().",
       );
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("update relationship not existing", async function() {
+  it("update relationship not existing", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -1202,26 +1144,20 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
         {
           op: "replace",
           path: "/isAccessRestricted",
-          value: true
-        }
+          value: true,
+        },
       ];
       await client.updateRelationship(BUILDING_DIGITAL_TWIN_ID, "foo", patch);
-    } catch (error) {
+    } catch (error: any) {
       errorWasThrown = true;
       assert.include(error.message, `Relationship foo not found on twin`);
       should.equal(errorWasThrown, true, "Error was not thrown");
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("list relationships", async function() {
+  it("list relationships", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -1231,33 +1167,33 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
 
       let relationshipFound = false;
@@ -1272,17 +1208,11 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       assert.equal(count >= 1, true, "Unexpected count result from listRelationships().");
       assert.equal(relationshipFound, true, "Unexpected result from listRelationships().");
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 
-  it("list incoming relationships", async function() {
+  it("list incoming relationships", async function () {
     await setUpModels();
     await setUpDigitalTwins();
 
@@ -1292,33 +1222,33 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       $sourceId: BUILDING_DIGITAL_TWIN_ID,
       $relationshipName: "has",
       $targetId: FLOOR_DIGITAL_TWIN_ID,
-      isAccessRestricted: false
+      isAccessRestricted: false,
     };
 
     try {
-      const createdRelationship = await client.upsertRelationship(
+      const createdRelationship: any = await client.upsertRelationship(
         BUILDING_DIGITAL_TWIN_ID,
         relationshipId,
-        relationship
+        relationship,
       );
       assert.equal(
-        createdRelationship.body.$relationshipId,
+        createdRelationship.$relationshipId,
         relationship.$relationshipId,
-        "Unexpected relationshipId result from upsertRelationship()."
+        "Unexpected relationshipId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$sourceId,
+        createdRelationship.$sourceId,
         relationship.$sourceId,
-        "Unexpected sourceId result from upsertRelationship()."
+        "Unexpected sourceId result from upsertRelationship().",
       );
       assert.equal(
-        createdRelationship.body.$targetId,
+        createdRelationship.$targetId,
         relationship.$targetId,
-        "Unexpected targetId result from upsertRelationship()."
+        "Unexpected targetId result from upsertRelationship().",
       );
       assert.isNotNull(
-        createdRelationship.body.$etag,
-        "Unexpected eTag result from upsertRelationship()."
+        createdRelationship.$etag,
+        "Unexpected eTag result from upsertRelationship().",
       );
 
       let relationshipFound = false;
@@ -1333,13 +1263,7 @@ describe("DigitalTwins Relationships - create, read, list, delete operations", (
       assert.equal(count === 0, true, "Unexpected count result from listRelationships().");
       assert.equal(relationshipFound, false, "Unexpected result from listRelationships().");
     } finally {
-      try {
-        await client.deleteRelationship(BUILDING_DIGITAL_TWIN_ID, relationshipId);
-      } catch (Exception) {
-        console.error("deleteRelationship failure during test setup or cleanup");
-      }
-      await deleteDigitalTwins();
-      await deleteModels();
+      await cleanup(BUILDING_DIGITAL_TWIN_ID, relationshipId);
     }
   });
 });

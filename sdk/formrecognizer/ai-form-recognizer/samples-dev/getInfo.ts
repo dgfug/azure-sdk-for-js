@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * This sample shows how to programmatically retrieve metadata about the number of custom models in the Form Recognizer
@@ -14,15 +14,15 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 async function main() {
-  const endpoint = process.env.FORM_RECOGNIZER_ENDPOINT ?? "<endpoint>";
-  const credential = new AzureKeyCredential(process.env.FORM_RECOGNIZER_API_KEY ?? "<api key>");
+  const endpoint = process.env.FORM_RECOGNIZER_ENDPOINT || "<endpoint>";
+  const credential = new AzureKeyCredential(process.env.FORM_RECOGNIZER_API_KEY || "<api key>");
 
   const client = new DocumentModelAdministrationClient(endpoint, credential);
 
-  const info = await client.getInfo();
+  const info = await client.getResourceDetails();
 
   console.log(
-    `Custom document models: ${info.customDocumentModels.count} of ${info.customDocumentModels.limit}`
+    `Custom document models: ${info.customDocumentModels.count} of ${info.customDocumentModels.limit}`,
   );
 }
 

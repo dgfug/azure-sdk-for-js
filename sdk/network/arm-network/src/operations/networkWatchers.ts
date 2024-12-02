@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { NetworkWatchers } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   NetworkWatcher,
   NetworkWatchersListOptionalParams,
+  NetworkWatchersListResponse,
   NetworkWatchersListAllOptionalParams,
+  NetworkWatchersListAllResponse,
   NetworkWatchersCreateOrUpdateOptionalParams,
   NetworkWatchersCreateOrUpdateResponse,
   NetworkWatchersGetOptionalParams,
@@ -26,8 +32,6 @@ import {
   TagsObject,
   NetworkWatchersUpdateTagsOptionalParams,
   NetworkWatchersUpdateTagsResponse,
-  NetworkWatchersListResponse,
-  NetworkWatchersListAllResponse,
   TopologyParameters,
   NetworkWatchersGetTopologyOptionalParams,
   NetworkWatchersGetTopologyResponse,
@@ -63,19 +67,19 @@ import {
   NetworkWatchersListAvailableProvidersResponse,
   NetworkConfigurationDiagnosticParameters,
   NetworkWatchersGetNetworkConfigurationDiagnosticOptionalParams,
-  NetworkWatchersGetNetworkConfigurationDiagnosticResponse
+  NetworkWatchersGetNetworkConfigurationDiagnosticResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing NetworkWatchers operations. */
 export class NetworkWatchersImpl implements NetworkWatchers {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class NetworkWatchers class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -86,7 +90,7 @@ export class NetworkWatchersImpl implements NetworkWatchers {
    */
   public list(
     resourceGroupName: string,
-    options?: NetworkWatchersListOptionalParams
+    options?: NetworkWatchersListOptionalParams,
   ): PagedAsyncIterableIterator<NetworkWatcher> {
     const iter = this.listPagingAll(resourceGroupName, options);
     return {
@@ -96,23 +100,28 @@ export class NetworkWatchersImpl implements NetworkWatchers {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(resourceGroupName, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
-    options?: NetworkWatchersListOptionalParams
+    options?: NetworkWatchersListOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<NetworkWatcher[]> {
-    let result = await this._list(resourceGroupName, options);
+    let result: NetworkWatchersListResponse;
+    result = await this._list(resourceGroupName, options);
     yield result.value || [];
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
-    options?: NetworkWatchersListOptionalParams
+    options?: NetworkWatchersListOptionalParams,
   ): AsyncIterableIterator<NetworkWatcher> {
     for await (const page of this.listPagingPage(resourceGroupName, options)) {
       yield* page;
@@ -124,7 +133,7 @@ export class NetworkWatchersImpl implements NetworkWatchers {
    * @param options The options parameters.
    */
   public listAll(
-    options?: NetworkWatchersListAllOptionalParams
+    options?: NetworkWatchersListAllOptionalParams,
   ): PagedAsyncIterableIterator<NetworkWatcher> {
     const iter = this.listAllPagingAll(options);
     return {
@@ -134,21 +143,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
+      },
     };
   }
 
   private async *listAllPagingPage(
-    options?: NetworkWatchersListAllOptionalParams
+    options?: NetworkWatchersListAllOptionalParams,
+    _settings?: PageSettings,
   ): AsyncIterableIterator<NetworkWatcher[]> {
-    let result = await this._listAll(options);
+    let result: NetworkWatchersListAllResponse;
+    result = await this._listAll(options);
     yield result.value || [];
   }
 
   private async *listAllPagingAll(
-    options?: NetworkWatchersListAllOptionalParams
+    options?: NetworkWatchersListAllOptionalParams,
   ): AsyncIterableIterator<NetworkWatcher> {
     for await (const page of this.listAllPagingPage(options)) {
       yield* page;
@@ -166,11 +180,11 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: NetworkWatcher,
-    options?: NetworkWatchersCreateOrUpdateOptionalParams
+    options?: NetworkWatchersCreateOrUpdateOptionalParams,
   ): Promise<NetworkWatchersCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkWatcherName, parameters, options },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -183,11 +197,11 @@ export class NetworkWatchersImpl implements NetworkWatchers {
   get(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: NetworkWatchersGetOptionalParams
+    options?: NetworkWatchersGetOptionalParams,
   ): Promise<NetworkWatchersGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkWatcherName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -200,25 +214,24 @@ export class NetworkWatchersImpl implements NetworkWatchers {
   async beginDelete(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: NetworkWatchersDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: NetworkWatchersDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -227,8 +240,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -236,21 +249,23 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, options },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -262,12 +277,12 @@ export class NetworkWatchersImpl implements NetworkWatchers {
   async beginDeleteAndWait(
     resourceGroupName: string,
     networkWatcherName: string,
-    options?: NetworkWatchersDeleteOptionalParams
+    options?: NetworkWatchersDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       networkWatcherName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -283,11 +298,11 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: TagsObject,
-    options?: NetworkWatchersUpdateTagsOptionalParams
+    options?: NetworkWatchersUpdateTagsOptionalParams,
   ): Promise<NetworkWatchersUpdateTagsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkWatcherName, parameters, options },
-      updateTagsOperationSpec
+      updateTagsOperationSpec,
     );
   }
 
@@ -298,11 +313,11 @@ export class NetworkWatchersImpl implements NetworkWatchers {
    */
   private _list(
     resourceGroupName: string,
-    options?: NetworkWatchersListOptionalParams
+    options?: NetworkWatchersListOptionalParams,
   ): Promise<NetworkWatchersListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -311,7 +326,7 @@ export class NetworkWatchersImpl implements NetworkWatchers {
    * @param options The options parameters.
    */
   private _listAll(
-    options?: NetworkWatchersListAllOptionalParams
+    options?: NetworkWatchersListAllOptionalParams,
   ): Promise<NetworkWatchersListAllResponse> {
     return this.client.sendOperationRequest({ options }, listAllOperationSpec);
   }
@@ -327,11 +342,11 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: TopologyParameters,
-    options?: NetworkWatchersGetTopologyOptionalParams
+    options?: NetworkWatchersGetTopologyOptionalParams,
   ): Promise<NetworkWatchersGetTopologyResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkWatcherName, parameters, options },
-      getTopologyOperationSpec
+      getTopologyOperationSpec,
     );
   }
 
@@ -346,30 +361,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: VerificationIPFlowParameters,
-    options?: NetworkWatchersVerifyIPFlowOptionalParams
+    options?: NetworkWatchersVerifyIPFlowOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersVerifyIPFlowResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersVerifyIPFlowResponse>,
       NetworkWatchersVerifyIPFlowResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersVerifyIPFlowResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -378,8 +392,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -387,21 +401,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      verifyIPFlowOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: verifyIPFlowOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersVerifyIPFlowResponse,
+      OperationState<NetworkWatchersVerifyIPFlowResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -415,13 +434,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: VerificationIPFlowParameters,
-    options?: NetworkWatchersVerifyIPFlowOptionalParams
+    options?: NetworkWatchersVerifyIPFlowOptionalParams,
   ): Promise<NetworkWatchersVerifyIPFlowResponse> {
     const poller = await this.beginVerifyIPFlow(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -437,30 +456,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: NextHopParameters,
-    options?: NetworkWatchersGetNextHopOptionalParams
+    options?: NetworkWatchersGetNextHopOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersGetNextHopResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersGetNextHopResponse>,
       NetworkWatchersGetNextHopResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersGetNextHopResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -469,8 +487,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -478,21 +496,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      getNextHopOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: getNextHopOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersGetNextHopResponse,
+      OperationState<NetworkWatchersGetNextHopResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -506,13 +529,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: NextHopParameters,
-    options?: NetworkWatchersGetNextHopOptionalParams
+    options?: NetworkWatchersGetNextHopOptionalParams,
   ): Promise<NetworkWatchersGetNextHopResponse> {
     const poller = await this.beginGetNextHop(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -528,30 +551,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: SecurityGroupViewParameters,
-    options?: NetworkWatchersGetVMSecurityRulesOptionalParams
+    options?: NetworkWatchersGetVMSecurityRulesOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersGetVMSecurityRulesResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersGetVMSecurityRulesResponse>,
       NetworkWatchersGetVMSecurityRulesResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersGetVMSecurityRulesResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -560,8 +582,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -569,21 +591,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      getVMSecurityRulesOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: getVMSecurityRulesOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersGetVMSecurityRulesResponse,
+      OperationState<NetworkWatchersGetVMSecurityRulesResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -597,13 +624,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: SecurityGroupViewParameters,
-    options?: NetworkWatchersGetVMSecurityRulesOptionalParams
+    options?: NetworkWatchersGetVMSecurityRulesOptionalParams,
   ): Promise<NetworkWatchersGetVMSecurityRulesResponse> {
     const poller = await this.beginGetVMSecurityRules(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -619,30 +646,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: TroubleshootingParameters,
-    options?: NetworkWatchersGetTroubleshootingOptionalParams
+    options?: NetworkWatchersGetTroubleshootingOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersGetTroubleshootingResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersGetTroubleshootingResponse>,
       NetworkWatchersGetTroubleshootingResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersGetTroubleshootingResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -651,8 +677,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -660,21 +686,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      getTroubleshootingOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: getTroubleshootingOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersGetTroubleshootingResponse,
+      OperationState<NetworkWatchersGetTroubleshootingResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -688,13 +719,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: TroubleshootingParameters,
-    options?: NetworkWatchersGetTroubleshootingOptionalParams
+    options?: NetworkWatchersGetTroubleshootingOptionalParams,
   ): Promise<NetworkWatchersGetTroubleshootingResponse> {
     const poller = await this.beginGetTroubleshooting(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -710,30 +741,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: QueryTroubleshootingParameters,
-    options?: NetworkWatchersGetTroubleshootingResultOptionalParams
+    options?: NetworkWatchersGetTroubleshootingResultOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersGetTroubleshootingResultResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersGetTroubleshootingResultResponse>,
       NetworkWatchersGetTroubleshootingResultResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersGetTroubleshootingResultResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -742,8 +772,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -751,21 +781,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      getTroubleshootingResultOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: getTroubleshootingResultOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersGetTroubleshootingResultResponse,
+      OperationState<NetworkWatchersGetTroubleshootingResultResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -779,13 +814,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: QueryTroubleshootingParameters,
-    options?: NetworkWatchersGetTroubleshootingResultOptionalParams
+    options?: NetworkWatchersGetTroubleshootingResultOptionalParams,
   ): Promise<NetworkWatchersGetTroubleshootingResultResponse> {
     const poller = await this.beginGetTroubleshootingResult(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -801,30 +836,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: FlowLogInformation,
-    options?: NetworkWatchersSetFlowLogConfigurationOptionalParams
+    options?: NetworkWatchersSetFlowLogConfigurationOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersSetFlowLogConfigurationResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersSetFlowLogConfigurationResponse>,
       NetworkWatchersSetFlowLogConfigurationResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersSetFlowLogConfigurationResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -833,8 +867,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -842,21 +876,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      setFlowLogConfigurationOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: setFlowLogConfigurationOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersSetFlowLogConfigurationResponse,
+      OperationState<NetworkWatchersSetFlowLogConfigurationResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -870,13 +909,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: FlowLogInformation,
-    options?: NetworkWatchersSetFlowLogConfigurationOptionalParams
+    options?: NetworkWatchersSetFlowLogConfigurationOptionalParams,
   ): Promise<NetworkWatchersSetFlowLogConfigurationResponse> {
     const poller = await this.beginSetFlowLogConfiguration(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -893,30 +932,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: FlowLogStatusParameters,
-    options?: NetworkWatchersGetFlowLogStatusOptionalParams
+    options?: NetworkWatchersGetFlowLogStatusOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersGetFlowLogStatusResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersGetFlowLogStatusResponse>,
       NetworkWatchersGetFlowLogStatusResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersGetFlowLogStatusResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -925,8 +963,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -934,21 +972,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      getFlowLogStatusOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: getFlowLogStatusOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersGetFlowLogStatusResponse,
+      OperationState<NetworkWatchersGetFlowLogStatusResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -963,13 +1006,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: FlowLogStatusParameters,
-    options?: NetworkWatchersGetFlowLogStatusOptionalParams
+    options?: NetworkWatchersGetFlowLogStatusOptionalParams,
   ): Promise<NetworkWatchersGetFlowLogStatusResponse> {
     const poller = await this.beginGetFlowLogStatus(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -986,30 +1029,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: ConnectivityParameters,
-    options?: NetworkWatchersCheckConnectivityOptionalParams
+    options?: NetworkWatchersCheckConnectivityOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersCheckConnectivityResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersCheckConnectivityResponse>,
       NetworkWatchersCheckConnectivityResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersCheckConnectivityResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -1018,8 +1060,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -1027,21 +1069,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      checkConnectivityOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: checkConnectivityOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersCheckConnectivityResponse,
+      OperationState<NetworkWatchersCheckConnectivityResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1056,13 +1103,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: ConnectivityParameters,
-    options?: NetworkWatchersCheckConnectivityOptionalParams
+    options?: NetworkWatchersCheckConnectivityOptionalParams,
   ): Promise<NetworkWatchersCheckConnectivityResponse> {
     const poller = await this.beginCheckConnectivity(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -1079,30 +1126,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: AzureReachabilityReportParameters,
-    options?: NetworkWatchersGetAzureReachabilityReportOptionalParams
+    options?: NetworkWatchersGetAzureReachabilityReportOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersGetAzureReachabilityReportResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersGetAzureReachabilityReportResponse>,
       NetworkWatchersGetAzureReachabilityReportResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersGetAzureReachabilityReportResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -1111,8 +1157,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -1120,21 +1166,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      getAzureReachabilityReportOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: getAzureReachabilityReportOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersGetAzureReachabilityReportResponse,
+      OperationState<NetworkWatchersGetAzureReachabilityReportResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1149,13 +1200,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: AzureReachabilityReportParameters,
-    options?: NetworkWatchersGetAzureReachabilityReportOptionalParams
+    options?: NetworkWatchersGetAzureReachabilityReportOptionalParams,
   ): Promise<NetworkWatchersGetAzureReachabilityReportResponse> {
     const poller = await this.beginGetAzureReachabilityReport(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -1172,30 +1223,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: AvailableProvidersListParameters,
-    options?: NetworkWatchersListAvailableProvidersOptionalParams
+    options?: NetworkWatchersListAvailableProvidersOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NetworkWatchersListAvailableProvidersResponse>,
+    SimplePollerLike<
+      OperationState<NetworkWatchersListAvailableProvidersResponse>,
       NetworkWatchersListAvailableProvidersResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersListAvailableProvidersResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -1204,8 +1254,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -1213,21 +1263,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      listAvailableProvidersOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: listAvailableProvidersOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersListAvailableProvidersResponse,
+      OperationState<NetworkWatchersListAvailableProvidersResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1242,13 +1297,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: AvailableProvidersListParameters,
-    options?: NetworkWatchersListAvailableProvidersOptionalParams
+    options?: NetworkWatchersListAvailableProvidersOptionalParams,
   ): Promise<NetworkWatchersListAvailableProvidersResponse> {
     const poller = await this.beginListAvailableProviders(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -1268,32 +1323,29 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: NetworkConfigurationDiagnosticParameters,
-    options?: NetworkWatchersGetNetworkConfigurationDiagnosticOptionalParams
+    options?: NetworkWatchersGetNetworkConfigurationDiagnosticOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        NetworkWatchersGetNetworkConfigurationDiagnosticResponse
-      >,
+    SimplePollerLike<
+      OperationState<NetworkWatchersGetNetworkConfigurationDiagnosticResponse>,
       NetworkWatchersGetNetworkConfigurationDiagnosticResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<NetworkWatchersGetNetworkConfigurationDiagnosticResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -1302,8 +1354,8 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -1311,21 +1363,26 @@ export class NetworkWatchersImpl implements NetworkWatchers {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkWatcherName, parameters, options },
-      getNetworkConfigurationDiagnosticOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, networkWatcherName, parameters, options },
+      spec: getNetworkConfigurationDiagnosticOperationSpec,
     });
+    const poller = await createHttpPoller<
+      NetworkWatchersGetNetworkConfigurationDiagnosticResponse,
+      OperationState<NetworkWatchersGetNetworkConfigurationDiagnosticResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -1343,13 +1400,13 @@ export class NetworkWatchersImpl implements NetworkWatchers {
     resourceGroupName: string,
     networkWatcherName: string,
     parameters: NetworkConfigurationDiagnosticParameters,
-    options?: NetworkWatchersGetNetworkConfigurationDiagnosticOptionalParams
+    options?: NetworkWatchersGetNetworkConfigurationDiagnosticOptionalParams,
   ): Promise<NetworkWatchersGetNetworkConfigurationDiagnosticResponse> {
     const poller = await this.beginGetNetworkConfigurationDiagnostic(
       resourceGroupName,
       networkWatcherName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -1358,57 +1415,54 @@ export class NetworkWatchersImpl implements NetworkWatchers {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.NetworkWatcher
+      bodyMapper: Mappers.NetworkWatcher,
     },
     201: {
-      bodyMapper: Mappers.NetworkWatcher
+      bodyMapper: Mappers.NetworkWatcher,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters32,
+  requestBody: Parameters.parameters47,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.NetworkWatcher
+      bodyMapper: Mappers.NetworkWatcher,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -1416,30 +1470,29 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateTagsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.NetworkWatcher
+      bodyMapper: Mappers.NetworkWatcher,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.parameters1,
   queryParameters: [Parameters.apiVersion],
@@ -1447,434 +1500,421 @@ const updateTagsOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.NetworkWatcherListResult
+      bodyMapper: Mappers.NetworkWatcherListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listAllOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/networkWatchers",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/networkWatchers",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.NetworkWatcherListResult
+      bodyMapper: Mappers.NetworkWatcherListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getTopologyOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/topology",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/topology",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.Topology
+      bodyMapper: Mappers.Topology,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters33,
+  requestBody: Parameters.parameters48,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const verifyIPFlowOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/ipFlowVerify",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/ipFlowVerify",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.VerificationIPFlowResult
+      bodyMapper: Mappers.VerificationIPFlowResult,
     },
     201: {
-      bodyMapper: Mappers.VerificationIPFlowResult
+      bodyMapper: Mappers.VerificationIPFlowResult,
     },
     202: {
-      bodyMapper: Mappers.VerificationIPFlowResult
+      bodyMapper: Mappers.VerificationIPFlowResult,
     },
     204: {
-      bodyMapper: Mappers.VerificationIPFlowResult
+      bodyMapper: Mappers.VerificationIPFlowResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters34,
+  requestBody: Parameters.parameters49,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getNextHopOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/nextHop",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/nextHop",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.NextHopResult
+      bodyMapper: Mappers.NextHopResult,
     },
     201: {
-      bodyMapper: Mappers.NextHopResult
+      bodyMapper: Mappers.NextHopResult,
     },
     202: {
-      bodyMapper: Mappers.NextHopResult
+      bodyMapper: Mappers.NextHopResult,
     },
     204: {
-      bodyMapper: Mappers.NextHopResult
+      bodyMapper: Mappers.NextHopResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters35,
+  requestBody: Parameters.parameters50,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getVMSecurityRulesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/securityGroupView",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/securityGroupView",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.SecurityGroupViewResult
+      bodyMapper: Mappers.SecurityGroupViewResult,
     },
     201: {
-      bodyMapper: Mappers.SecurityGroupViewResult
+      bodyMapper: Mappers.SecurityGroupViewResult,
     },
     202: {
-      bodyMapper: Mappers.SecurityGroupViewResult
+      bodyMapper: Mappers.SecurityGroupViewResult,
     },
     204: {
-      bodyMapper: Mappers.SecurityGroupViewResult
+      bodyMapper: Mappers.SecurityGroupViewResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters36,
+  requestBody: Parameters.parameters51,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getTroubleshootingOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/troubleshoot",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/troubleshoot",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     201: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     202: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     204: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters37,
+  requestBody: Parameters.parameters52,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getTroubleshootingResultOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/queryTroubleshootResult",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/queryTroubleshootResult",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     201: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     202: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     204: {
-      bodyMapper: Mappers.TroubleshootingResult
+      bodyMapper: Mappers.TroubleshootingResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters38,
+  requestBody: Parameters.parameters53,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const setFlowLogConfigurationOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/configureFlowLog",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/configureFlowLog",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     201: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     202: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     204: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters39,
+  requestBody: Parameters.parameters54,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getFlowLogStatusOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/queryFlowLogStatus",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/queryFlowLogStatus",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     201: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     202: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     204: {
-      bodyMapper: Mappers.FlowLogInformation
+      bodyMapper: Mappers.FlowLogInformation,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters40,
+  requestBody: Parameters.parameters55,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const checkConnectivityOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectivityCheck",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/connectivityCheck",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.ConnectivityInformation
+      bodyMapper: Mappers.ConnectivityInformation,
     },
     201: {
-      bodyMapper: Mappers.ConnectivityInformation
+      bodyMapper: Mappers.ConnectivityInformation,
     },
     202: {
-      bodyMapper: Mappers.ConnectivityInformation
+      bodyMapper: Mappers.ConnectivityInformation,
     },
     204: {
-      bodyMapper: Mappers.ConnectivityInformation
+      bodyMapper: Mappers.ConnectivityInformation,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters41,
+  requestBody: Parameters.parameters56,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getAzureReachabilityReportOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/azureReachabilityReport",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/azureReachabilityReport",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureReachabilityReport
+      bodyMapper: Mappers.AzureReachabilityReport,
     },
     201: {
-      bodyMapper: Mappers.AzureReachabilityReport
+      bodyMapper: Mappers.AzureReachabilityReport,
     },
     202: {
-      bodyMapper: Mappers.AzureReachabilityReport
+      bodyMapper: Mappers.AzureReachabilityReport,
     },
     204: {
-      bodyMapper: Mappers.AzureReachabilityReport
+      bodyMapper: Mappers.AzureReachabilityReport,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters42,
+  requestBody: Parameters.parameters57,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listAvailableProvidersOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/availableProvidersList",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/availableProvidersList",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.AvailableProvidersList
+      bodyMapper: Mappers.AvailableProvidersList,
     },
     201: {
-      bodyMapper: Mappers.AvailableProvidersList
+      bodyMapper: Mappers.AvailableProvidersList,
     },
     202: {
-      bodyMapper: Mappers.AvailableProvidersList
+      bodyMapper: Mappers.AvailableProvidersList,
     },
     204: {
-      bodyMapper: Mappers.AvailableProvidersList
+      bodyMapper: Mappers.AvailableProvidersList,
     },
     default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
-  requestBody: Parameters.parameters43,
+  requestBody: Parameters.parameters58,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkWatcherName
+    Parameters.networkWatcherName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
-const getNetworkConfigurationDiagnosticOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/networkConfigurationDiagnostic",
-  httpMethod: "POST",
-  responses: {
-    200: {
-      bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse
+const getNetworkConfigurationDiagnosticOperationSpec: coreClient.OperationSpec =
+  {
+    path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkWatchers/{networkWatcherName}/networkConfigurationDiagnostic",
+    httpMethod: "POST",
+    responses: {
+      200: {
+        bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse,
+      },
+      201: {
+        bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse,
+      },
+      202: {
+        bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse,
+      },
+      204: {
+        bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse,
+      },
+      default: {
+        bodyMapper: Mappers.ErrorResponse,
+      },
     },
-    201: {
-      bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse
-    },
-    202: {
-      bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse
-    },
-    204: {
-      bodyMapper: Mappers.NetworkConfigurationDiagnosticResponse
-    },
-    default: {
-      bodyMapper: Mappers.ErrorResponse
-    }
-  },
-  requestBody: Parameters.parameters44,
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.resourceGroupName,
-    Parameters.subscriptionId,
-    Parameters.networkWatcherName
-  ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
-};
+    requestBody: Parameters.parameters59,
+    queryParameters: [Parameters.apiVersion],
+    urlParameters: [
+      Parameters.$host,
+      Parameters.resourceGroupName,
+      Parameters.subscriptionId,
+      Parameters.networkWatcherName,
+    ],
+    headerParameters: [Parameters.accept, Parameters.contentType],
+    mediaType: "json",
+    serializer,
+  };

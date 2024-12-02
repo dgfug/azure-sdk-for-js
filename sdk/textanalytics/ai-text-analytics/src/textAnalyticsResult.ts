@@ -1,24 +1,18 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  TextDocumentStatistics,
+import type {
+  DocumentError,
+  ErrorCodeValue,
   TextAnalyticsError as GeneratedTextAnalyticsErrorModel,
   InnerError,
-  ErrorCodeValue,
   InnerErrorCodeValue,
   TextAnalyticsWarning,
-  DocumentError,
   TextDocumentBatchStatistics,
-  TextDocumentInput
+  TextDocumentInput,
+  TextDocumentStatistics,
 } from "./generated/models";
 import { sortResponseIdObjects } from "./util";
-
-/**
- * The result of a text analytics operation on a single input document.
- * @internal
- */
-export type TextAnalyticsResult = TextAnalyticsSuccessResult | TextAnalyticsErrorResult;
 
 /**
  * An Error Code returned from the Text Analytics service. Possible
@@ -95,7 +89,7 @@ export interface TextAnalyticsErrorResult {
 /**
  * @internal
  */
-export interface StandardTextAnalyticsResultArray<T1 extends TextAnalyticsSuccessResult>
+interface TextAnalyticsResultArray<T1 extends TextAnalyticsSuccessResult>
   extends Array<T1 | TextAnalyticsErrorResult> {
   /**
    * Statistics about the input document batch and how it was processed
@@ -113,28 +107,7 @@ export interface StandardTextAnalyticsResultArray<T1 extends TextAnalyticsSucces
 /**
  * @internal
  */
-export interface CustomTextAnalyticsResultArray<T1 extends TextAnalyticsSuccessResult>
-  extends Array<T1 | TextAnalyticsErrorResult> {
-  /**
-   * Statistics about the input document batch and how it was processed
-   * by the service. This property will have a value when includeStatistics is set to true
-   * in the client call.
-   */
-  statistics?: TextDocumentBatchStatistics;
-  /**
-   * This field indicates the project name for the model.
-   */
-  projectName: string;
-  /**
-   * This field indicates the deployment name for the model.
-   */
-  deploymentName: string;
-}
-
-/**
- * @internal
- */
-export interface StandardTextAnalyticsResponse<T1 extends TextAnalyticsSuccessResult> {
+interface TextAnalyticsResponse<T1 extends TextAnalyticsSuccessResult> {
   /**
    * Response by document
    */
@@ -154,38 +127,12 @@ export interface StandardTextAnalyticsResponse<T1 extends TextAnalyticsSuccessRe
 }
 
 /**
- * @internal
- */
-export interface CustomTextAnalyticsResponse<T1 extends TextAnalyticsSuccessResult> {
-  /**
-   * Response by document
-   */
-  documents: T1[];
-  /**
-   * Errors by document id.
-   */
-  errors: DocumentError[];
-  /**
-   * if includeStatistics=true was specified in the request this field will contain information about the request payload.
-   */
-  statistics?: TextDocumentBatchStatistics;
-  /**
-   * This field indicates the project name for the model.
-   */
-  projectName: string;
-  /**
-   * This field indicates the deployment name for the model.
-   */
-  deploymentName: string;
-}
-
-/**
  * Helper function for converting nested service error into
  * the unified TextAnalyticsError
  * @internal
  */
 export function intoTextAnalyticsError(
-  errorModel: GeneratedTextAnalyticsErrorModel | InnerError
+  errorModel: GeneratedTextAnalyticsErrorModel | InnerError,
 ): TextAnalyticsError {
   // Return the deepest error. This will always be at most
   // one level for TextAnalytics
@@ -196,7 +143,7 @@ export function intoTextAnalyticsError(
   return {
     code: errorModel.code,
     message: errorModel.message,
-    target: errorModel.target
+    target: errorModel.target,
   };
 }
 
@@ -206,12 +153,12 @@ export function intoTextAnalyticsError(
 export function makeTextAnalyticsSuccessResult(
   id: string,
   warnings: TextAnalyticsWarning[],
-  statistics?: TextDocumentStatistics
+  statistics?: TextDocumentStatistics,
 ): TextAnalyticsSuccessResult {
   return {
     id,
     statistics,
-    warnings
+    warnings,
   };
 }
 
@@ -220,31 +167,12 @@ export function makeTextAnalyticsSuccessResult(
  */
 export function makeTextAnalyticsErrorResult(
   id: string,
-  error: GeneratedTextAnalyticsErrorModel
+  error: GeneratedTextAnalyticsErrorModel,
 ): TextAnalyticsErrorResult {
   return {
     id,
-    error: intoTextAnalyticsError(error)
+    error: intoTextAnalyticsError(error),
   };
-}
-
-/**
- * @internal
- * combines successful and erroneous results into a single array of results and
- * sort them so that the IDs order match that of the input documents array.
- * @param input - the array of documents sent to the service for processing.
- * @param response - the response received from the service.
- */
-export function combineSuccessfulAndErroneousDocuments<TSuccess extends TextAnalyticsSuccessResult>(
-  input: TextDocumentInput[],
-  response: StandardTextAnalyticsResponse<TSuccess>
-): (TSuccess | TextAnalyticsErrorResult)[] {
-  return processAndCombineSuccessfulAndErroneousDocuments(
-    input,
-    response,
-    (x) => x,
-    makeTextAnalyticsErrorResult
-  );
 }
 
 /**
@@ -258,21 +186,17 @@ export function combineSuccessfulAndErroneousDocuments<TSuccess extends TextAnal
 export function processAndCombineSuccessfulAndErroneousDocuments<
   TSuccessService extends TextAnalyticsSuccessResult,
   TSuccessSDK extends TextAnalyticsSuccessResult,
-  TError extends TextAnalyticsErrorResult
+  TError extends TextAnalyticsErrorResult,
 >(
   input: TextDocumentInput[],
-  response: {
-    documents: TSuccessService[];
-    errors: DocumentError[];
-  },
+  response: TextAnalyticsResponse<TSuccessService>,
   processSuccess: (successResult: TSuccessService) => TSuccessSDK,
-  processError: (id: string, error: GeneratedTextAnalyticsErrorModel) => TError
+  processError: (id: string, error: GeneratedTextAnalyticsErrorModel) => TError,
 ): (TSuccessSDK | TextAnalyticsErrorResult)[] {
-  const successResults: (TSuccessSDK | TextAnalyticsErrorResult)[] = response.documents.map(
-    processSuccess
-  );
+  const successResults: (TSuccessSDK | TextAnalyticsErrorResult)[] =
+    response.documents.map(processSuccess);
   const unsortedResults = successResults.concat(
-    response.errors.map((error) => processError(error.id, error.error))
+    response.errors.map((error) => processError(error.id, error.error)),
   );
 
   return sortResponseIdObjects(input, unsortedResults);
@@ -289,52 +213,21 @@ export function processAndCombineSuccessfulAndErroneousDocuments<
 export function combineSuccessfulAndErroneousDocumentsWithStatisticsAndModelVersion<
   TSuccessService extends TextAnalyticsSuccessResult,
   TSuccessSDK extends TextAnalyticsSuccessResult,
-  TError extends TextAnalyticsErrorResult
+  TError extends TextAnalyticsErrorResult,
 >(
   input: TextDocumentInput[],
-  response: StandardTextAnalyticsResponse<TSuccessService>,
+  response: TextAnalyticsResponse<TSuccessService>,
   processSuccess: (doc: TSuccessService) => TSuccessSDK,
-  processError: (id: string, error: GeneratedTextAnalyticsErrorModel) => TError
-): StandardTextAnalyticsResultArray<TSuccessSDK> {
+  processError: (id: string, error: GeneratedTextAnalyticsErrorModel) => TError,
+): TextAnalyticsResultArray<TSuccessSDK> {
   const sorted = processAndCombineSuccessfulAndErroneousDocuments(
     input,
     response,
     processSuccess,
-    processError
+    processError,
   );
   return Object.assign(sorted, {
     statistics: response.statistics,
-    modelVersion: response.modelVersion
-  });
-}
-
-/**
- * @internal
- * combines successful and erroneous results into a single array of results and
- * sort them so that the IDs order match that of the input documents array. It
- * also attaches statistics, projectName, and deploymentName to the returned array.
- * @param input - the array of documents sent to the service for processing.
- * @param response - the response received from the service.
- */
-export function combineSuccessfulAndErroneousDocumentsWithStatisticsAndCustomProjectInfo<
-  TSuccessService extends TextAnalyticsSuccessResult,
-  TSuccessSDK extends TextAnalyticsSuccessResult,
-  TError extends TextAnalyticsErrorResult
->(
-  input: TextDocumentInput[],
-  response: CustomTextAnalyticsResponse<TSuccessService>,
-  processSuccess: (doc: TSuccessService) => TSuccessSDK,
-  processError: (id: string, error: GeneratedTextAnalyticsErrorModel) => TError
-): CustomTextAnalyticsResultArray<TSuccessSDK> {
-  const sorted = processAndCombineSuccessfulAndErroneousDocuments(
-    input,
-    response,
-    processSuccess,
-    processError
-  );
-  return Object.assign(sorted, {
-    statistics: response.statistics,
-    projectName: response.projectName,
-    deploymentName: response.deploymentName
+    modelVersion: response.modelVersion,
   });
 }

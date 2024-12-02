@@ -6,39 +6,40 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { UserSessions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DesktopVirtualizationAPIClientContext } from "../desktopVirtualizationAPIClientContext";
+import { DesktopVirtualizationAPIClient } from "../desktopVirtualizationAPIClient";
 import {
   UserSession,
   UserSessionsListByHostPoolNextOptionalParams,
   UserSessionsListByHostPoolOptionalParams,
+  UserSessionsListByHostPoolResponse,
   UserSessionsListNextOptionalParams,
   UserSessionsListOptionalParams,
-  UserSessionsListByHostPoolResponse,
+  UserSessionsListResponse,
   UserSessionsGetOptionalParams,
   UserSessionsGetResponse,
   UserSessionsDeleteOptionalParams,
-  UserSessionsListResponse,
   UserSessionsDisconnectOptionalParams,
   UserSessionsSendMessageOptionalParams,
   UserSessionsListByHostPoolNextResponse,
-  UserSessionsListNextResponse
+  UserSessionsListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing UserSessions operations. */
 export class UserSessionsImpl implements UserSessions {
-  private readonly client: DesktopVirtualizationAPIClientContext;
+  private readonly client: DesktopVirtualizationAPIClient;
 
   /**
    * Initialize a new instance of the class UserSessions class.
    * @param client Reference to the service client
    */
-  constructor(client: DesktopVirtualizationAPIClientContext) {
+  constructor(client: DesktopVirtualizationAPIClient) {
     this.client = client;
   }
 
@@ -51,12 +52,12 @@ export class UserSessionsImpl implements UserSessions {
   public listByHostPool(
     resourceGroupName: string,
     hostPoolName: string,
-    options?: UserSessionsListByHostPoolOptionalParams
+    options?: UserSessionsListByHostPoolOptionalParams,
   ): PagedAsyncIterableIterator<UserSession> {
     const iter = this.listByHostPoolPagingAll(
       resourceGroupName,
       hostPoolName,
-      options
+      options,
     );
     return {
       next() {
@@ -65,49 +66,62 @@ export class UserSessionsImpl implements UserSessions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByHostPoolPagingPage(
           resourceGroupName,
           hostPoolName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByHostPoolPagingPage(
     resourceGroupName: string,
     hostPoolName: string,
-    options?: UserSessionsListByHostPoolOptionalParams
+    options?: UserSessionsListByHostPoolOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<UserSession[]> {
-    let result = await this._listByHostPool(
-      resourceGroupName,
-      hostPoolName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: UserSessionsListByHostPoolResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByHostPool(
+        resourceGroupName,
+        hostPoolName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByHostPoolNext(
         resourceGroupName,
         hostPoolName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByHostPoolPagingAll(
     resourceGroupName: string,
     hostPoolName: string,
-    options?: UserSessionsListByHostPoolOptionalParams
+    options?: UserSessionsListByHostPoolOptionalParams,
   ): AsyncIterableIterator<UserSession> {
     for await (const page of this.listByHostPoolPagingPage(
       resourceGroupName,
       hostPoolName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -124,13 +138,13 @@ export class UserSessionsImpl implements UserSessions {
     resourceGroupName: string,
     hostPoolName: string,
     sessionHostName: string,
-    options?: UserSessionsListOptionalParams
+    options?: UserSessionsListOptionalParams,
   ): PagedAsyncIterableIterator<UserSession> {
     const iter = this.listPagingAll(
       resourceGroupName,
       hostPoolName,
       sessionHostName,
-      options
+      options,
     );
     return {
       next() {
@@ -139,14 +153,18 @@ export class UserSessionsImpl implements UserSessions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           hostPoolName,
           sessionHostName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -154,26 +172,35 @@ export class UserSessionsImpl implements UserSessions {
     resourceGroupName: string,
     hostPoolName: string,
     sessionHostName: string,
-    options?: UserSessionsListOptionalParams
+    options?: UserSessionsListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<UserSession[]> {
-    let result = await this._list(
-      resourceGroupName,
-      hostPoolName,
-      sessionHostName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: UserSessionsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        hostPoolName,
+        sessionHostName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         hostPoolName,
         sessionHostName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -181,13 +208,13 @@ export class UserSessionsImpl implements UserSessions {
     resourceGroupName: string,
     hostPoolName: string,
     sessionHostName: string,
-    options?: UserSessionsListOptionalParams
+    options?: UserSessionsListOptionalParams,
   ): AsyncIterableIterator<UserSession> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       hostPoolName,
       sessionHostName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -202,11 +229,11 @@ export class UserSessionsImpl implements UserSessions {
   private _listByHostPool(
     resourceGroupName: string,
     hostPoolName: string,
-    options?: UserSessionsListByHostPoolOptionalParams
+    options?: UserSessionsListByHostPoolOptionalParams,
   ): Promise<UserSessionsListByHostPoolResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostPoolName, options },
-      listByHostPoolOperationSpec
+      listByHostPoolOperationSpec,
     );
   }
 
@@ -223,7 +250,7 @@ export class UserSessionsImpl implements UserSessions {
     hostPoolName: string,
     sessionHostName: string,
     userSessionId: string,
-    options?: UserSessionsGetOptionalParams
+    options?: UserSessionsGetOptionalParams,
   ): Promise<UserSessionsGetResponse> {
     return this.client.sendOperationRequest(
       {
@@ -231,9 +258,9 @@ export class UserSessionsImpl implements UserSessions {
         hostPoolName,
         sessionHostName,
         userSessionId,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -250,7 +277,7 @@ export class UserSessionsImpl implements UserSessions {
     hostPoolName: string,
     sessionHostName: string,
     userSessionId: string,
-    options?: UserSessionsDeleteOptionalParams
+    options?: UserSessionsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       {
@@ -258,9 +285,9 @@ export class UserSessionsImpl implements UserSessions {
         hostPoolName,
         sessionHostName,
         userSessionId,
-        options
+        options,
       },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -275,11 +302,11 @@ export class UserSessionsImpl implements UserSessions {
     resourceGroupName: string,
     hostPoolName: string,
     sessionHostName: string,
-    options?: UserSessionsListOptionalParams
+    options?: UserSessionsListOptionalParams,
   ): Promise<UserSessionsListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostPoolName, sessionHostName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -296,7 +323,7 @@ export class UserSessionsImpl implements UserSessions {
     hostPoolName: string,
     sessionHostName: string,
     userSessionId: string,
-    options?: UserSessionsDisconnectOptionalParams
+    options?: UserSessionsDisconnectOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       {
@@ -304,9 +331,9 @@ export class UserSessionsImpl implements UserSessions {
         hostPoolName,
         sessionHostName,
         userSessionId,
-        options
+        options,
       },
-      disconnectOperationSpec
+      disconnectOperationSpec,
     );
   }
 
@@ -323,7 +350,7 @@ export class UserSessionsImpl implements UserSessions {
     hostPoolName: string,
     sessionHostName: string,
     userSessionId: string,
-    options?: UserSessionsSendMessageOptionalParams
+    options?: UserSessionsSendMessageOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       {
@@ -331,9 +358,9 @@ export class UserSessionsImpl implements UserSessions {
         hostPoolName,
         sessionHostName,
         userSessionId,
-        options
+        options,
       },
-      sendMessageOperationSpec
+      sendMessageOperationSpec,
     );
   }
 
@@ -348,11 +375,11 @@ export class UserSessionsImpl implements UserSessions {
     resourceGroupName: string,
     hostPoolName: string,
     nextLink: string,
-    options?: UserSessionsListByHostPoolNextOptionalParams
+    options?: UserSessionsListByHostPoolNextOptionalParams,
   ): Promise<UserSessionsListByHostPoolNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostPoolName, nextLink, options },
-      listByHostPoolNextOperationSpec
+      listByHostPoolNextOperationSpec,
     );
   }
 
@@ -369,11 +396,11 @@ export class UserSessionsImpl implements UserSessions {
     hostPoolName: string,
     sessionHostName: string,
     nextLink: string,
-    options?: UserSessionsListNextOptionalParams
+    options?: UserSessionsListNextOptionalParams,
   ): Promise<UserSessionsListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, hostPoolName, sessionHostName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -381,38 +408,42 @@ export class UserSessionsImpl implements UserSessions {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByHostPoolOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/userSessions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/userSessions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UserSessionList
+      bodyMapper: Mappers.UserSessionList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.pageSize,
+    Parameters.isDescending,
+    Parameters.initialSkip,
+    Parameters.filter,
+  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.hostPoolName
+    Parameters.hostPoolName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UserSession
+      bodyMapper: Mappers.UserSession,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -421,21 +452,20 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.hostPoolName,
     Parameters.sessionHostName,
-    Parameters.userSessionId
+    Parameters.userSessionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.force],
   urlParameters: [
@@ -444,43 +474,46 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.hostPoolName,
     Parameters.sessionHostName,
-    Parameters.userSessionId
+    Parameters.userSessionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UserSessionList
+      bodyMapper: Mappers.UserSessionList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.pageSize,
+    Parameters.isDescending,
+    Parameters.initialSkip,
+  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.hostPoolName,
-    Parameters.sessionHostName
+    Parameters.sessionHostName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const disconnectOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}/disconnect",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}/disconnect",
   httpMethod: "POST",
   responses: {
     200: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -489,20 +522,19 @@ const disconnectOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.hostPoolName,
     Parameters.sessionHostName,
-    Parameters.userSessionId
+    Parameters.userSessionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const sendMessageOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}/sendMessage",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/hostPools/{hostPoolName}/sessionHosts/{sessionHostName}/userSessions/{userSessionId}/sendMessage",
   httpMethod: "POST",
   responses: {
     200: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.sendMessage,
   queryParameters: [Parameters.apiVersion],
@@ -512,54 +544,52 @@ const sendMessageOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.hostPoolName,
     Parameters.sessionHostName,
-    Parameters.userSessionId
+    Parameters.userSessionId,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByHostPoolNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.UserSessionList
+      bodyMapper: Mappers.UserSessionList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
-  },
-  queryParameters: [Parameters.apiVersion, Parameters.filter],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.nextLink,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.hostPoolName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.UserSessionList
+      bodyMapper: Mappers.CloudError,
     },
-    default: {
-      bodyMapper: Mappers.CloudError
-    }
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.hostPoolName,
-    Parameters.sessionHostName
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const listNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.UserSessionList,
+    },
+    default: {
+      bodyMapper: Mappers.CloudError,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.nextLink,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.hostPoolName,
+    Parameters.sessionHostName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };

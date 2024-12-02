@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Metric,
   DatabasesListMetricsOptionalParams,
@@ -26,20 +25,20 @@ import {
   DatabaseUpdate,
   DatabasesUpdateOptionalParams,
   DatabasesUpdateResponse,
+  ExportDatabaseDefinition,
+  DatabasesExportOptionalParams,
+  DatabasesExportResponse,
   DatabasesFailoverOptionalParams,
+  ImportExistingDatabaseDefinition,
+  DatabasesImportOptionalParams,
+  DatabasesImportResponse,
+  ResourceMoveDefinition,
+  DatabasesRenameOptionalParams,
   DatabasesPauseOptionalParams,
   DatabasesPauseResponse,
   DatabasesResumeOptionalParams,
   DatabasesResumeResponse,
   DatabasesUpgradeDataWarehouseOptionalParams,
-  ResourceMoveDefinition,
-  DatabasesRenameOptionalParams,
-  ImportExistingDatabaseDefinition,
-  DatabasesImportOptionalParams,
-  DatabasesImportResponse,
-  ExportDatabaseDefinition,
-  DatabasesExportOptionalParams,
-  DatabasesExportResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -59,7 +58,7 @@ export interface Databases {
     serverName: string,
     databaseName: string,
     filter: string,
-    options?: DatabasesListMetricsOptionalParams
+    options?: DatabasesListMetricsOptionalParams,
   ): PagedAsyncIterableIterator<Metric>;
   /**
    * Returns database metric definitions.
@@ -73,7 +72,7 @@ export interface Databases {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabasesListMetricDefinitionsOptionalParams
+    options?: DatabasesListMetricDefinitionsOptionalParams,
   ): PagedAsyncIterableIterator<MetricDefinition>;
   /**
    * Gets a list of databases.
@@ -85,7 +84,7 @@ export interface Databases {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: DatabasesListByServerOptionalParams
+    options?: DatabasesListByServerOptionalParams,
   ): PagedAsyncIterableIterator<Database>;
   /**
    * Gets a list of databases in an elastic pool.
@@ -99,7 +98,7 @@ export interface Databases {
     resourceGroupName: string,
     serverName: string,
     elasticPoolName: string,
-    options?: DatabasesListByElasticPoolOptionalParams
+    options?: DatabasesListByElasticPoolOptionalParams,
   ): PagedAsyncIterableIterator<Database>;
   /**
    * Gets a list of inaccessible databases in a logical server
@@ -111,7 +110,7 @@ export interface Databases {
   listInaccessibleByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: DatabasesListInaccessibleByServerOptionalParams
+    options?: DatabasesListInaccessibleByServerOptionalParams,
   ): PagedAsyncIterableIterator<Database>;
   /**
    * Gets a database.
@@ -125,7 +124,7 @@ export interface Databases {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabasesGetOptionalParams
+    options?: DatabasesGetOptionalParams,
   ): Promise<DatabasesGetResponse>;
   /**
    * Creates a new database or updates an existing database.
@@ -141,10 +140,10 @@ export interface Databases {
     serverName: string,
     databaseName: string,
     parameters: Database,
-    options?: DatabasesCreateOrUpdateOptionalParams
+    options?: DatabasesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DatabasesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DatabasesCreateOrUpdateResponse>,
       DatabasesCreateOrUpdateResponse
     >
   >;
@@ -162,7 +161,7 @@ export interface Databases {
     serverName: string,
     databaseName: string,
     parameters: Database,
-    options?: DatabasesCreateOrUpdateOptionalParams
+    options?: DatabasesCreateOrUpdateOptionalParams,
   ): Promise<DatabasesCreateOrUpdateResponse>;
   /**
    * Deletes the database.
@@ -176,8 +175,8 @@ export interface Databases {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabasesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: DatabasesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the database.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -190,7 +189,7 @@ export interface Databases {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: DatabasesDeleteOptionalParams
+    options?: DatabasesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Updates an existing database.
@@ -206,10 +205,10 @@ export interface Databases {
     serverName: string,
     databaseName: string,
     parameters: DatabaseUpdate,
-    options?: DatabasesUpdateOptionalParams
+    options?: DatabasesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DatabasesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DatabasesUpdateResponse>,
       DatabasesUpdateResponse
     >
   >;
@@ -227,183 +226,8 @@ export interface Databases {
     serverName: string,
     databaseName: string,
     parameters: DatabaseUpdate,
-    options?: DatabasesUpdateOptionalParams
+    options?: DatabasesUpdateOptionalParams,
   ): Promise<DatabasesUpdateResponse>;
-  /**
-   * Failovers a database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to failover.
-   * @param options The options parameters.
-   */
-  beginFailover(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesFailoverOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
-  /**
-   * Failovers a database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to failover.
-   * @param options The options parameters.
-   */
-  beginFailoverAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesFailoverOptionalParams
-  ): Promise<void>;
-  /**
-   * Pauses a database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to be paused.
-   * @param options The options parameters.
-   */
-  beginPause(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesPauseOptionalParams
-  ): Promise<
-    PollerLike<
-      PollOperationState<DatabasesPauseResponse>,
-      DatabasesPauseResponse
-    >
-  >;
-  /**
-   * Pauses a database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to be paused.
-   * @param options The options parameters.
-   */
-  beginPauseAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesPauseOptionalParams
-  ): Promise<DatabasesPauseResponse>;
-  /**
-   * Resumes a database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to be resumed.
-   * @param options The options parameters.
-   */
-  beginResume(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesResumeOptionalParams
-  ): Promise<
-    PollerLike<
-      PollOperationState<DatabasesResumeResponse>,
-      DatabasesResumeResponse
-    >
-  >;
-  /**
-   * Resumes a database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to be resumed.
-   * @param options The options parameters.
-   */
-  beginResumeAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesResumeOptionalParams
-  ): Promise<DatabasesResumeResponse>;
-  /**
-   * Upgrades a data warehouse.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to be upgraded.
-   * @param options The options parameters.
-   */
-  beginUpgradeDataWarehouse(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesUpgradeDataWarehouseOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
-  /**
-   * Upgrades a data warehouse.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to be upgraded.
-   * @param options The options parameters.
-   */
-  beginUpgradeDataWarehouseAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    options?: DatabasesUpgradeDataWarehouseOptionalParams
-  ): Promise<void>;
-  /**
-   * Renames a database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database to rename.
-   * @param parameters The resource move definition for renaming this database.
-   * @param options The options parameters.
-   */
-  rename(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    parameters: ResourceMoveDefinition,
-    options?: DatabasesRenameOptionalParams
-  ): Promise<void>;
-  /**
-   * Imports a bacpac into a new database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database.
-   * @param parameters The database import request parameters.
-   * @param options The options parameters.
-   */
-  beginImport(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    parameters: ImportExistingDatabaseDefinition,
-    options?: DatabasesImportOptionalParams
-  ): Promise<
-    PollerLike<
-      PollOperationState<DatabasesImportResponse>,
-      DatabasesImportResponse
-    >
-  >;
-  /**
-   * Imports a bacpac into a new database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database.
-   * @param parameters The database import request parameters.
-   * @param options The options parameters.
-   */
-  beginImportAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    parameters: ImportExistingDatabaseDefinition,
-    options?: DatabasesImportOptionalParams
-  ): Promise<DatabasesImportResponse>;
   /**
    * Exports a database.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -418,10 +242,10 @@ export interface Databases {
     serverName: string,
     databaseName: string,
     parameters: ExportDatabaseDefinition,
-    options?: DatabasesExportOptionalParams
+    options?: DatabasesExportOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<DatabasesExportResponse>,
+    SimplePollerLike<
+      OperationState<DatabasesExportResponse>,
       DatabasesExportResponse
     >
   >;
@@ -439,6 +263,181 @@ export interface Databases {
     serverName: string,
     databaseName: string,
     parameters: ExportDatabaseDefinition,
-    options?: DatabasesExportOptionalParams
+    options?: DatabasesExportOptionalParams,
   ): Promise<DatabasesExportResponse>;
+  /**
+   * Failovers a database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to failover.
+   * @param options The options parameters.
+   */
+  beginFailover(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesFailoverOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Failovers a database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to failover.
+   * @param options The options parameters.
+   */
+  beginFailoverAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesFailoverOptionalParams,
+  ): Promise<void>;
+  /**
+   * Imports a bacpac into a new database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param parameters The database import request parameters.
+   * @param options The options parameters.
+   */
+  beginImport(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    parameters: ImportExistingDatabaseDefinition,
+    options?: DatabasesImportOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DatabasesImportResponse>,
+      DatabasesImportResponse
+    >
+  >;
+  /**
+   * Imports a bacpac into a new database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param parameters The database import request parameters.
+   * @param options The options parameters.
+   */
+  beginImportAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    parameters: ImportExistingDatabaseDefinition,
+    options?: DatabasesImportOptionalParams,
+  ): Promise<DatabasesImportResponse>;
+  /**
+   * Renames a database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to rename.
+   * @param parameters The resource move definition for renaming this database.
+   * @param options The options parameters.
+   */
+  rename(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    parameters: ResourceMoveDefinition,
+    options?: DatabasesRenameOptionalParams,
+  ): Promise<void>;
+  /**
+   * Pauses a database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to be paused.
+   * @param options The options parameters.
+   */
+  beginPause(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesPauseOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DatabasesPauseResponse>,
+      DatabasesPauseResponse
+    >
+  >;
+  /**
+   * Pauses a database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to be paused.
+   * @param options The options parameters.
+   */
+  beginPauseAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesPauseOptionalParams,
+  ): Promise<DatabasesPauseResponse>;
+  /**
+   * Resumes a database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to be resumed.
+   * @param options The options parameters.
+   */
+  beginResume(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesResumeOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DatabasesResumeResponse>,
+      DatabasesResumeResponse
+    >
+  >;
+  /**
+   * Resumes a database.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to be resumed.
+   * @param options The options parameters.
+   */
+  beginResumeAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesResumeOptionalParams,
+  ): Promise<DatabasesResumeResponse>;
+  /**
+   * Upgrades a data warehouse.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to be upgraded.
+   * @param options The options parameters.
+   */
+  beginUpgradeDataWarehouse(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesUpgradeDataWarehouseOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Upgrades a data warehouse.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database to be upgraded.
+   * @param options The options parameters.
+   */
+  beginUpgradeDataWarehouseAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    options?: DatabasesUpgradeDataWarehouseOptionalParams,
+  ): Promise<void>;
 }

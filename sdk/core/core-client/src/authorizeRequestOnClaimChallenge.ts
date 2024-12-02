@@ -1,12 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { GetTokenOptions } from "@azure/core-auth";
-import { AuthorizeRequestOnChallengeOptions } from "@azure/core-rest-pipeline";
-import { createClientLogger } from "@azure/logger";
-import { decodeStringToString } from "./base64";
-
-const logger = createClientLogger("authorizeRequestOnClaimChallenge");
+import type { AuthorizeRequestOnChallengeOptions } from "@azure/core-rest-pipeline";
+import { logger as coreClientLogger } from "./log.js";
+import { decodeStringToString } from "./base64.js";
 
 /**
  * Converts: `Bearer a="b", c="d", Bearer d="e", f="g"`.
@@ -19,7 +16,7 @@ export function parseCAEChallenge(challenges: string): any[] {
   return bearerChallenges.map((challenge) => {
     const challengeParts = `${challenge.trim()}, `.split('", ').filter((x) => x);
     const keyValuePairs = challengeParts.map((keyValue) =>
-      (([key, value]) => ({ [key]: value }))(keyValue.trim().split('="'))
+      (([key, value]) => ({ [key]: value }))(keyValue.trim().split('="')),
     );
     // Key-value pairs to plain object:
     return keyValuePairs.reduce((a, b) => ({ ...a, ...b }), {});
@@ -40,12 +37,15 @@ export interface CAEChallenge {
  *
  * Call the `bearerTokenAuthenticationPolicy` with the following options:
  *
- * ```ts
+ * ```ts snippet:authorize_request_on_claim_challenge
  * import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
  * import { authorizeRequestOnClaimChallenge } from "@azure/core-client";
  *
- * const bearerTokenAuthenticationPolicy = bearerTokenAuthenticationPolicy({
- *   authorizeRequestOnChallenge: authorizeRequestOnClaimChallenge
+ * const policy = bearerTokenAuthenticationPolicy({
+ *   challengeCallbacks: {
+ *     authorizeRequestOnChallenge: authorizeRequestOnClaimChallenge,
+ *   },
+ *   scopes: ["https://service/.default"],
  * });
  * ```
  *
@@ -61,14 +61,15 @@ export interface CAEChallenge {
  * ```
  */
 export async function authorizeRequestOnClaimChallenge(
-  onChallengeOptions: AuthorizeRequestOnChallengeOptions
+  onChallengeOptions: AuthorizeRequestOnChallengeOptions,
 ): Promise<boolean> {
   const { scopes, response } = onChallengeOptions;
+  const logger = onChallengeOptions.logger || coreClientLogger;
 
   const challenge = response.headers.get("WWW-Authenticate");
   if (!challenge) {
     logger.info(
-      `The WWW-Authenticate header was missing. Failed to perform the Continuous Access Evaluation authentication flow.`
+      `The WWW-Authenticate header was missing. Failed to perform the Continuous Access Evaluation authentication flow.`,
     );
     return false;
   }
@@ -77,7 +78,7 @@ export async function authorizeRequestOnClaimChallenge(
   const parsedChallenge = challenges.find((x) => x.claims);
   if (!parsedChallenge) {
     logger.info(
-      `The WWW-Authenticate header was missing the necessary "claims" to perform the Continuous Access Evaluation authentication flow.`
+      `The WWW-Authenticate header was missing the necessary "claims" to perform the Continuous Access Evaluation authentication flow.`,
     );
     return false;
   }
@@ -85,14 +86,17 @@ export async function authorizeRequestOnClaimChallenge(
   const accessToken = await onChallengeOptions.getAccessToken(
     parsedChallenge.scope ? [parsedChallenge.scope] : scopes,
     {
-      claims: decodeStringToString(parsedChallenge.claims)
-    } as GetTokenOptions
+      claims: decodeStringToString(parsedChallenge.claims),
+    },
   );
 
   if (!accessToken) {
     return false;
   }
 
-  onChallengeOptions.request.headers.set("Authorization", `Bearer ${accessToken.token}`);
+  onChallengeOptions.request.headers.set(
+    "Authorization",
+    `${accessToken.tokenType ?? "Bearer"} ${accessToken.token}`,
+  );
   return true;
 }

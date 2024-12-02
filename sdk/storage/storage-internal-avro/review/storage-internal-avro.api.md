@@ -4,9 +4,7 @@
 
 ```ts
 
-/// <reference types="node" />
-
-import { AbortSignalLike } from '@azure/abort-controller';
+import type { AbortSignalLike } from '@azure/abort-controller';
 
 // @public (undocumented)
 export abstract class AvroReadable {

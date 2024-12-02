@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Route,
   RoutesListOptionalParams,
@@ -15,7 +15,7 @@ import {
   RoutesGetOptionalParams,
   RoutesGetResponse,
   RoutesCreateOrUpdateOptionalParams,
-  RoutesCreateOrUpdateResponse
+  RoutesCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface Routes {
   list(
     resourceGroupName: string,
     routeTableName: string,
-    options?: RoutesListOptionalParams
+    options?: RoutesListOptionalParams,
   ): PagedAsyncIterableIterator<Route>;
   /**
    * Deletes the specified route from a route table.
@@ -43,8 +43,8 @@ export interface Routes {
     resourceGroupName: string,
     routeTableName: string,
     routeName: string,
-    options?: RoutesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: RoutesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified route from a route table.
    * @param resourceGroupName The name of the resource group.
@@ -56,7 +56,7 @@ export interface Routes {
     resourceGroupName: string,
     routeTableName: string,
     routeName: string,
-    options?: RoutesDeleteOptionalParams
+    options?: RoutesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified route from a route table.
@@ -69,7 +69,7 @@ export interface Routes {
     resourceGroupName: string,
     routeTableName: string,
     routeName: string,
-    options?: RoutesGetOptionalParams
+    options?: RoutesGetOptionalParams,
   ): Promise<RoutesGetResponse>;
   /**
    * Creates or updates a route in the specified route table.
@@ -84,10 +84,10 @@ export interface Routes {
     routeTableName: string,
     routeName: string,
     routeParameters: Route,
-    options?: RoutesCreateOrUpdateOptionalParams
+    options?: RoutesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<RoutesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<RoutesCreateOrUpdateResponse>,
       RoutesCreateOrUpdateResponse
     >
   >;
@@ -104,6 +104,6 @@ export interface Routes {
     routeTableName: string,
     routeName: string,
     routeParameters: Route,
-    options?: RoutesCreateOrUpdateOptionalParams
+    options?: RoutesCreateOrUpdateOptionalParams,
   ): Promise<RoutesCreateOrUpdateResponse>;
 }

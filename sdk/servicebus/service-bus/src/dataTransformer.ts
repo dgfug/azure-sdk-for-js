@@ -1,10 +1,31 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { message } from "rhea-promise";
 import isBuffer from "is-buffer";
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 import { Buffer } from "buffer";
-import { logErrorStackTrace, logger } from "./log";
+import { logErrorStackTrace, logger } from "./log.js";
+
+/** @internal */
+export const dataSectionTypeCode = 0x75 as const;
+/** @internal */
+export const sequenceSectionTypeCode = 0x76 as const;
+/** @internal */
+export const valueSectionTypeCode = 0x77 as const;
+
+/**
+ * Mirror of the internal Section interface in rhea.
+ *
+ * @internal
+ */
+export interface RheaAmqpSection {
+  typecode:
+    | typeof dataSectionTypeCode
+    | typeof sequenceSectionTypeCode
+    | typeof valueSectionTypeCode;
+  content: any;
+}
 
 /**
  * The default data transformer that will be used by the Azure SDK.
@@ -30,7 +51,7 @@ export const defaultDataTransformer = {
       result.typecode = valueSectionTypeCode;
     } else if (bodyType === "sequence") {
       result = message.sequence_section(body);
-    } else if (isBuffer(body)) {
+    } else if (isBuffer(body) || body instanceof Uint8Array) {
       result = message.data_section(body);
     } else {
       // string, undefined, null, boolean, array, object, number should end up here
@@ -40,7 +61,7 @@ export const defaultDataTransformer = {
       try {
         const bodyStr = JSON.stringify(body);
         result = message.data_section(Buffer.from(bodyStr, "utf8"));
-      } catch (err) {
+      } catch (err: any) {
         const msg =
           `An error occurred while executing JSON.stringify() on the given body ` +
           body +
@@ -64,16 +85,17 @@ export const defaultDataTransformer = {
    * of the AMQP mesage.
    *
    * @param body - The AMQP message body
-   * @return decoded body or the given body as-is.
+   * @param skipParsingBodyAsJson - Boolean to skip running JSON.parse() on message body content.
+   * @returns decoded body or the given body as-is.
    */
-  decode(body: unknown): unknown {
+  decode(body: unknown, skipParsingBodyAsJson: boolean): unknown {
     let actualContent = body;
 
     if (isRheaAmqpSection(body)) {
       actualContent = body.content;
     }
 
-    return tryToJsonDecode(actualContent);
+    return skipParsingBodyAsJson ? actualContent : tryToJsonDecode(actualContent);
   },
   /**
    * A function that takes the body property from an AMQP message, which can come from either
@@ -83,16 +105,21 @@ export const defaultDataTransformer = {
    * indicating which part of the AMQP message the body was decoded from.
    *
    * @param body - The AMQP message body as received from rhea.
-   * @return The decoded/raw body and the body type.
+   * @param skipParsingBodyAsJson - Boolean to skip running JSON.parse() on message body.
+   * @returns The decoded/raw body and the body type.
    */
   decodeWithType(
-    body: unknown | RheaAmqpSection
+    body: unknown | RheaAmqpSection,
+    skipParsingBodyAsJson: boolean,
   ): { body: unknown; bodyType: "data" | "sequence" | "value" } {
     try {
       if (isRheaAmqpSection(body)) {
         switch (body.typecode) {
           case dataSectionTypeCode:
-            return { body: tryToJsonDecode(body.content), bodyType: "data" };
+            return {
+              body: skipParsingBodyAsJson ? body.content : tryToJsonDecode(body.content),
+              bodyType: "data",
+            };
           case sequenceSectionTypeCode:
             // typecode:
             // handle sequences
@@ -105,24 +132,24 @@ export const defaultDataTransformer = {
         // not sure - we have to try to infer the proper bodyType and content
         if (isBuffer(body)) {
           // This indicates that we are getting the AMQP described type. Let us try decoding it.
-          return { body: tryToJsonDecode(body), bodyType: "data" };
+          return { body: skipParsingBodyAsJson ? body : tryToJsonDecode(body), bodyType: "data" };
         } else {
           return { body: body, bodyType: "value" };
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.verbose(
         "[decode] An error occurred while decoding the received message body. The error is: %O",
-        err
+        err,
       );
       throw err;
     }
-  }
+  },
 };
 
 /** @internal */
 export function isRheaAmqpSection(
-  possibleSection: any | RheaAmqpSection
+  possibleSection: any | RheaAmqpSection,
 ): possibleSection is RheaAmqpSection {
   return (
     possibleSection != null &&
@@ -137,11 +164,12 @@ export function isRheaAmqpSection(
  * Attempts to decode 'body' as a JSON string. If it fails it returns body
  * verbatim.
  *
- * @param body An AMQP message body.
+ * @param body - An AMQP message body.
  * @returns A JSON decoded object, or body if body was not a JSON string.
  *
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function tryToJsonDecode(body: any): any {
   let processedBody = body;
   try {
@@ -149,32 +177,12 @@ export function tryToJsonDecode(body: any): any {
     // the original type back
     const bodyStr: string = processedBody.toString("utf8");
     processedBody = JSON.parse(bodyStr);
-  } catch (err) {
+  } catch (err: any) {
     logger.verbose(
       "[decode] An error occurred while trying JSON.parse() on the received body. " +
         "The error is %O",
-      err
+      err,
     );
   }
   return processedBody;
-}
-
-/** @internal */
-export const dataSectionTypeCode: 0x75 = 0x75;
-/** @internal */
-export const sequenceSectionTypeCode: 0x76 = 0x76;
-/** @internal */
-export const valueSectionTypeCode: 0x77 = 0x77;
-
-/**
- * Mirror of the internal Section interface in rhea.
- *
- * @internal
- */
-export interface RheaAmqpSection {
-  typecode:
-    | typeof dataSectionTypeCode
-    | typeof sequenceSectionTypeCode
-    | typeof valueSectionTypeCode;
-  content: any;
 }

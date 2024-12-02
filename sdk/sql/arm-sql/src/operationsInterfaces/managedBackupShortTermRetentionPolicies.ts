@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ManagedBackupShortTermRetentionPolicy,
   ManagedBackupShortTermRetentionPoliciesListByDatabaseOptionalParams,
@@ -18,7 +17,7 @@ import {
   ManagedBackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams,
   ManagedBackupShortTermRetentionPoliciesCreateOrUpdateResponse,
   ManagedBackupShortTermRetentionPoliciesUpdateOptionalParams,
-  ManagedBackupShortTermRetentionPoliciesUpdateResponse
+  ManagedBackupShortTermRetentionPoliciesUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -36,7 +35,7 @@ export interface ManagedBackupShortTermRetentionPolicies {
     resourceGroupName: string,
     managedInstanceName: string,
     databaseName: string,
-    options?: ManagedBackupShortTermRetentionPoliciesListByDatabaseOptionalParams
+    options?: ManagedBackupShortTermRetentionPoliciesListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<ManagedBackupShortTermRetentionPolicy>;
   /**
    * Gets a managed database's short term retention policy.
@@ -52,7 +51,7 @@ export interface ManagedBackupShortTermRetentionPolicies {
     managedInstanceName: string,
     databaseName: string,
     policyName: ManagedShortTermRetentionPolicyName,
-    options?: ManagedBackupShortTermRetentionPoliciesGetOptionalParams
+    options?: ManagedBackupShortTermRetentionPoliciesGetOptionalParams,
   ): Promise<ManagedBackupShortTermRetentionPoliciesGetResponse>;
   /**
    * Updates a managed database's short term retention policy.
@@ -70,12 +69,10 @@ export interface ManagedBackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ManagedShortTermRetentionPolicyName,
     parameters: ManagedBackupShortTermRetentionPolicy,
-    options?: ManagedBackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams
+    options?: ManagedBackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ManagedBackupShortTermRetentionPoliciesCreateOrUpdateResponse
-      >,
+    SimplePollerLike<
+      OperationState<ManagedBackupShortTermRetentionPoliciesCreateOrUpdateResponse>,
       ManagedBackupShortTermRetentionPoliciesCreateOrUpdateResponse
     >
   >;
@@ -95,7 +92,7 @@ export interface ManagedBackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ManagedShortTermRetentionPolicyName,
     parameters: ManagedBackupShortTermRetentionPolicy,
-    options?: ManagedBackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams
+    options?: ManagedBackupShortTermRetentionPoliciesCreateOrUpdateOptionalParams,
   ): Promise<ManagedBackupShortTermRetentionPoliciesCreateOrUpdateResponse>;
   /**
    * Updates a managed database's short term retention policy.
@@ -113,10 +110,10 @@ export interface ManagedBackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ManagedShortTermRetentionPolicyName,
     parameters: ManagedBackupShortTermRetentionPolicy,
-    options?: ManagedBackupShortTermRetentionPoliciesUpdateOptionalParams
+    options?: ManagedBackupShortTermRetentionPoliciesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ManagedBackupShortTermRetentionPoliciesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ManagedBackupShortTermRetentionPoliciesUpdateResponse>,
       ManagedBackupShortTermRetentionPoliciesUpdateResponse
     >
   >;
@@ -136,6 +133,6 @@ export interface ManagedBackupShortTermRetentionPolicies {
     databaseName: string,
     policyName: ManagedShortTermRetentionPolicyName,
     parameters: ManagedBackupShortTermRetentionPolicy,
-    options?: ManagedBackupShortTermRetentionPoliciesUpdateOptionalParams
+    options?: ManagedBackupShortTermRetentionPoliciesUpdateOptionalParams,
   ): Promise<ManagedBackupShortTermRetentionPoliciesUpdateResponse>;
 }

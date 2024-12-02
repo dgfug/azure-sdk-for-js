@@ -6,32 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { WebCategories } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
   AzureWebCategory,
   WebCategoriesListBySubscriptionNextOptionalParams,
   WebCategoriesListBySubscriptionOptionalParams,
+  WebCategoriesListBySubscriptionResponse,
   WebCategoriesGetOptionalParams,
   WebCategoriesGetResponse,
-  WebCategoriesListBySubscriptionResponse,
-  WebCategoriesListBySubscriptionNextResponse
+  WebCategoriesListBySubscriptionNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing WebCategories operations. */
 export class WebCategoriesImpl implements WebCategories {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class WebCategories class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -40,7 +41,7 @@ export class WebCategoriesImpl implements WebCategories {
    * @param options The options parameters.
    */
   public listBySubscription(
-    options?: WebCategoriesListBySubscriptionOptionalParams
+    options?: WebCategoriesListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<AzureWebCategory> {
     const iter = this.listBySubscriptionPagingAll(options);
     return {
@@ -50,27 +51,39 @@ export class WebCategoriesImpl implements WebCategories {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySubscriptionPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySubscriptionPagingPage(options, settings);
+      },
     };
   }
 
   private async *listBySubscriptionPagingPage(
-    options?: WebCategoriesListBySubscriptionOptionalParams
+    options?: WebCategoriesListBySubscriptionOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<AzureWebCategory[]> {
-    let result = await this._listBySubscription(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: WebCategoriesListBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySubscription(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySubscriptionNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listBySubscriptionPagingAll(
-    options?: WebCategoriesListBySubscriptionOptionalParams
+    options?: WebCategoriesListBySubscriptionOptionalParams,
   ): AsyncIterableIterator<AzureWebCategory> {
     for await (const page of this.listBySubscriptionPagingPage(options)) {
       yield* page;
@@ -84,11 +97,11 @@ export class WebCategoriesImpl implements WebCategories {
    */
   get(
     name: string,
-    options?: WebCategoriesGetOptionalParams
+    options?: WebCategoriesGetOptionalParams,
   ): Promise<WebCategoriesGetResponse> {
     return this.client.sendOperationRequest(
       { name, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -97,11 +110,11 @@ export class WebCategoriesImpl implements WebCategories {
    * @param options The options parameters.
    */
   private _listBySubscription(
-    options?: WebCategoriesListBySubscriptionOptionalParams
+    options?: WebCategoriesListBySubscriptionOptionalParams,
   ): Promise<WebCategoriesListBySubscriptionResponse> {
     return this.client.sendOperationRequest(
       { options },
-      listBySubscriptionOperationSpec
+      listBySubscriptionOperationSpec,
     );
   }
 
@@ -112,11 +125,11 @@ export class WebCategoriesImpl implements WebCategories {
    */
   private _listBySubscriptionNext(
     nextLink: string,
-    options?: WebCategoriesListBySubscriptionNextOptionalParams
+    options?: WebCategoriesListBySubscriptionNextOptionalParams,
   ): Promise<WebCategoriesListBySubscriptionNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listBySubscriptionNextOperationSpec
+      listBySubscriptionNextOperationSpec,
     );
   }
 }
@@ -124,56 +137,53 @@ export class WebCategoriesImpl implements WebCategories {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/azureWebCategories/{name}",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/azureWebCategories/{name}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureWebCategory
+      bodyMapper: Mappers.AzureWebCategory,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.expand],
   urlParameters: [Parameters.$host, Parameters.subscriptionId, Parameters.name],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySubscriptionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/azureWebCategories",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/azureWebCategories",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureWebCategoryListResult
+      bodyMapper: Mappers.AzureWebCategoryListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySubscriptionNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AzureWebCategoryListResult
+      bodyMapper: Mappers.AzureWebCategoryListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

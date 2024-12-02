@@ -1,32 +1,26 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /// <reference lib="esnext.asynciterable" />
 
 import {
-  parseClientArguments,
+  createCommunicationAuthPolicy,
   isKeyCredential,
-  createCommunicationAuthPolicy
+  parseClientArguments,
 } from "@azure/communication-common";
-import { KeyCredential, TokenCredential } from "@azure/core-auth";
-import {
-  PipelineOptions,
-  InternalPipelineOptions,
-  createPipelineFromOptions,
-  OperationOptions,
-  operationOptionsToRequestOptionsBase
-} from "@azure/core-http";
-import { SpanStatusCode } from "@azure/core-tracing";
-import { SmsApiClient } from "./generated/src/smsApiClient";
-import { SDK_VERSION } from "./constants";
-import { createSpan } from "./tracing";
-import { logger } from "./logger";
-import { extractOperationOptions } from "./extractOperationOptions";
-import { generateSendMessageRequest } from "./utils/smsUtils";
+import type { KeyCredential, TokenCredential } from "@azure/core-auth";
+import { isTokenCredential } from "@azure/core-auth";
+import type { CommonClientOptions, OperationOptions } from "@azure/core-client";
+import type { InternalPipelineOptions } from "@azure/core-rest-pipeline";
+import { SmsApiClient } from "./generated/src/smsApiClient.js";
+import { extractOperationOptions } from "./extractOperationOptions.js";
+import { generateSendMessageRequest } from "./utils/smsUtils.js";
+import { logger } from "./logger.js";
+import { tracingClient } from "./generated/src/tracing.js";
 
 /**
  * Client options used to configure SMS Client API requests.
  */
-export interface SmsClientOptions extends PipelineOptions {}
+export interface SmsClientOptions extends CommonClientOptions {}
 
 /**
  * Values used to configure Sms message
@@ -61,6 +55,8 @@ export interface SmsSendOptions extends OperationOptions {
    * Report.
    */
   tag?: string;
+  /** Time to wait for a delivery report. After this time a delivery report with timeout error code is generated. */
+  deliveryReportTimeoutInSeconds?: number;
 }
 
 export interface SmsSendResult {
@@ -92,7 +88,7 @@ export interface SmsSendResult {
  * @param options - The value being checked.
  */
 const isSmsClientOptions = (options: any): options is SmsClientOptions =>
-  !!options && !isKeyCredential(options);
+  !!options && !isTokenCredential(options) && !isKeyCredential(options);
 
 /**
  * A SmsClient represents a Client to the Azure Communication Sms service allowing you
@@ -128,34 +124,23 @@ export class SmsClient {
   constructor(
     connectionStringOrUrl: string,
     credentialOrOptions?: KeyCredential | TokenCredential | SmsClientOptions,
-    maybeOptions: SmsClientOptions = {}
+    maybeOptions: SmsClientOptions = {},
   ) {
     const { url, credential } = parseClientArguments(connectionStringOrUrl, credentialOrOptions);
     const options = isSmsClientOptions(credentialOrOptions) ? credentialOrOptions : maybeOptions;
-    const libInfo = `azsdk-js-communication-sms/${SDK_VERSION}`;
-
-    if (!options.userAgentOptions) {
-      options.userAgentOptions = {};
-    }
-
-    if (options.userAgentOptions.userAgentPrefix) {
-      options.userAgentOptions.userAgentPrefix = `${options.userAgentOptions.userAgentPrefix} ${libInfo}`;
-    } else {
-      options.userAgentOptions.userAgentPrefix = libInfo;
-    }
 
     const internalPipelineOptions: InternalPipelineOptions = {
       ...options,
       ...{
         loggingOptions: {
-          logger: logger.info
-        }
-      }
+          logger: logger.info,
+        },
+      },
     };
 
     const authPolicy = createCommunicationAuthPolicy(credential);
-    const pipeline = createPipelineFromOptions(internalPipelineOptions, authPolicy);
-    this.api = new SmsApiClient(url, pipeline);
+    this.api = new SmsApiClient(url, internalPipelineOptions);
+    this.api.pipeline.addPolicy(authPolicy);
   }
 
   /**
@@ -166,25 +151,15 @@ export class SmsClient {
    */
   public async send(
     sendRequest: SmsSendRequest,
-    options: SmsSendOptions = { enableDeliveryReport: false }
+    options: SmsSendOptions = { enableDeliveryReport: false },
   ): Promise<SmsSendResult[]> {
     const { operationOptions, restOptions } = extractOperationOptions(options);
-    const { span, updatedOptions } = createSpan("SmsClient-Send", operationOptions);
-
-    try {
+    return tracingClient.withSpan("SmsClient-Send", operationOptions, async (updatedOptions) => {
       const response = await this.api.sms.send(
         generateSendMessageRequest(sendRequest, restOptions),
-        operationOptionsToRequestOptionsBase(updatedOptions)
+        updatedOptions,
       );
       return response.value;
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    });
   }
 }

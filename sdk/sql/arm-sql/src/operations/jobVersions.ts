@@ -6,13 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { JobVersions } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
+import { SqlManagementClient } from "../sqlManagementClient";
 import {
   JobVersion,
   JobVersionsListByJobNextOptionalParams,
@@ -20,19 +20,19 @@ import {
   JobVersionsListByJobResponse,
   JobVersionsGetOptionalParams,
   JobVersionsGetResponse,
-  JobVersionsListByJobNextResponse
+  JobVersionsListByJobNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing JobVersions operations. */
 export class JobVersionsImpl implements JobVersions {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class JobVersions class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -50,14 +50,14 @@ export class JobVersionsImpl implements JobVersions {
     serverName: string,
     jobAgentName: string,
     jobName: string,
-    options?: JobVersionsListByJobOptionalParams
+    options?: JobVersionsListByJobOptionalParams,
   ): PagedAsyncIterableIterator<JobVersion> {
     const iter = this.listByJobPagingAll(
       resourceGroupName,
       serverName,
       jobAgentName,
       jobName,
-      options
+      options,
     );
     return {
       next() {
@@ -66,15 +66,19 @@ export class JobVersionsImpl implements JobVersions {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByJobPagingPage(
           resourceGroupName,
           serverName,
           jobAgentName,
           jobName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -83,17 +87,24 @@ export class JobVersionsImpl implements JobVersions {
     serverName: string,
     jobAgentName: string,
     jobName: string,
-    options?: JobVersionsListByJobOptionalParams
+    options?: JobVersionsListByJobOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<JobVersion[]> {
-    let result = await this._listByJob(
-      resourceGroupName,
-      serverName,
-      jobAgentName,
-      jobName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: JobVersionsListByJobResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByJob(
+        resourceGroupName,
+        serverName,
+        jobAgentName,
+        jobName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByJobNext(
         resourceGroupName,
@@ -101,10 +112,12 @@ export class JobVersionsImpl implements JobVersions {
         jobAgentName,
         jobName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -113,14 +126,14 @@ export class JobVersionsImpl implements JobVersions {
     serverName: string,
     jobAgentName: string,
     jobName: string,
-    options?: JobVersionsListByJobOptionalParams
+    options?: JobVersionsListByJobOptionalParams,
   ): AsyncIterableIterator<JobVersion> {
     for await (const page of this.listByJobPagingPage(
       resourceGroupName,
       serverName,
       jobAgentName,
       jobName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -140,11 +153,11 @@ export class JobVersionsImpl implements JobVersions {
     serverName: string,
     jobAgentName: string,
     jobName: string,
-    options?: JobVersionsListByJobOptionalParams
+    options?: JobVersionsListByJobOptionalParams,
   ): Promise<JobVersionsListByJobResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, jobAgentName, jobName, options },
-      listByJobOperationSpec
+      listByJobOperationSpec,
     );
   }
 
@@ -164,7 +177,7 @@ export class JobVersionsImpl implements JobVersions {
     jobAgentName: string,
     jobName: string,
     jobVersion: number,
-    options?: JobVersionsGetOptionalParams
+    options?: JobVersionsGetOptionalParams,
   ): Promise<JobVersionsGetResponse> {
     return this.client.sendOperationRequest(
       {
@@ -173,9 +186,9 @@ export class JobVersionsImpl implements JobVersions {
         jobAgentName,
         jobName,
         jobVersion,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -195,7 +208,7 @@ export class JobVersionsImpl implements JobVersions {
     jobAgentName: string,
     jobName: string,
     nextLink: string,
-    options?: JobVersionsListByJobNextOptionalParams
+    options?: JobVersionsListByJobNextOptionalParams,
   ): Promise<JobVersionsListByJobNextResponse> {
     return this.client.sendOperationRequest(
       {
@@ -204,9 +217,9 @@ export class JobVersionsImpl implements JobVersions {
         jobAgentName,
         jobName,
         nextLink,
-        options
+        options,
       },
-      listByJobNextOperationSpec
+      listByJobNextOperationSpec,
     );
   }
 }
@@ -214,38 +227,15 @@ export class JobVersionsImpl implements JobVersions {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByJobOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/jobAgents/{jobAgentName}/jobs/{jobName}/versions",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/jobAgents/{jobAgentName}/jobs/{jobName}/versions",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.JobVersionListResult
+      bodyMapper: Mappers.JobVersionListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.serverName,
-    Parameters.jobAgentName,
-    Parameters.jobName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/jobAgents/{jobAgentName}/jobs/{jobName}/versions/{jobVersion}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.JobVersion
-    },
-    default: {}
-  },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -253,21 +243,41 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.serverName,
     Parameters.jobAgentName,
     Parameters.jobName,
-    Parameters.jobVersion
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const getOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/jobAgents/{jobAgentName}/jobs/{jobName}/versions/{jobVersion}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.JobVersion,
+    },
+    default: {},
+  },
+  queryParameters: [Parameters.apiVersion3],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.serverName,
+    Parameters.jobAgentName,
+    Parameters.jobName,
+    Parameters.jobVersion,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const listByJobNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.JobVersionListResult
+      bodyMapper: Mappers.JobVersionListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
@@ -275,8 +285,8 @@ const listByJobNextOperationSpec: coreClient.OperationSpec = {
     Parameters.serverName,
     Parameters.nextLink,
     Parameters.jobAgentName,
-    Parameters.jobName
+    Parameters.jobName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

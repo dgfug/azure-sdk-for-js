@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-export const SDK_VERSION: string = "12.8.0-beta.2";
-export const SERVICE_VERSION: string = "2020-12-06";
+export const SDK_VERSION: string = "12.25.0";
+export const SERVICE_VERSION: string = "2025-01-05";
 
 export const KB: number = 1024;
 export const MB: number = KB * 1024;
@@ -16,6 +16,9 @@ export const FILE_UPLOAD_DEFAULT_CHUNK_SIZE: number = 8 * MB;
 export const BLOCK_BLOB_MAX_BLOCKS: number = 50000;
 export const FILE_MAX_SIZE_BYTES: number = BLOCK_BLOB_MAX_BLOCKS * FILE_UPLOAD_MAX_CHUNK_SIZE;
 
+/**
+ * The OAuth scope to use with Azure Storage.
+ */
 export const StorageOAuthScopes: string | string[] = "https://storage.azure.com/.default";
 
 export const StorageDataLakeLoggingAllowedHeaderNames = [
@@ -110,7 +113,7 @@ export const StorageDataLakeLoggingAllowedHeaderNames = [
   "x-ms-source-if-none-match",
   "x-ms-source-if-unmodified-since",
   "x-ms-tag-count",
-  "x-ms-encryption-key-sha256"
+  "x-ms-encryption-key-sha256",
 ];
 
 export const StorageDataLakeLoggingAllowedQueryParameters = [
@@ -146,7 +149,7 @@ export const StorageDataLakeLoggingAllowedQueryParameters = [
   "skt",
   "sktid",
   "skv",
-  "snapshot"
+  "snapshot",
 ];
 
 export const UrlConstants = {
@@ -154,8 +157,8 @@ export const UrlConstants = {
     FORCE_BROWSER_NO_CACHE: "_",
     SIGNATURE: "sig",
     SNAPSHOT: "snapshot",
-    TIMEOUT: "timeout"
-  }
+    TIMEOUT: "timeout",
+  },
 };
 
 export const HttpUrlConnection = {
@@ -163,7 +166,7 @@ export const HttpUrlConnection = {
   HTTP_CONFLICT: 409,
   HTTP_NOT_FOUND: 404,
   HTTP_PRECON_FAILED: 412,
-  HTTP_RANGE_NOT_SATISFIABLE: 416
+  HTTP_RANGE_NOT_SATISFIABLE: 416,
 };
 
 export const HeaderConstants = {
@@ -189,7 +192,7 @@ export const HeaderConstants = {
   X_MS_COPY_SOURCE: "x-ms-copy-source",
   X_MS_DATE: "x-ms-date",
   X_MS_ERROR_CODE: "x-ms-error-code",
-  X_MS_VERSION: "x-ms-version"
+  X_MS_VERSION: "x-ms-version",
 };
 
 export const DevelopmentConnectionString = `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;`;
@@ -203,7 +206,8 @@ export const ToBlobEndpointHostMappings = [
   ["dfs.core.usgovcloudapi.net", "blob.core.usgovcloudapi.net"],
   ["dfs.core.cloudapi.de", "blob.core.cloudapi.de"],
   ["dfs.core.microsoft.scloud", "blob.core.microsoft.scloud"],
-  ["dfs.core.eaglex.ic.gov", "blob.core.eaglex.ic.gov"]
+  ["dfs.core.eaglex.ic.gov", "blob.core.eaglex.ic.gov"],
+  ["dfs.storage.azure.net", "blob.storage.azure.net"],
 ];
 
 // Mapping pairs to transform url from blob endpoint to dfs endpoint
@@ -215,14 +219,41 @@ export const ToDfsEndpointHostMappings = [
   ["blob.core.usgovcloudapi.net", "dfs.core.usgovcloudapi.net"],
   ["blob.core.cloudapi.de", "dfs.core.cloudapi.de"],
   ["blob.core.microsoft.scloud", "dfs.core.microsoft.scloud"],
-  ["blob.core.eaglex.ic.gov", "dfs.core.eaglex.ic.gov"]
+  ["blob.core.eaglex.ic.gov", "dfs.core.eaglex.ic.gov"],
+  ["blob.storage.azure.net", "dfs.storage.azure.net"],
 ];
 
 export const ETagAny = "*";
 
 export const DeletionIdKey = "deletionid";
+export const EncryptionAlgorithmAES25 = "AES256";
 
 export const PathResultTypeConstants = {
   FileResourceType: "file",
-  DirectoryResourceType: "directory"
+  DirectoryResourceType: "directory",
 };
+
+/// List of ports used for path style addressing.
+/// Path style addressing means that storage account is put in URI's Path segment in instead of in host.
+export const PathStylePorts = [
+  "10000",
+  "10001",
+  "10002",
+  "10003",
+  "10004",
+  "10100",
+  "10101",
+  "10102",
+  "10103",
+  "10104",
+  "11000",
+  "11001",
+  "11002",
+  "11003",
+  "11004",
+  "11100",
+  "11101",
+  "11102",
+  "11103",
+  "11104",
+];

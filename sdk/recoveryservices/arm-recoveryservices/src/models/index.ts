@@ -224,32 +224,33 @@ export interface CheckNameAvailabilityResult {
   message?: string;
 }
 
+/** Capabilities information */
+export interface CapabilitiesProperties {
+  dnsZones?: DNSZone[];
+}
+
+/** DNSZone information */
+export interface DNSZone {
+  /** Subresource type for vault AzureBackup, AzureBackup_secondary or AzureSiteRecovery */
+  subResource?: VaultSubResourceType;
+}
+
+/** Base class for request and response capabilities information for Microsoft.RecoveryServices */
+export interface ResourceCapabilitiesBase {
+  /** Describes the Resource type: Microsoft.RecoveryServices/Vaults */
+  type: string;
+}
+
+/** Capabilities properties in response */
+export interface CapabilitiesResponseProperties {
+  dnsZones?: DNSZoneResponse[];
+}
+
 /** The response model for a list of Vaults. */
 export interface VaultList {
   value?: Vault[];
   /** NOTE: This property will not be serialized. It can only be populated by the server. */
   readonly nextLink?: string;
-}
-
-/** ARM Resource. */
-export interface Resource {
-  /**
-   * Resource Id represents the complete path to the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly id?: string;
-  /**
-   * Resource name associated with the resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly name?: string;
-  /**
-   * Resource type represents the complete path of the form Namespace/ResourceType/ResourceType/...
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly type?: string;
-  /** Optional ETag. */
-  etag?: string;
 }
 
 /** Identity for the resource. */
@@ -317,6 +318,33 @@ export interface VaultProperties {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly moveState?: ResourceMoveState;
+  /**
+   * Backup storage version
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly backupStorageVersion?: BackupStorageVersion;
+  /** property to enable or disable resource provider inbound network traffic from public clients */
+  publicNetworkAccess?: PublicNetworkAccess;
+  /** Monitoring Settings of the vault */
+  monitoringSettings?: MonitoringSettings;
+  /** Restore Settings of the vault */
+  restoreSettings?: RestoreSettings;
+  /** The redundancy Settings of a Vault */
+  redundancySettings?: VaultPropertiesRedundancySettings;
+  /** Security Settings of the vault */
+  securitySettings?: SecuritySettings;
+  /**
+   * Secure Score of Recovery Services Vault
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly secureScore?: SecureScoreLevel;
+  /**
+   * Security levels of Recovery Services Vault for business continuity and disaster recovery
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly bcdrSecurityLevel?: BcdrSecurityLevel;
+  /** ResourceGuardOperationRequests on which LAC check will be performed */
+  resourceGuardOperationRequests?: string[];
 }
 
 /** Details for upgrading vault. */
@@ -414,6 +442,8 @@ export interface PrivateEndpointConnection {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;
+  /** Group Ids for the Private Endpoint */
+  groupIds?: VaultSubResourceType[];
 }
 
 /** The Private Endpoint network resource that is linked to the Private Endpoint connection. */
@@ -497,9 +527,75 @@ export interface VaultPropertiesMoveDetails {
   readonly targetResourceId?: string;
 }
 
+/** Monitoring Settings of the vault */
+export interface MonitoringSettings {
+  /** Settings for Azure Monitor based alerts */
+  azureMonitorAlertSettings?: AzureMonitorAlertSettings;
+  /** Settings for classic alerts */
+  classicAlertSettings?: ClassicAlertSettings;
+}
+
+/** Settings for Azure Monitor based alerts */
+export interface AzureMonitorAlertSettings {
+  alertsForAllJobFailures?: AlertsState;
+  alertsForAllReplicationIssues?: AlertsState;
+  alertsForAllFailoverIssues?: AlertsState;
+}
+
+/** Settings for classic alerts */
+export interface ClassicAlertSettings {
+  alertsForCriticalOperations?: AlertsState;
+  emailNotificationsForSiteRecovery?: AlertsState;
+}
+
+/** Restore Settings  of the vault */
+export interface RestoreSettings {
+  /** Settings for CrossSubscriptionRestore */
+  crossSubscriptionRestoreSettings?: CrossSubscriptionRestoreSettings;
+}
+
+/** Settings for Cross Subscription Restore Settings */
+export interface CrossSubscriptionRestoreSettings {
+  crossSubscriptionRestoreState?: CrossSubscriptionRestoreState;
+}
+
+/** The redundancy Settings of a Vault */
+export interface VaultPropertiesRedundancySettings {
+  /** The storage redundancy setting of a vault */
+  standardTierStorageRedundancy?: StandardTierStorageRedundancy;
+  /** Flag to show if Cross Region Restore is enabled on the Vault or not */
+  crossRegionRestore?: CrossRegionRestore;
+}
+
+/** Security Settings of the vault */
+export interface SecuritySettings {
+  /** Immutability Settings of a vault */
+  immutabilitySettings?: ImmutabilitySettings;
+  /** Soft delete Settings of a vault */
+  softDeleteSettings?: SoftDeleteSettings;
+  /**
+   * MUA Settings of a vault
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly multiUserAuthorization?: MultiUserAuthorization;
+}
+
+/** Immutability Settings of vault */
+export interface ImmutabilitySettings {
+  state?: ImmutabilityState;
+}
+
+/** Soft delete Settings of vault */
+export interface SoftDeleteSettings {
+  softDeleteState?: SoftDeleteState;
+  /** Soft delete retention period in days */
+  softDeleteRetentionPeriodInDays?: number;
+  enhancedSecurityState?: EnhancedSecurityState;
+}
+
 /** Identifies the unique system identifier for each Azure resource. */
 export interface Sku {
-  /** The Sku name. */
+  /** Name of SKU is RS0 (Recovery Services 0th version) and the tier is standard tier. They do not have affect on backend storage redundancy or any other vault settings. To manage storage redundancy, use the backupstorageconfig */
   name: SkuName;
   /** The Sku tier. */
   tier?: string;
@@ -525,6 +621,27 @@ export interface SystemData {
   lastModifiedByType?: CreatedByType;
   /** The type of identity that last modified the resource. */
   lastModifiedAt?: Date;
+}
+
+/** ARM Resource. */
+export interface Resource {
+  /**
+   * Resource Id represents the complete path to the resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+  /**
+   * Resource name associated with the resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * Resource type represents the complete path of the form Namespace/ResourceType/ResourceType/...
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /** Optional ETag. */
+  etag?: string;
 }
 
 /** Operations List response which contains list of available APIs. */
@@ -581,6 +698,41 @@ export interface ClientDiscoveryForLogSpecification {
   blobDuration?: string;
 }
 
+/** Common error response for all Azure Resource Manager APIs to return error details for failed operations. (This also follows the OData error response format.). */
+export interface ErrorResponse {
+  /** The error object. */
+  error?: ErrorDetail;
+}
+
+/** The error detail. */
+export interface ErrorDetail {
+  /**
+   * The error code.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly code?: string;
+  /**
+   * The error message.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly message?: string;
+  /**
+   * The error target.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly target?: string;
+  /**
+   * The error details.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly details?: ErrorDetail[];
+  /**
+   * The error additional info.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly additionalInfo?: ErrorAdditionalInfo[];
+}
+
 /** Operation Resource */
 export interface OperationResource {
   /** End time of the operation */
@@ -628,7 +780,8 @@ export interface NameInfo {
 }
 
 /** Certificate details representing the Vault credentials for AAD. */
-export type ResourceCertificateAndAadDetails = ResourceCertificateDetails & {
+export interface ResourceCertificateAndAadDetails
+  extends ResourceCertificateDetails {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   authType: "AzureActiveDirectory";
   /** AAD tenant authority. */
@@ -643,10 +796,13 @@ export type ResourceCertificateAndAadDetails = ResourceCertificateDetails & {
   azureManagementEndpointAudience: string;
   /** Service Resource Id. */
   serviceResourceId?: string;
-};
+  /** AAD audience for the resource */
+  aadAudience?: string;
+}
 
 /** Certificate details representing the Vault credentials for ACS. */
-export type ResourceCertificateAndAcsDetails = ResourceCertificateDetails & {
+export interface ResourceCertificateAndAcsDetails
+  extends ResourceCertificateDetails {
   /** Polymorphic discriminator, which specifies the different types this object can be */
   authType: "AccessControlService";
   /** ACS namespace name - tenant for our service. */
@@ -655,26 +811,44 @@ export type ResourceCertificateAndAcsDetails = ResourceCertificateDetails & {
   globalAcsHostName: string;
   /** Global ACS namespace RP realm. */
   globalAcsRPRealm: string;
-};
+}
+
+/** DNSZone information for Microsoft.RecoveryServices */
+export interface DNSZoneResponse extends DNSZone {
+  /** The private link resource Private link DNS zone names. */
+  requiredZoneNames?: string[];
+}
+
+/** Input to get capabilities information for Microsoft.RecoveryServices */
+export interface ResourceCapabilities extends ResourceCapabilitiesBase {
+  /** Capabilities information */
+  properties?: CapabilitiesProperties;
+}
+
+/** Capabilities response for Microsoft.RecoveryServices */
+export interface CapabilitiesResponse extends ResourceCapabilitiesBase {
+  /** Capabilities properties in response */
+  properties?: CapabilitiesResponseProperties;
+}
 
 /** Tracked resource with location. */
-export type TrackedResource = Resource & {
+export interface TrackedResource extends Resource {
   /** Resource location. */
   location: string;
   /** Resource tags. */
   tags?: { [propertyName: string]: string };
-};
+}
 
 /** Tracked resource with location. */
-export type PatchTrackedResource = Resource & {
+export interface PatchTrackedResource extends Resource {
   /** Resource location. */
   location?: string;
   /** Resource tags. */
   tags?: { [propertyName: string]: string };
-};
+}
 
 /** Vault extended information. */
-export type VaultExtendedInfoResource = Resource & {
+export interface VaultExtendedInfoResource extends Resource {
   /** Integrity key. */
   integrityKey?: string;
   /** Encryption key. */
@@ -683,10 +857,10 @@ export type VaultExtendedInfoResource = Resource & {
   encryptionKeyThumbprint?: string;
   /** Algorithm for Vault ExtendedInfo */
   algorithm?: string;
-};
+}
 
 /** Resource information, as returned by the resource provider. */
-export type Vault = TrackedResource & {
+export interface Vault extends TrackedResource {
   /** Identity for the resource. */
   identity?: IdentityData;
   /** Properties of the vault. */
@@ -698,25 +872,35 @@ export type Vault = TrackedResource & {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly systemData?: SystemData;
-};
+}
 
 /** Patch Resource information, as returned by the resource provider. */
-export type PatchVault = PatchTrackedResource & {
+export interface PatchVault extends PatchTrackedResource {
   /** Properties of the vault. */
   properties?: VaultProperties;
   /** Identifies the unique system identifier for each Azure resource. */
   sku?: Sku;
   /** Identity for the resource. */
   identity?: IdentityData;
-};
+}
+
+/** Defines headers for Vaults_delete operation. */
+export interface VaultsDeleteHeaders {
+  location?: string;
+}
 
 /** Known values of {@link AuthType} that the service accepts. */
 export enum KnownAuthType {
+  /** Invalid */
   Invalid = "Invalid",
+  /** ACS */
   ACS = "ACS",
+  /** AAD */
   AAD = "AAD",
+  /** AccessControlService */
   AccessControlService = "AccessControlService",
-  AzureActiveDirectory = "AzureActiveDirectory"
+  /** AzureActiveDirectory */
+  AzureActiveDirectory = "AzureActiveDirectory",
 }
 
 /**
@@ -732,12 +916,37 @@ export enum KnownAuthType {
  */
 export type AuthType = string;
 
+/** Known values of {@link VaultSubResourceType} that the service accepts. */
+export enum KnownVaultSubResourceType {
+  /** AzureBackup */
+  AzureBackup = "AzureBackup",
+  /** AzureBackupSecondary */
+  AzureBackupSecondary = "AzureBackup_secondary",
+  /** AzureSiteRecovery */
+  AzureSiteRecovery = "AzureSiteRecovery",
+}
+
+/**
+ * Defines values for VaultSubResourceType. \
+ * {@link KnownVaultSubResourceType} can be used interchangeably with VaultSubResourceType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **AzureBackup** \
+ * **AzureBackup_secondary** \
+ * **AzureSiteRecovery**
+ */
+export type VaultSubResourceType = string;
+
 /** Known values of {@link ResourceIdentityType} that the service accepts. */
 export enum KnownResourceIdentityType {
+  /** SystemAssigned */
   SystemAssigned = "SystemAssigned",
+  /** None */
   None = "None",
+  /** UserAssigned */
   UserAssigned = "UserAssigned",
-  SystemAssignedUserAssigned = "SystemAssigned, UserAssigned"
+  /** SystemAssignedUserAssigned */
+  SystemAssignedUserAssigned = "SystemAssigned, UserAssigned",
 }
 
 /**
@@ -754,10 +963,14 @@ export type ResourceIdentityType = string;
 
 /** Known values of {@link VaultUpgradeState} that the service accepts. */
 export enum KnownVaultUpgradeState {
+  /** Unknown */
   Unknown = "Unknown",
+  /** InProgress */
   InProgress = "InProgress",
+  /** Upgraded */
   Upgraded = "Upgraded",
-  Failed = "Failed"
+  /** Failed */
+  Failed = "Failed",
 }
 
 /**
@@ -774,8 +987,10 @@ export type VaultUpgradeState = string;
 
 /** Known values of {@link TriggerType} that the service accepts. */
 export enum KnownTriggerType {
+  /** UserTriggered */
   UserTriggered = "UserTriggered",
-  ForcedUpgrade = "ForcedUpgrade"
+  /** ForcedUpgrade */
+  ForcedUpgrade = "ForcedUpgrade",
 }
 
 /**
@@ -790,10 +1005,14 @@ export type TriggerType = string;
 
 /** Known values of {@link ProvisioningState} that the service accepts. */
 export enum KnownProvisioningState {
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Deleting */
   Deleting = "Deleting",
+  /** Failed */
   Failed = "Failed",
-  Pending = "Pending"
+  /** Pending */
+  Pending = "Pending",
 }
 
 /**
@@ -810,10 +1029,14 @@ export type ProvisioningState = string;
 
 /** Known values of {@link PrivateEndpointConnectionStatus} that the service accepts. */
 export enum KnownPrivateEndpointConnectionStatus {
+  /** Pending */
   Pending = "Pending",
+  /** Approved */
   Approved = "Approved",
+  /** Rejected */
   Rejected = "Rejected",
-  Disconnected = "Disconnected"
+  /** Disconnected */
+  Disconnected = "Disconnected",
 }
 
 /**
@@ -830,8 +1053,10 @@ export type PrivateEndpointConnectionStatus = string;
 
 /** Known values of {@link VaultPrivateEndpointState} that the service accepts. */
 export enum KnownVaultPrivateEndpointState {
+  /** None */
   None = "None",
-  Enabled = "Enabled"
+  /** Enabled */
+  Enabled = "Enabled",
 }
 
 /**
@@ -846,8 +1071,10 @@ export type VaultPrivateEndpointState = string;
 
 /** Known values of {@link InfrastructureEncryptionState} that the service accepts. */
 export enum KnownInfrastructureEncryptionState {
+  /** Enabled */
   Enabled = "Enabled",
-  Disabled = "Disabled"
+  /** Disabled */
+  Disabled = "Disabled",
 }
 
 /**
@@ -862,16 +1089,26 @@ export type InfrastructureEncryptionState = string;
 
 /** Known values of {@link ResourceMoveState} that the service accepts. */
 export enum KnownResourceMoveState {
+  /** Unknown */
   Unknown = "Unknown",
+  /** InProgress */
   InProgress = "InProgress",
+  /** PrepareFailed */
   PrepareFailed = "PrepareFailed",
+  /** CommitFailed */
   CommitFailed = "CommitFailed",
+  /** PrepareTimedout */
   PrepareTimedout = "PrepareTimedout",
+  /** CommitTimedout */
   CommitTimedout = "CommitTimedout",
+  /** MoveSucceeded */
   MoveSucceeded = "MoveSucceeded",
+  /** Failure */
   Failure = "Failure",
+  /** CriticalFailure */
   CriticalFailure = "CriticalFailure",
-  PartialSuccess = "PartialSuccess"
+  /** PartialSuccess */
+  PartialSuccess = "PartialSuccess",
 }
 
 /**
@@ -892,10 +1129,270 @@ export enum KnownResourceMoveState {
  */
 export type ResourceMoveState = string;
 
+/** Known values of {@link BackupStorageVersion} that the service accepts. */
+export enum KnownBackupStorageVersion {
+  /** V1 */
+  V1 = "V1",
+  /** V2 */
+  V2 = "V2",
+  /** Unassigned */
+  Unassigned = "Unassigned",
+}
+
+/**
+ * Defines values for BackupStorageVersion. \
+ * {@link KnownBackupStorageVersion} can be used interchangeably with BackupStorageVersion,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **V1** \
+ * **V2** \
+ * **Unassigned**
+ */
+export type BackupStorageVersion = string;
+
+/** Known values of {@link PublicNetworkAccess} that the service accepts. */
+export enum KnownPublicNetworkAccess {
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+}
+
+/**
+ * Defines values for PublicNetworkAccess. \
+ * {@link KnownPublicNetworkAccess} can be used interchangeably with PublicNetworkAccess,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled** \
+ * **Disabled**
+ */
+export type PublicNetworkAccess = string;
+
+/** Known values of {@link AlertsState} that the service accepts. */
+export enum KnownAlertsState {
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+}
+
+/**
+ * Defines values for AlertsState. \
+ * {@link KnownAlertsState} can be used interchangeably with AlertsState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled** \
+ * **Disabled**
+ */
+export type AlertsState = string;
+
+/** Known values of {@link CrossSubscriptionRestoreState} that the service accepts. */
+export enum KnownCrossSubscriptionRestoreState {
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+  /** PermanentlyDisabled */
+  PermanentlyDisabled = "PermanentlyDisabled",
+}
+
+/**
+ * Defines values for CrossSubscriptionRestoreState. \
+ * {@link KnownCrossSubscriptionRestoreState} can be used interchangeably with CrossSubscriptionRestoreState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled** \
+ * **Disabled** \
+ * **PermanentlyDisabled**
+ */
+export type CrossSubscriptionRestoreState = string;
+
+/** Known values of {@link StandardTierStorageRedundancy} that the service accepts. */
+export enum KnownStandardTierStorageRedundancy {
+  /** Invalid */
+  Invalid = "Invalid",
+  /** LocallyRedundant */
+  LocallyRedundant = "LocallyRedundant",
+  /** GeoRedundant */
+  GeoRedundant = "GeoRedundant",
+  /** ZoneRedundant */
+  ZoneRedundant = "ZoneRedundant",
+}
+
+/**
+ * Defines values for StandardTierStorageRedundancy. \
+ * {@link KnownStandardTierStorageRedundancy} can be used interchangeably with StandardTierStorageRedundancy,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Invalid** \
+ * **LocallyRedundant** \
+ * **GeoRedundant** \
+ * **ZoneRedundant**
+ */
+export type StandardTierStorageRedundancy = string;
+
+/** Known values of {@link CrossRegionRestore} that the service accepts. */
+export enum KnownCrossRegionRestore {
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+}
+
+/**
+ * Defines values for CrossRegionRestore. \
+ * {@link KnownCrossRegionRestore} can be used interchangeably with CrossRegionRestore,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Enabled** \
+ * **Disabled**
+ */
+export type CrossRegionRestore = string;
+
+/** Known values of {@link ImmutabilityState} that the service accepts. */
+export enum KnownImmutabilityState {
+  /** Disabled */
+  Disabled = "Disabled",
+  /** Unlocked */
+  Unlocked = "Unlocked",
+  /** Locked */
+  Locked = "Locked",
+}
+
+/**
+ * Defines values for ImmutabilityState. \
+ * {@link KnownImmutabilityState} can be used interchangeably with ImmutabilityState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Disabled** \
+ * **Unlocked** \
+ * **Locked**
+ */
+export type ImmutabilityState = string;
+
+/** Known values of {@link SoftDeleteState} that the service accepts. */
+export enum KnownSoftDeleteState {
+  /** Invalid */
+  Invalid = "Invalid",
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+  /** AlwaysON */
+  AlwaysON = "AlwaysON",
+}
+
+/**
+ * Defines values for SoftDeleteState. \
+ * {@link KnownSoftDeleteState} can be used interchangeably with SoftDeleteState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Invalid** \
+ * **Enabled** \
+ * **Disabled** \
+ * **AlwaysON**
+ */
+export type SoftDeleteState = string;
+
+/** Known values of {@link EnhancedSecurityState} that the service accepts. */
+export enum KnownEnhancedSecurityState {
+  /** Invalid */
+  Invalid = "Invalid",
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+  /** AlwaysON */
+  AlwaysON = "AlwaysON",
+}
+
+/**
+ * Defines values for EnhancedSecurityState. \
+ * {@link KnownEnhancedSecurityState} can be used interchangeably with EnhancedSecurityState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Invalid** \
+ * **Enabled** \
+ * **Disabled** \
+ * **AlwaysON**
+ */
+export type EnhancedSecurityState = string;
+
+/** Known values of {@link MultiUserAuthorization} that the service accepts. */
+export enum KnownMultiUserAuthorization {
+  /** Invalid */
+  Invalid = "Invalid",
+  /** Enabled */
+  Enabled = "Enabled",
+  /** Disabled */
+  Disabled = "Disabled",
+}
+
+/**
+ * Defines values for MultiUserAuthorization. \
+ * {@link KnownMultiUserAuthorization} can be used interchangeably with MultiUserAuthorization,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Invalid** \
+ * **Enabled** \
+ * **Disabled**
+ */
+export type MultiUserAuthorization = string;
+
+/** Known values of {@link SecureScoreLevel} that the service accepts. */
+export enum KnownSecureScoreLevel {
+  /** None */
+  None = "None",
+  /** Minimum */
+  Minimum = "Minimum",
+  /** Adequate */
+  Adequate = "Adequate",
+  /** Maximum */
+  Maximum = "Maximum",
+}
+
+/**
+ * Defines values for SecureScoreLevel. \
+ * {@link KnownSecureScoreLevel} can be used interchangeably with SecureScoreLevel,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **None** \
+ * **Minimum** \
+ * **Adequate** \
+ * **Maximum**
+ */
+export type SecureScoreLevel = string;
+
+/** Known values of {@link BcdrSecurityLevel} that the service accepts. */
+export enum KnownBcdrSecurityLevel {
+  /** Poor */
+  Poor = "Poor",
+  /** Fair */
+  Fair = "Fair",
+  /** Good */
+  Good = "Good",
+  /** Excellent */
+  Excellent = "Excellent",
+}
+
+/**
+ * Defines values for BcdrSecurityLevel. \
+ * {@link KnownBcdrSecurityLevel} can be used interchangeably with BcdrSecurityLevel,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Poor** \
+ * **Fair** \
+ * **Good** \
+ * **Excellent**
+ */
+export type BcdrSecurityLevel = string;
+
 /** Known values of {@link SkuName} that the service accepts. */
 export enum KnownSkuName {
+  /** Standard */
   Standard = "Standard",
-  RS0 = "RS0"
+  /** RS0 */
+  RS0 = "RS0",
 }
 
 /**
@@ -910,10 +1407,14 @@ export type SkuName = string;
 
 /** Known values of {@link CreatedByType} that the service accepts. */
 export enum KnownCreatedByType {
+  /** User */
   User = "User",
+  /** Application */
   Application = "Application",
+  /** ManagedIdentity */
   ManagedIdentity = "ManagedIdentity",
-  Key = "Key"
+  /** Key */
+  Key = "Key",
 }
 
 /**
@@ -930,12 +1431,18 @@ export type CreatedByType = string;
 
 /** Known values of {@link UsagesUnit} that the service accepts. */
 export enum KnownUsagesUnit {
+  /** Count */
   Count = "Count",
+  /** Bytes */
   Bytes = "Bytes",
+  /** Seconds */
   Seconds = "Seconds",
+  /** Percent */
   Percent = "Percent",
+  /** CountPerSecond */
   CountPerSecond = "CountPerSecond",
-  BytesPerSecond = "BytesPerSecond"
+  /** BytesPerSecond */
+  BytesPerSecond = "BytesPerSecond",
 }
 
 /**
@@ -996,7 +1503,15 @@ export interface RecoveryServicesCheckNameAvailabilityOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the checkNameAvailability operation. */
-export type RecoveryServicesCheckNameAvailabilityResponse = CheckNameAvailabilityResult;
+export type RecoveryServicesCheckNameAvailabilityResponse =
+  CheckNameAvailabilityResult;
+
+/** Optional parameters. */
+export interface RecoveryServicesCapabilitiesOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the capabilities operation. */
+export type RecoveryServicesCapabilitiesResponse = CapabilitiesResponse;
 
 /** Optional parameters. */
 export interface VaultsListBySubscriptionIdOptionalParams
@@ -1021,6 +1536,7 @@ export type VaultsGetResponse = Vault;
 /** Optional parameters. */
 export interface VaultsCreateOrUpdateOptionalParams
   extends coreClient.OperationOptions {
+  xMsAuthorizationAuxiliary?: string;
   /** Delay to wait until next poll, in milliseconds. */
   updateIntervalInMs?: number;
   /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
@@ -1032,11 +1548,20 @@ export type VaultsCreateOrUpdateResponse = Vault;
 
 /** Optional parameters. */
 export interface VaultsDeleteOptionalParams
-  extends coreClient.OperationOptions {}
+  extends coreClient.OperationOptions {
+  /** Delay to wait until next poll, in milliseconds. */
+  updateIntervalInMs?: number;
+  /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
+  resumeFrom?: string;
+}
+
+/** Contains response data for the delete operation. */
+export type VaultsDeleteResponse = VaultsDeleteHeaders;
 
 /** Optional parameters. */
 export interface VaultsUpdateOptionalParams
   extends coreClient.OperationOptions {
+  xMsAuthorizationAuxiliary?: string;
   /** Delay to wait until next poll, in milliseconds. */
   updateIntervalInMs?: number;
   /** A serialized poller which can be used to resume an existing paused Long-Running-Operation. */
@@ -1096,18 +1621,18 @@ export interface VaultExtendedInfoUpdateOptionalParams
 export type VaultExtendedInfoUpdateResponse = VaultExtendedInfoResource;
 
 /** Optional parameters. */
-export interface RecoveryServicesClientGetOperationStatusOptionalParams
+export interface GetOperationStatusOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getOperationStatus operation. */
-export type RecoveryServicesClientGetOperationStatusResponse = OperationResource;
+export type GetOperationStatusResponse = OperationResource;
 
 /** Optional parameters. */
-export interface RecoveryServicesClientGetOperationResultOptionalParams
+export interface GetOperationResultOptionalParams
   extends coreClient.OperationOptions {}
 
 /** Contains response data for the getOperationResult operation. */
-export type RecoveryServicesClientGetOperationResultResponse = Vault;
+export type GetOperationResultResponse = Vault;
 
 /** Optional parameters. */
 export interface UsagesListByVaultsOptionalParams

@@ -10,7 +10,7 @@ import { ManagementPolicies } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageManagementClientContext } from "../storageManagementClientContext";
+import { StorageManagementClient } from "../storageManagementClient";
 import {
   ManagementPolicyName,
   ManagementPoliciesGetOptionalParams,
@@ -18,18 +18,18 @@ import {
   ManagementPolicy,
   ManagementPoliciesCreateOrUpdateOptionalParams,
   ManagementPoliciesCreateOrUpdateResponse,
-  ManagementPoliciesDeleteOptionalParams
+  ManagementPoliciesDeleteOptionalParams,
 } from "../models";
 
-/** Class representing a ManagementPolicies. */
+/** Class containing ManagementPolicies operations. */
 export class ManagementPoliciesImpl implements ManagementPolicies {
-  private readonly client: StorageManagementClientContext;
+  private readonly client: StorageManagementClient;
 
   /**
    * Initialize a new instance of the class ManagementPolicies class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageManagementClientContext) {
+  constructor(client: StorageManagementClient) {
     this.client = client;
   }
 
@@ -48,11 +48,11 @@ export class ManagementPoliciesImpl implements ManagementPolicies {
     resourceGroupName: string,
     accountName: string,
     managementPolicyName: ManagementPolicyName,
-    options?: ManagementPoliciesGetOptionalParams
+    options?: ManagementPoliciesGetOptionalParams,
   ): Promise<ManagementPoliciesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, managementPolicyName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -73,7 +73,7 @@ export class ManagementPoliciesImpl implements ManagementPolicies {
     accountName: string,
     managementPolicyName: ManagementPolicyName,
     properties: ManagementPolicy,
-    options?: ManagementPoliciesCreateOrUpdateOptionalParams
+    options?: ManagementPoliciesCreateOrUpdateOptionalParams,
   ): Promise<ManagementPoliciesCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -81,9 +81,9 @@ export class ManagementPoliciesImpl implements ManagementPolicies {
         accountName,
         managementPolicyName,
         properties,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -102,11 +102,11 @@ export class ManagementPoliciesImpl implements ManagementPolicies {
     resourceGroupName: string,
     accountName: string,
     managementPolicyName: ManagementPolicyName,
-    options?: ManagementPoliciesDeleteOptionalParams
+    options?: ManagementPoliciesDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, managementPolicyName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 }
@@ -114,59 +114,56 @@ export class ManagementPoliciesImpl implements ManagementPolicies {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/managementPolicies/{managementPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/managementPolicies/{managementPolicyName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagementPolicy
-    }
+      bodyMapper: Mappers.ManagementPolicy,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.managementPolicyName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.managementPolicyName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/managementPolicies/{managementPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/managementPolicies/{managementPolicyName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagementPolicy
-    }
+      bodyMapper: Mappers.ManagementPolicy,
+    },
   },
   requestBody: Parameters.properties,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.managementPolicyName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.managementPolicyName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/managementPolicies/{managementPolicyName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/managementPolicies/{managementPolicyName}",
   httpMethod: "DELETE",
   responses: { 200: {}, 204: {} },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.managementPolicyName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.managementPolicyName,
   ],
-  serializer
+  serializer,
 };

@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   GalleryImageVersion,
   GalleryImageVersionsListByGalleryImageOptionalParams,
@@ -18,7 +18,7 @@ import {
   GalleryImageVersionsUpdateResponse,
   GalleryImageVersionsGetOptionalParams,
   GalleryImageVersionsGetResponse,
-  GalleryImageVersionsDeleteOptionalParams
+  GalleryImageVersionsDeleteOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -36,7 +36,7 @@ export interface GalleryImageVersions {
     resourceGroupName: string,
     galleryName: string,
     galleryImageName: string,
-    options?: GalleryImageVersionsListByGalleryImageOptionalParams
+    options?: GalleryImageVersionsListByGalleryImageOptionalParams,
   ): PagedAsyncIterableIterator<GalleryImageVersion>;
   /**
    * Create or update a gallery image version.
@@ -57,10 +57,10 @@ export interface GalleryImageVersions {
     galleryImageName: string,
     galleryImageVersionName: string,
     galleryImageVersion: GalleryImageVersion,
-    options?: GalleryImageVersionsCreateOrUpdateOptionalParams
+    options?: GalleryImageVersionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<GalleryImageVersionsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<GalleryImageVersionsCreateOrUpdateResponse>,
       GalleryImageVersionsCreateOrUpdateResponse
     >
   >;
@@ -83,7 +83,7 @@ export interface GalleryImageVersions {
     galleryImageName: string,
     galleryImageVersionName: string,
     galleryImageVersion: GalleryImageVersion,
-    options?: GalleryImageVersionsCreateOrUpdateOptionalParams
+    options?: GalleryImageVersionsCreateOrUpdateOptionalParams,
   ): Promise<GalleryImageVersionsCreateOrUpdateResponse>;
   /**
    * Update a gallery image version.
@@ -103,10 +103,10 @@ export interface GalleryImageVersions {
     galleryImageName: string,
     galleryImageVersionName: string,
     galleryImageVersion: GalleryImageVersionUpdate,
-    options?: GalleryImageVersionsUpdateOptionalParams
+    options?: GalleryImageVersionsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<GalleryImageVersionsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<GalleryImageVersionsUpdateResponse>,
       GalleryImageVersionsUpdateResponse
     >
   >;
@@ -128,7 +128,7 @@ export interface GalleryImageVersions {
     galleryImageName: string,
     galleryImageVersionName: string,
     galleryImageVersion: GalleryImageVersionUpdate,
-    options?: GalleryImageVersionsUpdateOptionalParams
+    options?: GalleryImageVersionsUpdateOptionalParams,
   ): Promise<GalleryImageVersionsUpdateResponse>;
   /**
    * Retrieves information about a gallery image version.
@@ -143,7 +143,7 @@ export interface GalleryImageVersions {
     galleryName: string,
     galleryImageName: string,
     galleryImageVersionName: string,
-    options?: GalleryImageVersionsGetOptionalParams
+    options?: GalleryImageVersionsGetOptionalParams,
   ): Promise<GalleryImageVersionsGetResponse>;
   /**
    * Delete a gallery image version.
@@ -158,8 +158,8 @@ export interface GalleryImageVersions {
     galleryName: string,
     galleryImageName: string,
     galleryImageVersionName: string,
-    options?: GalleryImageVersionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: GalleryImageVersionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete a gallery image version.
    * @param resourceGroupName The name of the resource group.
@@ -173,6 +173,6 @@ export interface GalleryImageVersions {
     galleryName: string,
     galleryImageName: string,
     galleryImageVersionName: string,
-    options?: GalleryImageVersionsDeleteOptionalParams
+    options?: GalleryImageVersionsDeleteOptionalParams,
   ): Promise<void>;
 }

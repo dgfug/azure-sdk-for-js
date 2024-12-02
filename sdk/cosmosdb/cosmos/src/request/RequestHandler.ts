@@ -1,37 +1,41 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import AbortController from "node-abort-controller";
-import {
-  createPipelineRequest,
-  createHttpHeaders,
-  PipelineResponse
-} from "@azure/core-rest-pipeline";
-import { trimSlashes } from "../common";
+// Licensed under the MIT License.
+
+import type { PipelineResponse } from "@azure/core-rest-pipeline";
+import { createPipelineRequest, createHttpHeaders } from "@azure/core-rest-pipeline";
+import { prepareURL } from "../common";
 import { Constants } from "../common/constants";
-import { logger } from "../common/logger";
 import { executePlugins, PluginOn } from "../plugins/Plugin";
 import * as RetryUtility from "../retry/retryUtility";
 import { defaultHttpAgent, defaultHttpsAgent } from "./defaultAgent";
 import { ErrorResponse } from "./ErrorResponse";
 import { bodyFromData } from "./request";
-import { RequestContext } from "./RequestContext";
-import { Response as CosmosResponse } from "./Response";
+import type { RequestContext } from "./RequestContext";
+import type { Response as CosmosResponse } from "./Response";
 import { TimeoutError } from "./TimeoutError";
-import { URL } from "../utils/url";
 import { getCachedDefaultHttpClient } from "../utils/cachedClient";
+import type { AzureLogger } from "@azure/logger";
+import { createClientLogger } from "@azure/logger";
+import type { DiagnosticNodeInternal } from "../diagnostics/DiagnosticNodeInternal";
+import { DiagnosticNodeType } from "../diagnostics/DiagnosticNodeInternal";
+import { addDignosticChild } from "../utils/diagnostics";
+import { getCurrentTimestampInMs } from "../utils/time";
 
-/** @hidden */
-const log = logger("RequestHandler");
+const logger: AzureLogger = createClientLogger("RequestHandler");
 
-async function executeRequest(requestContext: RequestContext): Promise<CosmosResponse<any>> {
-  return executePlugins(requestContext, httpRequest, PluginOn.request);
+async function executeRequest(
+  diagnosticNode: DiagnosticNodeInternal,
+  requestContext: RequestContext,
+): Promise<CosmosResponse<any>> {
+  return executePlugins(diagnosticNode, requestContext, httpRequest, PluginOn.request);
 }
 
 /**
  * @hidden
  */
 async function httpRequest(
-  requestContext: RequestContext
+  requestContext: RequestContext,
+  diagnosticNode: DiagnosticNodeInternal,
 ): Promise<{
   headers: any;
   result: any;
@@ -63,30 +67,32 @@ async function httpRequest(
     requestContext.body = bodyFromData(requestContext.body);
   }
 
-  const httpsClient = getCachedDefaultHttpClient();
-  const url = trimSlashes(requestContext.endpoint) + requestContext.path;
+  const httpsClient = requestContext.httpClient ?? getCachedDefaultHttpClient();
+  const url = prepareURL(requestContext.endpoint, requestContext.path);
   const reqHeaders = createHttpHeaders(requestContext.headers as any);
   const pipelineRequest = createPipelineRequest({
     url,
     headers: reqHeaders,
     method: requestContext.method,
     abortSignal: signal,
-    body: requestContext.body
+    body: requestContext.body,
   });
   if (requestContext.requestAgent) {
     pipelineRequest.agent = requestContext.requestAgent;
   } else {
     const parsedUrl = new URL(url);
-    pipelineRequest.agent = parsedUrl.protocol === "http" ? defaultHttpAgent : defaultHttpsAgent;
+    pipelineRequest.agent = parsedUrl.protocol === "http:" ? defaultHttpAgent : defaultHttpsAgent;
+    pipelineRequest.allowInsecureConnection = parsedUrl.protocol === "http:";
   }
 
+  const startTimeUTCInMs = getCurrentTimestampInMs();
   try {
     if (requestContext.pipeline) {
       response = await requestContext.pipeline.sendRequest(httpsClient, pipelineRequest);
     } else {
       response = await httpsClient.sendRequest(pipelineRequest);
     }
-  } catch (error) {
+  } catch (error: any) {
     if (error.name === "AbortError") {
       // If the user passed signal caused the abort, cancel the timeout and rethrow the error
       if (userSignal && userSignal.aborted === true) {
@@ -94,69 +100,85 @@ async function httpRequest(
         throw error;
       }
       // If the user didn't cancel, it must be an abort we called due to timeout
-      throw new TimeoutError();
+      throw new TimeoutError(
+        `Timeout Error! Request took more than ${requestContext.connectionPolicy.requestTimeout} ms`,
+      );
     }
     throw error;
   }
 
   clearTimeout(timeout);
-
   const result =
-    response.status === 204 || response.status === 304 ? null : JSON.parse(response.bodyAsText);
-  const headers = response.headers.toJSON();
+    response.status === 204 || response.status === 304 || response.bodyAsText === ""
+      ? null
+      : JSON.parse(response.bodyAsText);
+  const responseHeaders = response.headers.toJSON();
 
-  const substatus = headers[Constants.HttpHeaders.SubStatus]
-    ? parseInt(headers[Constants.HttpHeaders.SubStatus], 10)
+  const substatus = responseHeaders[Constants.HttpHeaders.SubStatus]
+    ? parseInt(responseHeaders[Constants.HttpHeaders.SubStatus], 10)
     : undefined;
 
-  if (response.status >= 400) {
-    const errorResponse: ErrorResponse = new Error(result.message);
+  diagnosticNode.recordSuccessfulNetworkCall(
+    startTimeUTCInMs,
+    requestContext,
+    response,
+    substatus,
+    url,
+  );
 
-    log.warn(
+  if (response.status >= 400) {
+    const errorResponse: ErrorResponse = new ErrorResponse(result.message);
+    logger.warning(
       response.status +
         " " +
         requestContext.endpoint +
         " " +
         requestContext.path +
         " " +
-        result.message
+        result.message,
     );
 
     errorResponse.code = response.status;
     errorResponse.body = result;
-    errorResponse.headers = headers;
+    errorResponse.headers = responseHeaders;
 
-    if (Constants.HttpHeaders.ActivityId in headers) {
-      errorResponse.activityId = headers[Constants.HttpHeaders.ActivityId];
+    if (Constants.HttpHeaders.ActivityId in responseHeaders) {
+      errorResponse.activityId = responseHeaders[Constants.HttpHeaders.ActivityId];
     }
 
-    if (Constants.HttpHeaders.SubStatus in headers) {
+    if (Constants.HttpHeaders.SubStatus in responseHeaders) {
       errorResponse.substatus = substatus;
     }
 
-    if (Constants.HttpHeaders.RetryAfterInMs in headers) {
-      errorResponse.retryAfterInMs = parseInt(headers[Constants.HttpHeaders.RetryAfterInMs], 10);
+    if (Constants.HttpHeaders.RetryAfterInMs in responseHeaders) {
+      errorResponse.retryAfterInMs = parseInt(
+        responseHeaders[Constants.HttpHeaders.RetryAfterInMs],
+        10,
+      );
       Object.defineProperty(errorResponse, "retryAfterInMilliseconds", {
         get: () => {
           return errorResponse.retryAfterInMs;
-        }
+        },
       });
     }
 
     throw errorResponse;
   }
   return {
-    headers,
+    headers: responseHeaders,
     result,
     code: response.status,
-    substatus
+    substatus,
   };
 }
 
 /**
  * @hidden
  */
-export async function request<T>(requestContext: RequestContext): Promise<CosmosResponse<T>> {
+async function request<T>(
+  requestContext: RequestContext,
+  diagnosticNode: DiagnosticNodeInternal,
+): Promise<CosmosResponse<T>> {
   if (requestContext.body) {
     requestContext.body = bodyFromData(requestContext.body);
     if (!requestContext.body) {
@@ -164,8 +186,19 @@ export async function request<T>(requestContext: RequestContext): Promise<Cosmos
     }
   }
 
-  return RetryUtility.execute({
-    requestContext,
-    executeRequest
-  });
+  return addDignosticChild(
+    async (childNode: DiagnosticNodeInternal) => {
+      return RetryUtility.execute({
+        diagnosticNode: childNode,
+        requestContext,
+        executeRequest,
+      });
+    },
+    diagnosticNode,
+    DiagnosticNodeType.REQUEST_ATTEMPTS,
+  );
 }
+
+export const RequestHandler = {
+  request,
+};

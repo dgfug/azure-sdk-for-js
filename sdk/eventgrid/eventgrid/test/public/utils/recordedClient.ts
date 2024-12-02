@@ -1,68 +1,87 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Context } from "mocha";
-import * as dotenv from "dotenv";
-
-import { env, Recorder, record, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import { isNode } from "./testUtils";
-
-import { EventGridPublisherClient, InputSchema } from "../../../src";
-import { KeyCredential } from "@azure/core-auth";
-
-if (isNode) {
-  dotenv.config();
-}
+import type {
+  FindReplaceSanitizer,
+  RecorderStartOptions,
+  TestInfo,
+} from "@azure-tools/test-recorder";
+import { assertEnvironmentVariable, Recorder } from "@azure-tools/test-recorder";
+import type { InputSchema } from "../../../src/index.js";
+import { EventGridPublisherClient } from "../../../src/index.js";
+import { createTestCredential } from "@azure-tools/test-credential";
+import type { AdditionalPolicyConfig } from "@azure/core-client";
 
 export interface RecordedClient<T extends InputSchema> {
   client: EventGridPublisherClient<T>;
   recorder: Recorder;
 }
 
-const replaceableVariables: { [k: string]: string } = {
-  EVENT_GRID_EVENT_GRID_SCHEMA_API_KEY: "api_key",
+const envSetupForPlayback: { [k: string]: string } = {
   EVENT_GRID_EVENT_GRID_SCHEMA_ENDPOINT: "https://endpoint/api/events",
-  EVENT_GRID_CLOUD_EVENT_SCHEMA_API_KEY: "api_key",
   EVENT_GRID_CLOUD_EVENT_SCHEMA_ENDPOINT: "https://endpoint/api/events",
-  EVENT_GRID_CUSTOM_SCHEMA_API_KEY: "api_key",
-  EVENT_GRID_CUSTOM_SCHEMA_ENDPOINT: "https://endpoint/api/events"
+  EVENT_GRID_CUSTOM_SCHEMA_ENDPOINT: "https://endpoint/api/events",
 };
 
-export const testEnv = new Proxy(replaceableVariables, {
-  get: (target, key: string) => {
-    return env[key] || target[key];
-  }
+/**
+ * In some tests the endpoints appear without the /api/events suffix
+ * so make sure to sanitize them in this case as well (it doesn't get
+ * covered automatically by envSetupForPlayback).
+ */
+const suffixlessEndpointSanitizer = (endpointEnv: string): FindReplaceSanitizer => ({
+  target: removeApiEventsSuffix(assertEnvironmentVariable(endpointEnv)),
+  value: "https://endpoint",
 });
 
-export const environmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording.replace(/"aeg-sas-key"\s?:\s?"[^"]*"/g, `"aeg-sas-key":"aeg-sas-key"`),
-    (recording: string): string =>
-      recording.replace(/"aeg-sas-token"\s?:\s?"[^"]*"/g, `"aeg-sas-token":"aeg-sas-token"`),
-    // If we put EVENT_GRID_EVENT_GRID_SCHEMA_ENDPOINT (or similar) in replaceableVariables above,
-    // it will not capture the endpoint string used with nock, which will be expanded to
-    // https://<endpoint>:443/ and therefore will not match, so we have to do
-    // this instead.
-    (recording: string): string => {
-      const replaced = recording.replace("endpoint:443", "endpoint");
-      return replaced;
-    }
+export const recorderOptions: RecorderStartOptions = {
+  envSetupForPlayback,
+  removeCentralSanitizers: [
+    "AZSDK3493", // .name in the body is not a secret and is listed below in the beforeEach section
+    "AZSDK3430", // .id in the body is not a secret and is listed below in the beforeEach section
+    "AZSDK4001",
   ],
-  queryParametersToSkip: []
 };
 
-export function createRecordedClient<T extends InputSchema>(
-  context: Context,
-  endpoint: string,
+export async function createRecordedClient<T extends InputSchema>(
+  currentTest: TestInfo | undefined,
+  endpointEnv: string,
   eventSchema: T,
-  credential: KeyCredential
-): RecordedClient<T> {
-  const recorder = record(context, environmentSetup);
+  options: {
+    removeApiEventsSuffixBool?: boolean;
+    additionalPolicies?: AdditionalPolicyConfig[];
+  } = {},
+): Promise<RecordedClient<T>> {
+  const recorder = new Recorder(currentTest);
+  await recorder.start(recorderOptions);
+  await recorder.addSanitizers({
+    generalSanitizers: [
+      suffixlessEndpointSanitizer("EVENT_GRID_EVENT_GRID_SCHEMA_ENDPOINT"),
+      suffixlessEndpointSanitizer("EVENT_GRID_CLOUD_EVENT_SCHEMA_ENDPOINT"),
+      suffixlessEndpointSanitizer("EVENT_GRID_CUSTOM_SCHEMA_ENDPOINT"),
+    ],
+  });
 
   return {
-    client: new EventGridPublisherClient(endpoint, eventSchema, credential),
-    recorder
+    client: new EventGridPublisherClient(
+      options.removeApiEventsSuffixBool
+        ? removeApiEventsSuffix(assertEnvironmentVariable(endpointEnv))
+        : assertEnvironmentVariable(endpointEnv),
+      eventSchema,
+      createTestCredential(),
+      recorder.configureClientOptions({
+        additionalPolicies: options.additionalPolicies,
+      }),
+    ),
+    recorder,
   };
+}
+
+function removeApiEventsSuffix(endpoint: string): string {
+  const suffix = "/api/events";
+
+  if (!endpoint.endsWith(suffix)) {
+    throw new Error(`${endpoint} does not end with ${suffix}`);
+  }
+
+  return endpoint.substring(0, endpoint.length - suffix.length);
 }

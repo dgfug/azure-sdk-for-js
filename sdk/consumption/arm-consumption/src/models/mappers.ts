@@ -179,42 +179,6 @@ export const BudgetsListResult: coreClient.CompositeMapper = {
   }
 };
 
-export const ProxyResource: coreClient.CompositeMapper = {
-  type: {
-    name: "Composite",
-    className: "ProxyResource",
-    modelProperties: {
-      id: {
-        serializedName: "id",
-        readOnly: true,
-        type: {
-          name: "String"
-        }
-      },
-      name: {
-        serializedName: "name",
-        readOnly: true,
-        type: {
-          name: "String"
-        }
-      },
-      type: {
-        serializedName: "type",
-        readOnly: true,
-        type: {
-          name: "String"
-        }
-      },
-      eTag: {
-        serializedName: "eTag",
-        type: {
-          name: "String"
-        }
-      }
-    }
-  }
-};
-
 export const BudgetTimePeriod: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
@@ -458,6 +422,42 @@ export const ForecastSpend: coreClient.CompositeMapper = {
       unit: {
         serializedName: "unit",
         readOnly: true,
+        type: {
+          name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const ProxyResource: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "ProxyResource",
+    modelProperties: {
+      id: {
+        serializedName: "id",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      name: {
+        serializedName: "name",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      type: {
+        serializedName: "type",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      eTag: {
+        serializedName: "eTag",
         type: {
           name: "String"
         }
@@ -1447,6 +1447,131 @@ export const MeterDetailsResponse: coreClient.CompositeMapper = {
         readOnly: true,
         type: {
           name: "String"
+        }
+      }
+    }
+  }
+};
+
+export const LegacyReservationRecommendationProperties: coreClient.CompositeMapper = {
+  type: {
+    name: "Composite",
+    className: "LegacyReservationRecommendationProperties",
+    uberParent: "LegacyReservationRecommendationProperties",
+    polymorphicDiscriminator: {
+      serializedName: "scope",
+      clientName: "scope"
+    },
+    modelProperties: {
+      lookBackPeriod: {
+        serializedName: "lookBackPeriod",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      instanceFlexibilityRatio: {
+        serializedName: "instanceFlexibilityRatio",
+        readOnly: true,
+        type: {
+          name: "Number"
+        }
+      },
+      instanceFlexibilityGroup: {
+        serializedName: "instanceFlexibilityGroup",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      normalizedSize: {
+        serializedName: "normalizedSize",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      recommendedQuantityNormalized: {
+        serializedName: "recommendedQuantityNormalized",
+        readOnly: true,
+        type: {
+          name: "Number"
+        }
+      },
+      meterId: {
+        serializedName: "meterId",
+        readOnly: true,
+        type: {
+          name: "Uuid"
+        }
+      },
+      resourceType: {
+        serializedName: "resourceType",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      term: {
+        serializedName: "term",
+        readOnly: true,
+        type: {
+          name: "String"
+        }
+      },
+      costWithNoReservedInstances: {
+        serializedName: "costWithNoReservedInstances",
+        readOnly: true,
+        type: {
+          name: "Number"
+        }
+      },
+      recommendedQuantity: {
+        serializedName: "recommendedQuantity",
+        readOnly: true,
+        type: {
+          name: "Number"
+        }
+      },
+      totalCostWithReservedInstances: {
+        serializedName: "totalCostWithReservedInstances",
+        readOnly: true,
+        type: {
+          name: "Number"
+        }
+      },
+      netSavings: {
+        serializedName: "netSavings",
+        readOnly: true,
+        type: {
+          name: "Number"
+        }
+      },
+      firstUsageDate: {
+        serializedName: "firstUsageDate",
+        readOnly: true,
+        type: {
+          name: "DateTime"
+        }
+      },
+      scope: {
+        serializedName: "scope",
+        required: true,
+        type: {
+          name: "String"
+        }
+      },
+      skuProperties: {
+        serializedName: "skuProperties",
+        readOnly: true,
+        type: {
+          name: "Sequence",
+          element: {
+            type: {
+              name: "Composite",
+              className: "SkuProperty"
+            }
+          }
         }
       }
     }
@@ -3072,13 +3197,48 @@ export const AmountWithExchangeRate: coreClient.CompositeMapper = {
   }
 };
 
+export const LegacySingleScopeReservationRecommendationProperties: coreClient.CompositeMapper = {
+  serializedName: "Single",
+  type: {
+    name: "Composite",
+    className: "LegacySingleScopeReservationRecommendationProperties",
+    uberParent: "LegacyReservationRecommendationProperties",
+    polymorphicDiscriminator:
+      LegacyReservationRecommendationProperties.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...LegacyReservationRecommendationProperties.type.modelProperties,
+      subscriptionId: {
+        serializedName: "subscriptionId",
+        readOnly: true,
+        type: {
+          name: "Uuid"
+        }
+      }
+    }
+  }
+};
+
+export const LegacySharedScopeReservationRecommendationProperties: coreClient.CompositeMapper = {
+  serializedName: "Shared",
+  type: {
+    name: "Composite",
+    className: "LegacySharedScopeReservationRecommendationProperties",
+    uberParent: "LegacyReservationRecommendationProperties",
+    polymorphicDiscriminator:
+      LegacyReservationRecommendationProperties.type.polymorphicDiscriminator,
+    modelProperties: {
+      ...LegacyReservationRecommendationProperties.type.modelProperties
+    }
+  }
+};
+
 export const LegacyUsageDetail: coreClient.CompositeMapper = {
   serializedName: "legacy",
   type: {
     name: "Composite",
     className: "LegacyUsageDetail",
-    uberParent: "Resource",
-    polymorphicDiscriminator: Resource.type.polymorphicDiscriminator,
+    uberParent: "UsageDetail",
+    polymorphicDiscriminator: UsageDetail.type.polymorphicDiscriminator,
     modelProperties: {
       ...UsageDetail.type.modelProperties,
       billingAccountId: {
@@ -3398,8 +3558,8 @@ export const ModernUsageDetail: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ModernUsageDetail",
-    uberParent: "Resource",
-    polymorphicDiscriminator: Resource.type.polymorphicDiscriminator,
+    uberParent: "UsageDetail",
+    polymorphicDiscriminator: UsageDetail.type.polymorphicDiscriminator,
     modelProperties: {
       ...UsageDetail.type.modelProperties,
       billingAccountId: {
@@ -3915,8 +4075,9 @@ export const LegacyReservationRecommendation: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "LegacyReservationRecommendation",
-    uberParent: "Resource",
-    polymorphicDiscriminator: Resource.type.polymorphicDiscriminator,
+    uberParent: "ReservationRecommendation",
+    polymorphicDiscriminator:
+      ReservationRecommendation.type.polymorphicDiscriminator,
     modelProperties: {
       ...ReservationRecommendation.type.modelProperties,
       lookBackPeriod: {
@@ -4012,7 +4173,7 @@ export const LegacyReservationRecommendation: coreClient.CompositeMapper = {
       },
       scope: {
         serializedName: "properties.scope",
-        readOnly: true,
+        required: true,
         type: {
           name: "String"
         }
@@ -4039,8 +4200,9 @@ export const ModernReservationRecommendation: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ModernReservationRecommendation",
-    uberParent: "Resource",
-    polymorphicDiscriminator: Resource.type.polymorphicDiscriminator,
+    uberParent: "ReservationRecommendation",
+    polymorphicDiscriminator:
+      ReservationRecommendation.type.polymorphicDiscriminator,
     modelProperties: {
       ...ReservationRecommendation.type.modelProperties,
       locationPropertiesLocation: {
@@ -4170,8 +4332,8 @@ export const LegacyChargeSummary: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "LegacyChargeSummary",
-    uberParent: "ProxyResource",
-    polymorphicDiscriminator: ProxyResource.type.polymorphicDiscriminator,
+    uberParent: "ChargeSummary",
+    polymorphicDiscriminator: ChargeSummary.type.polymorphicDiscriminator,
     modelProperties: {
       ...ChargeSummary.type.modelProperties,
       billingPeriodId: {
@@ -4232,8 +4394,8 @@ export const ModernChargeSummary: coreClient.CompositeMapper = {
   type: {
     name: "Composite",
     className: "ModernChargeSummary",
-    uberParent: "ProxyResource",
-    polymorphicDiscriminator: ProxyResource.type.polymorphicDiscriminator,
+    uberParent: "ChargeSummary",
+    polymorphicDiscriminator: ChargeSummary.type.polymorphicDiscriminator,
     modelProperties: {
       ...ChargeSummary.type.modelProperties,
       billingPeriodId: {
@@ -4328,11 +4490,16 @@ export const LegacyReservationTransaction: coreClient.CompositeMapper = {
 };
 
 export let discriminators = {
+  LegacyReservationRecommendationProperties: LegacyReservationRecommendationProperties,
   "Resource.UsageDetail": UsageDetail,
   "Resource.ReservationRecommendation": ReservationRecommendation,
   "ProxyResource.ChargeSummary": ChargeSummary,
-  "Resource.legacy": LegacyReservationRecommendation,
-  "Resource.modern": ModernReservationRecommendation,
-  "ProxyResource.legacy": LegacyChargeSummary,
-  "ProxyResource.modern": ModernChargeSummary
+  "LegacyReservationRecommendationProperties.Single": LegacySingleScopeReservationRecommendationProperties,
+  "LegacyReservationRecommendationProperties.Shared": LegacySharedScopeReservationRecommendationProperties,
+  "UsageDetail.legacy": LegacyUsageDetail,
+  "UsageDetail.modern": ModernUsageDetail,
+  "ReservationRecommendation.legacy": LegacyReservationRecommendation,
+  "ReservationRecommendation.modern": ModernReservationRecommendation,
+  "ChargeSummary.legacy": LegacyChargeSummary,
+  "ChargeSummary.modern": ModernChargeSummary
 };

@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { OperationOptions } from "@azure/core-client";
+import type { OperationOptions } from "@azure/core-client";
 
 /**
  * Options for model deletion.
  */
-export interface DeleteModelOptions extends OperationOptions {}
+export interface DeleteDocumentModelOptions extends OperationOptions {}

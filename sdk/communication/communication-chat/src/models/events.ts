@@ -1,19 +1,32 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import {
-  ChatEventId,
-  ChatMessageReceivedEvent,
-  ChatMessageEditedEvent,
   ChatMessageDeletedEvent,
-  ReadReceiptReceivedEvent,
-  TypingIndicatorReceivedEvent,
+  ChatMessageEditedEvent,
+  ChatMessageReceivedEvent,
   ChatThreadCreatedEvent,
   ChatThreadDeletedEvent,
   ChatThreadPropertiesUpdatedEvent,
   ParticipantsAddedEvent,
-  ParticipantsRemovedEvent
+  ParticipantsRemovedEvent,
+  ReadReceiptReceivedEvent,
+  TypingIndicatorReceivedEvent,
 } from "@azure/communication-signaling";
+
+type ChatEventId =
+  | "chatMessageReceived"
+  | "chatMessageEdited"
+  | "chatMessageDeleted"
+  | "typingIndicatorReceived"
+  | "readReceiptReceived"
+  | "chatThreadCreated"
+  | "chatThreadDeleted"
+  | "chatThreadPropertiesUpdated"
+  | "participantsAdded"
+  | "participantsRemoved"
+  | "realTimeNotificationConnected"
+  | "realTimeNotificationDisconnected";
 
 export {
   ChatEventId,
@@ -26,5 +39,5 @@ export {
   ChatThreadDeletedEvent,
   ChatThreadPropertiesUpdatedEvent,
   ParticipantsAddedEvent,
-  ParticipantsRemovedEvent
+  ParticipantsRemovedEvent,
 };

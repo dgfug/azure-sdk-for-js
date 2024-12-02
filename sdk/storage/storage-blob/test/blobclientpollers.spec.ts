@@ -1,23 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
-import * as dotenv from "dotenv";
-
+import { assert } from "chai";
 import { getBSU } from "./utils";
-import { record, Recorder, isRecordMode, isPlaybackMode } from "@azure-tools/test-recorder";
-import { recorderEnvSetup, testPollerProperties } from "./utils/testutils.common";
+import { Recorder, isRecordMode, isPlaybackMode, isLiveMode } from "@azure-tools/test-recorder";
 import {
+  getUniqueName,
+  recorderEnvSetupWithCopySource,
+  testPollerProperties,
+  uriSanitizers,
+} from "./utils/testutils.common";
+import type {
   BlobClient,
   BlockBlobClient,
   ContainerClient,
   BlobBeginCopyFromURLResponse,
-  PollerLike,
-  PollOperationState
 } from "../src";
-import { URLBuilder, URLQuery } from "@azure/core-http";
-import { Context } from "mocha";
-dotenv.config();
+import type { Context } from "mocha";
+import { isNodeLike } from "@azure/core-util";
 
 describe("BlobClient beginCopyFromURL Poller", () => {
   let containerName: string;
@@ -31,40 +31,44 @@ describe("BlobClient beginCopyFromURL Poller", () => {
 
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    recorder = record(this, recorderEnvSetup);
-    const blobServiceClient = getBSU();
-    containerName = recorder.getUniqueName("container");
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    // Copy source for all cases in this suite doesn't include any credential, it's save to keep x-ms-copy-source header.
+    await recorder.start(recorderEnvSetupWithCopySource);
+    await recorder.addSanitizers({ uriSanitizers }, ["playback", "record"]);
+    const blobServiceClient = getBSU(recorder);
+    containerName = recorder.variable("container", getUniqueName("container"));
     containerClient = blobServiceClient.getContainerClient(containerName);
     await containerClient.create();
-    blobName = recorder.getUniqueName("blob");
+    blobName = recorder.variable("blob", getUniqueName("blob"));
     blobClient = containerClient.getBlobClient(blobName);
     blockBlobClient = blobClient.getBlockBlobClient();
     await blockBlobClient.upload(content, content.length);
-    destinationContainerName = recorder.getUniqueName("dest-container");
+    destinationContainerName = recorder.variable("dest-container", getUniqueName("dest-container"));
     destinationContainerClient = blobServiceClient.getContainerClient(destinationContainerName);
     await destinationContainerClient.create();
   });
 
-  afterEach(async function(this: Context) {
-    if (!this.currentTest?.isPending()) {
+  afterEach(async function (this: Context) {
+    if (containerClient) {
       await containerClient.delete();
-      await destinationContainerClient.delete();
-      await recorder.stop();
     }
+    if (destinationContainerClient) {
+      await destinationContainerClient.delete();
+    }
+    await recorder.stop();
   });
 
-  it("supports automatic polling via pollUntilDone", async () => {
-    recorder.skip("browser");
+  it("supports automatic polling via pollUntilDone", async function () {
+    if (!isNodeLike && !isLiveMode()) {
+      this.skip();
+    }
     const newBlobClient = destinationContainerClient.getBlobClient(
-      recorder.getUniqueName("copiedblob")
+      recorder.variable("copiedblob", getUniqueName("copiedblob")),
     );
 
     // specify poller type to ensure types are properly exported
-    const poller: PollerLike<
-      PollOperationState<BlobBeginCopyFromURLResponse>,
-      BlobBeginCopyFromURLResponse
-    > = await newBlobClient.beginCopyFromURL(blobClient.url, testPollerProperties);
+    const poller = await newBlobClient.beginCopyFromURL(blobClient.url, testPollerProperties);
 
     const result = await poller.pollUntilDone();
     assert.ok(result.copyId);
@@ -78,27 +82,25 @@ describe("BlobClient beginCopyFromURL Poller", () => {
     // so we remove it before comparing urls.
     assert.ok(properties2.copySource, "Expecting valid 'properties2.copySource");
 
-    const sanitizedActualUrl = URLBuilder.parse(properties2.copySource!);
-    const sanitizedQuery = URLQuery.parse(sanitizedActualUrl.getQuery()!);
-    sanitizedQuery.set("sig", undefined);
-    sanitizedActualUrl.setQuery(sanitizedQuery.toString());
+    const sanitizedActualUrl = new URL(properties2.copySource!);
+    sanitizedActualUrl.searchParams.delete("sig");
 
-    const sanitizedExpectedUrl = URLBuilder.parse(blobClient.url);
-    const sanitizedQuery2 = URLQuery.parse(sanitizedActualUrl.getQuery()!);
-    sanitizedQuery2.set("sig", undefined);
-    sanitizedExpectedUrl.setQuery(sanitizedQuery.toString());
+    const sanitizedExpectedUrl = new URL(blobClient.url);
+    sanitizedExpectedUrl.searchParams.delete("sig");
 
     assert.strictEqual(
       sanitizedActualUrl.toString(),
       sanitizedExpectedUrl.toString(),
-      "copySource does not match original source"
+      "copySource does not match original source",
     );
   });
 
-  it("supports manual polling via poll", async () => {
-    recorder.skip("browser");
+  it("supports manual polling via poll", async function () {
+    if (!isNodeLike && !isLiveMode()) {
+      this.skip();
+    }
     const newBlobClient = destinationContainerClient.getBlobClient(
-      recorder.getUniqueName("copiedblob")
+      recorder.variable("copiedblob", getUniqueName("copiedblob")),
     );
     const poller = await newBlobClient.beginCopyFromURL(blobClient.url, testPollerProperties);
     let result: BlobBeginCopyFromURLResponse;
@@ -121,57 +123,59 @@ describe("BlobClient beginCopyFromURL Poller", () => {
     // so we remove it before comparing urls.
     assert.ok(properties2.copySource, "Expecting valid 'properties2.copySource");
 
-    const sanitizedActualUrl = URLBuilder.parse(properties2.copySource!);
-    const sanitizedQuery = URLQuery.parse(sanitizedActualUrl.getQuery()!);
-    sanitizedQuery.set("sig", undefined);
-    sanitizedActualUrl.setQuery(sanitizedQuery.toString());
+    const sanitizedActualUrl = new URL(properties2.copySource!);
+    sanitizedActualUrl.searchParams.delete("sig");
 
-    const sanitizedExpectedUrl = URLBuilder.parse(blobClient.url);
-    const sanitizedQuery2 = URLQuery.parse(sanitizedActualUrl.getQuery()!);
-    sanitizedQuery2.set("sig", undefined);
-    sanitizedExpectedUrl.setQuery(sanitizedQuery.toString());
+    const sanitizedExpectedUrl = new URL(blobClient.url);
+    sanitizedExpectedUrl.searchParams.delete("sig");
 
     assert.strictEqual(
       sanitizedActualUrl.toString(),
       sanitizedExpectedUrl.toString(),
-      "copySource does not match original source"
+      "copySource does not match original source",
     );
   });
 
-  it("supports cancellation of the copy", async function(this: Context) {
+  it("supports cancellation of the copy", async function (this: Context) {
     if (!(isRecordMode() || isPlaybackMode())) {
       // Depends on the service not returning 'success' as soon as
       // the copy is initiated. Since this can't be guaranteed in the live tests,
       // these tests will only run with the unit tests with pre-recorded service responses.
       this.skip();
     }
-    recorder.skip("browser");
+    if (!isNodeLike && !isLiveMode()) {
+      this.skip();
+    }
+
     const newBlobClient = destinationContainerClient.getBlobClient(
-      recorder.getUniqueName("copiedblob")
+      recorder.variable("copiedblob", getUniqueName("copiedblob")),
     );
     const poller = await newBlobClient.beginCopyFromURL(
       "https://azure.github.io/azure-sdk-for-js/index.html",
-      testPollerProperties
+      testPollerProperties,
     );
     await poller.cancelOperation();
     try {
       await poller.pollUntilDone();
       throw new Error("Test failure");
-    } catch (err) {
+    } catch (err: any) {
       assert.equal(err.name, "PollerCancelledError");
     }
   });
 
-  it("supports updating on progress events", async function(this: Context) {
+  it("supports updating on progress events", async function (this: Context) {
     if (!(isRecordMode() || isPlaybackMode())) {
       // Depends on the service not returning 'success' as soon as
       // the copy is initiated. Since this can't be guaranteed in the live tests,
       // these tests will only run with the unit tests with pre-recorded service responses.
       this.skip();
     }
-    recorder.skip("browser");
+    if (!isNodeLike) {
+      this.skip();
+    }
+
     const newBlobClient = destinationContainerClient.getBlobClient(
-      recorder.getUniqueName("copiedblob")
+      recorder.variable("copiedblob", getUniqueName("copiedblob")),
     );
     let onProgressCalled = false;
     const poller = await newBlobClient.beginCopyFromURL(
@@ -180,17 +184,20 @@ describe("BlobClient beginCopyFromURL Poller", () => {
         onProgress(_) {
           onProgressCalled = true;
         },
-        ...testPollerProperties
-      }
+        ...testPollerProperties,
+      },
     );
     await poller.pollUntilDone();
     assert.equal(onProgressCalled, true, "onProgress handler was not called.");
   });
 
-  it("supports restoring poller state from another poller", async () => {
-    recorder.skip("browser");
+  it("supports restoring poller state from another poller", async function () {
+    if (!isNodeLike && !isLiveMode()) {
+      this.skip();
+    }
+
     const newBlobClient = destinationContainerClient.getBlobClient(
-      recorder.getUniqueName("copiedblob")
+      recorder.variable("copiedblob", getUniqueName("copiedblob")),
     );
 
     const copySourceUrl = "https://azure.github.io/azure-sdk-for-js/index.html";
@@ -203,7 +210,7 @@ describe("BlobClient beginCopyFromURL Poller", () => {
 
     const poller2 = await newBlobClient.beginCopyFromURL(copySourceUrl, {
       resumeFrom: state,
-      ...testPollerProperties
+      ...testPollerProperties,
     });
     const result = await poller2.pollUntilDone();
     assert.ok(result.copyId);

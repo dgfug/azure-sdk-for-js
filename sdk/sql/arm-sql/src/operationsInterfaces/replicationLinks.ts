@@ -6,20 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ReplicationLink,
   ReplicationLinksListByDatabaseOptionalParams,
   ReplicationLinksListByServerOptionalParams,
-  ReplicationLinksDeleteOptionalParams,
-  ReplicationLinksFailoverOptionalParams,
-  ReplicationLinksFailoverAllowDataLossOptionalParams,
-  UnlinkParameters,
-  ReplicationLinksUnlinkOptionalParams,
   ReplicationLinksGetOptionalParams,
-  ReplicationLinksGetResponse
+  ReplicationLinksGetResponse,
+  ReplicationLinksCreateOrUpdateOptionalParams,
+  ReplicationLinksCreateOrUpdateResponse,
+  ReplicationLinksDeleteOptionalParams,
+  ReplicationLinkUpdate,
+  ReplicationLinksUpdateOptionalParams,
+  ReplicationLinksUpdateResponse,
+  ReplicationLinksFailoverOptionalParams,
+  ReplicationLinksFailoverResponse,
+  ReplicationLinksFailoverAllowDataLossOptionalParams,
+  ReplicationLinksFailoverAllowDataLossResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -37,7 +41,7 @@ export interface ReplicationLinks {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: ReplicationLinksListByDatabaseOptionalParams
+    options?: ReplicationLinksListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<ReplicationLink>;
   /**
    * Gets a list of replication links.
@@ -49,126 +53,8 @@ export interface ReplicationLinks {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ReplicationLinksListByServerOptionalParams
+    options?: ReplicationLinksListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ReplicationLink>;
-  /**
-   * Deletes a database replication link. Cannot be done during failover.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database that has the replication link to be dropped.
-   * @param linkId The ID of the replication link to be deleted.
-   * @param options The options parameters.
-   */
-  delete(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    linkId: string,
-    options?: ReplicationLinksDeleteOptionalParams
-  ): Promise<void>;
-  /**
-   * Sets which replica database is primary by failing over from the current primary replica database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database that has the replication link to be failed over.
-   * @param linkId The ID of the replication link to be failed over.
-   * @param options The options parameters.
-   */
-  beginFailover(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    linkId: string,
-    options?: ReplicationLinksFailoverOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
-  /**
-   * Sets which replica database is primary by failing over from the current primary replica database.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database that has the replication link to be failed over.
-   * @param linkId The ID of the replication link to be failed over.
-   * @param options The options parameters.
-   */
-  beginFailoverAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    linkId: string,
-    options?: ReplicationLinksFailoverOptionalParams
-  ): Promise<void>;
-  /**
-   * Sets which replica database is primary by failing over from the current primary replica database.
-   * This operation might result in data loss.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database that has the replication link to be failed over.
-   * @param linkId The ID of the replication link to be failed over.
-   * @param options The options parameters.
-   */
-  beginFailoverAllowDataLoss(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    linkId: string,
-    options?: ReplicationLinksFailoverAllowDataLossOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
-  /**
-   * Sets which replica database is primary by failing over from the current primary replica database.
-   * This operation might result in data loss.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database that has the replication link to be failed over.
-   * @param linkId The ID of the replication link to be failed over.
-   * @param options The options parameters.
-   */
-  beginFailoverAllowDataLossAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    linkId: string,
-    options?: ReplicationLinksFailoverAllowDataLossOptionalParams
-  ): Promise<void>;
-  /**
-   * Deletes a database replication link in forced or friendly way.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database that has the replication link to be failed over.
-   * @param linkId The ID of the replication link to be failed over.
-   * @param parameters The required parameters for unlinking replication link.
-   * @param options The options parameters.
-   */
-  beginUnlink(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    linkId: string,
-    parameters: UnlinkParameters,
-    options?: ReplicationLinksUnlinkOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
-  /**
-   * Deletes a database replication link in forced or friendly way.
-   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
-   *                          this value from the Azure Resource Manager API or the portal.
-   * @param serverName The name of the server.
-   * @param databaseName The name of the database that has the replication link to be failed over.
-   * @param linkId The ID of the replication link to be failed over.
-   * @param parameters The required parameters for unlinking replication link.
-   * @param options The options parameters.
-   */
-  beginUnlinkAndWait(
-    resourceGroupName: string,
-    serverName: string,
-    databaseName: string,
-    linkId: string,
-    parameters: UnlinkParameters,
-    options?: ReplicationLinksUnlinkOptionalParams
-  ): Promise<void>;
   /**
    * Gets a replication link.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -183,6 +69,194 @@ export interface ReplicationLinks {
     serverName: string,
     databaseName: string,
     linkId: string,
-    options?: ReplicationLinksGetOptionalParams
+    options?: ReplicationLinksGetOptionalParams,
   ): Promise<ReplicationLinksGetResponse>;
+  /**
+   * Updates the replication link type.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId
+   * @param parameters A replication link.
+   * @param options The options parameters.
+   */
+  beginCreateOrUpdate(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    parameters: ReplicationLink,
+    options?: ReplicationLinksCreateOrUpdateOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<ReplicationLinksCreateOrUpdateResponse>,
+      ReplicationLinksCreateOrUpdateResponse
+    >
+  >;
+  /**
+   * Updates the replication link type.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId
+   * @param parameters A replication link.
+   * @param options The options parameters.
+   */
+  beginCreateOrUpdateAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    parameters: ReplicationLink,
+    options?: ReplicationLinksCreateOrUpdateOptionalParams,
+  ): Promise<ReplicationLinksCreateOrUpdateResponse>;
+  /**
+   * Deletes the replication link.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId
+   * @param options The options parameters.
+   */
+  beginDelete(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    options?: ReplicationLinksDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
+  /**
+   * Deletes the replication link.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId
+   * @param options The options parameters.
+   */
+  beginDeleteAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    options?: ReplicationLinksDeleteOptionalParams,
+  ): Promise<void>;
+  /**
+   * Updates the replication link type.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId
+   * @param parameters A replication link update request.
+   * @param options The options parameters.
+   */
+  beginUpdate(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    parameters: ReplicationLinkUpdate,
+    options?: ReplicationLinksUpdateOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<ReplicationLinksUpdateResponse>,
+      ReplicationLinksUpdateResponse
+    >
+  >;
+  /**
+   * Updates the replication link type.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId
+   * @param parameters A replication link update request.
+   * @param options The options parameters.
+   */
+  beginUpdateAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    parameters: ReplicationLinkUpdate,
+    options?: ReplicationLinksUpdateOptionalParams,
+  ): Promise<ReplicationLinksUpdateResponse>;
+  /**
+   * Fails over from the current primary server to this server.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId The name of the replication link.
+   * @param options The options parameters.
+   */
+  beginFailover(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    options?: ReplicationLinksFailoverOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<ReplicationLinksFailoverResponse>,
+      ReplicationLinksFailoverResponse
+    >
+  >;
+  /**
+   * Fails over from the current primary server to this server.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId The name of the replication link.
+   * @param options The options parameters.
+   */
+  beginFailoverAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    options?: ReplicationLinksFailoverOptionalParams,
+  ): Promise<ReplicationLinksFailoverResponse>;
+  /**
+   * Fails over from the current primary server to this server allowing data loss.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId The name of the replication link.
+   * @param options The options parameters.
+   */
+  beginFailoverAllowDataLoss(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    options?: ReplicationLinksFailoverAllowDataLossOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<ReplicationLinksFailoverAllowDataLossResponse>,
+      ReplicationLinksFailoverAllowDataLossResponse
+    >
+  >;
+  /**
+   * Fails over from the current primary server to this server allowing data loss.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serverName The name of the server.
+   * @param databaseName The name of the database.
+   * @param linkId The name of the replication link.
+   * @param options The options parameters.
+   */
+  beginFailoverAllowDataLossAndWait(
+    resourceGroupName: string,
+    serverName: string,
+    databaseName: string,
+    linkId: string,
+    options?: ReplicationLinksFailoverAllowDataLossOptionalParams,
+  ): Promise<ReplicationLinksFailoverAllowDataLossResponse>;
 }

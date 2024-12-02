@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as assert from "assert";
+import { assert } from "chai";
 
 import {
   toAccessControlItem,
@@ -16,31 +16,31 @@ import {
   toProperties,
   toPublicAccessType,
   toRolePermissions,
-  toRolePermissionsString
+  toRolePermissionsString,
 } from "../src/transforms";
 
 describe("transforms", () => {
   it("toBlobEndpointUrl", () => {
     assert.deepStrictEqual(
       toBlobEndpointUrl("http://account.blob.core.windows.net"),
-      "http://account.blob.core.windows.net"
+      "http://account.blob.core.windows.net",
     );
     assert.deepStrictEqual(
       toBlobEndpointUrl("http://account.dfs.core.windows.net"),
-      "http://account.blob.core.windows.net"
+      "http://account.blob.core.windows.net",
     );
     assert.deepStrictEqual(toBlobEndpointUrl("http://127.0.0.1:10000"), "http://127.0.0.1:10000");
     assert.deepStrictEqual(
       toBlobEndpointUrl("http://account.blob.core.windows.net/abc"),
-      "http://account.blob.core.windows.net/abc"
+      "http://account.blob.core.windows.net/abc",
     );
     assert.deepStrictEqual(
       toBlobEndpointUrl("http://account.dfs.core.windows.net/abc"),
-      "http://account.blob.core.windows.net/abc"
+      "http://account.blob.core.windows.net/abc",
     );
     assert.deepStrictEqual(
       toBlobEndpointUrl("http://127.0.0.1:10000/abc"),
-      "http://127.0.0.1:10000/abc"
+      "http://127.0.0.1:10000/abc",
     );
     assert.deepStrictEqual(toBlobEndpointUrl("http://localhost"), "http://localhost");
     assert.deepStrictEqual(toBlobEndpointUrl("invalidurl"), "invalidurl");
@@ -49,24 +49,24 @@ describe("transforms", () => {
   it("toDfsEndpointUrl", () => {
     assert.deepStrictEqual(
       toDfsEndpointUrl("http://account.blob.core.windows.net"),
-      "http://account.dfs.core.windows.net"
+      "http://account.dfs.core.windows.net",
     );
     assert.deepStrictEqual(
       toDfsEndpointUrl("http://account.dfs.core.windows.net"),
-      "http://account.dfs.core.windows.net"
+      "http://account.dfs.core.windows.net",
     );
     assert.deepStrictEqual(toDfsEndpointUrl("http://127.0.0.1:10000"), "http://127.0.0.1:10000");
     assert.deepStrictEqual(
       toDfsEndpointUrl("http://account.blob.core.windows.net/abc"),
-      "http://account.dfs.core.windows.net/abc"
+      "http://account.dfs.core.windows.net/abc",
     );
     assert.deepStrictEqual(
       toDfsEndpointUrl("http://account.dfs.core.windows.net/abc"),
-      "http://account.dfs.core.windows.net/abc"
+      "http://account.dfs.core.windows.net/abc",
     );
     assert.deepStrictEqual(
       toDfsEndpointUrl("http://127.0.0.1:10000/abc"),
-      "http://127.0.0.1:10000/abc"
+      "http://127.0.0.1:10000/abc",
     );
     assert.deepStrictEqual(toDfsEndpointUrl("http://localhost"), "http://localhost");
     assert.deepStrictEqual(toDfsEndpointUrl("invalidurl"), "invalidurl");
@@ -102,46 +102,25 @@ describe("transforms", () => {
     assert.deepStrictEqual(toRolePermissions("R-X"), { read: true, write: false, execute: true });
     assert.deepStrictEqual(toRolePermissions("-W-"), { read: false, write: true, execute: false });
 
-    assert.deepStrictEqual(toRolePermissions("rwx", true), {
+    assert.deepStrictEqual(toRolePermissions("rwx"), {
       read: true,
       write: true,
-      execute: true
+      execute: true,
     });
-    assert.deepStrictEqual(toRolePermissions("---", true), {
+    assert.deepStrictEqual(toRolePermissions("---"), {
       read: false,
       write: false,
-      execute: false
+      execute: false,
     });
-    assert.deepStrictEqual(toRolePermissions("r-x", true), {
+    assert.deepStrictEqual(toRolePermissions("r-x"), {
       read: true,
       write: false,
-      execute: true
+      execute: true,
     });
-    assert.deepStrictEqual(toRolePermissions("-w-", true), {
+    assert.deepStrictEqual(toRolePermissions("-w-"), {
       read: false,
       write: true,
-      execute: false
-    });
-
-    assert.deepStrictEqual(toRolePermissions("rwt", true), {
-      read: true,
-      write: true,
-      execute: true
-    });
-    assert.deepStrictEqual(toRolePermissions("--t", true), {
-      read: false,
-      write: false,
-      execute: true
-    });
-    assert.deepStrictEqual(toRolePermissions("r-t", true), {
-      read: true,
-      write: false,
-      execute: true
-    });
-    assert.deepStrictEqual(toRolePermissions("-wt", true), {
-      read: false,
-      write: true,
-      execute: true
+      execute: false,
     });
   });
 
@@ -153,7 +132,7 @@ describe("transforms", () => {
       group: { read: true, write: true, execute: true },
       other: { read: true, write: true, execute: true },
       stickyBit: false,
-      extendedAcls: false
+      extendedAcls: false,
     });
 
     assert.deepStrictEqual(toPermissions("RWXRWxrwx"), {
@@ -161,7 +140,7 @@ describe("transforms", () => {
       group: { read: true, write: true, execute: true },
       other: { read: true, write: true, execute: true },
       stickyBit: false,
-      extendedAcls: false
+      extendedAcls: false,
     });
 
     assert.deepStrictEqual(toPermissions("---------"), {
@@ -169,7 +148,7 @@ describe("transforms", () => {
       group: { read: false, write: false, execute: false },
       other: { read: false, write: false, execute: false },
       stickyBit: false,
-      extendedAcls: false
+      extendedAcls: false,
     });
 
     assert.deepStrictEqual(toPermissions("---------+"), {
@@ -177,7 +156,7 @@ describe("transforms", () => {
       group: { read: false, write: false, execute: false },
       other: { read: false, write: false, execute: false },
       stickyBit: false,
-      extendedAcls: true
+      extendedAcls: true,
     });
 
     assert.deepStrictEqual(toPermissions("--------t"), {
@@ -185,15 +164,15 @@ describe("transforms", () => {
       group: { read: false, write: false, execute: false },
       other: { read: false, write: false, execute: true },
       stickyBit: true,
-      extendedAcls: false
+      extendedAcls: false,
     });
 
     assert.deepStrictEqual(toPermissions("---R-x--T"), {
       owner: { read: false, write: false, execute: false },
       group: { read: true, write: false, execute: true },
-      other: { read: false, write: false, execute: true },
+      other: { read: false, write: false, execute: false },
       stickyBit: true,
-      extendedAcls: false
+      extendedAcls: false,
     });
   });
 
@@ -202,35 +181,35 @@ describe("transforms", () => {
       defaultScope: true,
       accessControlType: "user",
       entityId: "xxx",
-      permissions: { read: true, write: true, execute: true }
+      permissions: { read: true, write: true, execute: true },
     });
 
     assert.deepStrictEqual(toAccessControlItem("DEFAULT:USER:XXX:RWX"), {
       defaultScope: true,
       accessControlType: "user",
       entityId: "xxx",
-      permissions: { read: true, write: true, execute: true }
+      permissions: { read: true, write: true, execute: true },
     });
 
     assert.deepStrictEqual(toAccessControlItem("user:xxx:---"), {
       defaultScope: false,
       accessControlType: "user",
       entityId: "xxx",
-      permissions: { read: false, write: false, execute: false }
+      permissions: { read: false, write: false, execute: false },
     });
 
     assert.deepStrictEqual(toAccessControlItem("user:xxx:rw-"), {
       defaultScope: false,
       accessControlType: "user",
       entityId: "xxx",
-      permissions: { read: true, write: true, execute: false }
+      permissions: { read: true, write: true, execute: false },
     });
 
     assert.deepStrictEqual(toAccessControlItem("user:xxx:-w-"), {
       defaultScope: false,
       accessControlType: "user",
       entityId: "xxx",
-      permissions: { read: false, write: true, execute: false }
+      permissions: { read: false, write: true, execute: false },
     });
   });
 
@@ -241,28 +220,28 @@ describe("transforms", () => {
         defaultScope: true,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: true, write: true, execute: true }
+        permissions: { read: true, write: true, execute: true },
       },
       {
         defaultScope: false,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: true, write: true, execute: false }
-      }
+        permissions: { read: true, write: true, execute: false },
+      },
     ]);
     assert.deepStrictEqual(toAcl("user:xxx:---,user:xxx:-w-"), [
       {
         defaultScope: false,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: false, write: false, execute: false }
+        permissions: { read: false, write: false, execute: false },
       },
       {
         defaultScope: false,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: false, write: true, execute: false }
-      }
+        permissions: { read: false, write: true, execute: false },
+      },
     ]);
   });
 
@@ -272,9 +251,9 @@ describe("transforms", () => {
         defaultScope: true,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: true, write: true, execute: true }
+        permissions: { read: true, write: true, execute: true },
       }),
-      "default:user:xxx:rwx"
+      "default:user:xxx:rwx",
     );
 
     assert.deepStrictEqual(
@@ -282,9 +261,9 @@ describe("transforms", () => {
         defaultScope: false,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: false, write: false, execute: false }
+        permissions: { read: false, write: false, execute: false },
       }),
-      "user:xxx:---"
+      "user:xxx:---",
     );
 
     assert.deepStrictEqual(
@@ -292,9 +271,9 @@ describe("transforms", () => {
         defaultScope: false,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: true, write: true, execute: false }
+        permissions: { read: true, write: true, execute: false },
       }),
-      "user:xxx:rw-"
+      "user:xxx:rw-",
     );
 
     assert.deepStrictEqual(
@@ -302,9 +281,9 @@ describe("transforms", () => {
         defaultScope: false,
         accessControlType: "user",
         entityId: "xxx",
-        permissions: { read: false, write: true, execute: false }
+        permissions: { read: false, write: true, execute: false },
       }),
-      "user:xxx:-w-"
+      "user:xxx:-w-",
     );
   });
 
@@ -316,55 +295,55 @@ describe("transforms", () => {
           defaultScope: true,
           accessControlType: "user",
           entityId: "xxx",
-          permissions: { read: true, write: true, execute: true }
+          permissions: { read: true, write: true, execute: true },
         },
         {
           defaultScope: false,
           accessControlType: "user",
           entityId: "xxx",
-          permissions: { read: true, write: true, execute: false }
+          permissions: { read: true, write: true, execute: false },
         },
         {
           defaultScope: false,
           accessControlType: "user",
           entityId: "xxx",
-          permissions: { read: false, write: false, execute: false }
+          permissions: { read: false, write: false, execute: false },
         },
         {
           defaultScope: false,
           accessControlType: "user",
           entityId: "xxx",
-          permissions: { read: false, write: true, execute: false }
-        }
+          permissions: { read: false, write: true, execute: false },
+        },
       ]),
-      "default:user:xxx:rwx,user:xxx:rw-,user:xxx:---,user:xxx:-w-"
+      "default:user:xxx:rwx,user:xxx:rw-,user:xxx:---,user:xxx:-w-",
     );
   });
 
   it("toRolePermissionsString", () => {
     assert.deepStrictEqual(
       toRolePermissionsString({ read: true, write: true, execute: true }),
-      "rwx"
+      "rwx",
     );
     assert.deepStrictEqual(
       toRolePermissionsString({ read: false, write: false, execute: false }),
-      "---"
+      "---",
     );
     assert.deepStrictEqual(
       toRolePermissionsString({ read: true, write: false, execute: true }),
-      "r-x"
+      "r-x",
     );
     assert.deepStrictEqual(
       toRolePermissionsString({ read: false, write: false, execute: true }),
-      "--x"
+      "--x",
     );
     assert.deepStrictEqual(
       toRolePermissionsString({ read: false, write: false, execute: true }, true),
-      "--t"
+      "--t",
     );
     assert.deepStrictEqual(
       toRolePermissionsString({ read: false, write: true, execute: false }, true),
-      "-wt"
+      "-wT",
     );
   });
 
@@ -375,9 +354,9 @@ describe("transforms", () => {
         group: { read: true, write: true, execute: true },
         other: { read: true, write: true, execute: true },
         stickyBit: false,
-        extendedAcls: false
+        extendedAcls: false,
       }),
-      "rwxrwxrwx"
+      "rwxrwxrwx",
     );
 
     assert.deepStrictEqual(
@@ -386,9 +365,9 @@ describe("transforms", () => {
         group: { read: false, write: false, execute: false },
         other: { read: false, write: false, execute: false },
         stickyBit: false,
-        extendedAcls: false
+        extendedAcls: false,
       }),
-      "---------"
+      "---------",
     );
 
     assert.deepStrictEqual(
@@ -397,9 +376,9 @@ describe("transforms", () => {
         group: { read: false, write: false, execute: false },
         other: { read: false, write: false, execute: false },
         stickyBit: false,
-        extendedAcls: true
+        extendedAcls: true,
       }),
-      "---------+"
+      "---------+",
     );
 
     assert.deepStrictEqual(
@@ -408,9 +387,9 @@ describe("transforms", () => {
         group: { read: false, write: false, execute: false },
         other: { read: false, write: false, execute: true },
         stickyBit: true,
-        extendedAcls: false
+        extendedAcls: false,
       }),
-      "--------t"
+      "--------t",
     );
 
     assert.deepStrictEqual(
@@ -419,9 +398,9 @@ describe("transforms", () => {
         group: { read: true, write: false, execute: true },
         other: { read: false, write: false, execute: true },
         stickyBit: true,
-        extendedAcls: false
+        extendedAcls: false,
       }),
-      "---r-x--t"
+      "---r-x--t",
     );
   });
 });

@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CheckpointStore, PartitionOwnership } from "./eventProcessor";
-import { Checkpoint } from "./partitionProcessor";
-import { generate_uuid } from "rhea-promise";
-import { throwTypeErrorIfParameterMissing } from "./util/error";
+import type { CheckpointStore, PartitionOwnership } from "./eventProcessor.js";
+import type { Checkpoint } from "./partitionProcessor.js";
+import { throwTypeErrorIfParameterMissing } from "./util/error.js";
+import { getRandomName } from "./util/utils.js";
 
 /**
  * The `EventProcessor` relies on a `CheckpointStore` to store checkpoints and handle partition
@@ -34,7 +34,7 @@ export class InMemoryCheckpointStore implements CheckpointStore {
   async listOwnership(
     _fullyQualifiedNamespace: string,
     _eventHubName: string,
-    _consumerGroup: string
+    _consumerGroup: string,
   ): Promise<PartitionOwnership[]> {
     const ownerships = [];
 
@@ -64,8 +64,8 @@ export class InMemoryCheckpointStore implements CheckpointStore {
 
         const newOwnership = {
           ...ownership,
-          etag: generate_uuid(),
-          lastModifiedTimeInMs: date.getTime()
+          etag: getRandomName(),
+          lastModifiedTimeInMs: date.getTime(),
         };
 
         this._partitionOwnershipMap.set(newOwnership.partitionId, newOwnership);
@@ -85,7 +85,7 @@ export class InMemoryCheckpointStore implements CheckpointStore {
       "",
       "updateCheckpoint",
       "sequenceNumber",
-      checkpoint.sequenceNumber
+      checkpoint.sequenceNumber,
     );
     throwTypeErrorIfParameterMissing("", "updateCheckpoint", "offset", checkpoint.offset);
 
@@ -93,7 +93,7 @@ export class InMemoryCheckpointStore implements CheckpointStore {
 
     const partitionOwnership = this._partitionOwnershipMap.get(checkpoint.partitionId);
     if (partitionOwnership) {
-      partitionOwnership.etag = generate_uuid();
+      partitionOwnership.etag = getRandomName();
 
       const key = `${checkpoint.fullyQualifiedNamespace}:${checkpoint.eventHubName}:${checkpoint.consumerGroup}`;
       let partitionMap = this._committedCheckpoints.get(key);
@@ -110,7 +110,7 @@ export class InMemoryCheckpointStore implements CheckpointStore {
   async listCheckpoints(
     fullyQualifiedNamespace: string,
     eventHubName: string,
-    consumerGroup: string
+    consumerGroup: string,
   ): Promise<Checkpoint[]> {
     const key = `${fullyQualifiedNamespace}:${eventHubName}:${consumerGroup}`;
 

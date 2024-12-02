@@ -8,123 +8,158 @@
 
 import {
   env,
-  record,
-  RecorderEnvironmentSetup,
   Recorder,
+  RecorderStartOptions,
   delay,
-  isPlaybackMode
+  isPlaybackMode,
 } from "@azure-tools/test-recorder";
-import * as assert from "assert";
-import { ClientSecretCredential } from "@azure/identity";
+import { NoOpCredential } from "@azure-tools/test-credential";
+import { assert } from "chai";
+import { Context } from "mocha";
 import { ContainerServiceClient } from "../src/containerServiceClient";
+import { DefaultAzureCredential } from "@azure/identity";
 
-const recorderEnvSetup: RecorderEnvironmentSetup = {
-  replaceableVariables: {
-    AZURE_CLIENT_ID: "azure_client_id",
-    AZURE_CLIENT_SECRET: "azure_client_secret",
-    AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
-    SUBSCRIPTION_ID: "azure_subscription_id"
-  },
-  customizationsOnRecordings: [
-    (recording: any): any =>
-      recording.replace(
-        /"access_token":"[^"]*"/g,
-        `"access_token":"access_token"`
-      )
+const replaceableVariables: Record<string, string> = {
+  SUBSCRIPTION_ID: "88888888-8888-8888-8888-888888888888"
+};
+
+const recorderOptions: RecorderStartOptions = {
+  envSetupForPlayback: replaceableVariables,
+  removeCentralSanitizers: [
+    "AZSDK3493", // .name in the body is not a secret and is listed below in the beforeEach section
+    "AZSDK3430", // .id in the body is not a secret and is listed below in the beforeEach section
   ],
-  queryParametersToSkip: []
 };
 
 export const testPollingOptions = {
   updateIntervalInMs: isPlaybackMode() ? 0 : undefined,
 };
 
+export function createTestCredential() {
+  return isPlaybackMode()
+    ? new NoOpCredential()
+    : new DefaultAzureCredential();
+}
+
 describe("ContainerService test", () => {
   let recorder: Recorder;
   let subscriptionId: string;
   let clientId: string;
-  let secret: string;
   let client: ContainerServiceClient;
   let location: string;
   let resourceGroupName: string;
   let resourceName: string;
 
-  beforeEach(async function() {
-    recorder = record(this, recorderEnvSetup);
-    subscriptionId = env.SUBSCRIPTION_ID;
-    clientId = env.AZURE_CLIENT_ID;
-    secret = env.AZURE_CLIENT_SECRET;
+  beforeEach(async function (this: Context) {
+    recorder = new Recorder(this.currentTest);
+    await recorder.start(recorderOptions);
+    subscriptionId = env.SUBSCRIPTION_ID || '';
+    clientId = env.AZURE_CLIENT_ID || '';
     // This is an example of how the environment variables are used
-    const credential = new ClientSecretCredential(
-      env.AZURE_TENANT_ID,
-      env.AZURE_CLIENT_ID,
-      env.AZURE_CLIENT_SECRET
-    );
-    client = new ContainerServiceClient(credential, subscriptionId);
+    const credential = createTestCredential();
+    client = new ContainerServiceClient(credential, subscriptionId, recorder.configureClientOptions({}));
     location = "eastus";
     resourceGroupName = "myjstest";
     resourceName = "myreourcexyz";
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
-  it("managedClusters create test", async function() {
-    const res = await client.managedClusters.beginCreateOrUpdateAndWait(resourceGroupName,resourceName,{
+  it.only("operation list test", async function () {
+    const resArray = new Array();
+    for await (let item of client.operations.list()) {
+      resArray.push(item);
+    }
+    assert.notEqual(resArray.length, 0);
+  });
+
+  it("managedClusters create test", async function () {
+    const res = await client.managedClusters.beginCreateOrUpdateAndWait(resourceGroupName, resourceName, {
       dnsPrefix: "aksjssdk",
-        agentPoolProfiles: [
-            {
-                name: "aksagent",
-                count: 1,
-                vmSize: "Standard_DS2_v2",
-                maxPods: 110,
-                minCount: 1,
-                maxCount: 100,
-                osType: "Linux",
-                type: "VirtualMachineScaleSets",
-                enableAutoScaling: true,
-                mode: "System"
-            }
-        ],
-        servicePrincipalProfile: {
-            clientId: clientId,
-            secret: secret
-        },
-        location: location
-    },testPollingOptions);
-    assert.equal(res.name,resourceName);
+      agentPoolProfiles: [
+        {
+          name: "aksagent",
+          count: 1,
+          vmSize: "Standard_DS2_v2",
+          maxPods: 110,
+          minCount: 1,
+          maxCount: 100,
+          osType: "Linux",
+          type: "VirtualMachineScaleSets",
+          enableAutoScaling: true,
+          mode: "System"
+        }
+      ],
+      servicePrincipalProfile: {
+        clientId: clientId,
+        secret: ""
+      },
+      location: location
+    }, testPollingOptions);
+    assert.equal(res.name, resourceName);
   });
 
-  it("managedClusters get test", async function() {
-    const res = await client.managedClusters.get(resourceGroupName,resourceName);
-    assert.equal(res.name,resourceName);
+  it("agentPools create test", async function () {
+    const res = await client.agentPools.beginCreateOrUpdateAndWait(
+      resourceGroupName,
+      resourceName,
+      "aksagent1",
+      {
+        count: 3,
+        mode: "User",
+        orchestratorVersion: "",
+        osDiskSizeGB: 64,
+        osType: "Linux",
+        vmSize: "Standard_DS2_v2",
+        workloadRuntime: "OCIContainer"
+      },
+      testPollingOptions,
+    );
+    assert.equal(res.name, "aksagent1");
   });
 
-  it("managedClusters getUpgradeProfile test", async function() {
-    const res = await client.managedClusters.getUpgradeProfile(resourceGroupName,resourceName);
-    assert.equal(res.name,"default");
+  it("managedClusters get test", async function () {
+    const res = await client.managedClusters.get(resourceGroupName, resourceName);
+    assert.equal(res.name, resourceName);
   });
 
-  it("managedClusters list test", async function() {
+  it("managedClusters getUpgradeProfile test", async function () {
+    const res = await client.managedClusters.getUpgradeProfile(resourceGroupName, resourceName);
+    assert.equal(res.name, "default");
+  });
+
+  it("managedClusters list test", async function () {
     const resArray = new Array();
-    for await (let item of client.managedClusters.list()){
-        resArray.push(item);
+    for await (let item of client.managedClusters.listByResourceGroup(resourceGroupName)) {
+      resArray.push(item);
     }
-    assert.equal(resArray.length,1);
+    assert.equal(resArray.length, 1);
   });
 
-  it("managedClusters update test", async function() {
-    const res = await client.managedClusters.beginUpdateTagsAndWait(resourceGroupName,resourceName,{tags: {tier: "testing",archv3: ""}},testPollingOptions);
-    assert.equal(res.type,"Microsoft.ContainerService/ManagedClusters");
-  });
-
-  it("managedClusters delete test", async function() {
-    const res = await client.managedClusters.beginDeleteAndWait(resourceGroupName,resourceName,testPollingOptions);
+  it("agentPools list test", async function () {
     const resArray = new Array();
-    for await (let item of client.managedClusters.list()){
-        resArray.push(item);
+    for await (let item of client.agentPools.list(
+      resourceGroupName,
+      resourceName
+    )) {
+      resArray.push(item);
     }
-    assert.equal(resArray.length,0);
+    assert.equal(resArray.length, 1);
+  });
+
+  it("managedClusters update test", async function () {
+    const res = await client.managedClusters.beginUpdateTagsAndWait(resourceGroupName, resourceName, { tags: { tier: "testing", archv3: "" } }, testPollingOptions);
+    assert.equal(res.type, "Microsoft.ContainerService/ManagedClusters");
+  });
+
+  it("managedClusters delete test", async function () {
+    const res = await client.managedClusters.beginDeleteAndWait(resourceGroupName, resourceName, testPollingOptions);
+    const resArray = new Array();
+    for await (let item of client.managedClusters.listByResourceGroup(resourceGroupName)) {
+      resArray.push(item);
+    }
+    assert.equal(resArray.length, 0);
   });
 });

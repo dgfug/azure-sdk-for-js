@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HeaderConstants, TRANSACTION_HTTP_LINE_ENDING } from "./constants";
+import { HeaderConstants, TRANSACTION_HTTP_LINE_ENDING } from "./constants.js";
 
 /**
  * Builds a transaction change set boundary to be added to the transaction request body
@@ -27,7 +27,7 @@ export function getTransactionBoundary(transactionId: string): string {
 export function getInitialTransactionBody(transactionId: string, changesetId: string): string[] {
   const transactionBoundary = `batch_${transactionId}`;
   return [
-    `--${transactionBoundary}${TRANSACTION_HTTP_LINE_ENDING}${HeaderConstants.CONTENT_TYPE}: multipart/mixed; boundary=changeset_${changesetId}${TRANSACTION_HTTP_LINE_ENDING}${TRANSACTION_HTTP_LINE_ENDING}`
+    `--${transactionBoundary}${TRANSACTION_HTTP_LINE_ENDING}${HeaderConstants.CONTENT_TYPE}: multipart/mixed; boundary=changeset_${changesetId}${TRANSACTION_HTTP_LINE_ENDING}${TRANSACTION_HTTP_LINE_ENDING}`,
   ];
 }
 
@@ -40,7 +40,7 @@ export function getInitialTransactionBody(transactionId: string, changesetId: st
 export function getTransactionHttpRequestBody(
   bodyParts: string[],
   transactionId: string,
-  changesetId: string
+  changesetId: string,
 ): string {
   const transactionBoundary = getTransactionBoundary(transactionId);
   const changesetBoundary = getChangeSetBoundary(changesetId);

@@ -24,7 +24,7 @@ Details about the terms used here are described in [Key concepts](#key-concepts)
 
 ### Currently supported environments
 
-- [LTS versions of Node.js](https://nodejs.org/about/releases/)
+- [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule)
 
 ### Prerequisites
 
@@ -58,7 +58,7 @@ Or authenticate the `WebPubSubServiceClient` using [Azure Active Directory][aad_
 
 1. Install the `@azure/identity` dependency
 
-```batch
+```bash
 npm install @azure/identity
 ```
 
@@ -66,6 +66,7 @@ npm install @azure/identity
 
 ```js
 const { WebPubSubServiceClient, AzureKeyCredential } = require("@azure/web-pubsub");
+const { DefaultAzureCredential } = require("@azure/identity");
 
 const key = new DefaultAzureCredential();
 const serviceClient = new WebPubSubServiceClient("<Endpoint>", key, "<hubName>");
@@ -108,6 +109,9 @@ let token = await serviceClient.getClientAccessToken();
 // Or get the access token and assign the client a userId
 token = await serviceClient.getClientAccessToken({ userId: "user1" });
 
+// Or get the access token that the client will join group GroupA when it connects using the access token
+token = await serviceClient.getClientAccessToken({ userId: "user1", groups: [ "GroupA" ] });
+
 // return the token to the WebSocket client
 ```
 
@@ -127,6 +131,34 @@ await serviceClient.sendToAll("Hi there!", { contentType: "text/plain" });
 // Send a binary message
 const payload = new Uint8Array(10);
 await serviceClient.sendToAll(payload.buffer);
+```
+
+### Send messages to all connections in a hub with OData filter syntax
+
+Details about `filter` syntax please see [OData filter syntax for Azure Web PubSub](https://aka.ms/awps/filter-syntax).
+
+```js
+const { WebPubSubServiceClient, odata } = require("@azure/web-pubsub");
+
+const serviceClient = new WebPubSubServiceClient("<ConnectionString>", "<hubName>");
+
+// Send a JSON message to anonymous connections
+await serviceClient.sendToAll(
+  { message: "Hello world!" },
+  { filter: "userId eq null" }
+  );
+
+// Send a text message to connections in groupA but not in groupB
+const groupA = 'groupA';
+const groupB = 'groupB';
+await serviceClient.sendToAll(
+  "Hello world!",
+  { 
+    contentType: "text/plain",
+    // use plain text "'groupA' in groups and not('groupB' in groups)"
+    // or use the odata helper method
+    filter: odata`${groupA} in groups and not(${groupB} in groups)` 
+  });
 ```
 
 ### Send messages to all connections in a group
@@ -192,7 +224,7 @@ const hasConnections = await serviceClient.groupExists("<groupName>");
 ```js
 const { WebPubSubServiceClient } = require("@azure/web-pubsub");
 
-function onResponse(rawResponse: FullOperationResponse): void {
+function onResponse(rawResponse) {
   console.log(rawResponse);
 }
 const serviceClient = new WebPubSubServiceClient("<ConnectionString>", "<hubName>");

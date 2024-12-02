@@ -1,32 +1,34 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { assert } from "chai";
-import { RestError } from "@azure/core-http";
-import { DeleteCertificatePoller } from "../../src/lro/delete/poller";
-import { RecoverDeletedCertificatePoller } from "../../src/lro/recover/poller";
+// Licensed under the MIT License.
+import type { PipelineRequest } from "@azure/core-rest-pipeline";
+import { RestError, createHttpHeaders } from "@azure/core-rest-pipeline";
+import { DeleteCertificatePoller } from "../../src/lro/delete/poller.js";
+import { RecoverDeletedCertificatePoller } from "../../src/lro/recover/poller.js";
+import type { KeyVaultClient } from "../../src/generated/index.js";
+import type { FullOperationResponse } from "@azure/core-client";
+import { describe, it, assert } from "vitest";
 
 describe("The LROs properly throw on unexpected errors", () => {
-  const vaultUrl = `https://keyVaultName.vault.azure.net`;
+  const vaultUrl = `https://keyvaultname.vault.azure.net`;
 
   describe("delete LRO", () => {
-    it("403 doesn't throw", async function() {
+    it("403 doesn't throw", async function () {
       const code = 403;
       const client: any = {
         async deleteCertificate(): Promise<any> {
           return {
-            id: "/version/name/version",
-            recoveryId: "something"
+            id: "https://keyvaultname.vault.azure.net/version/name/version",
+            recoveryId: "something",
           };
         },
         async getDeletedCertificate(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
       const poller = new DeleteCertificatePoller({
         vaultUrl,
         certificateName: "name",
-        client
+        client,
       });
 
       await poller.pollUntilDone();
@@ -34,23 +36,23 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isTrue(poller.getOperationState().isCompleted);
     });
 
-    it("404 doesn't throw", async function() {
+    it("404 doesn't throw", async function () {
       const code = 404;
       const client: any = {
         async deleteCertificate(): Promise<any> {
           return {
-            id: "/version/name/version",
-            recoveryId: "something"
+            id: "https://keyvaultname.vault.azure.net/version/name/version",
+            recoveryId: "something",
           };
         },
         async getDeletedCertificate(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
       const poller = new DeleteCertificatePoller({
         vaultUrl,
         certificateName: "name",
-        client
+        client,
       });
 
       await poller.poll();
@@ -59,30 +61,30 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isUndefined(poller.getOperationState().isCompleted);
     });
 
-    it("Errors other than 403 and 404 throw", async function() {
+    it("Errors other than 403 and 404 throw", async function () {
       const codes = [401, 402, 405, 500];
       for (const code of codes) {
         const client: any = {
           async deleteCertificate(): Promise<any> {
             return {
-              id: "/version/name/version",
-              recoveryId: "something"
+              id: "https://keyvaultname.vault.azure.net/version/name/version",
+              recoveryId: "something",
             };
           },
           async getDeletedCertificate(): Promise<any> {
-            throw new RestError(`${code}`, undefined, code);
-          }
+            throw new RestError(`${code}`, { statusCode: code });
+          },
         };
         const poller = new DeleteCertificatePoller({
           vaultUrl,
           certificateName: "name",
-          client
+          client,
         });
 
         let error: Error | null = null;
         try {
           await poller.pollUntilDone();
-        } catch (e) {
+        } catch (e: any) {
           error = e;
         }
 
@@ -92,27 +94,44 @@ describe("The LROs properly throw on unexpected errors", () => {
   });
 
   describe("recover LRO", () => {
-    it("403 doesn't throw", async function() {
+    it("403 doesn't throw", async function () {
       const code = 403;
-      const client: any = {
-        async recoverDeletedCertificate(): Promise<any> {
-          return {
-            _response: {
-              parsedBody: {
-                id: "/version/name/version",
-                recoveryId: "something"
-              }
-            }
+
+      const fooClient: Partial<KeyVaultClient> = {
+        async recoverDeletedCertificate(_a, _b, c): Promise<any> {
+          const request: PipelineRequest = {
+            url: "",
+            method: "GET",
+            headers: createHttpHeaders(),
+            timeout: 100,
+            withCredentials: false,
+            requestId: "something",
           };
+          const body = {
+            id: "https://keyvaultname.vault.azure.net/version/name/version",
+            recoveryId: "something",
+          };
+          const response: FullOperationResponse = {
+            request: request,
+            bodyAsText: JSON.stringify(body),
+            status: code,
+            headers: createHttpHeaders(),
+            parsedBody: body,
+          };
+          if (c?.onResponse !== undefined) {
+            c.onResponse(response, response, {});
+          }
         },
+
         async getCertificate(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
+
       const poller = new RecoverDeletedCertificatePoller({
         vaultUrl,
         certificateName: "name",
-        client
+        client: fooClient as any,
       });
 
       await poller.pollUntilDone();
@@ -120,27 +139,44 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isTrue(poller.getOperationState().isCompleted);
     });
 
-    it("404 doesn't throw", async function() {
+    it("404 doesn't throw", async function () {
       const code = 404;
-      const client: any = {
-        async recoverDeletedCertificate(): Promise<any> {
-          return {
-            _response: {
-              parsedBody: {
-                id: "/version/name/version",
-                recoveryId: "something"
-              }
-            }
+
+      const fooClient: Partial<KeyVaultClient> = {
+        async recoverDeletedCertificate(_a, _b, c): Promise<any> {
+          const request: PipelineRequest = {
+            url: "",
+            method: "GET",
+            headers: createHttpHeaders(),
+            timeout: 100,
+            withCredentials: false,
+            requestId: "something",
           };
+          const body = {
+            id: "https://keyvaultname.vault.azure.net/version/name/version",
+            recoveryId: "something",
+          };
+          const response: FullOperationResponse = {
+            request: request,
+            bodyAsText: JSON.stringify(body),
+            status: code,
+            headers: createHttpHeaders(),
+            parsedBody: body,
+          };
+          if (c?.onResponse !== undefined) {
+            c.onResponse(response, response, {});
+          }
         },
+
         async getCertificate(): Promise<any> {
-          throw new RestError(`${code}`, undefined, code);
-        }
+          throw new RestError(`${code}`, { statusCode: code });
+        },
       };
+
       const poller = new RecoverDeletedCertificatePoller({
         vaultUrl,
         certificateName: "name",
-        client
+        client: fooClient as any,
       });
 
       await poller.poll();
@@ -149,34 +185,51 @@ describe("The LROs properly throw on unexpected errors", () => {
       assert.isUndefined(poller.getOperationState().isCompleted);
     });
 
-    it("Errors other than 403 and 404 throw", async function() {
+    it("Errors other than 403 and 404 throw", async function () {
       const codes = [401, 402, 405, 500];
       for (const code of codes) {
-        const client: any = {
-          async recoverDeletedCertificate(): Promise<any> {
-            return {
-              _response: {
-                parsedBody: {
-                  id: "/version/name/version",
-                  recoveryId: "something"
-                }
-              }
+        const fooClient: Partial<KeyVaultClient> = {
+          async recoverDeletedCertificate(_a, _b, c): Promise<any> {
+            const request: PipelineRequest = {
+              url: "",
+              method: "GET",
+              headers: createHttpHeaders(),
+              timeout: 100,
+              withCredentials: false,
+              requestId: "something",
             };
+            const body = {
+              id: "https://keyvaultname.vault.azure.net/version/name/version",
+              recoveryId: "something",
+            };
+            const response: FullOperationResponse = {
+              request: request,
+              bodyAsText: JSON.stringify(body),
+              status: code,
+              headers: createHttpHeaders(),
+              parsedBody: body,
+            };
+            if (c?.onResponse !== undefined) {
+              c.onResponse(response, response, {});
+            }
           },
+
           async getCertificate(): Promise<any> {
-            throw new RestError(`${code}`, undefined, code);
-          }
+            throw new RestError(`${code}`, { statusCode: code });
+          },
         };
+
         const poller = new RecoverDeletedCertificatePoller({
           vaultUrl,
           certificateName: "name",
-          client
+          client: fooClient as any,
         });
 
         let error: Error | null = null;
+
         try {
           await poller.pollUntilDone();
-        } catch (e) {
+        } catch (e: any) {
           error = e;
         }
 

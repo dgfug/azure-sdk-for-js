@@ -4,127 +4,101 @@
 
 ```ts
 
-import { AbortSignalLike } from '@azure/abort-controller';
+import type { AbortSignalLike } from '@azure/abort-controller';
 
 // @public
 export type CancelOnProgress = () => void;
 
 // @public
-export interface LongRunningOperation<T> {
-    requestMethod: string;
-    requestPath: string;
-    sendInitialRequest: () => Promise<LroResponse<T>>;
-    sendPollRequest: (path: string) => Promise<LroResponse<T>>;
-}
+export function createHttpPoller<TResult, TState extends OperationState<TResult>>(lro: RunningOperation, options?: CreateHttpPollerOptions<TResult, TState>): PollerLike<TState, TResult>;
 
 // @public
-export class LroEngine<TResult, TState extends PollOperationState<TResult>> extends Poller<TState, TResult> {
-    constructor(lro: LongRunningOperation<TResult>, options?: LroEngineOptions<TResult, TState>);
-    delay(): Promise<void>;
-}
-
-// @public
-export interface LroEngineOptions<TResult, TState> {
+export interface CreateHttpPollerOptions<TResult, TState> {
     intervalInMs?: number;
-    isDone?: (lastResponse: unknown, state: TState) => boolean;
-    lroResourceLocationConfig?: LroResourceLocationConfig;
-    processResult?: (result: unknown, state: TState) => TResult;
-    resumeFrom?: string;
-    updateState?: (state: TState, lastResponse: RawResponse) => void;
+    processResult?: (result: unknown, state: TState) => Promise<TResult>;
+    resolveOnUnsuccessful?: boolean;
+    resourceLocationConfig?: ResourceLocationConfig;
+    restoreFrom?: string;
+    updateState?: (state: TState, response: OperationResponse) => void;
+    withOperationLocation?: (operationLocation: string) => void;
 }
 
 // @public
-export type LroResourceLocationConfig = "azure-async-operation" | "location" | "original-uri";
+export function deserializeState<TResult, TState extends OperationState<TResult>>(serializedState: string): RestorableOperationState<TResult, TState>;
 
 // @public
-export interface LroResponse<T> {
+export interface OperationConfig {
+    initialRequestUrl?: string;
+    metadata?: Record<string, string>;
+    operationLocation?: string;
+    requestMethod?: string;
+    resourceLocation?: string;
+}
+
+// @public
+export interface OperationResponse<T = unknown, TRequest extends RawRequest = RawRequest> {
     flatResponse: T;
-    rawResponse: RawResponse;
+    rawResponse: RawResponse<TRequest>;
 }
 
 // @public
-export abstract class Poller<TState extends PollOperationState<TResult>, TResult> implements PollerLike<TState, TResult> {
-    constructor(operation: PollOperation<TState, TResult>);
-    cancelOperation(options?: {
-        abortSignal?: AbortSignalLike;
-    }): Promise<void>;
-    protected abstract delay(): Promise<void>;
-    getOperationState(): TState;
-    getResult(): TResult | undefined;
-    isDone(): boolean;
-    isStopped(): boolean;
-    onProgress(callback: (state: TState) => void): CancelOnProgress;
-    protected operation: PollOperation<TState, TResult>;
-    poll(options?: {
-        abortSignal?: AbortSignalLike;
-    }): Promise<void>;
-    pollUntilDone(): Promise<TResult>;
-    stopPolling(): void;
-    toString(): string;
-}
-
-// @public
-export class PollerCancelledError extends Error {
-    constructor(message: string);
-}
-
-// @public
-export interface PollerLike<TState extends PollOperationState<TResult>, TResult> {
-    cancelOperation(options?: {
-        abortSignal?: AbortSignalLike;
-    }): Promise<void>;
-    getOperationState(): TState;
-    getResult(): TResult | undefined;
-    isDone(): boolean;
-    isStopped(): boolean;
-    onProgress(callback: (state: TState) => void): CancelOnProgress;
-    poll(options?: {
-        abortSignal?: AbortSignalLike;
-    }): Promise<void>;
-    pollUntilDone(): Promise<TResult>;
-    stopPolling(): void;
-    toString(): string;
-}
-
-// @public
-export class PollerStoppedError extends Error {
-    constructor(message: string);
-}
-
-// @public
-export interface PollOperation<TState, TResult> {
-    cancel(options?: {
-        abortSignal?: AbortSignalLike;
-    }): Promise<PollOperation<TState, TResult>>;
-    state: TState;
-    toString(): string;
-    update(options?: {
-        abortSignal?: AbortSignalLike;
-        fireProgress?: (state: TState) => void;
-    }): Promise<PollOperation<TState, TResult>>;
-}
-
-// @public
-export interface PollOperationState<TResult> {
+export interface OperationState<TResult> {
     error?: Error;
-    isCancelled?: boolean;
-    isCompleted?: boolean;
-    isStarted?: boolean;
     result?: TResult;
+    status: OperationStatus;
 }
 
 // @public
-export type PollProgressCallback<TState> = (state: TState) => void;
+export type OperationStatus = "notStarted" | "running" | "succeeded" | "canceled" | "failed";
 
 // @public
-export interface RawResponse {
+export interface PollerLike<TState extends OperationState<TResult>, TResult> extends Promise<TResult> {
+    readonly isDone: boolean;
+    onProgress(callback: (state: TState) => void): CancelOnProgress;
+    readonly operationState: TState | undefined;
+    poll(options?: {
+        abortSignal?: AbortSignalLike;
+    }): Promise<TState>;
+    pollUntilDone(pollOptions?: {
+        abortSignal?: AbortSignalLike;
+    }): Promise<TResult>;
+    readonly result: TResult | undefined;
+    serialize(): Promise<string>;
+    submitted(): Promise<void>;
+}
+
+// @public
+export interface RawRequest {
+    body?: unknown;
+    method: string;
+    url: string;
+}
+
+// @public
+export interface RawResponse<TRequest extends RawRequest = RawRequest> {
     body?: unknown;
     headers: {
         [headerName: string]: string;
     };
+    request: TRequest;
     statusCode: number;
 }
 
+// @public
+export type ResourceLocationConfig = "azure-async-operation" | "location" | "original-uri" | "operation-location";
+
+// @public
+export type RestorableOperationState<TResult, T extends OperationState<TResult>> = T & {
+    config: OperationConfig;
+};
+
+// @public
+export interface RunningOperation<T = unknown> {
+    sendInitialRequest: () => Promise<OperationResponse<unknown>>;
+    sendPollRequest: (path: string, options?: {
+        abortSignal?: AbortSignalLike;
+    }) => Promise<OperationResponse<T>>;
+}
 
 // (No @packageDocumentation comment for this package)
 

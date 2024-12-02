@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export { ContainerRepositoryProperties, ArtifactTagProperties } from "./generated";
 
-import { ArtifactTagProperties } from "./generated";
+import type { ArtifactTagProperties } from "./generated";
 
 /**
  * Defines known cloud audiences for Azure Container Registry.
@@ -11,12 +11,15 @@ import { ArtifactTagProperties } from "./generated";
 export enum KnownContainerRegistryAudience {
   /** Azure China */
   AzureResourceManagerChina = "https://management.chinacloudapi.cn",
-  /** Azure Gemany */
+  /**
+   * Azure Germany
+   * @deprecated Azure Germany is being deprecated in favor of standard nonsovereign Azure regions in Germany.
+   */
   AzureResourceManagerGermany = "https://management.microsoftazure.de",
   /** Azure Government */
   AzureResourceManagerGovernment = "https://management.usgovcloudapi.net",
   /** Azure Public Cloud */
-  AzureResourceManagerPublicCloud = "https://management.azure.com"
+  AzureResourceManagerPublicCloud = "https://management.azure.com",
 }
 
 /**
@@ -48,7 +51,7 @@ export enum KnownArtifactArchitecture {
   /** s390x */
   S390X = "s390x",
   /** Wasm */
-  Wasm = "wasm"
+  Wasm = "wasm",
 }
 
 /**
@@ -82,7 +85,7 @@ export enum KnownArtifactOperatingSystem {
   /** Solaris */
   Solaris = "solaris",
   /** Windows */
-  Windows = "windows"
+  Windows = "windows",
 }
 
 /** Manifest attributes details */
@@ -125,7 +128,7 @@ export interface ArtifactManifestProperties {
    * Image size
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly size?: number;
+  readonly sizeInBytes?: number;
   /**
    * Created time
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -167,22 +170,22 @@ export interface ArtifactManifestProperties {
 }
 
 /**
- * Defines values for TagOrderBy.
+ * Defines values for ArtifactTagOrder.
  *  this contains the known values that the service supports.
  * ### Know values supported by the service
  * **LastUpdatedOnDescending**: Order tags by LastUpdatedOn field, from most recently updated to least recently updated.
  * **LastUpdatedOnAscending**: Order tags by LastUpdatedOn field, from least recently updated to most recently updated.
  */
-export type TagOrderBy = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
+export type ArtifactTagOrder = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
 
 /**
- * Defines values for RegistryArtifactOrderBy.
+ * Defines values for ArtifactManifestOrder.
  *  this contains the known values that the service supports.
  * ### Know values supported by the service
  * **LastUpdatedOnDescending**: Order registry artifacts by LastUpdatedOn field, from most recently updated to least recently updated.
  * **LastUpdatedOnAscending**: Order  registry artifacts by LastUpdatedOn field, from least recently updated to most recently updated.
  */
-export type ManifestOrderBy = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
+export type ArtifactManifestOrder = "LastUpdatedOnDescending" | "LastUpdatedOnAscending";
 
 /**
  * Contains response data for the listRepositoryNames operation.

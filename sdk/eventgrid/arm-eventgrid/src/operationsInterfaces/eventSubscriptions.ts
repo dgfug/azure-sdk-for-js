@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   EventSubscription,
   EventSubscriptionsListGlobalBySubscriptionOptionalParams,
@@ -20,6 +20,8 @@ import {
   EventSubscriptionsListRegionalByResourceGroupForTopicTypeOptionalParams,
   EventSubscriptionsListByResourceOptionalParams,
   EventSubscriptionsListByDomainTopicOptionalParams,
+  EventSubscriptionsGetDeliveryAttributesOptionalParams,
+  EventSubscriptionsGetDeliveryAttributesResponse,
   EventSubscriptionsGetOptionalParams,
   EventSubscriptionsGetResponse,
   EventSubscriptionsCreateOrUpdateOptionalParams,
@@ -30,8 +32,6 @@ import {
   EventSubscriptionsUpdateResponse,
   EventSubscriptionsGetFullUrlOptionalParams,
   EventSubscriptionsGetFullUrlResponse,
-  EventSubscriptionsGetDeliveryAttributesOptionalParams,
-  EventSubscriptionsGetDeliveryAttributesResponse
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -42,7 +42,7 @@ export interface EventSubscriptions {
    * @param options The options parameters.
    */
   listGlobalBySubscription(
-    options?: EventSubscriptionsListGlobalBySubscriptionOptionalParams
+    options?: EventSubscriptionsListGlobalBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all global event subscriptions under an Azure subscription for a topic type.
@@ -51,7 +51,7 @@ export interface EventSubscriptions {
    */
   listGlobalBySubscriptionForTopicType(
     topicTypeName: string,
-    options?: EventSubscriptionsListGlobalBySubscriptionForTopicTypeOptionalParams
+    options?: EventSubscriptionsListGlobalBySubscriptionForTopicTypeOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all global event subscriptions under a specific Azure subscription and resource group.
@@ -60,7 +60,7 @@ export interface EventSubscriptions {
    */
   listGlobalByResourceGroup(
     resourceGroupName: string,
-    options?: EventSubscriptionsListGlobalByResourceGroupOptionalParams
+    options?: EventSubscriptionsListGlobalByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all global event subscriptions under a resource group for a specific topic type.
@@ -71,7 +71,7 @@ export interface EventSubscriptions {
   listGlobalByResourceGroupForTopicType(
     resourceGroupName: string,
     topicTypeName: string,
-    options?: EventSubscriptionsListGlobalByResourceGroupForTopicTypeOptionalParams
+    options?: EventSubscriptionsListGlobalByResourceGroupForTopicTypeOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all event subscriptions from the given location under a specific Azure subscription.
@@ -80,7 +80,7 @@ export interface EventSubscriptions {
    */
   listRegionalBySubscription(
     location: string,
-    options?: EventSubscriptionsListRegionalBySubscriptionOptionalParams
+    options?: EventSubscriptionsListRegionalBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all event subscriptions from the given location under a specific Azure subscription and
@@ -92,7 +92,7 @@ export interface EventSubscriptions {
   listRegionalByResourceGroup(
     resourceGroupName: string,
     location: string,
-    options?: EventSubscriptionsListRegionalByResourceGroupOptionalParams
+    options?: EventSubscriptionsListRegionalByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all event subscriptions from the given location under a specific Azure subscription and topic
@@ -104,7 +104,7 @@ export interface EventSubscriptions {
   listRegionalBySubscriptionForTopicType(
     location: string,
     topicTypeName: string,
-    options?: EventSubscriptionsListRegionalBySubscriptionForTopicTypeOptionalParams
+    options?: EventSubscriptionsListRegionalBySubscriptionForTopicTypeOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all event subscriptions from the given location under a specific Azure subscription and
@@ -118,10 +118,10 @@ export interface EventSubscriptions {
     resourceGroupName: string,
     location: string,
     topicTypeName: string,
-    options?: EventSubscriptionsListRegionalByResourceGroupForTopicTypeOptionalParams
+    options?: EventSubscriptionsListRegionalByResourceGroupForTopicTypeOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
-   * List all event subscriptions that have been created for a specific topic.
+   * List all event subscriptions that have been created for a specific resource.
    * @param resourceGroupName The name of the resource group within the user's subscription.
    * @param providerNamespace Namespace of the provider of the topic.
    * @param resourceTypeName Name of the resource type.
@@ -133,7 +133,7 @@ export interface EventSubscriptions {
     providerNamespace: string,
     resourceTypeName: string,
     resourceName: string,
-    options?: EventSubscriptionsListByResourceOptionalParams
+    options?: EventSubscriptionsListByResourceOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
    * List all event subscriptions that have been created for a specific domain topic.
@@ -146,10 +146,10 @@ export interface EventSubscriptions {
     resourceGroupName: string,
     domainName: string,
     topicName: string,
-    options?: EventSubscriptionsListByDomainTopicOptionalParams
+    options?: EventSubscriptionsListByDomainTopicOptionalParams,
   ): PagedAsyncIterableIterator<EventSubscription>;
   /**
-   * Get properties of an event subscription.
+   * Get all delivery attributes for an event subscription.
    * @param scope The scope of the event subscription. The scope can be a subscription, or a resource
    *              group, or a top level resource belonging to a resource provider namespace, or an EventGrid topic.
    *              For example, use '/subscriptions/{subscriptionId}/' for a subscription,
@@ -161,10 +161,28 @@ export interface EventSubscriptions {
    * @param eventSubscriptionName Name of the event subscription.
    * @param options The options parameters.
    */
+  getDeliveryAttributes(
+    scope: string,
+    eventSubscriptionName: string,
+    options?: EventSubscriptionsGetDeliveryAttributesOptionalParams,
+  ): Promise<EventSubscriptionsGetDeliveryAttributesResponse>;
+  /**
+   * Get properties of an event subscription.
+   * @param scope The scope of the event subscription. The scope can be a subscription, or a resource
+   *              group, or a top level resource belonging to a resource provider namespace, or an EventGrid topic.
+   *              For example, use '/subscriptions/{subscriptionId}/' for a subscription,
+   *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}' for a resource group, and
+   *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}'
+   *              for a resource, and
+   *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}'
+   *              for an EventGrid topic.
+   * @param eventSubscriptionName Name of the event subscription to be found.
+   * @param options The options parameters.
+   */
   get(
     scope: string,
     eventSubscriptionName: string,
-    options?: EventSubscriptionsGetOptionalParams
+    options?: EventSubscriptionsGetOptionalParams,
   ): Promise<EventSubscriptionsGetResponse>;
   /**
    * Asynchronously creates a new event subscription or updates an existing event subscription based on
@@ -178,8 +196,8 @@ export interface EventSubscriptions {
    *              for a resource, and
    *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}'
    *              for an EventGrid topic.
-   * @param eventSubscriptionName Name of the event subscription. Event subscription names must be
-   *                              between 3 and 64 characters in length and should use alphanumeric letters only.
+   * @param eventSubscriptionName Name of the event subscription to be created. Event subscription names
+   *                              must be between 3 and 64 characters in length and should use alphanumeric letters only.
    * @param eventSubscriptionInfo Event subscription properties containing the destination and filter
    *                              information.
    * @param options The options parameters.
@@ -188,10 +206,10 @@ export interface EventSubscriptions {
     scope: string,
     eventSubscriptionName: string,
     eventSubscriptionInfo: EventSubscription,
-    options?: EventSubscriptionsCreateOrUpdateOptionalParams
+    options?: EventSubscriptionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<EventSubscriptionsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<EventSubscriptionsCreateOrUpdateResponse>,
       EventSubscriptionsCreateOrUpdateResponse
     >
   >;
@@ -207,8 +225,8 @@ export interface EventSubscriptions {
    *              for a resource, and
    *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}'
    *              for an EventGrid topic.
-   * @param eventSubscriptionName Name of the event subscription. Event subscription names must be
-   *                              between 3 and 64 characters in length and should use alphanumeric letters only.
+   * @param eventSubscriptionName Name of the event subscription to be created. Event subscription names
+   *                              must be between 3 and 64 characters in length and should use alphanumeric letters only.
    * @param eventSubscriptionInfo Event subscription properties containing the destination and filter
    *                              information.
    * @param options The options parameters.
@@ -217,7 +235,7 @@ export interface EventSubscriptions {
     scope: string,
     eventSubscriptionName: string,
     eventSubscriptionInfo: EventSubscription,
-    options?: EventSubscriptionsCreateOrUpdateOptionalParams
+    options?: EventSubscriptionsCreateOrUpdateOptionalParams,
   ): Promise<EventSubscriptionsCreateOrUpdateResponse>;
   /**
    * Delete an existing event subscription.
@@ -229,14 +247,14 @@ export interface EventSubscriptions {
    *              for a resource, and
    *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}'
    *              for an EventGrid topic.
-   * @param eventSubscriptionName Name of the event subscription.
+   * @param eventSubscriptionName Name of the event subscription to be deleted.
    * @param options The options parameters.
    */
   beginDelete(
     scope: string,
     eventSubscriptionName: string,
-    options?: EventSubscriptionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: EventSubscriptionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Delete an existing event subscription.
    * @param scope The scope of the event subscription. The scope can be a subscription, or a resource
@@ -247,13 +265,13 @@ export interface EventSubscriptions {
    *              for a resource, and
    *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}'
    *              for an EventGrid topic.
-   * @param eventSubscriptionName Name of the event subscription.
+   * @param eventSubscriptionName Name of the event subscription to be deleted.
    * @param options The options parameters.
    */
   beginDeleteAndWait(
     scope: string,
     eventSubscriptionName: string,
-    options?: EventSubscriptionsDeleteOptionalParams
+    options?: EventSubscriptionsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Asynchronously updates an existing event subscription.
@@ -273,10 +291,10 @@ export interface EventSubscriptions {
     scope: string,
     eventSubscriptionName: string,
     eventSubscriptionUpdateParameters: EventSubscriptionUpdateParameters,
-    options?: EventSubscriptionsUpdateOptionalParams
+    options?: EventSubscriptionsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<EventSubscriptionsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<EventSubscriptionsUpdateResponse>,
       EventSubscriptionsUpdateResponse
     >
   >;
@@ -298,7 +316,7 @@ export interface EventSubscriptions {
     scope: string,
     eventSubscriptionName: string,
     eventSubscriptionUpdateParameters: EventSubscriptionUpdateParameters,
-    options?: EventSubscriptionsUpdateOptionalParams
+    options?: EventSubscriptionsUpdateOptionalParams,
   ): Promise<EventSubscriptionsUpdateResponse>;
   /**
    * Get the full endpoint URL for an event subscription.
@@ -316,24 +334,6 @@ export interface EventSubscriptions {
   getFullUrl(
     scope: string,
     eventSubscriptionName: string,
-    options?: EventSubscriptionsGetFullUrlOptionalParams
+    options?: EventSubscriptionsGetFullUrlOptionalParams,
   ): Promise<EventSubscriptionsGetFullUrlResponse>;
-  /**
-   * Get all delivery attributes for an event subscription.
-   * @param scope The scope of the event subscription. The scope can be a subscription, or a resource
-   *              group, or a top level resource belonging to a resource provider namespace, or an EventGrid topic.
-   *              For example, use '/subscriptions/{subscriptionId}/' for a subscription,
-   *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}' for a resource group, and
-   *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}'
-   *              for a resource, and
-   *              '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}'
-   *              for an EventGrid topic.
-   * @param eventSubscriptionName Name of the event subscription.
-   * @param options The options parameters.
-   */
-  getDeliveryAttributes(
-    scope: string,
-    eventSubscriptionName: string,
-    options?: EventSubscriptionsGetDeliveryAttributesOptionalParams
-  ): Promise<EventSubscriptionsGetDeliveryAttributesResponse>;
 }

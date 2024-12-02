@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /** Defines a target data type of an index path specification in the Azure Cosmos DB service. */
 export enum DataType {
   /** Represents a numeric data type. */
@@ -13,5 +13,5 @@ export enum DataType {
   /** Represents a polygon data type. */
   Polygon = "Polygon",
   /** Represents a multi-polygon data type. */
-  MultiPolygon = "MultiPolygon"
+  MultiPolygon = "MultiPolygon",
 }

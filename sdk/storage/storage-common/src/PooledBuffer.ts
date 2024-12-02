@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import { BuffersStream } from "./BuffersStream";
 import { Readable } from "stream";
@@ -7,8 +7,8 @@ import { Readable } from "stream";
 /**
  * maxBufferLength is max size of each buffer in the pooled buffers.
  */
-// Can't use import as Typescript doesn't recognize "buffer".
-const maxBufferLength = require("buffer").constants.MAX_LENGTH;
+import buffer from "buffer";
+const maxBufferLength = buffer.constants.MAX_LENGTH;
 
 /**
  * This class provides a buffer container which conceptually has no hard size limit.

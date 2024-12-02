@@ -1,22 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Context } from "mocha";
+import type { Context } from "mocha";
 
-import { env, Recorder, record, RecorderEnvironmentSetup } from "@azure-tools/test-recorder";
-import { ClientSecretCredential } from "@azure/identity";
-import { TokenCredential } from "@azure/core-auth";
+import { Recorder, assertEnvironmentVariable } from "@azure-tools/test-recorder";
+import { createTestCredential } from "@azure-tools/test-credential";
+import type { TokenCredential } from "@azure/core-auth";
 import {
-  MetricsAdvisorKeyCredential,
+  MetricsAdvisorAdministrationClient,
   MetricsAdvisorClient,
-  MetricsAdvisorAdministrationClient
+  MetricsAdvisorKeyCredential,
 } from "../../../src";
-import * as dotenv from "dotenv";
-import { isNode } from "@azure/core-http";
-
-if (isNode) {
-  dotenv.config();
-}
 
 export interface RecordedAdminClient {
   client: MetricsAdvisorAdministrationClient;
@@ -36,7 +30,7 @@ const replaceableVariables: { [k: string]: string } = {
   AZURE_TENANT_ID: "12345678-1234-1234-1234-123456789012",
   METRICS_ADVISOR_SUBSCRIPTION_KEY: "sub_key",
   METRICS_ADVISOR_API_KEY: "api_key",
-  METRICS_ADVISOR_ENDPOINT: "https://endpoint/",
+  METRICS_ADVISOR_ENDPOINT: "https://endpoint",
   METRICS_ADVISOR_AZURE_BLOB_CONNECTION_STRING: blobConnectionString,
   METRICS_ADVISOR_AZURE_BLOB_TEMPLATE: blobTemplate,
   METRICS_ADVISOR_AZURE_APPINSIGHTS_APPLICATION_ID: "appInsights_application",
@@ -52,53 +46,42 @@ const replaceableVariables: { [k: string]: string } = {
     "045f03a31628d5938cd75cfdecfff045-17465dcc000",
   METRICS_ADVISOR_AZURE_SQLSERVER_INCIDENT_ID: "045f03a31628d5938cd75cfdecfff045-17465dcc000",
   METRICS_EVENTHUB_CONNECTION_STRING: "eventhub-connection-string",
-  METRICS_EVENTHUB_CONSUMER_GROUP: "consumer-group"
+  METRICS_EVENTHUB_CONSUMER_GROUP: "consumer-group",
 };
 
-export const testEnv = new Proxy(replaceableVariables, {
-  get: (target, key: string) => {
-    return env[key] || target[key];
-  }
-});
-
-export const environmentSetup: RecorderEnvironmentSetup = {
-  replaceableVariables,
-  customizationsOnRecordings: [
-    (recording: string): string =>
-      recording
-        .replace(/"access_token"\s?:\s?"[^"]*"/g, `"access_token":"access_token"`)
-        .replace(/"accessToken"\s?:\s?"[^"]*"/g, `"accessToken":"accessToken"`),
-    // If we put ENDPOINT in replaceableVariables above, it will not capture
-    // the endpoint string used with nock, which will be expanded to
-    // https://<endpoint>:443/ and therefore will not match, so we have to do
-    // this instead.
-    (recording: string): string => {
-      const match = testEnv.METRICS_ADVISOR_ENDPOINT.replace(/^https:\/\//, "").replace(/\/$/, "");
-      return recording.replace(match, "endpoint");
-    }
-  ],
-  queryParametersToSkip: []
-};
-
-export function createRecordedAdminClient(
+export async function createRecordedAdminClient(
   context: Context,
-  apiKey: TokenCredential | MetricsAdvisorKeyCredential
-): RecordedAdminClient {
-  const recorder = record(context, environmentSetup);
+  apiKey: TokenCredential | MetricsAdvisorKeyCredential,
+): Promise<RecordedAdminClient> {
+  const recorder = new Recorder(context.currentTest);
+  await recorder.start({
+    envSetupForPlayback: replaceableVariables,
+  });
   return {
-    client: new MetricsAdvisorAdministrationClient(testEnv.METRICS_ADVISOR_ENDPOINT, apiKey),
-    recorder
+    client: new MetricsAdvisorAdministrationClient(
+      assertEnvironmentVariable("METRICS_ADVISOR_ENDPOINT"),
+      apiKey,
+      recorder.configureClientOptions({}),
+    ),
+    recorder,
   };
 }
 
-export function createRecordedAdvisorClient(
+export async function createRecordedAdvisorClient(
   context: Context,
-  apiKey: TokenCredential | MetricsAdvisorKeyCredential
-): RecordedAdvisorClient {
-  const recorder = record(context, environmentSetup);
+  apiKey: TokenCredential | MetricsAdvisorKeyCredential,
+): Promise<RecordedAdvisorClient> {
+  const recorder = new Recorder(context.currentTest);
+  await recorder.start({
+    envSetupForPlayback: replaceableVariables,
+  });
   return {
-    client: new MetricsAdvisorClient(testEnv.METRICS_ADVISOR_ENDPOINT, apiKey),
-    recorder
+    client: new MetricsAdvisorClient(
+      assertEnvironmentVariable("METRICS_ADVISOR_ENDPOINT"),
+      apiKey,
+      recorder.configureClientOptions({}),
+    ),
+    recorder,
   };
 }
 
@@ -107,13 +90,19 @@ export function createRecordedAdvisorClient(
  */
 export function makeCredential(useAad: boolean): TokenCredential | MetricsAdvisorKeyCredential {
   return useAad
-    ? new ClientSecretCredential(
-        testEnv.AZURE_TENANT_ID,
-        testEnv.AZURE_CLIENT_ID,
-        testEnv.AZURE_CLIENT_SECRET
-      )
+    ? createTestCredential()
     : new MetricsAdvisorKeyCredential(
-        testEnv.METRICS_ADVISOR_SUBSCRIPTION_KEY,
-        testEnv.METRICS_ADVISOR_API_KEY
+        assertEnvironmentVariable("METRICS_ADVISOR_SUBSCRIPTION_KEY"),
+        assertEnvironmentVariable("METRICS_ADVISOR_API_KEY"),
       );
+}
+
+export function getUniqueName(prefix: string): string {
+  return `${prefix}${new Date().getTime()}${Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(5, "00000")}`;
+}
+
+export function getRecorderUniqueVariable(recorder: Recorder, name: string): string {
+  return recorder.variable(name, getUniqueName(name));
 }

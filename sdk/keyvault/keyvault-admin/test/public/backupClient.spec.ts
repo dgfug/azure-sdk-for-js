@@ -1,20 +1,18 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-chai.use(chaiAsPromised);
 import { isPlaybackMode, Recorder } from "@azure-tools/test-recorder";
 
-import { KeyVaultBackupClient } from "../../src";
-import { authenticate } from "../utils/authentication";
-import { testPollerProperties } from "../utils/recorder";
-import { getSasToken } from "../utils/common";
+import { KeyVaultBackupClient } from "../../src/index.js";
+import { authenticate } from "./utils/authentication.js";
+import { testPollerProperties } from "./utils/recorder.js";
+import { getSasToken } from "./utils/common.js";
 import { delay } from "@azure/core-util";
-import { assert } from "chai";
 import { KeyClient } from "@azure/keyvault-keys";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
-describe("KeyVaultBackupClient", () => {
+// TODO: https://github.com/Azure/azure-sdk-for-js/issues/30273
+describe.skip("KeyVaultBackupClient", () => {
   let client: KeyVaultBackupClient;
   let keyClient: KeyClient;
 
@@ -22,8 +20,8 @@ describe("KeyVaultBackupClient", () => {
   let blobStorageUri: string;
   let blobSasToken: string;
 
-  beforeEach(async function() {
-    const authentication = await authenticate(this);
+  beforeEach(async function (ctx) {
+    const authentication = await authenticate(ctx);
     client = authentication.backupClient;
     keyClient = authentication.keyClient;
     recorder = authentication.recorder;
@@ -32,80 +30,78 @@ describe("KeyVaultBackupClient", () => {
     blobSasToken = sasTokenData.blobSasToken;
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
-  describe("beginBackup", function() {
-    it("returns the correct backup result when successful", async function() {
+  describe("beginBackup", function () {
+    it("returns the correct backup result when successful", async function () {
       const backupPoller = await client.beginBackup(
         blobStorageUri,
         blobSasToken,
-        testPollerProperties
+        testPollerProperties,
       );
       await backupPoller.poll();
 
       // A poller can be serialized and then resumed
       const resumedPoller = await client.beginBackup(blobStorageUri, blobSasToken, {
         resumeFrom: backupPoller.toString(),
-        ...testPollerProperties
+        ...testPollerProperties,
       });
 
-      assert.isTrue(resumedPoller.getOperationState().isStarted); // without polling
-      assert.equal(resumedPoller.getOperationState().jobId, backupPoller.getOperationState().jobId);
+      expect(resumedPoller.getOperationState().isStarted).toEqual(true); // without polling
+      expect(resumedPoller.getOperationState().jobId).toEqual(
+        backupPoller.getOperationState().jobId,
+      );
 
       const backupResult = await backupPoller.pollUntilDone();
-      assert.notExists(backupPoller.getOperationState().error);
-      assert.exists(backupResult.folderUri);
-      assert.equal(backupResult.startTime, backupPoller.getOperationState().startTime);
-      assert.equal(backupResult.endTime, backupPoller.getOperationState().endTime);
-      assert.match(backupResult.folderUri!, new RegExp(blobStorageUri));
+      expect(backupPoller.getOperationState().error).toBeUndefined();
+      expect(backupResult.folderUri).toBeDefined();
+      expect(backupResult.startTime).toEqual(backupPoller.getOperationState().startTime);
+      expect(backupResult.endTime).toEqual(backupPoller.getOperationState().endTime);
+      expect(backupResult.folderUri!).toMatch(new RegExp(blobStorageUri));
     });
 
-    it("throws when polling errors", async function() {
-      const backupPoller = await client.beginBackup(
-        blobStorageUri,
-        "invalid_sas_token",
-        testPollerProperties
-      );
-      await assert.isRejected(backupPoller.pollUntilDone(), /SAS token/);
+    it("throws when polling errors", async function () {
+      await expect(
+        client.beginBackup(blobStorageUri, "invalid_sas_token", testPollerProperties),
+      ).rejects.toThrow(/SAS token/);
     });
   });
 
-  describe("beginRestore", function() {
-    it("full restore completes successfully", async function() {
+  describe("beginRestore", function () {
+    it("full restore completes successfully", async function () {
       const backupPoller = await client.beginBackup(
         blobStorageUri,
         blobSasToken,
-        testPollerProperties
+        testPollerProperties,
       );
       const backupResult = await backupPoller.pollUntilDone();
-      assert.exists(backupResult.folderUri);
+      expect(backupResult.folderUri).toBeDefined();
 
       const restorePoller = await client.beginRestore(
         backupResult.folderUri!,
         blobSasToken,
-        testPollerProperties
+        testPollerProperties,
       );
       await restorePoller.poll();
 
       // A poller can be serialized and then resumed
       const resumedPoller = await client.beginRestore(backupResult.folderUri!, blobSasToken, {
         ...testPollerProperties,
-        resumeFrom: restorePoller.toString()
+        resumeFrom: restorePoller.toString(),
       });
-      assert.isTrue(resumedPoller.getOperationState().isStarted); // without polling
-      assert.equal(
-        resumedPoller.getOperationState().jobId,
-        restorePoller.getOperationState().jobId
+      expect(resumedPoller.getOperationState().isStarted).toEqual(true); // without polling
+      expect(resumedPoller.getOperationState().jobId).toEqual(
+        restorePoller.getOperationState().jobId,
       );
 
       const restoreResult = await restorePoller.pollUntilDone();
       const operationState = restorePoller.getOperationState();
-      assert.equal(restoreResult.startTime, operationState.startTime);
-      assert.equal(restoreResult.endTime, operationState.endTime);
-      assert.equal(operationState.isCompleted, true);
-      assert.notExists(operationState.error);
+      expect(restoreResult.startTime).toEqual(operationState.startTime);
+      expect(restoreResult.endTime).toEqual(operationState.endTime);
+      expect(operationState.isCompleted).toEqual(true);
+      expect(operationState.error).toBeUndefined();
       // Restore is eventually consistent so while we work
       // through the retry operations adding a delay here allows
       // tests to pass the 5s polling delay.
@@ -114,21 +110,18 @@ describe("KeyVaultBackupClient", () => {
       }
     });
 
-    it("selectiveKeyRestore completes successfully", async function() {
-      // This test can only be run in playback mode because running a backup
-      // or restore puts the instance in a bad state (tracked in IcM).
-      if (!isPlaybackMode()) {
-        this.skip();
-      }
+    // This test can only be run in playback mode because running a backup
+    // or restore puts the instance in a bad state (tracked in IcM).
+    it.skipIf(!isPlaybackMode())("selectiveKeyRestore completes successfully", async function () {
       const keyName = "rsa1";
       await keyClient.createRsaKey(keyName);
       const backupPoller = await client.beginBackup(
         blobStorageUri,
         blobSasToken,
-        testPollerProperties
+        testPollerProperties,
       );
       const backupURI = await backupPoller.pollUntilDone();
-      assert.exists(backupURI.folderUri);
+      expect(backupURI.folderUri).toBeDefined();
 
       // Delete the key (purging it is required), then restore and ensure it's restored
       await (await keyClient.beginDeleteKey(keyName, testPollerProperties)).pollUntilDone();
@@ -138,7 +131,7 @@ describe("KeyVaultBackupClient", () => {
         keyName,
         backupURI.folderUri!,
         blobSasToken,
-        testPollerProperties
+        testPollerProperties,
       );
       await selectiveKeyRestorePoller.poll();
 
@@ -149,29 +142,25 @@ describe("KeyVaultBackupClient", () => {
         blobSasToken,
         {
           ...testPollerProperties,
-          resumeFrom: selectiveKeyRestorePoller.toString()
-        }
+          resumeFrom: selectiveKeyRestorePoller.toString(),
+        },
       );
-      assert.isTrue(resumedPoller.getOperationState().isStarted); // without polling
-      assert.equal(
-        resumedPoller.getOperationState().jobId,
-        selectiveKeyRestorePoller.getOperationState().jobId
+      expect(resumedPoller.getOperationState().isStarted).toEqual(true); // without polling
+      expect(resumedPoller.getOperationState().jobId).toEqual(
+        selectiveKeyRestorePoller.getOperationState().jobId,
       );
 
       await selectiveKeyRestorePoller.pollUntilDone();
       const operationState = selectiveKeyRestorePoller.getOperationState();
-      assert.equal(operationState.isCompleted, true);
+      expect(operationState.isCompleted).toEqual(true);
 
       await keyClient.getKey(keyName);
     });
 
-    it("throws when polling errors", async function() {
-      const restorePoller = await client.beginRestore(
-        blobStorageUri,
-        "bad_token",
-        testPollerProperties
-      );
-      await assert.isRejected(restorePoller.pollUntilDone(), /SAS token is malformed/);
+    it("throws when polling errors", async function () {
+      await expect(
+        client.beginRestore(blobStorageUri, "bad_token", testPollerProperties),
+      ).rejects.toThrow(/SAS token is malformed/);
     });
   });
 });

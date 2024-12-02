@@ -10,7 +10,7 @@ import { SynonymMaps } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SearchServiceClientContext } from "../searchServiceClientContext";
+import { SearchServiceClient } from "../searchServiceClient";
 import {
   SynonymMap,
   SynonymMapsCreateOrUpdateOptionalParams,
@@ -21,18 +21,18 @@ import {
   SynonymMapsListOptionalParams,
   SynonymMapsListResponse,
   SynonymMapsCreateOptionalParams,
-  SynonymMapsCreateResponse
+  SynonymMapsCreateResponse,
 } from "../models";
 
 /** Class containing SynonymMaps operations. */
 export class SynonymMapsImpl implements SynonymMaps {
-  private readonly client: SearchServiceClientContext;
+  private readonly client: SearchServiceClient;
 
   /**
    * Initialize a new instance of the class SynonymMaps class.
    * @param client Reference to the service client
    */
-  constructor(client: SearchServiceClientContext) {
+  constructor(client: SearchServiceClient) {
     this.client = client;
   }
 
@@ -45,11 +45,11 @@ export class SynonymMapsImpl implements SynonymMaps {
   createOrUpdate(
     synonymMapName: string,
     synonymMap: SynonymMap,
-    options?: SynonymMapsCreateOrUpdateOptionalParams
+    options?: SynonymMapsCreateOrUpdateOptionalParams,
   ): Promise<SynonymMapsCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       { synonymMapName, synonymMap, options },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -60,11 +60,11 @@ export class SynonymMapsImpl implements SynonymMaps {
    */
   delete(
     synonymMapName: string,
-    options?: SynonymMapsDeleteOptionalParams
+    options?: SynonymMapsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { synonymMapName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -75,11 +75,11 @@ export class SynonymMapsImpl implements SynonymMaps {
    */
   get(
     synonymMapName: string,
-    options?: SynonymMapsGetOptionalParams
+    options?: SynonymMapsGetOptionalParams,
   ): Promise<SynonymMapsGetResponse> {
     return this.client.sendOperationRequest(
       { synonymMapName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -88,7 +88,7 @@ export class SynonymMapsImpl implements SynonymMaps {
    * @param options The options parameters.
    */
   list(
-    options?: SynonymMapsListOptionalParams
+    options?: SynonymMapsListOptionalParams,
   ): Promise<SynonymMapsListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -100,11 +100,11 @@ export class SynonymMapsImpl implements SynonymMaps {
    */
   create(
     synonymMap: SynonymMap,
-    options?: SynonymMapsCreateOptionalParams
+    options?: SynonymMapsCreateOptionalParams,
   ): Promise<SynonymMapsCreateResponse> {
     return this.client.sendOperationRequest(
       { synonymMap, options },
-      createOperationSpec
+      createOperationSpec,
     );
   }
 }
@@ -116,14 +116,14 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.SynonymMap
+      bodyMapper: Mappers.SynonymMap,
     },
     201: {
-      bodyMapper: Mappers.SynonymMap
+      bodyMapper: Mappers.SynonymMap,
     },
     default: {
-      bodyMapper: Mappers.SearchError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.synonymMap,
   queryParameters: [Parameters.apiVersion],
@@ -131,13 +131,12 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
   headerParameters: [
     Parameters.contentType,
     Parameters.accept,
-    Parameters.xMsClientRequestId,
     Parameters.ifMatch,
     Parameters.ifNoneMatch,
-    Parameters.prefer
+    Parameters.prefer,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
   path: "/synonymmaps('{synonymMapName}')",
@@ -146,70 +145,65 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     204: {},
     404: {},
     default: {
-      bodyMapper: Mappers.SearchError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.synonymMapName],
   headerParameters: [
     Parameters.accept,
-    Parameters.xMsClientRequestId,
     Parameters.ifMatch,
-    Parameters.ifNoneMatch
+    Parameters.ifNoneMatch,
   ],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
   path: "/synonymmaps('{synonymMapName}')",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.SynonymMap
+      bodyMapper: Mappers.SynonymMap,
     },
     default: {
-      bodyMapper: Mappers.SearchError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint, Parameters.synonymMapName],
-  headerParameters: [Parameters.accept, Parameters.xMsClientRequestId],
-  serializer
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
   path: "/synonymmaps",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListSynonymMapsResult
+      bodyMapper: Mappers.ListSynonymMapsResult,
     },
     default: {
-      bodyMapper: Mappers.SearchError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.select],
   urlParameters: [Parameters.endpoint],
-  headerParameters: [Parameters.accept, Parameters.xMsClientRequestId],
-  serializer
+  headerParameters: [Parameters.accept],
+  serializer,
 };
 const createOperationSpec: coreClient.OperationSpec = {
   path: "/synonymmaps",
   httpMethod: "POST",
   responses: {
     201: {
-      bodyMapper: Mappers.SynonymMap
+      bodyMapper: Mappers.SynonymMap,
     },
     default: {
-      bodyMapper: Mappers.SearchError
-    }
+      bodyMapper: Mappers.ErrorResponse,
+    },
   },
   requestBody: Parameters.synonymMap,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.endpoint],
-  headerParameters: [
-    Parameters.contentType,
-    Parameters.accept,
-    Parameters.xMsClientRequestId
-  ],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };

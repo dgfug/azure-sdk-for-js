@@ -4,7 +4,6 @@
  */
 {
   "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
-
   /**
    * Custom "commands" introduce new verbs for the command-line.  To see the help for these
    * example commands, try "rush --help", "rush my-bulk-command --help", or
@@ -12,12 +11,6 @@
    */
   "commands": [
     // Required Scripts
-    {
-      "commandKind": "bulk",
-      "name": "audit",
-      "summary": "Audit projects",
-      "enableParallelism": true
-    },
     {
       "commandKind": "bulk",
       "name": "build",
@@ -82,12 +75,6 @@
       "description": "Execute tests which require an actual service instance (live Azure, emulator, etc). Integration tests typically require service endpoints to be specified via environment variables in order to run.",
       "enableParallelism": true,
       "allowWarningsInSuccessfulBuild": true
-    },
-    {
-      "commandKind": "bulk",
-      "name": "lint:fix",
-      "summary": "Fix linting errors for projects",
-      "enableParallelism": true
     },
     {
       "commandKind": "bulk",
@@ -164,15 +151,27 @@
       "enableParallelism": true,
       "ignoreMissingScript": true
     },
-
     {
       "commandKind": "bulk",
-      "name": "generate-doc",
-      "summary": "Run typedoc on projects and generate documentation",
+      "name": "typecheck",
+      "summary": "type check files that are not part of the build",
       "enableParallelism": true,
       "ignoreMissingScript": true
     },
-
+    {
+      "commandKind": "bulk",
+      "name": "update-snippets",
+      "summary": "Replace snippets placeholders with code extracted from TypeScript files",
+      "enableParallelism": true,
+      "ignoreMissingScript": true
+    },
+    {
+      "commandKind": "bulk",
+      "name": "lint:fix",
+      "summary": "Fix linting errors for projects",
+      "enableParallelism": true,
+      "ignoreMissingScript": true
+    },
     // Global Commands
     {
       "commandKind": "global",
@@ -185,7 +184,7 @@
       "name": "reset-workspace",
       "summary": "Reset your workspace - !!DANGER!! unlink dependencies, purge downloaded node_modules, and remove all untracked files and directories",
       "safeForSimultaneousRushProcesses": true,
-      "shellCommand": "rush unlink && echo \"\nStarting \\\"git clean\\\"\" && git clean -dfx && rush purge"
+      "shellCommand": "rush unlink && echo \"\nStarting \\\"git clean\\\"\" && git clean -dfx -e *.env -e launch.json && rush purge"
     },
     {
       "commandKind": "global",
@@ -199,19 +198,8 @@
       "summary": "Unlink dependencies and purge downloaded node_modules",
       "safeForSimultaneousRushProcesses": true,
       "shellCommand": "rush unlink && rush purge"
-    },
-    {
-      "name": "prettier",
-      "commandKind": "global",
-      "summary": "Used by the pre-commit Git hook. This command invokes Prettier to reformat staged changes.",
-
-      "autoinstallerName": "rush-prettier",
-
-      // This will invoke common/autoinstallers/rush-prettier/node_modules/.bin/pretty-quick
-      "shellCommand": "pretty-quick --staged --no-restage"
     }
   ],
-
   /**
    * Custom "parameters" introduce new parameters for specified Rush command-line commands.
    * For example, you might define a "--production" parameter for the "rush build" command.

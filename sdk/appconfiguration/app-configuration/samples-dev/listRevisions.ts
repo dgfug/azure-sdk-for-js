@@ -6,6 +6,7 @@
  * @azsdk-weight 40
  */
 import { AppConfigurationClient } from "@azure/app-configuration";
+import { DefaultAzureCredential } from "@azure/identity";
 
 // Load the .env file if it exists
 import * as dotenv from "dotenv";
@@ -15,20 +16,22 @@ export async function main() {
   console.log(`Running listRevisions sample`);
 
   // Set the following environment variable or edit the value on the following line.
-  const connectionString = process.env["APPCONFIG_CONNECTION_STRING"] || "<connection string>";
-  const client = new AppConfigurationClient(connectionString);
+  const endpoint = process.env["AZ_CONFIG_ENDPOINT"] || "<endpoint>";
+
+  const credential = new DefaultAzureCredential();
+  const client = new AppConfigurationClient(endpoint, credential);
 
   // let's create the setting
   const originalSetting = await client.addConfigurationSetting({
     key: `keyWithRevisions-${Date.now()}`,
-    value: "original value"
+    value: "original value",
   });
 
   console.log(`First revision created with value ${originalSetting.value}`);
 
   const newSetting = {
     ...originalSetting,
-    value: "A new value!"
+    value: "A new value!",
   };
 
   // delay for a second to make the timestamps more interesting
@@ -39,7 +42,7 @@ export async function main() {
   await client.setConfigurationSetting(newSetting);
 
   const revisionsIterator = client.listRevisions({
-    keyFilter: newSetting.key
+    keyFilter: newSetting.key,
   });
 
   // show all the revisions, including the date they were set.
@@ -70,7 +73,7 @@ export async function main() {
   let marker = response.value.continuationToken;
   // Passing next marker as continuationToken
   iterator = client.listRevisions({ keyFilter: "keyWithRevisions-1626819906487" }).byPage({
-    continuationToken: marker
+    continuationToken: marker,
   });
   response = await iterator.next();
   if (response.done) {
@@ -88,7 +91,7 @@ export async function main() {
 
 async function cleanupSampleValues(keys: string[], client: AppConfigurationClient) {
   const settingsIterator = client.listConfigurationSettings({
-    keyFilter: keys.join(",")
+    keyFilter: keys.join(","),
   });
 
   for await (const setting of settingsIterator) {

@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { ClientContext } from "../../ClientContext";
+// Licensed under the MIT License.
+import type { ClientContext } from "../../ClientContext";
+import type { DiagnosticNodeInternal } from "../../diagnostics/DiagnosticNodeInternal";
 import { getIdFromLink, getPathFromLink, isResourceValid, ResourceType } from "../../common";
-import { SqlQuerySpec } from "../../queryExecutionContext";
+import type { SqlQuerySpec } from "../../queryExecutionContext";
 import { QueryIterator } from "../../queryIterator";
-import { FeedOptions, RequestOptions } from "../../request";
-import { Container } from "../Container";
-import { Resource } from "../Resource";
+import type { FeedOptions, RequestOptions } from "../../request";
+import type { Container } from "../Container";
+import type { Resource } from "../Resource";
 import { StoredProcedure } from "./StoredProcedure";
-import { StoredProcedureDefinition } from "./StoredProcedureDefinition";
+import type { StoredProcedureDefinition } from "./StoredProcedureDefinition";
 import { StoredProcedureResponse } from "./StoredProcedureResponse";
+import { getEmptyCosmosDiagnostics, withDiagnostics } from "../../utils/diagnostics";
 
 /**
  * Operations for creating, upserting, or reading/querying all Stored Procedures.
@@ -23,7 +25,7 @@ export class StoredProcedures {
    */
   constructor(
     public readonly container: Container,
-    private readonly clientContext: ClientContext
+    private readonly clientContext: ClientContext,
   ) {}
 
   /**
@@ -60,14 +62,15 @@ export class StoredProcedures {
     const path = getPathFromLink(this.container.url, ResourceType.sproc);
     const id = getIdFromLink(this.container.url);
 
-    return new QueryIterator(this.clientContext, query, options, (innerOptions) => {
+    return new QueryIterator(this.clientContext, query, options, (diagNode, innerOptions) => {
       return this.clientContext.queryFeed({
         path,
         resourceType: ResourceType.sproc,
         resourceId: id,
         resultFn: (result) => result.StoredProcedures,
         query,
-        options: innerOptions
+        options: innerOptions,
+        diagnosticNode: diagNode,
       });
     });
   }
@@ -94,28 +97,37 @@ export class StoredProcedures {
    */
   public async create(
     body: StoredProcedureDefinition,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<StoredProcedureResponse> {
-    if (body.body) {
-      body.body = body.body.toString();
-    }
+    return withDiagnostics(async (diagnosticNode: DiagnosticNodeInternal) => {
+      if (body.body) {
+        body.body = body.body.toString();
+      }
 
-    const err = {};
-    if (!isResourceValid(body, err)) {
-      throw err;
-    }
+      const err = {};
+      if (!isResourceValid(body, err)) {
+        throw err;
+      }
 
-    const path = getPathFromLink(this.container.url, ResourceType.sproc);
-    const id = getIdFromLink(this.container.url);
+      const path = getPathFromLink(this.container.url, ResourceType.sproc);
+      const id = getIdFromLink(this.container.url);
 
-    const response = await this.clientContext.create<StoredProcedureDefinition>({
-      body,
-      path,
-      resourceType: ResourceType.sproc,
-      resourceId: id,
-      options
-    });
-    const ref = new StoredProcedure(this.container, response.result.id, this.clientContext);
-    return new StoredProcedureResponse(response.result, response.headers, response.code, ref);
+      const response = await this.clientContext.create<StoredProcedureDefinition>({
+        body,
+        path,
+        resourceType: ResourceType.sproc,
+        resourceId: id,
+        options,
+        diagnosticNode,
+      });
+      const ref = new StoredProcedure(this.container, response.result.id, this.clientContext);
+      return new StoredProcedureResponse(
+        response.result,
+        response.headers,
+        response.code,
+        ref,
+        getEmptyCosmosDiagnostics(),
+      );
+    }, this.clientContext);
   }
 }

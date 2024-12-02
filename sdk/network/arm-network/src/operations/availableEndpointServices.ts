@@ -6,31 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { AvailableEndpointServices } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
   EndpointServiceResult,
   AvailableEndpointServicesListNextOptionalParams,
   AvailableEndpointServicesListOptionalParams,
   AvailableEndpointServicesListResponse,
-  AvailableEndpointServicesListNextResponse
+  AvailableEndpointServicesListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing AvailableEndpointServices operations. */
 export class AvailableEndpointServicesImpl
-  implements AvailableEndpointServices {
-  private readonly client: NetworkManagementClientContext;
+  implements AvailableEndpointServices
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class AvailableEndpointServices class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -41,7 +43,7 @@ export class AvailableEndpointServicesImpl
    */
   public list(
     location: string,
-    options?: AvailableEndpointServicesListOptionalParams
+    options?: AvailableEndpointServicesListOptionalParams,
   ): PagedAsyncIterableIterator<EndpointServiceResult> {
     const iter = this.listPagingAll(location, options);
     return {
@@ -51,29 +53,41 @@ export class AvailableEndpointServicesImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(location, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(location, options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
     location: string,
-    options?: AvailableEndpointServicesListOptionalParams
+    options?: AvailableEndpointServicesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<EndpointServiceResult[]> {
-    let result = await this._list(location, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: AvailableEndpointServicesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(location, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(location, continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     location: string,
-    options?: AvailableEndpointServicesListOptionalParams
+    options?: AvailableEndpointServicesListOptionalParams,
   ): AsyncIterableIterator<EndpointServiceResult> {
     for await (const page of this.listPagingPage(location, options)) {
       yield* page;
@@ -87,11 +101,11 @@ export class AvailableEndpointServicesImpl
    */
   private _list(
     location: string,
-    options?: AvailableEndpointServicesListOptionalParams
+    options?: AvailableEndpointServicesListOptionalParams,
   ): Promise<AvailableEndpointServicesListResponse> {
     return this.client.sendOperationRequest(
       { location, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -104,11 +118,11 @@ export class AvailableEndpointServicesImpl
   private _listNext(
     location: string,
     nextLink: string,
-    options?: AvailableEndpointServicesListNextOptionalParams
+    options?: AvailableEndpointServicesListNextOptionalParams,
   ): Promise<AvailableEndpointServicesListNextResponse> {
     return this.client.sendOperationRequest(
       { location, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -116,44 +130,42 @@ export class AvailableEndpointServicesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.Network/locations/{location}/virtualNetworkAvailableEndpointServices",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.Network/locations/{location}/virtualNetworkAvailableEndpointServices",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.EndpointServicesListResult
+      bodyMapper: Mappers.EndpointServicesListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.EndpointServicesListResult
+      bodyMapper: Mappers.EndpointServicesListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.location
+    Parameters.location,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

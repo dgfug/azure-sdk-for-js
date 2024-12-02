@@ -1,15 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
+import { Recorder, env } from "@azure-tools/test-recorder";
 
-import * as assert from "assert";
-import { Context } from "mocha";
-import { env, Recorder } from "@azure-tools/test-recorder";
-
-import { KeyClient } from "../../src";
-import { authenticate } from "../utils/testAuthentication";
-import TestClient from "../utils/testClient";
-import { getServiceVersion } from "../utils/utils.common";
-import { createRsaKey } from "../utils/crypto";
+import type { KeyClient } from "../../src/index.js";
+import { authenticate, envSetupForPlayback } from "./utils/testAuthentication.js";
+import type TestClient from "./utils/testClient.js";
+import { createRsaKey } from "./utils/crypto.js";
+import { describe, it, assert, expect, vi, beforeEach, afterEach } from "vitest";
 
 describe("Keys client - import keys", () => {
   const prefix = `import${env.CERTIFICATE_NAME || "KeyName"}`;
@@ -18,23 +15,24 @@ describe("Keys client - import keys", () => {
   let testClient: TestClient;
   let recorder: Recorder;
 
-  beforeEach(async function(this: Context) {
-    const authentication = await authenticate(this, getServiceVersion());
+  beforeEach(async function (ctx) {
+    recorder = new Recorder(ctx);
+    await recorder.start(envSetupForPlayback);
+    const authentication = await authenticate(recorder);
     suffix = authentication.keySuffix;
     client = authentication.client;
     testClient = authentication.testClient;
-    recorder = authentication.recorder;
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
   // The tests follow
 
-  it("can import a key", async function(this: Context) {
+  it("can import a key", async function (ctx) {
     const jsonWebKey = createRsaKey();
-    const keyName = testClient.formatName(`${prefix}-${this!.test!.title}-${suffix}`);
+    const keyName = testClient.formatName(`${prefix}-${ctx.task.name}-${suffix}`);
     const key = await client.importKey(keyName, jsonWebKey);
     assert.equal(key.key!.e!.toString(), jsonWebKey.e!.toString());
   });

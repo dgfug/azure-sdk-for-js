@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 import {
   DEFAULT_API_VERSION,
@@ -7,22 +7,22 @@ import {
   DEFAULT_USER_AGENT,
   DEPENDENCY_MODE_DISABLED,
   DEPENDENCY_MODE_ENABLED,
-  DEPENDENCY_MODE_TRY_FROM_EXPANDED
-} from "./utils/constants";
-import { createClientPipeline, InternalClientPipelineOptions } from "@azure/core-client";
-import { Fetcher } from "./fetcherAbstract";
-import { URL } from "./utils/url";
-import { isLocalPath, normalize } from "./utils/path";
-import { FilesystemFetcher } from "./fetcherFilesystem";
-import { dependencyResolutionType } from "./dependencyResolutionType";
-import { DtmiResolver } from "./dtmiResolver";
-import { PseudoParser } from "./psuedoParser";
-import { ModelsRepositoryClientOptions } from "./interfaces/modelsRepositoryClientOptions";
-import { logger } from "./logger";
-import { IoTModelsRepositoryServiceClient } from "./modelsRepositoryServiceClient";
-import { HttpFetcher } from "./fetcherHTTP";
-import { GetModelsOptions } from "./interfaces/getModelsOptions";
-import { DTDL } from "./psuedoDtdl";
+  DEPENDENCY_MODE_TRY_FROM_EXPANDED,
+} from "./utils/constants.js";
+import type { InternalClientPipelineOptions } from "@azure/core-client";
+import { createClientPipeline } from "@azure/core-client";
+import type { Fetcher } from "./fetcherAbstract.js";
+import { isLocalPath, normalize } from "./utils/path.js";
+import { FilesystemFetcher } from "./fetcherFilesystem.js";
+import type { dependencyResolutionType } from "./dependencyResolutionType.js";
+import { DtmiResolver } from "./dtmiResolver.js";
+import { PseudoParser } from "./psuedoParser.js";
+import type { ModelsRepositoryClientOptions } from "./interfaces/modelsRepositoryClientOptions.js";
+import { logger } from "./logger.js";
+import { IoTModelsRepositoryServiceClient } from "./modelsRepositoryServiceClient.js";
+import { HttpFetcher } from "./fetcherHTTP.js";
+import type { GetModelsOptions } from "./interfaces/getModelsOptions.js";
+import type { DTDL } from "./psuedoDtdl.js";
 
 /**
  * Initializes a new instance of the IoT Models Repository Client.
@@ -110,9 +110,9 @@ export class ModelsRepositoryClient {
       ...pipelineOptions,
       ...{
         loggingOptions: {
-          logger: logger.info
-        }
-      }
+          logger: logger.info,
+        },
+      },
     };
 
     const pipeline = createClientPipeline(internalPipelineOptions);
@@ -147,7 +147,7 @@ export class ModelsRepositoryClient {
       } else if (prot === "" && location.search(/\.[a-zA-Z]{2,63}$/)) {
         // Web URL with protocol unspecified - default to HTTPS
         logger.info(
-          "Repository Location identified as remote endpoint without protocol specified - using HttpFetcher"
+          "Repository Location identified as remote endpoint without protocol specified - using HttpFetcher",
         );
         const fLocation = "https://" + location;
         const client = this._createClient(options);
@@ -173,11 +173,11 @@ export class ModelsRepositoryClient {
    */
   async getModels(
     dtmis: string[],
-    options?: GetModelsOptions
+    options?: GetModelsOptions,
   ): Promise<{ [dtmi: string]: unknown }>;
   async getModels(
     dtmis: string | string[],
-    options?: GetModelsOptions
+    options?: GetModelsOptions,
   ): Promise<{ [dtmi: string]: unknown }> {
     let modelMap: { [dtmi: string]: unknown };
     if (!Array.isArray(dtmis)) {
@@ -202,13 +202,13 @@ export class ModelsRepositoryClient {
       try {
         logger.info(`Retreiving expanded model(s): ${dtmis}...`);
         modelMap = await this._resolver.resolve(dtmis, true, options);
-      } catch (e) {
+      } catch (e: any) {
         if (e.name === "RestError" && e.code === "ResouceNotFound") {
           logger.info("Could not retrieve model(s) from expanded model DTDL - ");
           const baseModelMap: { [dtmi: string]: unknown } = await this._resolver.resolve(
             dtmis,
             false,
-            options
+            options,
           );
           const baseModelList = Object.keys(baseModelMap).map((key) => baseModelMap[key]);
           logger.info(`Retreiving model dependencies for ${dtmis}...`);

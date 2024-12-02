@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /**
  * Specifies the supported indexing modes.
  */
@@ -18,5 +18,5 @@ export enum IndexingMode {
    */
   lazy = "lazy",
   /** No Index is provided. */
-  none = "none"
+  none = "none",
 }

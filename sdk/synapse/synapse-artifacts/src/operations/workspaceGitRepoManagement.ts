@@ -6,62 +6,18 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { createSpan } from "../tracing";
-import { WorkspaceGitRepoManagement } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import type { WorkspaceGitRepoManagement } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as coreTracing from "@azure/core-tracing";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { ArtifactsClientContext } from "../artifactsClientContext";
-import {
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import type { ArtifactsClient } from "../artifactsClient.js";
+import type {
   GitHubAccessTokenRequest,
   WorkspaceGitRepoManagementGetGitHubAccessTokenOptionalParams,
-  WorkspaceGitRepoManagementGetGitHubAccessTokenResponse
-} from "../models";
+  WorkspaceGitRepoManagementGetGitHubAccessTokenResponse,
+} from "../models/index.js";
 
-/** Class containing WorkspaceGitRepoManagement operations. */
-export class WorkspaceGitRepoManagementImpl
-  implements WorkspaceGitRepoManagement {
-  private readonly client: ArtifactsClientContext;
-
-  /**
-   * Initialize a new instance of the class WorkspaceGitRepoManagement class.
-   * @param client Reference to the service client
-   */
-  constructor(client: ArtifactsClientContext) {
-    this.client = client;
-  }
-
-  /**
-   * Get the GitHub access token.
-   * @param gitHubAccessTokenRequest
-   * @param options The options parameters.
-   */
-  async getGitHubAccessToken(
-    gitHubAccessTokenRequest: GitHubAccessTokenRequest,
-    options?: WorkspaceGitRepoManagementGetGitHubAccessTokenOptionalParams
-  ): Promise<WorkspaceGitRepoManagementGetGitHubAccessTokenResponse> {
-    const { span } = createSpan(
-      "ArtifactsClient-getGitHubAccessToken",
-      options || {}
-    );
-    try {
-      const result = await this.client.sendOperationRequest(
-        { gitHubAccessTokenRequest, options },
-        getGitHubAccessTokenOperationSpec
-      );
-      return result as WorkspaceGitRepoManagementGetGitHubAccessTokenResponse;
-    } catch (error) {
-      span.setStatus({
-        code: coreTracing.SpanStatusCode.UNSET,
-        message: error.message
-      });
-      throw error;
-    } finally {
-      span.end();
-    }
-  }
-}
 // Operation Specifications
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
@@ -70,17 +26,48 @@ const getGitHubAccessTokenOperationSpec: coreClient.OperationSpec = {
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.GitHubAccessTokenResponse
-    }
+      bodyMapper: Mappers.GitHubAccessTokenResponse,
+    },
   },
   requestBody: Parameters.gitHubAccessTokenRequest,
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion5],
   urlParameters: [Parameters.endpoint],
-  headerParameters: [
-    Parameters.accept,
-    Parameters.contentType,
-    Parameters.clientRequestId
-  ],
+  headerParameters: [Parameters.accept, Parameters.contentType, Parameters.clientRequestId],
   mediaType: "json",
-  serializer
+  serializer,
 };
+
+/** Class containing WorkspaceGitRepoManagement operations. */
+export class WorkspaceGitRepoManagementImpl implements WorkspaceGitRepoManagement {
+  private readonly client: ArtifactsClient;
+
+  /**
+   * Initialize a new instance of the class WorkspaceGitRepoManagement class.
+   * @param client - Reference to the service client
+   */
+  // eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
+  constructor(client: ArtifactsClient) {
+    this.client = client;
+  }
+
+  /**
+   * Get the GitHub access token.
+   * @param gitHubAccessTokenRequest - The GitHub access token request
+   * @param options - The options parameters.
+   */
+  async getGitHubAccessToken(
+    gitHubAccessTokenRequest: GitHubAccessTokenRequest,
+    options?: WorkspaceGitRepoManagementGetGitHubAccessTokenOptionalParams,
+  ): Promise<WorkspaceGitRepoManagementGetGitHubAccessTokenResponse> {
+    return tracingClient.withSpan(
+      "ArtifactsClient.getGitHubAccessToken",
+      options ?? {},
+      async (updatedOptions) => {
+        return this.client.sendOperationRequest(
+          { gitHubAccessTokenRequest, updatedOptions },
+          getGitHubAccessTokenOperationSpec,
+        ) as Promise<WorkspaceGitRepoManagementGetGitHubAccessTokenResponse>;
+      },
+    );
+  }
+}

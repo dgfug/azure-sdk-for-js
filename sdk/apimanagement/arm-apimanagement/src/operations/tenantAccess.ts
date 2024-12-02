@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { TenantAccess } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
+import { ApiManagementClient } from "../apiManagementClient";
 import {
   AccessInformationContract,
   TenantAccessListByServiceNextOptionalParams,
@@ -38,19 +39,19 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing TenantAccess operations. */
 export class TenantAccessImpl implements TenantAccess {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class TenantAccess class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Returns list of access infos - for Git and Management endpoints.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -71,11 +72,15 @@ export class TenantAccessImpl implements TenantAccess {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -84,15 +89,22 @@ export class TenantAccessImpl implements TenantAccess {
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: TenantAccessListByServiceOptionalParams
+    options?: TenantAccessListByServiceOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<AccessInformationContract[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: TenantAccessListByServiceResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByService(
+        resourceGroupName,
+        serviceName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByServiceNext(
         resourceGroupName,
@@ -101,7 +113,9 @@ export class TenantAccessImpl implements TenantAccess {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -121,7 +135,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Returns list of access infos - for Git and Management endpoints.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -138,7 +152,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Tenant access metadata
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param accessName The identifier of the Access configuration.
    * @param options The options parameters.
@@ -157,7 +171,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Get tenant access information details without secrets.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param accessName The identifier of the Access configuration.
    * @param options The options parameters.
@@ -176,7 +190,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Update tenant access information details.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param accessName The identifier of the Access configuration.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -207,7 +221,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Update tenant access information details.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param accessName The identifier of the Access configuration.
    * @param ifMatch ETag of the Entity. ETag should match the current entity state from the header
@@ -238,7 +252,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Regenerate primary access key
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param accessName The identifier of the Access configuration.
    * @param options The options parameters.
@@ -257,7 +271,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Regenerate secondary access key
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param accessName The identifier of the Access configuration.
    * @param options The options parameters.
@@ -276,7 +290,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * Get tenant access information details.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param accessName The identifier of the Access configuration.
    * @param options The options parameters.
@@ -295,7 +309,7 @@ export class TenantAccessImpl implements TenantAccess {
 
   /**
    * ListByServiceNext
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param nextLink The nextLink from the previous successful call to the ListByService method.
    * @param options The options parameters.
@@ -397,7 +411,7 @@ const createOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters55,
+  requestBody: Parameters.parameters69,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -427,7 +441,7 @@ const updateOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  requestBody: Parameters.parameters56,
+  requestBody: Parameters.parameters70,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
@@ -521,7 +535,6 @@ const listByServiceNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [Parameters.filter, Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,

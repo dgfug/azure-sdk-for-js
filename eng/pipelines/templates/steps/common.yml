@@ -3,9 +3,4 @@ steps:
     parameters:
       AgentImage: $(OSVmImage)
 
-  - task: UsePythonVersion@0
-    displayName: "Use Python 3.6"
-    inputs:
-      versionSpec: "3.6"
-
   - template: use-node-version.yml

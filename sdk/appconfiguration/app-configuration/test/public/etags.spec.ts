@@ -1,33 +1,33 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AppConfigurationClient } from "../../src";
+import type { Recorder } from "@azure-tools/test-recorder";
+import { testPollingOptions } from "@azure-tools/test-recorder";
 import {
-  startRecorder,
+  assertThrowsRestError,
   createAppConfigurationClientForTests,
   deleteKeyCompletely,
-  assertThrowsRestError
-} from "./utils/testHelpers";
-import * as assert from "assert";
-import { Recorder } from "@azure-tools/test-recorder";
-import { Context } from "mocha";
+  startRecorder,
+} from "./utils/testHelpers.js";
+import type { AppConfigurationClient } from "../../src/index.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
 
 describe("etags", () => {
   let client: AppConfigurationClient;
   let recorder: Recorder;
   let key: string;
 
-  beforeEach(async function(this: Context) {
-    recorder = startRecorder(this);
-    key = recorder.getUniqueName("etags");
-    client = createAppConfigurationClientForTests() || this.skip();
+  beforeEach(async function (ctx) {
+    recorder = await startRecorder(ctx);
+    key = recorder.variable("etags", `etags${Math.floor(Math.random() * 1000)}`);
+    client = createAppConfigurationClientForTests(recorder.configureClientOptions({}));
     await client.addConfigurationSetting({
       key: key,
-      value: "some value"
+      value: "some value",
     });
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await deleteKeyCompletely([key], client);
     await recorder.stop();
   });
@@ -50,20 +50,20 @@ describe("etags", () => {
 
     // etag of the remote setting matches what we have so we're okay to update
     const newlyUpdatedSetting = await client.setConfigurationSetting(addedSetting, {
-      onlyIfUnchanged: true
+      onlyIfUnchanged: true,
     });
     assert.equal(newlyUpdatedSetting.value, addedSetting.value);
 
     const badEtagSetting = {
       ...addedSetting,
-      etag: "bogus"
+      etag: "bogus",
     };
 
     // trying to save with a non-matching etag (when we specifically said to only save if
     // nothing has changed) will result in a 412 (precondition failed)
     await assertThrowsRestError(
       () => client.setConfigurationSetting(badEtagSetting, { onlyIfUnchanged: true }),
-      412
+      412,
     );
   });
 
@@ -76,7 +76,7 @@ describe("etags", () => {
     // enable the etag)
     await client.setConfigurationSetting({
       ...addedSetting,
-      value: "sneaky user updated the field"
+      value: "sneaky user updated the field",
     });
 
     // the value (and thus the etag) was changed behind our backs
@@ -84,27 +84,26 @@ describe("etags", () => {
     await assertThrowsRestError(
       () =>
         client.setConfigurationSetting(addedSetting, {
-          onlyIfUnchanged: true
+          onlyIfUnchanged: true,
         }),
       412,
-      "Old etag will result in a failed update and error"
+      "Old etag will result in a failed update and error",
     );
   });
 
   it("get using ifNoneMatch to only get the setting if it's changed (ie: safe GET)", async () => {
     const originalSetting = await client.setConfigurationSetting({
       key: key,
-      value: "world"
+      value: "world",
     });
 
     // only get the setting if it changed (it hasn't)
     const response = await client.getConfigurationSetting(originalSetting, {
-      onlyIfChanged: true
+      onlyIfChanged: true,
     });
 
     // to keep 'key' a required field we fill this out (but set all the other properties to undefined)
     assert.equal(response.key, key);
-    assert.equal(response._response.status, 304);
     assert.equal(response.statusCode, 304);
 
     assert.ok(!response.contentType);
@@ -123,14 +122,14 @@ describe("etags", () => {
     assert.notEqual(
       originalSetting.etag,
       updatedSetting.etag,
-      "New content, new update, etags shouldn't match"
+      "New content, new update, etags shouldn't match",
     );
 
     assert.equal(200, updatedSetting.statusCode);
 
     // only get the setting if it changed (it has!)
     const configurationSetting = await client.getConfigurationSetting(originalSetting, {
-      onlyIfChanged: true
+      onlyIfChanged: true,
     });
 
     // now our retrieved setting matches what's on the server
@@ -143,16 +142,16 @@ describe("etags", () => {
 
     const badEtagSetting = {
       ...addedSetting,
-      etag: "bogus"
+      etag: "bogus",
     };
 
     // etag won't match so we get a precondition failed
     await assertThrowsRestError(
       () =>
         client.setReadOnly(badEtagSetting, true, {
-          onlyIfUnchanged: true
+          onlyIfUnchanged: true,
         }),
-      412
+      412,
     );
 
     let actualSetting = await client.getConfigurationSetting(badEtagSetting);
@@ -169,9 +168,9 @@ describe("etags", () => {
     await assertThrowsRestError(
       () =>
         client.setReadOnly(badEtagSetting, false, {
-          onlyIfUnchanged: true
+          onlyIfUnchanged: true,
         }),
-      412
+      412,
     );
 
     // ...still readOnly
@@ -180,7 +179,7 @@ describe("etags", () => {
 
     // now we'll use the right etag (from the setting we just retrieved)
     await client.setReadOnly(actualSetting, false, {
-      onlyIfUnchanged: true
+      onlyIfUnchanged: true,
     });
 
     // and now it's no longer readOnly
@@ -193,12 +192,12 @@ describe("etags", () => {
 
     const badEtagSetting = {
       ...addedSetting,
-      etag: "bogus"
+      etag: "bogus",
     };
 
     await assertThrowsRestError(
       () => client.deleteConfigurationSetting(badEtagSetting, { onlyIfUnchanged: true }),
-      412
+      412,
     );
 
     // obviously the setting is still there (or else this would throw)
@@ -209,5 +208,24 @@ describe("etags", () => {
 
     // and now the setting isn't found
     await assertThrowsRestError(() => client.getConfigurationSetting({ key }), 404);
+  });
+
+  it("archive and recover using etags", async () => {
+    const snapshot1 = {
+      name: recorder.variable("snapshot", `snapshot${Math.floor(Math.random() * 1000)}`),
+      retentionPeriodInSeconds: 2592000,
+      filters: [{ keyFilter: key, valueFilter: "some value" }],
+    };
+    const newSnapshot = await client.beginCreateSnapshotAndWait(snapshot1, testPollingOptions);
+    await assertThrowsRestError(
+      () => client.archiveSnapshot(newSnapshot.name, { etag: "badEtag" }),
+      412,
+    );
+    await client.archiveSnapshot(newSnapshot.name, { etag: newSnapshot.etag });
+
+    await assertThrowsRestError(
+      () => client.recoverSnapshot(newSnapshot.name, { etag: "badEtag" }),
+      412,
+    );
   });
 });

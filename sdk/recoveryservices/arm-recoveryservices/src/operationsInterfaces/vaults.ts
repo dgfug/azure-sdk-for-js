@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   Vault,
   VaultsListBySubscriptionIdOptionalParams,
@@ -17,9 +17,10 @@ import {
   VaultsCreateOrUpdateOptionalParams,
   VaultsCreateOrUpdateResponse,
   VaultsDeleteOptionalParams,
+  VaultsDeleteResponse,
   PatchVault,
   VaultsUpdateOptionalParams,
-  VaultsUpdateResponse
+  VaultsUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,34 +31,31 @@ export interface Vaults {
    * @param options The options parameters.
    */
   listBySubscriptionId(
-    options?: VaultsListBySubscriptionIdOptionalParams
+    options?: VaultsListBySubscriptionIdOptionalParams,
   ): PagedAsyncIterableIterator<Vault>;
   /**
    * Retrieve a list of Vaults.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param options The options parameters.
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: VaultsListByResourceGroupOptionalParams
+    options?: VaultsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<Vault>;
   /**
    * Get the Vault details.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param options The options parameters.
    */
   get(
     resourceGroupName: string,
     vaultName: string,
-    options?: VaultsGetOptionalParams
+    options?: VaultsGetOptionalParams,
   ): Promise<VaultsGetResponse>;
   /**
    * Creates or updates a Recovery Services vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param vault Recovery Services Vault to be created.
    * @param options The options parameters.
@@ -66,17 +64,16 @@ export interface Vaults {
     resourceGroupName: string,
     vaultName: string,
     vault: Vault,
-    options?: VaultsCreateOrUpdateOptionalParams
+    options?: VaultsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VaultsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VaultsCreateOrUpdateResponse>,
       VaultsCreateOrUpdateResponse
     >
   >;
   /**
    * Creates or updates a Recovery Services vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param vault Recovery Services Vault to be created.
    * @param options The options parameters.
@@ -85,24 +82,35 @@ export interface Vaults {
     resourceGroupName: string,
     vaultName: string,
     vault: Vault,
-    options?: VaultsCreateOrUpdateOptionalParams
+    options?: VaultsCreateOrUpdateOptionalParams,
   ): Promise<VaultsCreateOrUpdateResponse>;
   /**
    * Deletes a vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param options The options parameters.
    */
-  delete(
+  beginDelete(
     resourceGroupName: string,
     vaultName: string,
-    options?: VaultsDeleteOptionalParams
-  ): Promise<void>;
+    options?: VaultsDeleteOptionalParams,
+  ): Promise<
+    SimplePollerLike<OperationState<VaultsDeleteResponse>, VaultsDeleteResponse>
+  >;
+  /**
+   * Deletes a vault.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
+   * @param vaultName The name of the recovery services vault.
+   * @param options The options parameters.
+   */
+  beginDeleteAndWait(
+    resourceGroupName: string,
+    vaultName: string,
+    options?: VaultsDeleteOptionalParams,
+  ): Promise<VaultsDeleteResponse>;
   /**
    * Updates the vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param vault Recovery Services Vault to be created.
    * @param options The options parameters.
@@ -111,14 +119,13 @@ export interface Vaults {
     resourceGroupName: string,
     vaultName: string,
     vault: PatchVault,
-    options?: VaultsUpdateOptionalParams
+    options?: VaultsUpdateOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<VaultsUpdateResponse>, VaultsUpdateResponse>
+    SimplePollerLike<OperationState<VaultsUpdateResponse>, VaultsUpdateResponse>
   >;
   /**
    * Updates the vault.
-   * @param resourceGroupName The name of the resource group where the recovery services vault is
-   *                          present.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param vaultName The name of the recovery services vault.
    * @param vault Recovery Services Vault to be created.
    * @param options The options parameters.
@@ -127,6 +134,6 @@ export interface Vaults {
     resourceGroupName: string,
     vaultName: string,
     vault: PatchVault,
-    options?: VaultsUpdateOptionalParams
+    options?: VaultsUpdateOptionalParams,
   ): Promise<VaultsUpdateResponse>;
 }

@@ -1,17 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../src/jsrsasign.d.ts"/>
 import * as jsrsasign from "jsrsasign";
 
-import { hexToByteArray } from "../../src/utils/base64";
+import { hexToByteArray } from "../../src/utils/base64.js";
 
 export function createECDSKey(): [string, string] {
   const keyPair = jsrsasign.KEYUTIL.generateKeypair("EC", "secp256r1");
   return [
     jsrsasign.KEYUTIL.getPEM(keyPair.prvKeyObj, "PKCS8PRV"),
-    jsrsasign.KEYUTIL.getPEM(keyPair.pubKeyObj, "PKCS8PUB")
+    jsrsasign.KEYUTIL.getPEM(keyPair.pubKeyObj, "PKCS8PUB"),
   ];
 }
 
@@ -19,7 +19,7 @@ export function createRSAKey(): [string, string] {
   const keyPair = jsrsasign.KEYUTIL.generateKeypair("RSA", 1024);
   return [
     jsrsasign.KEYUTIL.getPEM(keyPair.prvKeyObj, "PKCS8PRV"),
-    jsrsasign.KEYUTIL.getPEM(keyPair.pubKeyObj, "PKCS8PUB")
+    jsrsasign.KEYUTIL.getPEM(keyPair.pubKeyObj, "PKCS8PUB"),
   ];
 }
 
@@ -52,7 +52,7 @@ function formatDateString(dateObject: Date): string {
 export function createX509Certificate(
   privKeyPEM: string,
   pubKeyPEM: string,
-  subject_name: string
+  subject_name: string,
 ): string {
   const pubKey = jsrsasign.KEYUTIL.getKey(pubKeyPEM);
   const privKey = jsrsasign.KEYUTIL.getKey(privKeyPEM);
@@ -70,10 +70,10 @@ export function createX509Certificate(
     ext: [
       { extname: "basicConstraints", critical: false, cA: false, pathLen: 0 },
       { extname: "subjectAltName", critical: false, array: [{ uri: "https://" + subject_name }] },
-      { extname: "keyUsage", critical: true, names: ["digitalSignature"] }
+      { extname: "keyUsage", critical: true, names: ["digitalSignature"] },
     ],
     sigalg: { name: "SHA256withRSA" },
-    cakey: privKey
+    cakey: privKey,
   });
 
   const x509 = new jsrsasign.X509();

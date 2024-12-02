@@ -1,20 +1,45 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 export * from "./DataLakeServiceClient";
 export * from "./DataLakeFileSystemClient";
 export * from "./clients";
 export * from "./DataLakeLeaseClient";
-export * from "./StorageBrowserPolicyFactory";
-export * from "./credentials/AnonymousCredential";
-export * from "./credentials/Credential";
-export * from "./Pipeline";
-export * from "./policies/AnonymousCredentialPolicy";
-export * from "./policies/CredentialPolicy";
-export * from "./StorageRetryPolicyFactory";
 export * from "./models";
 export * from "./utils/DataLakeAclChangeFailedError";
+export {
+  Pipeline,
+  PipelineLike,
+  PipelineOptions,
+  isPipelineLike,
+  newPipeline,
+  StoragePipelineOptions,
+  RequestPolicyFactory,
+  RequestPolicy,
+  RequestPolicyOptions,
+  WebResource,
+  HttpOperationResponse,
+  HttpHeaders,
+  HttpRequestBody,
+  IHttpClient,
+  StorageOAuthScopes,
+  ServiceClientOptions,
+} from "./Pipeline";
+export {
+  AnonymousCredential,
+  AnonymousCredentialPolicy,
+  Credential,
+  CredentialPolicy,
+  StorageBrowserPolicy,
+  StorageBrowserPolicyFactory,
+  StorageRetryOptions,
+  StorageRetryPolicy,
+  StorageRetryPolicyType,
+  StorageRetryPolicyFactory,
+  BlobServiceProperties as DataLakeServiceProperties,
+  ServiceGetPropertiesResponse as DataLakeServiceGetPropertiesResponse,
+} from "@azure/storage-blob";
 export { CommonOptions } from "./StorageClient";
 export { ToBlobEndpointHostMappings, ToDfsEndpointHostMappings } from "./utils/constants";
-export { RestError } from "@azure/core-http";
+export { RestError } from "@azure/core-rest-pipeline";
 export { logger } from "./log";

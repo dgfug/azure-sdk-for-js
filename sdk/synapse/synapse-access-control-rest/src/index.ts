@@ -1,12 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import AccessControl from "./accessControl";
+import AccessControlRestClient from "./accessControlRestClient.js";
 
-export * from "./accessControl";
-export * from "./models";
-export * from "./parameters";
-export * from "./responses";
-export * from "./paginateHelper";
+export * from "./accessControlRestClient.js";
+export * from "./parameters.js";
+export * from "./responses.js";
+export * from "./clientDefinitions.js";
+export * from "./isUnexpected.js";
+export * from "./models.js";
+export * from "./outputModels.js";
+export * from "./paginateHelper.js";
 
-export default AccessControl;
+// eslint-disable-next-line @azure/azure-sdk/ts-modules-only-named
+export default AccessControlRestClient;

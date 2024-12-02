@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   NatGateway,
   NatGatewaysListAllOptionalParams,
@@ -19,7 +19,7 @@ import {
   NatGatewaysCreateOrUpdateResponse,
   TagsObject,
   NatGatewaysUpdateTagsOptionalParams,
-  NatGatewaysUpdateTagsResponse
+  NatGatewaysUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface NatGateways {
    * @param options The options parameters.
    */
   listAll(
-    options?: NatGatewaysListAllOptionalParams
+    options?: NatGatewaysListAllOptionalParams,
   ): PagedAsyncIterableIterator<NatGateway>;
   /**
    * Gets all nat gateways in a resource group.
@@ -39,7 +39,7 @@ export interface NatGateways {
    */
   list(
     resourceGroupName: string,
-    options?: NatGatewaysListOptionalParams
+    options?: NatGatewaysListOptionalParams,
   ): PagedAsyncIterableIterator<NatGateway>;
   /**
    * Deletes the specified nat gateway.
@@ -50,8 +50,8 @@ export interface NatGateways {
   beginDelete(
     resourceGroupName: string,
     natGatewayName: string,
-    options?: NatGatewaysDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: NatGatewaysDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified nat gateway.
    * @param resourceGroupName The name of the resource group.
@@ -61,7 +61,7 @@ export interface NatGateways {
   beginDeleteAndWait(
     resourceGroupName: string,
     natGatewayName: string,
-    options?: NatGatewaysDeleteOptionalParams
+    options?: NatGatewaysDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified nat gateway in a specified resource group.
@@ -72,7 +72,7 @@ export interface NatGateways {
   get(
     resourceGroupName: string,
     natGatewayName: string,
-    options?: NatGatewaysGetOptionalParams
+    options?: NatGatewaysGetOptionalParams,
   ): Promise<NatGatewaysGetResponse>;
   /**
    * Creates or updates a nat gateway.
@@ -85,10 +85,10 @@ export interface NatGateways {
     resourceGroupName: string,
     natGatewayName: string,
     parameters: NatGateway,
-    options?: NatGatewaysCreateOrUpdateOptionalParams
+    options?: NatGatewaysCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<NatGatewaysCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<NatGatewaysCreateOrUpdateResponse>,
       NatGatewaysCreateOrUpdateResponse
     >
   >;
@@ -103,7 +103,7 @@ export interface NatGateways {
     resourceGroupName: string,
     natGatewayName: string,
     parameters: NatGateway,
-    options?: NatGatewaysCreateOrUpdateOptionalParams
+    options?: NatGatewaysCreateOrUpdateOptionalParams,
   ): Promise<NatGatewaysCreateOrUpdateResponse>;
   /**
    * Updates nat gateway tags.
@@ -116,6 +116,6 @@ export interface NatGateways {
     resourceGroupName: string,
     natGatewayName: string,
     parameters: TagsObject,
-    options?: NatGatewaysUpdateTagsOptionalParams
+    options?: NatGatewaysUpdateTagsOptionalParams,
   ): Promise<NatGatewaysUpdateTagsResponse>;
 }

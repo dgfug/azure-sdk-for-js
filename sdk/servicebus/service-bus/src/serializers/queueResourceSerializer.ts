@@ -1,15 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HttpOperationResponse, OperationOptions } from "@azure/core-http";
+import type { FullOperationResponse, OperationOptions } from "@azure/core-client";
+import type { AtomXmlSerializer } from "../util/atomXmlHelper.js";
+import { deserializeAtomXmlResponse, serializeToAtomXmlRequest } from "../util/atomXmlHelper.js";
+import * as Constants from "../util/constants.js";
+import type { AuthorizationRule, EntityStatus, EntityAvailabilityStatus } from "../util/utils.js";
 import {
-  AtomXmlSerializer,
-  deserializeAtomXmlResponse,
-  serializeToAtomXmlRequest
-} from "../util/atomXmlHelper";
-import * as Constants from "../util/constants";
-import {
-  AuthorizationRule,
   getAuthorizationRulesOrUndefined,
   getBoolean,
   getMessageCountDetails,
@@ -19,9 +16,7 @@ import {
   getString,
   getStringOrUndefined,
   getDate,
-  EntityStatus,
-  EntityAvailabilityStatus
-} from "../util/utils";
+} from "../util/utils.js";
 
 /**
  * @internal
@@ -56,7 +51,7 @@ export function buildQueueOptions(queue: CreateQueueOptions): InternalQueueOptio
     ForwardDeadLetteredMessagesTo: getStringOrUndefined(queue.forwardDeadLetteredMessagesTo),
     EntityAvailabilityStatus: getStringOrUndefined(queue.availabilityStatus),
     EnableExpress: getStringOrUndefined(queue.enableExpress),
-    MaxMessageSizeInKilobytes: getStringOrUndefined(queue.maxMessageSizeInKilobytes)
+    MaxMessageSizeInKilobytes: getStringOrUndefined(queue.maxMessageSizeInKilobytes),
   };
 }
 
@@ -81,29 +76,29 @@ export function buildQueue(rawQueue: Record<string, any>): QueueProperties {
     requiresSession: getBoolean(rawQueue[Constants.REQUIRES_SESSION], "requiresSession"),
     enableBatchedOperations: getBoolean(
       rawQueue[Constants.ENABLE_BATCHED_OPERATIONS],
-      "enableBatchedOperations"
+      "enableBatchedOperations",
     ),
 
     defaultMessageTimeToLive: getString(
       rawQueue[Constants.DEFAULT_MESSAGE_TIME_TO_LIVE],
-      "defaultMessageTimeToLive"
+      "defaultMessageTimeToLive",
     ),
     autoDeleteOnIdle: rawQueue[Constants.AUTO_DELETE_ON_IDLE],
 
     requiresDuplicateDetection: getBoolean(
       rawQueue[Constants.REQUIRES_DUPLICATE_DETECTION],
-      "requiresDuplicateDetection"
+      "requiresDuplicateDetection",
     ),
     duplicateDetectionHistoryTimeWindow: getString(
       rawQueue[Constants.DUPLICATE_DETECTION_HISTORY_TIME_WINDOW],
-      "duplicateDetectionHistoryTimeWindow"
+      "duplicateDetectionHistoryTimeWindow",
     ),
     deadLetteringOnMessageExpiration: getBoolean(
       rawQueue[Constants.DEAD_LETTERING_ON_MESSAGE_EXPIRATION],
-      "deadLetteringOnMessageExpiration"
+      "deadLetteringOnMessageExpiration",
     ),
     forwardDeadLetteredMessagesTo: getStringOrUndefined(
-      rawQueue[Constants.FORWARD_DEADLETTERED_MESSAGES_TO]
+      rawQueue[Constants.FORWARD_DEADLETTERED_MESSAGES_TO],
     ),
 
     authorizationRules: getAuthorizationRulesOrUndefined(rawQueue[Constants.AUTHORIZATION_RULES]),
@@ -115,8 +110,8 @@ export function buildQueue(rawQueue: Record<string, any>): QueueProperties {
     availabilityStatus: rawQueue[Constants.ENTITY_AVAILABILITY_STATUS],
 
     maxMessageSizeInKilobytes: getIntegerOrUndefined(
-      rawQueue[Constants.MAX_MESSAGE_SIZE_IN_KILOBYTES]
-    )
+      rawQueue[Constants.MAX_MESSAGE_SIZE_IN_KILOBYTES],
+    ),
   };
 }
 
@@ -134,7 +129,7 @@ export function buildQueueRuntimeProperties(rawQueue: Record<string, any>): Queu
     ...messageCountDetails,
     createdAt: getDate(rawQueue[Constants.CREATED_AT], "createdAt"),
     modifiedAt: getDate(rawQueue[Constants.UPDATED_AT], "modifiedAt"),
-    accessedAt: getDate(rawQueue[Constants.ACCESSED_AT], "accessedAt")
+    accessedAt: getDate(rawQueue[Constants.ACCESSED_AT], "accessedAt"),
   };
 }
 
@@ -641,11 +636,11 @@ export interface QueueRuntimeProperties {
  * Atom XML Serializer for Queues.
  */
 export class QueueResourceSerializer implements AtomXmlSerializer {
-  serialize(resource: InternalQueueOptions): object {
+  serialize(resource: InternalQueueOptions): Record<string, unknown> {
     return serializeToAtomXmlRequest("QueueDescription", resource);
   }
 
-  async deserialize(response: HttpOperationResponse): Promise<HttpOperationResponse> {
+  async deserialize(response: FullOperationResponse): Promise<FullOperationResponse> {
     return deserializeAtomXmlResponse(["QueueName"], response);
   }
 }

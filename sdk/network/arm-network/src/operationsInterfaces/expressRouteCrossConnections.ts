@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ExpressRouteCrossConnection,
   ExpressRouteCrossConnectionsListOptionalParams,
@@ -24,7 +24,7 @@ import {
   ExpressRouteCrossConnectionsListRoutesTableSummaryOptionalParams,
   ExpressRouteCrossConnectionsListRoutesTableSummaryResponse,
   ExpressRouteCrossConnectionsListRoutesTableOptionalParams,
-  ExpressRouteCrossConnectionsListRoutesTableResponse
+  ExpressRouteCrossConnectionsListRoutesTableResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -35,7 +35,7 @@ export interface ExpressRouteCrossConnections {
    * @param options The options parameters.
    */
   list(
-    options?: ExpressRouteCrossConnectionsListOptionalParams
+    options?: ExpressRouteCrossConnectionsListOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteCrossConnection>;
   /**
    * Retrieves all the ExpressRouteCrossConnections in a resource group.
@@ -44,7 +44,7 @@ export interface ExpressRouteCrossConnections {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: ExpressRouteCrossConnectionsListByResourceGroupOptionalParams
+    options?: ExpressRouteCrossConnectionsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<ExpressRouteCrossConnection>;
   /**
    * Gets details about the specified ExpressRouteCrossConnection.
@@ -55,7 +55,7 @@ export interface ExpressRouteCrossConnections {
   get(
     resourceGroupName: string,
     crossConnectionName: string,
-    options?: ExpressRouteCrossConnectionsGetOptionalParams
+    options?: ExpressRouteCrossConnectionsGetOptionalParams,
   ): Promise<ExpressRouteCrossConnectionsGetResponse>;
   /**
    * Update the specified ExpressRouteCrossConnection.
@@ -68,10 +68,10 @@ export interface ExpressRouteCrossConnections {
     resourceGroupName: string,
     crossConnectionName: string,
     parameters: ExpressRouteCrossConnection,
-    options?: ExpressRouteCrossConnectionsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCrossConnectionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteCrossConnectionsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteCrossConnectionsCreateOrUpdateResponse>,
       ExpressRouteCrossConnectionsCreateOrUpdateResponse
     >
   >;
@@ -86,7 +86,7 @@ export interface ExpressRouteCrossConnections {
     resourceGroupName: string,
     crossConnectionName: string,
     parameters: ExpressRouteCrossConnection,
-    options?: ExpressRouteCrossConnectionsCreateOrUpdateOptionalParams
+    options?: ExpressRouteCrossConnectionsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRouteCrossConnectionsCreateOrUpdateResponse>;
   /**
    * Updates an express route cross connection tags.
@@ -99,7 +99,7 @@ export interface ExpressRouteCrossConnections {
     resourceGroupName: string,
     crossConnectionName: string,
     crossConnectionParameters: TagsObject,
-    options?: ExpressRouteCrossConnectionsUpdateTagsOptionalParams
+    options?: ExpressRouteCrossConnectionsUpdateTagsOptionalParams,
   ): Promise<ExpressRouteCrossConnectionsUpdateTagsResponse>;
   /**
    * Gets the currently advertised ARP table associated with the express route cross connection in a
@@ -115,10 +115,10 @@ export interface ExpressRouteCrossConnections {
     crossConnectionName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCrossConnectionsListArpTableOptionalParams
+    options?: ExpressRouteCrossConnectionsListArpTableOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteCrossConnectionsListArpTableResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteCrossConnectionsListArpTableResponse>,
       ExpressRouteCrossConnectionsListArpTableResponse
     >
   >;
@@ -136,7 +136,7 @@ export interface ExpressRouteCrossConnections {
     crossConnectionName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCrossConnectionsListArpTableOptionalParams
+    options?: ExpressRouteCrossConnectionsListArpTableOptionalParams,
   ): Promise<ExpressRouteCrossConnectionsListArpTableResponse>;
   /**
    * Gets the route table summary associated with the express route cross connection in a resource group.
@@ -151,12 +151,10 @@ export interface ExpressRouteCrossConnections {
     crossConnectionName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCrossConnectionsListRoutesTableSummaryOptionalParams
+    options?: ExpressRouteCrossConnectionsListRoutesTableSummaryOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        ExpressRouteCrossConnectionsListRoutesTableSummaryResponse
-      >,
+    SimplePollerLike<
+      OperationState<ExpressRouteCrossConnectionsListRoutesTableSummaryResponse>,
       ExpressRouteCrossConnectionsListRoutesTableSummaryResponse
     >
   >;
@@ -173,7 +171,7 @@ export interface ExpressRouteCrossConnections {
     crossConnectionName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCrossConnectionsListRoutesTableSummaryOptionalParams
+    options?: ExpressRouteCrossConnectionsListRoutesTableSummaryOptionalParams,
   ): Promise<ExpressRouteCrossConnectionsListRoutesTableSummaryResponse>;
   /**
    * Gets the currently advertised routes table associated with the express route cross connection in a
@@ -189,10 +187,10 @@ export interface ExpressRouteCrossConnections {
     crossConnectionName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCrossConnectionsListRoutesTableOptionalParams
+    options?: ExpressRouteCrossConnectionsListRoutesTableOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteCrossConnectionsListRoutesTableResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteCrossConnectionsListRoutesTableResponse>,
       ExpressRouteCrossConnectionsListRoutesTableResponse
     >
   >;
@@ -210,6 +208,6 @@ export interface ExpressRouteCrossConnections {
     crossConnectionName: string,
     peeringName: string,
     devicePath: string,
-    options?: ExpressRouteCrossConnectionsListRoutesTableOptionalParams
+    options?: ExpressRouteCrossConnectionsListRoutesTableOptionalParams,
   ): Promise<ExpressRouteCrossConnectionsListRoutesTableResponse>;
 }

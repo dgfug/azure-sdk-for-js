@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualMachine,
   VirtualMachinesListByLocationOptionalParams,
@@ -46,9 +46,12 @@ import {
   VirtualMachineInstallPatchesParameters,
   VirtualMachinesInstallPatchesOptionalParams,
   VirtualMachinesInstallPatchesResponse,
+  AttachDetachDataDisksRequest,
+  VirtualMachinesAttachDetachDataDisksOptionalParams,
+  VirtualMachinesAttachDetachDataDisksResponse,
   RunCommandInput,
   VirtualMachinesRunCommandOptionalParams,
-  VirtualMachinesRunCommandResponse
+  VirtualMachinesRunCommandResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -61,7 +64,7 @@ export interface VirtualMachines {
    */
   listByLocation(
     location: string,
-    options?: VirtualMachinesListByLocationOptionalParams
+    options?: VirtualMachinesListByLocationOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachine>;
   /**
    * Lists all of the virtual machines in the specified resource group. Use the nextLink property in the
@@ -71,7 +74,7 @@ export interface VirtualMachines {
    */
   list(
     resourceGroupName: string,
-    options?: VirtualMachinesListOptionalParams
+    options?: VirtualMachinesListOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachine>;
   /**
    * Lists all of the virtual machines in the specified subscription. Use the nextLink property in the
@@ -79,7 +82,7 @@ export interface VirtualMachines {
    * @param options The options parameters.
    */
   listAll(
-    options?: VirtualMachinesListAllOptionalParams
+    options?: VirtualMachinesListAllOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachine>;
   /**
    * Lists all available virtual machine sizes to which the specified virtual machine can be resized.
@@ -90,7 +93,7 @@ export interface VirtualMachines {
   listAvailableSizes(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesListAvailableSizesOptionalParams
+    options?: VirtualMachinesListAvailableSizesOptionalParams,
   ): PagedAsyncIterableIterator<VirtualMachineSize>;
   /**
    * Captures the VM by copying virtual hard disks of the VM and outputs a template that can be used to
@@ -104,10 +107,10 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: VirtualMachineCaptureParameters,
-    options?: VirtualMachinesCaptureOptionalParams
+    options?: VirtualMachinesCaptureOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachinesCaptureResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachinesCaptureResponse>,
       VirtualMachinesCaptureResponse
     >
   >;
@@ -123,7 +126,7 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: VirtualMachineCaptureParameters,
-    options?: VirtualMachinesCaptureOptionalParams
+    options?: VirtualMachinesCaptureOptionalParams,
   ): Promise<VirtualMachinesCaptureResponse>;
   /**
    * The operation to create or update a virtual machine. Please note some properties can be set only
@@ -137,10 +140,10 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: VirtualMachine,
-    options?: VirtualMachinesCreateOrUpdateOptionalParams
+    options?: VirtualMachinesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachinesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachinesCreateOrUpdateResponse>,
       VirtualMachinesCreateOrUpdateResponse
     >
   >;
@@ -156,7 +159,7 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: VirtualMachine,
-    options?: VirtualMachinesCreateOrUpdateOptionalParams
+    options?: VirtualMachinesCreateOrUpdateOptionalParams,
   ): Promise<VirtualMachinesCreateOrUpdateResponse>;
   /**
    * The operation to update a virtual machine.
@@ -169,10 +172,10 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: VirtualMachineUpdate,
-    options?: VirtualMachinesUpdateOptionalParams
+    options?: VirtualMachinesUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachinesUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachinesUpdateResponse>,
       VirtualMachinesUpdateResponse
     >
   >;
@@ -187,7 +190,7 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: VirtualMachineUpdate,
-    options?: VirtualMachinesUpdateOptionalParams
+    options?: VirtualMachinesUpdateOptionalParams,
   ): Promise<VirtualMachinesUpdateResponse>;
   /**
    * The operation to delete a virtual machine.
@@ -198,8 +201,8 @@ export interface VirtualMachines {
   beginDelete(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to delete a virtual machine.
    * @param resourceGroupName The name of the resource group.
@@ -209,7 +212,7 @@ export interface VirtualMachines {
   beginDeleteAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesDeleteOptionalParams
+    options?: VirtualMachinesDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Retrieves information about the model view or the instance view of a virtual machine.
@@ -220,7 +223,7 @@ export interface VirtualMachines {
   get(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesGetOptionalParams
+    options?: VirtualMachinesGetOptionalParams,
   ): Promise<VirtualMachinesGetResponse>;
   /**
    * Retrieves information about the run-time state of a virtual machine.
@@ -231,7 +234,7 @@ export interface VirtualMachines {
   instanceView(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesInstanceViewOptionalParams
+    options?: VirtualMachinesInstanceViewOptionalParams,
   ): Promise<VirtualMachinesInstanceViewResponse>;
   /**
    * Converts virtual machine disks from blob-based to managed disks. Virtual machine must be
@@ -243,8 +246,8 @@ export interface VirtualMachines {
   beginConvertToManagedDisks(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesConvertToManagedDisksOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesConvertToManagedDisksOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Converts virtual machine disks from blob-based to managed disks. Virtual machine must be
    * stop-deallocated before invoking this operation.
@@ -255,7 +258,7 @@ export interface VirtualMachines {
   beginConvertToManagedDisksAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesConvertToManagedDisksOptionalParams
+    options?: VirtualMachinesConvertToManagedDisksOptionalParams,
   ): Promise<void>;
   /**
    * Shuts down the virtual machine and releases the compute resources. You are not billed for the
@@ -267,8 +270,8 @@ export interface VirtualMachines {
   beginDeallocate(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesDeallocateOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesDeallocateOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Shuts down the virtual machine and releases the compute resources. You are not billed for the
    * compute resources that this virtual machine uses.
@@ -279,14 +282,14 @@ export interface VirtualMachines {
   beginDeallocateAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesDeallocateOptionalParams
+    options?: VirtualMachinesDeallocateOptionalParams,
   ): Promise<void>;
   /**
    * Sets the OS state of the virtual machine to generalized. It is recommended to sysprep the virtual
-   * machine before performing this operation. <br>For Windows, please refer to [Create a managed image
-   * of a generalized VM in
-   * Azure](https://docs.microsoft.com/azure/virtual-machines/windows/capture-image-resource).<br>For
-   * Linux, please refer to [How to create an image of a virtual machine or
+   * machine before performing this operation. For Windows, please refer to [Create a managed image of a
+   * generalized VM in
+   * Azure](https://docs.microsoft.com/azure/virtual-machines/windows/capture-image-resource). For Linux,
+   * please refer to [How to create an image of a virtual machine or
    * VHD](https://docs.microsoft.com/azure/virtual-machines/linux/capture-image).
    * @param resourceGroupName The name of the resource group.
    * @param vmName The name of the virtual machine.
@@ -295,7 +298,7 @@ export interface VirtualMachines {
   generalize(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesGeneralizeOptionalParams
+    options?: VirtualMachinesGeneralizeOptionalParams,
   ): Promise<void>;
   /**
    * The operation to power off (stop) a virtual machine. The virtual machine can be restarted with the
@@ -307,8 +310,8 @@ export interface VirtualMachines {
   beginPowerOff(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesPowerOffOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesPowerOffOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to power off (stop) a virtual machine. The virtual machine can be restarted with the
    * same provisioned resources. You are still charged for this virtual machine.
@@ -319,7 +322,7 @@ export interface VirtualMachines {
   beginPowerOffAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesPowerOffOptionalParams
+    options?: VirtualMachinesPowerOffOptionalParams,
   ): Promise<void>;
   /**
    * The operation to reapply a virtual machine's state.
@@ -330,8 +333,8 @@ export interface VirtualMachines {
   beginReapply(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesReapplyOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesReapplyOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to reapply a virtual machine's state.
    * @param resourceGroupName The name of the resource group.
@@ -341,7 +344,7 @@ export interface VirtualMachines {
   beginReapplyAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesReapplyOptionalParams
+    options?: VirtualMachinesReapplyOptionalParams,
   ): Promise<void>;
   /**
    * The operation to restart a virtual machine.
@@ -352,8 +355,8 @@ export interface VirtualMachines {
   beginRestart(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesRestartOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesRestartOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to restart a virtual machine.
    * @param resourceGroupName The name of the resource group.
@@ -363,7 +366,7 @@ export interface VirtualMachines {
   beginRestartAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesRestartOptionalParams
+    options?: VirtualMachinesRestartOptionalParams,
   ): Promise<void>;
   /**
    * The operation to start a virtual machine.
@@ -374,8 +377,8 @@ export interface VirtualMachines {
   beginStart(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesStartOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesStartOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to start a virtual machine.
    * @param resourceGroupName The name of the resource group.
@@ -385,7 +388,7 @@ export interface VirtualMachines {
   beginStartAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesStartOptionalParams
+    options?: VirtualMachinesStartOptionalParams,
   ): Promise<void>;
   /**
    * Shuts down the virtual machine, moves it to a new node, and powers it back on.
@@ -396,8 +399,8 @@ export interface VirtualMachines {
   beginRedeploy(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesRedeployOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesRedeployOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Shuts down the virtual machine, moves it to a new node, and powers it back on.
    * @param resourceGroupName The name of the resource group.
@@ -407,10 +410,15 @@ export interface VirtualMachines {
   beginRedeployAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesRedeployOptionalParams
+    options?: VirtualMachinesRedeployOptionalParams,
   ): Promise<void>;
   /**
-   * Reimages the virtual machine which has an ephemeral OS disk back to its initial state.
+   * Reimages (upgrade the operating system) a virtual machine which don't have a ephemeral OS disk, for
+   * virtual machines who have a ephemeral OS disk the virtual machine is reset to initial state. NOTE:
+   * The retaining of old OS disk depends on the value of deleteOption of OS disk. If deleteOption is
+   * detach, the old OS disk will be preserved after reimage. If deleteOption is delete, the old OS disk
+   * will be deleted after reimage. The deleteOption of the OS disk should be updated accordingly before
+   * performing the reimage.
    * @param resourceGroupName The name of the resource group.
    * @param vmName The name of the virtual machine.
    * @param options The options parameters.
@@ -418,10 +426,15 @@ export interface VirtualMachines {
   beginReimage(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesReimageOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesReimageOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
-   * Reimages the virtual machine which has an ephemeral OS disk back to its initial state.
+   * Reimages (upgrade the operating system) a virtual machine which don't have a ephemeral OS disk, for
+   * virtual machines who have a ephemeral OS disk the virtual machine is reset to initial state. NOTE:
+   * The retaining of old OS disk depends on the value of deleteOption of OS disk. If deleteOption is
+   * detach, the old OS disk will be preserved after reimage. If deleteOption is delete, the old OS disk
+   * will be deleted after reimage. The deleteOption of the OS disk should be updated accordingly before
+   * performing the reimage.
    * @param resourceGroupName The name of the resource group.
    * @param vmName The name of the virtual machine.
    * @param options The options parameters.
@@ -429,7 +442,7 @@ export interface VirtualMachines {
   beginReimageAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesReimageOptionalParams
+    options?: VirtualMachinesReimageOptionalParams,
   ): Promise<void>;
   /**
    * The operation to retrieve SAS URIs for a virtual machine's boot diagnostic logs.
@@ -440,7 +453,7 @@ export interface VirtualMachines {
   retrieveBootDiagnosticsData(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesRetrieveBootDiagnosticsDataOptionalParams
+    options?: VirtualMachinesRetrieveBootDiagnosticsDataOptionalParams,
   ): Promise<VirtualMachinesRetrieveBootDiagnosticsDataResponse>;
   /**
    * The operation to perform maintenance on a virtual machine.
@@ -451,8 +464,8 @@ export interface VirtualMachines {
   beginPerformMaintenance(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesPerformMaintenanceOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualMachinesPerformMaintenanceOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * The operation to perform maintenance on a virtual machine.
    * @param resourceGroupName The name of the resource group.
@@ -462,7 +475,7 @@ export interface VirtualMachines {
   beginPerformMaintenanceAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesPerformMaintenanceOptionalParams
+    options?: VirtualMachinesPerformMaintenanceOptionalParams,
   ): Promise<void>;
   /**
    * The operation to simulate the eviction of spot virtual machine.
@@ -473,7 +486,7 @@ export interface VirtualMachines {
   simulateEviction(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesSimulateEvictionOptionalParams
+    options?: VirtualMachinesSimulateEvictionOptionalParams,
   ): Promise<void>;
   /**
    * Assess patches on the VM.
@@ -484,10 +497,10 @@ export interface VirtualMachines {
   beginAssessPatches(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesAssessPatchesOptionalParams
+    options?: VirtualMachinesAssessPatchesOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachinesAssessPatchesResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachinesAssessPatchesResponse>,
       VirtualMachinesAssessPatchesResponse
     >
   >;
@@ -500,7 +513,7 @@ export interface VirtualMachines {
   beginAssessPatchesAndWait(
     resourceGroupName: string,
     vmName: string,
-    options?: VirtualMachinesAssessPatchesOptionalParams
+    options?: VirtualMachinesAssessPatchesOptionalParams,
   ): Promise<VirtualMachinesAssessPatchesResponse>;
   /**
    * Installs patches on the VM.
@@ -513,10 +526,10 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     installPatchesInput: VirtualMachineInstallPatchesParameters,
-    options?: VirtualMachinesInstallPatchesOptionalParams
+    options?: VirtualMachinesInstallPatchesOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachinesInstallPatchesResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachinesInstallPatchesResponse>,
       VirtualMachinesInstallPatchesResponse
     >
   >;
@@ -531,8 +544,41 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     installPatchesInput: VirtualMachineInstallPatchesParameters,
-    options?: VirtualMachinesInstallPatchesOptionalParams
+    options?: VirtualMachinesInstallPatchesOptionalParams,
   ): Promise<VirtualMachinesInstallPatchesResponse>;
+  /**
+   * Attach and detach data disks to/from the virtual machine.
+   * @param resourceGroupName The name of the resource group.
+   * @param vmName The name of the virtual machine.
+   * @param parameters Parameters supplied to the attach and detach data disks operation on the virtual
+   *                   machine.
+   * @param options The options parameters.
+   */
+  beginAttachDetachDataDisks(
+    resourceGroupName: string,
+    vmName: string,
+    parameters: AttachDetachDataDisksRequest,
+    options?: VirtualMachinesAttachDetachDataDisksOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<VirtualMachinesAttachDetachDataDisksResponse>,
+      VirtualMachinesAttachDetachDataDisksResponse
+    >
+  >;
+  /**
+   * Attach and detach data disks to/from the virtual machine.
+   * @param resourceGroupName The name of the resource group.
+   * @param vmName The name of the virtual machine.
+   * @param parameters Parameters supplied to the attach and detach data disks operation on the virtual
+   *                   machine.
+   * @param options The options parameters.
+   */
+  beginAttachDetachDataDisksAndWait(
+    resourceGroupName: string,
+    vmName: string,
+    parameters: AttachDetachDataDisksRequest,
+    options?: VirtualMachinesAttachDetachDataDisksOptionalParams,
+  ): Promise<VirtualMachinesAttachDetachDataDisksResponse>;
   /**
    * Run command on the VM.
    * @param resourceGroupName The name of the resource group.
@@ -544,10 +590,10 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: RunCommandInput,
-    options?: VirtualMachinesRunCommandOptionalParams
+    options?: VirtualMachinesRunCommandOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualMachinesRunCommandResponse>,
+    SimplePollerLike<
+      OperationState<VirtualMachinesRunCommandResponse>,
       VirtualMachinesRunCommandResponse
     >
   >;
@@ -562,6 +608,6 @@ export interface VirtualMachines {
     resourceGroupName: string,
     vmName: string,
     parameters: RunCommandInput,
-    options?: VirtualMachinesRunCommandOptionalParams
+    options?: VirtualMachinesRunCommandOptionalParams,
   ): Promise<VirtualMachinesRunCommandResponse>;
 }

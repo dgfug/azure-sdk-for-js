@@ -6,9 +6,9 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import * as coreHttp from "@azure/core-http";
+import * as coreClient from "@azure/core-client";
 
-export const FileSystemList: coreHttp.CompositeMapper = {
+export const FileSystemList: coreClient.CompositeMapper = {
   serializedName: "FileSystemList",
   type: {
     name: "Composite",
@@ -32,7 +32,7 @@ export const FileSystemList: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystem: coreHttp.CompositeMapper = {
+export const FileSystem: coreClient.CompositeMapper = {
   serializedName: "FileSystem",
   type: {
     name: "Composite",
@@ -63,7 +63,7 @@ export const FileSystem: coreHttp.CompositeMapper = {
   }
 };
 
-export const StorageError: coreHttp.CompositeMapper = {
+export const StorageError: coreClient.CompositeMapper = {
   serializedName: "StorageError",
   type: {
     name: "Composite",
@@ -83,12 +83,19 @@ export const StorageError: coreHttp.CompositeMapper = {
         type: {
           name: "String"
         }
+      },
+      authenticationErrorDetail: {
+        serializedName: "AuthenticationErrorDetail",
+        xmlName: "AuthenticationErrorDetail",
+        type: {
+          name: "String"
+        }
       }
     }
   }
 };
 
-export const StorageErrorError: coreHttp.CompositeMapper = {
+export const StorageErrorError: coreClient.CompositeMapper = {
   serializedName: "StorageErrorError",
   type: {
     name: "Composite",
@@ -112,7 +119,7 @@ export const StorageErrorError: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathList: coreHttp.CompositeMapper = {
+export const PathList: coreClient.CompositeMapper = {
   serializedName: "PathList",
   type: {
     name: "Composite",
@@ -136,7 +143,7 @@ export const PathList: coreHttp.CompositeMapper = {
   }
 };
 
-export const Path: coreHttp.CompositeMapper = {
+export const Path: coreClient.CompositeMapper = {
   serializedName: "Path",
   type: {
     name: "Composite",
@@ -150,6 +157,7 @@ export const Path: coreHttp.CompositeMapper = {
         }
       },
       isDirectory: {
+        defaultValue: false,
         serializedName: "isDirectory",
         xmlName: "isDirectory",
         type: {
@@ -197,12 +205,40 @@ export const Path: coreHttp.CompositeMapper = {
         type: {
           name: "String"
         }
+      },
+      encryptionScope: {
+        serializedName: "EncryptionScope",
+        xmlName: "EncryptionScope",
+        type: {
+          name: "String"
+        }
+      },
+      creationTime: {
+        serializedName: "creationTime",
+        xmlName: "creationTime",
+        type: {
+          name: "String"
+        }
+      },
+      expiryTime: {
+        serializedName: "expiryTime",
+        xmlName: "expiryTime",
+        type: {
+          name: "String"
+        }
+      },
+      encryptionContext: {
+        serializedName: "EncryptionContext",
+        xmlName: "EncryptionContext",
+        type: {
+          name: "String"
+        }
       }
     }
   }
 };
 
-export const ListBlobsHierarchySegmentResponse: coreHttp.CompositeMapper = {
+export const ListBlobsHierarchySegmentResponse: coreClient.CompositeMapper = {
   serializedName: "ListBlobsHierarchySegmentResponse",
   xmlName: "EnumerationResults",
   type: {
@@ -274,7 +310,7 @@ export const ListBlobsHierarchySegmentResponse: coreHttp.CompositeMapper = {
   }
 };
 
-export const BlobHierarchyListSegment: coreHttp.CompositeMapper = {
+export const BlobHierarchyListSegment: coreClient.CompositeMapper = {
   serializedName: "BlobHierarchyListSegment",
   xmlName: "Blobs",
   type: {
@@ -314,7 +350,7 @@ export const BlobHierarchyListSegment: coreHttp.CompositeMapper = {
   }
 };
 
-export const BlobPrefix: coreHttp.CompositeMapper = {
+export const BlobPrefix: coreClient.CompositeMapper = {
   serializedName: "BlobPrefix",
   type: {
     name: "Composite",
@@ -332,7 +368,7 @@ export const BlobPrefix: coreHttp.CompositeMapper = {
   }
 };
 
-export const BlobItemModel: coreHttp.CompositeMapper = {
+export const BlobItemModel: coreClient.CompositeMapper = {
   serializedName: "BlobItemModel",
   xmlName: "Blob",
   type: {
@@ -396,7 +432,7 @@ export const BlobItemModel: coreHttp.CompositeMapper = {
   }
 };
 
-export const BlobPropertiesModel: coreHttp.CompositeMapper = {
+export const BlobPropertiesModel: coreClient.CompositeMapper = {
   serializedName: "BlobPropertiesModel",
   xmlName: "Properties",
   type: {
@@ -612,7 +648,7 @@ export const BlobPropertiesModel: coreHttp.CompositeMapper = {
   }
 };
 
-export const SetAccessControlRecursiveResponse: coreHttp.CompositeMapper = {
+export const SetAccessControlRecursiveResponse: coreClient.CompositeMapper = {
   serializedName: "SetAccessControlRecursiveResponse",
   type: {
     name: "Composite",
@@ -657,7 +693,7 @@ export const SetAccessControlRecursiveResponse: coreHttp.CompositeMapper = {
   }
 };
 
-export const AclFailedEntry: coreHttp.CompositeMapper = {
+export const AclFailedEntry: coreClient.CompositeMapper = {
   serializedName: "AclFailedEntry",
   type: {
     name: "Composite",
@@ -688,7 +724,7 @@ export const AclFailedEntry: coreHttp.CompositeMapper = {
   }
 };
 
-export const ServiceListFileSystemsHeaders: coreHttp.CompositeMapper = {
+export const ServiceListFileSystemsHeaders: coreClient.CompositeMapper = {
   serializedName: "Service_listFileSystemsHeaders",
   type: {
     name: "Composite",
@@ -738,7 +774,7 @@ export const ServiceListFileSystemsHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const ServiceListFileSystemsExceptionHeaders: coreHttp.CompositeMapper = {
+export const ServiceListFileSystemsExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Service_listFileSystemsExceptionHeaders",
   type: {
     name: "Composite",
@@ -755,7 +791,7 @@ export const ServiceListFileSystemsExceptionHeaders: coreHttp.CompositeMapper = 
   }
 };
 
-export const FileSystemCreateHeaders: coreHttp.CompositeMapper = {
+export const FileSystemCreateHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_createHeaders",
   type: {
     name: "Composite",
@@ -812,7 +848,7 @@ export const FileSystemCreateHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemCreateExceptionHeaders: coreHttp.CompositeMapper = {
+export const FileSystemCreateExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_createExceptionHeaders",
   type: {
     name: "Composite",
@@ -829,7 +865,7 @@ export const FileSystemCreateExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemSetPropertiesHeaders: coreHttp.CompositeMapper = {
+export const FileSystemSetPropertiesHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_setPropertiesHeaders",
   type: {
     name: "Composite",
@@ -879,7 +915,7 @@ export const FileSystemSetPropertiesHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemSetPropertiesExceptionHeaders: coreHttp.CompositeMapper = {
+export const FileSystemSetPropertiesExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_setPropertiesExceptionHeaders",
   type: {
     name: "Composite",
@@ -896,7 +932,7 @@ export const FileSystemSetPropertiesExceptionHeaders: coreHttp.CompositeMapper =
   }
 };
 
-export const FileSystemGetPropertiesHeaders: coreHttp.CompositeMapper = {
+export const FileSystemGetPropertiesHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_getPropertiesHeaders",
   type: {
     name: "Composite",
@@ -960,7 +996,7 @@ export const FileSystemGetPropertiesHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemGetPropertiesExceptionHeaders: coreHttp.CompositeMapper = {
+export const FileSystemGetPropertiesExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_getPropertiesExceptionHeaders",
   type: {
     name: "Composite",
@@ -977,7 +1013,7 @@ export const FileSystemGetPropertiesExceptionHeaders: coreHttp.CompositeMapper =
   }
 };
 
-export const FileSystemDeleteHeaders: coreHttp.CompositeMapper = {
+export const FileSystemDeleteHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_deleteHeaders",
   type: {
     name: "Composite",
@@ -1013,7 +1049,7 @@ export const FileSystemDeleteHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemDeleteExceptionHeaders: coreHttp.CompositeMapper = {
+export const FileSystemDeleteExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_deleteExceptionHeaders",
   type: {
     name: "Composite",
@@ -1030,7 +1066,7 @@ export const FileSystemDeleteExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemListPathsHeaders: coreHttp.CompositeMapper = {
+export const FileSystemListPathsHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_listPathsHeaders",
   type: {
     name: "Composite",
@@ -1094,7 +1130,7 @@ export const FileSystemListPathsHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemListPathsExceptionHeaders: coreHttp.CompositeMapper = {
+export const FileSystemListPathsExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_listPathsExceptionHeaders",
   type: {
     name: "Composite",
@@ -1111,7 +1147,7 @@ export const FileSystemListPathsExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const FileSystemListBlobHierarchySegmentHeaders: coreHttp.CompositeMapper = {
+export const FileSystemListBlobHierarchySegmentHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_listBlobHierarchySegmentHeaders",
   type: {
     name: "Composite",
@@ -1163,7 +1199,7 @@ export const FileSystemListBlobHierarchySegmentHeaders: coreHttp.CompositeMapper
   }
 };
 
-export const FileSystemListBlobHierarchySegmentExceptionHeaders: coreHttp.CompositeMapper = {
+export const FileSystemListBlobHierarchySegmentExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "FileSystem_listBlobHierarchySegmentExceptionHeaders",
   type: {
     name: "Composite",
@@ -1180,7 +1216,7 @@ export const FileSystemListBlobHierarchySegmentExceptionHeaders: coreHttp.Compos
   }
 };
 
-export const PathCreateHeaders: coreHttp.CompositeMapper = {
+export const PathCreateHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_createHeaders",
   type: {
     name: "Composite",
@@ -1240,6 +1276,20 @@ export const PathCreateHeaders: coreHttp.CompositeMapper = {
           name: "Number"
         }
       },
+      isServerEncrypted: {
+        serializedName: "x-ms-request-server-encrypted",
+        xmlName: "x-ms-request-server-encrypted",
+        type: {
+          name: "Boolean"
+        }
+      },
+      encryptionKeySha256: {
+        serializedName: "x-ms-encryption-key-sha256",
+        xmlName: "x-ms-encryption-key-sha256",
+        type: {
+          name: "String"
+        }
+      },
       errorCode: {
         serializedName: "x-ms-error-code",
         xmlName: "x-ms-error-code",
@@ -1251,7 +1301,7 @@ export const PathCreateHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathCreateExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathCreateExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_createExceptionHeaders",
   type: {
     name: "Composite",
@@ -1268,7 +1318,7 @@ export const PathCreateExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathUpdateHeaders: coreHttp.CompositeMapper = {
+export const PathUpdateHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_updateHeaders",
   type: {
     name: "Composite",
@@ -1402,7 +1452,7 @@ export const PathUpdateHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathUpdateExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathUpdateExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_updateExceptionHeaders",
   type: {
     name: "Composite",
@@ -1419,7 +1469,7 @@ export const PathUpdateExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathLeaseHeaders: coreHttp.CompositeMapper = {
+export const PathLeaseHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_leaseHeaders",
   type: {
     name: "Composite",
@@ -1481,7 +1531,7 @@ export const PathLeaseHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathLeaseExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathLeaseExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_leaseExceptionHeaders",
   type: {
     name: "Composite",
@@ -1498,7 +1548,7 @@ export const PathLeaseExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathReadHeaders: coreHttp.CompositeMapper = {
+export const PathReadHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_readHeaders",
   type: {
     name: "Composite",
@@ -1641,12 +1691,26 @@ export const PathReadHeaders: coreHttp.CompositeMapper = {
         type: {
           name: "String"
         }
+      },
+      isServerEncrypted: {
+        serializedName: "x-ms-request-server-encrypted",
+        xmlName: "x-ms-request-server-encrypted",
+        type: {
+          name: "Boolean"
+        }
+      },
+      encryptionKeySha256: {
+        serializedName: "x-ms-encryption-key-sha256",
+        xmlName: "x-ms-encryption-key-sha256",
+        type: {
+          name: "String"
+        }
       }
     }
   }
 };
 
-export const PathReadExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathReadExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_readExceptionHeaders",
   type: {
     name: "Composite",
@@ -1663,7 +1727,7 @@ export const PathReadExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathGetPropertiesHeaders: coreHttp.CompositeMapper = {
+export const PathGetPropertiesHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_getPropertiesHeaders",
   type: {
     name: "Composite",
@@ -1846,7 +1910,7 @@ export const PathGetPropertiesHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathGetPropertiesExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathGetPropertiesExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_getPropertiesExceptionHeaders",
   type: {
     name: "Composite",
@@ -1863,7 +1927,7 @@ export const PathGetPropertiesExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathDeleteHeaders: coreHttp.CompositeMapper = {
+export const PathDeleteHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_deleteHeaders",
   type: {
     name: "Composite",
@@ -1920,7 +1984,7 @@ export const PathDeleteHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathDeleteExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathDeleteExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_deleteExceptionHeaders",
   type: {
     name: "Composite",
@@ -1937,7 +2001,7 @@ export const PathDeleteExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathSetAccessControlHeaders: coreHttp.CompositeMapper = {
+export const PathSetAccessControlHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_setAccessControlHeaders",
   type: {
     name: "Composite",
@@ -1989,7 +2053,7 @@ export const PathSetAccessControlHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathSetAccessControlExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathSetAccessControlExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_setAccessControlExceptionHeaders",
   type: {
     name: "Composite",
@@ -2020,7 +2084,7 @@ export const PathSetAccessControlExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathSetAccessControlRecursiveHeaders: coreHttp.CompositeMapper = {
+export const PathSetAccessControlRecursiveHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_setAccessControlRecursiveHeaders",
   type: {
     name: "Composite",
@@ -2065,7 +2129,7 @@ export const PathSetAccessControlRecursiveHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathSetAccessControlRecursiveExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathSetAccessControlRecursiveExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_setAccessControlRecursiveExceptionHeaders",
   type: {
     name: "Composite",
@@ -2096,7 +2160,7 @@ export const PathSetAccessControlRecursiveExceptionHeaders: coreHttp.CompositeMa
   }
 };
 
-export const PathFlushDataHeaders: coreHttp.CompositeMapper = {
+export const PathFlushDataHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_flushDataHeaders",
   type: {
     name: "Composite",
@@ -2155,12 +2219,33 @@ export const PathFlushDataHeaders: coreHttp.CompositeMapper = {
         type: {
           name: "String"
         }
+      },
+      isServerEncrypted: {
+        serializedName: "x-ms-request-server-encrypted",
+        xmlName: "x-ms-request-server-encrypted",
+        type: {
+          name: "Boolean"
+        }
+      },
+      encryptionKeySha256: {
+        serializedName: "x-ms-encryption-key-sha256",
+        xmlName: "x-ms-encryption-key-sha256",
+        type: {
+          name: "String"
+        }
+      },
+      leaseRenewed: {
+        serializedName: "x-ms-lease-renewed",
+        xmlName: "x-ms-lease-renewed",
+        type: {
+          name: "Boolean"
+        }
       }
     }
   }
 };
 
-export const PathFlushDataExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathFlushDataExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_flushDataExceptionHeaders",
   type: {
     name: "Composite",
@@ -2191,7 +2276,7 @@ export const PathFlushDataExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathAppendDataHeaders: coreHttp.CompositeMapper = {
+export const PathAppendDataHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_appendDataHeaders",
   type: {
     name: "Composite",
@@ -2252,12 +2337,26 @@ export const PathAppendDataHeaders: coreHttp.CompositeMapper = {
         type: {
           name: "Boolean"
         }
+      },
+      encryptionKeySha256: {
+        serializedName: "x-ms-encryption-key-sha256",
+        xmlName: "x-ms-encryption-key-sha256",
+        type: {
+          name: "String"
+        }
+      },
+      leaseRenewed: {
+        serializedName: "x-ms-lease-renewed",
+        xmlName: "x-ms-lease-renewed",
+        type: {
+          name: "Boolean"
+        }
       }
     }
   }
 };
 
-export const PathAppendDataExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathAppendDataExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_appendDataExceptionHeaders",
   type: {
     name: "Composite",
@@ -2288,7 +2387,7 @@ export const PathAppendDataExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathSetExpiryHeaders: coreHttp.CompositeMapper = {
+export const PathSetExpiryHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_setExpiryHeaders",
   type: {
     name: "Composite",
@@ -2347,7 +2446,7 @@ export const PathSetExpiryHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathSetExpiryExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathSetExpiryExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_setExpiryExceptionHeaders",
   type: {
     name: "Composite",
@@ -2364,7 +2463,7 @@ export const PathSetExpiryExceptionHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathUndeleteHeaders: coreHttp.CompositeMapper = {
+export const PathUndeleteHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_undeleteHeaders",
   type: {
     name: "Composite",
@@ -2409,7 +2508,7 @@ export const PathUndeleteHeaders: coreHttp.CompositeMapper = {
   }
 };
 
-export const PathUndeleteExceptionHeaders: coreHttp.CompositeMapper = {
+export const PathUndeleteExceptionHeaders: coreClient.CompositeMapper = {
   serializedName: "Path_undeleteExceptionHeaders",
   type: {
     name: "Composite",

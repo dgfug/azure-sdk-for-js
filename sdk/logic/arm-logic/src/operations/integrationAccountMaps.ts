@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { IntegrationAccountMaps } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { LogicManagementClientContext } from "../logicManagementClientContext";
+import { LogicManagementClient } from "../logicManagementClient";
 import {
   IntegrationAccountMap,
   IntegrationAccountMapsListNextOptionalParams,
@@ -31,13 +32,13 @@ import {
 /// <reference lib="esnext.asynciterable" />
 /** Class containing IntegrationAccountMaps operations. */
 export class IntegrationAccountMapsImpl implements IntegrationAccountMaps {
-  private readonly client: LogicManagementClientContext;
+  private readonly client: LogicManagementClient;
 
   /**
    * Initialize a new instance of the class IntegrationAccountMaps class.
    * @param client Reference to the service client
    */
-  constructor(client: LogicManagementClientContext) {
+  constructor(client: LogicManagementClient) {
     this.client = client;
   }
 
@@ -64,11 +65,15 @@ export class IntegrationAccountMapsImpl implements IntegrationAccountMaps {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           integrationAccountName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -77,15 +82,22 @@ export class IntegrationAccountMapsImpl implements IntegrationAccountMaps {
   private async *listPagingPage(
     resourceGroupName: string,
     integrationAccountName: string,
-    options?: IntegrationAccountMapsListOptionalParams
+    options?: IntegrationAccountMapsListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<IntegrationAccountMap[]> {
-    let result = await this._list(
-      resourceGroupName,
-      integrationAccountName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: IntegrationAccountMapsListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        integrationAccountName,
+        options
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
@@ -94,7 +106,9 @@ export class IntegrationAccountMapsImpl implements IntegrationAccountMaps {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -149,7 +163,9 @@ export class IntegrationAccountMapsImpl implements IntegrationAccountMaps {
   }
 
   /**
-   * Creates or updates an integration account map.
+   * Creates or updates an integration account map. If the map is larger than 4 MB, you need to store the
+   * map in an Azure blob and use the blob's Shared Access Signature (SAS) URL as the 'contentLink'
+   * property value.
    * @param resourceGroupName The resource group name.
    * @param integrationAccountName The integration account name.
    * @param mapName The integration account map name.
@@ -368,7 +384,6 @@ const listNextOperationSpec: coreClient.OperationSpec = {
       bodyMapper: Mappers.ErrorResponse
     }
   },
-  queryParameters: [Parameters.apiVersion, Parameters.top, Parameters.filter],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,

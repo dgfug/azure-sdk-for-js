@@ -22,17 +22,19 @@ These sample programs show how to use the TypeScript client libraries for Azure 
 | [analyzeInvoice.ts][analyzeinvoice]                     | extract data from an invoice document                                                      |
 | [analyzeReceipt.ts][analyzereceipt]                     | extract data from a receipt document                                                       |
 | [analyzeReceiptByModelId.ts][analyzereceiptbymodelid]   | use the "prebuilt-receipt" model ID to extract data from a receipt document (weakly-typed) |
+| [analyzeW2TaxForm.ts][analyzew2taxform]                 | extract data from a United States W2 tax document                                          |
 | [buildModel.ts][buildmodel]                             | build a model with a single document type from a training data set                         |
 | [copyModel.ts][copymodel]                               | copy a model from one resource to another                                                  |
-| [extractGenericDocument.ts][extractgenericdocument]     | use the prebuilt (generic) document model to extract key-value pairs and entities          |
+| [extractGeneralDocument.ts][extractgeneraldocument]     | use the prebuilt (general) document model to extract key-value pairs and entities          |
 | [extractLayout.ts][extractlayout]                       | use the prebuilt layout model to extract basic document elements only                      |
 | [getInfo.ts][getinfo]                                   | get information about the count and limit of custom models in the resource                 |
 | [getModel.ts][getmodel]                                 | get information about a model by its ID                                                    |
 | [listModels.ts][listmodels]                             | iterate over the models in a resource                                                      |
+| [readDocument.ts][readdocument]                         | use the prebuilt "read" model to extract information about the text content of a document  |
 
 ## Prerequisites
 
-The sample programs are compatible with [LTS versions of Node.js](https://nodejs.org/about/releases/).
+The sample programs are compatible with [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule).
 
 Before running the samples in Node, they must be compiled to JavaScript using the TypeScript compiler. For more information on TypeScript, see the [TypeScript documentation][typescript]. Install the TypeScript compiler using:
 
@@ -75,7 +77,7 @@ node dist/composeModel.js
 Alternatively, run a single sample with the correct environment variables set (setting up the `.env` file is not required if you do this), for example (cross-platform):
 
 ```bash
-npx cross-env FORM_RECOGNIZER_ENDPOINT="<form recognizer endpoint>" FORM_RECOGNIZER_API_KEY="<form recognizer api key>" PURCHASE_ORDER_SUPPLIES_SAS_URL="<purchase order supplies sas url>" PURCHASE_ORDER_EQUIPMENT_SAS_URL="<purchase order equipment sas url>" PURCHASE_ORDER_FURNITURE_SAS_URL="<purchase order furniture sas url>" PURCHASE_ORDER_CLEANING_SUPPLIES_SAS_URL="<purchase order cleaning supplies sas url>" node dist/composeModel.js
+npx dev-tool run vendored cross-env FORM_RECOGNIZER_ENDPOINT="<form recognizer endpoint>" FORM_RECOGNIZER_API_KEY="<form recognizer api key>" PURCHASE_ORDER_SUPPLIES_SAS_URL="<purchase order supplies sas url>" PURCHASE_ORDER_EQUIPMENT_SAS_URL="<purchase order equipment sas url>" PURCHASE_ORDER_FURNITURE_SAS_URL="<purchase order furniture sas url>" PURCHASE_ORDER_CLEANING_SUPPLIES_SAS_URL="<purchase order cleaning supplies sas url>" node dist/composeModel.js
 ```
 
 ## Next Steps
@@ -89,13 +91,15 @@ Take a look at our [API Documentation][apiref] for more information about the AP
 [analyzeinvoice]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/analyzeInvoice.ts
 [analyzereceipt]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/analyzeReceipt.ts
 [analyzereceiptbymodelid]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/analyzeReceiptByModelId.ts
+[analyzew2taxform]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/analyzeW2TaxForm.ts
 [buildmodel]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/buildModel.ts
 [copymodel]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/copyModel.ts
-[extractgenericdocument]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/extractGenericDocument.ts
+[extractgeneraldocument]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/extractGeneralDocument.ts
 [extractlayout]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/extractLayout.ts
 [getinfo]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/getInfo.ts
 [getmodel]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/getModel.ts
 [listmodels]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/listModels.ts
+[readdocument]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/formrecognizer/ai-form-recognizer/samples/v4/typescript/src/readDocument.ts
 [apiref]: https://docs.microsoft.com/javascript/api/@azure/ai-form-recognizer
 [freesub]: https://azure.microsoft.com/free/
 [createinstance_azurecognitiveservicesaccount]: https://docs.microsoft.com/azure/cognitive-services/cognitive-services-apis-create-account

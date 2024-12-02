@@ -1,13 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HttpOperationResponse } from "@azure/core-http";
-import {
-  AtomXmlSerializer,
-  deserializeAtomXmlResponse,
-  serializeToAtomXmlRequest
-} from "../util/atomXmlHelper";
-import { getInteger, getString, getDate } from "../util/utils";
+import type { FullOperationResponse } from "@azure/core-client";
+import type { AtomXmlSerializer } from "../util/atomXmlHelper.js";
+import { deserializeAtomXmlResponse, serializeToAtomXmlRequest } from "../util/atomXmlHelper.js";
+import { getInteger, getString, getDate } from "../util/utils.js";
 
 /**
  * Represents the metadata related to a service bus namespace.
@@ -56,7 +53,7 @@ export function buildNamespace(rawNamespace: Record<string, any>): NamespaceProp
     messagingUnits:
       messagingSku === "Premium"
         ? getInteger(rawNamespace["MessagingUnits"], "messagingUnits")
-        : undefined
+        : undefined,
   };
 }
 
@@ -65,11 +62,11 @@ export function buildNamespace(rawNamespace: Record<string, any>): NamespaceProp
  * Atom XML Serializer for Namespaces.
  */
 export class NamespaceResourceSerializer implements AtomXmlSerializer {
-  serialize(): object {
+  serialize(): Record<string, unknown> {
     return serializeToAtomXmlRequest("NamespaceProperties", {});
   }
 
-  async deserialize(response: HttpOperationResponse): Promise<HttpOperationResponse> {
+  async deserialize(response: FullOperationResponse): Promise<FullOperationResponse> {
     return deserializeAtomXmlResponse(["name"], response);
   }
 }

@@ -6,37 +6,42 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { VirtualApplianceSites } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { NetworkManagementClient } from "../networkManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   VirtualApplianceSite,
   VirtualApplianceSitesListNextOptionalParams,
   VirtualApplianceSitesListOptionalParams,
+  VirtualApplianceSitesListResponse,
   VirtualApplianceSitesDeleteOptionalParams,
   VirtualApplianceSitesGetOptionalParams,
   VirtualApplianceSitesGetResponse,
   VirtualApplianceSitesCreateOrUpdateOptionalParams,
   VirtualApplianceSitesCreateOrUpdateResponse,
-  VirtualApplianceSitesListResponse,
-  VirtualApplianceSitesListNextResponse
+  VirtualApplianceSitesListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing VirtualApplianceSites operations. */
 export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
-  private readonly client: NetworkManagementClientContext;
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class VirtualApplianceSites class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
@@ -49,12 +54,12 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
   public list(
     resourceGroupName: string,
     networkVirtualApplianceName: string,
-    options?: VirtualApplianceSitesListOptionalParams
+    options?: VirtualApplianceSitesListOptionalParams,
   ): PagedAsyncIterableIterator<VirtualApplianceSite> {
     const iter = this.listPagingAll(
       resourceGroupName,
       networkVirtualApplianceName,
-      options
+      options,
     );
     return {
       next() {
@@ -63,49 +68,62 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listPagingPage(
           resourceGroupName,
           networkVirtualApplianceName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     networkVirtualApplianceName: string,
-    options?: VirtualApplianceSitesListOptionalParams
+    options?: VirtualApplianceSitesListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<VirtualApplianceSite[]> {
-    let result = await this._list(
-      resourceGroupName,
-      networkVirtualApplianceName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: VirtualApplianceSitesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(
+        resourceGroupName,
+        networkVirtualApplianceName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         networkVirtualApplianceName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     networkVirtualApplianceName: string,
-    options?: VirtualApplianceSitesListOptionalParams
+    options?: VirtualApplianceSitesListOptionalParams,
   ): AsyncIterableIterator<VirtualApplianceSite> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       networkVirtualApplianceName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -122,25 +140,24 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
     resourceGroupName: string,
     networkVirtualApplianceName: string,
     siteName: string,
-    options?: VirtualApplianceSitesDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+    options?: VirtualApplianceSitesDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -149,8 +166,8 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -158,21 +175,28 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, networkVirtualApplianceName, siteName, options },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "location"
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        networkVirtualApplianceName,
+        siteName,
+        options,
+      },
+      spec: deleteOperationSpec,
     });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "location",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -186,13 +210,13 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
     resourceGroupName: string,
     networkVirtualApplianceName: string,
     siteName: string,
-    options?: VirtualApplianceSitesDeleteOptionalParams
+    options?: VirtualApplianceSitesDeleteOptionalParams,
   ): Promise<void> {
     const poller = await this.beginDelete(
       resourceGroupName,
       networkVirtualApplianceName,
       siteName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -208,11 +232,11 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
     resourceGroupName: string,
     networkVirtualApplianceName: string,
     siteName: string,
-    options?: VirtualApplianceSitesGetOptionalParams
+    options?: VirtualApplianceSitesGetOptionalParams,
   ): Promise<VirtualApplianceSitesGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkVirtualApplianceName, siteName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -230,30 +254,29 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
     networkVirtualApplianceName: string,
     siteName: string,
     parameters: VirtualApplianceSite,
-    options?: VirtualApplianceSitesCreateOrUpdateOptionalParams
+    options?: VirtualApplianceSitesCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualApplianceSitesCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualApplianceSitesCreateOrUpdateResponse>,
       VirtualApplianceSitesCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<VirtualApplianceSitesCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -262,8 +285,8 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -271,27 +294,32 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         networkVirtualApplianceName,
         siteName,
         parameters,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs,
-      lroResourceLocationConfig: "azure-async-operation"
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      VirtualApplianceSitesCreateOrUpdateResponse,
+      OperationState<VirtualApplianceSitesCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+      resourceLocationConfig: "azure-async-operation",
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -308,14 +336,14 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
     networkVirtualApplianceName: string,
     siteName: string,
     parameters: VirtualApplianceSite,
-    options?: VirtualApplianceSitesCreateOrUpdateOptionalParams
+    options?: VirtualApplianceSitesCreateOrUpdateOptionalParams,
   ): Promise<VirtualApplianceSitesCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       networkVirtualApplianceName,
       siteName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -329,11 +357,11 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
   private _list(
     resourceGroupName: string,
     networkVirtualApplianceName: string,
-    options?: VirtualApplianceSitesListOptionalParams
+    options?: VirtualApplianceSitesListOptionalParams,
   ): Promise<VirtualApplianceSitesListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkVirtualApplianceName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -348,11 +376,11 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
     resourceGroupName: string,
     networkVirtualApplianceName: string,
     nextLink: string,
-    options?: VirtualApplianceSitesListNextOptionalParams
+    options?: VirtualApplianceSitesListNextOptionalParams,
   ): Promise<VirtualApplianceSitesListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, networkVirtualApplianceName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -360,8 +388,7 @@ export class VirtualApplianceSitesImpl implements VirtualApplianceSites {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites/{siteName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites/{siteName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
@@ -369,8 +396,8 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     202: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -378,22 +405,21 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.networkVirtualApplianceName,
-    Parameters.siteName
+    Parameters.siteName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites/{siteName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites/{siteName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualApplianceSite
+      bodyMapper: Mappers.VirtualApplianceSite,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -401,86 +427,83 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.networkVirtualApplianceName,
-    Parameters.siteName
+    Parameters.siteName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites/{siteName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites/{siteName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.VirtualApplianceSite
+      bodyMapper: Mappers.VirtualApplianceSite,
     },
     201: {
-      bodyMapper: Mappers.VirtualApplianceSite
+      bodyMapper: Mappers.VirtualApplianceSite,
     },
     202: {
-      bodyMapper: Mappers.VirtualApplianceSite
+      bodyMapper: Mappers.VirtualApplianceSite,
     },
     204: {
-      bodyMapper: Mappers.VirtualApplianceSite
+      bodyMapper: Mappers.VirtualApplianceSite,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters30,
+  requestBody: Parameters.parameters45,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.networkVirtualApplianceName,
-    Parameters.siteName
+    Parameters.siteName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkVirtualAppliances/{networkVirtualApplianceName}/virtualApplianceSites",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.NetworkVirtualApplianceSiteListResult
+      bodyMapper: Mappers.NetworkVirtualApplianceSiteListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.networkVirtualApplianceName
+    Parameters.networkVirtualApplianceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.NetworkVirtualApplianceSiteListResult
+      bodyMapper: Mappers.NetworkVirtualApplianceSiteListResult,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
     Parameters.nextLink,
-    Parameters.networkVirtualApplianceName
+    Parameters.networkVirtualApplianceName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

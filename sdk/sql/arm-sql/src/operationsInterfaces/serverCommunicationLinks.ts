@@ -6,9 +6,8 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ServerCommunicationLink,
   ServerCommunicationLinksListByServerOptionalParams,
@@ -16,7 +15,7 @@ import {
   ServerCommunicationLinksGetOptionalParams,
   ServerCommunicationLinksGetResponse,
   ServerCommunicationLinksCreateOrUpdateOptionalParams,
-  ServerCommunicationLinksCreateOrUpdateResponse
+  ServerCommunicationLinksCreateOrUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,7 +31,7 @@ export interface ServerCommunicationLinks {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerCommunicationLinksListByServerOptionalParams
+    options?: ServerCommunicationLinksListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerCommunicationLink>;
   /**
    * Deletes a server communication link.
@@ -46,7 +45,7 @@ export interface ServerCommunicationLinks {
     resourceGroupName: string,
     serverName: string,
     communicationLinkName: string,
-    options?: ServerCommunicationLinksDeleteOptionalParams
+    options?: ServerCommunicationLinksDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Returns a server communication link.
@@ -60,7 +59,7 @@ export interface ServerCommunicationLinks {
     resourceGroupName: string,
     serverName: string,
     communicationLinkName: string,
-    options?: ServerCommunicationLinksGetOptionalParams
+    options?: ServerCommunicationLinksGetOptionalParams,
   ): Promise<ServerCommunicationLinksGetResponse>;
   /**
    * Creates a server communication link.
@@ -76,10 +75,10 @@ export interface ServerCommunicationLinks {
     serverName: string,
     communicationLinkName: string,
     parameters: ServerCommunicationLink,
-    options?: ServerCommunicationLinksCreateOrUpdateOptionalParams
+    options?: ServerCommunicationLinksCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ServerCommunicationLinksCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ServerCommunicationLinksCreateOrUpdateResponse>,
       ServerCommunicationLinksCreateOrUpdateResponse
     >
   >;
@@ -97,6 +96,6 @@ export interface ServerCommunicationLinks {
     serverName: string,
     communicationLinkName: string,
     parameters: ServerCommunicationLink,
-    options?: ServerCommunicationLinksCreateOrUpdateOptionalParams
+    options?: ServerCommunicationLinksCreateOrUpdateOptionalParams,
   ): Promise<ServerCommunicationLinksCreateOrUpdateResponse>;
 }

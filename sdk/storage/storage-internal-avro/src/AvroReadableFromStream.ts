@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { AvroReadable, AvroReadableReadOptions } from "./AvroReadable";
+import type { AvroReadableReadOptions } from "./AvroReadable";
+import { AvroReadable } from "./AvroReadable";
 import { AbortError } from "@azure/abort-controller";
 
 const ABORT_ERROR = new AbortError("Reading from the avro stream was aborted.");
@@ -50,7 +51,8 @@ export class AvroReadableFromStream extends AvroReadable {
     } else {
       // register callback to wait for enough data to read
       return new Promise((resolve, reject) => {
-        const cleanUp = () => {
+        /* eslint-disable @typescript-eslint/no-use-before-define */
+        const cleanUp: () => void = () => {
           this._readable.removeListener("readable", readableCallback);
           this._readable.removeListener("error", rejectCallback);
           this._readable.removeListener("end", rejectCallback);
@@ -61,22 +63,22 @@ export class AvroReadableFromStream extends AvroReadable {
           }
         };
 
-        const readableCallback = () => {
-          const chunk = this._readable.read(size);
-          if (chunk) {
-            this._position += chunk.length;
+        const readableCallback: () => void = () => {
+          const callbackChunk = this._readable.read(size);
+          if (callbackChunk) {
+            this._position += callbackChunk.length;
             cleanUp();
-            // chunk.length maybe less than desired size if the stream ends.
-            resolve(this.toUint8Array(chunk));
+            // callbackChunk.length maybe less than desired size if the stream ends.
+            resolve(this.toUint8Array(callbackChunk));
           }
         };
 
-        const rejectCallback = () => {
+        const rejectCallback: () => void = () => {
           cleanUp();
           reject();
         };
 
-        const abortHandler = () => {
+        const abortHandler: () => void = () => {
           cleanUp();
           reject(ABORT_ERROR);
         };
@@ -88,6 +90,7 @@ export class AvroReadableFromStream extends AvroReadable {
         if (options.abortSignal) {
           options.abortSignal!.addEventListener("abort", abortHandler);
         }
+        /* eslint-enable @typescript-eslint/no-use-before-define */
       });
     }
   }

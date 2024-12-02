@@ -6,7 +6,7 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   ExpressRouteConnection,
   ExpressRouteConnectionsCreateOrUpdateOptionalParams,
@@ -15,7 +15,7 @@ import {
   ExpressRouteConnectionsGetResponse,
   ExpressRouteConnectionsDeleteOptionalParams,
   ExpressRouteConnectionsListOptionalParams,
-  ExpressRouteConnectionsListResponse
+  ExpressRouteConnectionsListResponse,
 } from "../models";
 
 /** Interface representing a ExpressRouteConnections. */
@@ -34,10 +34,10 @@ export interface ExpressRouteConnections {
     expressRouteGatewayName: string,
     connectionName: string,
     putExpressRouteConnectionParameters: ExpressRouteConnection,
-    options?: ExpressRouteConnectionsCreateOrUpdateOptionalParams
+    options?: ExpressRouteConnectionsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<ExpressRouteConnectionsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<ExpressRouteConnectionsCreateOrUpdateResponse>,
       ExpressRouteConnectionsCreateOrUpdateResponse
     >
   >;
@@ -55,7 +55,7 @@ export interface ExpressRouteConnections {
     expressRouteGatewayName: string,
     connectionName: string,
     putExpressRouteConnectionParameters: ExpressRouteConnection,
-    options?: ExpressRouteConnectionsCreateOrUpdateOptionalParams
+    options?: ExpressRouteConnectionsCreateOrUpdateOptionalParams,
   ): Promise<ExpressRouteConnectionsCreateOrUpdateResponse>;
   /**
    * Gets the specified ExpressRouteConnection.
@@ -68,7 +68,7 @@ export interface ExpressRouteConnections {
     resourceGroupName: string,
     expressRouteGatewayName: string,
     connectionName: string,
-    options?: ExpressRouteConnectionsGetOptionalParams
+    options?: ExpressRouteConnectionsGetOptionalParams,
   ): Promise<ExpressRouteConnectionsGetResponse>;
   /**
    * Deletes a connection to a ExpressRoute circuit.
@@ -81,8 +81,8 @@ export interface ExpressRouteConnections {
     resourceGroupName: string,
     expressRouteGatewayName: string,
     connectionName: string,
-    options?: ExpressRouteConnectionsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: ExpressRouteConnectionsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a connection to a ExpressRoute circuit.
    * @param resourceGroupName The name of the resource group.
@@ -94,7 +94,7 @@ export interface ExpressRouteConnections {
     resourceGroupName: string,
     expressRouteGatewayName: string,
     connectionName: string,
-    options?: ExpressRouteConnectionsDeleteOptionalParams
+    options?: ExpressRouteConnectionsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Lists ExpressRouteConnections.
@@ -105,6 +105,6 @@ export interface ExpressRouteConnections {
   list(
     resourceGroupName: string,
     expressRouteGatewayName: string,
-    options?: ExpressRouteConnectionsListOptionalParams
+    options?: ExpressRouteConnectionsListOptionalParams,
   ): Promise<ExpressRouteConnectionsListResponse>;
 }

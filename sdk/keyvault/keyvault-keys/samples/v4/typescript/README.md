@@ -12,15 +12,15 @@ urlFragment: keyvault-keys-typescript
 
 These sample programs show how to use the TypeScript client libraries for Azure Key Vault Keys in some common scenarios.
 
-| **File Name**                   | **Description**                                                                    |
-| ------------------------------- | ---------------------------------------------------------------------------------- |
-| [cryptography.ts][cryptography] | Uses an Azure Key Vault key to sign/verify, encrypt/decrypt, and wrap/unwrap data. |
-| [helloWorld.ts][helloworld]     | Creates, reads, lists, and deletes keys.                                           |
-| [purgeAllKeys.ts][purgeallkeys] | Purges all deleted keys from an Azure Key Vault.                                   |
+| **File Name**                   | **Description**                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| [cryptography.ts][cryptography] | Uses an Azure Key Vault key to sign/verify, encrypt/decrypt, and wrap/unwrap data.  |
+| [helloWorld.ts][helloworld]     | Creates, reads, lists, and deletes keys.                                            |
+| [keyRotation.ts][keyrotation]   | Creates and updates a key's automated rotation policy, and rotates a key on-demand. |
 
 ## Prerequisites
 
-The sample programs are compatible with [LTS versions of Node.js](https://nodejs.org/about/releases/).
+The sample programs are compatible with [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule).
 
 Before running the samples in Node, they must be compiled to JavaScript using the TypeScript compiler. For more information on TypeScript, see the [TypeScript documentation][typescript]. Install the TypeScript compiler using:
 
@@ -69,7 +69,7 @@ node dist/cryptography.js
 Alternatively, run a single sample with the correct environment variables set (setting up the `.env` file is not required if you do this), for example (cross-platform):
 
 ```bash
-npx cross-env KEYVAULT_URI="<keyvault uri>" node dist/cryptography.js
+npx dev-tool run vendored cross-env KEYVAULT_URI="<keyvault uri>" node dist/cryptography.js
 ```
 
 ## Next Steps
@@ -78,7 +78,7 @@ Take a look at our [API Documentation][apiref] for more information about the AP
 
 [cryptography]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/keyvault/keyvault-keys/samples/v4/typescript/src/cryptography.ts
 [helloworld]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/keyvault/keyvault-keys/samples/v4/typescript/src/helloWorld.ts
-[purgeallkeys]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/keyvault/keyvault-keys/samples/v4/typescript/src/purgeAllKeys.ts
+[keyrotation]: https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/keyvault/keyvault-keys/samples/v4/typescript/src/keyRotation.ts
 [apiref]: https://docs.microsoft.com/javascript/api/@azure/keyvault-keys
 [freesub]: https://azure.microsoft.com/free/
 [createinstance_azurekeyvault]: https://docs.microsoft.com/azure/key-vault/quick-create-portal

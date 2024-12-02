@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @summary Creates, reads, lists, and deletes keys.
@@ -9,23 +9,22 @@ const { KeyClient } = require("@azure/keyvault-keys");
 const { DefaultAzureCredential } = require("@azure/identity");
 
 // Load the .env file if it exists
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 async function main() {
-  // DefaultAzureCredential expects the following three environment variables:
-  // - AZURE_TENANT_ID: The tenant ID in Azure Active Directory
-  // - AZURE_CLIENT_ID: The application (client) ID registered in the AAD tenant
-  // - AZURE_CLIENT_SECRET: The client secret for the registered application
+  // This sample uses DefaultAzureCredential, which supports a number of authentication mechanisms.
+  // See https://docs.microsoft.com/javascript/api/overview/azure/identity-readme?view=azure-node-latest for more information
+  // about DefaultAzureCredential and the other credentials that are available for use.
   const credential = new DefaultAzureCredential();
 
   const url = process.env["KEYVAULT_URI"] || "<keyvault-url>";
   const client = new KeyClient(url, credential);
 
-  const uniqueString = new Date().getTime();
-  const keyName = `KeyName${uniqueString}`;
-  const ecKeyName = `ECKeyName${uniqueString}`;
-  const rsaKeyName = `RSAKeyName${uniqueString}`;
+  // Create unique names for keys we will use in this sample
+  const uniqueString = Date.now();
+  const keyName = `sample-key-${uniqueString}`;
+  const ecKeyName = `sample-ec-key-${uniqueString}`;
+  const rsaKeyName = `sample-rsa-key-${uniqueString}`;
 
   // You can create keys using the general method
   const result = await client.createKey(keyName, "EC");
@@ -49,16 +48,28 @@ async function main() {
 
   // Update the key
   const updatedKey = await client.updateKeyProperties(keyName, result.properties.version, {
-    enabled: false
+    enabled: false,
   });
   console.log("updated key: ", updatedKey);
 
-  await client.beginDeleteKey(keyName);
-  await client.beginDeleteKey(ecKeyName);
-  await client.beginDeleteKey(rsaKeyName);
+  // Delete the key - the key is soft-deleted but not yet purged
+  const deletePoller = await client.beginDeleteKey(keyName);
+  await deletePoller.pollUntilDone();
+
+  // The `getDeletedKey` method can be used to retrieve any soft-deleted key
+  const deletedKey = await client.getDeletedKey(keyName);
+  console.log("deleted key: ", deletedKey);
+
+  // Purge the key - the key is permanently deleted
+  // This operation could take some time to complete
+  console.time("purge a single key");
+  await client.purgeDeletedKey(keyName);
+  console.timeEnd("purge a single key");
 }
 
 main().catch((error) => {
   console.error("An error occurred:", error);
   process.exit(1);
 });
+
+module.exports = { main };

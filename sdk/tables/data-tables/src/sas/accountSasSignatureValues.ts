@@ -1,18 +1,21 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { NamedKeyCredential } from "@azure/core-auth";
-import { computeHMACSHA256 } from "../utils/computeHMACSHA256";
-import { SERVICE_VERSION } from "../utils/constants";
-import { truncatedISO8061Date } from "../utils/truncateISO8061Date";
-import { AccountSasPermissions, accountSasPermissionsToString } from "./accountSasPermissions";
+import type { AccountSasPermissions } from "./accountSasPermissions.js";
+import { accountSasPermissionsToString } from "./accountSasPermissions.js";
+import type { SasIPRange } from "./sasIPRange.js";
+import { ipRangeToString } from "./sasIPRange.js";
+import type { SasProtocol } from "./sasQueryParameters.js";
+import { SasQueryParameters } from "./sasQueryParameters.js";
 import {
   accountSasResourceTypesFromString,
-  accountSasResourceTypesToString
-} from "./accountSasResourceTypes";
-import { accountSasServicesFromString, accountSasServicesToString } from "./accountSasServices";
-import { ipRangeToString, SasIPRange } from "./sasIPRange";
-import { SasProtocol, SasQueryParameters } from "./sasQueryParameters";
+  accountSasResourceTypesToString,
+} from "./accountSasResourceTypes.js";
+import { accountSasServicesFromString, accountSasServicesToString } from "./accountSasServices.js";
+import type { NamedKeyCredential } from "@azure/core-auth";
+import { SERVICE_VERSION } from "../utils/constants.js";
+import { computeHMACSHA256 } from "../utils/computeHMACSHA256.js";
+import { truncatedISO8061Date } from "../utils/truncateISO8061Date.js";
 
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -87,7 +90,7 @@ export interface AccountSasSignatureValues {
  */
 export function generateAccountSasQueryParameters(
   accountSasSignatureValues: AccountSasSignatureValues,
-  credential: NamedKeyCredential
+  credential: NamedKeyCredential,
 ): SasQueryParameters {
   const version = accountSasSignatureValues.version
     ? accountSasSignatureValues.version
@@ -95,11 +98,11 @@ export function generateAccountSasQueryParameters(
 
   const parsedPermissions = accountSasPermissionsToString(accountSasSignatureValues.permissions);
   const parsedServices = accountSasServicesToString(
-    accountSasServicesFromString(accountSasSignatureValues.services)
+    accountSasServicesFromString(accountSasSignatureValues.services),
   );
   // to and from string to guarantee the correct order of resoruce types is generated
   const parsedResourceTypes = accountSasResourceTypesToString(
-    accountSasResourceTypesFromString(accountSasSignatureValues.resourceTypes)
+    accountSasResourceTypesFromString(accountSasSignatureValues.resourceTypes),
   );
 
   const stringToSign = [
@@ -114,7 +117,7 @@ export function generateAccountSasQueryParameters(
     accountSasSignatureValues.ipRange ? ipRangeToString(accountSasSignatureValues.ipRange) : "",
     accountSasSignatureValues.protocol ? accountSasSignatureValues.protocol : "",
     version,
-    "" // Account SAS requires an additional newline character
+    "", // Account SAS requires an additional newline character
   ].join("\n");
 
   const signature: string = computeHMACSHA256(stringToSign, credential.key);
@@ -126,6 +129,6 @@ export function generateAccountSasQueryParameters(
     protocol: accountSasSignatureValues.protocol,
     startsOn: accountSasSignatureValues.startsOn,
     expiresOn: accountSasSignatureValues.expiresOn,
-    ipRange: accountSasSignatureValues.ipRange
+    ipRange: accountSasSignatureValues.ipRange,
   });
 }

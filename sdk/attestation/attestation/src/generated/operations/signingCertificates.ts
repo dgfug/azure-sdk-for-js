@@ -6,25 +6,26 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { SigningCertificates } from "../operationsInterfaces";
+import { tracingClient } from "../tracing.js";
+import { SigningCertificates } from "../operationsInterfaces/index.js";
 import * as coreClient from "@azure/core-client";
-import * as Mappers from "../models/mappers";
-import * as Parameters from "../models/parameters";
-import { GeneratedClientContext } from "../generatedClientContext";
+import * as Mappers from "../models/mappers.js";
+import * as Parameters from "../models/parameters.js";
+import { GeneratedClient } from "../generatedClient.js";
 import {
   SigningCertificatesGetOptionalParams,
   SigningCertificatesGetResponse
-} from "../models";
+} from "../models/index.js";
 
-/** Class representing a SigningCertificates. */
+/** Class containing SigningCertificates operations. */
 export class SigningCertificatesImpl implements SigningCertificates {
-  private readonly client: GeneratedClientContext;
+  private readonly client: GeneratedClient;
 
   /**
    * Initialize a new instance of the class SigningCertificates class.
    * @param client Reference to the service client
    */
-  constructor(client: GeneratedClientContext) {
+  constructor(client: GeneratedClient) {
     this.client = client;
   }
 
@@ -32,10 +33,19 @@ export class SigningCertificatesImpl implements SigningCertificates {
    * Retrieves metadata signing certificates in use by the attestation service
    * @param options The options parameters.
    */
-  get(
+  async get(
     options?: SigningCertificatesGetOptionalParams
   ): Promise<SigningCertificatesGetResponse> {
-    return this.client.sendOperationRequest({ options }, getOperationSpec);
+    return tracingClient.withSpan(
+      "GeneratedClient.get",
+      options ?? {},
+      async (options) => {
+        return this.client.sendOperationRequest(
+          { options },
+          getOperationSpec
+        ) as Promise<SigningCertificatesGetResponse>;
+      }
+    );
   }
 }
 // Operation Specifications

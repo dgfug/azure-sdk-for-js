@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-import { RetryOptions } from "../retry/retryOptions";
+// Licensed under the MIT License.
+import type { RetryOptions } from "../retry/retryOptions";
 import { ConnectionMode } from "./ConnectionMode";
 /**
  * Represents the Connection policy associated with a CosmosClient in the Azure Cosmos DB database service.
@@ -42,9 +42,9 @@ export const defaultConnectionPolicy: ConnectionPolicy = Object.freeze({
   retryOptions: {
     maxRetryAttemptCount: 9,
     fixedRetryIntervalInMilliseconds: 0,
-    maxWaitTimeInSeconds: 30
+    maxWaitTimeInSeconds: 30,
   },
   useMultipleWriteLocations: true,
   endpointRefreshRateInMs: 300000,
-  enableBackgroundEndpointRefreshing: true
+  enableBackgroundEndpointRefreshing: true,
 });

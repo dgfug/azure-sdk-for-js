@@ -6,20 +6,20 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Features } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { FeatureClientContext } from "../featureClientContext";
+import { FeatureClient } from "../featureClient";
 import {
   FeatureResult,
   FeaturesListAllNextOptionalParams,
   FeaturesListAllOptionalParams,
+  FeaturesListAllResponse,
   FeaturesListNextOptionalParams,
   FeaturesListOptionalParams,
-  FeaturesListAllResponse,
   FeaturesListResponse,
   FeaturesGetOptionalParams,
   FeaturesGetResponse,
@@ -32,15 +32,15 @@ import {
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a Features. */
+/** Class containing Features operations. */
 export class FeaturesImpl implements Features {
-  private readonly client: FeatureClientContext;
+  private readonly client: FeatureClient;
 
   /**
    * Initialize a new instance of the class Features class.
    * @param client Reference to the service client
    */
-  constructor(client: FeatureClientContext) {
+  constructor(client: FeatureClient) {
     this.client = client;
   }
 
@@ -59,22 +59,34 @@ export class FeaturesImpl implements Features {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listAllPagingPage(options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listAllPagingPage(options, settings);
       }
     };
   }
 
   private async *listAllPagingPage(
-    options?: FeaturesListAllOptionalParams
+    options?: FeaturesListAllOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<FeatureResult[]> {
-    let result = await this._listAll(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: FeaturesListAllResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listAll(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listAllNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -104,19 +116,33 @@ export class FeaturesImpl implements Features {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceProviderNamespace, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceProviderNamespace,
+          options,
+          settings
+        );
       }
     };
   }
 
   private async *listPagingPage(
     resourceProviderNamespace: string,
-    options?: FeaturesListOptionalParams
+    options?: FeaturesListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<FeatureResult[]> {
-    let result = await this._list(resourceProviderNamespace, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: FeaturesListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceProviderNamespace, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceProviderNamespace,
@@ -124,7 +150,9 @@ export class FeaturesImpl implements Features {
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 

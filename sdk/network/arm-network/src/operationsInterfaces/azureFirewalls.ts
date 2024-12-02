@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   AzureFirewall,
   AzureFirewallsListOptionalParams,
@@ -19,7 +19,12 @@ import {
   AzureFirewallsCreateOrUpdateResponse,
   TagsObject,
   AzureFirewallsUpdateTagsOptionalParams,
-  AzureFirewallsUpdateTagsResponse
+  AzureFirewallsUpdateTagsResponse,
+  AzureFirewallsListLearnedPrefixesOptionalParams,
+  AzureFirewallsListLearnedPrefixesResponse,
+  FirewallPacketCaptureParameters,
+  AzureFirewallsPacketCaptureOptionalParams,
+  AzureFirewallsPacketCaptureResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -32,14 +37,14 @@ export interface AzureFirewalls {
    */
   list(
     resourceGroupName: string,
-    options?: AzureFirewallsListOptionalParams
+    options?: AzureFirewallsListOptionalParams,
   ): PagedAsyncIterableIterator<AzureFirewall>;
   /**
    * Gets all the Azure Firewalls in a subscription.
    * @param options The options parameters.
    */
   listAll(
-    options?: AzureFirewallsListAllOptionalParams
+    options?: AzureFirewallsListAllOptionalParams,
   ): PagedAsyncIterableIterator<AzureFirewall>;
   /**
    * Deletes the specified Azure Firewall.
@@ -50,8 +55,8 @@ export interface AzureFirewalls {
   beginDelete(
     resourceGroupName: string,
     azureFirewallName: string,
-    options?: AzureFirewallsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: AzureFirewallsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified Azure Firewall.
    * @param resourceGroupName The name of the resource group.
@@ -61,7 +66,7 @@ export interface AzureFirewalls {
   beginDeleteAndWait(
     resourceGroupName: string,
     azureFirewallName: string,
-    options?: AzureFirewallsDeleteOptionalParams
+    options?: AzureFirewallsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified Azure Firewall.
@@ -72,7 +77,7 @@ export interface AzureFirewalls {
   get(
     resourceGroupName: string,
     azureFirewallName: string,
-    options?: AzureFirewallsGetOptionalParams
+    options?: AzureFirewallsGetOptionalParams,
   ): Promise<AzureFirewallsGetResponse>;
   /**
    * Creates or updates the specified Azure Firewall.
@@ -85,10 +90,10 @@ export interface AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: AzureFirewall,
-    options?: AzureFirewallsCreateOrUpdateOptionalParams
+    options?: AzureFirewallsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<AzureFirewallsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<AzureFirewallsCreateOrUpdateResponse>,
       AzureFirewallsCreateOrUpdateResponse
     >
   >;
@@ -103,7 +108,7 @@ export interface AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: AzureFirewall,
-    options?: AzureFirewallsCreateOrUpdateOptionalParams
+    options?: AzureFirewallsCreateOrUpdateOptionalParams,
   ): Promise<AzureFirewallsCreateOrUpdateResponse>;
   /**
    * Updates tags of an Azure Firewall resource.
@@ -116,10 +121,10 @@ export interface AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: TagsObject,
-    options?: AzureFirewallsUpdateTagsOptionalParams
+    options?: AzureFirewallsUpdateTagsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<AzureFirewallsUpdateTagsResponse>,
+    SimplePollerLike<
+      OperationState<AzureFirewallsUpdateTagsResponse>,
       AzureFirewallsUpdateTagsResponse
     >
   >;
@@ -134,6 +139,64 @@ export interface AzureFirewalls {
     resourceGroupName: string,
     azureFirewallName: string,
     parameters: TagsObject,
-    options?: AzureFirewallsUpdateTagsOptionalParams
+    options?: AzureFirewallsUpdateTagsOptionalParams,
   ): Promise<AzureFirewallsUpdateTagsResponse>;
+  /**
+   * Retrieves a list of all IP prefixes that azure firewall has learned to not SNAT.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the azure firewall.
+   * @param options The options parameters.
+   */
+  beginListLearnedPrefixes(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    options?: AzureFirewallsListLearnedPrefixesOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<AzureFirewallsListLearnedPrefixesResponse>,
+      AzureFirewallsListLearnedPrefixesResponse
+    >
+  >;
+  /**
+   * Retrieves a list of all IP prefixes that azure firewall has learned to not SNAT.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the azure firewall.
+   * @param options The options parameters.
+   */
+  beginListLearnedPrefixesAndWait(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    options?: AzureFirewallsListLearnedPrefixesOptionalParams,
+  ): Promise<AzureFirewallsListLearnedPrefixesResponse>;
+  /**
+   * Runs a packet capture on AzureFirewall.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the Azure Firewall.
+   * @param parameters Parameters supplied to run packet capture on azure firewall.
+   * @param options The options parameters.
+   */
+  beginPacketCapture(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    parameters: FirewallPacketCaptureParameters,
+    options?: AzureFirewallsPacketCaptureOptionalParams,
+  ): Promise<
+    SimplePollerLike<
+      OperationState<AzureFirewallsPacketCaptureResponse>,
+      AzureFirewallsPacketCaptureResponse
+    >
+  >;
+  /**
+   * Runs a packet capture on AzureFirewall.
+   * @param resourceGroupName The name of the resource group.
+   * @param azureFirewallName The name of the Azure Firewall.
+   * @param parameters Parameters supplied to run packet capture on azure firewall.
+   * @param options The options parameters.
+   */
+  beginPacketCaptureAndWait(
+    resourceGroupName: string,
+    azureFirewallName: string,
+    parameters: FirewallPacketCaptureParameters,
+    options?: AzureFirewallsPacketCaptureOptionalParams,
+  ): Promise<AzureFirewallsPacketCaptureResponse>;
 }

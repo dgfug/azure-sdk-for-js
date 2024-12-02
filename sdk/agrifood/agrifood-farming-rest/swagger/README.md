@@ -12,11 +12,14 @@ generate-metadata: false
 license-header: MICROSOFT_MIT_NO_VERSION
 output-folder: ../
 source-code-folder-path: ./src
-input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/agfood/data-plane/Microsoft.AgFoodPlatform/preview/2021-03-31-preview/agfood.json
-package-version: 1.0.0-beta.2
+input-file: https://github.com/Azure/azure-rest-api-specs/blob/e38daec67d57ef9c4804b1e3055753407e45fa71/specification/agrifood/data-plane/Microsoft.AgFoodPlatform/preview/2022-11-01-preview/agfood.json
+package-version: 1.0.0-beta.3
 rest-level-client: true
-add-credentials: true
-credential-scopes: https://farmbeats.azure.net/.default
+security: AADToken
+security-scopes: https://farmbeats.azure.net/.default
 use-extension:
-  "@autorest/typescript": "~/Microsoft/autorest.typescript"
+  "@autorest/typescript": "latest"
+
+modelerfour:
+  treat-type-object-as-anything: true
 ```

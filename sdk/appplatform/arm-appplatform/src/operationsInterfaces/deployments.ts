@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   DeploymentResource,
   DeploymentsListOptionalParams,
@@ -22,6 +22,12 @@ import {
   DeploymentsStartOptionalParams,
   DeploymentsStopOptionalParams,
   DeploymentsRestartOptionalParams,
+  DeploymentsEnableRemoteDebuggingOptionalParams,
+  DeploymentsEnableRemoteDebuggingResponse,
+  DeploymentsDisableRemoteDebuggingOptionalParams,
+  DeploymentsDisableRemoteDebuggingResponse,
+  DeploymentsGetRemoteDebuggingConfigOptionalParams,
+  DeploymentsGetRemoteDebuggingConfigResponse,
   DeploymentsGetLogFileUrlOptionalParams,
   DeploymentsGetLogFileUrlResponse,
   DiagnosticParameters,
@@ -93,8 +99,8 @@ export interface Deployments {
     deploymentResource: DeploymentResource,
     options?: DeploymentsCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsCreateOrUpdateResponse>,
       DeploymentsCreateOrUpdateResponse
     >
   >;
@@ -131,7 +137,7 @@ export interface Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Operation to delete a Deployment.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -166,8 +172,8 @@ export interface Deployments {
     deploymentResource: DeploymentResource,
     options?: DeploymentsUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<DeploymentsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<DeploymentsUpdateResponse>,
       DeploymentsUpdateResponse
     >
   >;
@@ -204,7 +210,7 @@ export interface Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsStartOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Start the deployment.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -236,7 +242,7 @@ export interface Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsStopOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Stop the deployment.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -268,7 +274,7 @@ export interface Deployments {
     appName: string,
     deploymentName: string,
     options?: DeploymentsRestartOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Restart the deployment.
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -285,6 +291,96 @@ export interface Deployments {
     deploymentName: string,
     options?: DeploymentsRestartOptionalParams
   ): Promise<void>;
+  /**
+   * Enable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  beginEnableRemoteDebugging(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsEnableRemoteDebuggingOptionalParams
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DeploymentsEnableRemoteDebuggingResponse>,
+      DeploymentsEnableRemoteDebuggingResponse
+    >
+  >;
+  /**
+   * Enable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  beginEnableRemoteDebuggingAndWait(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsEnableRemoteDebuggingOptionalParams
+  ): Promise<DeploymentsEnableRemoteDebuggingResponse>;
+  /**
+   * Disable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  beginDisableRemoteDebugging(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsDisableRemoteDebuggingOptionalParams
+  ): Promise<
+    SimplePollerLike<
+      OperationState<DeploymentsDisableRemoteDebuggingResponse>,
+      DeploymentsDisableRemoteDebuggingResponse
+    >
+  >;
+  /**
+   * Disable remote debugging.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  beginDisableRemoteDebuggingAndWait(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsDisableRemoteDebuggingOptionalParams
+  ): Promise<DeploymentsDisableRemoteDebuggingResponse>;
+  /**
+   * Get remote debugging config.
+   * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
+   *                          this value from the Azure Resource Manager API or the portal.
+   * @param serviceName The name of the Service resource.
+   * @param appName The name of the App resource.
+   * @param deploymentName The name of the Deployment resource.
+   * @param options The options parameters.
+   */
+  getRemoteDebuggingConfig(
+    resourceGroupName: string,
+    serviceName: string,
+    appName: string,
+    deploymentName: string,
+    options?: DeploymentsGetRemoteDebuggingConfigOptionalParams
+  ): Promise<DeploymentsGetRemoteDebuggingConfigResponse>;
   /**
    * Get deployment log file URL
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -318,7 +414,7 @@ export interface Deployments {
     deploymentName: string,
     diagnosticParameters: DiagnosticParameters,
     options?: DeploymentsGenerateHeapDumpOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Generate Heap Dump
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -354,7 +450,7 @@ export interface Deployments {
     deploymentName: string,
     diagnosticParameters: DiagnosticParameters,
     options?: DeploymentsGenerateThreadDumpOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Generate Thread Dump
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -390,7 +486,7 @@ export interface Deployments {
     deploymentName: string,
     diagnosticParameters: DiagnosticParameters,
     options?: DeploymentsStartJFROptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Start JFR
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain

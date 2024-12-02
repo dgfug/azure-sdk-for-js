@@ -1,22 +1,17 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * Current version of the Key Vault Admin SDK.
  */
-export const SDK_VERSION: string = "4.2.0-beta.2";
+export const SDK_VERSION: string = "4.6.1";
 
 /**
  * The latest supported Key Vault service API version.
  */
-export const LATEST_API_VERSION = "7.3-preview";
+export const LATEST_API_VERSION = "7.5";
 
 /**
  * Supported API versions
  */
-export type SUPPORTED_API_VERSIONS = "7.2" | "7.3-preview";
-
-/**
- * Authentication scopes
- */
-export const authenticationScopes = ["https://managedhsm.azure.net/.default"];
+export type SUPPORTED_API_VERSIONS = "7.2" | "7.3" | "7.4" | "7.5";

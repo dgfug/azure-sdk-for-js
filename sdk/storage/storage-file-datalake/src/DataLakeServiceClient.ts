@@ -1,21 +1,23 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import "@azure/core-paging";
-
-import { getDefaultProxySettings, isNode, TokenCredential } from "@azure/core-http";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import {
-  BlobServiceClient,
+import type { TokenCredential } from "@azure/core-auth";
+import type { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { getDefaultProxySettings } from "@azure/core-rest-pipeline";
+import { isNode } from "@azure/core-util";
+import type {
   ServiceGetPropertiesOptions,
   ServiceSetPropertiesOptions,
-  ServiceSetPropertiesResponse
+  ServiceSetPropertiesResponse,
 } from "@azure/storage-blob";
-
-import { AnonymousCredential } from "./credentials/AnonymousCredential";
+import { BlobServiceClient } from "@azure/storage-blob";
+import type { Pipeline, StoragePipelineOptions } from "./Pipeline";
+import { isPipelineLike, newPipeline } from "./Pipeline";
+import { AnonymousCredential } from "@azure/storage-blob";
 import { StorageSharedKeyCredential } from "./credentials/StorageSharedKeyCredential";
+
 import { DataLakeFileSystemClient } from "./DataLakeFileSystemClient";
-import {
+import type {
   FileSystemItem,
   FileSystemRenameResponse,
   ServiceGenerateAccountSasUrlOptions,
@@ -23,23 +25,27 @@ import {
   ServiceListFileSystemsSegmentResponse,
   ServiceRenameFileSystemOptions,
   ServiceUndeleteFileSystemOptions,
-  FileSystemUndeleteResponse
+  FileSystemUndeleteResponse,
 } from "./models";
-import { Pipeline, StoragePipelineOptions, newPipeline } from "./Pipeline";
 import { StorageClient } from "./StorageClient";
 import {
   appendToURLPath,
   appendToURLQuery,
-  extractConnectionStringParts
+  extractConnectionStringParts,
 } from "./utils/utils.common";
-import { createSpan } from "./utils/tracing";
 import { toDfsEndpointUrl, toFileSystemPagedAsyncIterableIterator } from "./transforms";
-import { ServiceGetUserDelegationKeyOptions, ServiceGetUserDelegationKeyResponse } from "./models";
-import { SpanStatusCode } from "@azure/core-tracing";
+import type {
+  ServiceGetUserDelegationKeyOptions,
+  ServiceGetUserDelegationKeyResponse,
+} from "./models";
+import { tracingClient } from "./utils/tracing";
 import { AccountSASPermissions } from "./sas/AccountSASPermissions";
-import { generateAccountSASQueryParameters } from "./sas/AccountSASSignatureValues";
+import {
+  generateAccountSASQueryParameters,
+  generateAccountSASQueryParametersInternal,
+} from "./sas/AccountSASSignatureValues";
 import { AccountSASServices } from "./sas/AccountSASServices";
-import { DataLakeServiceGetPropertiesResponse, DataLakeServiceProperties } from "./index";
+import type { DataLakeServiceGetPropertiesResponse, DataLakeServiceProperties } from "./index";
 
 /**
  * DataLakeServiceClient allows you to manipulate Azure
@@ -67,12 +73,12 @@ export class DataLakeServiceClient extends StorageClient {
    * @param options - Optional. Options to configure the HTTP pipeline.
    */
   // Legacy, no way to fix the eslint error without breaking. Disable the rule for this line.
-  /* eslint-disable-next-line @azure/azure-sdk/ts-naming-options */
+
   public static fromConnectionString(
     connectionString: string,
     // Legacy, no way to fix the eslint error without breaking. Disable the rule for this line.
     /* eslint-disable-next-line @azure/azure-sdk/ts-naming-options */
-    options?: StoragePipelineOptions
+    options?: StoragePipelineOptions,
   ): DataLakeServiceClient {
     options = options || {};
     const extractedCreds = extractConnectionStringParts(connectionString);
@@ -80,9 +86,11 @@ export class DataLakeServiceClient extends StorageClient {
       if (isNode) {
         const sharedKeyCredential = new StorageSharedKeyCredential(
           extractedCreds.accountName!,
-          extractedCreds.accountKey
+          extractedCreds.accountKey,
         );
-        options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        if (!options.proxyOptions) {
+          options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+        }
         const pipeline = newPipeline(sharedKeyCredential, options);
         return new DataLakeServiceClient(toDfsEndpointUrl(extractedCreds.url), pipeline);
       } else {
@@ -92,11 +100,11 @@ export class DataLakeServiceClient extends StorageClient {
       const pipeline = newPipeline(new AnonymousCredential(), options);
       return new DataLakeServiceClient(
         toDfsEndpointUrl(extractedCreds.url) + "?" + extractedCreds.accountSas,
-        pipeline
+        pipeline,
       );
     } else {
       throw new Error(
-        "Connection string must be either an Account connection string or a SAS connection string"
+        "Connection string must be either an Account connection string or a SAS connection string",
       );
     }
   }
@@ -115,7 +123,7 @@ export class DataLakeServiceClient extends StorageClient {
     credential?: StorageSharedKeyCredential | AnonymousCredential | TokenCredential,
     // Legacy, no way to fix the eslint error without breaking. Disable the rule for this line.
     /* eslint-disable-next-line @azure/azure-sdk/ts-naming-options */
-    options?: StoragePipelineOptions
+    options?: StoragePipelineOptions,
   );
 
   /**
@@ -138,9 +146,9 @@ export class DataLakeServiceClient extends StorageClient {
       | Pipeline,
     // Legacy, no way to fix the eslint error without breaking. Disable the rule for this line.
     /* eslint-disable-next-line @azure/azure-sdk/ts-naming-options */
-    options?: StoragePipelineOptions
+    options?: StoragePipelineOptions,
   ) {
-    if (credentialOrPipeline instanceof Pipeline) {
+    if (isPipelineLike(credentialOrPipeline)) {
       super(url, credentialOrPipeline);
     } else {
       let credential;
@@ -168,7 +176,7 @@ export class DataLakeServiceClient extends StorageClient {
   public getFileSystemClient(fileSystemName: string): DataLakeFileSystemClient {
     return new DataLakeFileSystemClient(
       appendToURLPath(this.url, encodeURIComponent(fileSystemName)),
-      this.pipeline
+      this.pipeline,
     );
   }
 
@@ -204,23 +212,15 @@ export class DataLakeServiceClient extends StorageClient {
   public async getUserDelegationKey(
     startsOn: Date,
     expiresOn: Date,
-    options: ServiceGetUserDelegationKeyOptions = {}
+    options: ServiceGetUserDelegationKeyOptions = {},
   ): Promise<ServiceGetUserDelegationKeyResponse> {
-    const { span, updatedOptions } = createSpan(
+    return tracingClient.withSpan(
       "DataLakeServiceClient-getUserDelegationKey",
-      options
+      options,
+      async (updatedOptions) => {
+        return this.blobServiceClient.getUserDelegationKey(startsOn, expiresOn, updatedOptions);
+      },
     );
-    try {
-      return await this.blobServiceClient.getUserDelegationKey(startsOn, expiresOn, updatedOptions);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -299,7 +299,7 @@ export class DataLakeServiceClient extends StorageClient {
    * @param options -
    */
   public listFileSystems(
-    options: ServiceListFileSystemsOptions = {}
+    options: ServiceListFileSystemsOptions = {},
   ): PagedAsyncIterableIterator<FileSystemItem, ServiceListFileSystemsSegmentResponse> {
     return toFileSystemPagedAsyncIterableIterator(this.blobServiceClient.listContainers(options));
   }
@@ -330,11 +330,11 @@ export class DataLakeServiceClient extends StorageClient {
     expiresOn?: Date,
     permissions: AccountSASPermissions = AccountSASPermissions.parse("r"),
     resourceTypes: string = "sco",
-    options: ServiceGenerateAccountSasUrlOptions = {}
+    options: ServiceGenerateAccountSasUrlOptions = {},
   ): string {
     if (!(this.credential instanceof StorageSharedKeyCredential)) {
       throw RangeError(
-        "Can only generate the account SAS when the client is initialized with a shared key credential"
+        "Can only generate the account SAS when the client is initialized with a shared key credential",
       );
     }
 
@@ -349,12 +349,55 @@ export class DataLakeServiceClient extends StorageClient {
         expiresOn,
         resourceTypes,
         services: AccountSASServices.parse("b").toString(),
-        ...options
+        ...options,
       },
-      this.credential
+      this.credential,
     ).toString();
 
     return appendToURLQuery(this.url, sas);
+  }
+
+  /**
+   * Only available for DataLakeServiceClient constructed with a shared key credential.
+   *
+   * Generates string to sign for an account Shared Access Signature (SAS) based on the client properties
+   * and parameters passed in. The SAS is signed by the shared key credential of the client.
+   *
+   * @see https://docs.microsoft.com/en-us/rest/api/storageservices/create-account-sas
+   *
+   * @param expiresOn - Optional. The time at which the shared access signature becomes invalid. Default to an hour later if not specified.
+   * @param permissions - Specifies the list of permissions to be associated with the SAS.
+   * @param resourceTypes - Specifies the resource types associated with the shared access signature.
+   * @param options - Optional parameters.
+   * @returns An account SAS URI consisting of the URI to the resource represented by this client, followed by the generated SAS token.
+   */
+  public generateSasStringToSign(
+    expiresOn?: Date,
+    permissions: AccountSASPermissions = AccountSASPermissions.parse("r"),
+    resourceTypes: string = "sco",
+    options: ServiceGenerateAccountSasUrlOptions = {},
+  ): string {
+    if (!(this.credential instanceof StorageSharedKeyCredential)) {
+      throw RangeError(
+        "Can only generate the account SAS when the client is initialized with a shared key credential",
+      );
+    }
+
+    if (expiresOn === undefined) {
+      const now = new Date();
+      expiresOn = new Date(now.getTime() + 3600 * 1000);
+    }
+
+    return generateAccountSASQueryParametersInternal(
+      {
+        permissions,
+        expiresOn,
+        resourceTypes,
+        services: AccountSASServices.parse("b").toString(),
+        ...options,
+      },
+      this.credential,
+    ).stringToSign;
   }
 
   /**
@@ -369,34 +412,28 @@ export class DataLakeServiceClient extends StorageClient {
   private async renameFileSystem(
     sourceFileSystemName: string,
     destinationFileSystemName: string,
-    options: ServiceRenameFileSystemOptions = {}
+    options: ServiceRenameFileSystemOptions = {},
   ): Promise<{
     fileSystemClient: DataLakeFileSystemClient;
     fileSystemRenameResponse: FileSystemRenameResponse;
   }> {
-    const { span, updatedOptions } = createSpan("DataLakeServiceClient-renameFileSystem", options);
-    try {
-      // const res = await this.blobServiceClient.renameContainer(
-      const res = await this.blobServiceClient["renameContainer"](
-        sourceFileSystemName,
-        destinationFileSystemName,
-        updatedOptions
-      );
+    return tracingClient.withSpan(
+      "DataLakeServiceClient-renameFileSystem",
+      options,
+      async (updatedOptions) => {
+        const res = await this.blobServiceClient["renameContainer"](
+          sourceFileSystemName,
+          destinationFileSystemName,
+          updatedOptions,
+        );
 
-      const fileSystemClient = this.getFileSystemClient(destinationFileSystemName);
-      return {
-        fileSystemClient,
-        fileSystemRenameResponse: res.containerRenameResponse
-      };
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+        const fileSystemClient = this.getFileSystemClient(destinationFileSystemName);
+        return {
+          fileSystemClient,
+          fileSystemRenameResponse: res.containerRenameResponse,
+        };
+      },
+    );
   }
 
   /**
@@ -410,42 +447,34 @@ export class DataLakeServiceClient extends StorageClient {
   public async undeleteFileSystem(
     deletedFileSystemName: string,
     deleteFileSystemVersion: string,
-    options: ServiceUndeleteFileSystemOptions = {}
+    options: ServiceUndeleteFileSystemOptions = {},
   ): Promise<{
     fileSystemClient: DataLakeFileSystemClient;
     fileSystemUndeleteResponse: FileSystemUndeleteResponse;
   }> {
-    const { span, updatedOptions } = createSpan(
+    return tracingClient.withSpan(
       "DataLakeServiceClient-undeleteFileSystem",
-      options
-    );
-    try {
-      const res = await this.blobServiceClient.undeleteContainer(
-        deletedFileSystemName,
-        deleteFileSystemVersion,
-        {
-          ...options,
-          destinationContainerName: options.destinationFileSystemName,
-          tracingOptions: updatedOptions.tracingOptions
-        }
-      );
+      options,
+      async (updatedOptions) => {
+        const res = await this.blobServiceClient.undeleteContainer(
+          deletedFileSystemName,
+          deleteFileSystemVersion,
+          {
+            ...options,
+            destinationContainerName: options.destinationFileSystemName,
+            tracingOptions: updatedOptions.tracingOptions,
+          },
+        );
 
-      const fileSystemClient = this.getFileSystemClient(
-        options.destinationFileSystemName || deletedFileSystemName
-      );
-      return {
-        fileSystemClient,
-        fileSystemUndeleteResponse: res.containerUndeleteResponse
-      };
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+        const fileSystemClient = this.getFileSystemClient(
+          options.destinationFileSystemName || deletedFileSystemName,
+        );
+        return {
+          fileSystemClient,
+          fileSystemUndeleteResponse: res.containerUndeleteResponse,
+        };
+      },
+    );
   }
 
   /**
@@ -457,23 +486,18 @@ export class DataLakeServiceClient extends StorageClient {
    * @returns Response data for the Service Get Properties operation.
    */
   public async getProperties(
-    options: ServiceGetPropertiesOptions = {}
+    options: ServiceGetPropertiesOptions = {},
   ): Promise<DataLakeServiceGetPropertiesResponse> {
-    const { span, updatedOptions } = createSpan("DataLakeServiceClient-getProperties", options);
-    try {
-      return await this.blobServiceClient.getProperties({
-        abortSignal: options.abortSignal,
-        tracingOptions: updatedOptions.tracingOptions
-      });
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "DataLakeServiceClient-getProperties",
+      options,
+      async (updatedOptions) => {
+        return this.blobServiceClient.getProperties({
+          abortSignal: options.abortSignal,
+          tracingOptions: updatedOptions.tracingOptions,
+        });
+      },
+    );
   }
 
   /**
@@ -487,22 +511,17 @@ export class DataLakeServiceClient extends StorageClient {
    */
   public async setProperties(
     properties: DataLakeServiceProperties,
-    options: ServiceSetPropertiesOptions = {}
+    options: ServiceSetPropertiesOptions = {},
   ): Promise<ServiceSetPropertiesResponse> {
-    const { span, updatedOptions } = createSpan("DataLakeServiceClient-setProperties", options);
-    try {
-      return await this.blobServiceClient.setProperties(properties, {
-        abortSignal: options.abortSignal,
-        tracingOptions: updatedOptions.tracingOptions
-      });
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
+    return tracingClient.withSpan(
+      "DataLakeServiceClient-setProperties",
+      options,
+      async (updatedOptions) => {
+        return this.blobServiceClient.setProperties(properties, {
+          abortSignal: options.abortSignal,
+          tracingOptions: updatedOptions.tracingOptions,
+        });
+      },
+    );
   }
 }

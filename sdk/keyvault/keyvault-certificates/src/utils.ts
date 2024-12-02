@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { isNode } from "@azure/core-http";
-import { CertificateContentType } from "./certificatesModels";
+import type { CertificateContentType } from "./certificatesModels.js";
+import { isNode } from "@azure/core-util";
 
 /**
  * Decodes a Uint8Array into a Base64 string.
@@ -12,7 +12,7 @@ export function toBase64(bytes: Uint8Array): string {
   if (isNode) {
     return Buffer.from(bytes).toString("base64");
   } else {
-    return btoa(String.fromCharCode.apply(null, (bytes as any) as number[]));
+    return btoa(String.fromCharCode.apply(null, bytes as any as number[]));
   }
 }
 
@@ -62,7 +62,7 @@ export function base64ToUint8Array(value: string): Uint8Array {
  */
 export function parseCertificateBytes(
   certificateBytes: Uint8Array,
-  contentType: CertificateContentType
+  contentType: CertificateContentType,
 ): string {
   if (contentType === "application/x-pem-file") {
     // PEM files have the certificate bytes already Base64 formatted.

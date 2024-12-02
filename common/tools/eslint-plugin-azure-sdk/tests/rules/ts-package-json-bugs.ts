@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * @file Testing the ts-package-json-bugs rule.
- * @author Arpan Laha
+ *
  */
 
+import { createRuleTester } from "../ruleTester";
 import rule from "../../src/rules/ts-package-json-bugs";
-import { RuleTester } from "eslint";
 
 //------------------------------------------------------------------------------
 // Example files
@@ -80,15 +80,13 @@ const examplePackageGood = `{
     "eslint-detailed-reporter": "^0.8.0",
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-only-tests": "^2.3.0",
-    "eslint-plugin-promise": "^4.1.1",    
+    "eslint-plugin-promise": "^4.1.1",
     "https-proxy-agent": "^2.2.1",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^1.2.0",
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.5",
@@ -193,15 +191,13 @@ const examplePackageBad = `{
     "eslint-detailed-reporter": "^0.8.0",
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-only-tests": "^2.3.0",
-    "eslint-plugin-promise": "^4.1.1",    
+    "eslint-plugin-promise": "^4.1.1",
     "https-proxy-agent": "^2.2.1",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
-    "karma-edge-launcher": "^0.4.2",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.1.0",
-    "karma-ie-launcher": "^1.0.0",
     "karma-junit-reporter": "^1.2.0",
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.5",
@@ -243,31 +239,25 @@ const examplePackageBad = `{
 // Tests
 //------------------------------------------------------------------------------
 
-const ruleTester = new RuleTester({
-  parser: require.resolve("@typescript-eslint/parser"),
-  parserOptions: {
-    createDefaultProgram: true,
-    project: "./tsconfig.json"
-  }
-});
+const ruleTester = createRuleTester();
 
 ruleTester.run("ts-package-json-bugs", rule, {
   valid: [
     {
       // only the fields we care about
       code: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // a full example package.json (taken from https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/eventhub/event-hubs/package.json)
       code: examplePackageGood,
-      filename: "package.json"
+      filename: "package.json",
     },
     {
       // incorrect format but in a file we don't care about
       code: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-java/issues" }}',
-      filename: "not_package.json"
-    }
+      filename: "not_package.json",
+    },
   ],
   invalid: [
     {
@@ -275,9 +265,9 @@ ruleTester.run("ts-package-json-bugs", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "bugs does not exist at the outermost level"
-        }
-      ]
+          message: "bugs does not exist at the outermost level",
+        },
+      ],
     },
     {
       // commpilerOptions is in a nested object
@@ -285,9 +275,9 @@ ruleTester.run("ts-package-json-bugs", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "bugs does not exist at the outermost level"
-        }
-      ]
+          message: "bugs does not exist at the outermost level",
+        },
+      ],
     },
     {
       // commpilerOptions does not contain strict
@@ -295,9 +285,9 @@ ruleTester.run("ts-package-json-bugs", rule, {
       filename: "package.json",
       errors: [
         {
-          message: "url is not a member of bugs"
-        }
-      ]
+          message: "url is not a member of bugs",
+        },
+      ],
     },
     {
       // only the fields we care about
@@ -306,10 +296,10 @@ ruleTester.run("ts-package-json-bugs", rule, {
       errors: [
         {
           message:
-            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
-        }
+            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues",
+        },
       ],
-      output: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}'
+      output: '{"bugs": { "url": "https://github.com/Azure/azure-sdk-for-js/issues" }}',
     },
     {
       // example file with compilerOptions.strict set to false
@@ -318,10 +308,10 @@ ruleTester.run("ts-package-json-bugs", rule, {
       errors: [
         {
           message:
-            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues"
-        }
+            "bugs.url is set to https://github.com/Azure/azure-sdk-for-java/issues when it should be set to https://github.com/Azure/azure-sdk-for-js/issues",
+        },
       ],
-      output: examplePackageGood
-    }
-  ]
+      output: examplePackageGood,
+    },
+  ],
 });

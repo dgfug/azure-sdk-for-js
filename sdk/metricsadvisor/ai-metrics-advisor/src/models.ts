@@ -1,19 +1,19 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
+import type { IngestionStatusType } from "./generated/models";
 import {
-  SuppressCondition,
-  SmartDetectionCondition,
+  EntityStatus as DataFeedDetailStatus,
   EmailHookParameter,
-  WebhookHookParameter,
-  TopNGroupScope,
+  AlertSnoozeCondition as MetricAnomalyAlertSnoozeCondition,
   Severity,
   SeverityCondition,
-  AlertSnoozeCondition as MetricAnomalyAlertSnoozeCondition,
-  IngestionStatusType,
-  EntityStatus as DataFeedDetailStatus
+  SmartDetectionCondition,
+  SuppressCondition,
+  TopNGroupScope,
+  WebhookHookParameter,
 } from "./generated/models";
-
+import type { FullOperationResponse } from "@azure/core-client";
 export {
   Severity,
   SeverityCondition,
@@ -23,7 +23,7 @@ export {
   SuppressCondition,
   EmailHookParameter,
   WebhookHookParameter,
-  DataFeedDetailStatus
+  DataFeedDetailStatus,
 };
 
 // not used directly here but needed by public API surface.
@@ -36,7 +36,7 @@ export {
   SnoozeScope,
   AnomalyDetectorDirection,
   FeedbackType,
-  FeedbackQueryTimeMode
+  FeedbackQueryTimeMode,
 } from "./generated/models";
 
 /**
@@ -185,6 +185,19 @@ export type DataFeedGranularity =
       granularityType: "Custom";
       customGranularityValue: number;
     };
+/**
+ * The flattened response to a REST call.
+ * Contains the underlying HttpOperationResponse as well as
+ * the merged properties of the parsedBody, parsedHeaders, etc.
+ */
+export interface RestResponse {
+  /**
+   * The underlying HTTP response containing both raw and deserialized response data.
+   */
+  _response: FullOperationResponse;
+
+  [key: string]: any;
+}
 
 /** DataFeed Status */
 export type DataFeedStatus = "Paused" | "Active";

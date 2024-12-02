@@ -1,17 +1,12 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { HttpOperationResponse, OperationOptions } from "@azure/core-http";
+import type { FullOperationResponse, OperationOptions } from "@azure/core-client";
+import type { AtomXmlSerializer } from "../util/atomXmlHelper.js";
+import { deserializeAtomXmlResponse, serializeToAtomXmlRequest } from "../util/atomXmlHelper.js";
+import * as Constants from "../util/constants.js";
+import type { AuthorizationRule, EntityStatus, EntityAvailabilityStatus } from "../util/utils.js";
 import {
-  AtomXmlSerializer,
-  deserializeAtomXmlResponse,
-  serializeToAtomXmlRequest
-} from "../util/atomXmlHelper";
-import * as Constants from "../util/constants";
-import {
-  AuthorizationRule,
-  EntityStatus,
-  EntityAvailabilityStatus,
   getAuthorizationRulesOrUndefined,
   getBoolean,
   getInteger,
@@ -20,8 +15,8 @@ import {
   getString,
   getStringOrUndefined,
   getDate,
-  getMessageCountDetails
-} from "../util/utils";
+  getMessageCountDetails,
+} from "../util/utils.js";
 
 /**
  * @internal
@@ -51,7 +46,7 @@ export function buildTopicOptions(topic: CreateTopicOptions): InternalTopicOptio
     EnablePartitioning: getStringOrUndefined(topic.enablePartitioning),
     EntityAvailabilityStatus: getStringOrUndefined(topic.availabilityStatus),
     EnableExpress: getStringOrUndefined(topic.enableExpress),
-    MaxMessageSizeInKilobytes: getStringOrUndefined(topic.maxMessageSizeInKilobytes)
+    MaxMessageSizeInKilobytes: getStringOrUndefined(topic.maxMessageSizeInKilobytes),
   };
 }
 
@@ -69,22 +64,22 @@ export function buildTopic(rawTopic: Record<string, any>): TopicProperties {
     supportOrdering: getBoolean(rawTopic[Constants.SUPPORT_ORDERING], "supportOrdering"),
     enableBatchedOperations: getBoolean(
       rawTopic[Constants.ENABLE_BATCHED_OPERATIONS],
-      "enableBatchedOperations"
+      "enableBatchedOperations",
     ),
 
     defaultMessageTimeToLive: getString(
       rawTopic[Constants.DEFAULT_MESSAGE_TIME_TO_LIVE],
-      "defaultMessageTimeToLive"
+      "defaultMessageTimeToLive",
     ),
     autoDeleteOnIdle: rawTopic[Constants.AUTO_DELETE_ON_IDLE],
 
     requiresDuplicateDetection: getBoolean(
       rawTopic[Constants.REQUIRES_DUPLICATE_DETECTION],
-      "requiresDuplicateDetection"
+      "requiresDuplicateDetection",
     ),
     duplicateDetectionHistoryTimeWindow: getString(
       rawTopic[Constants.DUPLICATE_DETECTION_HISTORY_TIME_WINDOW],
-      "duplicateDetectionHistoryTimeWindow"
+      "duplicateDetectionHistoryTimeWindow",
     ),
 
     authorizationRules: getAuthorizationRulesOrUndefined(rawTopic[Constants.AUTHORIZATION_RULES]),
@@ -97,8 +92,8 @@ export function buildTopic(rawTopic: Record<string, any>): TopicProperties {
     availabilityStatus: rawTopic[Constants.ENTITY_AVAILABILITY_STATUS],
 
     maxMessageSizeInKilobytes: getIntegerOrUndefined(
-      rawTopic[Constants.MAX_MESSAGE_SIZE_IN_KILOBYTES]
-    )
+      rawTopic[Constants.MAX_MESSAGE_SIZE_IN_KILOBYTES],
+    ),
   };
 }
 
@@ -116,7 +111,7 @@ export function buildTopicRuntimeProperties(rawTopic: Record<string, any>): Topi
     scheduledMessageCount: getMessageCountDetails(rawTopic[Constants.COUNT_DETAILS])
       .scheduledMessageCount,
     modifiedAt: getDate(rawTopic[Constants.UPDATED_AT], "modifiedAt"),
-    accessedAt: getDate(rawTopic[Constants.ACCESSED_AT], "accessedAt")
+    accessedAt: getDate(rawTopic[Constants.ACCESSED_AT], "accessedAt"),
   };
 }
 
@@ -479,10 +474,10 @@ export interface TopicRuntimeProperties {
  * TopicResourceSerializer for serializing / deserializing Topic entities
  */
 export class TopicResourceSerializer implements AtomXmlSerializer {
-  serialize(resource: InternalTopicOptions): object {
+  serialize(resource: InternalTopicOptions): Record<string, unknown> {
     return serializeToAtomXmlRequest("TopicDescription", resource);
   }
-  async deserialize(response: HttpOperationResponse): Promise<HttpOperationResponse> {
+  async deserialize(response: FullOperationResponse): Promise<FullOperationResponse> {
     return deserializeAtomXmlResponse(["TopicName"], response);
   }
 }

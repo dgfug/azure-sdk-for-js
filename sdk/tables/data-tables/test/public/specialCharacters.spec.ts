@@ -1,25 +1,16 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { odata, TableClient, TableEntityResult, TransactionAction } from "../../src";
-import { assert } from "chai";
-import { createTableClient, recordedEnvironmentSetup } from "./utils/recordedClient";
-import { isNode } from "@azure/test-utils";
-import { isLiveMode, record, Recorder } from "@azure-tools/test-recorder";
-import { Context } from "mocha";
+import type { TableClient, TableEntityResult, TransactionAction } from "../../src/index.js";
+import { odata } from "../../src/index.js";
+import { createTableClient } from "./utils/recordedClient.js";
+import { isLiveMode } from "@azure-tools/test-recorder";
+import { isNodeLike } from "@azure/core-util";
+import { describe, it, assert, beforeEach, afterAll } from "vitest";
 
-describe("SpecialCharacters", function() {
-  before(function(this: Context) {
-    if (!isLiveMode()) {
-      // Currently the recorder is having issues with the encoding of single qoutes in the
-      // query request and generates invalid JS code. Disabling this test on playback mode
-      // while these issues are resolved. #18534
-      this.skip();
-    }
-  });
+describe("SpecialCharacters", { skip: !isLiveMode() }, () => {
   let client: TableClient;
-  let recorder: Recorder;
-  const suffix = isNode ? "Node" : "Browser";
+  const suffix = isNodeLike ? "Node" : "Browser";
   const tableName = `SpecialCharacterTest${suffix}`;
   const specialCharacters = [
     { char: `'`, name: "single quote" },
@@ -42,17 +33,12 @@ describe("SpecialCharacters", function() {
     { char: `^`, name: "hat" },
     { char: `!`, name: "bang" },
     { char: `%`, name: "percentage" },
-    { char: `*`, name: "star" }
+    { char: `*`, name: "star" },
   ];
 
   describe("Single operations", () => {
-    beforeEach(function(this: Context) {
-      recorder = record(this, recordedEnvironmentSetup);
-      client = createTableClient(tableName, "TokenCredential");
-    });
-
-    afterEach(async function() {
-      await recorder.stop();
+    beforeEach(async () => {
+      client = await createTableClient(tableName, "TokenCredential");
     });
 
     specialCharacters.forEach(({ char, name }) => {
@@ -97,7 +83,7 @@ describe("SpecialCharacters", function() {
 
         it("should filter entity by partition key", async () => {
           const entities = client.listEntities({
-            queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` }
+            queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` },
           });
 
           for await (const entity of entities) {
@@ -109,7 +95,7 @@ describe("SpecialCharacters", function() {
 
         it("should filter entity by row key", async () => {
           const entities = client.listEntities({
-            queryOptions: { filter: odata`RowKey eq ${rowKey}` }
+            queryOptions: { filter: odata`RowKey eq ${rowKey}` },
           });
 
           for await (const entity of entities) {
@@ -126,20 +112,16 @@ describe("SpecialCharacters", function() {
       });
     });
 
-    after(async () => {
+    afterAll(async () => {
       await client.deleteTable();
     });
   });
 
   describe("Batch", () => {
-    beforeEach(function(this: Context) {
-      recorder = record(this, recordedEnvironmentSetup);
-      client = createTableClient(`${tableName}Batch`, "TokenCredential");
+    beforeEach(async () => {
+      client = await createTableClient(`${tableName}Batch`, "TokenCredential");
     });
 
-    afterEach(async function() {
-      await recorder.stop();
-    });
     const partitionKey = `foo'`;
     it("should create entity with single quote in the partitionKey and rowKey", async () => {
       await client.createTable();
@@ -199,7 +181,7 @@ describe("SpecialCharacters", function() {
 
     it(`should filter entity by partition key`, async () => {
       const entities = client.listEntities({
-        queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` }
+        queryOptions: { filter: odata`PartitionKey eq ${partitionKey}` },
       });
 
       const results = [];
@@ -224,7 +206,7 @@ describe("SpecialCharacters", function() {
 
       it(`should filter entity by row key with ${name}`, async () => {
         const entities = client.listEntities({
-          queryOptions: { filter: odata`RowKey eq ${rowKey}` }
+          queryOptions: { filter: odata`RowKey eq ${rowKey}` },
         });
 
         const results: TableEntityResult<Record<string, unknown>>[] = [];
@@ -237,12 +219,12 @@ describe("SpecialCharacters", function() {
         }
 
         const hasEntity = results.some(
-          (e) => e.partitionKey === partitionKey && e.rowKey === rowKey && e.value === value
+          (e) => e.partitionKey === partitionKey && e.rowKey === rowKey && e.value === value,
         );
 
         assert.isTrue(
           hasEntity,
-          `Couldn't find entity with partitionKey: ${partitionKey} and rowKey: ${rowKey}`
+          `Couldn't find entity with partitionKey: ${partitionKey} and rowKey: ${rowKey}`,
         );
       });
     });
@@ -256,7 +238,8 @@ describe("SpecialCharacters", function() {
       const result = await client.submitTransaction(actions);
       assert.equal(result.status, 202);
     });
-    after(async () => {
+
+    afterAll(async () => {
       await client.deleteTable();
     });
   });

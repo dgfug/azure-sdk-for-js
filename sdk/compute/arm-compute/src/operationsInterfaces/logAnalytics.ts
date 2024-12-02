@@ -6,14 +6,14 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   RequestRateByIntervalInput,
   LogAnalyticsExportRequestRateByIntervalOptionalParams,
   LogAnalyticsExportRequestRateByIntervalResponse,
   ThrottledRequestsInput,
   LogAnalyticsExportThrottledRequestsOptionalParams,
-  LogAnalyticsExportThrottledRequestsResponse
+  LogAnalyticsExportThrottledRequestsResponse,
 } from "../models";
 
 /** Interface representing a LogAnalytics. */
@@ -28,10 +28,10 @@ export interface LogAnalytics {
   beginExportRequestRateByInterval(
     location: string,
     parameters: RequestRateByIntervalInput,
-    options?: LogAnalyticsExportRequestRateByIntervalOptionalParams
+    options?: LogAnalyticsExportRequestRateByIntervalOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<LogAnalyticsExportRequestRateByIntervalResponse>,
+    SimplePollerLike<
+      OperationState<LogAnalyticsExportRequestRateByIntervalResponse>,
       LogAnalyticsExportRequestRateByIntervalResponse
     >
   >;
@@ -45,7 +45,7 @@ export interface LogAnalytics {
   beginExportRequestRateByIntervalAndWait(
     location: string,
     parameters: RequestRateByIntervalInput,
-    options?: LogAnalyticsExportRequestRateByIntervalOptionalParams
+    options?: LogAnalyticsExportRequestRateByIntervalOptionalParams,
   ): Promise<LogAnalyticsExportRequestRateByIntervalResponse>;
   /**
    * Export logs that show total throttled Api requests for this subscription in the given time window.
@@ -56,10 +56,10 @@ export interface LogAnalytics {
   beginExportThrottledRequests(
     location: string,
     parameters: ThrottledRequestsInput,
-    options?: LogAnalyticsExportThrottledRequestsOptionalParams
+    options?: LogAnalyticsExportThrottledRequestsOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<LogAnalyticsExportThrottledRequestsResponse>,
+    SimplePollerLike<
+      OperationState<LogAnalyticsExportThrottledRequestsResponse>,
       LogAnalyticsExportThrottledRequestsResponse
     >
   >;
@@ -72,6 +72,6 @@ export interface LogAnalytics {
   beginExportThrottledRequestsAndWait(
     location: string,
     parameters: ThrottledRequestsInput,
-    options?: LogAnalyticsExportThrottledRequestsOptionalParams
+    options?: LogAnalyticsExportThrottledRequestsOptionalParams,
   ): Promise<LogAnalyticsExportThrottledRequestsResponse>;
 }

@@ -6,11 +6,10 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
 import {
   ServerOperation,
-  ServerOperationsListByServerOptionalParams
+  ServerOperationsListByServerOptionalParams,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -26,6 +25,6 @@ export interface ServerOperations {
   listByServer(
     resourceGroupName: string,
     serverName: string,
-    options?: ServerOperationsListByServerOptionalParams
+    options?: ServerOperationsListByServerOptionalParams,
   ): PagedAsyncIterableIterator<ServerOperation>;
 }

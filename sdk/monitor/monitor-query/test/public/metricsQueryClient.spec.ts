@@ -1,50 +1,49 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
+import { getYieldedValue } from "@azure-tools/test-utils-vitest";
+import type { MetricsQueryClient } from "../../src/index.js";
+import { Durations } from "../../src/index.js";
 
-import { assert } from "chai";
-import { Context } from "mocha";
-import { Durations, MetricsQueryClient } from "../../src";
-
+import type { RecorderAndMetricsClient } from "./shared/testShared.js";
 import {
   createRecorderAndMetricsClient,
   getMetricsArmResourceId,
   loggerForTest,
-  RecorderAndMetricsClient
-} from "./shared/testShared";
+} from "./shared/testShared.js";
 import { Recorder } from "@azure-tools/test-recorder";
-describe("MetricsClient live tests", function() {
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
+
+describe("MetricsClient live tests", function () {
   let resourceId: string;
   let metricsQueryClient: MetricsQueryClient;
   let recorder: Recorder;
 
-  beforeEach(function(this: Context) {
+  beforeEach(async function (ctx) {
     loggerForTest.verbose(`Recorder: starting...`);
-    const recordedClient: RecorderAndMetricsClient = createRecorderAndMetricsClient(this);
-    ({ resourceId } = getMetricsArmResourceId(this));
+    recorder = new Recorder(ctx);
+    const recordedClient: RecorderAndMetricsClient = await createRecorderAndMetricsClient(recorder);
+    resourceId = getMetricsArmResourceId();
     metricsQueryClient = recordedClient.client;
-    recorder = recordedClient.recorder;
   });
 
-  afterEach(async function() {
-    if (recorder) {
-      loggerForTest.verbose("Recorder: stopping");
-      await recorder.stop();
-    }
+  afterEach(async function () {
+    loggerForTest.verbose("Recorder: stopping");
+    await recorder.stop();
   });
 
   it("getMetricDefinitions -> queryMetrics", async () => {
     const iter = metricsQueryClient.listMetricDefinitions(resourceId);
 
     let result = await iter.next();
+    const firstResult = getYieldedValue(result);
     assert.isNotEmpty(result);
-    const firstMetricDefinition = result.value;
     let metricDefinitionsLength = 0;
     while (!result.done) {
       // you can only query 20 metrics at a time.
       const resultQuery = await metricsQueryClient.queryResource(
         resourceId,
         [result.value.name || ""],
-        {}
+        {},
       );
       assert(resultQuery);
       assert(resultQuery.granularity);
@@ -70,8 +69,8 @@ describe("MetricsClient live tests", function() {
       if (i % 20 === 0 || i === metricDefinitionsLength) {
         const newResults = await metricsQueryClient.queryResource(resourceId, definitionNames, {
           timespan: {
-            duration: Durations.twentyFourHours
-          }
+            duration: Durations.oneDay,
+          },
         });
         assert.ok(newResults);
         assert.isNotEmpty(newResults.metrics);
@@ -80,17 +79,17 @@ describe("MetricsClient live tests", function() {
 
     // pick the first query and use the namespace as well.
 
-    assert.isNotNull(firstMetricDefinition);
-    assert.isNotEmpty(firstMetricDefinition.name);
-    assert.isNotEmpty(firstMetricDefinition.namespace);
+    assert.isNotNull(firstResult);
+    assert.isNotEmpty(firstResult.name);
+    assert.isNotEmpty(firstResult.namespace);
 
     const individualMetricWithNamespace = await metricsQueryClient.queryResource(
       resourceId,
-      [firstMetricDefinition.name!],
+      [firstResult.name!],
       {
-        timespan: { duration: Durations.twentyFourHours },
-        metricNamespace: firstMetricDefinition.namespace
-      }
+        timespan: { duration: Durations.oneDay },
+        metricNamespace: firstResult.namespace,
+      },
     );
 
     assert.ok(individualMetricWithNamespace);

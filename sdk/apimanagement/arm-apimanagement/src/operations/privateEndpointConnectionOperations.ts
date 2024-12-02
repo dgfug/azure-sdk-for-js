@@ -6,14 +6,18 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
 import { PrivateEndpointConnectionOperations } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { ApiManagementClientContext } from "../apiManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { ApiManagementClient } from "../apiManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   PrivateEndpointConnection,
   PrivateEndpointConnectionListByServiceOptionalParams,
@@ -34,19 +38,19 @@ import {
 /** Class containing PrivateEndpointConnectionOperations operations. */
 export class PrivateEndpointConnectionOperationsImpl
   implements PrivateEndpointConnectionOperations {
-  private readonly client: ApiManagementClientContext;
+  private readonly client: ApiManagementClient;
 
   /**
    * Initialize a new instance of the class PrivateEndpointConnectionOperations class.
    * @param client Reference to the service client
    */
-  constructor(client: ApiManagementClientContext) {
+  constructor(client: ApiManagementClient) {
     this.client = client;
   }
 
   /**
    * Lists all private endpoint connections of the API Management service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -67,11 +71,15 @@ export class PrivateEndpointConnectionOperationsImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByServicePagingPage(
           resourceGroupName,
           serviceName,
-          options
+          options,
+          settings
         );
       }
     };
@@ -80,13 +88,11 @@ export class PrivateEndpointConnectionOperationsImpl
   private async *listByServicePagingPage(
     resourceGroupName: string,
     serviceName: string,
-    options?: PrivateEndpointConnectionListByServiceOptionalParams
+    options?: PrivateEndpointConnectionListByServiceOptionalParams,
+    _settings?: PageSettings
   ): AsyncIterableIterator<PrivateEndpointConnection[]> {
-    let result = await this._listByService(
-      resourceGroupName,
-      serviceName,
-      options
-    );
+    let result: PrivateEndpointConnectionListByServiceResponse;
+    result = await this._listByService(resourceGroupName, serviceName, options);
     yield result.value || [];
   }
 
@@ -106,7 +112,7 @@ export class PrivateEndpointConnectionOperationsImpl
 
   /**
    * Lists all private endpoint connections of the API Management service instance.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -123,7 +129,7 @@ export class PrivateEndpointConnectionOperationsImpl
 
   /**
    * Gets the details of the Private Endpoint Connection specified by its identifier.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param privateEndpointConnectionName Name of the private endpoint connection.
    * @param options The options parameters.
@@ -147,7 +153,7 @@ export class PrivateEndpointConnectionOperationsImpl
 
   /**
    * Creates a new Private Endpoint Connection or updates an existing one.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param privateEndpointConnectionName Name of the private endpoint connection.
    * @param privateEndpointConnectionRequest A request to approve or reject a private endpoint connection
@@ -160,8 +166,8 @@ export class PrivateEndpointConnectionOperationsImpl
     privateEndpointConnectionRequest: PrivateEndpointConnectionRequest,
     options?: PrivateEndpointConnectionCreateOrUpdateOptionalParams
   ): Promise<
-    PollerLike<
-      PollOperationState<PrivateEndpointConnectionCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<PrivateEndpointConnectionCreateOrUpdateResponse>,
       PrivateEndpointConnectionCreateOrUpdateResponse
     >
   > {
@@ -171,7 +177,7 @@ export class PrivateEndpointConnectionOperationsImpl
     ): Promise<PrivateEndpointConnectionCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -204,26 +210,31 @@ export class PrivateEndpointConnectionOperationsImpl
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         privateEndpointConnectionName,
         privateEndpointConnectionRequest,
         options
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
+      spec: createOrUpdateOperationSpec
+    });
+    const poller = await createHttpPoller<
+      PrivateEndpointConnectionCreateOrUpdateResponse,
+      OperationState<PrivateEndpointConnectionCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Creates a new Private Endpoint Connection or updates an existing one.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param privateEndpointConnectionName Name of the private endpoint connection.
    * @param privateEndpointConnectionRequest A request to approve or reject a private endpoint connection
@@ -248,7 +259,7 @@ export class PrivateEndpointConnectionOperationsImpl
 
   /**
    * Deletes the specified Private Endpoint Connection.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param privateEndpointConnectionName Name of the private endpoint connection.
    * @param options The options parameters.
@@ -258,14 +269,14 @@ export class PrivateEndpointConnectionOperationsImpl
     serviceName: string,
     privateEndpointConnectionName: string,
     options?: PrivateEndpointConnectionDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>> {
+  ): Promise<SimplePollerLike<OperationState<void>, void>> {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ): Promise<void> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
       spec: coreClient.OperationSpec
     ) => {
@@ -298,25 +309,27 @@ export class PrivateEndpointConnectionOperationsImpl
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         serviceName,
         privateEndpointConnectionName,
         options
       },
-      deleteOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
+      spec: deleteOperationSpec
+    });
+    const poller = await createHttpPoller<void, OperationState<void>>(lro, {
+      restoreFrom: options?.resumeFrom,
       intervalInMs: options?.updateIntervalInMs
     });
+    await poller.poll();
+    return poller;
   }
 
   /**
    * Deletes the specified Private Endpoint Connection.
-   * @param resourceGroupName The name of the resource group.
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param privateEndpointConnectionName Name of the private endpoint connection.
    * @param options The options parameters.
@@ -337,8 +350,8 @@ export class PrivateEndpointConnectionOperationsImpl
   }
 
   /**
-   * Description for Gets the private link resources
-   * @param resourceGroupName The name of the resource group.
+   * Gets the private link resources
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param options The options parameters.
    */
@@ -354,8 +367,8 @@ export class PrivateEndpointConnectionOperationsImpl
   }
 
   /**
-   * Description for Gets the private link resources
-   * @param resourceGroupName The name of the resource group.
+   * Gets the private link resources
+   * @param resourceGroupName The name of the resource group. The name is case insensitive.
    * @param serviceName The name of the API Management service.
    * @param privateLinkSubResourceName Name of the private link resource.
    * @param options The options parameters.

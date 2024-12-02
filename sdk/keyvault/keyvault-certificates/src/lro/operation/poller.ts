@@ -1,13 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CertificateOperationPollOperation, CertificateOperationState } from "./operation";
-import { KeyVaultCertificateWithPolicy } from "../../certificatesModels";
-import {
-  KeyVaultCertificatePoller,
-  KeyVaultCertificatePollerOptions,
-  cleanState
-} from "../keyVaultCertificatePoller";
+import type { CertificateOperationState } from "./operation.js";
+import { CertificateOperationPollOperation } from "./operation.js";
+import type { KeyVaultCertificateWithPolicy } from "../../certificatesModels.js";
+import type { KeyVaultCertificatePollerOptions } from "../keyVaultCertificatePoller.js";
+import { KeyVaultCertificatePoller, cleanState } from "../keyVaultCertificatePoller.js";
 
 export interface CertificateOperationPollerOptions extends KeyVaultCertificatePollerOptions {}
 
@@ -25,7 +23,7 @@ export class CertificateOperationPoller extends KeyVaultCertificatePoller<
       certificateName,
       operationOptions,
       intervalInMs = 2000,
-      resumeFrom
+      resumeFrom,
     } = options;
 
     let state: CertificateOperationState | undefined;
@@ -37,11 +35,11 @@ export class CertificateOperationPoller extends KeyVaultCertificatePoller<
     const operation = new CertificateOperationPollOperation(
       {
         ...state,
-        certificateName
+        certificateName,
       },
       vaultUrl,
       client,
-      operationOptions
+      operationOptions,
     );
 
     super(operation);
@@ -55,7 +53,7 @@ export class CertificateOperationPoller extends KeyVaultCertificatePoller<
   public getOperationState(): CertificateOperationState {
     return {
       ...cleanState(this.operation.state),
-      certificateOperation: this.operation.state.certificateOperation
+      certificateOperation: this.operation.state.certificateOperation,
     };
   }
 }

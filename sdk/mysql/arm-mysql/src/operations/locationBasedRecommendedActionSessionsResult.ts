@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { LocationBasedRecommendedActionSessionsResult } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { MySQLManagementClientContext } from "../mySQLManagementClientContext";
+import { MySQLManagementClient } from "../mySQLManagementClient";
 import {
   RecommendationAction,
   LocationBasedRecommendedActionSessionsResultListNextOptionalParams,
@@ -24,13 +25,13 @@ import {
 /** Class containing LocationBasedRecommendedActionSessionsResult operations. */
 export class LocationBasedRecommendedActionSessionsResultImpl
   implements LocationBasedRecommendedActionSessionsResult {
-  private readonly client: MySQLManagementClientContext;
+  private readonly client: MySQLManagementClient;
 
   /**
    * Initialize a new instance of the class LocationBasedRecommendedActionSessionsResult class.
    * @param client Reference to the service client
    */
-  constructor(client: MySQLManagementClientContext) {
+  constructor(client: MySQLManagementClient) {
     this.client = client;
   }
 
@@ -53,8 +54,16 @@ export class LocationBasedRecommendedActionSessionsResultImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(locationName, operationId, options);
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          locationName,
+          operationId,
+          options,
+          settings
+        );
       }
     };
   }
@@ -62,11 +71,18 @@ export class LocationBasedRecommendedActionSessionsResultImpl
   private async *listPagingPage(
     locationName: string,
     operationId: string,
-    options?: LocationBasedRecommendedActionSessionsResultListOptionalParams
+    options?: LocationBasedRecommendedActionSessionsResultListOptionalParams,
+    settings?: PageSettings
   ): AsyncIterableIterator<RecommendationAction[]> {
-    let result = await this._list(locationName, operationId, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: LocationBasedRecommendedActionSessionsResultListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(locationName, operationId, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         locationName,
@@ -75,7 +91,9 @@ export class LocationBasedRecommendedActionSessionsResultImpl
         options
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 

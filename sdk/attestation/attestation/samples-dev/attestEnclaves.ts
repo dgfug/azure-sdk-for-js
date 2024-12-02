@@ -28,8 +28,8 @@ import { DefaultAzureCredential } from "@azure/identity";
 
 // Load environment from a .env file if it exists.
 import * as dotenv from "dotenv";
-import { writeBanner } from "./utils/helpers";
-import { decodeString } from "./utils/base64url";
+import { writeBanner } from "./utils/helpers.js";
+import { decodeString } from "./utils/base64url.js";
 
 dotenv.config();
 
@@ -222,7 +222,7 @@ async function attestOpenEnclaveWithRuntimeData() {
   // it does, it will emit a token for the quote.
   {
     const attestResponse = await client.attestOpenEnclave(openEnclaveReport, {
-      runTimeData: runtimeData
+      runTimeData: runtimeData,
     });
 
     console.log("Received attestation token: ", attestResponse.token.serialize());
@@ -239,7 +239,7 @@ async function attestOpenEnclaveWithRuntimeData() {
     if (attestResponse.body.enclaveHeldData) {
       console.log(
         " Runtime Data received by the service: ",
-        bytesToString(attestResponse.body.enclaveHeldData)
+        bytesToString(attestResponse.body.enclaveHeldData),
       );
     }
   }
@@ -270,7 +270,7 @@ async function attestOpenEnclaveWithRuntimeJson() {
   // it does, it will emit a token for the quote.
   {
     const attestResponse = await client.attestOpenEnclave(openEnclaveReport, {
-      runTimeJson: runtimeJson
+      runTimeJson: runtimeJson,
     });
 
     console.log("Received attestation token: ", attestResponse.token.serialize());
@@ -331,7 +331,7 @@ issuancerules
   c:[type=="x-ms-attestation-type"] => issue(type="tee", value=c.value);
 };`;
     const attestResponse = await client.attestOpenEnclave(openEnclaveReport, {
-      draftPolicyForAttestation: testPolicy
+      draftPolicyForAttestation: testPolicy,
     });
 
     console.log("Received attestation token: ", attestResponse.token.serialize());
@@ -380,7 +380,7 @@ issuancerules
 
     try {
       await client.attestOpenEnclave(openEnclaveReport, { draftPolicyForAttestation: testPolicy });
-    } catch (error) {
+    } catch (error: any) {
       console.log(`Expected Exception thrown for invalid request: ${error.message}`);
     }
   }

@@ -4,10 +4,10 @@
 
 ```ts
 
-import { AbortSignalLike } from '@azure/core-http';
-import { AccessToken } from '@azure/core-http';
+import type { AbortSignalLike } from '@azure/abort-controller';
+import type { AccessToken } from '@azure/core-auth';
 import { KeyCredential } from '@azure/core-auth';
-import { RequestPolicyFactory } from '@azure/core-http';
+import { PipelinePolicy } from '@azure/core-rest-pipeline';
 import { TokenCredential } from '@azure/core-auth';
 
 // @public
@@ -16,7 +16,7 @@ export class AzureCommunicationTokenCredential implements CommunicationTokenCred
     constructor(refreshOptions: CommunicationTokenRefreshOptions);
     dispose(): void;
     getToken(options?: CommunicationGetTokenOptions): Promise<AccessToken>;
-    }
+}
 
 // @public
 export interface CommunicationGetTokenOptions {
@@ -24,10 +24,10 @@ export interface CommunicationGetTokenOptions {
 }
 
 // @public
-export type CommunicationIdentifier = CommunicationUserIdentifier | PhoneNumberIdentifier | MicrosoftTeamsUserIdentifier | UnknownIdentifier;
+export type CommunicationIdentifier = CommunicationUserIdentifier | PhoneNumberIdentifier | MicrosoftTeamsUserIdentifier | MicrosoftTeamsAppIdentifier | UnknownIdentifier;
 
 // @public
-export type CommunicationIdentifierKind = CommunicationUserKind | PhoneNumberKind | MicrosoftTeamsUserKind | UnknownIdentifierKind;
+export type CommunicationIdentifierKind = CommunicationUserKind | PhoneNumberKind | MicrosoftTeamsUserKind | MicrosoftTeamsAppKind | UnknownIdentifierKind;
 
 // @public
 export interface CommunicationTokenCredential {
@@ -53,10 +53,13 @@ export interface CommunicationUserKind extends CommunicationUserIdentifier {
 }
 
 // @public
-export const createCommunicationAccessKeyCredentialPolicy: (credential: KeyCredential) => RequestPolicyFactory;
+export function createCommunicationAccessKeyCredentialPolicy(credential: KeyCredential): PipelinePolicy;
 
 // @public
-export const createCommunicationAuthPolicy: (credential: KeyCredential | TokenCredential) => RequestPolicyFactory;
+export function createCommunicationAuthPolicy(credential: KeyCredential | TokenCredential): PipelinePolicy;
+
+// @public
+export const createIdentifierFromRawId: (rawId: string) => CommunicationIdentifierKind;
 
 // @public
 export const deserializeCommunicationIdentifier: (serializedIdentifier: SerializedCommunicationIdentifier) => CommunicationIdentifierKind;
@@ -71,10 +74,16 @@ export interface EndpointCredential {
 export const getIdentifierKind: (identifier: CommunicationIdentifier) => CommunicationIdentifierKind;
 
 // @public
+export const getIdentifierRawId: (identifier: CommunicationIdentifier) => string;
+
+// @public
 export const isCommunicationUserIdentifier: (identifier: CommunicationIdentifier) => identifier is CommunicationUserIdentifier;
 
 // @public
 export const isKeyCredential: (credential: unknown) => credential is KeyCredential;
+
+// @public
+export const isMicrosoftTeamsAppIdentifier: (identifier: CommunicationIdentifier) => identifier is MicrosoftTeamsAppIdentifier;
 
 // @public
 export const isMicrosoftTeamsUserIdentifier: (identifier: CommunicationIdentifier) => identifier is MicrosoftTeamsUserIdentifier;
@@ -84,6 +93,18 @@ export const isPhoneNumberIdentifier: (identifier: CommunicationIdentifier) => i
 
 // @public
 export const isUnknownIdentifier: (identifier: CommunicationIdentifier) => identifier is UnknownIdentifier;
+
+// @public
+export interface MicrosoftTeamsAppIdentifier {
+    cloud?: "public" | "dod" | "gcch";
+    rawId?: string;
+    teamsAppId: string;
+}
+
+// @public
+export interface MicrosoftTeamsAppKind extends MicrosoftTeamsAppIdentifier {
+    kind: "microsoftTeamsApp";
+}
 
 // @public
 export interface MicrosoftTeamsUserIdentifier {
@@ -124,6 +145,8 @@ export type SerializedCommunicationCloudEnvironment = "public" | "dod" | "gcch";
 // @public
 export interface SerializedCommunicationIdentifier {
     communicationUser?: SerializedCommunicationUserIdentifier;
+    kind?: string;
+    microsoftTeamsApp?: SerializedMicrosoftTeamsAppIdentifier;
     microsoftTeamsUser?: SerializedMicrosoftTeamsUserIdentifier;
     phoneNumber?: SerializedPhoneNumberIdentifier;
     rawId?: string;
@@ -132,6 +155,12 @@ export interface SerializedCommunicationIdentifier {
 // @public
 export interface SerializedCommunicationUserIdentifier {
     id: string;
+}
+
+// @public
+export interface SerializedMicrosoftTeamsAppIdentifier {
+    appId: string;
+    cloud?: SerializedCommunicationCloudEnvironment;
 }
 
 // @public
@@ -161,7 +190,6 @@ export type UrlWithCredential = {
     url: string;
     credential: TokenCredential | KeyCredential;
 };
-
 
 // (No @packageDocumentation comment for this package)
 

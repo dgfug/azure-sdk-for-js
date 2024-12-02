@@ -6,13 +6,12 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   InstancePool,
-  InstancePoolsListByResourceGroupOptionalParams,
   InstancePoolsListOptionalParams,
+  InstancePoolsListByResourceGroupOptionalParams,
   InstancePoolsGetOptionalParams,
   InstancePoolsGetResponse,
   InstancePoolsCreateOrUpdateOptionalParams,
@@ -20,12 +19,19 @@ import {
   InstancePoolsDeleteOptionalParams,
   InstancePoolUpdate,
   InstancePoolsUpdateOptionalParams,
-  InstancePoolsUpdateResponse
+  InstancePoolsUpdateResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Interface representing a InstancePools. */
 export interface InstancePools {
+  /**
+   * Gets a list of all instance pools in the subscription.
+   * @param options The options parameters.
+   */
+  list(
+    options?: InstancePoolsListOptionalParams,
+  ): PagedAsyncIterableIterator<InstancePool>;
   /**
    * Gets a list of instance pools in the resource group
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -34,14 +40,7 @@ export interface InstancePools {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: InstancePoolsListByResourceGroupOptionalParams
-  ): PagedAsyncIterableIterator<InstancePool>;
-  /**
-   * Gets a list of all instance pools in the subscription.
-   * @param options The options parameters.
-   */
-  list(
-    options?: InstancePoolsListOptionalParams
+    options?: InstancePoolsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<InstancePool>;
   /**
    * Gets an instance pool.
@@ -53,7 +52,7 @@ export interface InstancePools {
   get(
     resourceGroupName: string,
     instancePoolName: string,
-    options?: InstancePoolsGetOptionalParams
+    options?: InstancePoolsGetOptionalParams,
   ): Promise<InstancePoolsGetResponse>;
   /**
    * Creates or updates an instance pool.
@@ -67,10 +66,10 @@ export interface InstancePools {
     resourceGroupName: string,
     instancePoolName: string,
     parameters: InstancePool,
-    options?: InstancePoolsCreateOrUpdateOptionalParams
+    options?: InstancePoolsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<InstancePoolsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<InstancePoolsCreateOrUpdateResponse>,
       InstancePoolsCreateOrUpdateResponse
     >
   >;
@@ -86,7 +85,7 @@ export interface InstancePools {
     resourceGroupName: string,
     instancePoolName: string,
     parameters: InstancePool,
-    options?: InstancePoolsCreateOrUpdateOptionalParams
+    options?: InstancePoolsCreateOrUpdateOptionalParams,
   ): Promise<InstancePoolsCreateOrUpdateResponse>;
   /**
    * Deletes an instance pool
@@ -98,8 +97,8 @@ export interface InstancePools {
   beginDelete(
     resourceGroupName: string,
     instancePoolName: string,
-    options?: InstancePoolsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: InstancePoolsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes an instance pool
    * @param resourceGroupName The name of the resource group that contains the resource. You can obtain
@@ -110,7 +109,7 @@ export interface InstancePools {
   beginDeleteAndWait(
     resourceGroupName: string,
     instancePoolName: string,
-    options?: InstancePoolsDeleteOptionalParams
+    options?: InstancePoolsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Updates an instance pool.
@@ -124,10 +123,10 @@ export interface InstancePools {
     resourceGroupName: string,
     instancePoolName: string,
     parameters: InstancePoolUpdate,
-    options?: InstancePoolsUpdateOptionalParams
+    options?: InstancePoolsUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<InstancePoolsUpdateResponse>,
+    SimplePollerLike<
+      OperationState<InstancePoolsUpdateResponse>,
       InstancePoolsUpdateResponse
     >
   >;
@@ -143,6 +142,6 @@ export interface InstancePools {
     resourceGroupName: string,
     instancePoolName: string,
     parameters: InstancePoolUpdate,
-    options?: InstancePoolsUpdateOptionalParams
+    options?: InstancePoolsUpdateOptionalParams,
   ): Promise<InstancePoolsUpdateResponse>;
 }

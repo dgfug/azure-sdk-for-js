@@ -10,28 +10,30 @@ import { FirewallPolicyIdpsSignatures } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { NetworkManagementClientContext } from "../networkManagementClientContext";
+import { NetworkManagementClient } from "../networkManagementClient";
 import {
   IdpsQueryObject,
   FirewallPolicyIdpsSignaturesListOptionalParams,
-  FirewallPolicyIdpsSignaturesListResponse
+  FirewallPolicyIdpsSignaturesListResponse,
 } from "../models";
 
 /** Class containing FirewallPolicyIdpsSignatures operations. */
 export class FirewallPolicyIdpsSignaturesImpl
-  implements FirewallPolicyIdpsSignatures {
-  private readonly client: NetworkManagementClientContext;
+  implements FirewallPolicyIdpsSignatures
+{
+  private readonly client: NetworkManagementClient;
 
   /**
    * Initialize a new instance of the class FirewallPolicyIdpsSignatures class.
    * @param client Reference to the service client
    */
-  constructor(client: NetworkManagementClientContext) {
+  constructor(client: NetworkManagementClient) {
     this.client = client;
   }
 
   /**
-   * Retrieves the current status of IDPS signatures for the relevant policy
+   * Retrieves the current status of IDPS signatures for the relevant policy. Maximal amount of returned
+   * signatures is 1000.
    * @param resourceGroupName The name of the resource group.
    * @param firewallPolicyName The name of the Firewall Policy.
    * @param parameters Will describe the query to run against the IDPS signatures DB
@@ -41,11 +43,11 @@ export class FirewallPolicyIdpsSignaturesImpl
     resourceGroupName: string,
     firewallPolicyName: string,
     parameters: IdpsQueryObject,
-    options?: FirewallPolicyIdpsSignaturesListOptionalParams
+    options?: FirewallPolicyIdpsSignaturesListOptionalParams,
   ): Promise<FirewallPolicyIdpsSignaturesListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, firewallPolicyName, parameters, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 }
@@ -53,25 +55,25 @@ export class FirewallPolicyIdpsSignaturesImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/listIdpsSignatures",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/firewallPolicies/{firewallPolicyName}/listIdpsSignatures",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.QueryResults
+      bodyMapper: Mappers.QueryResults,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  requestBody: Parameters.parameters17,
+  requestBody: Parameters.parameters21,
+  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.resourceGroupName,
     Parameters.subscriptionId,
-    Parameters.firewallPolicyName
+    Parameters.firewallPolicyName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };

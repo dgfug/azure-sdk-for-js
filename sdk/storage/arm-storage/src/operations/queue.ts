@@ -6,17 +6,18 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Queue } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StorageManagementClientContext } from "../storageManagementClientContext";
+import { StorageManagementClient } from "../storageManagementClient";
 import {
   ListQueue,
   QueueListNextOptionalParams,
   QueueListOptionalParams,
+  QueueListResponse,
   StorageQueue,
   QueueCreateOptionalParams,
   QueueCreateResponse,
@@ -25,20 +26,19 @@ import {
   QueueGetOptionalParams,
   QueueGetResponse,
   QueueDeleteOptionalParams,
-  QueueListResponse,
-  QueueListNextResponse
+  QueueListNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a Queue. */
+/** Class containing Queue operations. */
 export class QueueImpl implements Queue {
-  private readonly client: StorageManagementClientContext;
+  private readonly client: StorageManagementClient;
 
   /**
    * Initialize a new instance of the class Queue class.
    * @param client Reference to the service client
    */
-  constructor(client: StorageManagementClientContext) {
+  constructor(client: StorageManagementClient) {
     this.client = client;
   }
 
@@ -54,7 +54,7 @@ export class QueueImpl implements Queue {
   public list(
     resourceGroupName: string,
     accountName: string,
-    options?: QueueListOptionalParams
+    options?: QueueListOptionalParams,
   ): PagedAsyncIterableIterator<ListQueue> {
     const iter = this.listPagingAll(resourceGroupName, accountName, options);
     return {
@@ -64,41 +64,58 @@ export class QueueImpl implements Queue {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(resourceGroupName, accountName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(
+          resourceGroupName,
+          accountName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listPagingPage(
     resourceGroupName: string,
     accountName: string,
-    options?: QueueListOptionalParams
+    options?: QueueListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ListQueue[]> {
-    let result = await this._list(resourceGroupName, accountName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: QueueListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(resourceGroupName, accountName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(
         resourceGroupName,
         accountName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
     resourceGroupName: string,
     accountName: string,
-    options?: QueueListOptionalParams
+    options?: QueueListOptionalParams,
   ): AsyncIterableIterator<ListQueue> {
     for await (const page of this.listPagingPage(
       resourceGroupName,
       accountName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -122,11 +139,11 @@ export class QueueImpl implements Queue {
     accountName: string,
     queueName: string,
     queue: StorageQueue,
-    options?: QueueCreateOptionalParams
+    options?: QueueCreateOptionalParams,
   ): Promise<QueueCreateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, queueName, queue, options },
-      createOperationSpec
+      createOperationSpec,
     );
   }
 
@@ -148,11 +165,11 @@ export class QueueImpl implements Queue {
     accountName: string,
     queueName: string,
     queue: StorageQueue,
-    options?: QueueUpdateOptionalParams
+    options?: QueueUpdateOptionalParams,
   ): Promise<QueueUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, queueName, queue, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -172,11 +189,11 @@ export class QueueImpl implements Queue {
     resourceGroupName: string,
     accountName: string,
     queueName: string,
-    options?: QueueGetOptionalParams
+    options?: QueueGetOptionalParams,
   ): Promise<QueueGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, queueName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -196,11 +213,11 @@ export class QueueImpl implements Queue {
     resourceGroupName: string,
     accountName: string,
     queueName: string,
-    options?: QueueDeleteOptionalParams
+    options?: QueueDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, queueName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -216,11 +233,11 @@ export class QueueImpl implements Queue {
   private _list(
     resourceGroupName: string,
     accountName: string,
-    options?: QueueListOptionalParams
+    options?: QueueListOptionalParams,
   ): Promise<QueueListResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, options },
-      listOperationSpec
+      listOperationSpec,
     );
   }
 
@@ -238,11 +255,11 @@ export class QueueImpl implements Queue {
     resourceGroupName: string,
     accountName: string,
     nextLink: string,
-    options?: QueueListNextOptionalParams
+    options?: QueueListNextOptionalParams,
   ): Promise<QueueListNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, accountName, nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 }
@@ -250,148 +267,138 @@ export class QueueImpl implements Queue {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.StorageQueue
+      bodyMapper: Mappers.StorageQueue,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.queue,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.queueName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.queueName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.StorageQueue
+      bodyMapper: Mappers.StorageQueue,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.queue,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.queueName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.queueName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.StorageQueue
+      bodyMapper: Mappers.StorageQueue,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.queueName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.queueName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues/{queueName}",
   httpMethod: "DELETE",
   responses: {
     204: {},
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.queueName
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.queueName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}/queueServices/default/queues",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListQueueResource
+      bodyMapper: Mappers.ListQueueResource,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [
     Parameters.apiVersion,
     Parameters.maxpagesize,
-    Parameters.filter
+    Parameters.filter,
   ],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1
+    Parameters.accountName,
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ListQueueResource
+      bodyMapper: Mappers.ListQueueResource,
     },
     default: {
-      bodyMapper: Mappers.CloudErrorAutoGenerated
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [
-    Parameters.apiVersion,
-    Parameters.maxpagesize,
-    Parameters.filter
-  ],
   urlParameters: [
     Parameters.$host,
-    Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.accountName1,
-    Parameters.nextLink
+    Parameters.accountName,
+    Parameters.subscriptionId,
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

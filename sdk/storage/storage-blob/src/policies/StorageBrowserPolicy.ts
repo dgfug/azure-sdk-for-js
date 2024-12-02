@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import {
-  BaseRequestPolicy,
-  HttpOperationResponse,
-  isNode,
+import type {
   RequestPolicy,
-  RequestPolicyOptions,
-  WebResource
-} from "@azure/core-http";
+  RequestPolicyOptionsLike as RequestPolicyOptions,
+  WebResourceLike as WebResource,
+  CompatResponse as HttpOperationResponse,
+} from "@azure/core-http-compat";
+import { BaseRequestPolicy } from "./RequestPolicy";
+import { isNode } from "@azure/core-util";
 
 import { HeaderConstants, URLConstants } from "../utils/constants";
 import { setURLParameter } from "../utils/utils.common";
@@ -50,7 +50,7 @@ export class StorageBrowserPolicy extends BaseRequestPolicy {
       request.url = setURLParameter(
         request.url,
         URLConstants.Parameters.FORCE_BROWSER_NO_CACHE,
-        new Date().getTime().toString()
+        new Date().getTime().toString(),
       );
     }
 

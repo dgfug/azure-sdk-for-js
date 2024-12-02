@@ -1,41 +1,39 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
-import { assert } from "chai";
-import {
+// Licensed under the MIT License.
+import type {
   DeletedKeyBundle,
   DeletedKeyItem,
+  KeyRotationPolicy as GeneratedKeyRotationPolicy,
   KeyBundle,
-  KeyRotationPolicy as GeneratedKeyRotationPolicy
-} from "../../src/generated";
-import {
+} from "../../src/generated/index.js";
+import type {
   DeletedKey,
   KeyProperties,
-  KeyVaultKey,
   KeyRotationPolicy,
-  KeyRotationPolicyProperties
-} from "../../src/keysModels";
+  KeyRotationPolicyProperties,
+  KeyVaultKey,
+} from "../../src/keysModels.js";
 import {
   getDeletedKeyFromDeletedKeyItem,
   getKeyFromKeyBundle,
   getKeyPropertiesFromKeyItem,
-  keyRotationTransformations
-} from "../../src/transformations";
-import { stringToUint8Array } from "../utils/crypto";
+  keyRotationTransformations,
+} from "../../src/transformations.js";
+import { stringToUint8Array } from "../public/utils/crypto.js";
+import { describe, it, assert, expect } from "vitest";
 
 describe("Transformations", () => {
   const releasePolicy = {
     contentType: "content type",
-    data: stringToUint8Array("release policy")
+    data: stringToUint8Array("release policy"),
   };
   it("KeyBundle to KeyVaultKey", () => {
     const date = new Date();
     const bundle: KeyBundle = {
       key: {
-        kid:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+        kid: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
         kty: "oct-HSM",
-        keyOps: ["encrypt", "decrypt"]
+        keyOps: ["encrypt", "decrypt"],
       },
       attributes: {
         exportable: true,
@@ -45,30 +43,28 @@ describe("Transformations", () => {
         notBefore: date,
         expires: date,
         created: date,
-        updated: date
+        updated: date,
+        hsmPlatform: "hsmPlatform",
       },
       releasePolicy,
       tags: {
-        tag_name: "tag_value"
+        tag_name: "tag_value",
       },
-      managed: false
+      managed: false,
     };
 
     const expectedResult: KeyVaultKey = {
       key: {
-        kid:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+        kid: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
         kty: "oct-HSM",
-        keyOps: ["encrypt", "decrypt"]
+        keyOps: ["encrypt", "decrypt"],
       },
       name: "transformations",
-      id:
-        "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+      id: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
       keyType: "oct-HSM",
       keyOperations: ["encrypt", "decrypt"],
       properties: {
-        id:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+        id: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
         name: "transformations",
         vaultUrl: "https://azure_managedhsm.managedhsm.azure.net",
         version: "f03e8b3d76554e8b9749994bcf72fc61",
@@ -76,7 +72,7 @@ describe("Transformations", () => {
         notBefore: date,
         expiresOn: date,
         tags: {
-          tag_name: "tag_value"
+          tag_name: "tag_value",
         },
         exportable: true,
         releasePolicy,
@@ -84,8 +80,9 @@ describe("Transformations", () => {
         updatedOn: date,
         recoveryLevel: "Recoverable",
         recoverableDays: 1,
-        managed: false
-      }
+        managed: false,
+        hsmPlatform: "hsmPlatform",
+      },
     };
 
     const key: KeyVaultKey = getKeyFromKeyBundle(bundle);
@@ -96,10 +93,9 @@ describe("Transformations", () => {
     const date = new Date();
     const bundle: DeletedKeyBundle = {
       key: {
-        kid:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+        kid: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
         kty: "oct-HSM",
-        keyOps: ["encrypt", "decrypt"]
+        keyOps: ["encrypt", "decrypt"],
       },
       attributes: {
         recoverableDays: 1,
@@ -109,33 +105,31 @@ describe("Transformations", () => {
         expires: date,
         created: date,
         updated: date,
-        exportable: false
+        exportable: false,
+        hsmPlatform: "hsmPlatform",
       },
       tags: {
-        tag_name: "tag_value"
+        tag_name: "tag_value",
       },
       managed: false,
       recoveryId: "recovery-id",
       releasePolicy,
       scheduledPurgeDate: date,
-      deletedDate: date
+      deletedDate: date,
     };
 
     const expectedResult: DeletedKey = {
       key: {
-        kid:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+        kid: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
         kty: "oct-HSM",
-        keyOps: ["encrypt", "decrypt"]
+        keyOps: ["encrypt", "decrypt"],
       },
       name: "transformations",
-      id:
-        "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+      id: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
       keyType: "oct-HSM",
       keyOperations: ["encrypt", "decrypt"],
       properties: {
-        id:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+        id: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
         name: "transformations",
         vaultUrl: "https://azure_managedhsm.managedhsm.azure.net",
         version: "f03e8b3d76554e8b9749994bcf72fc61",
@@ -143,7 +137,7 @@ describe("Transformations", () => {
         notBefore: date,
         expiresOn: date,
         tags: {
-          tag_name: "tag_value"
+          tag_name: "tag_value",
         },
         releasePolicy,
         exportable: false,
@@ -154,8 +148,9 @@ describe("Transformations", () => {
         managed: false,
         recoveryId: "recovery-id",
         scheduledPurgeDate: date,
-        deletedOn: date
-      }
+        deletedOn: date,
+        hsmPlatform: "hsmPlatform",
+      },
     };
 
     const key: DeletedKey = getKeyFromKeyBundle(bundle);
@@ -165,8 +160,7 @@ describe("Transformations", () => {
   it("DeletedKeyItem to DeletedKey", () => {
     const date = new Date();
     const item: DeletedKeyItem = {
-      kid:
-        "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+      kid: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
       attributes: {
         recoverableDays: 1,
         recoveryLevel: "Recoverable",
@@ -174,28 +168,26 @@ describe("Transformations", () => {
         notBefore: date,
         expires: date,
         created: date,
-        updated: date
+        updated: date,
+        hsmPlatform: "hsmPlatform",
       },
       tags: {
-        tag_name: "tag_value"
+        tag_name: "tag_value",
       },
       managed: false,
       recoveryId: "recovery-id",
       scheduledPurgeDate: date,
-      deletedDate: date
+      deletedDate: date,
     };
 
     const expectedResult: DeletedKey = {
       key: {
-        kid:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61"
+        kid: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
       },
       name: "transformations",
-      id:
-        "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+      id: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
       properties: {
-        id:
-          "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+        id: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
         name: "transformations",
         vaultUrl: "https://azure_managedhsm.managedhsm.azure.net",
         version: "f03e8b3d76554e8b9749994bcf72fc61",
@@ -203,7 +195,7 @@ describe("Transformations", () => {
         notBefore: date,
         expiresOn: date,
         tags: {
-          tag_name: "tag_value"
+          tag_name: "tag_value",
         },
         createdOn: date,
         updatedOn: date,
@@ -212,8 +204,9 @@ describe("Transformations", () => {
         managed: false,
         recoveryId: "recovery-id",
         scheduledPurgeDate: date,
-        deletedOn: date
-      }
+        deletedOn: date,
+        hsmPlatform: "hsmPlatform",
+      },
     };
 
     const key: DeletedKey = getDeletedKeyFromDeletedKeyItem(item);
@@ -223,8 +216,7 @@ describe("Transformations", () => {
   it("KeyItem to KeyProperties", () => {
     const date = new Date();
     const item: DeletedKeyItem = {
-      kid:
-        "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+      kid: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
       attributes: {
         recoverableDays: 1,
         recoveryLevel: "Recoverable",
@@ -232,20 +224,20 @@ describe("Transformations", () => {
         notBefore: date,
         expires: date,
         created: date,
-        updated: date
+        updated: date,
+        hsmPlatform: "hsmPlatform",
       },
       tags: {
-        tag_name: "tag_value"
+        tag_name: "tag_value",
       },
       managed: false,
       recoveryId: "recovery-id",
       scheduledPurgeDate: date,
-      deletedDate: date
+      deletedDate: date,
     };
 
     const expectedResult: KeyProperties = {
-      id:
-        "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
+      id: "https://azure_managedhsm.managedhsm.azure.net/keys/transformations/f03e8b3d76554e8b9749994bcf72fc61",
       name: "transformations",
       vaultUrl: "https://azure_managedhsm.managedhsm.azure.net",
       version: "f03e8b3d76554e8b9749994bcf72fc61",
@@ -253,13 +245,14 @@ describe("Transformations", () => {
       notBefore: date,
       expiresOn: date,
       tags: {
-        tag_name: "tag_value"
+        tag_name: "tag_value",
       },
       createdOn: date,
       updatedOn: date,
       recoveryLevel: "Recoverable",
       recoverableDays: 1,
-      managed: false
+      managed: false,
+      hsmPlatform: "hsmPlatform",
     };
 
     const key: KeyProperties = getKeyPropertiesFromKeyItem(item);
@@ -273,19 +266,19 @@ describe("Transformations", () => {
         attributes: {
           created: date,
           expiryTime: "P30D",
-          updated: date
+          updated: date,
         },
         id: "policy-id",
         lifetimeActions: [
           {
             action: { type: "Rotate" },
-            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" }
+            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" },
           },
           {
             action: { type: "Notify" },
-            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" }
-          }
-        ]
+            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" },
+          },
+        ],
       };
 
       const expected: KeyRotationPolicy = {
@@ -297,14 +290,14 @@ describe("Transformations", () => {
           {
             action: "Rotate",
             timeAfterCreate: "P90D",
-            timeBeforeExpiry: "P90D"
+            timeBeforeExpiry: "P90D",
           },
           {
             action: "Notify",
             timeAfterCreate: "P90D",
-            timeBeforeExpiry: "P90D"
-          }
-        ]
+            timeBeforeExpiry: "P90D",
+          },
+        ],
       };
 
       assert.deepEqual(keyRotationTransformations.generatedToPublic(generated), expected);
@@ -317,36 +310,34 @@ describe("Transformations", () => {
           {
             action: "Rotate",
             timeAfterCreate: "P90D",
-            timeBeforeExpiry: "P90D"
+            timeBeforeExpiry: "P90D",
           },
           {
             action: "Notify",
             timeAfterCreate: "P90D",
-            timeBeforeExpiry: "P90D"
-          }
-        ]
+            timeBeforeExpiry: "P90D",
+          },
+        ],
       };
 
       const expected: GeneratedKeyRotationPolicy = {
         attributes: {
-          expiryTime: "P30D"
+          expiryTime: "P30D",
         },
         lifetimeActions: [
           {
             action: { type: "Rotate" },
-            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" }
+            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" },
           },
           {
             action: { type: "Notify" },
-            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" }
-          }
-        ]
+            trigger: { timeAfterCreate: "P90D", timeBeforeExpiry: "P90D" },
+          },
+        ],
       };
 
-      assert.deepEqualExcludingEvery(
-        keyRotationTransformations.propertiesToGenerated(publicPolicy),
+      expect(keyRotationTransformations.propertiesToGenerated(publicPolicy)).to.deep.equal(
         expected,
-        ["created", "updated"] as any
       );
     });
   });

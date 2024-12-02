@@ -39,6 +39,8 @@ export interface KeyProperties {
   readonly keyUriWithVersion?: string;
   /** Key rotation policy in response. It will be used for both output and input. Omitted if empty */
   rotationPolicy?: RotationPolicy;
+  /** Key release policy in response. It will be used for both output and input. Omitted if empty */
+  releasePolicy?: KeyReleasePolicy;
 }
 
 /** The object attributes managed by the Azure Key Vault service. */
@@ -64,6 +66,8 @@ export interface KeyAttributes {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly recoveryLevel?: DeletionRecoveryLevel;
+  /** Indicates if the private key can be exported. */
+  exportable?: boolean;
 }
 
 export interface RotationPolicy {
@@ -96,15 +100,22 @@ export interface LifetimeAction {
 }
 
 export interface Trigger {
-  /** The time duration after key creation to rotate the key. It should be in ISO8601 format. Eg: 'P90D', 'P1Y'. */
+  /** The time duration after key creation to rotate the key. It only applies to rotate. It will be in ISO 8601 duration format. Eg: 'P90D', 'P1Y'. */
   timeAfterCreate?: string;
-  /** The time duration before key expiring to rotate the key. It should be in ISO8601 format. Eg: 'P90D', 'P1Y'. */
+  /** The time duration before key expiring to rotate or notify. It will be in ISO 8601 duration format. Eg: 'P90D', 'P1Y'. */
   timeBeforeExpiry?: string;
 }
 
 export interface Action {
   /** The type of action. */
   type?: KeyRotationPolicyActionType;
+}
+
+export interface KeyReleasePolicy {
+  /** Content type and version of key release policy */
+  contentType?: string;
+  /** Blob encoding the policy rules under which the key can be released. */
+  data?: Uint8Array;
 }
 
 /** Key Vault resource */
@@ -158,6 +169,145 @@ export interface KeyListResult {
   nextLink?: string;
 }
 
+/** The parameters used to create a key. */
+export interface ManagedHsmKeyCreateParameters {
+  /** The tags that will be assigned to the key. */
+  tags?: { [propertyName: string]: string };
+  /** The properties of the key to be created. */
+  properties: ManagedHsmKeyProperties;
+}
+
+/** The properties of the key. */
+export interface ManagedHsmKeyProperties {
+  /** The attributes of the key. */
+  attributes?: ManagedHsmKeyAttributes;
+  /** The type of the key. For valid values, see JsonWebKeyType. */
+  kty?: JsonWebKeyType;
+  keyOps?: JsonWebKeyOperation[];
+  /** The key size in bits. For example: 2048, 3072, or 4096 for RSA. */
+  keySize?: number;
+  /** The elliptic curve name. For valid values, see JsonWebKeyCurveName. */
+  curveName?: JsonWebKeyCurveName;
+  /**
+   * The URI to retrieve the current version of the key.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly keyUri?: string;
+  /**
+   * The URI to retrieve the specific version of the key.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly keyUriWithVersion?: string;
+  /** Key rotation policy in response. It will be used for both output and input. Omitted if empty */
+  rotationPolicy?: ManagedHsmRotationPolicy;
+  /** Key release policy in response. It will be used for both output and input. Omitted if empty */
+  releasePolicy?: ManagedHsmKeyReleasePolicy;
+}
+
+/** The object attributes managed by the Azure Key Vault service. */
+export interface ManagedHsmKeyAttributes {
+  /** Determines whether or not the object is enabled. */
+  enabled?: boolean;
+  /** Not before date in seconds since 1970-01-01T00:00:00Z. */
+  notBefore?: number;
+  /** Expiry date in seconds since 1970-01-01T00:00:00Z. */
+  expires?: number;
+  /**
+   * Creation time in seconds since 1970-01-01T00:00:00Z.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly created?: number;
+  /**
+   * Last updated time in seconds since 1970-01-01T00:00:00Z.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly updated?: number;
+  /**
+   * The deletion recovery level currently in effect for the object. If it contains 'Purgeable', then the object can be permanently deleted by a privileged user; otherwise, only the system can purge the object at the end of the retention interval.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly recoveryLevel?: DeletionRecoveryLevel;
+  /** Indicates if the private key can be exported. */
+  exportable?: boolean;
+}
+
+export interface ManagedHsmRotationPolicy {
+  /** The attributes of key rotation policy. */
+  attributes?: ManagedHsmKeyRotationPolicyAttributes;
+  /** The lifetimeActions for key rotation action. */
+  lifetimeActions?: ManagedHsmLifetimeAction[];
+}
+
+export interface ManagedHsmKeyRotationPolicyAttributes {
+  /**
+   * Creation time in seconds since 1970-01-01T00:00:00Z.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly created?: number;
+  /**
+   * Last updated time in seconds since 1970-01-01T00:00:00Z.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly updated?: number;
+  /** The expiration time for the new key version. It should be in ISO8601 format. Eg: 'P90D', 'P1Y'. */
+  expiryTime?: string;
+}
+
+export interface ManagedHsmLifetimeAction {
+  /** The trigger of key rotation policy lifetimeAction. */
+  trigger?: ManagedHsmTrigger;
+  /** The action of key rotation policy lifetimeAction. */
+  action?: ManagedHsmAction;
+}
+
+export interface ManagedHsmTrigger {
+  /** The time duration after key creation to rotate the key. It only applies to rotate. It will be in ISO 8601 duration format. Eg: 'P90D', 'P1Y'. */
+  timeAfterCreate?: string;
+  /** The time duration before key expiring to rotate or notify. It will be in ISO 8601 duration format. Eg: 'P90D', 'P1Y'. */
+  timeBeforeExpiry?: string;
+}
+
+export interface ManagedHsmAction {
+  /** The type of action. */
+  type?: KeyRotationPolicyActionType;
+}
+
+export interface ManagedHsmKeyReleasePolicy {
+  /** Content type and version of key release policy */
+  contentType?: string;
+  /** Blob encoding the policy rules under which the key can be released. */
+  data?: Uint8Array;
+}
+
+/** Common fields that are returned in the response for all Azure Resource Manager resources */
+export interface ProxyResourceWithoutSystemData {
+  /**
+   * Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+  /**
+   * The name of the resource
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly name?: string;
+  /**
+   * The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly type?: string;
+  /** Resource tags. */
+  tags?: { [propertyName: string]: string };
+}
+
+/** The page of keys. */
+export interface ManagedHsmKeyListResult {
+  /** The key resources. */
+  value?: ManagedHsmKey[];
+  /** The URL to get the next page of keys. */
+  nextLink?: string;
+}
+
 /** Parameters for creating or updating a vault */
 export interface VaultCreateOrUpdateParameters {
   /** The supported Azure location where the key vault should be created. */
@@ -193,7 +343,7 @@ export interface VaultProperties {
   enableSoftDelete?: boolean;
   /** softDelete data retention days. It accepts >=7 and <=90. */
   softDeleteRetentionInDays?: number;
-  /** Property that controls how data actions are authorized. When true, the key vault will use Role Based Access Control (RBAC) for authorization of data actions, and the access policies specified in vault properties will be  ignored (warning: this is a preview feature). When false, the key vault will use the access policies specified in vault properties, and any policy stored on Azure Resource Manager will be ignored. If null or not specified, the vault is created with the default value of false. Note that management actions are always authorized with RBAC. */
+  /** Property that controls how data actions are authorized. When true, the key vault will use Role Based Access Control (RBAC) for authorization of data actions, and the access policies specified in vault properties will be  ignored. When false, the key vault will use the access policies specified in vault properties, and any policy stored on Azure Resource Manager will be ignored. If null or not specified, the vault is created with the default value of false. Note that management actions are always authorized with RBAC. */
   enableRbacAuthorization?: boolean;
   /** The vault's create mode to indicate whether the vault need to be recovered or not. */
   createMode?: CreateMode;
@@ -373,7 +523,7 @@ export interface VaultPatchProperties {
   enabledForTemplateDeployment?: boolean;
   /** Property to specify whether the 'soft delete' functionality is enabled for this key vault. Once set to true, it cannot be reverted to false. */
   enableSoftDelete?: boolean;
-  /** Property that controls how data actions are authorized. When true, the key vault will use Role Based Access Control (RBAC) for authorization of data actions, and the access policies specified in vault properties will be  ignored (warning: this is a preview feature). When false, the key vault will use the access policies specified in vault properties, and any policy stored on Azure Resource Manager will be ignored. If null or not specified, the value of this property will not change. */
+  /** Property that controls how data actions are authorized. When true, the key vault will use Role Based Access Control (RBAC) for authorization of data actions, and the access policies specified in vault properties will be  ignored. When false, the key vault will use the access policies specified in vault properties, and any policy stored on Azure Resource Manager will be ignored. If null or not specified, the value of this property will not change. */
   enableRbacAuthorization?: boolean;
   /** softDelete data retention days. It accepts >=7 and <=90. */
   softDeleteRetentionInDays?: number;
@@ -539,6 +689,142 @@ export interface PrivateLinkResourceListResult {
   value?: PrivateLinkResource[];
 }
 
+/** Properties of the managed HSM Pool */
+export interface ManagedHsmProperties {
+  /** The Azure Active Directory tenant ID that should be used for authenticating requests to the managed HSM pool. */
+  tenantId?: string;
+  /** Array of initial administrators object ids for this managed hsm pool. */
+  initialAdminObjectIds?: string[];
+  /**
+   * The URI of the managed hsm pool for performing operations on keys.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly hsmUri?: string;
+  /** Property to specify whether the 'soft delete' functionality is enabled for this managed HSM pool. Soft delete is enabled by default for all managed HSMs and is immutable. */
+  enableSoftDelete?: boolean;
+  /** Soft deleted data retention days. When you delete an HSM or a key, it will remain recoverable for the configured retention period or for a default period of 90 days. It accepts values between 7 and 90. */
+  softDeleteRetentionInDays?: number;
+  /** Property specifying whether protection against purge is enabled for this managed HSM pool. Setting this property to true activates protection against purge for this managed HSM pool and its content - only the Managed HSM service may initiate a hard, irrecoverable deletion. Enabling this functionality is irreversible. */
+  enablePurgeProtection?: boolean;
+  /** The create mode to indicate whether the resource is being created or is being recovered from a deleted resource. */
+  createMode?: CreateMode;
+  /**
+   * Resource Status Message.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly statusMessage?: string;
+  /**
+   * Provisioning state.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: ProvisioningState;
+  /** Rules governing the accessibility of the key vault from specific network locations. */
+  networkAcls?: MhsmNetworkRuleSet;
+  /** List of all regions associated with the managed hsm pool. */
+  regions?: MhsmGeoReplicatedRegion[];
+  /**
+   * List of private endpoint connections associated with the managed hsm pool.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly privateEndpointConnections?: MhsmPrivateEndpointConnectionItem[];
+  /** Control permission to the managed HSM from public networks. */
+  publicNetworkAccess?: PublicNetworkAccess;
+  /**
+   * The scheduled purge date in UTC.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly scheduledPurgeDate?: Date;
+  /**
+   * Managed HSM security domain properties.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly securityDomainProperties?: ManagedHSMSecurityDomainProperties;
+}
+
+/** A set of rules governing the network accessibility of a managed hsm pool. */
+export interface MhsmNetworkRuleSet {
+  /** Tells what traffic can bypass network rules. This can be 'AzureServices' or 'None'.  If not specified the default is 'AzureServices'. */
+  bypass?: NetworkRuleBypassOptions;
+  /** The default action when no rule from ipRules and from virtualNetworkRules match. This is only used after the bypass property has been evaluated. */
+  defaultAction?: NetworkRuleAction;
+  /** The list of IP address rules. */
+  ipRules?: MhsmipRule[];
+  /** The list of virtual network rules. */
+  virtualNetworkRules?: MhsmVirtualNetworkRule[];
+}
+
+/** A rule governing the accessibility of a managed HSM pool from a specific IP address or IP range. */
+export interface MhsmipRule {
+  /** An IPv4 address range in CIDR notation, such as '124.56.78.91' (simple IP address) or '124.56.78.0/24' (all addresses that start with 124.56.78). */
+  value: string;
+}
+
+/** A rule governing the accessibility of a managed hsm pool from a specific virtual network. */
+export interface MhsmVirtualNetworkRule {
+  /** Full resource id of a vnet subnet, such as '/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/subnet1'. */
+  id: string;
+}
+
+/** A region that this managed HSM Pool has been extended to. */
+export interface MhsmGeoReplicatedRegion {
+  /** Name of the geo replicated region. */
+  name?: string;
+  /**
+   * Provisioning state of the geo replicated region.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly provisioningState?: GeoReplicationRegionProvisioningState;
+  /** A boolean value that indicates whether the region is the primary region or a secondary region. */
+  isPrimary?: boolean;
+}
+
+/** Private endpoint connection item. */
+export interface MhsmPrivateEndpointConnectionItem {
+  /** Id of private endpoint connection. */
+  id?: string;
+  /** Modified whenever there is a change in the state of private endpoint connection. */
+  etag?: string;
+  /** Properties of the private endpoint object. */
+  privateEndpoint?: MhsmPrivateEndpoint;
+  /** Approval state of the private link connection. */
+  privateLinkServiceConnectionState?: MhsmPrivateLinkServiceConnectionState;
+  /** Provisioning state of the private endpoint connection. */
+  provisioningState?: PrivateEndpointConnectionProvisioningState;
+}
+
+/** Private endpoint object properties. */
+export interface MhsmPrivateEndpoint {
+  /**
+   * Full identifier of the private endpoint resource.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly id?: string;
+}
+
+/** An object that represents the approval state of the private link connection. */
+export interface MhsmPrivateLinkServiceConnectionState {
+  /** Indicates whether the connection has been approved, rejected or removed by the key vault owner. */
+  status?: PrivateEndpointServiceConnectionStatus;
+  /** The reason for approval or rejection. */
+  description?: string;
+  /** A message indicating if changes on the service provider require any updates on the consumer. */
+  actionsRequired?: ActionsRequired;
+}
+
+/** The security domain properties of the managed hsm. */
+export interface ManagedHSMSecurityDomainProperties {
+  /**
+   * Activation Status
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly activationStatus?: ActivationStatus;
+  /**
+   * Activation Status Message.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly activationStatusMessage?: string;
+}
+
 /** Managed HSM resource */
 export interface ManagedHsmResource {
   /**
@@ -567,6 +853,8 @@ export interface ManagedHsmResource {
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
   readonly systemData?: SystemData;
+  /** Managed service identity (system assigned and/or user assigned identities) */
+  identity?: ManagedServiceIdentity;
 }
 
 /** SKU details */
@@ -577,102 +865,38 @@ export interface ManagedHsmSku {
   name: ManagedHsmSkuName;
 }
 
-/** Properties of the managed HSM Pool */
-export interface ManagedHsmProperties {
-  /** The Azure Active Directory tenant ID that should be used for authenticating requests to the managed HSM pool. */
-  tenantId?: string;
-  /** Array of initial administrators object ids for this managed hsm pool. */
-  initialAdminObjectIds?: string[];
+/** Managed service identity (system assigned and/or user assigned identities) */
+export interface ManagedServiceIdentity {
   /**
-   * The URI of the managed hsm pool for performing operations on keys.
+   * The service principal ID of the system assigned identity. This property will only be provided for a system assigned identity.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly hsmUri?: string;
-  /** Property to specify whether the 'soft delete' functionality is enabled for this managed HSM pool. If it's not set to any value(true or false) when creating new managed HSM pool, it will be set to true by default. Once set to true, it cannot be reverted to false. */
-  enableSoftDelete?: boolean;
-  /** softDelete data retention days. It accepts >=7 and <=90. */
-  softDeleteRetentionInDays?: number;
-  /** Property specifying whether protection against purge is enabled for this managed HSM pool. Setting this property to true activates protection against purge for this managed HSM pool and its content - only the Managed HSM service may initiate a hard, irrecoverable deletion. The setting is effective only if soft delete is also enabled. Enabling this functionality is irreversible. */
-  enablePurgeProtection?: boolean;
-  /** The create mode to indicate whether the resource is being created or is being recovered from a deleted resource. */
-  createMode?: CreateMode;
+  readonly principalId?: string;
   /**
-   * Resource Status Message.
+   * The tenant ID of the system assigned identity. This property will only be provided for a system assigned identity.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly statusMessage?: string;
+  readonly tenantId?: string;
+  /** Type of managed service identity (where both SystemAssigned and UserAssigned types are allowed). */
+  type: ManagedServiceIdentityType;
+  /** The set of user assigned identities associated with the resource. The userAssignedIdentities dictionary keys will be ARM resource ids in the form: '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}. The dictionary values can be empty objects ({}) in requests. */
+  userAssignedIdentities?: {
+    [propertyName: string]: UserAssignedIdentity | null;
+  };
+}
+
+/** User assigned identity properties */
+export interface UserAssignedIdentity {
   /**
-   * Provisioning state.
+   * The principal ID of the assigned identity.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly provisioningState?: ProvisioningState;
-  /** Rules governing the accessibility of the key vault from specific network locations. */
-  networkAcls?: MhsmNetworkRuleSet;
+  readonly principalId?: string;
   /**
-   * List of private endpoint connections associated with the managed hsm pool.
+   * The client ID of the assigned identity.
    * NOTE: This property will not be serialized. It can only be populated by the server.
    */
-  readonly privateEndpointConnections?: MhsmPrivateEndpointConnectionItem[];
-  /** Control permission for data plane traffic coming from public networks while private endpoint is enabled. */
-  publicNetworkAccess?: PublicNetworkAccess;
-  /**
-   * The scheduled purge date in UTC.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly scheduledPurgeDate?: Date;
-}
-
-/** A set of rules governing the network accessibility of a managed hsm pool. */
-export interface MhsmNetworkRuleSet {
-  /** Tells what traffic can bypass network rules. This can be 'AzureServices' or 'None'.  If not specified the default is 'AzureServices'. */
-  bypass?: NetworkRuleBypassOptions;
-  /** The default action when no rule from ipRules and from virtualNetworkRules match. This is only used after the bypass property has been evaluated. */
-  defaultAction?: NetworkRuleAction;
-  /** The list of IP address rules. */
-  ipRules?: MhsmipRule[];
-  /** The list of virtual network rules. */
-  virtualNetworkRules?: MhsmVirtualNetworkRule[];
-}
-
-/** A rule governing the accessibility of a managed hsm pool from a specific ip address or ip range. */
-export interface MhsmipRule {
-  /** An IPv4 address range in CIDR notation, such as '124.56.78.91' (simple IP address) or '124.56.78.0/24' (all addresses that start with 124.56.78). */
-  value: string;
-}
-
-/** A rule governing the accessibility of a managed hsm pool from a specific virtual network. */
-export interface MhsmVirtualNetworkRule {
-  /** Full resource id of a vnet subnet, such as '/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/subnet1'. */
-  id: string;
-}
-
-/** Private endpoint connection item. */
-export interface MhsmPrivateEndpointConnectionItem {
-  /** Properties of the private endpoint object. */
-  privateEndpoint?: MhsmPrivateEndpoint;
-  /** Approval state of the private link connection. */
-  privateLinkServiceConnectionState?: MhsmPrivateLinkServiceConnectionState;
-  /** Provisioning state of the private endpoint connection. */
-  provisioningState?: PrivateEndpointConnectionProvisioningState;
-}
-
-/** Private endpoint object properties. */
-export interface MhsmPrivateEndpoint {
-  /**
-   * Full identifier of the private endpoint resource.
-   * NOTE: This property will not be serialized. It can only be populated by the server.
-   */
-  readonly id?: string;
-}
-
-/** An object that represents the approval state of the private link connection. */
-export interface MhsmPrivateLinkServiceConnectionState {
-  /** Indicates whether the connection has been approved, rejected or removed by the key vault owner. */
-  status?: PrivateEndpointServiceConnectionStatus;
-  /** The reason for approval or rejection. */
-  description?: string;
-  /** A message indicating if changes on the service provider require any updates on the consumer. */
-  actionsRequired?: ActionsRequired;
+  readonly clientId?: string;
 }
 
 /** The error exception. */
@@ -785,6 +1009,39 @@ export interface DeletedManagedHsmProperties {
 export interface MhsmPrivateLinkResourceListResult {
   /** Array of private link resources */
   value?: MhsmPrivateLinkResource[];
+}
+
+/** List of regions associated with a managed HSM Pools */
+export interface MhsmRegionsListResult {
+  /** The region associated with a managed HSM Pools. */
+  value?: MhsmGeoReplicatedRegion[];
+  /** The URL to get the next set of managed HSM Pools. */
+  nextLink?: string;
+}
+
+/** The parameters used to check the availability of the managed hsm name. */
+export interface CheckMhsmNameAvailabilityParameters {
+  /** The managed hsm name. */
+  name: string;
+}
+
+/** The CheckMhsmNameAvailability operation response. */
+export interface CheckMhsmNameAvailabilityResult {
+  /**
+   * A boolean value that indicates whether the name is available for you to use. If true, the name is available. If false, the name has already been taken or is invalid and cannot be used.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly nameAvailable?: boolean;
+  /**
+   * The reason that a managed hsm name could not be used. The reason element is only returned if NameAvailable is false.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly reason?: Reason;
+  /**
+   * An error message explaining the Reason value in more detail.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly message?: string;
 }
 
 /** Result of the request to list Storage operations. It contains a list of operations and a URL link to get the next set of results. */
@@ -950,7 +1207,7 @@ export interface SecretListResult {
 }
 
 /** The key resource. */
-export type Key = Resource & {
+export interface Key extends Resource {
   /** The attributes of the key. */
   attributes?: KeyAttributes;
   /** The type of the key. For valid values, see JsonWebKeyType. */
@@ -972,10 +1229,12 @@ export type Key = Resource & {
   readonly keyUriWithVersion?: string;
   /** Key rotation policy in response. It will be used for both output and input. Omitted if empty */
   rotationPolicy?: RotationPolicy;
-};
+  /** Key release policy in response. It will be used for both output and input. Omitted if empty */
+  releasePolicy?: KeyReleasePolicy;
+}
 
 /** Private endpoint connection resource. */
-export type PrivateEndpointConnection = Resource & {
+export interface PrivateEndpointConnection extends Resource {
   /** Modified whenever there is a change in the state of private endpoint connection. */
   etag?: string;
   /** Properties of the private endpoint object. */
@@ -984,10 +1243,10 @@ export type PrivateEndpointConnection = Resource & {
   privateLinkServiceConnectionState?: PrivateLinkServiceConnectionState;
   /** Provisioning state of the private endpoint connection. */
   provisioningState?: PrivateEndpointConnectionProvisioningState;
-};
+}
 
 /** A private link resource */
-export type PrivateLinkResource = Resource & {
+export interface PrivateLinkResource extends Resource {
   /**
    * Group identifier of private link resource.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -1000,22 +1259,49 @@ export type PrivateLinkResource = Resource & {
   readonly requiredMembers?: string[];
   /** Required DNS zone names of the the private link resource. */
   requiredZoneNames?: string[];
-};
+}
 
 /** Resource information with extended details. */
-export type Secret = Resource & {
+export interface Secret extends Resource {
   /** Properties of the secret */
   properties: SecretProperties;
-};
+}
+
+/** The key resource. */
+export interface ManagedHsmKey extends ProxyResourceWithoutSystemData {
+  /** The attributes of the key. */
+  attributes?: ManagedHsmKeyAttributes;
+  /** The type of the key. For valid values, see JsonWebKeyType. */
+  kty?: JsonWebKeyType;
+  keyOps?: JsonWebKeyOperation[];
+  /** The key size in bits. For example: 2048, 3072, or 4096 for RSA. */
+  keySize?: number;
+  /** The elliptic curve name. For valid values, see JsonWebKeyCurveName. */
+  curveName?: JsonWebKeyCurveName;
+  /**
+   * The URI to retrieve the current version of the key.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly keyUri?: string;
+  /**
+   * The URI to retrieve the specific version of the key.
+   * NOTE: This property will not be serialized. It can only be populated by the server.
+   */
+  readonly keyUriWithVersion?: string;
+  /** Key rotation policy in response. It will be used for both output and input. Omitted if empty */
+  rotationPolicy?: ManagedHsmRotationPolicy;
+  /** Key release policy in response. It will be used for both output and input. Omitted if empty */
+  releasePolicy?: ManagedHsmKeyReleasePolicy;
+}
 
 /** Resource information with extended details. */
-export type ManagedHsm = ManagedHsmResource & {
+export interface ManagedHsm extends ManagedHsmResource {
   /** Properties of the managed HSM */
   properties?: ManagedHsmProperties;
-};
+}
 
 /** Private endpoint connection resource. */
-export type MhsmPrivateEndpointConnection = ManagedHsmResource & {
+export interface MhsmPrivateEndpointConnection extends ManagedHsmResource {
   /** Modified whenever there is a change in the state of private endpoint connection. */
   etag?: string;
   /** Properties of the private endpoint object. */
@@ -1024,10 +1310,10 @@ export type MhsmPrivateEndpointConnection = ManagedHsmResource & {
   privateLinkServiceConnectionState?: MhsmPrivateLinkServiceConnectionState;
   /** Provisioning state of the private endpoint connection. */
   provisioningState?: PrivateEndpointConnectionProvisioningState;
-};
+}
 
 /** A private link resource */
-export type MhsmPrivateLinkResource = ManagedHsmResource & {
+export interface MhsmPrivateLinkResource extends ManagedHsmResource {
   /**
    * Group identifier of private link resource.
    * NOTE: This property will not be serialized. It can only be populated by the server.
@@ -1040,10 +1326,10 @@ export type MhsmPrivateLinkResource = ManagedHsmResource & {
   readonly requiredMembers?: string[];
   /** Required DNS zone names of the the private link resource. */
   requiredZoneNames?: string[];
-};
+}
 
 /** The secret management attributes. */
-export type SecretAttributes = Attributes & {};
+export interface SecretAttributes extends Attributes {}
 
 /** Defines headers for PrivateEndpointConnections_put operation. */
 export interface PrivateEndpointConnectionsPutHeaders {
@@ -1061,6 +1347,30 @@ export interface PrivateEndpointConnectionsDeleteHeaders {
   location?: string;
 }
 
+/** Defines headers for ManagedHsms_createOrUpdate operation. */
+export interface ManagedHsmsCreateOrUpdateHeaders {
+  /** The URI to poll for completion status. */
+  location?: string;
+}
+
+/** Defines headers for ManagedHsms_update operation. */
+export interface ManagedHsmsUpdateHeaders {
+  /** The URI to poll for completion status. */
+  location?: string;
+}
+
+/** Defines headers for ManagedHsms_delete operation. */
+export interface ManagedHsmsDeleteHeaders {
+  /** The URI to poll for completion status. */
+  location?: string;
+}
+
+/** Defines headers for ManagedHsms_purgeDeleted operation. */
+export interface ManagedHsmsPurgeDeletedHeaders {
+  /** The URI to poll for completion status. */
+  location?: string;
+}
+
 /** Defines headers for MhsmPrivateEndpointConnections_put operation. */
 export interface MhsmPrivateEndpointConnectionsPutHeaders {
   /** (specified only if operation does not finish synchronously) The recommended number of seconds to wait before calling the URI specified in Azure-AsyncOperation. */
@@ -1071,17 +1381,19 @@ export interface MhsmPrivateEndpointConnectionsPutHeaders {
 
 /** Defines headers for MhsmPrivateEndpointConnections_delete operation. */
 export interface MhsmPrivateEndpointConnectionsDeleteHeaders {
-  /** The recommended number of seconds to wait before calling the URI specified in the location header. */
-  retryAfter?: number;
   /** The URI to poll for completion status. */
   location?: string;
 }
 
 /** Known values of {@link DeletionRecoveryLevel} that the service accepts. */
 export enum KnownDeletionRecoveryLevel {
+  /** Purgeable */
   Purgeable = "Purgeable",
+  /** RecoverablePurgeable */
   RecoverablePurgeable = "Recoverable+Purgeable",
+  /** Recoverable */
   Recoverable = "Recoverable",
+  /** RecoverableProtectedSubscription */
   RecoverableProtectedSubscription = "Recoverable+ProtectedSubscription"
 }
 
@@ -1099,9 +1411,13 @@ export type DeletionRecoveryLevel = string;
 
 /** Known values of {@link JsonWebKeyType} that the service accepts. */
 export enum KnownJsonWebKeyType {
+  /** EC */
   EC = "EC",
+  /** ECHSM */
   ECHSM = "EC-HSM",
+  /** RSA */
   RSA = "RSA",
+  /** RSAHSM */
   RSAHSM = "RSA-HSM"
 }
 
@@ -1119,13 +1435,22 @@ export type JsonWebKeyType = string;
 
 /** Known values of {@link JsonWebKeyOperation} that the service accepts. */
 export enum KnownJsonWebKeyOperation {
+  /** Encrypt */
   Encrypt = "encrypt",
+  /** Decrypt */
   Decrypt = "decrypt",
+  /** Sign */
   Sign = "sign",
+  /** Verify */
   Verify = "verify",
+  /** WrapKey */
   WrapKey = "wrapKey",
+  /** UnwrapKey */
   UnwrapKey = "unwrapKey",
-  Import = "import"
+  /** Import */
+  Import = "import",
+  /** Release */
+  Release = "release"
 }
 
 /**
@@ -1139,15 +1464,20 @@ export enum KnownJsonWebKeyOperation {
  * **verify** \
  * **wrapKey** \
  * **unwrapKey** \
- * **import**
+ * **import** \
+ * **release**
  */
 export type JsonWebKeyOperation = string;
 
 /** Known values of {@link JsonWebKeyCurveName} that the service accepts. */
 export enum KnownJsonWebKeyCurveName {
+  /** P256 */
   P256 = "P-256",
+  /** P384 */
   P384 = "P-384",
+  /** P521 */
   P521 = "P-521",
+  /** P256K */
   P256K = "P-256K"
 }
 
@@ -1165,6 +1495,7 @@ export type JsonWebKeyCurveName = string;
 
 /** Known values of {@link SkuFamily} that the service accepts. */
 export enum KnownSkuFamily {
+  /** A */
   A = "A"
 }
 
@@ -1179,25 +1510,48 @@ export type SkuFamily = string;
 
 /** Known values of {@link KeyPermissions} that the service accepts. */
 export enum KnownKeyPermissions {
+  /** All */
   All = "all",
+  /** Encrypt */
   Encrypt = "encrypt",
+  /** Decrypt */
   Decrypt = "decrypt",
+  /** WrapKey */
   WrapKey = "wrapKey",
+  /** UnwrapKey */
   UnwrapKey = "unwrapKey",
+  /** Sign */
   Sign = "sign",
+  /** Verify */
   Verify = "verify",
+  /** Get */
   Get = "get",
+  /** List */
   List = "list",
+  /** Create */
   Create = "create",
+  /** Update */
   Update = "update",
+  /** Import */
   Import = "import",
+  /** Delete */
   Delete = "delete",
+  /** Backup */
   Backup = "backup",
+  /** Restore */
   Restore = "restore",
+  /** Recover */
   Recover = "recover",
+  /** Purge */
   Purge = "purge",
+  /** Release */
   Release = "release",
-  Rotate = "rotate"
+  /** Rotate */
+  Rotate = "rotate",
+  /** Getrotationpolicy */
+  Getrotationpolicy = "getrotationpolicy",
+  /** Setrotationpolicy */
+  Setrotationpolicy = "setrotationpolicy"
 }
 
 /**
@@ -1223,20 +1577,31 @@ export enum KnownKeyPermissions {
  * **recover** \
  * **purge** \
  * **release** \
- * **rotate**
+ * **rotate** \
+ * **getrotationpolicy** \
+ * **setrotationpolicy**
  */
 export type KeyPermissions = string;
 
 /** Known values of {@link SecretPermissions} that the service accepts. */
 export enum KnownSecretPermissions {
+  /** All */
   All = "all",
+  /** Get */
   Get = "get",
+  /** List */
   List = "list",
+  /** Set */
   Set = "set",
+  /** Delete */
   Delete = "delete",
+  /** Backup */
   Backup = "backup",
+  /** Restore */
   Restore = "restore",
+  /** Recover */
   Recover = "recover",
+  /** Purge */
   Purge = "purge"
 }
 
@@ -1259,22 +1624,39 @@ export type SecretPermissions = string;
 
 /** Known values of {@link CertificatePermissions} that the service accepts. */
 export enum KnownCertificatePermissions {
+  /** All */
   All = "all",
+  /** Get */
   Get = "get",
+  /** List */
   List = "list",
+  /** Delete */
   Delete = "delete",
+  /** Create */
   Create = "create",
+  /** Import */
   Import = "import",
+  /** Update */
   Update = "update",
+  /** Managecontacts */
   Managecontacts = "managecontacts",
+  /** Getissuers */
   Getissuers = "getissuers",
+  /** Listissuers */
   Listissuers = "listissuers",
+  /** Setissuers */
   Setissuers = "setissuers",
+  /** Deleteissuers */
   Deleteissuers = "deleteissuers",
+  /** Manageissuers */
   Manageissuers = "manageissuers",
+  /** Recover */
   Recover = "recover",
+  /** Purge */
   Purge = "purge",
+  /** Backup */
   Backup = "backup",
+  /** Restore */
   Restore = "restore"
 }
 
@@ -1305,20 +1687,35 @@ export type CertificatePermissions = string;
 
 /** Known values of {@link StoragePermissions} that the service accepts. */
 export enum KnownStoragePermissions {
+  /** All */
   All = "all",
+  /** Get */
   Get = "get",
+  /** List */
   List = "list",
+  /** Delete */
   Delete = "delete",
+  /** Set */
   Set = "set",
+  /** Update */
   Update = "update",
+  /** Regeneratekey */
   Regeneratekey = "regeneratekey",
+  /** Recover */
   Recover = "recover",
+  /** Purge */
   Purge = "purge",
+  /** Backup */
   Backup = "backup",
+  /** Restore */
   Restore = "restore",
+  /** Setsas */
   Setsas = "setsas",
+  /** Listsas */
   Listsas = "listsas",
+  /** Getsas */
   Getsas = "getsas",
+  /** Deletesas */
   Deletesas = "deletesas"
 }
 
@@ -1347,7 +1744,9 @@ export type StoragePermissions = string;
 
 /** Known values of {@link NetworkRuleBypassOptions} that the service accepts. */
 export enum KnownNetworkRuleBypassOptions {
+  /** AzureServices */
   AzureServices = "AzureServices",
+  /** None */
   None = "None"
 }
 
@@ -1363,7 +1762,9 @@ export type NetworkRuleBypassOptions = string;
 
 /** Known values of {@link NetworkRuleAction} that the service accepts. */
 export enum KnownNetworkRuleAction {
+  /** Allow */
   Allow = "Allow",
+  /** Deny */
   Deny = "Deny"
 }
 
@@ -1379,7 +1780,9 @@ export type NetworkRuleAction = string;
 
 /** Known values of {@link VaultProvisioningState} that the service accepts. */
 export enum KnownVaultProvisioningState {
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** RegisteringDns */
   RegisteringDns = "RegisteringDns"
 }
 
@@ -1395,9 +1798,13 @@ export type VaultProvisioningState = string;
 
 /** Known values of {@link PrivateEndpointServiceConnectionStatus} that the service accepts. */
 export enum KnownPrivateEndpointServiceConnectionStatus {
+  /** Pending */
   Pending = "Pending",
+  /** Approved */
   Approved = "Approved",
+  /** Rejected */
   Rejected = "Rejected",
+  /** Disconnected */
   Disconnected = "Disconnected"
 }
 
@@ -1415,6 +1822,7 @@ export type PrivateEndpointServiceConnectionStatus = string;
 
 /** Known values of {@link ActionsRequired} that the service accepts. */
 export enum KnownActionsRequired {
+  /** None */
   None = "None"
 }
 
@@ -1429,11 +1837,17 @@ export type ActionsRequired = string;
 
 /** Known values of {@link PrivateEndpointConnectionProvisioningState} that the service accepts. */
 export enum KnownPrivateEndpointConnectionProvisioningState {
+  /** Succeeded */
   Succeeded = "Succeeded",
+  /** Creating */
   Creating = "Creating",
+  /** Updating */
   Updating = "Updating",
+  /** Deleting */
   Deleting = "Deleting",
+  /** Failed */
   Failed = "Failed",
+  /** Disconnected */
   Disconnected = "Disconnected"
 }
 
@@ -1453,9 +1867,13 @@ export type PrivateEndpointConnectionProvisioningState = string;
 
 /** Known values of {@link IdentityType} that the service accepts. */
 export enum KnownIdentityType {
+  /** User */
   User = "User",
+  /** Application */
   Application = "Application",
+  /** ManagedIdentity */
   ManagedIdentity = "ManagedIdentity",
+  /** Key */
   Key = "Key"
 }
 
@@ -1470,20 +1888,6 @@ export enum KnownIdentityType {
  * **Key**
  */
 export type IdentityType = string;
-
-/** Known values of {@link ManagedHsmSkuFamily} that the service accepts. */
-export enum KnownManagedHsmSkuFamily {
-  B = "B"
-}
-
-/**
- * Defines values for ManagedHsmSkuFamily. \
- * {@link KnownManagedHsmSkuFamily} can be used interchangeably with ManagedHsmSkuFamily,
- *  this enum contains the known values that the service supports.
- * ### Known values supported by the service
- * **B**
- */
-export type ManagedHsmSkuFamily = string;
 
 /** Known values of {@link ProvisioningState} that the service accepts. */
 export enum KnownProvisioningState {
@@ -1521,9 +1925,41 @@ export enum KnownProvisioningState {
  */
 export type ProvisioningState = string;
 
+/** Known values of {@link GeoReplicationRegionProvisioningState} that the service accepts. */
+export enum KnownGeoReplicationRegionProvisioningState {
+  /** Preprovisioning */
+  Preprovisioning = "Preprovisioning",
+  /** Provisioning */
+  Provisioning = "Provisioning",
+  /** Succeeded */
+  Succeeded = "Succeeded",
+  /** Failed */
+  Failed = "Failed",
+  /** Deleting */
+  Deleting = "Deleting",
+  /** Cleanup */
+  Cleanup = "Cleanup"
+}
+
+/**
+ * Defines values for GeoReplicationRegionProvisioningState. \
+ * {@link KnownGeoReplicationRegionProvisioningState} can be used interchangeably with GeoReplicationRegionProvisioningState,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Preprovisioning** \
+ * **Provisioning** \
+ * **Succeeded** \
+ * **Failed** \
+ * **Deleting** \
+ * **Cleanup**
+ */
+export type GeoReplicationRegionProvisioningState = string;
+
 /** Known values of {@link PublicNetworkAccess} that the service accepts. */
 export enum KnownPublicNetworkAccess {
+  /** Enabled */
   Enabled = "Enabled",
+  /** Disabled */
   Disabled = "Disabled"
 }
 
@@ -1536,6 +1972,69 @@ export enum KnownPublicNetworkAccess {
  * **Disabled**
  */
 export type PublicNetworkAccess = string;
+
+/** Known values of {@link ActivationStatus} that the service accepts. */
+export enum KnownActivationStatus {
+  /** The managed HSM Pool is active. */
+  Active = "Active",
+  /** The managed HSM Pool is not yet activated. */
+  NotActivated = "NotActivated",
+  /** An unknown error occurred while activating managed hsm. */
+  Unknown = "Unknown",
+  /** Failed to activate managed hsm. */
+  Failed = "Failed"
+}
+
+/**
+ * Defines values for ActivationStatus. \
+ * {@link KnownActivationStatus} can be used interchangeably with ActivationStatus,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **Active**: The managed HSM Pool is active. \
+ * **NotActivated**: The managed HSM Pool is not yet activated. \
+ * **Unknown**: An unknown error occurred while activating managed hsm. \
+ * **Failed**: Failed to activate managed hsm.
+ */
+export type ActivationStatus = string;
+
+/** Known values of {@link ManagedHsmSkuFamily} that the service accepts. */
+export enum KnownManagedHsmSkuFamily {
+  /** B */
+  B = "B"
+}
+
+/**
+ * Defines values for ManagedHsmSkuFamily. \
+ * {@link KnownManagedHsmSkuFamily} can be used interchangeably with ManagedHsmSkuFamily,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **B**
+ */
+export type ManagedHsmSkuFamily = string;
+
+/** Known values of {@link ManagedServiceIdentityType} that the service accepts. */
+export enum KnownManagedServiceIdentityType {
+  /** None */
+  None = "None",
+  /** SystemAssigned */
+  SystemAssigned = "SystemAssigned",
+  /** UserAssigned */
+  UserAssigned = "UserAssigned",
+  /** SystemAssignedUserAssigned */
+  SystemAssignedUserAssigned = "SystemAssigned,UserAssigned"
+}
+
+/**
+ * Defines values for ManagedServiceIdentityType. \
+ * {@link KnownManagedServiceIdentityType} can be used interchangeably with ManagedServiceIdentityType,
+ *  this enum contains the known values that the service supports.
+ * ### Known values supported by the service
+ * **None** \
+ * **SystemAssigned** \
+ * **UserAssigned** \
+ * **SystemAssigned,UserAssigned**
+ */
+export type ManagedServiceIdentityType = string;
 /** Defines values for KeyRotationPolicyActionType. */
 export type KeyRotationPolicyActionType = "rotate" | "notify";
 /** Defines values for SkuName. */
@@ -1547,7 +2046,7 @@ export type AccessPolicyUpdateKind = "add" | "replace" | "remove";
 /** Defines values for Reason. */
 export type Reason = "AccountNameInvalid" | "AlreadyExists";
 /** Defines values for ManagedHsmSkuName. */
-export type ManagedHsmSkuName = "Standard_B1" | "Custom_B32";
+export type ManagedHsmSkuName = "Standard_B1" | "Custom_B32" | "Custom_B6";
 
 /** Optional parameters. */
 export interface KeysCreateIfNotExistOptionalParams
@@ -1595,6 +2094,55 @@ export interface KeysListVersionsNextOptionalParams
 
 /** Contains response data for the listVersionsNext operation. */
 export type KeysListVersionsNextResponse = KeyListResult;
+
+/** Optional parameters. */
+export interface ManagedHsmKeysCreateIfNotExistOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the createIfNotExist operation. */
+export type ManagedHsmKeysCreateIfNotExistResponse = ManagedHsmKey;
+
+/** Optional parameters. */
+export interface ManagedHsmKeysGetOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the get operation. */
+export type ManagedHsmKeysGetResponse = ManagedHsmKey;
+
+/** Optional parameters. */
+export interface ManagedHsmKeysListOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the list operation. */
+export type ManagedHsmKeysListResponse = ManagedHsmKeyListResult;
+
+/** Optional parameters. */
+export interface ManagedHsmKeysGetVersionOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the getVersion operation. */
+export type ManagedHsmKeysGetVersionResponse = ManagedHsmKey;
+
+/** Optional parameters. */
+export interface ManagedHsmKeysListVersionsOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listVersions operation. */
+export type ManagedHsmKeysListVersionsResponse = ManagedHsmKeyListResult;
+
+/** Optional parameters. */
+export interface ManagedHsmKeysListNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listNext operation. */
+export type ManagedHsmKeysListNextResponse = ManagedHsmKeyListResult;
+
+/** Optional parameters. */
+export interface ManagedHsmKeysListVersionsNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listVersionsNext operation. */
+export type ManagedHsmKeysListVersionsNextResponse = ManagedHsmKeyListResult;
 
 /** Optional parameters. */
 export interface VaultsCreateOrUpdateOptionalParams
@@ -1693,20 +2241,14 @@ export type VaultsCheckNameAvailabilityResponse = CheckNameAvailabilityResult;
 
 /** Optional parameters. */
 export interface VaultsListByResourceGroupNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Maximum number of results to return. */
-  top?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
 export type VaultsListByResourceGroupNextResponse = VaultListResult;
 
 /** Optional parameters. */
 export interface VaultsListBySubscriptionNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Maximum number of results to return. */
-  top?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySubscriptionNext operation. */
 export type VaultsListBySubscriptionNextResponse = VaultListResult;
@@ -1720,10 +2262,7 @@ export type VaultsListDeletedNextResponse = DeletedVaultListResult;
 
 /** Optional parameters. */
 export interface VaultsListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Maximum number of results to return. */
-  top?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type VaultsListNextResponse = ResourceListResult;
@@ -1859,22 +2398,26 @@ export interface ManagedHsmsPurgeDeletedOptionalParams
   resumeFrom?: string;
 }
 
+/** Contains response data for the purgeDeleted operation. */
+export type ManagedHsmsPurgeDeletedResponse = ManagedHsmsPurgeDeletedHeaders;
+
+/** Optional parameters. */
+export interface ManagedHsmsCheckMhsmNameAvailabilityOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the checkMhsmNameAvailability operation. */
+export type ManagedHsmsCheckMhsmNameAvailabilityResponse = CheckMhsmNameAvailabilityResult;
+
 /** Optional parameters. */
 export interface ManagedHsmsListByResourceGroupNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Maximum number of results to return. */
-  top?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listByResourceGroupNext operation. */
 export type ManagedHsmsListByResourceGroupNextResponse = ManagedHsmListResult;
 
 /** Optional parameters. */
 export interface ManagedHsmsListBySubscriptionNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Maximum number of results to return. */
-  top?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listBySubscriptionNext operation. */
 export type ManagedHsmsListBySubscriptionNextResponse = ManagedHsmListResult;
@@ -1935,6 +2478,20 @@ export interface MhsmPrivateLinkResourcesListByMhsmResourceOptionalParams
 export type MhsmPrivateLinkResourcesListByMhsmResourceResponse = MhsmPrivateLinkResourceListResult;
 
 /** Optional parameters. */
+export interface MhsmRegionsListByResourceOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByResource operation. */
+export type MhsmRegionsListByResourceResponse = MhsmRegionsListResult;
+
+/** Optional parameters. */
+export interface MhsmRegionsListByResourceNextOptionalParams
+  extends coreClient.OperationOptions {}
+
+/** Contains response data for the listByResourceNext operation. */
+export type MhsmRegionsListByResourceNextResponse = MhsmRegionsListResult;
+
+/** Optional parameters. */
 export interface OperationsListOptionalParams
   extends coreClient.OperationOptions {}
 
@@ -1979,10 +2536,7 @@ export type SecretsListResponse = SecretListResult;
 
 /** Optional parameters. */
 export interface SecretsListNextOptionalParams
-  extends coreClient.OperationOptions {
-  /** Maximum number of results to return. */
-  top?: number;
-}
+  extends coreClient.OperationOptions {}
 
 /** Contains response data for the listNext operation. */
 export type SecretsListNextResponse = SecretListResult;

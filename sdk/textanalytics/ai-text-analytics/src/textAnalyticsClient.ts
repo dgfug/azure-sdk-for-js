@@ -1,102 +1,82 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { CommonClientOptions } from "@azure/core-client";
-import {
-  InternalPipelineOptions,
-  bearerTokenAuthenticationPolicy
-} from "@azure/core-rest-pipeline";
-import { TokenCredential, KeyCredential, isTokenCredential } from "@azure/core-auth";
+import type { CommonClientOptions } from "@azure/core-client";
+import type { InternalPipelineOptions } from "@azure/core-rest-pipeline";
+import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
+import type { KeyCredential, TokenCredential } from "@azure/core-auth";
+import { isTokenCredential } from "@azure/core-auth";
+import { SDK_VERSION } from "./constants";
 import { GeneratedClient } from "./generated/generatedClient";
 import { logger } from "./logger";
-import {
-  JobManifestTasks as GeneratedActions,
+import type {
   DetectLanguageInput,
-  GeneratedClientEntitiesRecognitionPiiOptionalParams as GeneratedRecognizePiiEntitiesOptions,
-  GeneratedClientSentimentOptionalParams as GeneratedAnalyzeSentimentOptions,
-  GeneratedClientEntitiesRecognitionGeneralOptionalParams as GeneratedRecognizeCategorizedEntitiesOptions,
-  GeneratedClientEntitiesLinkingOptionalParams as GeneratedRecognizeLinkedEntitiesOptions,
-  GeneratedClientKeyPhrasesOptionalParams as GeneratedExtractKeyPhrasesOptions,
-  GeneratedClientLanguagesOptionalParams as GeneratedDetectLanguageOptions,
+  JobManifestTasks as GeneratedActions,
+  SentimentOptionalParams as GeneratedAnalyzeSentimentOptions,
+  LanguagesOptionalParams as GeneratedDetectLanguageOptions,
+  KeyPhrasesOptionalParams as GeneratedExtractKeyPhrasesOptions,
+  EntitiesRecognitionGeneralOptionalParams as GeneratedRecognizeCategorizedEntitiesOptions,
+  EntitiesLinkingOptionalParams as GeneratedRecognizeLinkedEntitiesOptions,
+  EntitiesRecognitionPiiOptionalParams as GeneratedRecognizePiiEntitiesOptions,
+  PiiCategory,
   TextDocumentInput,
-  PiiCategory
 } from "./generated/models";
-import {
-  DetectLanguageResultArray,
-  makeDetectLanguageResultArray
-} from "./detectLanguageResultArray";
-import {
-  RecognizeCategorizedEntitiesResultArray,
-  makeRecognizeCategorizedEntitiesResultArray
-} from "./recognizeCategorizedEntitiesResultArray";
-import {
-  AnalyzeSentimentResultArray,
-  makeAnalyzeSentimentResultArray
-} from "./analyzeSentimentResultArray";
-import {
-  makeExtractKeyPhrasesResultArray,
-  ExtractKeyPhrasesResultArray
-} from "./extractKeyPhrasesResultArray";
-import {
-  RecognizePiiEntitiesResultArray,
-  makeRecognizePiiEntitiesResultArray
-} from "./recognizePiiEntitiesResultArray";
-import {
-  RecognizeLinkedEntitiesResultArray,
-  makeRecognizeLinkedEntitiesResultArray
-} from "./recognizeLinkedEntitiesResultArray";
-import { createSpan } from "./tracing";
-import { SpanStatusCode } from "@azure/core-tracing";
+import type { DetectLanguageResultArray } from "./detectLanguageResultArray";
+import { makeDetectLanguageResultArray } from "./detectLanguageResultArray";
+import type { RecognizeCategorizedEntitiesResultArray } from "./recognizeCategorizedEntitiesResultArray";
+import { makeRecognizeCategorizedEntitiesResultArray } from "./recognizeCategorizedEntitiesResultArray";
+import type { AnalyzeSentimentResultArray } from "./analyzeSentimentResultArray";
+import { makeAnalyzeSentimentResultArray } from "./analyzeSentimentResultArray";
+import type { ExtractKeyPhrasesResultArray } from "./extractKeyPhrasesResultArray";
+import { makeExtractKeyPhrasesResultArray } from "./extractKeyPhrasesResultArray";
+import type { RecognizePiiEntitiesResultArray } from "./recognizePiiEntitiesResultArray";
+import { makeRecognizePiiEntitiesResultArray } from "./recognizePiiEntitiesResultArray";
+import type { RecognizeLinkedEntitiesResultArray } from "./recognizeLinkedEntitiesResultArray";
+import { makeRecognizeLinkedEntitiesResultArray } from "./recognizeLinkedEntitiesResultArray";
+import type { TracingClient } from "@azure/core-tracing";
+import { createTracingClient } from "@azure/core-tracing";
 import { textAnalyticsAzureKeyCredentialPolicy } from "./azureKeyCredentialPolicy";
 import {
+  StringIndexType,
   addParamsToTask,
   compose,
-  compileError,
   setCategoriesFilter,
   setOpinionMining,
-  setOrderBy,
-  setSentenceCount,
   setStrEncodingParam,
   setStrEncodingParamValue,
-  StringIndexType
+  throwError,
 } from "./util";
-import { TextAnalyticsOperationOptions } from "./textAnalyticsOperationOptions";
-import { AnalysisPollOperationState, OperationMetadata } from "./pollerModels";
-import { CustomTextAnalyticsAction, TextAnalyticsAction } from "./textAnalyticsAction";
 import {
   AnalyzeHealthcareEntitiesPollerLike,
+  BeginAnalyzeHealthcarePoller,
+  PollerLikeWithCancellation,
+} from "./lro/health/poller";
+import {
   AnalyzeHealthcareOperationState,
   BeginAnalyzeHealthcareEntitiesOptions,
-  HealthLro,
-  isHealthDone,
-  processHealthResult,
-  updateHealthState
-} from "./healthLro";
-import { LroEngine } from "@azure/core-lro";
-import { PagedAnalyzeHealthcareEntitiesResult } from "./analyzeHealthcareEntitiesResult";
+} from "./lro/health/operation";
+import type { TextAnalyticsOperationOptions } from "./textAnalyticsOperationOptions";
+import { AnalyzeActionsPollerLike, BeginAnalyzeActionsPoller } from "./lro/analyze/poller";
 import {
   AnalyzeActionsOperationMetadata,
   AnalyzeActionsOperationState,
-  AnalyzeActionsPollerLike,
-  AnalyzeLro,
   BeginAnalyzeActionsOptions,
-  isAnalyzeDone,
-  processAnalyzeResult,
-  updateAnalyzeState
-} from "./analyzeLro";
-import { PagedAnalyzeActionsResult } from "./analyzeActionsResult";
+} from "./lro/analyze/operation";
+import { AnalysisPollOperationState, OperationMetadata } from "./lro/poller";
+import type { TextAnalyticsAction } from "./textAnalyticsAction";
 
 export {
   BeginAnalyzeActionsOptions,
   AnalyzeActionsPollerLike,
   AnalyzeActionsOperationState,
   BeginAnalyzeHealthcareEntitiesOptions,
+  PollerLikeWithCancellation,
   AnalyzeHealthcareEntitiesPollerLike,
   AnalyzeHealthcareOperationState,
   AnalysisPollOperationState,
   OperationMetadata,
   AnalyzeActionsOperationMetadata,
-  StringIndexType
+  StringIndexType,
 };
 
 const DEFAULT_COGNITIVE_SCOPE = "https://cognitiveservices.azure.com/.default";
@@ -161,7 +141,7 @@ export enum PiiEntityDomain {
   /**
    * @see {@link https://aka.ms/tanerpii} for more information.
    */
-  PROTECTED_HEALTH_INFORMATION = "PHI"
+  PROTECTED_HEALTH_INFORMATION = "PHI",
 }
 
 /**
@@ -307,124 +287,29 @@ export interface AnalyzeSentimentAction extends TextAnalyticsAction {
 }
 
 /**
- * A type representing how to sort sentences for the summarization extraction action.
- */
-export type KnownSummarySentencesSortBy = "Offset" | "Rank";
-
-/**
- * Options for an extract summary action.
- */
-export interface ExtractSummaryAction extends TextAnalyticsAction {
-  /**
-   * Specifies the measurement unit used to calculate the offset and length properties.
-   * Possible units are "TextElements_v8", "UnicodeCodePoint", and "Utf16CodeUnit".
-   * The default is the JavaScript's default which is "Utf16CodeUnit".
-   */
-  stringIndexType?: StringIndexType;
-  /**
-   * If set to true, you opt-out of having your text input logged for troubleshooting. By default, Text Analytics
-   * logs your input text for 48 hours, solely to allow for troubleshooting issues. Setting this parameter to true,
-   * disables input logging and may limit our ability to remediate issues that occur.
-   */
-  disableServiceLogs?: boolean;
-  /**
-   * Specifies the number of summary sentences to return. The default number of sentences is 3.
-   */
-  maxSentenceCount?: number;
-  /**
-   * Specifies how to sort the returned sentences. Please refer to {@link KnownSummarySentencesOrderBy} for possible values.
-   */
-  orderBy?: string;
-}
-
-/**
- * Options for a custom recognize entities action. For more information, please refer
- * to the service documentation: {@link https://aka.ms/azsdk/textanalytics/customentityrecognition}
- */
-export interface RecognizeCustomEntitiesAction extends CustomTextAnalyticsAction {
-  /**
-   * Specifies the measurement unit used to calculate the offset and length properties.
-   * Possible units are "TextElements_v8", "UnicodeCodePoint", and "Utf16CodeUnit".
-   * The default is the JavaScript's default which is "Utf16CodeUnit".
-   */
-  stringIndexType?: StringIndexType;
-  /**
-   * If set to true, you opt-out of having your text input logged for troubleshooting. By default, Text Analytics
-   * logs your input text for 48 hours, solely to allow for troubleshooting issues. Setting this parameter to true,
-   * disables input logging and may limit our ability to remediate issues that occur.
-   */
-  disableServiceLogs?: boolean;
-}
-
-/**
- * Options for an custom classify document single category action. For more information, please refer
- * to the service documentation: {@link https://aka.ms/azsdk/textanalytics/customfunctionalities}
- */
-export interface SingleCategoryClassifyAction extends CustomTextAnalyticsAction {
-  /**
-   * If set to true, you opt-out of having your text input logged for troubleshooting. By default, Text Analytics
-   * logs your input text for 48 hours, solely to allow for troubleshooting issues. Setting this parameter to true,
-   * disables input logging and may limit our ability to remediate issues that occur.
-   */
-  disableServiceLogs?: boolean;
-}
-
-/**
- * Options for a custom classify document multi categories action. For more information, please refer
- * to the service documentation: {@link https://aka.ms/azsdk/textanalytics/customfunctionalities}
- */
-export interface MultiCategoryClassifyAction extends CustomTextAnalyticsAction {
-  /**
-   * If set to true, you opt-out of having your text input logged for troubleshooting. By default, Text Analytics
-   * logs your input text for 48 hours, solely to allow for troubleshooting issues. Setting this parameter to true,
-   * disables input logging and may limit our ability to remediate issues that occur.
-   */
-  disableServiceLogs?: boolean;
-}
-
-/**
- * Description of collection of actions for the analyze API to perform on input documents.
+ * Description of collection of actions for the analyze API to perform on input documents. However, currently, the service can accept up to one action only per action type.
  */
 export interface TextAnalyticsActions {
   /**
-   * A collection of descriptions of entities recognition actions.
+   * A collection of descriptions of entities recognition actions. However, currently, the service can accept up to one action only for `recognizeEntities`.
    */
   recognizeEntitiesActions?: RecognizeCategorizedEntitiesAction[];
   /**
-   * A collection of descriptions of Pii entities recognition actions.
+   * A collection of descriptions of Pii entities recognition actions. However, currently, the service can accept up to one action only for `recognizePiiEntities`.
    */
   recognizePiiEntitiesActions?: RecognizePiiEntitiesAction[];
   /**
-   * A collection of descriptions of key phrases recognition actions.
+   * A collection of descriptions of key phrases recognition actions. However, currently, the service can accept up to one action only for `extractKeyPhrases`.
    */
   extractKeyPhrasesActions?: ExtractKeyPhrasesAction[];
   /**
-   * A collection of descriptions of entities linking actions.
+   * A collection of descriptions of entities linking actions. However, currently, the service can accept up to one action only for `recognizeLinkedEntities`.
    */
   recognizeLinkedEntitiesActions?: RecognizeLinkedEntitiesAction[];
   /**
-   * A collection of descriptions of sentiment analysis actions.
+   * A collection of descriptions of sentiment analysis actions. However, currently, the service can accept up to one action only for `analyzeSentiment`.
    */
   analyzeSentimentActions?: AnalyzeSentimentAction[];
-  /**
-   * A collection of descriptions of summarization extraction actions.
-   */
-  extractSummaryActions?: ExtractSummaryAction[];
-  /**
-   * A collection of descriptions of custom entity recognition actions. For more information, please refer
-   * to the service documentation: {@link https://aka.ms/azsdk/textanalytics/customentityrecognition}
-   */
-  recognizeCustomEntitiesActions?: RecognizeCustomEntitiesAction[];
-  /**
-   * A collection of descriptions of custom single classification actions. For more information, please refer
-   * to the service documentation: {@link https://aka.ms/azsdk/textanalytics/customfunctionalities}
-   */
-  singleCategoryClassifyActions?: SingleCategoryClassifyAction[];
-  /**
-   * A collection of descriptions of custom multi classification actions. For more information, please refer
-   * to the service documentation: {@link https://aka.ms/azsdk/textanalytics/customfunctionalities}
-   */
-  multiCategoryClassifyActions?: MultiCategoryClassifyAction[];
 }
 /**
  * Client class for interacting with Azure Text Analytics.
@@ -450,6 +335,7 @@ export class TextAnalyticsClient {
    * A reference to the auto-generated TextAnalytics HTTP client.
    */
   private readonly client: GeneratedClient;
+  private readonly _tracing: TracingClient;
 
   /**
    * Creates an instance of TextAnalyticsClient.
@@ -470,21 +356,31 @@ export class TextAnalyticsClient {
   constructor(
     endpointUrl: string,
     credential: TokenCredential | KeyCredential,
-    options: TextAnalyticsClientOptions = {}
+    options: TextAnalyticsClientOptions = {},
   ) {
     this.endpointUrl = endpointUrl;
     const { defaultCountryHint = "us", defaultLanguage = "en", ...pipelineOptions } = options;
     this.defaultCountryHint = defaultCountryHint;
     this.defaultLanguage = defaultLanguage;
 
+    const libInfo = `azsdk-js-ai-textanalytics/${SDK_VERSION}`;
+    if (!pipelineOptions.userAgentOptions) {
+      pipelineOptions.userAgentOptions = {};
+    }
+    if (pipelineOptions.userAgentOptions.userAgentPrefix) {
+      pipelineOptions.userAgentOptions.userAgentPrefix = `${pipelineOptions.userAgentOptions.userAgentPrefix} ${libInfo}`;
+    } else {
+      pipelineOptions.userAgentOptions.userAgentPrefix = libInfo;
+    }
+
     const internalPipelineOptions: InternalPipelineOptions = {
       ...pipelineOptions,
       ...{
         loggingOptions: {
           logger: logger.info,
-          additionalAllowedHeaderNames: ["x-ms-correlation-request-id", "x-ms-request-id"]
-        }
-      }
+          additionalAllowedHeaderNames: ["x-ms-correlation-request-id", "x-ms-request-id"],
+        },
+      },
     };
 
     this.client = new GeneratedClient(this.endpointUrl, internalPipelineOptions);
@@ -494,6 +390,11 @@ export class TextAnalyticsClient {
       : textAnalyticsAzureKeyCredentialPolicy(credential);
 
     this.client.pipeline.addPolicy(authPolicy);
+    this._tracing = createTracingClient({
+      packageName: "@azure/ai-text-analytics",
+      packageVersion: SDK_VERSION,
+      namespace: "Microsoft.CognitiveServices",
+    });
   }
 
   /**
@@ -515,7 +416,7 @@ export class TextAnalyticsClient {
   public async detectLanguage(
     documents: string[],
     countryHint?: string,
-    options?: DetectLanguageOptions
+    options?: DetectLanguageOptions,
   ): Promise<DetectLanguageResultArray>;
   /**
    * Runs a predictive model to determine the language that the passed-in
@@ -528,12 +429,12 @@ export class TextAnalyticsClient {
    */
   public async detectLanguage(
     documents: DetectLanguageInput[],
-    options?: DetectLanguageOptions
+    options?: DetectLanguageOptions,
   ): Promise<DetectLanguageResultArray>;
   public async detectLanguage(
     documents: string[] | DetectLanguageInput[],
     countryHintOrOptions?: string | DetectLanguageOptions,
-    options?: DetectLanguageOptions
+    options?: DetectLanguageOptions,
   ): Promise<DetectLanguageResultArray> {
     let realOptions: DetectLanguageOptions;
     let realInputs: DetectLanguageInput[];
@@ -550,34 +451,24 @@ export class TextAnalyticsClient {
       // Replace "none" hints with ""
       realInputs = documents.map((input) => ({
         ...input,
-        countryHint: input.countryHint === "none" ? "" : input.countryHint
+        countryHint: input.countryHint === "none" ? "" : input.countryHint,
       }));
       realOptions = (countryHintOrOptions as DetectLanguageOptions) || {};
     }
 
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return this._tracing.withSpan(
       "TextAnalyticsClient-detectLanguages",
-      makeGeneratedDetectLanguageOptions(realOptions)
+      makeGeneratedDetectLanguageOptions(realOptions),
+      (finalOptions) =>
+        this.client
+          .languages(
+            {
+              documents: realInputs,
+            },
+            finalOptions,
+          )
+          .then((result) => makeDetectLanguageResultArray(realInputs, result)),
     );
-
-    try {
-      const result = await this.client.languages(
-        {
-          documents: realInputs
-        },
-        finalOptions
-      );
-
-      return makeDetectLanguageResultArray(realInputs, result);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -600,7 +491,7 @@ export class TextAnalyticsClient {
     documents: string[],
     language?: string,
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options?: RecognizeCategorizedEntitiesOptions
+    options?: RecognizeCategorizedEntitiesOptions,
   ): Promise<RecognizeCategorizedEntitiesResultArray>;
   /**
    * Runs a predictive model to identify a collection of named entities
@@ -616,13 +507,13 @@ export class TextAnalyticsClient {
   public async recognizeEntities(
     documents: TextDocumentInput[],
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options?: RecognizeCategorizedEntitiesOptions
+    options?: RecognizeCategorizedEntitiesOptions,
   ): Promise<RecognizeCategorizedEntitiesResultArray>;
   public async recognizeEntities(
     documents: string[] | TextDocumentInput[],
     languageOrOptions?: string | RecognizeCategorizedEntitiesOptions,
     // eslint-disable-next-line @azure/azure-sdk/ts-naming-options
-    options?: RecognizeCategorizedEntitiesOptions
+    options?: RecognizeCategorizedEntitiesOptions,
   ): Promise<RecognizeCategorizedEntitiesResultArray> {
     let realOptions: RecognizeCategorizedEntitiesOptions;
     let realInputs: TextDocumentInput[];
@@ -640,38 +531,19 @@ export class TextAnalyticsClient {
       realOptions = (languageOrOptions as RecognizeCategorizedEntitiesOptions) || {};
     }
 
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return this._tracing.withSpan(
       "TextAnalyticsClient-recognizeEntities",
-      makeGeneratedRecognizeCategorizedEntitiesOptions(realOptions)
+      makeGeneratedRecognizeCategorizedEntitiesOptions(realOptions),
+      (finalOptions) =>
+        throwError(
+          this.client.entitiesRecognitionGeneral(
+            {
+              documents: realInputs,
+            },
+            finalOptions,
+          ),
+        ).then((result) => makeRecognizeCategorizedEntitiesResultArray(realInputs, result)),
     );
-
-    try {
-      const result = await this.client.entitiesRecognitionGeneral(
-        {
-          documents: realInputs
-        },
-        finalOptions
-      );
-
-      return makeRecognizeCategorizedEntitiesResultArray(realInputs, result);
-    } catch (e) {
-      /**
-       * This special logic handles REST exception with code
-       * InvalidDocumentBatch and is needed to maintain backward compatability
-       * with sdk v5.0.0 and earlier. In general, REST exceptions are thrown as
-       * is and include both outer and inner exception codes. However, the
-       * earlier versions were throwing an exception that included the inner
-       * code only.
-       */
-      const backwardCompatibleException = compileError(e);
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: backwardCompatibleException.message
-      });
-      throw backwardCompatibleException;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -692,7 +564,7 @@ export class TextAnalyticsClient {
   public async analyzeSentiment(
     documents: string[],
     language?: string,
-    options?: AnalyzeSentimentOptions
+    options?: AnalyzeSentimentOptions,
   ): Promise<AnalyzeSentimentResultArray>;
   /**
    * Runs a predictive model to identify the positive, negative or neutral, or mixed
@@ -706,12 +578,12 @@ export class TextAnalyticsClient {
    */
   public async analyzeSentiment(
     documents: TextDocumentInput[],
-    options?: AnalyzeSentimentOptions
+    options?: AnalyzeSentimentOptions,
   ): Promise<AnalyzeSentimentResultArray>;
   public async analyzeSentiment(
     documents: string[] | TextDocumentInput[],
     languageOrOptions?: string | AnalyzeSentimentOptions,
-    options?: AnalyzeSentimentOptions
+    options?: AnalyzeSentimentOptions,
   ): Promise<AnalyzeSentimentResultArray> {
     let realOptions: AnalyzeSentimentOptions;
     let realInputs: TextDocumentInput[];
@@ -729,29 +601,19 @@ export class TextAnalyticsClient {
       realOptions = (languageOrOptions as AnalyzeSentimentOptions) || {};
     }
 
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return this._tracing.withSpan(
       "TextAnalyticsClient-analyzeSentiment",
-      makeGeneratedAnalyzeSentimentOptions(realOptions)
+      makeGeneratedAnalyzeSentimentOptions(realOptions),
+      (finalOptions) =>
+        this.client
+          .sentiment(
+            {
+              documents: realInputs,
+            },
+            finalOptions,
+          )
+          .then((result) => makeAnalyzeSentimentResultArray(realInputs, result)),
     );
-
-    try {
-      const result = await this.client.sentiment(
-        {
-          documents: realInputs
-        },
-        finalOptions
-      );
-
-      return makeAnalyzeSentimentResultArray(realInputs, result);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -770,7 +632,7 @@ export class TextAnalyticsClient {
   public async extractKeyPhrases(
     documents: string[],
     language?: string,
-    options?: ExtractKeyPhrasesOptions
+    options?: ExtractKeyPhrasesOptions,
   ): Promise<ExtractKeyPhrasesResultArray>;
   /**
    * Runs a model to identify a collection of significant phrases
@@ -782,12 +644,12 @@ export class TextAnalyticsClient {
    */
   public async extractKeyPhrases(
     documents: TextDocumentInput[],
-    options?: ExtractKeyPhrasesOptions
+    options?: ExtractKeyPhrasesOptions,
   ): Promise<ExtractKeyPhrasesResultArray>;
   public async extractKeyPhrases(
     documents: string[] | TextDocumentInput[],
     languageOrOptions?: string | ExtractKeyPhrasesOptions,
-    options?: ExtractKeyPhrasesOptions
+    options?: ExtractKeyPhrasesOptions,
   ): Promise<ExtractKeyPhrasesResultArray> {
     let realOptions: ExtractKeyPhrasesOptions;
     let realInputs: TextDocumentInput[];
@@ -805,29 +667,19 @@ export class TextAnalyticsClient {
       realOptions = (languageOrOptions as ExtractKeyPhrasesOptions) || {};
     }
 
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return this._tracing.withSpan(
       "TextAnalyticsClient-extractKeyPhrases",
-      makeGeneratedExtractKeyPhrasesOptions(realOptions)
+      makeGeneratedExtractKeyPhrasesOptions(realOptions),
+      (finalOptions) =>
+        this.client
+          .keyPhrases(
+            {
+              documents: realInputs,
+            },
+            finalOptions,
+          )
+          .then((result) => makeExtractKeyPhrasesResultArray(realInputs, result)),
     );
-
-    try {
-      const result = await this.client.keyPhrases(
-        {
-          documents: realInputs
-        },
-        finalOptions
-      );
-
-      return makeExtractKeyPhrasesResultArray(realInputs, result);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -848,7 +700,7 @@ export class TextAnalyticsClient {
   public async recognizePiiEntities(
     inputs: string[],
     language?: string,
-    options?: RecognizePiiEntitiesOptions
+    options?: RecognizePiiEntitiesOptions,
   ): Promise<RecognizePiiEntitiesResultArray>;
   /**
    * Runs a predictive model to identify a collection of entities containing
@@ -862,12 +714,12 @@ export class TextAnalyticsClient {
    */
   public async recognizePiiEntities(
     inputs: TextDocumentInput[],
-    options?: RecognizePiiEntitiesOptions
+    options?: RecognizePiiEntitiesOptions,
   ): Promise<RecognizePiiEntitiesResultArray>;
   public async recognizePiiEntities(
     inputs: string[] | TextDocumentInput[],
     languageOrOptions?: string | RecognizePiiEntitiesOptions,
-    options?: RecognizePiiEntitiesOptions
+    options?: RecognizePiiEntitiesOptions,
   ): Promise<RecognizePiiEntitiesResultArray> {
     let realOptions: RecognizePiiEntitiesOptions;
     let realInputs: TextDocumentInput[];
@@ -881,29 +733,19 @@ export class TextAnalyticsClient {
       realOptions = (languageOrOptions as RecognizePiiEntitiesOptions) || {};
     }
 
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return this._tracing.withSpan(
       "TextAnalyticsClient-recognizePiiEntities",
-      makeGeneratedRecognizePiiEntitiesOptions(realOptions)
+      makeGeneratedRecognizePiiEntitiesOptions(realOptions),
+      (finalOptions) =>
+        this.client
+          .entitiesRecognitionPii(
+            {
+              documents: realInputs,
+            },
+            finalOptions,
+          )
+          .then((result) => makeRecognizePiiEntitiesResultArray(realInputs, result)),
     );
-
-    try {
-      const result = await this.client.entitiesRecognitionPii(
-        {
-          documents: realInputs
-        },
-        finalOptions
-      );
-
-      return makeRecognizePiiEntitiesResultArray(realInputs, result);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -923,7 +765,7 @@ export class TextAnalyticsClient {
   public async recognizeLinkedEntities(
     documents: string[],
     language?: string,
-    options?: RecognizeLinkedEntitiesOptions
+    options?: RecognizeLinkedEntitiesOptions,
   ): Promise<RecognizeLinkedEntitiesResultArray>;
   /**
    * Runs a predictive model to identify a collection of entities
@@ -936,12 +778,12 @@ export class TextAnalyticsClient {
    */
   public async recognizeLinkedEntities(
     documents: TextDocumentInput[],
-    options?: RecognizeLinkedEntitiesOptions
+    options?: RecognizeLinkedEntitiesOptions,
   ): Promise<RecognizeLinkedEntitiesResultArray>;
   public async recognizeLinkedEntities(
     documents: string[] | TextDocumentInput[],
     languageOrOptions?: string | RecognizeLinkedEntitiesOptions,
-    options?: RecognizeLinkedEntitiesOptions
+    options?: RecognizeLinkedEntitiesOptions,
   ): Promise<RecognizeLinkedEntitiesResultArray> {
     let realOptions: RecognizeLinkedEntitiesOptions;
     let realInputs: TextDocumentInput[];
@@ -959,29 +801,19 @@ export class TextAnalyticsClient {
       realOptions = (languageOrOptions as RecognizeLinkedEntitiesOptions) || {};
     }
 
-    const { span, updatedOptions: finalOptions } = createSpan(
+    return this._tracing.withSpan(
       "TextAnalyticsClient-recognizeLinkedEntities",
-      makeGeneratedRecognizeLinkingEntitiesOptions(realOptions)
+      makeGeneratedRecognizeLinkingEntitiesOptions(realOptions),
+      (finalOptions) =>
+        this.client
+          .entitiesLinking(
+            {
+              documents: realInputs,
+            },
+            finalOptions,
+          )
+          .then((result) => makeRecognizeLinkedEntitiesResultArray(realInputs, result)),
     );
-
-    try {
-      const result = await this.client.entitiesLinking(
-        {
-          documents: realInputs
-        },
-        finalOptions
-      );
-
-      return makeRecognizeLinkedEntitiesResultArray(realInputs, result);
-    } catch (e) {
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: e.message
-      });
-      throw e;
-    } finally {
-      span.end();
-    }
   }
 
   /**
@@ -998,7 +830,7 @@ export class TextAnalyticsClient {
   async beginAnalyzeHealthcareEntities(
     documents: string[],
     language?: string,
-    options?: BeginAnalyzeHealthcareEntitiesOptions
+    options?: BeginAnalyzeHealthcareEntitiesOptions,
   ): Promise<AnalyzeHealthcareEntitiesPollerLike>;
   /**
    * Start a healthcare analysis operation to recognize healthcare related entities (drugs, conditions,
@@ -1008,13 +840,13 @@ export class TextAnalyticsClient {
    */
   async beginAnalyzeHealthcareEntities(
     documents: TextDocumentInput[],
-    options?: BeginAnalyzeHealthcareEntitiesOptions
+    options?: BeginAnalyzeHealthcareEntitiesOptions,
   ): Promise<AnalyzeHealthcareEntitiesPollerLike>;
 
   async beginAnalyzeHealthcareEntities(
     documents: string[] | TextDocumentInput[],
     languageOrOptions?: string | BeginAnalyzeHealthcareEntitiesOptions,
-    options?: BeginAnalyzeHealthcareEntitiesOptions
+    options?: BeginAnalyzeHealthcareEntitiesOptions,
   ): Promise<AnalyzeHealthcareEntitiesPollerLike> {
     let realOptions: BeginAnalyzeHealthcareEntitiesOptions;
     let realInputs: TextDocumentInput[];
@@ -1027,49 +859,14 @@ export class TextAnalyticsClient {
       realOptions = (languageOrOptions as BeginAnalyzeHealthcareEntitiesOptions) || {};
     }
 
-    const {
-      updateIntervalInMs,
-      resumeFrom,
-      onResponse,
-      disableServiceLogs,
-      modelVersion,
-      requestOptions,
-      serializerOptions,
-      abortSignal,
-      stringIndexType,
-      includeStatistics,
-      tracingOptions
-    } = realOptions;
-    const lro = new HealthLro(
-      this.client,
-      {
-        onResponse,
-        requestOptions,
-        serializerOptions,
-        abortSignal,
-        tracingOptions
-      },
-      { loggingOptOut: disableServiceLogs, stringIndexType, modelVersion },
-      { includeStatistics },
-      realInputs
-    );
-
-    const poller = new LroEngine<
-      PagedAnalyzeHealthcareEntitiesResult,
-      AnalyzeHealthcareOperationState
-    >(lro, {
-      intervalInMs: updateIntervalInMs,
+    const { updateIntervalInMs, resumeFrom, ...restOptions } = realOptions;
+    const poller = new BeginAnalyzeHealthcarePoller({
+      client: this.client,
+      tracing: this._tracing,
+      documents: realInputs,
+      options: restOptions,
+      updateIntervalInMs: updateIntervalInMs,
       resumeFrom: resumeFrom,
-      processResult: processHealthResult(this.client, realInputs, {
-        onResponse,
-        requestOptions,
-        serializerOptions,
-        abortSignal,
-        tracingOptions,
-        includeStatistics
-      }),
-      isDone: isHealthDone,
-      updateState: updateHealthState
     });
 
     await poller.poll();
@@ -1091,7 +888,7 @@ export class TextAnalyticsClient {
     documents: string[],
     actions: TextAnalyticsActions,
     language?: string,
-    options?: BeginAnalyzeActionsOptions
+    options?: BeginAnalyzeActionsOptions,
   ): Promise<AnalyzeActionsPollerLike>;
   /**
    * Submit a collection of text documents for analysis. Specify one or more unique actions to be executed.
@@ -1102,13 +899,13 @@ export class TextAnalyticsClient {
   public async beginAnalyzeActions(
     documents: TextDocumentInput[],
     actions: TextAnalyticsActions,
-    options?: BeginAnalyzeActionsOptions
+    options?: BeginAnalyzeActionsOptions,
   ): Promise<AnalyzeActionsPollerLike>;
   public async beginAnalyzeActions(
     documents: string[] | TextDocumentInput[],
     actions: TextAnalyticsActions,
     languageOrOptions?: string | BeginAnalyzeActionsOptions,
-    options?: BeginAnalyzeActionsOptions
+    options?: BeginAnalyzeActionsOptions,
   ): Promise<AnalyzeActionsPollerLike> {
     let realOptions: BeginAnalyzeActionsOptions;
     let realInputs: TextDocumentInput[];
@@ -1126,45 +923,15 @@ export class TextAnalyticsClient {
       realOptions = (languageOrOptions as BeginAnalyzeActionsOptions) || {};
     }
     const compiledActions = compileAnalyzeInput(actions);
-    const {
-      updateIntervalInMs,
-      resumeFrom,
-      displayName,
-      includeStatistics,
-      onResponse,
-      requestOptions,
-      serializerOptions,
-      abortSignal,
-      tracingOptions
-    } = realOptions;
-    const lro = new AnalyzeLro(
-      this.client,
-      {
-        onResponse,
-        requestOptions,
-        serializerOptions,
-        abortSignal,
-        tracingOptions
-      },
-      { displayName },
-      { includeStatistics },
-      realInputs,
-      compiledActions
-    );
-
-    const poller = new LroEngine<PagedAnalyzeActionsResult, AnalyzeActionsOperationState>(lro, {
-      intervalInMs: updateIntervalInMs,
+    const { updateIntervalInMs, resumeFrom, ...restOptions } = realOptions;
+    const poller = new BeginAnalyzeActionsPoller({
+      client: this.client,
+      tracing: this._tracing,
+      documents: realInputs,
+      actions: compiledActions,
+      options: restOptions,
       resumeFrom: resumeFrom,
-      processResult: processAnalyzeResult(this.client, realInputs, {
-        onResponse,
-        requestOptions,
-        serializerOptions,
-        abortSignal,
-        tracingOptions,
-        includeStatistics
-      }),
-      isDone: isAnalyzeDone,
-      updateState: updateAnalyzeState
+      updateIntervalInMs: updateIntervalInMs,
     });
 
     await poller.poll();
@@ -1178,26 +945,18 @@ export class TextAnalyticsClient {
 function compileAnalyzeInput(actions: TextAnalyticsActions): GeneratedActions {
   return {
     entityRecognitionPiiTasks: actions.recognizePiiEntitiesActions?.map(
-      compose(setStrEncodingParam, compose(setCategoriesFilter, addParamsToTask))
+      compose(setStrEncodingParam, compose(setCategoriesFilter, addParamsToTask)),
     ),
     entityRecognitionTasks: actions.recognizeEntitiesActions?.map(
-      compose(setStrEncodingParam, addParamsToTask)
+      compose(setStrEncodingParam, addParamsToTask),
     ),
     keyPhraseExtractionTasks: actions.extractKeyPhrasesActions?.map(addParamsToTask),
     entityLinkingTasks: actions.recognizeLinkedEntitiesActions?.map(
-      compose(setStrEncodingParam, addParamsToTask)
+      compose(setStrEncodingParam, addParamsToTask),
     ),
     sentimentAnalysisTasks: actions.analyzeSentimentActions?.map(
-      compose(setStrEncodingParam, compose(setOpinionMining, addParamsToTask))
+      compose(setStrEncodingParam, compose(setOpinionMining, addParamsToTask)),
     ),
-    extractiveSummarizationTasks: actions.extractSummaryActions?.map(
-      compose(setStrEncodingParam, compose(setSentenceCount, compose(setOrderBy, addParamsToTask)))
-    ),
-    customEntityRecognitionTasks: actions.recognizeCustomEntitiesActions?.map(
-      compose(setStrEncodingParam, addParamsToTask)
-    ),
-    customSingleClassificationTasks: actions.singleCategoryClassifyActions?.map(addParamsToTask),
-    customMultiClassificationTasks: actions.multiCategoryClassifyActions?.map(addParamsToTask)
   };
 }
 
@@ -1210,35 +969,31 @@ function isStringArray(documents: any[]): documents is string[] {
  */
 function convertToDetectLanguageInput(
   inputs: string[],
-  countryHint: string
+  countryHint: string,
 ): DetectLanguageInput[] {
   if (countryHint === "none") {
     countryHint = "";
   }
-  return inputs.map(
-    (text: string, index): DetectLanguageInput => {
-      return {
-        id: String(index),
-        countryHint,
-        text
-      };
-    }
-  );
+  return inputs.map((text: string, index): DetectLanguageInput => {
+    return {
+      id: String(index),
+      countryHint,
+      text,
+    };
+  });
 }
 
 /**
  * @internal
  */
 function convertToTextDocumentInput(inputs: string[], language: string): TextDocumentInput[] {
-  return inputs.map(
-    (text: string, index): TextDocumentInput => {
-      return {
-        id: String(index),
-        language,
-        text
-      };
-    }
-  );
+  return inputs.map((text: string, index): TextDocumentInput => {
+    return {
+      id: String(index),
+      language,
+      text,
+    };
+  });
 }
 
 /**
@@ -1247,7 +1002,7 @@ function convertToTextDocumentInput(inputs: string[], language: string): TextDoc
  * @internal
  */
 function makeGeneratedAnalyzeSentimentOptions(
-  params: AnalyzeSentimentOptions
+  params: AnalyzeSentimentOptions,
 ): GeneratedAnalyzeSentimentOptions {
   return {
     abortSignal: params.abortSignal,
@@ -1259,7 +1014,7 @@ function makeGeneratedAnalyzeSentimentOptions(
     tracingOptions: params.tracingOptions,
     onResponse: params.onResponse,
     serializerOptions: params.serializerOptions,
-    loggingOptOut: params.disableServiceLogs
+    loggingOptOut: params.disableServiceLogs,
   };
 }
 
@@ -1269,7 +1024,7 @@ function makeGeneratedAnalyzeSentimentOptions(
  * @internal
  */
 function makeGeneratedRecognizePiiEntitiesOptions(
-  params: RecognizePiiEntitiesOptions
+  params: RecognizePiiEntitiesOptions,
 ): GeneratedRecognizePiiEntitiesOptions {
   return {
     abortSignal: params.abortSignal,
@@ -1282,7 +1037,7 @@ function makeGeneratedRecognizePiiEntitiesOptions(
     piiCategories: params.categoriesFilter,
     onResponse: params.onResponse,
     serializerOptions: params.serializerOptions,
-    loggingOptOut: params.disableServiceLogs
+    loggingOptOut: params.disableServiceLogs,
   };
 }
 
@@ -1292,7 +1047,7 @@ function makeGeneratedRecognizePiiEntitiesOptions(
  * @internal
  */
 function makeGeneratedRecognizeCategorizedEntitiesOptions(
-  params: RecognizeCategorizedEntitiesOptions
+  params: RecognizeCategorizedEntitiesOptions,
 ): GeneratedRecognizeCategorizedEntitiesOptions {
   return {
     abortSignal: params.abortSignal,
@@ -1303,7 +1058,7 @@ function makeGeneratedRecognizeCategorizedEntitiesOptions(
     tracingOptions: params.tracingOptions,
     onResponse: params.onResponse,
     serializerOptions: params.serializerOptions,
-    loggingOptOut: params.disableServiceLogs
+    loggingOptOut: params.disableServiceLogs,
   };
 }
 
@@ -1313,7 +1068,7 @@ function makeGeneratedRecognizeCategorizedEntitiesOptions(
  * @internal
  */
 function makeGeneratedDetectLanguageOptions(
-  params: DetectLanguageOptions
+  params: DetectLanguageOptions,
 ): GeneratedDetectLanguageOptions {
   return {
     abortSignal: params.abortSignal,
@@ -1323,7 +1078,7 @@ function makeGeneratedDetectLanguageOptions(
     tracingOptions: params.tracingOptions,
     onResponse: params.onResponse,
     serializerOptions: params.serializerOptions,
-    loggingOptOut: params.disableServiceLogs
+    loggingOptOut: params.disableServiceLogs,
   };
 }
 
@@ -1333,7 +1088,7 @@ function makeGeneratedDetectLanguageOptions(
  * @internal
  */
 function makeGeneratedExtractKeyPhrasesOptions(
-  params: ExtractKeyPhrasesOptions
+  params: ExtractKeyPhrasesOptions,
 ): GeneratedExtractKeyPhrasesOptions {
   return {
     abortSignal: params.abortSignal,
@@ -1343,7 +1098,7 @@ function makeGeneratedExtractKeyPhrasesOptions(
     tracingOptions: params.tracingOptions,
     onResponse: params.onResponse,
     serializerOptions: params.serializerOptions,
-    loggingOptOut: params.disableServiceLogs
+    loggingOptOut: params.disableServiceLogs,
   };
 }
 
@@ -1353,7 +1108,7 @@ function makeGeneratedExtractKeyPhrasesOptions(
  * @internal
  */
 function makeGeneratedRecognizeLinkingEntitiesOptions(
-  params: RecognizeLinkedEntitiesOptions
+  params: RecognizeLinkedEntitiesOptions,
 ): GeneratedRecognizeLinkedEntitiesOptions {
   return {
     abortSignal: params.abortSignal,
@@ -1364,6 +1119,6 @@ function makeGeneratedRecognizeLinkingEntitiesOptions(
     onResponse: params.onResponse,
     serializerOptions: params.serializerOptions,
     loggingOptOut: params.disableServiceLogs,
-    stringIndexType: setStrEncodingParamValue(params.stringIndexType)
+    stringIndexType: setStrEncodingParamValue(params.stringIndexType),
   };
 }

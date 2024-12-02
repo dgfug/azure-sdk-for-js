@@ -6,27 +6,32 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { AppServiceCertificateOrders } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { WebSiteManagementClientContext } from "../webSiteManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { WebSiteManagementClient } from "../webSiteManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   AppServiceCertificateOrder,
   AppServiceCertificateOrdersListNextOptionalParams,
   AppServiceCertificateOrdersListOptionalParams,
+  AppServiceCertificateOrdersListResponse,
   AppServiceCertificateOrdersListByResourceGroupNextOptionalParams,
   AppServiceCertificateOrdersListByResourceGroupOptionalParams,
+  AppServiceCertificateOrdersListByResourceGroupResponse,
   AppServiceCertificateResource,
   AppServiceCertificateOrdersListCertificatesNextOptionalParams,
   AppServiceCertificateOrdersListCertificatesOptionalParams,
-  AppServiceCertificateOrdersListResponse,
+  AppServiceCertificateOrdersListCertificatesResponse,
   AppServiceCertificateOrdersValidatePurchaseInformationOptionalParams,
-  AppServiceCertificateOrdersListByResourceGroupResponse,
   AppServiceCertificateOrdersGetOptionalParams,
   AppServiceCertificateOrdersGetResponse,
   AppServiceCertificateOrdersCreateOrUpdateOptionalParams,
@@ -35,7 +40,6 @@ import {
   AppServiceCertificateOrderPatchResource,
   AppServiceCertificateOrdersUpdateOptionalParams,
   AppServiceCertificateOrdersUpdateResponse,
-  AppServiceCertificateOrdersListCertificatesResponse,
   AppServiceCertificateOrdersGetCertificateOptionalParams,
   AppServiceCertificateOrdersGetCertificateResponse,
   AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams,
@@ -61,20 +65,21 @@ import {
   AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse,
   AppServiceCertificateOrdersListNextResponse,
   AppServiceCertificateOrdersListByResourceGroupNextResponse,
-  AppServiceCertificateOrdersListCertificatesNextResponse
+  AppServiceCertificateOrdersListCertificatesNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a AppServiceCertificateOrders. */
+/** Class containing AppServiceCertificateOrders operations. */
 export class AppServiceCertificateOrdersImpl
-  implements AppServiceCertificateOrders {
-  private readonly client: WebSiteManagementClientContext;
+  implements AppServiceCertificateOrders
+{
+  private readonly client: WebSiteManagementClient;
 
   /**
    * Initialize a new instance of the class AppServiceCertificateOrders class.
    * @param client Reference to the service client
    */
-  constructor(client: WebSiteManagementClientContext) {
+  constructor(client: WebSiteManagementClient) {
     this.client = client;
   }
 
@@ -83,7 +88,7 @@ export class AppServiceCertificateOrdersImpl
    * @param options The options parameters.
    */
   public list(
-    options?: AppServiceCertificateOrdersListOptionalParams
+    options?: AppServiceCertificateOrdersListOptionalParams,
   ): PagedAsyncIterableIterator<AppServiceCertificateOrder> {
     const iter = this.listPagingAll(options);
     return {
@@ -93,27 +98,39 @@ export class AppServiceCertificateOrdersImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listPagingPage(options, settings);
+      },
     };
   }
 
   private async *listPagingPage(
-    options?: AppServiceCertificateOrdersListOptionalParams
+    options?: AppServiceCertificateOrdersListOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<AppServiceCertificateOrder[]> {
-    let result = await this._list(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: AppServiceCertificateOrdersListResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._list(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listPagingAll(
-    options?: AppServiceCertificateOrdersListOptionalParams
+    options?: AppServiceCertificateOrdersListOptionalParams,
   ): AsyncIterableIterator<AppServiceCertificateOrder> {
     for await (const page of this.listPagingPage(options)) {
       yield* page;
@@ -127,7 +144,7 @@ export class AppServiceCertificateOrdersImpl
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams
+    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<AppServiceCertificateOrder> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -137,37 +154,53 @@ export class AppServiceCertificateOrdersImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams
+    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<AppServiceCertificateOrder[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: AppServiceCertificateOrdersListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams
+    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<AppServiceCertificateOrder> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -182,12 +215,12 @@ export class AppServiceCertificateOrdersImpl
   public listCertificates(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersListCertificatesOptionalParams
+    options?: AppServiceCertificateOrdersListCertificatesOptionalParams,
   ): PagedAsyncIterableIterator<AppServiceCertificateResource> {
     const iter = this.listCertificatesPagingAll(
       resourceGroupName,
       certificateOrderName,
-      options
+      options,
     );
     return {
       next() {
@@ -196,49 +229,62 @@ export class AppServiceCertificateOrdersImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listCertificatesPagingPage(
           resourceGroupName,
           certificateOrderName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listCertificatesPagingPage(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersListCertificatesOptionalParams
+    options?: AppServiceCertificateOrdersListCertificatesOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<AppServiceCertificateResource[]> {
-    let result = await this._listCertificates(
-      resourceGroupName,
-      certificateOrderName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: AppServiceCertificateOrdersListCertificatesResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listCertificates(
+        resourceGroupName,
+        certificateOrderName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listCertificatesNext(
         resourceGroupName,
         certificateOrderName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listCertificatesPagingAll(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersListCertificatesOptionalParams
+    options?: AppServiceCertificateOrdersListCertificatesOptionalParams,
   ): AsyncIterableIterator<AppServiceCertificateResource> {
     for await (const page of this.listCertificatesPagingPage(
       resourceGroupName,
       certificateOrderName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -249,7 +295,7 @@ export class AppServiceCertificateOrdersImpl
    * @param options The options parameters.
    */
   private _list(
-    options?: AppServiceCertificateOrdersListOptionalParams
+    options?: AppServiceCertificateOrdersListOptionalParams,
   ): Promise<AppServiceCertificateOrdersListResponse> {
     return this.client.sendOperationRequest({ options }, listOperationSpec);
   }
@@ -261,11 +307,11 @@ export class AppServiceCertificateOrdersImpl
    */
   validatePurchaseInformation(
     appServiceCertificateOrder: AppServiceCertificateOrder,
-    options?: AppServiceCertificateOrdersValidatePurchaseInformationOptionalParams
+    options?: AppServiceCertificateOrdersValidatePurchaseInformationOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { appServiceCertificateOrder, options },
-      validatePurchaseInformationOperationSpec
+      validatePurchaseInformationOperationSpec,
     );
   }
 
@@ -276,11 +322,11 @@ export class AppServiceCertificateOrdersImpl
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams
+    options?: AppServiceCertificateOrdersListByResourceGroupOptionalParams,
   ): Promise<AppServiceCertificateOrdersListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -293,11 +339,11 @@ export class AppServiceCertificateOrdersImpl
   get(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersGetOptionalParams
+    options?: AppServiceCertificateOrdersGetOptionalParams,
   ): Promise<AppServiceCertificateOrdersGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -312,30 +358,29 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     certificateDistinguishedName: AppServiceCertificateOrder,
-    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<AppServiceCertificateOrdersCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<AppServiceCertificateOrdersCreateOrUpdateResponse>,
       AppServiceCertificateOrdersCreateOrUpdateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<AppServiceCertificateOrdersCreateOrUpdateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -344,8 +389,8 @@ export class AppServiceCertificateOrdersImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -353,25 +398,30 @@ export class AppServiceCertificateOrdersImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         certificateOrderName,
         certificateDistinguishedName,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: createOrUpdateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      AppServiceCertificateOrdersCreateOrUpdateResponse,
+      OperationState<AppServiceCertificateOrdersCreateOrUpdateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -385,13 +435,13 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     certificateDistinguishedName: AppServiceCertificateOrder,
-    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateOptionalParams,
   ): Promise<AppServiceCertificateOrdersCreateOrUpdateResponse> {
     const poller = await this.beginCreateOrUpdate(
       resourceGroupName,
       certificateOrderName,
       certificateDistinguishedName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -405,11 +455,11 @@ export class AppServiceCertificateOrdersImpl
   delete(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersDeleteOptionalParams
+    options?: AppServiceCertificateOrdersDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -424,16 +474,16 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     certificateDistinguishedName: AppServiceCertificateOrderPatchResource,
-    options?: AppServiceCertificateOrdersUpdateOptionalParams
+    options?: AppServiceCertificateOrdersUpdateOptionalParams,
   ): Promise<AppServiceCertificateOrdersUpdateResponse> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         certificateOrderName,
         certificateDistinguishedName,
-        options
+        options,
       },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -446,11 +496,11 @@ export class AppServiceCertificateOrdersImpl
   private _listCertificates(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersListCertificatesOptionalParams
+    options?: AppServiceCertificateOrdersListCertificatesOptionalParams,
   ): Promise<AppServiceCertificateOrdersListCertificatesResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, options },
-      listCertificatesOperationSpec
+      listCertificatesOperationSpec,
     );
   }
 
@@ -465,11 +515,11 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     name: string,
-    options?: AppServiceCertificateOrdersGetCertificateOptionalParams
+    options?: AppServiceCertificateOrdersGetCertificateOptionalParams,
   ): Promise<AppServiceCertificateOrdersGetCertificateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, name, options },
-      getCertificateOperationSpec
+      getCertificateOperationSpec,
     );
   }
 
@@ -486,32 +536,29 @@ export class AppServiceCertificateOrdersImpl
     certificateOrderName: string,
     name: string,
     keyVaultCertificate: AppServiceCertificateResource,
-    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<
-        AppServiceCertificateOrdersCreateOrUpdateCertificateResponse
-      >,
+    SimplePollerLike<
+      OperationState<AppServiceCertificateOrdersCreateOrUpdateCertificateResponse>,
       AppServiceCertificateOrdersCreateOrUpdateCertificateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<AppServiceCertificateOrdersCreateOrUpdateCertificateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -520,8 +567,8 @@ export class AppServiceCertificateOrdersImpl
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -529,26 +576,31 @@ export class AppServiceCertificateOrdersImpl
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      {
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
         resourceGroupName,
         certificateOrderName,
         name,
         keyVaultCertificate,
-        options
+        options,
       },
-      createOrUpdateCertificateOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+      spec: createOrUpdateCertificateOperationSpec,
     });
+    const poller = await createHttpPoller<
+      AppServiceCertificateOrdersCreateOrUpdateCertificateResponse,
+      OperationState<AppServiceCertificateOrdersCreateOrUpdateCertificateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -564,14 +616,14 @@ export class AppServiceCertificateOrdersImpl
     certificateOrderName: string,
     name: string,
     keyVaultCertificate: AppServiceCertificateResource,
-    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams
+    options?: AppServiceCertificateOrdersCreateOrUpdateCertificateOptionalParams,
   ): Promise<AppServiceCertificateOrdersCreateOrUpdateCertificateResponse> {
     const poller = await this.beginCreateOrUpdateCertificate(
       resourceGroupName,
       certificateOrderName,
       name,
       keyVaultCertificate,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -587,11 +639,11 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     name: string,
-    options?: AppServiceCertificateOrdersDeleteCertificateOptionalParams
+    options?: AppServiceCertificateOrdersDeleteCertificateOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, name, options },
-      deleteCertificateOperationSpec
+      deleteCertificateOperationSpec,
     );
   }
 
@@ -608,7 +660,7 @@ export class AppServiceCertificateOrdersImpl
     certificateOrderName: string,
     name: string,
     keyVaultCertificate: AppServiceCertificatePatchResource,
-    options?: AppServiceCertificateOrdersUpdateCertificateOptionalParams
+    options?: AppServiceCertificateOrdersUpdateCertificateOptionalParams,
   ): Promise<AppServiceCertificateOrdersUpdateCertificateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -616,9 +668,9 @@ export class AppServiceCertificateOrdersImpl
         certificateOrderName,
         name,
         keyVaultCertificate,
-        options
+        options,
       },
-      updateCertificateOperationSpec
+      updateCertificateOperationSpec,
     );
   }
 
@@ -633,16 +685,16 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     reissueCertificateOrderRequest: ReissueCertificateOrderRequest,
-    options?: AppServiceCertificateOrdersReissueOptionalParams
+    options?: AppServiceCertificateOrdersReissueOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         certificateOrderName,
         reissueCertificateOrderRequest,
-        options
+        options,
       },
-      reissueOperationSpec
+      reissueOperationSpec,
     );
   }
 
@@ -657,16 +709,16 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     renewCertificateOrderRequest: RenewCertificateOrderRequest,
-    options?: AppServiceCertificateOrdersRenewOptionalParams
+    options?: AppServiceCertificateOrdersRenewOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       {
         resourceGroupName,
         certificateOrderName,
         renewCertificateOrderRequest,
-        options
+        options,
       },
-      renewOperationSpec
+      renewOperationSpec,
     );
   }
 
@@ -679,11 +731,11 @@ export class AppServiceCertificateOrdersImpl
   resendEmail(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersResendEmailOptionalParams
+    options?: AppServiceCertificateOrdersResendEmailOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, options },
-      resendEmailOperationSpec
+      resendEmailOperationSpec,
     );
   }
 
@@ -699,11 +751,11 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     nameIdentifier: NameIdentifier,
-    options?: AppServiceCertificateOrdersResendRequestEmailsOptionalParams
+    options?: AppServiceCertificateOrdersResendRequestEmailsOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, nameIdentifier, options },
-      resendRequestEmailsOperationSpec
+      resendRequestEmailsOperationSpec,
     );
   }
 
@@ -724,11 +776,11 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     siteSealRequest: SiteSealRequest,
-    options?: AppServiceCertificateOrdersRetrieveSiteSealOptionalParams
+    options?: AppServiceCertificateOrdersRetrieveSiteSealOptionalParams,
   ): Promise<AppServiceCertificateOrdersRetrieveSiteSealResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, siteSealRequest, options },
-      retrieveSiteSealOperationSpec
+      retrieveSiteSealOperationSpec,
     );
   }
 
@@ -741,11 +793,11 @@ export class AppServiceCertificateOrdersImpl
   verifyDomainOwnership(
     resourceGroupName: string,
     certificateOrderName: string,
-    options?: AppServiceCertificateOrdersVerifyDomainOwnershipOptionalParams
+    options?: AppServiceCertificateOrdersVerifyDomainOwnershipOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, options },
-      verifyDomainOwnershipOperationSpec
+      verifyDomainOwnershipOperationSpec,
     );
   }
 
@@ -758,11 +810,11 @@ export class AppServiceCertificateOrdersImpl
   retrieveCertificateActions(
     resourceGroupName: string,
     name: string,
-    options?: AppServiceCertificateOrdersRetrieveCertificateActionsOptionalParams
+    options?: AppServiceCertificateOrdersRetrieveCertificateActionsOptionalParams,
   ): Promise<AppServiceCertificateOrdersRetrieveCertificateActionsResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, options },
-      retrieveCertificateActionsOperationSpec
+      retrieveCertificateActionsOperationSpec,
     );
   }
 
@@ -775,13 +827,11 @@ export class AppServiceCertificateOrdersImpl
   retrieveCertificateEmailHistory(
     resourceGroupName: string,
     name: string,
-    options?: AppServiceCertificateOrdersRetrieveCertificateEmailHistoryOptionalParams
-  ): Promise<
-    AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse
-  > {
+    options?: AppServiceCertificateOrdersRetrieveCertificateEmailHistoryOptionalParams,
+  ): Promise<AppServiceCertificateOrdersRetrieveCertificateEmailHistoryResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, name, options },
-      retrieveCertificateEmailHistoryOperationSpec
+      retrieveCertificateEmailHistoryOperationSpec,
     );
   }
 
@@ -792,11 +842,11 @@ export class AppServiceCertificateOrdersImpl
    */
   private _listNext(
     nextLink: string,
-    options?: AppServiceCertificateOrdersListNextOptionalParams
+    options?: AppServiceCertificateOrdersListNextOptionalParams,
   ): Promise<AppServiceCertificateOrdersListNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listNextOperationSpec
+      listNextOperationSpec,
     );
   }
 
@@ -809,11 +859,11 @@ export class AppServiceCertificateOrdersImpl
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: AppServiceCertificateOrdersListByResourceGroupNextOptionalParams
+    options?: AppServiceCertificateOrdersListByResourceGroupNextOptionalParams,
   ): Promise<AppServiceCertificateOrdersListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
@@ -828,11 +878,11 @@ export class AppServiceCertificateOrdersImpl
     resourceGroupName: string,
     certificateOrderName: string,
     nextLink: string,
-    options?: AppServiceCertificateOrdersListCertificatesNextOptionalParams
+    options?: AppServiceCertificateOrdersListCertificatesNextOptionalParams,
   ): Promise<AppServiceCertificateOrdersListCertificatesNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, certificateOrderName, nextLink, options },
-      listCertificatesNextOperationSpec
+      listCertificatesNextOperationSpec,
     );
   }
 }
@@ -840,193 +890,67 @@ export class AppServiceCertificateOrdersImpl
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.CertificateRegistration/certificateOrders",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.CertificateRegistration/certificateOrders",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AppServiceCertificateOrderCollection
+      bodyMapper: Mappers.AppServiceCertificateOrderCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const validatePurchaseInformationOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.CertificateRegistration/validateCertificateRegistrationInformation",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.CertificateRegistration/validateCertificateRegistrationInformation",
   httpMethod: "POST",
   responses: {
     204: {},
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   requestBody: Parameters.appServiceCertificateOrder,
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AppServiceCertificateOrderCollection
+      bodyMapper: Mappers.AppServiceCertificateOrderCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.AppServiceCertificateOrder
+      bodyMapper: Mappers.AppServiceCertificateOrder,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
-  httpMethod: "PUT",
-  responses: {
-    200: {
-      bodyMapper: Mappers.AppServiceCertificateOrder
+      bodyMapper: Mappers.DefaultErrorResponse,
     },
-    201: {
-      bodyMapper: Mappers.AppServiceCertificateOrder
-    },
-    202: {
-      bodyMapper: Mappers.AppServiceCertificateOrder
-    },
-    204: {
-      bodyMapper: Mappers.AppServiceCertificateOrder
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  requestBody: Parameters.certificateDistinguishedName,
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
-};
-const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
-  httpMethod: "DELETE",
-  responses: {
-    200: {},
-    204: {},
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
-  httpMethod: "PATCH",
-  responses: {
-    200: {
-      bodyMapper: Mappers.AppServiceCertificateOrder
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  requestBody: Parameters.certificateDistinguishedName1,
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
-};
-const listCertificatesOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.AppServiceCertificateCollection
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const getCertificateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.AppServiceCertificateResource
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -1034,31 +958,147 @@ const getCertificateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.certificateOrderName,
-    Parameters.name
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
-const createOrUpdateCertificateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
+const createOrUpdateOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.AppServiceCertificateResource
+      bodyMapper: Mappers.AppServiceCertificateOrder,
     },
     201: {
-      bodyMapper: Mappers.AppServiceCertificateResource
+      bodyMapper: Mappers.AppServiceCertificateOrder,
     },
     202: {
-      bodyMapper: Mappers.AppServiceCertificateResource
+      bodyMapper: Mappers.AppServiceCertificateOrder,
     },
     204: {
-      bodyMapper: Mappers.AppServiceCertificateResource
+      bodyMapper: Mappers.AppServiceCertificateOrder,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  requestBody: Parameters.certificateDistinguishedName,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const deleteOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
+  httpMethod: "DELETE",
+  responses: {
+    200: {},
+    204: {},
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const updateOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}",
+  httpMethod: "PATCH",
+  responses: {
+    200: {
+      bodyMapper: Mappers.AppServiceCertificateOrder,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  requestBody: Parameters.certificateDistinguishedName1,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const listCertificatesOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.AppServiceCertificateCollection,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const getCertificateOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.AppServiceCertificateResource,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+    Parameters.name,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const createOrUpdateCertificateOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
+  httpMethod: "PUT",
+  responses: {
+    200: {
+      bodyMapper: Mappers.AppServiceCertificateResource,
+    },
+    201: {
+      bodyMapper: Mappers.AppServiceCertificateResource,
+    },
+    202: {
+      bodyMapper: Mappers.AppServiceCertificateResource,
+    },
+    204: {
+      bodyMapper: Mappers.AppServiceCertificateResource,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   requestBody: Parameters.keyVaultCertificate,
   queryParameters: [Parameters.apiVersion],
@@ -1067,22 +1107,21 @@ const createOrUpdateCertificateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.certificateOrderName,
-    Parameters.name
+    Parameters.name,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteCertificateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -1090,22 +1129,21 @@ const deleteCertificateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.certificateOrderName,
-    Parameters.name
+    Parameters.name,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateCertificateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/certificates/{name}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.AppServiceCertificateResource
+      bodyMapper: Mappers.AppServiceCertificateResource,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   requestBody: Parameters.keyVaultCertificate1,
   queryParameters: [Parameters.apiVersion],
@@ -1114,21 +1152,20 @@ const updateCertificateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.certificateOrderName,
-    Parameters.name
+    Parameters.name,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const reissueOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/reissue",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/reissue",
   httpMethod: "POST",
   responses: {
     204: {},
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   requestBody: Parameters.reissueCertificateOrderRequest,
   queryParameters: [Parameters.apiVersion],
@@ -1136,21 +1173,20 @@ const reissueOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.certificateOrderName
+    Parameters.certificateOrderName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const renewOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/renew",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/renew",
   httpMethod: "POST",
   responses: {
     204: {},
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   requestBody: Parameters.renewCertificateOrderRequest,
   queryParameters: [Parameters.apiVersion],
@@ -1158,207 +1194,20 @@ const renewOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.certificateOrderName
+    Parameters.certificateOrderName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const resendEmailOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/resendEmail",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/resendEmail",
   httpMethod: "POST",
   responses: {
     204: {},
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const resendRequestEmailsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/resendRequestEmails",
-  httpMethod: "POST",
-  responses: {
-    204: {},
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  requestBody: Parameters.nameIdentifier,
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
-};
-const retrieveSiteSealOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/retrieveSiteSeal",
-  httpMethod: "POST",
-  responses: {
-    200: {
-      bodyMapper: Mappers.SiteSeal
+      bodyMapper: Mappers.DefaultErrorResponse,
     },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  requestBody: Parameters.siteSealRequest,
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
-  mediaType: "json",
-  serializer
-};
-const verifyDomainOwnershipOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/verifyDomainOwnership",
-  httpMethod: "POST",
-  responses: {
-    204: {},
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.certificateOrderName
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const retrieveCertificateActionsOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{name}/retrieveCertificateActions",
-  httpMethod: "POST",
-  responses: {
-    200: {
-      bodyMapper: {
-        type: {
-          name: "Sequence",
-          element: {
-            type: { name: "Composite", className: "CertificateOrderAction" }
-          }
-        }
-      }
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.name
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const retrieveCertificateEmailHistoryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{name}/retrieveEmailHistory",
-  httpMethod: "POST",
-  responses: {
-    200: {
-      bodyMapper: {
-        type: {
-          name: "Sequence",
-          element: {
-            type: { name: "Composite", className: "CertificateEmail" }
-          }
-        }
-      }
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.name
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.AppServiceCertificateOrderCollection
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.nextLink
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.AppServiceCertificateOrderCollection
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
-  },
-  queryParameters: [Parameters.apiVersion],
-  urlParameters: [
-    Parameters.$host,
-    Parameters.subscriptionId,
-    Parameters.resourceGroupName,
-    Parameters.nextLink
-  ],
-  headerParameters: [Parameters.accept],
-  serializer
-};
-const listCertificatesNextOperationSpec: coreClient.OperationSpec = {
-  path: "{nextLink}",
-  httpMethod: "GET",
-  responses: {
-    200: {
-      bodyMapper: Mappers.AppServiceCertificateCollection
-    },
-    default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -1366,8 +1215,186 @@ const listCertificatesNextOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.certificateOrderName,
-    Parameters.nextLink
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
+};
+const resendRequestEmailsOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/resendRequestEmails",
+  httpMethod: "POST",
+  responses: {
+    204: {},
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  requestBody: Parameters.nameIdentifier,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const retrieveSiteSealOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/retrieveSiteSeal",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: Mappers.SiteSeal,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  requestBody: Parameters.siteSealRequest,
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+  ],
+  headerParameters: [Parameters.accept, Parameters.contentType],
+  mediaType: "json",
+  serializer,
+};
+const verifyDomainOwnershipOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{certificateOrderName}/verifyDomainOwnership",
+  httpMethod: "POST",
+  responses: {
+    204: {},
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const retrieveCertificateActionsOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{name}/retrieveCertificateActions",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: {
+        type: {
+          name: "Sequence",
+          element: {
+            type: { name: "Composite", className: "CertificateOrderAction" },
+          },
+        },
+      },
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.name,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const retrieveCertificateEmailHistoryOperationSpec: coreClient.OperationSpec = {
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CertificateRegistration/certificateOrders/{name}/retrieveEmailHistory",
+  httpMethod: "POST",
+  responses: {
+    200: {
+      bodyMapper: {
+        type: {
+          name: "Sequence",
+          element: {
+            type: { name: "Composite", className: "CertificateEmail" },
+          },
+        },
+      },
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  queryParameters: [Parameters.apiVersion],
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.name,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const listNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.AppServiceCertificateOrderCollection,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.nextLink,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.AppServiceCertificateOrderCollection,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.nextLink,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
+};
+const listCertificatesNextOperationSpec: coreClient.OperationSpec = {
+  path: "{nextLink}",
+  httpMethod: "GET",
+  responses: {
+    200: {
+      bodyMapper: Mappers.AppServiceCertificateCollection,
+    },
+    default: {
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
+  },
+  urlParameters: [
+    Parameters.$host,
+    Parameters.subscriptionId,
+    Parameters.resourceGroupName,
+    Parameters.certificateOrderName,
+    Parameters.nextLink,
+  ],
+  headerParameters: [Parameters.accept],
+  serializer,
 };

@@ -6,14 +6,14 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   VirtualHubBgpConnectionGetOptionalParams,
   VirtualHubBgpConnectionGetResponse,
   BgpConnection,
   VirtualHubBgpConnectionCreateOrUpdateOptionalParams,
   VirtualHubBgpConnectionCreateOrUpdateResponse,
-  VirtualHubBgpConnectionDeleteOptionalParams
+  VirtualHubBgpConnectionDeleteOptionalParams,
 } from "../models";
 
 /** Interface representing a VirtualHubBgpConnection. */
@@ -29,7 +29,7 @@ export interface VirtualHubBgpConnection {
     resourceGroupName: string,
     virtualHubName: string,
     connectionName: string,
-    options?: VirtualHubBgpConnectionGetOptionalParams
+    options?: VirtualHubBgpConnectionGetOptionalParams,
   ): Promise<VirtualHubBgpConnectionGetResponse>;
   /**
    * Creates a VirtualHubBgpConnection resource if it doesn't exist else updates the existing
@@ -45,10 +45,10 @@ export interface VirtualHubBgpConnection {
     virtualHubName: string,
     connectionName: string,
     parameters: BgpConnection,
-    options?: VirtualHubBgpConnectionCreateOrUpdateOptionalParams
+    options?: VirtualHubBgpConnectionCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<VirtualHubBgpConnectionCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<VirtualHubBgpConnectionCreateOrUpdateResponse>,
       VirtualHubBgpConnectionCreateOrUpdateResponse
     >
   >;
@@ -66,7 +66,7 @@ export interface VirtualHubBgpConnection {
     virtualHubName: string,
     connectionName: string,
     parameters: BgpConnection,
-    options?: VirtualHubBgpConnectionCreateOrUpdateOptionalParams
+    options?: VirtualHubBgpConnectionCreateOrUpdateOptionalParams,
   ): Promise<VirtualHubBgpConnectionCreateOrUpdateResponse>;
   /**
    * Deletes a VirtualHubBgpConnection.
@@ -79,8 +79,8 @@ export interface VirtualHubBgpConnection {
     resourceGroupName: string,
     virtualHubName: string,
     connectionName: string,
-    options?: VirtualHubBgpConnectionDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: VirtualHubBgpConnectionDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes a VirtualHubBgpConnection.
    * @param resourceGroupName The resource group name of the VirtualHubBgpConnection.
@@ -92,6 +92,6 @@ export interface VirtualHubBgpConnection {
     resourceGroupName: string,
     virtualHubName: string,
     connectionName: string,
-    options?: VirtualHubBgpConnectionDeleteOptionalParams
+    options?: VirtualHubBgpConnectionDeleteOptionalParams,
   ): Promise<void>;
 }

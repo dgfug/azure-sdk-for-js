@@ -4,14 +4,16 @@
 
 ```ts
 
-import { AccessToken } from '@azure/core-auth';
+import type { AbortSignalLike } from '@azure/abort-controller';
+import type { AccessToken } from '@azure/core-auth';
 import { AzureKeyCredential } from '@azure/core-auth';
-import { CommonClientOptions } from '@azure/core-client';
-import { OperationOptions } from '@azure/core-client';
-import { PagedAsyncIterableIterator } from '@azure/core-paging';
-import { PollerLike } from '@azure/core-lro';
-import { PollOperationState } from '@azure/core-lro';
-import { TokenCredential } from '@azure/core-auth';
+import type { CancelOnProgress } from '@azure/core-lro';
+import type { CommonClientOptions } from '@azure/core-client';
+import type { OperationOptions } from '@azure/core-client';
+import type { PagedAsyncIterableIterator } from '@azure/core-paging';
+import type { PollerLike } from '@azure/core-lro';
+import type { PollOperationState } from '@azure/core-lro';
+import type { TokenCredential } from '@azure/core-auth';
 
 // @public
 export type AssetConversion = NonStartedAssetConversion | RunningAssetConversion | SucceededAssetConversion | FailedAssetConversion | CancelledAssetConversion;
@@ -151,6 +153,24 @@ export interface PartialRenderingSessionProperties {
 }
 
 // @public
+export interface PollerLikeWithCancellation<TState extends PollOperationState<TResult>, TResult> {
+    cancelOperation(options?: {
+        abortSignal?: AbortSignalLike;
+    }): Promise<void>;
+    getOperationState(): TState;
+    getResult(): TResult | undefined;
+    isDone(): boolean;
+    isStopped(): boolean;
+    onProgress(callback: (state: TState) => void): CancelOnProgress;
+    poll(options?: {
+        abortSignal?: AbortSignalLike;
+    }): Promise<void>;
+    pollUntilDone(): Promise<TResult>;
+    stopPolling(): void;
+    toString(): string;
+}
+
+// @public
 export interface ReadyRenderingSession extends RenderingSessionBase {
     properties: RenderingSessionProperties;
     status: "Ready";
@@ -206,7 +226,7 @@ export interface RenderingSessionOperationState extends PollOperationState<Rende
 }
 
 // @public
-export type RenderingSessionPollerLike = PollerLike<RenderingSessionOperationState, RenderingSession>;
+export type RenderingSessionPollerLike = PollerLikeWithCancellation<RenderingSessionOperationState, RenderingSession>;
 
 // @public
 export interface RenderingSessionPollerOptions {
@@ -269,7 +289,6 @@ export type UpdateSessionOptions = OperationOptions;
 export interface UpdateSessionSettings {
     maxLeaseTimeInMinutes: number;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

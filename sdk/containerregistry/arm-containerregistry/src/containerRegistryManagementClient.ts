@@ -6,9 +6,15 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
+import * as coreClient from "@azure/core-client";
+import * as coreRestPipeline from "@azure/core-rest-pipeline";
 import * as coreAuth from "@azure/core-auth";
 import {
+  ArchivesImpl,
+  ArchiveVersionsImpl,
+  CacheRulesImpl,
   ConnectedRegistriesImpl,
+  CredentialSetsImpl,
   ExportPipelinesImpl,
   RegistriesImpl,
   ImportPipelinesImpl,
@@ -25,7 +31,11 @@ import {
   TasksImpl
 } from "./operations";
 import {
+  Archives,
+  ArchiveVersions,
+  CacheRules,
   ConnectedRegistries,
+  CredentialSets,
   ExportPipelines,
   Registries,
   ImportPipelines,
@@ -41,14 +51,16 @@ import {
   TaskRuns,
   Tasks
 } from "./operationsInterfaces";
-import { ContainerRegistryManagementClientContext } from "./containerRegistryManagementClientContext";
 import { ContainerRegistryManagementClientOptionalParams } from "./models";
 
-export class ContainerRegistryManagementClient extends ContainerRegistryManagementClientContext {
+export class ContainerRegistryManagementClient extends coreClient.ServiceClient {
+  $host: string;
+  subscriptionId: string;
+
   /**
    * Initializes a new instance of the ContainerRegistryManagementClient class.
    * @param credentials Subscription credentials which uniquely identify client subscription.
-   * @param subscriptionId The Microsoft Azure subscription ID.
+   * @param subscriptionId The ID of the target subscription. The value must be an UUID.
    * @param options The parameter options
    */
   constructor(
@@ -56,8 +68,80 @@ export class ContainerRegistryManagementClient extends ContainerRegistryManageme
     subscriptionId: string,
     options?: ContainerRegistryManagementClientOptionalParams
   ) {
-    super(credentials, subscriptionId, options);
+    if (credentials === undefined) {
+      throw new Error("'credentials' cannot be null");
+    }
+    if (subscriptionId === undefined) {
+      throw new Error("'subscriptionId' cannot be null");
+    }
+
+    // Initializing default values for options
+    if (!options) {
+      options = {};
+    }
+    const defaults: ContainerRegistryManagementClientOptionalParams = {
+      requestContentType: "application/json; charset=utf-8",
+      credential: credentials
+    };
+
+    const packageDetails = `azsdk-js-arm-containerregistry/11.0.0-beta.4`;
+    const userAgentPrefix =
+      options.userAgentOptions && options.userAgentOptions.userAgentPrefix
+        ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}`
+        : `${packageDetails}`;
+
+    const optionsWithDefaults = {
+      ...defaults,
+      ...options,
+      userAgentOptions: {
+        userAgentPrefix
+      },
+      endpoint:
+        options.endpoint ?? options.baseUri ?? "https://management.azure.com"
+    };
+    super(optionsWithDefaults);
+
+    let bearerTokenAuthenticationPolicyFound: boolean = false;
+    if (options?.pipeline && options.pipeline.getOrderedPolicies().length > 0) {
+      const pipelinePolicies: coreRestPipeline.PipelinePolicy[] = options.pipeline.getOrderedPolicies();
+      bearerTokenAuthenticationPolicyFound = pipelinePolicies.some(
+        (pipelinePolicy) =>
+          pipelinePolicy.name ===
+          coreRestPipeline.bearerTokenAuthenticationPolicyName
+      );
+    }
+    if (
+      !options ||
+      !options.pipeline ||
+      options.pipeline.getOrderedPolicies().length == 0 ||
+      !bearerTokenAuthenticationPolicyFound
+    ) {
+      this.pipeline.removePolicy({
+        name: coreRestPipeline.bearerTokenAuthenticationPolicyName
+      });
+      this.pipeline.addPolicy(
+        coreRestPipeline.bearerTokenAuthenticationPolicy({
+          credential: credentials,
+          scopes:
+            optionsWithDefaults.credentialScopes ??
+            `${optionsWithDefaults.endpoint}/.default`,
+          challengeCallbacks: {
+            authorizeRequestOnChallenge:
+              coreClient.authorizeRequestOnClaimChallenge
+          }
+        })
+      );
+    }
+    // Parameter assignments
+    this.subscriptionId = subscriptionId;
+
+    // Assigning values to Constant parameters
+    this.$host = options.$host || "https://management.azure.com";
+    this.archives = new ArchivesImpl(this);
+    this.archiveVersions = new ArchiveVersionsImpl(this);
+    this.cacheRules = new CacheRulesImpl(this);
     this.connectedRegistries = new ConnectedRegistriesImpl(this);
+    this.credentialSets = new CredentialSetsImpl(this);
     this.exportPipelines = new ExportPipelinesImpl(this);
     this.registries = new RegistriesImpl(this);
     this.importPipelines = new ImportPipelinesImpl(this);
@@ -74,7 +158,11 @@ export class ContainerRegistryManagementClient extends ContainerRegistryManageme
     this.tasks = new TasksImpl(this);
   }
 
+  archives: Archives;
+  archiveVersions: ArchiveVersions;
+  cacheRules: CacheRules;
   connectedRegistries: ConnectedRegistries;
+  credentialSets: CredentialSets;
   exportPipelines: ExportPipelines;
   registries: Registries;
   importPipelines: ImportPipelines;

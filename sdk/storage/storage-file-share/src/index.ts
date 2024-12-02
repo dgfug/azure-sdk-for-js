@@ -1,19 +1,22 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RestError } from "@azure/core-http";
+import { RestError } from "@azure/core-rest-pipeline";
 
 export * from "./AccountSASPermissions";
 export * from "./AccountSASResourceTypes";
 export * from "./AccountSASServices";
-export * from "./AccountSASSignatureValues";
+export {
+  AccountSASSignatureValues,
+  generateAccountSASQueryParameters,
+} from "./AccountSASSignatureValues";
 export * from "./FileSASPermissions";
-export * from "./FileSASSignatureValues";
+export { FileSASSignatureValues, generateFileSASQueryParameters } from "./FileSASSignatureValues";
 export * from "./Clients";
 export * from "./ShareSASPermissions";
-export * from "./credentials/AnonymousCredential";
-export * from "./credentials/Credential";
-export * from "./credentials/StorageSharedKeyCredential";
+export * from "../../storage-blob/src/credentials/AnonymousCredential";
+export * from "../../storage-blob/src/credentials/Credential";
+export * from "../../storage-blob/src/credentials/StorageSharedKeyCredential";
 export { SasIPRange } from "./SasIPRange";
 export { Range } from "./Range";
 export {
@@ -28,18 +31,45 @@ export {
   FileAttributesPreserveType,
   CloseHandlesInfo,
   ShareProtocols,
-  HttpAuthorization
+  HttpAuthorization,
+  StorageFileAudience,
+  getFileServiceAccountAudience,
 } from "./models";
 export * from "./FileSystemAttributes";
-export * from "./Pipeline";
-export * from "./policies/AnonymousCredentialPolicy";
-export * from "./policies/CredentialPolicy";
+export { BaseRequestPolicy } from "../../storage-blob/src/policies/RequestPolicy";
+export {
+  Pipeline,
+  PipelineLike,
+  PipelineOptions,
+  isPipelineLike,
+  newPipeline,
+  StoragePipelineOptions,
+  RequestPolicyFactory,
+  RequestPolicy,
+  RequestPolicyOptions,
+  WebResource,
+  HttpOperationResponse,
+  HttpHeaders,
+  HttpRequestBody,
+  IHttpClient,
+  StorageOAuthScopes,
+  ServiceClientOptions,
+} from "./Pipeline";
+export * from "../../storage-blob/src/policies/AnonymousCredentialPolicy";
+export * from "../../storage-blob/src/policies/CredentialPolicy";
 export * from "./StorageRetryPolicyFactory";
-export * from "./policies/StorageSharedKeyCredentialPolicy";
-export * from "./StorageBrowserPolicyFactory";
+export * from "../../storage-blob/src/policies/StorageSharedKeyCredentialPolicy";
+export * from "../../storage-blob/src/StorageBrowserPolicyFactory";
 export * from "./ShareServiceClient";
 export * from "./SASQueryParameters";
 export { CommonOptions } from "./StorageClient";
 export * from "./generatedModels";
+export {
+  WithResponse,
+  ResponseLike,
+  ResponseWithBody,
+  ResponseWithHeaders,
+  HttpResponse,
+} from "./utils/utils.common";
 export { RestError };
 export { logger } from "./log";

@@ -1,12 +1,10 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { TokenCredential, GetTokenOptions, AccessToken } from "@azure/core-auth";
+import type { AccessToken, GetTokenOptions, TokenCredential } from "@azure/core-auth";
 
-import {
-  MixedRealityStsClient,
-  MixedRealityStsClientOptions
-} from "@azure/mixed-reality-authentication";
+import type { MixedRealityStsClientOptions } from "@azure/mixed-reality-authentication";
+import { MixedRealityStsClient } from "@azure/mixed-reality-authentication";
 
 /**
  * Represents a token credential that can be used to access a Mixed Reality service.
@@ -19,7 +17,7 @@ export class MixedRealityTokenCredential implements TokenCredential {
     accountId: string,
     accountDomain: string,
     credential: TokenCredential,
-    options: MixedRealityStsClientOptions
+    options: MixedRealityStsClientOptions,
   ) {
     this.stsClient = new MixedRealityStsClient(accountId, accountDomain, credential, options);
   }

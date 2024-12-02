@@ -6,32 +6,33 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { DomainRegistrationProvider } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { WebSiteManagementClientContext } from "../webSiteManagementClientContext";
+import { WebSiteManagementClient } from "../webSiteManagementClient";
 import {
   CsmOperationDescription,
   DomainRegistrationProviderListOperationsNextOptionalParams,
   DomainRegistrationProviderListOperationsOptionalParams,
   DomainRegistrationProviderListOperationsResponse,
-  DomainRegistrationProviderListOperationsNextResponse
+  DomainRegistrationProviderListOperationsNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
-/** Class representing a DomainRegistrationProvider. */
+/** Class containing DomainRegistrationProvider operations. */
 export class DomainRegistrationProviderImpl
-  implements DomainRegistrationProvider {
-  private readonly client: WebSiteManagementClientContext;
+  implements DomainRegistrationProvider
+{
+  private readonly client: WebSiteManagementClient;
 
   /**
    * Initialize a new instance of the class DomainRegistrationProvider class.
    * @param client Reference to the service client
    */
-  constructor(client: WebSiteManagementClientContext) {
+  constructor(client: WebSiteManagementClient) {
     this.client = client;
   }
 
@@ -41,7 +42,7 @@ export class DomainRegistrationProviderImpl
    * @param options The options parameters.
    */
   public listOperations(
-    options?: DomainRegistrationProviderListOperationsOptionalParams
+    options?: DomainRegistrationProviderListOperationsOptionalParams,
   ): PagedAsyncIterableIterator<CsmOperationDescription> {
     const iter = this.listOperationsPagingAll(options);
     return {
@@ -51,27 +52,39 @@ export class DomainRegistrationProviderImpl
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listOperationsPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listOperationsPagingPage(options, settings);
+      },
     };
   }
 
   private async *listOperationsPagingPage(
-    options?: DomainRegistrationProviderListOperationsOptionalParams
+    options?: DomainRegistrationProviderListOperationsOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<CsmOperationDescription[]> {
-    let result = await this._listOperations(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: DomainRegistrationProviderListOperationsResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listOperations(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listOperationsNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listOperationsPagingAll(
-    options?: DomainRegistrationProviderListOperationsOptionalParams
+    options?: DomainRegistrationProviderListOperationsOptionalParams,
   ): AsyncIterableIterator<CsmOperationDescription> {
     for await (const page of this.listOperationsPagingPage(options)) {
       yield* page;
@@ -84,11 +97,11 @@ export class DomainRegistrationProviderImpl
    * @param options The options parameters.
    */
   private _listOperations(
-    options?: DomainRegistrationProviderListOperationsOptionalParams
+    options?: DomainRegistrationProviderListOperationsOptionalParams,
   ): Promise<DomainRegistrationProviderListOperationsResponse> {
     return this.client.sendOperationRequest(
       { options },
-      listOperationsOperationSpec
+      listOperationsOperationSpec,
     );
   }
 
@@ -99,11 +112,11 @@ export class DomainRegistrationProviderImpl
    */
   private _listOperationsNext(
     nextLink: string,
-    options?: DomainRegistrationProviderListOperationsNextOptionalParams
+    options?: DomainRegistrationProviderListOperationsNextOptionalParams,
   ): Promise<DomainRegistrationProviderListOperationsNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listOperationsNextOperationSpec
+      listOperationsNextOperationSpec,
     );
   }
 }
@@ -115,30 +128,29 @@ const listOperationsOperationSpec: coreClient.OperationSpec = {
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.CsmOperationCollection
+      bodyMapper: Mappers.CsmOperationCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listOperationsNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.CsmOperationCollection
+      bodyMapper: Mappers.CsmOperationCollection,
     },
     default: {
-      bodyMapper: Mappers.DefaultErrorResponse
-    }
+      bodyMapper: Mappers.DefaultErrorResponse,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [Parameters.$host, Parameters.nextLink],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

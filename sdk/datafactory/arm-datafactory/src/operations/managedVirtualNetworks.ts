@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ManagedVirtualNetworks } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DataFactoryManagementClientContext } from "../dataFactoryManagementClientContext";
+import { DataFactoryManagementClient } from "../dataFactoryManagementClient";
 import {
   ManagedVirtualNetworkResource,
   ManagedVirtualNetworksListByFactoryNextOptionalParams,
@@ -21,19 +22,19 @@ import {
   ManagedVirtualNetworksCreateOrUpdateResponse,
   ManagedVirtualNetworksGetOptionalParams,
   ManagedVirtualNetworksGetResponse,
-  ManagedVirtualNetworksListByFactoryNextResponse
+  ManagedVirtualNetworksListByFactoryNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ManagedVirtualNetworks operations. */
 export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
-  private readonly client: DataFactoryManagementClientContext;
+  private readonly client: DataFactoryManagementClient;
 
   /**
    * Initialize a new instance of the class ManagedVirtualNetworks class.
    * @param client Reference to the service client
    */
-  constructor(client: DataFactoryManagementClientContext) {
+  constructor(client: DataFactoryManagementClient) {
     this.client = client;
   }
 
@@ -46,12 +47,12 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
   public listByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: ManagedVirtualNetworksListByFactoryOptionalParams
+    options?: ManagedVirtualNetworksListByFactoryOptionalParams,
   ): PagedAsyncIterableIterator<ManagedVirtualNetworkResource> {
     const iter = this.listByFactoryPagingAll(
       resourceGroupName,
       factoryName,
-      options
+      options,
     );
     return {
       next() {
@@ -60,49 +61,62 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByFactoryPagingPage(
           resourceGroupName,
           factoryName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByFactoryPagingPage(
     resourceGroupName: string,
     factoryName: string,
-    options?: ManagedVirtualNetworksListByFactoryOptionalParams
+    options?: ManagedVirtualNetworksListByFactoryOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ManagedVirtualNetworkResource[]> {
-    let result = await this._listByFactory(
-      resourceGroupName,
-      factoryName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ManagedVirtualNetworksListByFactoryResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByFactory(
+        resourceGroupName,
+        factoryName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByFactoryNext(
         resourceGroupName,
         factoryName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByFactoryPagingAll(
     resourceGroupName: string,
     factoryName: string,
-    options?: ManagedVirtualNetworksListByFactoryOptionalParams
+    options?: ManagedVirtualNetworksListByFactoryOptionalParams,
   ): AsyncIterableIterator<ManagedVirtualNetworkResource> {
     for await (const page of this.listByFactoryPagingPage(
       resourceGroupName,
       factoryName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -117,11 +131,11 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
   private _listByFactory(
     resourceGroupName: string,
     factoryName: string,
-    options?: ManagedVirtualNetworksListByFactoryOptionalParams
+    options?: ManagedVirtualNetworksListByFactoryOptionalParams,
   ): Promise<ManagedVirtualNetworksListByFactoryResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, options },
-      listByFactoryOperationSpec
+      listByFactoryOperationSpec,
     );
   }
 
@@ -138,7 +152,7 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
     factoryName: string,
     managedVirtualNetworkName: string,
     managedVirtualNetwork: ManagedVirtualNetworkResource,
-    options?: ManagedVirtualNetworksCreateOrUpdateOptionalParams
+    options?: ManagedVirtualNetworksCreateOrUpdateOptionalParams,
   ): Promise<ManagedVirtualNetworksCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -146,9 +160,9 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
         factoryName,
         managedVirtualNetworkName,
         managedVirtualNetwork,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -163,11 +177,11 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
     resourceGroupName: string,
     factoryName: string,
     managedVirtualNetworkName: string,
-    options?: ManagedVirtualNetworksGetOptionalParams
+    options?: ManagedVirtualNetworksGetOptionalParams,
   ): Promise<ManagedVirtualNetworksGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, managedVirtualNetworkName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -182,11 +196,11 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
     resourceGroupName: string,
     factoryName: string,
     nextLink: string,
-    options?: ManagedVirtualNetworksListByFactoryNextOptionalParams
+    options?: ManagedVirtualNetworksListByFactoryNextOptionalParams,
   ): Promise<ManagedVirtualNetworksListByFactoryNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, nextLink, options },
-      listByFactoryNextOperationSpec
+      listByFactoryNextOperationSpec,
     );
   }
 }
@@ -194,38 +208,36 @@ export class ManagedVirtualNetworksImpl implements ManagedVirtualNetworks {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByFactoryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedVirtualNetworkListResponse
+      bodyMapper: Mappers.ManagedVirtualNetworkListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedVirtualNetworkResource
+      bodyMapper: Mappers.ManagedVirtualNetworkResource,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.managedVirtualNetwork,
   queryParameters: [Parameters.apiVersion],
@@ -234,27 +246,26 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.managedVirtualNetworkName
+    Parameters.managedVirtualNetworkName,
   ],
   headerParameters: [
     Parameters.accept,
     Parameters.contentType,
-    Parameters.ifMatch
+    Parameters.ifMatch,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedVirtualNetworkResource
+      bodyMapper: Mappers.ManagedVirtualNetworkResource,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -262,30 +273,29 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.managedVirtualNetworkName
+    Parameters.managedVirtualNetworkName,
   ],
   headerParameters: [Parameters.accept, Parameters.ifNoneMatch],
-  serializer
+  serializer,
 };
 const listByFactoryNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedVirtualNetworkListResponse
+      bodyMapper: Mappers.ManagedVirtualNetworkListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.factoryName
+    Parameters.factoryName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

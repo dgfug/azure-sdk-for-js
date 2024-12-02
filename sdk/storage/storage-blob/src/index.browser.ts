@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { RestError } from "@azure/core-http";
+import { RestError } from "@azure/core-rest-pipeline";
 
 export * from "./BlobServiceClient";
 export * from "./Clients";
@@ -24,9 +24,27 @@ export {
   ContainerRequestConditions,
   HttpAuthorization,
   ModificationConditions,
-  MatchConditions
+  MatchConditions,
 } from "./models";
-export * from "./Pipeline";
+export {
+  Pipeline,
+  PipelineLike,
+  PipelineOptions,
+  isPipelineLike,
+  newPipeline,
+  StoragePipelineOptions,
+  RequestPolicyFactory,
+  RequestPolicy,
+  RequestPolicyOptions,
+  WebResource,
+  HttpOperationResponse,
+  HttpHeaders,
+  HttpRequestBody,
+  IHttpClient,
+  StorageOAuthScopes,
+  ServiceClientOptions,
+} from "./Pipeline";
+export { BaseRequestPolicy } from "./policies/RequestPolicy";
 export * from "./policies/AnonymousCredentialPolicy";
 export * from "./policies/CredentialPolicy";
 export * from "./StorageRetryPolicyFactory";
@@ -36,6 +54,6 @@ export { RestError };
 export {
   PageBlobGetPageRangesDiffResponse,
   PageBlobGetPageRangesResponse,
-  PageList
+  PageList,
 } from "./PageBlobRangeResponse";
 export { logger } from "./log";

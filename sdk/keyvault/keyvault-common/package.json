@@ -1,72 +1,109 @@
 {
   "name": "@azure/keyvault-common",
-  "sideEffects": false,
-  "sdk-type": "client",
-  "private": true,
-  "author": "Microsoft Corporation",
-  "version": "1.0.0",
-  "license": "MIT",
+  "version": "2.0.1",
   "description": "Common internal functionality for all of the Azure Key Vault clients in the Azure SDK for JavaScript",
+  "sdk-type": "client",
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "main": "./dist/commonjs/index.js",
+  "browser": "./dist/browser/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/commonjs/index.d.ts",
+  "scripts": {
+    "build": "npm run clean && dev-tool run build-package && dev-tool run extract-api",
+    "build:samples": "echo skipped",
+    "build:test": "npm run clean && dev-tool run build-package",
+    "check-format": "dev-tool run vendored prettier --list-different --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\"",
+    "clean": "dev-tool run vendored rimraf --glob dist dist-* temp types *.tgz *.log",
+    "execute:samples": "dev-tool samples run samples-dev",
+    "extract-api": "dev-tool run build-package && dev-tool run extract-api",
+    "format": "dev-tool run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\"",
+    "integration-test": "npm run integration-test:node && npm run integration-test:browser",
+    "integration-test:browser": "echo skipped",
+    "integration-test:node": "echo skipped",
+    "lint": "eslint README.md package.json api-extractor.json src test",
+    "lint:fix": "eslint README.md package.json api-extractor.json src test --fix --fix-type [problem,suggestion]",
+    "pack": "npm pack 2>&1",
+    "test": "npm run build:test && npm run unit-test:node && dev-tool run bundle && npm run unit-test:browser && npm run integration-test",
+    "test:browser": "npm run clean && npm run build:test && npm run integration-test:browser",
+    "test:node": "npm run clean && tsc -p . && npm run integration-test:node",
+    "unit-test": "npm run unit-test:node && npm run unit-test:browser",
+    "unit-test:browser": "echo skipped",
+    "unit-test:node": "dev-tool run test:vitest --no-test-proxy",
+    "update-snippets": "echo skipped"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "repository": "github:Azure/azure-sdk-for-js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "keywords": [
-    "node",
     "azure",
     "cloud",
-    "typescript",
-    "browser",
-    "isomorphic",
-    "keyvault"
+    "typescript"
   ],
   "bugs": {
     "url": "https://github.com/Azure/azure-sdk-for-js/issues"
   },
-  "main": "./src/index.ts",
-  "module": "dist-esm/index.js",
-  "types": "./types/index.d.ts",
-  "engines": {
-    "node": ">=12.0.0"
-  },
-  "scripts": {
-    "audit": "echo skipped",
-    "build:samples": "echo skipped",
-    "build:es6": "tsc -p tsconfig.json",
-    "build:nodebrowser": "echo skipped",
-    "build:test": "echo skipped",
-    "build": "npm run clean && npm run extract-api && npm run build:es6 && npm run build:nodebrowser",
-    "check-format": "prettier --list-different --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\"",
-    "clean": "rimraf dist-esm dist-test types *.tgz *.log samples/typescript/dist",
-    "execute:js-samples": "echo skipped",
-    "execute:ts-samples": "echo skipped",
-    "execute:samples": "npm run build:samples && npm run execute:js-samples && npm run execute:ts-samples",
-    "extract-api": "echo skipped",
-    "format": "prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.ts\" \"*.{js,json}\"",
-    "integration-test:browser": "echo skipped",
-    "integration-test:node": "echo skipped",
-    "integration-test:node:no-timeout": "echo skipped",
-    "integration-test": "npm run integration-test:node && npm run integration-test:browser",
-    "lint:fix": "eslint package.json src --ext .ts --fix --fix-type [problem,suggestion]",
-    "lint": "eslint package.json src --ext .ts",
-    "pack": "npm pack 2>&1",
-    "test:browser": "npm run clean && npm run build:test && npm run unit-test:browser",
-    "test:node": "npm run clean && npm run build:test && npm run unit-test:node",
-    "test": "npm run clean && npm run build:test && npm run unit-test",
-    "unit-test:browser": "echo skipped",
-    "unit-test:node": "echo skipped",
-    "unit-test:node:no-timeout": "echo skipped",
-    "unit-test": "npm run unit-test:node && npm run unit-test:browser",
-    "docs": "echo Skipped."
-  },
+  "homepage": "https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/keyvault/keyvault-common/README.md",
+  "sideEffects": false,
+  "prettier": "@azure/eslint-plugin-azure-sdk/prettier.json",
   "dependencies": {
-    "@azure/core-http": "^2.0.0",
-    "@azure/core-tracing": "1.0.0-preview.13",
-    "tslib": "^2.2.0"
+    "@azure/abort-controller": "^2.0.0",
+    "@azure/core-auth": "^1.3.0",
+    "@azure/core-client": "^1.5.0",
+    "@azure/core-rest-pipeline": "^1.8.0",
+    "@azure/core-tracing": "^1.0.0",
+    "@azure/logger": "^1.1.4",
+    "tslib": "^2.2.0",
+    "@azure/core-util": "^1.10.0"
   },
   "devDependencies": {
-    "@azure/test-utils": "^1.0.0",
+    "@azure-tools/test-utils-vitest": "^1.0.0",
+    "@azure/dev-tool": "^1.0.0",
     "@azure/eslint-plugin-azure-sdk": "^3.0.0",
-    "eslint": "^7.15.0",
-    "prettier": "^1.16.4",
-    "rimraf": "^3.0.0",
-    "typescript": "~4.2.0"
+    "@types/node": "^18.0.0",
+    "@vitest/browser": "^2.0.5",
+    "@vitest/coverage-istanbul": "^2.0.5",
+    "eslint": "^9.9.0",
+    "playwright": "^1.46.0",
+    "typescript": "~5.6.2",
+    "vitest": "^2.0.5"
+  },
+  "type": "module",
+  "tshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    },
+    "dialects": [
+      "esm",
+      "commonjs"
+    ],
+    "esmDialects": [
+      "browser"
+    ],
+    "selfLink": false
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "browser": {
+        "types": "./dist/browser/index.d.ts",
+        "default": "./dist/browser/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
+    }
   }
 }

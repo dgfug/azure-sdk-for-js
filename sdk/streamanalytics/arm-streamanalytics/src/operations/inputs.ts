@@ -6,18 +6,24 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { Inputs } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { StreamAnalyticsManagementClientContext } from "../streamAnalyticsManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { StreamAnalyticsManagementClient } from "../streamAnalyticsManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   Input,
   InputsListByStreamingJobNextOptionalParams,
   InputsListByStreamingJobOptionalParams,
+  InputsListByStreamingJobResponse,
   InputsCreateOrReplaceOptionalParams,
   InputsCreateOrReplaceResponse,
   InputsUpdateOptionalParams,
@@ -25,22 +31,21 @@ import {
   InputsDeleteOptionalParams,
   InputsGetOptionalParams,
   InputsGetResponse,
-  InputsListByStreamingJobResponse,
   InputsTestOptionalParams,
   InputsTestResponse,
-  InputsListByStreamingJobNextResponse
+  InputsListByStreamingJobNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing Inputs operations. */
 export class InputsImpl implements Inputs {
-  private readonly client: StreamAnalyticsManagementClientContext;
+  private readonly client: StreamAnalyticsManagementClient;
 
   /**
    * Initialize a new instance of the class Inputs class.
    * @param client Reference to the service client
    */
-  constructor(client: StreamAnalyticsManagementClientContext) {
+  constructor(client: StreamAnalyticsManagementClient) {
     this.client = client;
   }
 
@@ -53,12 +58,12 @@ export class InputsImpl implements Inputs {
   public listByStreamingJob(
     resourceGroupName: string,
     jobName: string,
-    options?: InputsListByStreamingJobOptionalParams
+    options?: InputsListByStreamingJobOptionalParams,
   ): PagedAsyncIterableIterator<Input> {
     const iter = this.listByStreamingJobPagingAll(
       resourceGroupName,
       jobName,
-      options
+      options,
     );
     return {
       next() {
@@ -67,49 +72,62 @@ export class InputsImpl implements Inputs {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByStreamingJobPagingPage(
           resourceGroupName,
           jobName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
   private async *listByStreamingJobPagingPage(
     resourceGroupName: string,
     jobName: string,
-    options?: InputsListByStreamingJobOptionalParams
+    options?: InputsListByStreamingJobOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<Input[]> {
-    let result = await this._listByStreamingJob(
-      resourceGroupName,
-      jobName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: InputsListByStreamingJobResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByStreamingJob(
+        resourceGroupName,
+        jobName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByStreamingJobNext(
         resourceGroupName,
         jobName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByStreamingJobPagingAll(
     resourceGroupName: string,
     jobName: string,
-    options?: InputsListByStreamingJobOptionalParams
+    options?: InputsListByStreamingJobOptionalParams,
   ): AsyncIterableIterator<Input> {
     for await (const page of this.listByStreamingJobPagingPage(
       resourceGroupName,
       jobName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -129,11 +147,11 @@ export class InputsImpl implements Inputs {
     jobName: string,
     inputName: string,
     input: Input,
-    options?: InputsCreateOrReplaceOptionalParams
+    options?: InputsCreateOrReplaceOptionalParams,
   ): Promise<InputsCreateOrReplaceResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, jobName, inputName, input, options },
-      createOrReplaceOperationSpec
+      createOrReplaceOperationSpec,
     );
   }
 
@@ -154,11 +172,11 @@ export class InputsImpl implements Inputs {
     jobName: string,
     inputName: string,
     input: Input,
-    options?: InputsUpdateOptionalParams
+    options?: InputsUpdateOptionalParams,
   ): Promise<InputsUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, jobName, inputName, input, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -173,11 +191,11 @@ export class InputsImpl implements Inputs {
     resourceGroupName: string,
     jobName: string,
     inputName: string,
-    options?: InputsDeleteOptionalParams
+    options?: InputsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, jobName, inputName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -192,11 +210,11 @@ export class InputsImpl implements Inputs {
     resourceGroupName: string,
     jobName: string,
     inputName: string,
-    options?: InputsGetOptionalParams
+    options?: InputsGetOptionalParams,
   ): Promise<InputsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, jobName, inputName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -209,11 +227,11 @@ export class InputsImpl implements Inputs {
   private _listByStreamingJob(
     resourceGroupName: string,
     jobName: string,
-    options?: InputsListByStreamingJobOptionalParams
+    options?: InputsListByStreamingJobOptionalParams,
   ): Promise<InputsListByStreamingJobResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, jobName, options },
-      listByStreamingJobOperationSpec
+      listByStreamingJobOperationSpec,
     );
   }
 
@@ -228,27 +246,26 @@ export class InputsImpl implements Inputs {
     resourceGroupName: string,
     jobName: string,
     inputName: string,
-    options?: InputsTestOptionalParams
+    options?: InputsTestOptionalParams,
   ): Promise<
-    PollerLike<PollOperationState<InputsTestResponse>, InputsTestResponse>
+    SimplePollerLike<OperationState<InputsTestResponse>, InputsTestResponse>
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<InputsTestResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -257,8 +274,8 @@ export class InputsImpl implements Inputs {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -266,20 +283,25 @@ export class InputsImpl implements Inputs {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, jobName, inputName, options },
-      testOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: { resourceGroupName, jobName, inputName, options },
+      spec: testOperationSpec,
     });
+    const poller = await createHttpPoller<
+      InputsTestResponse,
+      OperationState<InputsTestResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -293,13 +315,13 @@ export class InputsImpl implements Inputs {
     resourceGroupName: string,
     jobName: string,
     inputName: string,
-    options?: InputsTestOptionalParams
+    options?: InputsTestOptionalParams,
   ): Promise<InputsTestResponse> {
     const poller = await this.beginTest(
       resourceGroupName,
       jobName,
       inputName,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -315,11 +337,11 @@ export class InputsImpl implements Inputs {
     resourceGroupName: string,
     jobName: string,
     nextLink: string,
-    options?: InputsListByStreamingJobNextOptionalParams
+    options?: InputsListByStreamingJobNextOptionalParams,
   ): Promise<InputsListByStreamingJobNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, jobName, nextLink, options },
-      listByStreamingJobNextOperationSpec
+      listByStreamingJobNextOperationSpec,
     );
   }
 }
@@ -327,21 +349,20 @@ export class InputsImpl implements Inputs {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const createOrReplaceOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
+  path: "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
   httpMethod: "PUT",
   responses: {
     200: {
       bodyMapper: Mappers.Input,
-      headersMapper: Mappers.InputsCreateOrReplaceHeaders
+      headersMapper: Mappers.InputsCreateOrReplaceHeaders,
     },
     201: {
       bodyMapper: Mappers.Input,
-      headersMapper: Mappers.InputsCreateOrReplaceHeaders
+      headersMapper: Mappers.InputsCreateOrReplaceHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.input,
   queryParameters: [Parameters.apiVersion],
@@ -350,29 +371,28 @@ const createOrReplaceOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.jobName,
-    Parameters.inputName
+    Parameters.inputName,
   ],
   headerParameters: [
     Parameters.contentType,
     Parameters.accept,
     Parameters.ifMatch,
-    Parameters.ifNoneMatch
+    Parameters.ifNoneMatch,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
+  path: "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
   httpMethod: "PATCH",
   responses: {
     200: {
       bodyMapper: Mappers.Input,
-      headersMapper: Mappers.InputsUpdateHeaders
+      headersMapper: Mappers.InputsUpdateHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.input,
   queryParameters: [Parameters.apiVersion],
@@ -381,26 +401,25 @@ const updateOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.jobName,
-    Parameters.inputName
+    Parameters.inputName,
   ],
   headerParameters: [
     Parameters.contentType,
     Parameters.accept,
-    Parameters.ifMatch
+    Parameters.ifMatch,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
+  path: "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -408,23 +427,22 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.jobName,
-    Parameters.inputName
+    Parameters.inputName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
+  path: "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}",
   httpMethod: "GET",
   responses: {
     200: {
       bodyMapper: Mappers.Input,
-      headersMapper: Mappers.InputsGetHeaders
+      headersMapper: Mappers.InputsGetHeaders,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -432,53 +450,51 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.jobName,
-    Parameters.inputName
+    Parameters.inputName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByStreamingJobOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs",
+  path: "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.InputListResult
+      bodyMapper: Mappers.InputListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.select],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.jobName
+    Parameters.jobName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const testOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}/test",
+  path: "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/Microsoft.StreamAnalytics/streamingjobs/{jobName}/inputs/{inputName}/test",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.ResourceTestStatus
+      bodyMapper: Mappers.ResourceTestStatus,
     },
     201: {
-      bodyMapper: Mappers.ResourceTestStatus
+      bodyMapper: Mappers.ResourceTestStatus,
     },
     202: {
-      bodyMapper: Mappers.ResourceTestStatus
+      bodyMapper: Mappers.ResourceTestStatus,
     },
     204: {
-      bodyMapper: Mappers.ResourceTestStatus
+      bodyMapper: Mappers.ResourceTestStatus,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
   requestBody: Parameters.input1,
   queryParameters: [Parameters.apiVersion],
@@ -487,31 +503,30 @@ const testOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.jobName,
-    Parameters.inputName
+    Parameters.inputName,
   ],
   headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByStreamingJobNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.InputListResult
+      bodyMapper: Mappers.InputListResult,
     },
     default: {
-      bodyMapper: Mappers.ErrorModel
-    }
+      bodyMapper: Mappers.ErrorModel,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.select],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.jobName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

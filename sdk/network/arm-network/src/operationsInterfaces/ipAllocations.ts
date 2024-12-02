@@ -7,7 +7,7 @@
  */
 
 import { PagedAsyncIterableIterator } from "@azure/core-paging";
-import { PollerLike, PollOperationState } from "@azure/core-lro";
+import { SimplePollerLike, OperationState } from "@azure/core-lro";
 import {
   IpAllocation,
   IpAllocationsListOptionalParams,
@@ -19,7 +19,7 @@ import {
   IpAllocationsCreateOrUpdateResponse,
   TagsObject,
   IpAllocationsUpdateTagsOptionalParams,
-  IpAllocationsUpdateTagsResponse
+  IpAllocationsUpdateTagsResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
@@ -30,7 +30,7 @@ export interface IpAllocations {
    * @param options The options parameters.
    */
   list(
-    options?: IpAllocationsListOptionalParams
+    options?: IpAllocationsListOptionalParams,
   ): PagedAsyncIterableIterator<IpAllocation>;
   /**
    * Gets all IpAllocations in a resource group.
@@ -39,7 +39,7 @@ export interface IpAllocations {
    */
   listByResourceGroup(
     resourceGroupName: string,
-    options?: IpAllocationsListByResourceGroupOptionalParams
+    options?: IpAllocationsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<IpAllocation>;
   /**
    * Deletes the specified IpAllocation.
@@ -50,8 +50,8 @@ export interface IpAllocations {
   beginDelete(
     resourceGroupName: string,
     ipAllocationName: string,
-    options?: IpAllocationsDeleteOptionalParams
-  ): Promise<PollerLike<PollOperationState<void>, void>>;
+    options?: IpAllocationsDeleteOptionalParams,
+  ): Promise<SimplePollerLike<OperationState<void>, void>>;
   /**
    * Deletes the specified IpAllocation.
    * @param resourceGroupName The name of the resource group.
@@ -61,7 +61,7 @@ export interface IpAllocations {
   beginDeleteAndWait(
     resourceGroupName: string,
     ipAllocationName: string,
-    options?: IpAllocationsDeleteOptionalParams
+    options?: IpAllocationsDeleteOptionalParams,
   ): Promise<void>;
   /**
    * Gets the specified IpAllocation by resource group.
@@ -72,7 +72,7 @@ export interface IpAllocations {
   get(
     resourceGroupName: string,
     ipAllocationName: string,
-    options?: IpAllocationsGetOptionalParams
+    options?: IpAllocationsGetOptionalParams,
   ): Promise<IpAllocationsGetResponse>;
   /**
    * Creates or updates an IpAllocation in the specified resource group.
@@ -85,10 +85,10 @@ export interface IpAllocations {
     resourceGroupName: string,
     ipAllocationName: string,
     parameters: IpAllocation,
-    options?: IpAllocationsCreateOrUpdateOptionalParams
+    options?: IpAllocationsCreateOrUpdateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<IpAllocationsCreateOrUpdateResponse>,
+    SimplePollerLike<
+      OperationState<IpAllocationsCreateOrUpdateResponse>,
       IpAllocationsCreateOrUpdateResponse
     >
   >;
@@ -103,7 +103,7 @@ export interface IpAllocations {
     resourceGroupName: string,
     ipAllocationName: string,
     parameters: IpAllocation,
-    options?: IpAllocationsCreateOrUpdateOptionalParams
+    options?: IpAllocationsCreateOrUpdateOptionalParams,
   ): Promise<IpAllocationsCreateOrUpdateResponse>;
   /**
    * Updates a IpAllocation tags.
@@ -116,6 +116,6 @@ export interface IpAllocations {
     resourceGroupName: string,
     ipAllocationName: string,
     parameters: TagsObject,
-    options?: IpAllocationsUpdateTagsOptionalParams
+    options?: IpAllocationsUpdateTagsOptionalParams,
   ): Promise<IpAllocationsUpdateTagsResponse>;
 }

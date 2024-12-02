@@ -1,16 +1,11 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 /* eslint-disable eqeqeq */
 
-import { AmqpError, AmqpResponseStatusCode, isAmqpError as rheaIsAmqpError } from "rhea-promise";
-import { isNode, isNumber, isString } from "../src/util/utils";
-import { isDefined, isObjectWithProperties } from "./util/typeGuards";
-
-/**
- * The standard error message accompanying an AbortError.
- * @hidden
- */
-export const StandardAbortMessage = "The operation was aborted.";
+import type { AmqpError } from "rhea-promise";
+import { AmqpResponseStatusCode, isAmqpError as rheaIsAmqpError } from "rhea-promise";
+import { isDefined, isError, isNodeLike, isObjectWithProperties } from "@azure/core-util";
+import { isNumber, isString } from "./util/utils.js";
 
 /**
  * Maps the conditions to the numeric AMQP Response status codes.
@@ -36,7 +31,7 @@ export enum ConditionStatusMapper {
   "amqp:link:stolen" = AmqpResponseStatusCode.Gone,
   "amqp:not-allowed" = AmqpResponseStatusCode.BadRequest,
   "amqp:unauthorized-access" = AmqpResponseStatusCode.Unauthorized,
-  "amqp:resource-limit-exceeded" = AmqpResponseStatusCode.Forbidden
+  "amqp:resource-limit-exceeded" = AmqpResponseStatusCode.Forbidden,
 }
 
 /**
@@ -123,6 +118,7 @@ export enum ConditionErrorNameMapper {
   /**
    * Error is thrown when the connection parameters are wrong and the server refused the connection.
    */
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   "com.microsoft:auth-failed" = "UnauthorizedError",
   /**
    * Error is thrown when the service is unavailable. The operation should be retried.
@@ -143,6 +139,7 @@ export enum ConditionErrorNameMapper {
   /**
    * Error is thrown when a condition that should have been met in order to execute an operation was not.
    */
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   "com.microsoft:precondition-failed" = "PreconditionFailedError",
   /**
    * Error is thrown when data could not be decoded.
@@ -238,10 +235,15 @@ export enum ConditionErrorNameMapper {
    */
   "client.sender:not-enough-link-credit" = "SenderBusyError", // Retryable
   /**
+   * Error is thrown when the client sender's link isn't ready
+   */
+  "client.sender:link-not-ready" = "SenderNotReadyError", // Retryable
+
+  /**
    * Error is thrown when a low level system error is thrown by node.js.
    * {@link https://nodejs.org/dist/latest-v8.x/docs/api/all.html#errors_class_system_error}
    */
-  "system:error" = "SystemError"
+  "system:error" = "SystemError",
 }
 
 /**
@@ -435,10 +437,14 @@ export enum ErrorNameConditionMapper {
    */
   SenderBusyError = "client.sender:not-enough-link-credit", // Retryable
   /**
+   * Error is thrown when the client sender's link isn't ready
+   */
+  SenderNotReadyError = "client.sender:link-not-ready", // Retryable
+  /**
    * Error is thrown when a low level system error is thrown by node.js.
    * {@link https://nodejs.org/api/errors.html#errors_class_systemerror}
    */
-  SystemError = "system:error"
+  SystemError = "system:error",
 }
 
 /**
@@ -468,7 +474,7 @@ const systemErrorFieldsToCopy: (keyof Omit<NetworkSystemError, "name" | "message
   "info",
   "port",
   "stack",
-  "syscall"
+  "syscall",
 ];
 
 /**
@@ -545,7 +551,7 @@ export class MessagingError extends Error {
 /**
  * Provides a list of retryable AMQP errors.
  * "InternalServerError", "ServerBusyError", "ServiceUnavailableError", "OperationCancelledError",
- * "SenderBusyError", "MessagingError", "DetachForcedError", "ConnectionForcedError",
+ * "SenderBusyError", "SenderNotReadyError", "MessagingError", "DetachForcedError", "ConnectionForcedError",
  * "TransferLimitExceededError"
  */
 export const retryableErrors: string[] = [
@@ -563,6 +569,7 @@ export const retryableErrors: string[] = [
   "OperationTimeoutError",
 
   "SenderBusyError",
+  "SenderNotReadyError",
   "MessagingError",
   "DetachForcedError",
   "ConnectionForcedError",
@@ -570,13 +577,14 @@ export const retryableErrors: string[] = [
 
   // InsufficientCreditError occurs when the number of credits available on Rhea link is insufficient.
   // Since reasons for such shortage can be transient such as for pending delivery of messages, this is treated as a retryable error.
-  "InsufficientCreditError"
+  "InsufficientCreditError",
 ];
 
 /**
  * Maps some SystemErrors to amqp error conditions
  */
 export enum SystemErrorConditionMapper {
+  /* eslint-disable @typescript-eslint/no-duplicate-enum-values */
   ENOTFOUND = "amqp:not-found",
   EBUSY = "com.microsoft:server-busy",
   ECONNREFUSED = "amqp:connection:forced",
@@ -586,7 +594,8 @@ export enum SystemErrorConditionMapper {
   EHOSTDOWN = "com.microsoft:timeout",
   ENETRESET = "com.microsoft:timeout",
   ENETUNREACH = "com.microsoft:timeout",
-  ENONET = "com.microsoft:timeout"
+  ENONET = "com.microsoft:timeout",
+  /* eslint-enable @typescript-eslint/no-duplicate-enum-values */
 }
 
 /**
@@ -618,10 +627,24 @@ export function isSystemError(err: unknown): err is NetworkSystemError {
  */
 function isBrowserWebsocketError(err: any): boolean {
   let result: boolean = false;
-  if (!isNode && self && err.type === "error" && err.target instanceof (self as any).WebSocket) {
+  if (
+    !isNodeLike &&
+    self &&
+    err.type === "error" &&
+    err.target instanceof (self as any).WebSocket
+  ) {
     result = true;
   }
   return result;
+}
+
+/**
+ * @internal
+ * Checks whether a object is an ErrorEvent or not. https://html.spec.whatwg.org/multipage/webappapis.html#errorevent
+ * @param err - object that may contain error information
+ */
+function isErrorEvent(err: any): err is { message: string; error: any } {
+  return typeof err.error === "object" && typeof err.message === "string";
 }
 
 /**
@@ -635,7 +658,7 @@ const rheaPromiseErrors = [
   "InsufficientCreditError",
 
   // Defines the error that occurs when the Sender fails to send a message.
-  "SendOperationFailedError"
+  "SendOperationFailedError",
 ];
 
 /**
@@ -645,26 +668,29 @@ const rheaPromiseErrors = [
  * @param err - The amqp error that was received.
  * @returns MessagingError object.
  */
-export function translate(err: AmqpError | Error): MessagingError | Error {
+export function translate(err: unknown): MessagingError | Error {
   if (!isDefined(err)) {
     return new Error(`Unknown error encountered.`);
   } else if (typeof err !== "object") {
     // The error is a scalar type, make it the message of an actual error.
-    return new Error(err);
-  }
-  // Built-in errors like TypeError and RangeError should not be retryable as these indicate issues
-  // with user input and not an issue with the Messaging process.
-  if (err instanceof TypeError || err instanceof RangeError) {
-    return err;
+    return new Error(String(err));
   }
 
-  if (isAmqpError(err)) {
+  const errObj = isErrorEvent(err) ? err.error : err;
+
+  // Built-in errors like TypeError and RangeError should not be retryable as these indicate issues
+  // with user input and not an issue with the Messaging process.
+  if (errObj instanceof TypeError || errObj instanceof RangeError) {
+    return errObj;
+  }
+
+  if (isAmqpError(errObj)) {
     // translate
-    const condition = err.condition;
-    const description = err.description!;
+    const condition = errObj.condition;
+    const description = errObj.description!;
     const error = new MessagingError(description);
-    if ((err as any).stack) error.stack = (err as any).stack;
-    error.info = err.info;
+    if ((errObj as any).stack) error.stack = (errObj as any).stack;
+    error.info = errObj.info;
     if (condition) {
       error.code = ConditionErrorNameMapper[condition as keyof typeof ConditionErrorNameMapper];
     }
@@ -682,16 +708,16 @@ export function translate(err: AmqpError | Error): MessagingError | Error {
     return error;
   }
 
-  if (err.name === "MessagingError") {
+  if (errObj instanceof Error && errObj.name === "MessagingError") {
     // already translated
-    return err;
+    return errObj;
   }
 
-  if (isSystemError(err)) {
+  if (isSystemError(errObj)) {
     // translate
-    const condition = err.code;
-    const description = err.message;
-    const error = new MessagingError(description, err);
+    const condition = errObj.code;
+    const description = errObj.message;
+    const error = new MessagingError(description, errObj);
     let errorType = "SystemError";
     if (condition) {
       const amqpErrorCondition =
@@ -706,7 +732,7 @@ export function translate(err: AmqpError | Error): MessagingError | Error {
     return error;
   }
 
-  if (isBrowserWebsocketError(err)) {
+  if (isBrowserWebsocketError(errObj)) {
     // Translate browser communication errors during opening handshake to generic ServiceCommunicationError
     const error = new MessagingError("Websocket connection failed.");
     error.code = ConditionErrorNameMapper[ErrorNameConditionMapper.ServiceCommunicationError];
@@ -716,9 +742,9 @@ export function translate(err: AmqpError | Error): MessagingError | Error {
 
   // Some errors come from rhea-promise and need to be converted to MessagingError.
   // A subset of these are also retryable.
-  if (rheaPromiseErrors.indexOf(err.name) !== -1) {
-    const error = new MessagingError(err.message, err);
-    error.code = err.name;
+  if (isError(errObj) && rheaPromiseErrors.indexOf(errObj.name) !== -1) {
+    const error = new MessagingError(errObj.message, errObj);
+    error.code = errObj.name;
     if (error.code && retryableErrors.indexOf(error.code) === -1) {
       // not found
       error.retryable = false;
@@ -726,7 +752,7 @@ export function translate(err: AmqpError | Error): MessagingError | Error {
     return error;
   }
 
-  return err;
+  return isError(errObj) ? errObj : new Error(String(errObj));
 }
 
 /**

@@ -6,18 +6,21 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ApplicationGroups } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DesktopVirtualizationAPIClientContext } from "../desktopVirtualizationAPIClientContext";
+import { DesktopVirtualizationAPIClient } from "../desktopVirtualizationAPIClient";
 import {
   ApplicationGroup,
   ApplicationGroupsListByResourceGroupNextOptionalParams,
   ApplicationGroupsListByResourceGroupOptionalParams,
+  ApplicationGroupsListByResourceGroupResponse,
   ApplicationGroupsListBySubscriptionNextOptionalParams,
   ApplicationGroupsListBySubscriptionOptionalParams,
+  ApplicationGroupsListBySubscriptionResponse,
   ApplicationGroupsGetOptionalParams,
   ApplicationGroupsGetResponse,
   ApplicationGroupsCreateOrUpdateOptionalParams,
@@ -25,22 +28,20 @@ import {
   ApplicationGroupsDeleteOptionalParams,
   ApplicationGroupsUpdateOptionalParams,
   ApplicationGroupsUpdateResponse,
-  ApplicationGroupsListByResourceGroupResponse,
-  ApplicationGroupsListBySubscriptionResponse,
   ApplicationGroupsListByResourceGroupNextResponse,
-  ApplicationGroupsListBySubscriptionNextResponse
+  ApplicationGroupsListBySubscriptionNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ApplicationGroups operations. */
 export class ApplicationGroupsImpl implements ApplicationGroups {
-  private readonly client: DesktopVirtualizationAPIClientContext;
+  private readonly client: DesktopVirtualizationAPIClient;
 
   /**
    * Initialize a new instance of the class ApplicationGroups class.
    * @param client Reference to the service client
    */
-  constructor(client: DesktopVirtualizationAPIClientContext) {
+  constructor(client: DesktopVirtualizationAPIClient) {
     this.client = client;
   }
 
@@ -51,7 +52,7 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
    */
   public listByResourceGroup(
     resourceGroupName: string,
-    options?: ApplicationGroupsListByResourceGroupOptionalParams
+    options?: ApplicationGroupsListByResourceGroupOptionalParams,
   ): PagedAsyncIterableIterator<ApplicationGroup> {
     const iter = this.listByResourceGroupPagingAll(resourceGroupName, options);
     return {
@@ -61,37 +62,53 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listByResourceGroupPagingPage(resourceGroupName, options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listByResourceGroupPagingPage(
+          resourceGroupName,
+          options,
+          settings,
+        );
+      },
     };
   }
 
   private async *listByResourceGroupPagingPage(
     resourceGroupName: string,
-    options?: ApplicationGroupsListByResourceGroupOptionalParams
+    options?: ApplicationGroupsListByResourceGroupOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ApplicationGroup[]> {
-    let result = await this._listByResourceGroup(resourceGroupName, options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ApplicationGroupsListByResourceGroupResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByResourceGroup(resourceGroupName, options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByResourceGroupNext(
         resourceGroupName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listByResourceGroupPagingAll(
     resourceGroupName: string,
-    options?: ApplicationGroupsListByResourceGroupOptionalParams
+    options?: ApplicationGroupsListByResourceGroupOptionalParams,
   ): AsyncIterableIterator<ApplicationGroup> {
     for await (const page of this.listByResourceGroupPagingPage(
       resourceGroupName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -102,7 +119,7 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
    * @param options The options parameters.
    */
   public listBySubscription(
-    options?: ApplicationGroupsListBySubscriptionOptionalParams
+    options?: ApplicationGroupsListBySubscriptionOptionalParams,
   ): PagedAsyncIterableIterator<ApplicationGroup> {
     const iter = this.listBySubscriptionPagingAll(options);
     return {
@@ -112,27 +129,39 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
-        return this.listBySubscriptionPagingPage(options);
-      }
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
+        return this.listBySubscriptionPagingPage(options, settings);
+      },
     };
   }
 
   private async *listBySubscriptionPagingPage(
-    options?: ApplicationGroupsListBySubscriptionOptionalParams
+    options?: ApplicationGroupsListBySubscriptionOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ApplicationGroup[]> {
-    let result = await this._listBySubscription(options);
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ApplicationGroupsListBySubscriptionResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listBySubscription(options);
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listBySubscriptionNext(continuationToken, options);
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
   private async *listBySubscriptionPagingAll(
-    options?: ApplicationGroupsListBySubscriptionOptionalParams
+    options?: ApplicationGroupsListBySubscriptionOptionalParams,
   ): AsyncIterableIterator<ApplicationGroup> {
     for await (const page of this.listBySubscriptionPagingPage(options)) {
       yield* page;
@@ -148,11 +177,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
   get(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: ApplicationGroupsGetOptionalParams
+    options?: ApplicationGroupsGetOptionalParams,
   ): Promise<ApplicationGroupsGetResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, options },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -167,11 +196,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
     resourceGroupName: string,
     applicationGroupName: string,
     applicationGroup: ApplicationGroup,
-    options?: ApplicationGroupsCreateOrUpdateOptionalParams
+    options?: ApplicationGroupsCreateOrUpdateOptionalParams,
   ): Promise<ApplicationGroupsCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, applicationGroup, options },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -184,11 +213,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
   delete(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: ApplicationGroupsDeleteOptionalParams
+    options?: ApplicationGroupsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, options },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -201,11 +230,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
   update(
     resourceGroupName: string,
     applicationGroupName: string,
-    options?: ApplicationGroupsUpdateOptionalParams
+    options?: ApplicationGroupsUpdateOptionalParams,
   ): Promise<ApplicationGroupsUpdateResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, applicationGroupName, options },
-      updateOperationSpec
+      updateOperationSpec,
     );
   }
 
@@ -216,11 +245,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
    */
   private _listByResourceGroup(
     resourceGroupName: string,
-    options?: ApplicationGroupsListByResourceGroupOptionalParams
+    options?: ApplicationGroupsListByResourceGroupOptionalParams,
   ): Promise<ApplicationGroupsListByResourceGroupResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, options },
-      listByResourceGroupOperationSpec
+      listByResourceGroupOperationSpec,
     );
   }
 
@@ -229,11 +258,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
    * @param options The options parameters.
    */
   private _listBySubscription(
-    options?: ApplicationGroupsListBySubscriptionOptionalParams
+    options?: ApplicationGroupsListBySubscriptionOptionalParams,
   ): Promise<ApplicationGroupsListBySubscriptionResponse> {
     return this.client.sendOperationRequest(
       { options },
-      listBySubscriptionOperationSpec
+      listBySubscriptionOperationSpec,
     );
   }
 
@@ -246,11 +275,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
   private _listByResourceGroupNext(
     resourceGroupName: string,
     nextLink: string,
-    options?: ApplicationGroupsListByResourceGroupNextOptionalParams
+    options?: ApplicationGroupsListByResourceGroupNextOptionalParams,
   ): Promise<ApplicationGroupsListByResourceGroupNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, nextLink, options },
-      listByResourceGroupNextOperationSpec
+      listByResourceGroupNextOperationSpec,
     );
   }
 
@@ -261,11 +290,11 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
    */
   private _listBySubscriptionNext(
     nextLink: string,
-    options?: ApplicationGroupsListBySubscriptionNextOptionalParams
+    options?: ApplicationGroupsListBySubscriptionNextOptionalParams,
   ): Promise<ApplicationGroupsListBySubscriptionNextResponse> {
     return this.client.sendOperationRequest(
       { nextLink, options },
-      listBySubscriptionNextOperationSpec
+      listBySubscriptionNextOperationSpec,
     );
   }
 }
@@ -273,41 +302,39 @@ export class ApplicationGroupsImpl implements ApplicationGroups {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationGroup
+      bodyMapper: Mappers.ApplicationGroup,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationGroup
+      bodyMapper: Mappers.ApplicationGroup,
     },
     201: {
-      bodyMapper: Mappers.ApplicationGroup
+      bodyMapper: Mappers.ApplicationGroup,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.applicationGroup,
   queryParameters: [Parameters.apiVersion],
@@ -315,44 +342,42 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const updateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups/{applicationGroupName}",
   httpMethod: "PATCH",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationGroup
+      bodyMapper: Mappers.ApplicationGroup,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.applicationGroup1,
   queryParameters: [Parameters.apiVersion],
@@ -360,88 +385,90 @@ const updateOperationSpec: coreClient.OperationSpec = {
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
-    Parameters.applicationGroupName
+    Parameters.applicationGroupName,
   ],
   headerParameters: [Parameters.accept, Parameters.contentType],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const listByResourceGroupOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DesktopVirtualization/applicationGroups",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationGroupList
+      bodyMapper: Mappers.ApplicationGroupList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter],
+  queryParameters: [
+    Parameters.apiVersion,
+    Parameters.pageSize,
+    Parameters.isDescending,
+    Parameters.initialSkip,
+    Parameters.filter,
+  ],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySubscriptionOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/providers/Microsoft.DesktopVirtualization/applicationGroups",
+  path: "/subscriptions/{subscriptionId}/providers/Microsoft.DesktopVirtualization/applicationGroups",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationGroupList
+      bodyMapper: Mappers.ApplicationGroupList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [Parameters.$host, Parameters.subscriptionId],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByResourceGroupNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationGroupList
+      bodyMapper: Mappers.ApplicationGroupList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
-    Parameters.resourceGroupName
+    Parameters.resourceGroupName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listBySubscriptionNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ApplicationGroupList
+      bodyMapper: Mappers.ApplicationGroupList,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion, Parameters.filter],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
-    Parameters.subscriptionId
+    Parameters.subscriptionId,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

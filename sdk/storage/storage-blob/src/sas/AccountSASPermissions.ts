@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -129,7 +129,7 @@ export class AccountSASPermissions {
   public write: boolean = false;
 
   /**
-   * Permission to create blobs and files granted.
+   * Permission to delete blobs and files granted.
    */
   public delete: boolean = false;
 

@@ -1,13 +1,70 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { PollOperationState, Poller, PollOperation } from "@azure/core-lro";
+import type { PollOperationState, PollOperation, CancelOnProgress } from "@azure/core-lro";
+import { Poller } from "@azure/core-lro";
 import { KnownRenderingSessionStatus, KnownRenderingServerSize } from "../generated/models/index";
 import { getSessionInternal, endSessionInternal } from "../internal/commonQueries";
-import { AbortSignalLike } from "@azure/abort-controller";
-import { RemoteRendering } from "../generated/operationsInterfaces";
+import type { AbortSignalLike } from "@azure/abort-controller";
+import type { RemoteRendering } from "../generated/operationsInterfaces";
 import { delay } from "@azure/core-util";
-import { RenderingSession } from "../internal/renderingSession";
+import type { RenderingSession } from "../internal/renderingSession";
+
+/**
+ * Abstract representation of a poller, intended to expose just the minimal API that the user needs to work with.
+ */
+export interface PollerLikeWithCancellation<TState extends PollOperationState<TResult>, TResult> {
+  /**
+   * Returns a promise that will resolve once a single polling request finishes.
+   * It does this by calling the update method of the Poller's operation.
+   */
+  poll(options?: { abortSignal?: AbortSignalLike }): Promise<void>;
+  /**
+   * Returns a promise that will resolve once the underlying operation is completed.
+   */
+  pollUntilDone(): Promise<TResult>;
+  /**
+   * Invokes the provided callback after each polling is completed,
+   * sending the current state of the poller's operation.
+   *
+   * It returns a method that can be used to stop receiving updates on the given callback function.
+   */
+  onProgress(callback: (state: TState) => void): CancelOnProgress;
+  /**
+   * Returns true if the poller has finished polling.
+   */
+  isDone(): boolean;
+  /**
+   * Stops the poller. After this, no manual or automated requests can be sent.
+   */
+  stopPolling(): void;
+  /**
+   * Returns true if the poller is stopped.
+   */
+  isStopped(): boolean;
+  /**
+   * Attempts to cancel the underlying operation.
+   */
+  cancelOperation(options?: { abortSignal?: AbortSignalLike }): Promise<void>;
+  /**
+   * Returns the state of the operation.
+   * The TState defined in PollerLike can be a subset of the TState defined in
+   * the Poller implementation.
+   */
+  getOperationState(): TState;
+  /**
+   * Returns the result value of the operation,
+   * regardless of the state of the poller.
+   * It can return undefined or an incomplete form of the final TResult value
+   * depending on the implementation.
+   */
+  getResult(): TResult | undefined;
+  /**
+   * Returns a serialized version of the poller's operation
+   * by invoking the operation's toString method.
+   */
+  toString(): string;
+}
 
 /**
  * Options to configure the poller for the beginSession operation.
@@ -65,7 +122,8 @@ export class RenderingSessionOperationStateImpl implements RenderingSessionOpera
  * @internal
  */
 class RenderingSessionOperation
-  implements PollOperation<RenderingSessionOperationState, RenderingSession> {
+  implements PollOperation<RenderingSessionOperationState, RenderingSession>
+{
   private accountId: string;
   private operations: RemoteRendering;
   state: RenderingSessionOperationState;
@@ -73,7 +131,7 @@ class RenderingSessionOperation
   constructor(
     accountId: string,
     operations: RemoteRendering,
-    state: RenderingSessionOperationState
+    state: RenderingSessionOperationState,
   ) {
     this.accountId = accountId;
     this.operations = operations;
@@ -88,7 +146,7 @@ class RenderingSessionOperation
       this.accountId,
       this.operations,
       this.state.latestResponse.sessionId,
-      "RenderingSessionOperation-Update"
+      "RenderingSessionOperation-Update",
     );
     return this;
   }
@@ -108,7 +166,7 @@ class RenderingSessionOperation
       this.operations,
       this.state.latestResponse.sessionId,
       "RenderingSessionOperation-Cancel",
-      options
+      options,
     );
     return this;
   }
@@ -138,14 +196,14 @@ export class RenderingSessionPoller extends Poller<
     accountId: string,
     operations: RemoteRendering,
     renderingSession: RenderingSession,
-    options: RenderingSessionPollerOptions
+    options: RenderingSessionPollerOptions,
   ) {
     super(
       new RenderingSessionOperation(
         accountId,
         operations,
-        new RenderingSessionOperationStateImpl(renderingSession)
-      )
+        new RenderingSessionOperationStateImpl(renderingSession),
+      ),
     );
     if (options.intervalInMs) {
       this.intervalInMs = options.intervalInMs;

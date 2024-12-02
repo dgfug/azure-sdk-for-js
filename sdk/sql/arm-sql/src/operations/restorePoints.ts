@@ -6,15 +6,19 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import "@azure/core-paging";
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { RestorePoints } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { SqlManagementClientContext } from "../sqlManagementClientContext";
-import { PollerLike, PollOperationState, LroEngine } from "@azure/core-lro";
-import { LroImpl } from "../lroImpl";
+import { SqlManagementClient } from "../sqlManagementClient";
+import {
+  SimplePollerLike,
+  OperationState,
+  createHttpPoller,
+} from "@azure/core-lro";
+import { createLroSpec } from "../lroImpl";
 import {
   RestorePoint,
   RestorePointsListByDatabaseNextOptionalParams,
@@ -26,19 +30,19 @@ import {
   RestorePointsGetOptionalParams,
   RestorePointsGetResponse,
   RestorePointsDeleteOptionalParams,
-  RestorePointsListByDatabaseNextResponse
+  RestorePointsListByDatabaseNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing RestorePoints operations. */
 export class RestorePointsImpl implements RestorePoints {
-  private readonly client: SqlManagementClientContext;
+  private readonly client: SqlManagementClient;
 
   /**
    * Initialize a new instance of the class RestorePoints class.
    * @param client Reference to the service client
    */
-  constructor(client: SqlManagementClientContext) {
+  constructor(client: SqlManagementClient) {
     this.client = client;
   }
 
@@ -54,13 +58,13 @@ export class RestorePointsImpl implements RestorePoints {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: RestorePointsListByDatabaseOptionalParams
+    options?: RestorePointsListByDatabaseOptionalParams,
   ): PagedAsyncIterableIterator<RestorePoint> {
     const iter = this.listByDatabasePagingAll(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     );
     return {
       next() {
@@ -69,14 +73,18 @@ export class RestorePointsImpl implements RestorePoints {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByDatabasePagingPage(
           resourceGroupName,
           serverName,
           databaseName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -84,26 +92,35 @@ export class RestorePointsImpl implements RestorePoints {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: RestorePointsListByDatabaseOptionalParams
+    options?: RestorePointsListByDatabaseOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<RestorePoint[]> {
-    let result = await this._listByDatabase(
-      resourceGroupName,
-      serverName,
-      databaseName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: RestorePointsListByDatabaseResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByDatabase(
+        resourceGroupName,
+        serverName,
+        databaseName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByDatabaseNext(
         resourceGroupName,
         serverName,
         databaseName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -111,13 +128,13 @@ export class RestorePointsImpl implements RestorePoints {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: RestorePointsListByDatabaseOptionalParams
+    options?: RestorePointsListByDatabaseOptionalParams,
   ): AsyncIterableIterator<RestorePoint> {
     for await (const page of this.listByDatabasePagingPage(
       resourceGroupName,
       serverName,
       databaseName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -135,11 +152,11 @@ export class RestorePointsImpl implements RestorePoints {
     resourceGroupName: string,
     serverName: string,
     databaseName: string,
-    options?: RestorePointsListByDatabaseOptionalParams
+    options?: RestorePointsListByDatabaseOptionalParams,
   ): Promise<RestorePointsListByDatabaseResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, options },
-      listByDatabaseOperationSpec
+      listByDatabaseOperationSpec,
     );
   }
 
@@ -157,30 +174,29 @@ export class RestorePointsImpl implements RestorePoints {
     serverName: string,
     databaseName: string,
     parameters: CreateDatabaseRestorePointDefinition,
-    options?: RestorePointsCreateOptionalParams
+    options?: RestorePointsCreateOptionalParams,
   ): Promise<
-    PollerLike<
-      PollOperationState<RestorePointsCreateResponse>,
+    SimplePollerLike<
+      OperationState<RestorePointsCreateResponse>,
       RestorePointsCreateResponse
     >
   > {
     const directSendOperation = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ): Promise<RestorePointsCreateResponse> => {
       return this.client.sendOperationRequest(args, spec);
     };
-    const sendOperation = async (
+    const sendOperationFn = async (
       args: coreClient.OperationArguments,
-      spec: coreClient.OperationSpec
+      spec: coreClient.OperationSpec,
     ) => {
-      let currentRawResponse:
-        | coreClient.FullOperationResponse
-        | undefined = undefined;
+      let currentRawResponse: coreClient.FullOperationResponse | undefined =
+        undefined;
       const providedCallback = args.options?.onResponse;
       const callback: coreClient.RawResponseCallback = (
         rawResponse: coreClient.FullOperationResponse,
-        flatResponse: unknown
+        flatResponse: unknown,
       ) => {
         currentRawResponse = rawResponse;
         providedCallback?.(rawResponse, flatResponse);
@@ -189,8 +205,8 @@ export class RestorePointsImpl implements RestorePoints {
         ...args,
         options: {
           ...args.options,
-          onResponse: callback
-        }
+          onResponse: callback,
+        },
       };
       const flatResponse = await directSendOperation(updatedArgs, spec);
       return {
@@ -198,20 +214,31 @@ export class RestorePointsImpl implements RestorePoints {
         rawResponse: {
           statusCode: currentRawResponse!.status,
           body: currentRawResponse!.parsedBody,
-          headers: currentRawResponse!.headers.toJSON()
-        }
+          headers: currentRawResponse!.headers.toJSON(),
+        },
       };
     };
 
-    const lro = new LroImpl(
-      sendOperation,
-      { resourceGroupName, serverName, databaseName, parameters, options },
-      createOperationSpec
-    );
-    return new LroEngine(lro, {
-      resumeFrom: options?.resumeFrom,
-      intervalInMs: options?.updateIntervalInMs
+    const lro = createLroSpec({
+      sendOperationFn,
+      args: {
+        resourceGroupName,
+        serverName,
+        databaseName,
+        parameters,
+        options,
+      },
+      spec: createOperationSpec,
     });
+    const poller = await createHttpPoller<
+      RestorePointsCreateResponse,
+      OperationState<RestorePointsCreateResponse>
+    >(lro, {
+      restoreFrom: options?.resumeFrom,
+      intervalInMs: options?.updateIntervalInMs,
+    });
+    await poller.poll();
+    return poller;
   }
 
   /**
@@ -228,14 +255,14 @@ export class RestorePointsImpl implements RestorePoints {
     serverName: string,
     databaseName: string,
     parameters: CreateDatabaseRestorePointDefinition,
-    options?: RestorePointsCreateOptionalParams
+    options?: RestorePointsCreateOptionalParams,
   ): Promise<RestorePointsCreateResponse> {
     const poller = await this.beginCreate(
       resourceGroupName,
       serverName,
       databaseName,
       parameters,
-      options
+      options,
     );
     return poller.pollUntilDone();
   }
@@ -254,7 +281,7 @@ export class RestorePointsImpl implements RestorePoints {
     serverName: string,
     databaseName: string,
     restorePointName: string,
-    options?: RestorePointsGetOptionalParams
+    options?: RestorePointsGetOptionalParams,
   ): Promise<RestorePointsGetResponse> {
     return this.client.sendOperationRequest(
       {
@@ -262,9 +289,9 @@ export class RestorePointsImpl implements RestorePoints {
         serverName,
         databaseName,
         restorePointName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -282,7 +309,7 @@ export class RestorePointsImpl implements RestorePoints {
     serverName: string,
     databaseName: string,
     restorePointName: string,
-    options?: RestorePointsDeleteOptionalParams
+    options?: RestorePointsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       {
@@ -290,9 +317,9 @@ export class RestorePointsImpl implements RestorePoints {
         serverName,
         databaseName,
         restorePointName,
-        options
+        options,
       },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -310,11 +337,11 @@ export class RestorePointsImpl implements RestorePoints {
     serverName: string,
     databaseName: string,
     nextLink: string,
-    options?: RestorePointsListByDatabaseNextOptionalParams
+    options?: RestorePointsListByDatabaseNextOptionalParams,
   ): Promise<RestorePointsListByDatabaseNextResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, serverName, databaseName, nextLink, options },
-      listByDatabaseNextOperationSpec
+      listByDatabaseNextOperationSpec,
     );
   }
 }
@@ -322,114 +349,109 @@ export class RestorePointsImpl implements RestorePoints {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByDatabaseOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorePointListResult
+      bodyMapper: Mappers.RestorePointListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.databaseName
+    Parameters.databaseName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints",
   httpMethod: "POST",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     201: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     202: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
     204: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
-    default: {}
+    default: {},
   },
-  requestBody: Parameters.parameters63,
-  queryParameters: [Parameters.apiVersion2],
+  requestBody: Parameters.parameters41,
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
-    Parameters.databaseName
+    Parameters.databaseName,
   ],
-  headerParameters: [Parameters.accept, Parameters.contentType],
+  headerParameters: [Parameters.contentType, Parameters.accept],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints/{restorePointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints/{restorePointName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorePoint
+      bodyMapper: Mappers.RestorePoint,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.restorePointName
+    Parameters.restorePointName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints/{restorePointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/restorePoints/{restorePointName}",
   httpMethod: "DELETE",
   responses: { 200: {}, default: {} },
-  queryParameters: [Parameters.apiVersion2],
+  queryParameters: [Parameters.apiVersion3],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.restorePointName
+    Parameters.restorePointName,
   ],
-  serializer
+  serializer,
 };
 const listByDatabaseNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.RestorePointListResult
+      bodyMapper: Mappers.RestorePointListResult,
     },
-    default: {}
+    default: {},
   },
-  queryParameters: [Parameters.apiVersion2],
   urlParameters: [
     Parameters.$host,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.serverName,
     Parameters.databaseName,
-    Parameters.nextLink
+    Parameters.nextLink,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };

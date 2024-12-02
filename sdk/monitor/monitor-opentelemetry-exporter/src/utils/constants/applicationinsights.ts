@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 /**
  * AI MS Links.
@@ -20,12 +20,28 @@ export const TIME_SINCE_ENQUEUED = "timeSinceEnqueued";
  * AzureMonitorTraceExporter version.
  * @internal
  */
-export const packageVersion = "1.0.0-beta.6";
+export const packageVersion = "1.0.0-beta.27";
 
 export enum DependencyTypes {
   InProc = "InProc",
   QueueMessage = "Queue Message",
   Sql = "SQL",
   Http = "Http",
-  Grpc = "GRPC"
+  Grpc = "GRPC",
+  Wcf = "WCF Service",
 }
+
+export const AzureMonitorSampleRate = "microsoft.sample_rate";
+export const ApplicationInsightsBaseType = "_MS.baseType";
+
+export const ApplicationInsightsMessageName = "Microsoft.ApplicationInsights.Message";
+export const ApplicationInsightsExceptionName = "Microsoft.ApplicationInsights.Exception";
+export const ApplicationInsightsPageViewName = "Microsoft.ApplicationInsights.PageView";
+export const ApplicationInsightsAvailabilityName = "Microsoft.ApplicationInsights.Availability";
+export const ApplicationInsightsEventName = "Microsoft.ApplicationInsights.Event";
+
+export const ApplicationInsightsMessageBaseType = "MessageData";
+export const ApplicationInsightsExceptionBaseType = "ExceptionData";
+export const ApplicationInsightsPageViewBaseType = "PageViewData";
+export const ApplicationInsightsAvailabilityBaseType = "AvailabilityData";
+export const ApplicationInsightsEventBaseType = "EventData";

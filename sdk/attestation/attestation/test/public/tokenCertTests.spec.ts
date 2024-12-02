@@ -1,42 +1,44 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../src/jsrsasign.d.ts"/>
 import * as jsrsasign from "jsrsasign";
 
-import { assert, use as chaiUse } from "chai";
-import { Context } from "mocha";
-import chaiPromises from "chai-as-promised";
-chaiUse(chaiPromises);
-
 import { Recorder } from "@azure-tools/test-recorder";
 
-import { createRecordedClient, createRecorder, getAttestationUri } from "../utils/recordedClient";
-import { AttestationClient } from "../../src";
-describe("TokenCertTests", function() {
+import {
+  createRecordedClient,
+  getAttestationUri,
+  recorderOptions,
+} from "../utils/recordedClient.js";
+import type { AttestationClient } from "../../src/index.js";
+import { describe, it, assert, beforeEach, afterEach } from "vitest";
+
+describe("TokenCertTests", function () {
   let recorder: Recorder;
 
-  beforeEach(function(this: Context) {
-    recorder = createRecorder(this);
+  beforeEach(async function (ctx) {
+    recorder = new Recorder(ctx);
+    await recorder.start(recorderOptions);
   });
 
-  afterEach(async function() {
+  afterEach(async function () {
     await recorder.stop();
   });
 
-  it("#GetCertificateAAD", async () => {
-    const client = createRecordedClient("AAD");
+  it("#GetCertificateAAD", async function () {
+    const client = createRecordedClient(recorder, "AAD");
     await getCertificatesTest(client);
   });
 
-  it("#GetCertificatesIsolated", async () => {
-    const client = createRecordedClient("Isolated");
+  it("#GetCertificatesIsolated", async function () {
+    const client = createRecordedClient(recorder, "Isolated");
     await getCertificatesTest(client);
   });
 
-  it("#GetCertificatesShared", async () => {
-    const client = createRecordedClient("Shared");
+  it("#GetCertificatesShared", async function () {
+    const client = createRecordedClient(recorder, "Shared");
     await getCertificatesTest(client);
   });
 
@@ -55,24 +57,24 @@ describe("TokenCertTests", function() {
     }
   }
 
-  it("#GetMetadataConfigAAD", async () => {
-    const client = createRecordedClient("AAD");
+  it("#GetMetadataConfigAAD", async function () {
+    const client = createRecordedClient(recorder, "AAD");
     await getMetadataConfigTest(client, getAttestationUri("AAD"));
   });
 
-  it("#GetMetadataConfigIsolated", async () => {
-    const client = createRecordedClient("Isolated");
+  it("#GetMetadataConfigIsolated", async function () {
+    const client = createRecordedClient(recorder, "Isolated");
     await getMetadataConfigTest(client, getAttestationUri("Isolated"));
   });
 
-  it("#GetMetadataConfigShared", async () => {
-    const client = createRecordedClient("Shared");
+  it("#GetMetadataConfigShared", async function () {
+    const client = createRecordedClient(recorder, "Shared");
     await getMetadataConfigTest(client, getAttestationUri("Shared"));
   });
 
   async function getMetadataConfigTest(
     client: AttestationClient,
-    instanceUrl: string
+    instanceUrl: string,
   ): Promise<void> {
     const openIdMetadata = await client.getOpenIdMetadata();
     assert.isDefined(openIdMetadata["response_types_supported"]);

@@ -6,12 +6,13 @@
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 
-import { PagedAsyncIterableIterator } from "@azure/core-paging";
+import { PagedAsyncIterableIterator, PageSettings } from "@azure/core-paging";
+import { setContinuationToken } from "../pagingHelper";
 import { ManagedPrivateEndpoints } from "../operationsInterfaces";
 import * as coreClient from "@azure/core-client";
 import * as Mappers from "../models/mappers";
 import * as Parameters from "../models/parameters";
-import { DataFactoryManagementClientContext } from "../dataFactoryManagementClientContext";
+import { DataFactoryManagementClient } from "../dataFactoryManagementClient";
 import {
   ManagedPrivateEndpointResource,
   ManagedPrivateEndpointsListByFactoryNextOptionalParams,
@@ -22,19 +23,19 @@ import {
   ManagedPrivateEndpointsGetOptionalParams,
   ManagedPrivateEndpointsGetResponse,
   ManagedPrivateEndpointsDeleteOptionalParams,
-  ManagedPrivateEndpointsListByFactoryNextResponse
+  ManagedPrivateEndpointsListByFactoryNextResponse,
 } from "../models";
 
 /// <reference lib="esnext.asynciterable" />
 /** Class containing ManagedPrivateEndpoints operations. */
 export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
-  private readonly client: DataFactoryManagementClientContext;
+  private readonly client: DataFactoryManagementClient;
 
   /**
    * Initialize a new instance of the class ManagedPrivateEndpoints class.
    * @param client Reference to the service client
    */
-  constructor(client: DataFactoryManagementClientContext) {
+  constructor(client: DataFactoryManagementClient) {
     this.client = client;
   }
 
@@ -49,13 +50,13 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     resourceGroupName: string,
     factoryName: string,
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListByFactoryOptionalParams
+    options?: ManagedPrivateEndpointsListByFactoryOptionalParams,
   ): PagedAsyncIterableIterator<ManagedPrivateEndpointResource> {
     const iter = this.listByFactoryPagingAll(
       resourceGroupName,
       factoryName,
       managedVirtualNetworkName,
-      options
+      options,
     );
     return {
       next() {
@@ -64,14 +65,18 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
       [Symbol.asyncIterator]() {
         return this;
       },
-      byPage: () => {
+      byPage: (settings?: PageSettings) => {
+        if (settings?.maxPageSize) {
+          throw new Error("maxPageSize is not supported by this operation.");
+        }
         return this.listByFactoryPagingPage(
           resourceGroupName,
           factoryName,
           managedVirtualNetworkName,
-          options
+          options,
+          settings,
         );
-      }
+      },
     };
   }
 
@@ -79,26 +84,35 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     resourceGroupName: string,
     factoryName: string,
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListByFactoryOptionalParams
+    options?: ManagedPrivateEndpointsListByFactoryOptionalParams,
+    settings?: PageSettings,
   ): AsyncIterableIterator<ManagedPrivateEndpointResource[]> {
-    let result = await this._listByFactory(
-      resourceGroupName,
-      factoryName,
-      managedVirtualNetworkName,
-      options
-    );
-    yield result.value || [];
-    let continuationToken = result.nextLink;
+    let result: ManagedPrivateEndpointsListByFactoryResponse;
+    let continuationToken = settings?.continuationToken;
+    if (!continuationToken) {
+      result = await this._listByFactory(
+        resourceGroupName,
+        factoryName,
+        managedVirtualNetworkName,
+        options,
+      );
+      let page = result.value || [];
+      continuationToken = result.nextLink;
+      setContinuationToken(page, continuationToken);
+      yield page;
+    }
     while (continuationToken) {
       result = await this._listByFactoryNext(
         resourceGroupName,
         factoryName,
         managedVirtualNetworkName,
         continuationToken,
-        options
+        options,
       );
       continuationToken = result.nextLink;
-      yield result.value || [];
+      let page = result.value || [];
+      setContinuationToken(page, continuationToken);
+      yield page;
     }
   }
 
@@ -106,13 +120,13 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     resourceGroupName: string,
     factoryName: string,
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListByFactoryOptionalParams
+    options?: ManagedPrivateEndpointsListByFactoryOptionalParams,
   ): AsyncIterableIterator<ManagedPrivateEndpointResource> {
     for await (const page of this.listByFactoryPagingPage(
       resourceGroupName,
       factoryName,
       managedVirtualNetworkName,
-      options
+      options,
     )) {
       yield* page;
     }
@@ -129,11 +143,11 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     resourceGroupName: string,
     factoryName: string,
     managedVirtualNetworkName: string,
-    options?: ManagedPrivateEndpointsListByFactoryOptionalParams
+    options?: ManagedPrivateEndpointsListByFactoryOptionalParams,
   ): Promise<ManagedPrivateEndpointsListByFactoryResponse> {
     return this.client.sendOperationRequest(
       { resourceGroupName, factoryName, managedVirtualNetworkName, options },
-      listByFactoryOperationSpec
+      listByFactoryOperationSpec,
     );
   }
 
@@ -152,7 +166,7 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     managedVirtualNetworkName: string,
     managedPrivateEndpointName: string,
     managedPrivateEndpoint: ManagedPrivateEndpointResource,
-    options?: ManagedPrivateEndpointsCreateOrUpdateOptionalParams
+    options?: ManagedPrivateEndpointsCreateOrUpdateOptionalParams,
   ): Promise<ManagedPrivateEndpointsCreateOrUpdateResponse> {
     return this.client.sendOperationRequest(
       {
@@ -161,9 +175,9 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
         managedVirtualNetworkName,
         managedPrivateEndpointName,
         managedPrivateEndpoint,
-        options
+        options,
       },
-      createOrUpdateOperationSpec
+      createOrUpdateOperationSpec,
     );
   }
 
@@ -180,7 +194,7 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     factoryName: string,
     managedVirtualNetworkName: string,
     managedPrivateEndpointName: string,
-    options?: ManagedPrivateEndpointsGetOptionalParams
+    options?: ManagedPrivateEndpointsGetOptionalParams,
   ): Promise<ManagedPrivateEndpointsGetResponse> {
     return this.client.sendOperationRequest(
       {
@@ -188,9 +202,9 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
         factoryName,
         managedVirtualNetworkName,
         managedPrivateEndpointName,
-        options
+        options,
       },
-      getOperationSpec
+      getOperationSpec,
     );
   }
 
@@ -207,7 +221,7 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     factoryName: string,
     managedVirtualNetworkName: string,
     managedPrivateEndpointName: string,
-    options?: ManagedPrivateEndpointsDeleteOptionalParams
+    options?: ManagedPrivateEndpointsDeleteOptionalParams,
   ): Promise<void> {
     return this.client.sendOperationRequest(
       {
@@ -215,9 +229,9 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
         factoryName,
         managedVirtualNetworkName,
         managedPrivateEndpointName,
-        options
+        options,
       },
-      deleteOperationSpec
+      deleteOperationSpec,
     );
   }
 
@@ -234,7 +248,7 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
     factoryName: string,
     managedVirtualNetworkName: string,
     nextLink: string,
-    options?: ManagedPrivateEndpointsListByFactoryNextOptionalParams
+    options?: ManagedPrivateEndpointsListByFactoryNextOptionalParams,
   ): Promise<ManagedPrivateEndpointsListByFactoryNextResponse> {
     return this.client.sendOperationRequest(
       {
@@ -242,9 +256,9 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
         factoryName,
         managedVirtualNetworkName,
         nextLink,
-        options
+        options,
       },
-      listByFactoryNextOperationSpec
+      listByFactoryNextOperationSpec,
     );
   }
 }
@@ -252,16 +266,15 @@ export class ManagedPrivateEndpointsImpl implements ManagedPrivateEndpoints {
 const serializer = coreClient.createSerializer(Mappers, /* isXml */ false);
 
 const listByFactoryOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedPrivateEndpointListResponse
+      bodyMapper: Mappers.ManagedPrivateEndpointListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -269,22 +282,21 @@ const listByFactoryOperationSpec: coreClient.OperationSpec = {
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.managedVirtualNetworkName
+    Parameters.managedVirtualNetworkName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const createOrUpdateOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
   httpMethod: "PUT",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedPrivateEndpointResource
+      bodyMapper: Mappers.ManagedPrivateEndpointResource,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   requestBody: Parameters.managedPrivateEndpoint,
   queryParameters: [Parameters.apiVersion],
@@ -294,27 +306,26 @@ const createOrUpdateOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.factoryName,
     Parameters.managedVirtualNetworkName,
-    Parameters.managedPrivateEndpointName
+    Parameters.managedPrivateEndpointName,
   ],
   headerParameters: [
     Parameters.accept,
     Parameters.contentType,
-    Parameters.ifMatch
+    Parameters.ifMatch,
   ],
   mediaType: "json",
-  serializer
+  serializer,
 };
 const getOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedPrivateEndpointResource
+      bodyMapper: Mappers.ManagedPrivateEndpointResource,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -323,21 +334,20 @@ const getOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.factoryName,
     Parameters.managedVirtualNetworkName,
-    Parameters.managedPrivateEndpointName
+    Parameters.managedPrivateEndpointName,
   ],
   headerParameters: [Parameters.accept, Parameters.ifNoneMatch],
-  serializer
+  serializer,
 };
 const deleteOperationSpec: coreClient.OperationSpec = {
-  path:
-    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
+  path: "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DataFactory/factories/{factoryName}/managedVirtualNetworks/{managedVirtualNetworkName}/managedPrivateEndpoints/{managedPrivateEndpointName}",
   httpMethod: "DELETE",
   responses: {
     200: {},
     204: {},
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
   queryParameters: [Parameters.apiVersion],
   urlParameters: [
@@ -346,31 +356,30 @@ const deleteOperationSpec: coreClient.OperationSpec = {
     Parameters.resourceGroupName,
     Parameters.factoryName,
     Parameters.managedVirtualNetworkName,
-    Parameters.managedPrivateEndpointName
+    Parameters.managedPrivateEndpointName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
 const listByFactoryNextOperationSpec: coreClient.OperationSpec = {
   path: "{nextLink}",
   httpMethod: "GET",
   responses: {
     200: {
-      bodyMapper: Mappers.ManagedPrivateEndpointListResponse
+      bodyMapper: Mappers.ManagedPrivateEndpointListResponse,
     },
     default: {
-      bodyMapper: Mappers.CloudError
-    }
+      bodyMapper: Mappers.CloudError,
+    },
   },
-  queryParameters: [Parameters.apiVersion],
   urlParameters: [
     Parameters.$host,
     Parameters.nextLink,
     Parameters.subscriptionId,
     Parameters.resourceGroupName,
     Parameters.factoryName,
-    Parameters.managedVirtualNetworkName
+    Parameters.managedVirtualNetworkName,
   ],
   headerParameters: [Parameters.accept],
-  serializer
+  serializer,
 };
